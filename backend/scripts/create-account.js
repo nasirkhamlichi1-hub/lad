@@ -17,10 +17,14 @@
 //
 // Recognised roles:
 //   lawyer
-//   lad_admin           (back-office: LAD Admin portal)
-//   lad_intelligence    (back-office: LAD Staff intelligence dashboard)
+//   lad_super_admin     (top tier — can manage other admins; create yours first)
+//   lad_admin           (operational admin — cannot create/edit other admins)
+//   lad_intelligence    (LAD Staff intelligence dashboard)
 //   firm_compliance_officer
 //   provider_admin
+//
+// Flags:
+//   --must-change-password   forces the user to change their password on next login
 //
 // Safe to re-run: existing accounts have their password reset.
 // Never commits passwords — always re-prompts or takes them on the CLI.
@@ -86,15 +90,17 @@ createAccount({
   id:      args.id || null,
   firm:    args['firm-id'] || null,
   credits: args.credits ? parseInt(args.credits, 10) : 0,
+  mustChange: !!args['must-change-password'],
 });
 
 // ─── Core ──────────────────────────────────────────────────────────────
-function createAccount({ role, email, pass, first, last, id, firm, credits }) {
+function createAccount({ role, email, pass, first, last, id, firm, credits, mustChange }) {
   if (!pass || pass.length < 8) {
     console.error(`✗ ${email}: password must be at least 8 characters`);
     process.exit(1);
   }
   const hash = bcrypt.hashSync(pass, 12);
+  const mc = mustChange ? 1 : 0;
 
   if (role === 'lawyer') {
     const lawyerId = id || ('L-' + crypto.randomBytes(4).toString('hex').toUpperCase());
@@ -103,31 +109,37 @@ function createAccount({ role, email, pass, first, last, id, firm, credits }) {
       db.prepare(`UPDATE lawyers SET password_hash = ?, first_name = ?, last_name = ?,
                                      firm_id = COALESCE(?, firm_id),
                                      credit_balance = COALESCE(?, credit_balance),
-                                     status = 'active'
+                                     status = 'active',
+                                     must_change_password = ?,
+                                     password_changed_at = CURRENT_TIMESTAMP
                                  WHERE id = ?`)
-        .run(hash, first, last, firm, credits, exists.id);
-      console.log(`✓ Updated lawyer: ${email}  (id=${exists.id})`);
+        .run(hash, first, last, firm, credits, mc, exists.id);
+      console.log(`✓ Updated lawyer: ${email}  (id=${exists.id}${mustChange ? ', must change pw' : ''})`);
     } else {
-      db.prepare(`INSERT INTO lawyers (id, email, first_name, last_name, firm_id, credit_balance, status, password_hash)
-                  VALUES (?, ?, ?, ?, ?, ?, 'active', ?)`)
-        .run(lawyerId, email, first, last, firm, credits || 0, hash);
-      console.log(`✓ Created lawyer: ${email}  (id=${lawyerId})`);
+      db.prepare(`INSERT INTO lawyers (id, email, first_name, last_name, firm_id, credit_balance, status, password_hash,
+                                       must_change_password, password_changed_at)
+                  VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, CURRENT_TIMESTAMP)`)
+        .run(lawyerId, email, first, last, firm, credits || 0, hash, mc);
+      console.log(`✓ Created lawyer: ${email}  (id=${lawyerId}${mustChange ? ', must change pw' : ''})`);
     }
   } else {
-    // staff table — covers lad_admin / lad_intelligence / firm_compliance_officer / provider_admin
+    // staff table — covers lad_super_admin / lad_admin / lad_intelligence / firm_compliance_officer / provider_admin
     const staffId = id || ('S-' + crypto.randomBytes(4).toString('hex').toUpperCase());
     const exists = db.prepare('SELECT id FROM staff WHERE LOWER(email) = LOWER(?)').get(email);
     if (exists) {
       db.prepare(`UPDATE staff SET password_hash = ?, first_name = ?, last_name = ?, role = ?,
-                                   firm_id = COALESCE(?, firm_id), status = 'active'
+                                   firm_id = COALESCE(?, firm_id), status = 'active',
+                                   must_change_password = ?,
+                                   password_changed_at = CURRENT_TIMESTAMP
                                WHERE id = ?`)
-        .run(hash, first, last, role, firm, exists.id);
-      console.log(`✓ Updated staff: ${email}  (id=${exists.id}, role=${role})`);
+        .run(hash, first, last, role, firm, mc, exists.id);
+      console.log(`✓ Updated staff: ${email}  (id=${exists.id}, role=${role}${mustChange ? ', must change pw' : ''})`);
     } else {
-      db.prepare(`INSERT INTO staff (id, email, first_name, last_name, role, firm_id, status, password_hash)
-                  VALUES (?, ?, ?, ?, ?, ?, 'active', ?)`)
-        .run(staffId, email, first, last, role, firm, hash);
-      console.log(`✓ Created staff: ${email}  (id=${staffId}, role=${role})`);
+      db.prepare(`INSERT INTO staff (id, email, first_name, last_name, role, firm_id, status, password_hash,
+                                     must_change_password, password_changed_at)
+                  VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, CURRENT_TIMESTAMP)`)
+        .run(staffId, email, first, last, role, firm, hash, mc);
+      console.log(`✓ Created staff: ${email}  (id=${staffId}, role=${role}${mustChange ? ', must change pw' : ''})`);
     }
   }
 }

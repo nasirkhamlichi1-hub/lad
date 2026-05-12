@@ -221,7 +221,7 @@ router.post('/staff/login', async (req, res) => {
   if (!email || !password) return res.status(400).json({ error: 'email and password required' });
 
   const staff = db.prepare(`SELECT id, email, first_name, last_name, role, firm_id,
-                                   password_hash, status
+                                   password_hash, status, must_change_password
                             FROM staff WHERE LOWER(email) = LOWER(?)`).get(email);
   if (!staff || staff.status !== 'active' || !staff.password_hash) {
     return res.status(401).json({ error: 'Invalid credentials' });
@@ -244,7 +244,8 @@ router.post('/staff/login', async (req, res) => {
               VALUES (?, 'staff', 'login', ?, ?)`)
     .run(staff.id, JSON.stringify({ method: 'password' }), req.ip || null);
 
-  res.json({ token, role: staff.role, name: `${staff.first_name} ${staff.last_name}`.trim() });
+  res.json({ token, role: staff.role, name: `${staff.first_name} ${staff.last_name}`.trim(),
+             must_change_password: !!staff.must_change_password });
 });
 
 // ─── Lawyer: email + password (temporary, until UAE Pass production is live)
@@ -257,7 +258,8 @@ router.post('/lawyer/login', async (req, res) => {
   if (!email || !password) return res.status(400).json({ error: 'email and password required' });
 
   const lawyer = db.prepare(`SELECT id, email, first_name, last_name, firm_id,
-                                    password_hash, status, credit_balance, lifetime_points
+                                    password_hash, status, credit_balance, lifetime_points,
+                                    must_change_password
                              FROM lawyers WHERE LOWER(email) = LOWER(?)`).get(email);
   if (!lawyer || lawyer.status !== 'active' || !lawyer.password_hash) {
     return res.status(401).json({ error: 'Invalid credentials' });
@@ -292,7 +294,47 @@ router.post('/lawyer/login', async (req, res) => {
       credit_balance: lawyer.credit_balance,
       lifetime_points: lawyer.lifetime_points,
     },
+    must_change_password: !!lawyer.must_change_password,
   });
+});
+
+// ─── POST /auth/change-password ─────────────────────────────────────────
+// Used both for the first-login forced flow and for users rotating their
+// password voluntarily. Requires a valid JWT. Verifies the old password,
+// validates the new one against minimum strength, hashes + persists,
+// clears must_change_password.
+const passwords = require('../services/passwords');
+router.post('/change-password', requireAuth, async (req, res) => {
+  const { old_password, new_password } = req.body || {};
+  if (!old_password || !new_password) {
+    return res.status(400).json({ error: 'old_password and new_password are required' });
+  }
+
+  // Strength check on the new password
+  const errors = passwords.validateUserChosen(new_password);
+  if (errors.length) {
+    return res.status(400).json({ error: errors.join('; '), code: 'WEAK_PASSWORD', details: errors });
+  }
+
+  const userType = req.user.user_type;
+  const table = userType === 'lawyer' ? 'lawyers' : 'staff';
+  const row = db.prepare(`SELECT password_hash FROM ${table} WHERE id = ?`).get(req.user.sub);
+  if (!row || !row.password_hash) return res.status(404).json({ error: 'Account not found' });
+
+  const ok = await bcrypt.compare(old_password, row.password_hash);
+  if (!ok) return res.status(401).json({ error: 'Current password is incorrect' });
+
+  const newHash = bcrypt.hashSync(new_password, 12);
+  db.prepare(`UPDATE ${table} SET password_hash = ?,
+                                  must_change_password = 0,
+                                  password_changed_at = CURRENT_TIMESTAMP
+                            WHERE id = ?`).run(newHash, req.user.sub);
+
+  db.prepare(`INSERT INTO audit_log (actor_id, actor_type, action, details, ip)
+              VALUES (?, ?, 'user.self_password_change', ?, ?)`)
+    .run(req.user.sub, userType, JSON.stringify({}), req.ip || null);
+
+  res.json({ ok: true });
 });
 
 module.exports = router;

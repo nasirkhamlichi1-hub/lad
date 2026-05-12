@@ -2329,8 +2329,19 @@ async function doLogin() {
       userCredits = (res.profile && typeof res.profile.credit_balance === 'number') ? res.profile.credit_balance : 0;
       userPts     = (res.profile && typeof res.profile.lifetime_points === 'number') ? res.profile.lifetime_points : 0;
       userBookings = [];
+      // Persist role/name for cross-page features (users-admin.html etc.)
+      try {
+        localStorage.setItem('lad_role', res.role || role);
+        localStorage.setItem('lad_name', res.name || cfg.user.name);
+      } catch (_) {}
       ladUpdateAuth();
       closeAuth();
+      // First-login flow — backend says this account must rotate its password
+      if (res.must_change_password) {
+        showToast('Please set a new password to continue');
+        window.location.href = 'change-password.html';
+        return;
+      }
       showToast('Signed in as ' + currentUser.name);
       // Redirect by role
       const dest = role === 'lawyer'    ? 'lawyer-portal-v2.html'

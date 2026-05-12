@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>User Management · LAD CLPD</title>
+<style>
+  :root {
+    --green:#006B3F; --green2:#004C2D; --green3:#00532E;
+    --gold:#C4A66B; --gold2:#A88B4E;
+    --ink:#1a1a1a; --slate1:#475569; --slate2:#64748b; --slate3:#94a3b8;
+    --line1:#e2e8f0; --line2:#cbd5e1; --bg:#f8fafc; --bg2:#fff;
+    --red:#dc2626; --red2:#fef2f2; --amber:#d97706; --amber2:#fffbeb;
+    --serif:'Cormorant Garamond',Georgia,serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);color:var(--ink);background:var(--bg);font-size:14px;line-height:1.5}
+  a{color:var(--green);text-decoration:none}
+  .header{background:#fff;border-bottom:1px solid var(--line1);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+  .header-l{display:flex;align-items:center;gap:14px}
+  .crest{height:42px}
+  .titles{font-family:var(--serif)}
+  .titles h1{font-size:20px;font-weight:600;color:var(--green2);letter-spacing:0.3px}
+  .titles .sub{font-size:11px;color:var(--slate2);font-family:var(--mono);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
+  .header-r{display:flex;align-items:center;gap:14px;font-size:13px}
+  .user-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;background:var(--bg);border-radius:24px;font-weight:600}
+  .role-tag{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:1px;padding:2px 6px;border-radius:3px;background:var(--green);color:#fff}
+  .role-tag.super{background:var(--gold)}
+  .role-tag.firm{background:var(--slate1)}
+  .signout{color:var(--slate2);font-size:13px;cursor:pointer}
+  .signout:hover{color:var(--red)}
+
+  .main{max-width:1400px;margin:0 auto;padding:24px 28px}
+  .breadcrumb{font-size:12px;color:var(--slate2);margin-bottom:6px}
+  .breadcrumb a{color:var(--slate2)}
+  .breadcrumb a:hover{color:var(--green)}
+  .page-h{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:24px}
+  .page-h h2{font-family:var(--serif);font-size:32px;font-weight:600;color:var(--ink);line-height:1.1}
+  .page-h .desc{font-size:13px;color:var(--slate2);margin-top:6px;max-width:560px}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:6px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.15s}
+  .btn:disabled{opacity:0.5;cursor:not-allowed}
+  .btn-g{background:var(--green);color:#fff}
+  .btn-g:hover:not(:disabled){background:var(--green2)}
+  .btn-gh{background:#fff;color:var(--green);border:1px solid var(--green)}
+  .btn-gh:hover:not(:disabled){background:var(--bg)}
+  .btn-r{background:var(--red);color:#fff}
+  .btn-r:hover:not(:disabled){background:#b91c1c}
+  .btn-ghost{background:transparent;color:var(--slate2);padding:6px 10px}
+  .btn-ghost:hover:not(:disabled){color:var(--ink);background:var(--bg)}
+  .btn-sm{padding:6px 12px;font-size:12px}
+
+  .filterbar{background:#fff;border:1px solid var(--line1);border-radius:8px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .filterbar input,.filterbar select{padding:8px 12px;border:1px solid var(--line2);border-radius:5px;font-size:13px;background:#fff;font-family:var(--sans);min-width:140px}
+  .filterbar input:focus,.filterbar select:focus{outline:none;border-color:var(--green)}
+  .filterbar input[type="search"]{flex:1;min-width:240px}
+  .filterbar .count{margin-left:auto;font-size:12px;color:var(--slate2);font-family:var(--mono)}
+
+  .table-wrap{background:#fff;border:1px solid var(--line1);border-radius:8px;overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;padding:12px 14px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--slate2);background:var(--bg);border-bottom:1px solid var(--line1)}
+  td{padding:12px 14px;border-bottom:1px solid var(--line1);font-size:13px;vertical-align:middle}
+  tr:hover td{background:var(--bg)}
+  td.name{font-weight:600}
+  td.muted{color:var(--slate2);font-size:12px}
+  td.muted-mono{color:var(--slate2);font-size:11px;font-family:var(--mono)}
+  .badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+  .badge.active{background:#d1fae5;color:#065f46}
+  .badge.suspended{background:#fee2e2;color:#991b1b}
+  .badge.mustchg{background:var(--amber2);color:var(--amber);margin-left:6px}
+  .row-actions{display:flex;align-items:center;gap:4px;justify-content:flex-end}
+
+  .empty{padding:60px 20px;text-align:center;color:var(--slate2);font-size:13px}
+  .empty-title{font-family:var(--serif);font-size:22px;color:var(--ink);margin-bottom:8px}
+
+  /* Modal */
+  .modal{position:fixed;inset:0;background:rgba(15,23,42,0.65);display:none;align-items:flex-start;justify-content:center;padding:60px 20px;z-index:100;overflow-y:auto}
+  .modal.on{display:flex}
+  .modal-card{background:#fff;border-radius:10px;width:520px;max-width:100%;box-shadow:0 25px 50px rgba(0,0,0,0.25)}
+  .modal-h{padding:20px 24px;border-bottom:1px solid var(--line1);display:flex;justify-content:space-between;align-items:flex-start}
+  .modal-h h3{font-family:var(--serif);font-size:22px}
+  .modal-h .desc{font-size:12px;color:var(--slate2);margin-top:4px}
+  .modal-x{background:transparent;border:none;font-size:22px;color:var(--slate2);cursor:pointer;line-height:1}
+  .modal-b{padding:20px 24px;display:flex;flex-direction:column;gap:14px}
+  .modal-f{padding:14px 24px;border-top:1px solid var(--line1);display:flex;gap:8px;justify-content:flex-end}
+  .field label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--slate2);margin-bottom:6px}
+  .field input,.field select{width:100%;padding:9px 12px;border:1px solid var(--line2);border-radius:5px;font-size:14px;font-family:var(--sans)}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--green)}
+  .field.row{display:flex;gap:10px}
+  .field.row > div{flex:1}
+  .field-help{font-size:11px;color:var(--slate2);margin-top:5px;line-height:1.4}
+  .pw-row{display:flex;gap:8px}
+  .pw-row input{flex:1}
+  .checkbox{display:flex;align-items:flex-start;gap:9px;cursor:pointer;font-size:13px;line-height:1.4}
+  .checkbox input{width:auto;margin-top:2px}
+
+  .success-banner{background:#ecfdf5;border:1px solid #6ee7b7;border-radius:6px;padding:14px 16px;font-size:13px;color:#065f46;display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+  .success-banner strong{display:block;margin-bottom:4px}
+  .pw-display{background:#fff;border:1px dashed #6ee7b7;border-radius:5px;padding:10px 12px;font-family:var(--mono);font-size:14px;margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--ink)}
+  .pw-display .copy{font-size:11px;color:var(--green);cursor:pointer;text-transform:uppercase;letter-spacing:1px;font-family:var(--sans);font-weight:600}
+  .pw-display .copy.done{color:var(--slate2)}
+
+  .toast{position:fixed;top:24px;right:24px;padding:14px 20px;background:var(--ink);color:#fff;border-radius:6px;font-size:13px;z-index:200;box-shadow:0 10px 30px rgba(0,0,0,0.2);opacity:0;transform:translateY(-10px);transition:all 0.25s}
+  .toast.on{opacity:1;transform:translateY(0)}
+  .toast.err{background:var(--red)}
+  .err-text{font-size:13px;color:var(--red);background:var(--red2);border:1px solid #fecaca;border-radius:5px;padding:10px 12px;margin-bottom:10px}
+
+  @media (max-width:760px){
+    .header{padding:12px 16px;flex-wrap:wrap}
+    .main{padding:16px}
+    .page-h{flex-direction:column}
+    .filterbar input[type="search"]{flex:1 1 100%}
+    table thead{display:none}
+    table,tbody,tr,td{display:block;width:100%}
+    tr{padding:12px 14px;border-bottom:1px solid var(--line1)}
+    tr:hover td{background:transparent}
+    td{padding:4px 0;border:none}
+    td.row-actions{justify-content:flex-start;margin-top:8px}
+  }
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-l">
+    <img class="crest" alt="Dubai Government" src="img/dubai-logo.svg" onerror="this.style.display='none'">
+    <div class="titles">
+      <h1>User Management</h1>
+      <div class="sub">Continuing Legal Professional Development</div>
+    </div>
+  </div>
+  <div class="header-r">
+    <span class="user-pill"><span id="userName">…</span><span id="userRole" class="role-tag">…</span></span>
+    <span class="signout" onclick="signOut()">Sign out</span>
+  </div>
+</header>
+
+<main class="main">
+  <div class="breadcrumb"><a href="#" onclick="goBack();return false">← Back to portal</a></div>
+  <div class="page-h">
+    <div>
+      <h2>Users</h2>
+      <div class="desc" id="pageDesc">Manage accounts across the platform.</div>
+    </div>
+    <button class="btn btn-g" onclick="openAddModal()">+ Add User</button>
+  </div>
+
+  <div class="filterbar">
+    <input type="search" id="searchInput" placeholder="Search by name or email…" oninput="onFilterChange()">
+    <select id="roleFilter" onchange="onFilterChange()">
+      <option value="">All roles</option>
+      <option value="lawyer">Lawyer</option>
+      <option value="firm_compliance_officer">Firm CO</option>
+      <option value="lad_intelligence">LAD Staff</option>
+      <option value="lad_admin">LAD Admin</option>
+      <option value="lad_super_admin">Super Admin</option>
+      <option value="provider_admin">Provider</option>
+    </select>
+    <select id="firmFilter" onchange="onFilterChange()">
+      <option value="">All firms</option>
+    </select>
+    <select id="statusFilter" onchange="onFilterChange()">
+      <option value="">Any status</option>
+      <option value="active">Active</option>
+      <option value="suspended">Suspended</option>
+    </select>
+    <span class="count" id="countLabel">…</span>
+  </div>
+
+  <div class="table-wrap" id="tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Firm</th>
+          <th>Status</th>
+          <th>Last login</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="usersBody">
+        <tr><td colspan="7" class="empty">Loading users…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<!-- Add user modal -->
+<div class="modal" id="addModal">
+  <div class="modal-card">
+    <div class="modal-h">
+      <div>
+        <h3>Add user</h3>
+        <div class="desc">Create a new account. The user will receive their initial password from you.</div>
+      </div>
+      <button class="modal-x" onclick="closeAddModal()">×</button>
+    </div>
+    <div class="modal-b">
+      <div id="addErr" class="err-text" style="display:none"></div>
+
+      <div class="field">
+        <label>Role</label>
+        <select id="addRole" onchange="onRoleChange()">
+          <!-- populated dynamically based on current admin's permissions -->
+        </select>
+      </div>
+
+      <div class="field row">
+        <div>
+          <label>First name</label>
+          <input type="text" id="addFirst" placeholder="Yousef">
+        </div>
+        <div>
+          <label>Last name</label>
+          <input type="text" id="addLast" placeholder="Al Mansouri">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="addEmail" placeholder="y.mansouri@firm.ae">
+      </div>
+
+      <div class="field" id="firmField">
+        <label>Firm</label>
+        <select id="addFirm"></select>
+      </div>
+
+      <div class="field">
+        <label>Initial password</label>
+        <div class="pw-row">
+          <input type="text" id="addPassword" placeholder="Leave blank to auto-generate">
+          <button class="btn btn-gh btn-sm" type="button" onclick="generatePw()">Generate</button>
+        </div>
+        <div class="field-help">If left blank, a strong password will be generated for you. The password will be shown once after creation — copy it and share with the user via a secure channel.</div>
+      </div>
+
+      <label class="checkbox">
+        <input type="checkbox" id="addMustChange" checked>
+        <span>Require user to change password on first sign-in <span style="color:var(--slate2)">(recommended)</span></span>
+      </label>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-g" id="addSubmitBtn" onclick="submitAdd()">Create user</button>
+    </div>
+  </div>
+</div>
+
+<!-- Result modal — shown after create / reset password to display the password once -->
+<div class="modal" id="pwModal">
+  <div class="modal-card">
+    <div class="modal-h">
+      <div>
+        <h3 id="pwTitle">Account created</h3>
+        <div class="desc" id="pwSub">Copy this password now — it will not be shown again.</div>
+      </div>
+      <button class="modal-x" onclick="closePwModal()">×</button>
+    </div>
+    <div class="modal-b">
+      <div class="success-banner">
+        <div>
+          <strong id="pwHeading">Initial password</strong>
+          Share this with the user via a secure channel. Once you close this dialog the password is gone — we do not store it anywhere readable.
+          <div class="pw-display">
+            <span id="pwValue">…</span>
+            <span class="copy" id="pwCopy" onclick="copyPassword()">Copy</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-g" onclick="closePwModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="runtime-config.js"></script>
+<script src="api-client.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ─── State ────────────────────────────────────────────────────────────
+  const ROLE_LABELS = {
+    lawyer: 'Lawyer',
+    firm_compliance_officer: 'Firm CO',
+    lad_intelligence: 'LAD Staff',
+    lad_admin: 'LAD Admin',
+    lad_super_admin: 'Super Admin',
+    provider_admin: 'Provider',
+  };
+
+  let CURRENT_USER = null;
+  let CURRENT_ROLE = null;
+  let FIRMS = [];
+
+  // ─── Boot ─────────────────────────────────────────────────────────────
+  async function boot() {
+    if (!window.LAD || !window.LAD.enabled) {
+      // Demo mode — show a friendly message and bail
+      document.getElementById('usersBody').innerHTML = '<tr><td colspan="7" class="empty"><div class="empty-title">Demo mode</div>Connect to a backend to manage users. Edit <code>runtime-config.js</code> and set <code>LAD_API_BASE</code>.</td></tr>';
+      return;
+    }
+    if (!window.LAD.isAuthenticated()) {
+      // Not signed in — go back to portal
+      window.location.href = 'index.html';
+      return;
+    }
+
+    // Pull current user info from localStorage (stored at login)
+    try {
+      CURRENT_USER = localStorage.getItem('lad_name') || '';
+      CURRENT_ROLE = localStorage.getItem('lad_role') || '';
+    } catch (_) {}
+    document.getElementById('userName').textContent = CURRENT_USER || 'Signed in';
+    const rolePill = document.getElementById('userRole');
+    rolePill.textContent = (ROLE_LABELS[CURRENT_ROLE] || CURRENT_ROLE || '').toUpperCase();
+    if (CURRENT_ROLE === 'lad_super_admin') rolePill.classList.add('super');
+    if (CURRENT_ROLE === 'firm_compliance_officer') rolePill.classList.add('firm');
+
+    // Tailor the page description by role
+    const desc = document.getElementById('pageDesc');
+    if (CURRENT_ROLE === 'lad_super_admin') {
+      desc.textContent = 'Manage every account across the platform — including admins and super admins.';
+    } else if (CURRENT_ROLE === 'lad_admin') {
+      desc.textContent = 'Manage lawyer, firm CO, LAD staff, and provider accounts. To manage admins, contact a super admin.';
+    } else if (CURRENT_ROLE === 'firm_compliance_officer') {
+      desc.textContent = 'Manage the lawyers within your firm.';
+    } else {
+      desc.textContent = 'You do not have permission to access this page.';
+      document.querySelector('.page-h .btn').style.display = 'none';
+    }
+
+    // Populate role filter based on what they can see
+    populateRoleSelect();
+
+    // Load firms list and users
+    await loadFirms();
+    await loadUsers();
+  }
+
+  function populateRoleSelect() {
+    const sel = document.getElementById('roleFilter');
+    let opts = ['lawyer', 'firm_compliance_officer', 'lad_intelligence', 'provider_admin'];
+    if (CURRENT_ROLE === 'lad_super_admin') opts = opts.concat(['lad_admin', 'lad_super_admin']);
+    if (CURRENT_ROLE === 'firm_compliance_officer') opts = ['lawyer'];
+    sel.innerHTML = '<option value="">All roles</option>' + opts.map(r => `<option value="${r}">${ROLE_LABELS[r]}</option>`).join('');
+  }
+
+  async function loadFirms() {
+    try {
+      const res = await window.LAD.listFirmsForAdmin();
+      FIRMS = res.firms || [];
+      const fSel = document.getElementById('firmFilter');
+      fSel.innerHTML = '<option value="">All firms</option>' + FIRMS.map(f => `<option value="${f.id}">${escapeHtml(f.name)}</option>`).join('');
+      const aSel = document.getElementById('addFirm');
+      aSel.innerHTML = '<option value="">— pick firm —</option>' + FIRMS.map(f => `<option value="${f.id}">${escapeHtml(f.name)}</option>`).join('');
+    } catch (e) {
+      console.warn('Failed to load firms:', e);
+    }
+  }
+
+  async function loadUsers() {
+    const filters = {
+      search: document.getElementById('searchInput').value.trim(),
+      role: document.getElementById('roleFilter').value,
+      firm_id: document.getElementById('firmFilter').value,
+      status: document.getElementById('statusFilter').value,
+    };
+    try {
+      const res = await window.LAD.listUsers(filters);
+      renderTable(res.users || []);
+      document.getElementById('countLabel').textContent = (res.count || 0) + ' users';
+    } catch (e) {
+      document.getElementById('usersBody').innerHTML = '<tr><td colspan="7" class="empty err">' + escapeHtml(e.message) + '</td></tr>';
+    }
+  }
+
+  function renderTable(users) {
+    const body = document.getElementById('usersBody');
+    if (!users.length) {
+      body.innerHTML = '<tr><td colspan="7" class="empty"><div class="empty-title">No users match</div>Try clearing your filters or add the first one.</td></tr>';
+      return;
+    }
+    body.innerHTML = users.map(u => {
+      const firm = FIRMS.find(f => f.id === u.firm_id);
+      const firmName = firm ? firm.name : (u.firm_id || '—');
+      const lastLogin = u.last_login_at ? new Date(u.last_login_at).toLocaleString() : '—';
+      const canTouch = canTouchUser(u);
+      return `
+        <tr data-id="${escapeHtml(u.id)}">
+          <td class="name">${escapeHtml(u.name || (u.first_name + ' ' + u.last_name))} ${u.must_change_password ? '<span class="badge mustchg">must change pw</span>' : ''}</td>
+          <td class="muted">${escapeHtml(u.email)}</td>
+          <td>${ROLE_LABELS[u.role] || u.role}</td>
+          <td class="muted">${escapeHtml(firmName)}</td>
+          <td><span class="badge ${u.status}">${u.status}</span></td>
+          <td class="muted-mono">${lastLogin}</td>
+          <td class="row-actions">
+            ${canTouch ? `
+              <button class="btn btn-ghost btn-sm" onclick="resetPw('${escapeHtml(u.id)}', '${escapeHtml(u.name || u.email)}')">Reset pw</button>
+              ${u.status === 'active'
+                ? `<button class="btn btn-ghost btn-sm" onclick="suspend('${escapeHtml(u.id)}', '${escapeHtml(u.name || u.email)}')" style="color:var(--red)">Suspend</button>`
+                : `<button class="btn btn-ghost btn-sm" onclick="reactivate('${escapeHtml(u.id)}')">Reactivate</button>`
+              }
+            ` : '<span class="muted" style="font-size:11px">no permission</span>'}
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  function canTouchUser(u) {
+    if (CURRENT_ROLE === 'lad_super_admin') return true;
+    if (CURRENT_ROLE === 'lad_admin') return !['lad_admin','lad_super_admin'].includes(u.role);
+    if (CURRENT_ROLE === 'firm_compliance_officer') return u.role === 'lawyer';
+    return false;
+  }
+
+  // ─── Filter / search ──────────────────────────────────────────────────
+  let _filterTimer = null;
+  window.onFilterChange = function () {
+    clearTimeout(_filterTimer);
+    _filterTimer = setTimeout(loadUsers, 250);
+  };
+
+  // ─── Add user flow ────────────────────────────────────────────────────
+  window.openAddModal = function () {
+    document.getElementById('addErr').style.display = 'none';
+    document.getElementById('addFirst').value = '';
+    document.getElementById('addLast').value = '';
+    document.getElementById('addEmail').value = '';
+    document.getElementById('addPassword').value = '';
+    document.getElementById('addMustChange').checked = true;
+
+    // Populate role select based on what current user can create
+    const roleSel = document.getElementById('addRole');
+    let allowed = [];
+    if (CURRENT_ROLE === 'lad_super_admin') allowed = ['lawyer','firm_compliance_officer','lad_intelligence','provider_admin','lad_admin','lad_super_admin'];
+    else if (CURRENT_ROLE === 'lad_admin') allowed = ['lawyer','firm_compliance_officer','lad_intelligence','provider_admin'];
+    else if (CURRENT_ROLE === 'firm_compliance_officer') allowed = ['lawyer'];
+    roleSel.innerHTML = allowed.map(r => `<option value="${r}">${ROLE_LABELS[r]}</option>`).join('');
+
+    // Firm CO: lock firm to their own
+    if (CURRENT_ROLE === 'firm_compliance_officer') {
+      document.getElementById('addFirm').disabled = true;
+    } else {
+      document.getElementById('addFirm').disabled = false;
+    }
+
+    onRoleChange();
+    document.getElementById('addModal').classList.add('on');
+    setTimeout(() => document.getElementById('addFirst').focus(), 100);
+  };
+
+  window.closeAddModal = function () {
+    document.getElementById('addModal').classList.remove('on');
+  };
+
+  window.onRoleChange = function () {
+    const role = document.getElementById('addRole').value;
+    const firmField = document.getElementById('firmField');
+    // Firm is required for lawyer + firm_compliance_officer
+    if (['lawyer','firm_compliance_officer'].includes(role)) {
+      firmField.style.display = '';
+    } else {
+      firmField.style.display = 'none';
+    }
+  };
+
+  window.generatePw = function () {
+    // Client-side mirror of the server-side readable generator. Server
+    // generates its own anyway if this is left blank — but generating
+    // client-side lets the admin SEE what they're about to set.
+    const words = ['Falcon','Marina','Dhow','Pearl','Desert','Oasis','Palm','Dune','Coral','Heron','Cedar','Jasmine','Saffron','Amber','Onyx','Topaz','Sapphire','Ivory','Cypress','Mirage','Compass','Anchor','Lantern','Beacon','Summit','Harbour','Bridge','Tower','Garden','Mosaic'];
+    const a = words[Math.floor(Math.random()*words.length)];
+    let b; do { b = words[Math.floor(Math.random()*words.length)]; } while (b===a);
+    const d = String(10 + Math.floor(Math.random()*90));
+    const U = 'ABCDEFGHJKLMNPQRSTUVWXYZ', l = 'abcdefghjkmnpqrstuvwxyz';
+    const t = U[Math.floor(Math.random()*U.length)] + l[Math.floor(Math.random()*l.length)];
+    document.getElementById('addPassword').value = `${a}-${b}-${d}-${t}`;
+  };
+
+  window.submitAdd = async function () {
+    const errBox = document.getElementById('addErr');
+    errBox.style.display = 'none';
+    const btn = document.getElementById('addSubmitBtn');
+    btn.disabled = true; btn.textContent = 'Creating…';
+
+    try {
+      const data = {
+        role: document.getElementById('addRole').value,
+        first_name: document.getElementById('addFirst').value.trim(),
+        last_name: document.getElementById('addLast').value.trim(),
+        email: document.getElementById('addEmail').value.trim(),
+        firm_id: document.getElementById('addFirm').value || null,
+        password: document.getElementById('addPassword').value,  // backend auto-generates if blank
+        must_change_password: document.getElementById('addMustChange').checked,
+      };
+      if (!data.first_name || !data.last_name || !data.email) {
+        throw new Error('Please fill in name and email');
+      }
+      const res = await window.LAD.createUser(data);
+      closeAddModal();
+      showPwModal('Account created', `${data.first_name} ${data.last_name}`, res.initial_password);
+      await loadUsers();
+    } catch (e) {
+      errBox.textContent = e.message || 'Failed to create user';
+      errBox.style.display = '';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Create user';
+    }
+  };
+
+  // ─── Reset / suspend / reactivate ─────────────────────────────────────
+  window.resetPw = async function (id, name) {
+    if (!confirm(`Reset password for ${name}? They will need to use the new password to sign in.`)) return;
+    try {
+      const res = await window.LAD.resetUserPassword(id);
+      showPwModal('Password reset', name, res.new_password);
+      await loadUsers();
+    } catch (e) {
+      toast(e.message, true);
+    }
+  };
+
+  window.suspend = async function (id, name) {
+    if (!confirm(`Suspend ${name}? They will no longer be able to sign in.`)) return;
+    try {
+      await window.LAD.suspendUser(id);
+      toast(`${name} suspended`);
+      await loadUsers();
+    } catch (e) { toast(e.message, true); }
+  };
+
+  window.reactivate = async function (id) {
+    try {
+      await window.LAD.reactivateUser(id);
+      toast('Reactivated');
+      await loadUsers();
+    } catch (e) { toast(e.message, true); }
+  };
+
+  // ─── Password display modal ───────────────────────────────────────────
+  function showPwModal(title, who, password) {
+    document.getElementById('pwTitle').textContent = title;
+    document.getElementById('pwSub').textContent = `For ${who} — copy now, this is shown once only.`;
+    document.getElementById('pwValue').textContent = password;
+    document.getElementById('pwCopy').textContent = 'Copy';
+    document.getElementById('pwCopy').classList.remove('done');
+    document.getElementById('pwModal').classList.add('on');
+  }
+  window.closePwModal = function () {
+    document.getElementById('pwModal').classList.remove('on');
+  };
+  window.copyPassword = function () {
+    const pw = document.getElementById('pwValue').textContent;
+    navigator.clipboard.writeText(pw).then(() => {
+      const c = document.getElementById('pwCopy');
+      c.textContent = 'Copied ✓';
+      c.classList.add('done');
+    }).catch(() => toast('Copy failed — select the text manually', true));
+  };
+
+  // ─── Sign out + back ──────────────────────────────────────────────────
+  window.signOut = function () {
+    try {
+      if (window.LAD) window.LAD.logout();
+      localStorage.removeItem('lad_role');
+      localStorage.removeItem('lad_name');
+    } catch (_) {}
+    window.location.href = 'index.html';
+  };
+
+  window.goBack = function () {
+    // Send them back to the portal that matches their role
+    const dest = CURRENT_ROLE === 'firm_compliance_officer' ? 'firm-compliance-portal.html'
+               : CURRENT_ROLE === 'lad_intelligence'        ? 'lad-intelligence-v4.html'
+               : 'lad-admin.html';
+    window.location.href = dest;
+  };
+
+  // ─── Toast / utils ────────────────────────────────────────────────────
+  function toast(msg, err) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast' + (err ? ' err' : '') + ' on';
+    setTimeout(() => t.classList.remove('on'), 3500);
+  }
+  window.toast = toast;
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // Go!
+  boot();
+})();
+</script>
+</body>
+</html>

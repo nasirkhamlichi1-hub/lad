@@ -162,6 +162,23 @@
     // Lex chat (server-side Anthropic proxy)
     lexChat: (messages, system) => ENABLED ? call('POST', '/api/v1/lex/chat', { messages, system })
                                             : Promise.reject(new Error('offline')),
+
+    // ─── Admin: user management ──────────────────────────────────────
+    listUsers: (filters) => {
+      if (!ENABLED) return Promise.resolve({ users: [], count: 0 });
+      const qs = filters ? '?' + Object.entries(filters).filter(([_,v]) => v).map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&') : '';
+      return call('GET', '/api/v1/admin/users' + qs);
+    },
+    createUser:    (data)         => call('POST',  '/api/v1/admin/users', data),
+    updateUser:    (id, patch)    => call('PATCH', '/api/v1/admin/users/' + encodeURIComponent(id), patch),
+    resetUserPassword: (id)       => call('POST',  '/api/v1/admin/users/' + encodeURIComponent(id) + '/reset-password'),
+    suspendUser:   (id)           => call('POST',  '/api/v1/admin/users/' + encodeURIComponent(id) + '/suspend'),
+    reactivateUser: (id)          => call('POST',  '/api/v1/admin/users/' + encodeURIComponent(id) + '/reactivate'),
+    listFirmsForAdmin: ()         => call('GET',   '/api/v1/admin/users/firms/list'),
+
+    // Self-service password change (used by the first-login flow)
+    changeMyPassword: (oldPassword, newPassword) =>
+      call('POST', '/api/v1/auth/change-password', { old_password: oldPassword, new_password: newPassword }),
   };
 
   window.LAD = api;
