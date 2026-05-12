@@ -23,7 +23,7 @@
   // Production: 'https://api.your-domain.ae'
   // Staging:    'https://lad-clpd-backend.onrender.com'
   // Demo/empty: ''  (use localStorage fallback)
-  window.LAD_API_BASE = '';
+  window.LAD_API_BASE = 'https://lad-clpd-backend.onrender.com';
   // ─── END EDIT ──────────────────────────────────────────────────────
 
   // Detect environment for logging / debugging only
