@@ -1,0 +1,33 @@
+version: '3.9'
+
+# Local development stack. Run with: `docker-compose up`.
+# For production deploy (Azure App Service / AWS / etc.) use the Dockerfile
+# directly and inject env vars via the platform's secret manager.
+
+services:
+  backend:
+    build: .
+    container_name: lad-clpd-backend
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    volumes:
+      # Persist SQLite + the seed spreadsheet across container restarts
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:4000/api/v1/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # Optional: serve the static frontend from nginx during local dev
+  frontend:
+    image: nginx:alpine
+    container_name: lad-clpd-frontend
+    ports:
+      - "8080:80"
+    volumes:
+      - ../frontend:/usr/share/nginx/html:ro
+    restart: unless-stopped

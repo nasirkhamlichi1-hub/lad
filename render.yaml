@@ -1,0 +1,64 @@
+# ─────────────────────────────────────────────────────────────────────────
+# LAD CLPD — Render blueprint
+# ─────────────────────────────────────────────────────────────────────────
+# Render reads this file on first repo connect and provisions everything
+# below in one go. After deploy, fill in the secrets marked `sync: false`
+# in the Render dashboard (Render won't read them from the repo).
+#
+# Recommended for STAGING / development environments. For UAE production,
+# deploy the same Docker image to Azure Container Apps (UAE North region)
+# — see docs/PRODUCTION.md.
+
+services:
+  - type: web
+    name: lad-clpd-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter        # bump to standard for production scale (≥1 GB RAM, autoscaling)
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    region: frankfurt    # nearest Render region to UAE (Render has no UAE region; for production use Azure UAE North)
+    disk:
+      name: lad-clpd-data
+      mountPath: /app/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: LOG_LEVEL
+        value: info
+      - key: DATABASE_URL
+        value: /app/data/lad-clpd.sqlite
+      - key: PUBLIC_API_BASE
+        sync: false      # fill in after deploy: https://lad-clpd-backend.onrender.com
+      - key: CORS_ORIGIN
+        sync: false      # comma-separated: https://lad-clpd.netlify.app,https://your-domain.ae
+      - key: JWT_SECRET
+        generateValue: true   # Render generates a strong random value once
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: UAEPASS_ENV
+        value: staging   # flip to production once UAE Pass approves the SP
+      - key: UAEPASS_CLIENT_ID
+        sync: false
+      - key: UAEPASS_CLIENT_SECRET
+        sync: false
+      - key: UAEPASS_CLIENT_ID_PROD
+        sync: false
+      - key: UAEPASS_CLIENT_SECRET_PROD
+        sync: false
+      - key: UAEPASS_REDIRECT_URI
+        sync: false      # https://lad-clpd-backend.onrender.com/api/v1/auth/uaepass/callback
+      - key: FRONTEND_POST_LOGIN_URL
+        sync: false      # https://lad-clpd.netlify.app/router.html
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-sonnet-4-20250514
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "60000"
+      - key: RATE_LIMIT_MAX
+        value: "120"

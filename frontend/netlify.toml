@@ -1,0 +1,122 @@
+# ─────────────────────────────────────────────────────────────
+# LAD CLPD frontend — Netlify config
+# Static HTML/CSS/JS served from the root, no build step.
+# ─────────────────────────────────────────────────────────────
+
+[build]
+  publish = "."
+
+# Explicitly disable ALL post-processing.
+# Why: our HTML files are large (lad-super-system.html ~1MB) and contain
+# inline scripts/styles. Netlify's html-minifier and asset bundlers
+# regularly time out or choke on files this size, producing the dreaded
+# "post-processing error". Disabling avoids the failure mode entirely.
+# Page-load performance is fine without it — we hand-control caching below.
+[build.processing]
+  skip_processing = true
+
+[build.processing.html]
+  pretty_urls = false
+
+[build.processing.css]
+  bundle = false
+  minify = false
+
+[build.processing.js]
+  bundle = false
+  minify = false
+
+[build.processing.images]
+  compress = false
+
+# ─── Friendly URL aliases ─────────────────────────────────────
+[[redirects]]
+  from = "/lawyer"
+  to = "/lawyer-portal-v2.html"
+  status = 301
+
+[[redirects]]
+  from = "/firm"
+  to = "/firm-compliance-portal.html"
+  status = 301
+
+[[redirects]]
+  from = "/intelligence"
+  to = "/lad-intelligence-v4.html"
+  status = 301
+
+[[redirects]]
+  from = "/admin"
+  to = "/lad-admin.html"
+  status = 301
+
+[[redirects]]
+  from = "/accreditation"
+  to = "/lad-accreditation-review.html"
+  status = 301
+
+[[redirects]]
+  from = "/heatmap"
+  to = "/lad-capability-heatmap.html"
+  status = 301
+
+[[redirects]]
+  from = "/hub"
+  to = "/lad-super-system.html"
+  status = 301
+
+[[redirects]]
+  from = "/clpd"
+  to = "/clpd-portal.html"
+  status = 301
+
+[[redirects]]
+  from = "/provider"
+  to = "/provider-portal.html"
+  status = 301
+
+# Post-login router — auth-bridge / UAE Pass callback lands here
+[[redirects]]
+  from = "/router"
+  to = "/router.html"
+  status = 301
+
+# Direct entries to each role's portal (mirrors v3 IA — see SITEMAP.md)
+[[redirects]]
+  from = "/staff"
+  to = "/lad-intelligence-v4.html"
+  status = 301
+
+# ─── Security headers ─────────────────────────────────────────
+# All HTML portals carry the same CSP. We allow self + inline (the portals
+# rely on inline <style>/<script> blocks), and connect-src must list every
+# external endpoint the frontend may call:
+#   - the backend API origin (set via runtime-config.js)
+#   - Anthropic (only used by AI-powered Artifacts demos; remove if not needed)
+# Update connect-src whenever you switch backend hosts.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.onrender.com https://*.azurewebsites.net https://api.anthropic.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self' https://stg-id.uaepass.ae https://id.uaepass.ae"
+
+# ─── Caching — HTML revalidates fast, images cache long ───────
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/lad-config.json"
+  [headers.values]
+    Cache-Control = "public, max-age=60, must-revalidate"
+    Access-Control-Allow-Origin = "*"
+
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"

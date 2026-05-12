@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firm Capabilities — CLPD Platform</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+               background: #f8fafc; color: #1e293b; -webkit-font-smoothing: antialiased; }
+  .topbar { background: linear-gradient(120deg, #0f172a 0%, #1e293b 100%); color: #fff;
+            padding: 22px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-mark { width: 38px; height: 38px; border-radius: 9px; background: linear-gradient(135deg,#60a5fa,#3b82f6);
+                display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px; }
+  .brand h1 { margin:0;font-size:18px;font-weight:600; }
+  .brand p  { margin:2px 0 0;font-size:12px;opacity:.65; }
+  .topbar a { color: #cbd5e1; text-decoration: none; font-size: 14px; }
+
+  .container { max-width: 1320px; margin: 0 auto; padding: 32px 40px 80px; }
+  .pagehead { display: flex; justify-content: space-between; align-items: end; margin-bottom: 28px; gap: 24px; }
+  .pagehead h2 { font-size: 28px; font-weight: 700; margin: 0 0 4px; }
+  .pagehead p { color: #64748b; margin: 0; font-size: 14px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 28px; }
+  .kpi { background:#fff;border-radius:12px;padding:18px 20px;border:1px solid #e2e8f0; }
+  .kpi .v { font-size: 28px; font-weight: 700; color: #0f172a; line-height: 1; margin-bottom: 4px; }
+  .kpi .l { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .search-row { display: flex; gap: 12px; margin-bottom: 24px; }
+  .search-row input { flex: 1; padding: 12px 16px; border-radius: 10px; border: 1px solid #cbd5e1;
+                      font-size: 14px; background: #fff; }
+  .search-row input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+
+  .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+  @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+
+  .card { background:#fff;border-radius:14px;padding:24px;border:1px solid #e2e8f0; margin-bottom: 24px; }
+  .card h3 { margin:0 0 4px;font-size:17px;font-weight:600; }
+  .card .sub { color:#64748b;font-size:13px;margin: 0 0 18px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+       color: #64748b; padding: 10px 8px; border-bottom: 1px solid #e2e8f0; font-weight: 600; }
+  td { padding: 12px 8px; font-size: 14px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+  td.label { font-weight: 500; }
+  td.domain-tag { font-size: 12px; color: #64748b; }
+  td.metric { font-weight: 600; color: #1e40af; text-align: right; }
+  td.lawyers { font-size: 12px; color: #475569; line-height: 1.5; }
+
+  .gap { padding: 14px 16px; background: linear-gradient(135deg, #fee2e2, #fecaca);
+         border-radius: 10px; margin-bottom: 10px; border: 1px solid #fca5a5; }
+  .gap .label { font-weight: 600; color: #7f1d1d; font-size: 14px; }
+  .gap .meta { color: #991b1b; font-size: 12.5px; margin-top: 2px; }
+
+  .domain-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .domain-bar .name { width: 220px; font-size: 13px; font-weight: 500; }
+  .domain-bar .track { flex: 1; height: 10px; background: #f1f5f9; border-radius: 5px; overflow: hidden; }
+  .domain-bar .fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #2563eb); border-radius: 5px; }
+  .domain-bar .val { width: 50px; text-align: right; font-size: 12.5px; color: #475569; font-weight: 500; }
+
+  .lawyer-pill { display: inline-block; padding: 2px 8px; background: #eff6ff; color: #1d4ed8;
+                 border-radius: 4px; font-size: 11px; font-weight: 500; margin: 1px 2px; }
+  .freshness { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 3px; margin-left: 6px; }
+  .freshness.current { background: #d1fae5; color: #065f46; }
+  .freshness.stale { background: #fef3c7; color: #92400e; }
+  .freshness.critically_stale { background: #fee2e2; color: #991b1b; }
+  .empty { text-align: center; color: #94a3b8; padding: 40px 20px; }
+</style>
+
+<style id="lgn-styles">
+/* ═════════ LAD Global Nav ═════════ */
+.lgn{position:sticky;top:0;z-index:600;height:54px;background:linear-gradient(90deg,#0a1e3a 0%,#1c3a5e 100%);display:flex;align-items:center;gap:6px;padding:0 18px;box-shadow:0 2px 12px rgba(0,0,0,.2);color:#fff;font-family:'Inter','IBM Plex Sans',system-ui,sans-serif;font-size:13px;letter-spacing:-.005em}
+.lgn a{text-decoration:none}
+.lgn-brand{display:flex;gap:11px;align-items:center;color:#fff;padding-right:18px;margin-right:6px;border-right:1px solid rgba(255,255,255,.15);min-width:0}
+.lgn-emblem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#C9913A,#d9a85a);color:#1c1f2e;display:grid;place-items:center;font-family:'Crimson Pro',Georgia,serif;font-size:17px;font-weight:700;flex-shrink:0}
+.lgn-brand-text{line-height:1.15;min-width:0}
+.lgn-brand-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lgn-brand-sub{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:rgba(255,255,255,.55);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px;white-space:nowrap}
+.lgn-group{display:flex;gap:3px;align-items:center}
+.lgn-group-label{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:rgba(255,255,255,.4);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin:0 8px 0 4px;flex-shrink:0}
+.lgn-pill{padding:7px 13px;border-radius:7px;font-size:12.5px;font-weight:500;color:rgba(255,255,255,.72);transition:all .15s;cursor:pointer;white-space:nowrap}
+.lgn-pill:hover{color:#fff;background:rgba(255,255,255,.08)}
+.lgn-pill.on{color:#fff;background:rgba(255,255,255,.16);font-weight:600}
+.lgn-pill-sec{padding:6px 11px;font-size:12px;color:rgba(255,255,255,.5)}
+.lgn-pill-sec:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.06)}
+.lgn-spacer{flex:1;min-width:12px}
+.lgn-divider{width:1px;height:22px;background:rgba(255,255,255,.15);margin:0 8px;flex-shrink:0}
+@media (max-width:1100px){.lgn-brand-text{display:none}.lgn-group-label{display:none}.lgn-pill{padding:7px 10px;font-size:12px}.lgn-pill-sec{padding:6px 9px}}
+
+/* Push existing sticky topbars / sidebars below the unified nav */
+.lgn ~ .topbar,.lgn ~ * .topbar{top:54px !important}
+.lgn ~ .sidebar,.lgn ~ * .sidebar{top:54px !important;height:calc(100vh - 54px) !important}
+.lgn ~ .adm-topbar,.lgn ~ * .adm-topbar{top:54px !important}
+.lgn ~ .adm-tabs-top,.lgn ~ * .adm-tabs-top{top:54px !important}
+.lgn ~ .adm-web-subtabs,.lgn ~ * .adm-web-subtabs{top:54px !important}
+@media (max-width:760px){.lgn{padding:0 10px;gap:2px}.lgn-pill{padding:6px 8px;font-size:11.5px}.lgn-emblem{width:28px;height:28px;font-size:15px}}
+</style>
+</head>
+<body>
+<style>
+:root{--lad-nav-h:58px}
+.lad-shared-nav{background:#1c1f2e;height:var(--lad-nav-h);display:flex;align-items:center;padding:0 24px;gap:20px;position:sticky;top:0;z-index:500;box-shadow:0 2px 12px rgba(0,0,0,.35);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.lad-portal-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;background:rgba(96,165,250,.15);border:1px solid rgba(96,165,250,.35);color:rgba(147,197,253,.9)}
+.lad-snl{color:rgba(255,255,255,.75);font-size:12.5px;font-weight:500;padding:6px 12px;border-radius:6px;cursor:pointer;transition:all .15s;white-space:nowrap;text-decoration:none}
+.lad-snl:hover{background:rgba(255,255,255,.1);color:#fff}
+.lad-snl.active{background:rgba(255,255,255,.1);color:#fff}
+.lad-snl-cta{background:rgba(255,200,80,.18);color:#ffd166;font-weight:600;border:1px solid rgba(255,200,80,.35)}
+.lad-snl-spacer{flex:1}
+.lad-brand-mini{font-family:'Crimson Pro',Georgia,serif;font-size:13px;color:rgba(255,255,255,.85);letter-spacing:-.01em;padding-right:14px;border-right:1px solid rgba(255,255,255,.12);margin-right:6px}
+.topbar.gov-topbar{top:var(--lad-nav-h)!important}
+</style>
+
+<!-- ═════════ Unified Firm top nav ═════════ -->
+<div class="lad-shared-nav">
+  <span class="lad-brand-mini">Legal Affairs Dept · CLPD</span>
+  <div class="lad-portal-chip"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8"></span>FIRM COMPLIANCE</div>
+  <a class="lad-snl" href="firm-compliance-portal.html">Overview</a>
+  <a class="lad-snl" href="firm-compliance-portal.html#lawyers">My lawyers</a>
+  <a class="lad-snl active" href="firm-capabilities.html">Capabilities</a>
+  <a class="lad-snl" href="firm-compliance-portal.html#booked">Bookings</a>
+  <a class="lad-snl" href="firm-compliance-portal.html#credits">Credits</a>
+  <a class="lad-snl lad-snl-cta" href="provider-portal.html">Apply for accreditation →</a>
+  <span class="lad-snl-spacer"></span>
+  <a class="lad-snl" onclick="['lad_token','lad_role','lad_name'].forEach(function(k){try{localStorage.removeItem(k)}catch(e){}});window.location.href='clpd-portal.html';return false;" data-lad-logout style="font-size:11.5px;color:rgba(255,255,255,.55);cursor:pointer">Sign out</a>
+</div>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">G</div>
+    <div>
+      <h1>Firm Capabilities</h1>
+      <p>Compliance & Skills · Legal Affairs Department of Dubai</p>
+    </div>
+  </div>
+  <div><a href="firm-compliance-portal.html">← Back to dashboard</a></div>
+</div>
+
+<div class="container">
+  <div class="pagehead">
+    <div>
+      <h2 id="firm-name">Loading firm capabilities…</h2>
+      <p>Aggregated skill graph across your firm's practising lawyers. Use this to find who's trained on what — and where the capability gaps are.</p>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="v" id="kpi-lawyers">—</div><div class="l">Lawyers</div></div>
+    <div class="kpi"><div class="v" id="kpi-topics">—</div><div class="l">Topics covered</div></div>
+    <div class="kpi"><div class="v" id="kpi-depth">—</div><div class="l">Total firm depth</div></div>
+    <div class="kpi"><div class="v" id="kpi-stale">—</div><div class="l">Stale capabilities</div></div>
+  </div>
+
+  <div class="search-row">
+    <input id="search" type="text" placeholder="Search by skill or topic — e.g. 'DIFC arbitration', 'data protection'…" />
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h3>Capabilities by topic</h3>
+        <p class="sub">Sorted by aggregate firm depth · click a row to see who's trained</p>
+        <table id="cap-table">
+          <thead><tr>
+            <th>Topic</th><th>Lawyers</th><th>Depth</th><th style="width:30%">Top performers</th>
+          </tr></thead>
+          <tbody><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h3>Coverage by domain</h3>
+        <p class="sub">Where your firm's depth is concentrated</p>
+        <div id="domain-coverage"></div>
+      </div>
+
+      <div class="card">
+        <h3>Capability gaps</h3>
+        <p class="sub">Topics your firm has thin coverage on</p>
+        <div id="gaps"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="runtime-config.js"></script>
+  <script src="api-client.js"></script>
+<script src="auth-bridge.js"></script>
+<script>
+'use strict';
+
+const DOMAIN_NAMES = {
+  dr:'Dispute Resolution',cc:'Corporate & Commercial',fs:'Financial Services',
+  re:'Real Estate & Construction',em:'Employment & Immigration',ip:'IP & Technology',
+  fp:'Family & Personal Status',cr:'Criminal Law',pa:'Public & Administrative',
+  tx:'Tax & Customs',en:'Energy & Infrastructure',ma:'Maritime & Aviation',
+  hc:'Healthcare',in:'Insurance',rc:'Regulatory Compliance & Ethics',
+  jx:'UAE Jurisdictional Specialisms',ps:'Professional Skills',eg:'Emerging Areas'
+};
+
+// Demo data — Galadari (31 lawyers in handoff seed)
+const DEMO = {
+  firm_name: 'Galadari Advocates & Legal Consultants',
+  capabilities: [
+    { topic_id:'rc.ethics.uae_code', label:'UAE Code of Ethics for Legal Professionals', domain:'rc',
+      total_depth: 142.5, lawyers_count: 28, avg_depth: 5.1, freshness:'current',
+      top_lawyers: [
+        { lawyer_id:'L-01494', name:'Yousef Al Mansouri', depth_score: 12.4, last_trained_at:'2025-03-15' },
+        { lawyer_id:'L-01483', name:'Khalid Al Marri',    depth_score: 11.2, last_trained_at:'2025-01-20' },
+        { lawyer_id:'L-04347', name:'Reema Saleh',        depth_score: 9.8,  last_trained_at:'2024-11-12' },
+      ]
+    },
+    { topic_id:'jx.civil_transactions', label:'UAE Civil Transactions Law', domain:'jx',
+      total_depth: 124.7, lawyers_count: 24, avg_depth: 5.2, freshness:'current',
+      top_lawyers: [
+        { lawyer_id:'L-01494', name:'Yousef Al Mansouri', depth_score: 11.2, last_trained_at:'2025-02-10' },
+        { lawyer_id:'L-04347', name:'Reema Saleh',        depth_score: 9.4,  last_trained_at:'2024-09-22' },
+      ]
+    },
+    { topic_id:'cc.contracts.civil_code', label:'UAE Civil Code (Contracts)', domain:'cc',
+      total_depth: 98.2, lawyers_count: 22, avg_depth: 4.5, freshness:'current',
+      top_lawyers: [
+        { lawyer_id:'L-01494', name:'Yousef Al Mansouri', depth_score: 9.8, last_trained_at:'2024-11-20' },
+      ]
+    },
+    { topic_id:'dr.arbitration.difc', label:'DIFC-LCIA / DIFC Arbitration', domain:'dr',
+      total_depth: 64.4, lawyers_count: 14, avg_depth: 4.6, freshness:'current',
+      top_lawyers: [
+        { lawyer_id:'L-01494', name:'Yousef Al Mansouri', depth_score: 8.4, last_trained_at:'2025-04-01' },
+        { lawyer_id:'L-06120', name:'Hamad Al Rashid',    depth_score: 7.1, last_trained_at:'2025-04-01' },
+      ]
+    },
+    { topic_id:'cc.contracts.common_law', label:'Common Law Contract Principles', domain:'cc',
+      total_depth: 42.3, lawyers_count: 14, avg_depth: 3.0, freshness:'current', top_lawyers: [] },
+    { topic_id:'fs.aml.uae_framework', label:'UAE AML Framework', domain:'fs',
+      total_depth: 38.4, lawyers_count: 18, avg_depth: 2.1, freshness:'stale',
+      top_lawyers: [{ lawyer_id:'L-01494', name:'Yousef Al Mansouri', depth_score: 1.7, last_trained_at:'2021-06-12' }]
+    },
+    { topic_id:'ip.tech.dp.uae_federal', label:'UAE PDPL (Federal Decree 45/2021)', domain:'ip',
+      total_depth: 28.4, lawyers_count: 11, avg_depth: 2.6, freshness:'current',
+      top_lawyers: [{ lawyer_id:'L-01494', name:'Yousef Al Mansouri', depth_score: 3.4, last_trained_at:'2024-03-25' }]
+    },
+    { topic_id:'cc.contracts.exclusion', label:'Exclusion & Limitation Clauses', domain:'cc',
+      total_depth: 24.1, lawyers_count: 9, avg_depth: 2.7, freshness:'current', top_lawyers: [] },
+    { topic_id:'ip.copyright.ai', label:'AI & Copyright', domain:'ip',
+      total_depth: 18.4, lawyers_count: 8, avg_depth: 2.3, freshness:'current',
+      top_lawyers: [{ lawyer_id:'L-01494', name:'Yousef Al Mansouri', depth_score: 2.4, last_trained_at:'2025-04-13' }]
+    },
+    { topic_id:'cc.contracts.poa', label:'Powers of Attorney', domain:'cc',
+      total_depth: 14.5, lawyers_count: 9, avg_depth: 1.6, freshness:'current', top_lawyers: [] },
+  ],
+};
+
+let allCaps = [];
+let firmName = '';
+
+function fmtMonthsAgo(iso) {
+  if (!iso) return 'never';
+  const m = Math.floor((Date.now() - new Date(iso).getTime()) / (30.44 * 24 * 3600 * 1000));
+  if (m < 1) return 'this month';
+  if (m < 12) return `${m}mo`;
+  const y = Math.floor(m / 12);
+  return y === 1 ? '1yr' : `${y}yr`;
+}
+
+function renderTable(caps) {
+  const body = caps.length ? caps.map(c => `
+    <tr>
+      <td class="label">
+        ${c.label}
+        <div class="domain-tag">${DOMAIN_NAMES[c.domain] || c.domain}
+          <span class="freshness ${c.freshness}">${c.freshness === 'current' ? 'current' : c.freshness === 'stale' ? 'stale' : 'critical'}</span>
+        </div>
+      </td>
+      <td class="metric">${c.lawyers_count}</td>
+      <td class="metric">${c.total_depth.toFixed(1)}<div class="domain-tag" style="text-align:right">avg ${c.avg_depth?.toFixed(1) || '—'}</div></td>
+      <td class="lawyers">
+        ${(c.top_lawyers || []).slice(0,3).map(l =>
+          `<span class="lawyer-pill" title="Depth ${l.depth_score?.toFixed(1)}">${l.name}</span>`
+        ).join('') || '<span style="color:#94a3b8">—</span>'}
+      </td>
+    </tr>
+  `).join('') : '<tr><td colspan="4" class="empty">No matching capabilities.</td></tr>';
+  document.querySelector('#cap-table tbody').innerHTML = body;
+}
+
+function renderKPIs(caps) {
+  const lawyers = new Set();
+  caps.forEach(c => (c.top_lawyers || []).forEach(l => lawyers.add(l.lawyer_id)));
+  document.getElementById('kpi-lawyers').textContent = lawyers.size || '—';
+  document.getElementById('kpi-topics').textContent = caps.length;
+  document.getElementById('kpi-depth').textContent = caps.reduce((x, y) => x + y.total_depth, 0).toFixed(0);
+  document.getElementById('kpi-stale').textContent = caps.filter(c => c.freshness !== 'current').length;
+}
+
+function renderDomainCoverage(caps) {
+  const byDomain = new Map();
+  for (const c of caps) {
+    byDomain.set(c.domain, (byDomain.get(c.domain) || 0) + c.total_depth);
+  }
+  const sorted = [...byDomain.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const max = Math.max(...sorted.map(s => s[1])) || 1;
+  document.getElementById('domain-coverage').innerHTML = sorted.map(([dom, depth]) => `
+    <div class="domain-bar">
+      <div class="name">${DOMAIN_NAMES[dom] || dom}</div>
+      <div class="track"><div class="fill" style="width:${100*depth/max}%"></div></div>
+      <div class="val">${depth.toFixed(0)}</div>
+    </div>
+  `).join('');
+}
+
+function renderGaps(caps) {
+  // Gaps = topics with low avg_depth but some attendance (genuine thin spots),
+  // or stale topics with high lawyer count (broad refresh needed)
+  const thin = caps.filter(c => c.lawyers_count <= 3 && c.total_depth < 10).slice(0, 4);
+  const stale = caps.filter(c => c.freshness !== 'current' && c.lawyers_count >= 5).slice(0, 4);
+  const items = [...stale.map(c => ({ ...c, kind: 'stale' })), ...thin.map(c => ({ ...c, kind: 'thin' }))];
+  if (!items.length) {
+    document.getElementById('gaps').innerHTML = '<div style="color:#94a3b8;font-size:13px">No major gaps identified.</div>';
+    return;
+  }
+  document.getElementById('gaps').innerHTML = items.map(c => `
+    <div class="gap">
+      <div class="label">${c.label}</div>
+      <div class="meta">${
+        c.kind === 'stale'
+          ? `${c.lawyers_count} lawyers trained, but no refresh in 2+ years`
+          : `Only ${c.lawyers_count} lawyer${c.lawyers_count === 1 ? '' : 's'} trained — thin coverage`
+      }</div>
+    </div>
+  `).join('');
+}
+
+async function load() {
+  let data;
+  try {
+    if (window.LAD && window.LAD.enabled) {
+      const me = await fetch(window.LAD_API_BASE + '/api/v1/auth/me', {
+        headers: { Authorization: 'Bearer ' + (localStorage.getItem('lad_token') || '') }
+      }).then(r => r.json());
+      const firmId = me.firm_id;
+      data = await fetch(window.LAD_API_BASE + '/api/v1/skills/firms/' + firmId, {
+        headers: { Authorization: 'Bearer ' + (localStorage.getItem('lad_token') || '') }
+      }).then(r => r.json());
+    } else { throw new Error('offline'); }
+  } catch (e) {
+    data = DEMO;
+  }
+
+  firmName = data.firm_name;
+  document.getElementById('firm-name').textContent = data.firm_name || 'Firm';
+  allCaps = data.capabilities || [];
+  renderKPIs(allCaps);
+  renderTable(allCaps);
+  renderDomainCoverage(allCaps);
+  renderGaps(allCaps);
+}
+
+document.getElementById('search').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase().trim();
+  if (!q) { renderTable(allCaps); return; }
+  renderTable(allCaps.filter(c =>
+    c.label.toLowerCase().includes(q) || (DOMAIN_NAMES[c.domain] || '').toLowerCase().includes(q)
+  ));
+});
+
+load();
+</script>
+</body>
+</html>

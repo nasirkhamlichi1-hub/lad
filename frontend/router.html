@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Signing you in… · CLPD</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;background:#0a0e14;color:#fff;-webkit-font-smoothing:antialiased}
+  .wrap{min-height:100%;display:grid;place-items:center;padding:40px 20px}
+  .card{max-width:440px;width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:32px;text-align:center}
+  .mark{width:46px;height:46px;border-radius:11px;margin:0 auto 18px;background:linear-gradient(135deg,#006B3F,#00a85e);display:grid;place-items:center;font-weight:700;font-size:20px}
+  h1{margin:0 0 6px;font-size:18px;font-weight:600;letter-spacing:-.01em}
+  p{margin:0;font-size:13px;color:rgba(255,255,255,.65);line-height:1.6}
+  .spinner{width:22px;height:22px;border:2px solid rgba(255,255,255,.15);border-top-color:#00a85e;border-radius:50%;margin:20px auto 0;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ad{display:none;margin-top:24px;padding:14px;background:rgba(255,200,80,.08);border:1px solid rgba(255,200,80,.2);border-radius:10px;text-align:left}
+  .ad.show{display:block}
+  .ad-title{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#ffd166;margin-bottom:6px}
+  .ad-body{font-size:12.5px;color:rgba(255,255,255,.85);line-height:1.6}
+  .links{margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .links a{display:inline-block;padding:6px 12px;border:1px solid rgba(255,255,255,.15);border-radius:8px;color:rgba(255,255,255,.7);text-decoration:none;font-size:11.5px;font-family:'JetBrains Mono',monospace;letter-spacing:.4px}
+  .links a:hover{color:#fff;border-color:rgba(255,255,255,.35)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="mark">L</div>
+    <h1 id="title">Signing you in…</h1>
+    <p id="msg">Reading your role from UAE Pass and routing you to the right portal.</p>
+    <div class="spinner" id="spinner"></div>
+    <div class="ad" id="err">
+      <div class="ad-title" id="errTitle">No matching record</div>
+      <div class="ad-body" id="errBody">UAE Pass authenticated successfully, but the LAD didn't find a matching record for you. Contact <a style="color:#ffd166" href="mailto:support@legal.dubai.gov.ae">support@legal.dubai.gov.ae</a>.</div>
+    </div>
+    <div class="links" id="manual" style="display:none">
+      <a href="clpd-portal.html">← Public site</a>
+    </div>
+  </div>
+</div>
+
+<script src="runtime-config.js"></script>
+  <script src="api-client.js"></script>
+<script src="auth-bridge.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ─── Capture token + role from URL fragment (mirrors auth-bridge.js) ──
+  const hash = location.hash || '';
+  const params = hash ? new URLSearchParams(hash.slice(1)) : new URLSearchParams();
+  const token = params.get('token');
+  const role  = params.get('role');
+  const name  = params.get('name');
+  const err   = params.get('error');
+
+  if (token && window.LAD) {
+    window.LAD.setToken(token);
+    if (role) localStorage.setItem('lad_role', role);
+    if (name) localStorage.setItem('lad_name', name);
+  }
+
+  // Where does each role belong?
+  const ROUTES = {
+    // Lawyers
+    lawyer:                      'lawyer-portal-v2.html',
+    // Firms
+    firm:                        'firm-compliance-portal.html',
+    firm_compliance_officer:     'firm-compliance-portal.html',
+    // LAD Staff (oversight + accreditation sign-off)
+    lad_staff:                   'lad-intelligence-v4.html',
+    lad_intelligence:            'lad-intelligence-v4.html',
+    // LAD Admin (operations)
+    lad_admin:                   'lad-admin.html',
+    // External training providers
+    provider:                    'provider-portal.html',
+    provider_admin:              'provider-portal.html',
+  };
+
+  // Fall back to whatever was stored locally if no role came via fragment
+  const effectiveRole = role || localStorage.getItem('lad_role') || null;
+
+  function fail(title, body) {
+    document.getElementById('title').textContent = 'Sign-in problem';
+    document.getElementById('msg').style.display = 'none';
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('errTitle').textContent = title;
+    document.getElementById('errBody').innerHTML = body;
+    document.getElementById('err').classList.add('show');
+    document.getElementById('manual').style.display = 'flex';
+  }
+
+  if (err) {
+    if (err === 'no_lad_record') {
+      const eid = params.get('emirates_id') || '';
+      fail('No matching LAD record',
+        `UAE Pass authenticated successfully${eid ? ' (Emirates ID ' + eid + ')' : ''}, but no LAD record matches. Contact <a style="color:#ffd166" href="mailto:support@legal.dubai.gov.ae">support@legal.dubai.gov.ae</a>.`);
+    } else {
+      fail('UAE Pass error', err + (params.get('desc') ? ' — ' + params.get('desc') : ''));
+    }
+    history.replaceState(null, '', location.pathname);
+    return;
+  }
+
+  if (!effectiveRole) {
+    fail('No role on session', 'Sign in again from the public site.');
+    return;
+  }
+
+  const target = ROUTES[effectiveRole];
+  if (!target) {
+    fail('Unknown role: ' + effectiveRole, 'This role is not recognised by the frontend. Contact support@legal.dubai.gov.ae.');
+    return;
+  }
+
+  // Tiny delay so the spinner shows for a beat
+  setTimeout(() => {
+    location.replace(target);
+  }, 350);
+})();
+</script>
+</body>
+</html>

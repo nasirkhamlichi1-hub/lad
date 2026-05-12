@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Skills & Interests — CLPD Platform</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+               background: #f8fafc; color: #1e293b; -webkit-font-smoothing: antialiased; }
+
+  .topbar { background: linear-gradient(120deg, #0f172a 0%, #1e293b 100%); color: #fff;
+            padding: 22px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-mark { width: 38px; height: 38px; border-radius: 9px; background: linear-gradient(135deg,#fbbf24,#f59e0b);
+                display:flex;align-items:center;justify-content:center;color:#0f172a;font-weight:800;font-size:18px; }
+  .brand h1 { margin:0;font-size:18px;font-weight:600;letter-spacing:.3px; }
+  .brand p  { margin:2px 0 0;font-size:12px;opacity:.65;font-weight:400; }
+  .topbar a { color: #cbd5e1; text-decoration: none; font-size: 14px; }
+  .topbar a:hover { color: #fff; }
+
+  .container { max-width: 1320px; margin: 0 auto; padding: 32px 40px 80px; }
+
+  .pagehead { display: flex; justify-content: space-between; align-items: end; margin-bottom: 28px; gap: 24px; }
+  .pagehead h2 { font-size: 28px; font-weight: 700; margin: 0 0 4px; }
+  .pagehead p { color: #64748b; margin: 0; font-size: 14px; }
+  .pagehead .lawyer-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px;
+                         color: #475569; background: #e2e8f0; padding: 4px 10px; border-radius: 6px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 28px; }
+  .kpi { background:#fff;border-radius:12px;padding:18px 20px;border:1px solid #e2e8f0;
+         box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+  .kpi .v { font-size: 28px; font-weight: 700; color: #0f172a; line-height: 1; margin-bottom: 4px; }
+  .kpi .l { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+  @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+
+  .card { background:#fff;border-radius:14px;padding:24px;border:1px solid #e2e8f0;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 24px; }
+  .card h3 { margin:0 0 4px;font-size:17px;font-weight:600; }
+  .card .sub { color:#64748b;font-size:13px;margin: 0 0 18px; }
+
+  /* Domain map (treemap-style) */
+  .domain-map { display: grid; gap: 8px; }
+  .domain { background:#f1f5f9; border-radius:10px; padding: 14px 16px; }
+  .domain-head { display:flex;justify-content:space-between;align-items:center; margin-bottom: 10px; }
+  .domain-head .name { font-weight: 600; font-size: 14px; }
+  .domain-head .meta { font-size: 12px; color: #64748b; }
+  .topics { display:flex; flex-wrap: wrap; gap:6px; }
+  .topic { padding: 5px 10px; border-radius: 6px; font-size: 12.5px; font-weight: 500;
+           border: 1px solid transparent; cursor: default; }
+  .topic.advanced     { background: #064e3b; color: #d1fae5; border-color: #064e3b; }
+  .topic.intermediate { background: #065f46; color: #ecfdf5; border-color: #047857; }
+  .topic.beginner     { background: #ecfdf5; color: #065f46; border-color: #6ee7b7; }
+  .topic.introductory { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+  .topic.stale       { opacity: 0.7; border-style: dashed; }
+  .topic.critically_stale { opacity: 0.55; border-style: dashed; }
+  .topic .freshness-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+                           margin-right: 6px; vertical-align: middle; }
+  .topic .freshness-dot.current { background: #10b981; }
+  .topic .freshness-dot.stale { background: #f59e0b; }
+  .topic .freshness-dot.critically_stale { background: #ef4444; }
+
+  .legend { display:flex; gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0;
+            font-size: 12px; color: #64748b; flex-wrap: wrap; }
+  .legend .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 4px;
+                    vertical-align: middle; }
+
+  /* Top skills list */
+  .skill-row { display: grid; grid-template-columns: 1fr auto; gap: 12px;
+               padding: 11px 0; border-bottom: 1px solid #f1f5f9; align-items: center; }
+  .skill-row:last-child { border-bottom: 0; }
+  .skill-row .name { font-size: 14px; font-weight: 500; }
+  .skill-row .domain-tag { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .skill-row .depth { font-size: 13px; font-weight: 600; color: #047857; }
+  .skill-row .depth .small { font-size: 11px; font-weight: 500; color: #64748b; }
+
+  /* Recommendations */
+  .reco { background: linear-gradient(135deg,#fef3c7 0%, #fde68a 100%); border-radius: 12px;
+          padding: 14px 16px; margin-bottom: 12px; border: 1px solid #fcd34d; }
+  .reco .reason { font-size: 11px; font-weight: 600; color: #92400e; text-transform: uppercase;
+                  letter-spacing: 0.05em; margin-bottom: 4px; }
+  .reco .title { font-size: 14px; font-weight: 600; color: #422006; }
+  .reco .detail { font-size: 12.5px; color: #78350f; margin-top: 3px; }
+  .reco-empty { color:#94a3b8; font-style: italic; font-size: 13px; }
+
+  .empty { text-align: center; color: #94a3b8; padding: 40px 20px; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<style>
+:root{--lad-nav-h:58px}
+.lad-shared-nav{background:#1c1f2e;height:var(--lad-nav-h);display:flex;align-items:center;padding:0 24px;gap:20px;position:sticky;top:0;z-index:500;box-shadow:0 2px 12px rgba(0,0,0,.35);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.lad-portal-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;background:rgba(0,107,63,.2);border:1px solid rgba(0,171,100,.4);color:rgba(100,220,150,.9)}
+.lad-snl{color:rgba(255,255,255,.75);font-size:12.5px;font-weight:500;padding:6px 12px;border-radius:6px;cursor:pointer;transition:all .15s;white-space:nowrap;text-decoration:none}
+.lad-snl:hover{background:rgba(255,255,255,.1);color:#fff}
+.lad-snl.active{background:rgba(255,255,255,.1);color:#fff}
+.lad-snl-spacer{flex:1}
+.lad-brand-mini{font-family:'Instrument Serif',Georgia,serif;font-size:13px;color:rgba(255,255,255,.85);letter-spacing:-.01em;padding-right:14px;border-right:1px solid rgba(255,255,255,.12);margin-right:6px}
+</style>
+
+<!-- ═════════ Unified Lawyer top nav ═════════ -->
+<div class="lad-shared-nav">
+  <span class="lad-brand-mini">Legal Affairs Dept · CLPD</span>
+  <div class="lad-portal-chip"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8"></span>LAWYER PORTAL</div>
+  <a class="lad-snl" href="lawyer-portal-v2.html">Dashboard</a>
+  <a class="lad-snl" href="lawyer-portal-v2.html#courses">Browse courses</a>
+  <a class="lad-snl" href="lawyer-portal-v2.html#calendar">My bookings</a>
+  <a class="lad-snl active" href="lawyer-skills.html">Skills</a>
+  <a class="lad-snl" href="lawyer-portal-v2.html#file">History</a>
+  <span class="lad-snl-spacer"></span>
+  <a class="lad-snl" onclick="['lad_token','lad_role','lad_name'].forEach(function(k){try{localStorage.removeItem(k)}catch(e){}});window.location.href='clpd-portal.html';return false;" data-lad-logout style="font-size:11.5px;color:rgba(255,255,255,.55);cursor:pointer">Sign out</a>
+</div>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">L</div>
+    <div>
+      <h1>My Skills & Interests</h1>
+      <p>Continuing Legal Professional Development · Legal Affairs Department of Dubai</p>
+    </div>
+  </div>
+  <div>
+    <a href="lawyer-portal-v2.html">← Back to dashboard</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="pagehead">
+    <div>
+      <h2 id="lawyer-name">Loading…</h2>
+      <p>Your skill graph is built automatically from every course you attend. Topics fade over time — keep them current with refresher CPD.</p>
+    </div>
+    <div class="lawyer-id" id="lawyer-id-tag"></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="v" id="kpi-total-topics">—</div><div class="l">Skills covered</div></div>
+    <div class="kpi"><div class="v" id="kpi-domains">—</div><div class="l">Practice domains</div></div>
+    <div class="kpi"><div class="v" id="kpi-advanced">—</div><div class="l">Advanced depth</div></div>
+    <div class="kpi"><div class="v" id="kpi-stale">—</div><div class="l">Need refresh</div></div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h3>Your skill map</h3>
+        <p class="sub">Coloured by depth · dashed = freshness gap</p>
+        <div id="domain-map" class="domain-map">
+          <div class="empty">Building your skill graph…</div>
+        </div>
+        <div class="legend">
+          <span><span class="swatch" style="background:#064e3b"></span>Advanced</span>
+          <span><span class="swatch" style="background:#047857"></span>Intermediate</span>
+          <span><span class="swatch" style="background:#ecfdf5;border:1px solid #6ee7b7"></span>Beginner</span>
+          <span><span class="swatch" style="background:#f1f5f9;border:1px solid #cbd5e1"></span>Introductory</span>
+          <span>· · ·</span>
+          <span><span class="freshness-dot current" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;margin-right:3px"></span>Current</span>
+          <span><span class="freshness-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f59e0b;margin-right:3px"></span>Stale (2+ yrs)</span>
+          <span><span class="freshness-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;margin-right:3px"></span>Critically stale (4+ yrs)</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Top skills</h3>
+        <p class="sub">Highest depth across all attended training</p>
+        <div id="top-skills"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h3>Refresh recommendations</h3>
+        <p class="sub">Skills going stale — refresh CPD that builds on them</p>
+        <div id="reco-refresh"><div class="reco-empty">No refresher recommendations yet — everything's current.</div></div>
+      </div>
+
+      <div class="card">
+        <h3>Recommended for you</h3>
+        <p class="sub">Topics your peers at your firm have, you don't</p>
+        <div id="reco-peer-gap"><div class="reco-empty">No peer-gap recommendations available yet.</div></div>
+      </div>
+
+      <div class="card">
+        <h3>Self-booked vs firm-mandated</h3>
+        <p class="sub">Your self-initiated training signals interest direction</p>
+        <div id="interest-summary"><div class="empty">Calculating…</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Includes: hooks the API client if a backend is configured -->
+<script src="runtime-config.js"></script>
+  <script src="api-client.js"></script>
+<script src="auth-bridge.js"></script>
+<script>
+'use strict';
+
+const DOMAIN_NAMES = {
+  dr: 'Dispute Resolution', cc: 'Corporate & Commercial', fs: 'Financial Services',
+  re: 'Real Estate & Construction', em: 'Employment & Immigration',
+  ip: 'IP & Technology', fp: 'Family & Personal Status', cr: 'Criminal Law',
+  pa: 'Public & Administrative', tx: 'Tax & Customs', en: 'Energy & Infrastructure',
+  ma: 'Maritime & Aviation', hc: 'Healthcare', in: 'Insurance',
+  rc: 'Regulatory Compliance & Ethics', jx: 'UAE Jurisdictional Specialisms',
+  ps: 'Professional Skills', eg: 'Emerging Areas'
+};
+
+// Demo data — used when no backend is configured (matches Yousef demo)
+const DEMO_SKILLS = [
+  { topic_id:'rc.ethics.uae_code', label:'UAE Code of Ethics for Legal Professionals', domain:'rc',
+    depth_score: 12.4, depth_bucket:'intermediate', last_trained_at:'2025-03-15', freshness:'current',
+    course_count: 3, interest_score: 1.5 },
+  { topic_id:'jx.civil_transactions', label:'UAE Civil Transactions Law', domain:'jx',
+    depth_score: 11.2, depth_bucket:'intermediate', last_trained_at:'2025-02-10', freshness:'current',
+    course_count: 3, interest_score: 0 },
+  { topic_id:'cc.contracts.civil_code', label:'UAE Civil Code (Contracts)', domain:'cc',
+    depth_score: 9.8, depth_bucket:'intermediate', last_trained_at:'2024-11-20', freshness:'current',
+    course_count: 2, interest_score: 1.2 },
+  { topic_id:'dr.arbitration.difc', label:'DIFC-LCIA / DIFC Arbitration', domain:'dr',
+    depth_score: 8.4, depth_bucket:'intermediate', last_trained_at:'2025-04-01', freshness:'current',
+    course_count: 2, interest_score: 1.6 },
+  { topic_id:'dr.arbitration.icc', label:'ICC Arbitration', domain:'dr',
+    depth_score: 4.2, depth_bucket:'beginner', last_trained_at:'2024-04-01', freshness:'current',
+    course_count: 1, interest_score: 1.0 },
+  { topic_id:'cc.contracts.exclusion', label:'Exclusion & Limitation Clauses', domain:'cc',
+    depth_score: 3.4, depth_bucket:'beginner', last_trained_at:'2024-05-12', freshness:'current',
+    course_count: 1, interest_score: 0 },
+  { topic_id:'ip.tech.dp.uae_federal', label:'UAE PDPL (Federal Decree 45/2021)', domain:'ip',
+    depth_score: 3.4, depth_bucket:'beginner', last_trained_at:'2024-03-25', freshness:'current',
+    course_count: 1, interest_score: 1.7 },
+  { topic_id:'ip.copyright.ai', label:'AI & Copyright', domain:'ip',
+    depth_score: 2.4, depth_bucket:'beginner', last_trained_at:'2025-04-13', freshness:'current',
+    course_count: 1, interest_score: 1.6 },
+  { topic_id:'fs.aml.uae_framework', label:'UAE AML Framework', domain:'fs',
+    depth_score: 1.7, depth_bucket:'introductory', last_trained_at:'2021-06-12', freshness:'stale',
+    course_count: 1, interest_score: 0 },
+  { topic_id:'cc.contracts.poa', label:'Powers of Attorney', domain:'cc',
+    depth_score: 1.7, depth_bucket:'introductory', last_trained_at:'2025-01-28', freshness:'current',
+    course_count: 1, interest_score: 0 },
+];
+
+const DEMO_RECO = {
+  refresh: [
+    { reason:'refresh', reason_detail:'Last trained 5 years ago — refresh recommended',
+      topic_label:'UAE AML Framework', course_title:'Anti Money Laundering 2026 Update', course_pts: 2 },
+  ],
+  peer_gap: [
+    { reason:'peer_gap', reason_detail:'14 colleagues at Galadari have this skill',
+      topic_label:'Common Law Contract Principles', course_title:'Common Law Contract Drafting', course_pts: 2 },
+    { reason:'peer_gap', reason_detail:'9 colleagues at Galadari have this skill',
+      topic_label:'Tax Law Updates', course_title:'UAE Tax Law Update 2026', course_pts: 2 },
+  ],
+};
+
+function fmtMonthsAgo(iso) {
+  if (!iso) return 'never';
+  const ms = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(ms / (30.44 * 24 * 3600 * 1000));
+  if (m < 1) return 'this month';
+  if (m < 12) return `${m} mo ago`;
+  const y = Math.floor(m / 12);
+  return y === 1 ? '1 yr ago' : `${y} yrs ago`;
+}
+
+function renderSkillMap(skills) {
+  const byDomain = new Map();
+  for (const s of skills) {
+    if (!byDomain.has(s.domain)) byDomain.set(s.domain, []);
+    byDomain.get(s.domain).push(s);
+  }
+  const sorted = [...byDomain.entries()].sort((a, b) => {
+    const dA = a[1].reduce((x, y) => x + y.depth_score, 0);
+    const dB = b[1].reduce((x, y) => x + y.depth_score, 0);
+    return dB - dA;
+  });
+  const html = sorted.map(([dom, list]) => {
+    list.sort((a, b) => b.depth_score - a.depth_score);
+    const total = list.reduce((x, y) => x + y.depth_score, 0).toFixed(1);
+    return `<div class="domain">
+      <div class="domain-head">
+        <div class="name">${DOMAIN_NAMES[dom] || dom}</div>
+        <div class="meta">${list.length} skill${list.length === 1 ? '' : 's'} · total depth ${total}</div>
+      </div>
+      <div class="topics">
+        ${list.map(s => `<div class="topic ${s.depth_bucket} ${s.freshness !== 'current' ? s.freshness : ''}"
+          title="Depth: ${s.depth_score.toFixed(1)} · ${s.course_count} course${s.course_count === 1 ? '' : 's'} · ${fmtMonthsAgo(s.last_trained_at)}">
+          <span class="freshness-dot ${s.freshness}"></span>${s.label}
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('domain-map').innerHTML = html || '<div class="empty">No skills recorded yet — attend a course to start building your graph.</div>';
+}
+
+function renderTopSkills(skills) {
+  const top = [...skills].sort((a, b) => b.depth_score - a.depth_score).slice(0, 10);
+  if (!top.length) {
+    document.getElementById('top-skills').innerHTML = '<div class="empty">No skills recorded yet.</div>';
+    return;
+  }
+  document.getElementById('top-skills').innerHTML = top.map(s => `
+    <div class="skill-row">
+      <div>
+        <div class="name">${s.label}</div>
+        <div class="domain-tag">${DOMAIN_NAMES[s.domain] || s.domain} · ${s.course_count} course${s.course_count === 1 ? '' : 's'} · ${fmtMonthsAgo(s.last_trained_at)}</div>
+      </div>
+      <div class="depth">
+        ${s.depth_score.toFixed(1)}
+        <div class="small">${s.depth_bucket}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderReco(refresh, peerGap) {
+  const r = document.getElementById('reco-refresh');
+  if (refresh && refresh.length) {
+    r.innerHTML = refresh.map(x => `
+      <div class="reco">
+        <div class="reason">${x.reason_detail}</div>
+        <div class="title">${x.topic_label}</div>
+        <div class="detail">→ ${x.course_title || 'No active course available'} ${x.course_pts ? '(+' + x.course_pts + ' pts)' : ''}</div>
+      </div>`).join('');
+  } else {
+    r.innerHTML = '<div class="reco-empty">All your skills are current — well done.</div>';
+  }
+
+  const p = document.getElementById('reco-peer-gap');
+  if (peerGap && peerGap.length) {
+    p.innerHTML = peerGap.map(x => `
+      <div class="reco">
+        <div class="reason">${x.reason_detail}</div>
+        <div class="title">${x.topic_label}</div>
+        <div class="detail">→ ${x.course_title || 'No active course available'} ${x.course_pts ? '(+' + x.course_pts + ' pts)' : ''}</div>
+      </div>`).join('');
+  } else {
+    p.innerHTML = '<div class="reco-empty">No peer-gap suggestions right now.</div>';
+  }
+}
+
+function renderInterests(skills) {
+  const total = skills.reduce((x, y) => x + y.depth_score, 0);
+  const interest = skills.reduce((x, y) => x + (y.interest_score || 0), 0);
+  const ratio = total ? Math.round((interest / total) * 100) : 0;
+  const topInterests = [...skills].filter(s => s.interest_score > 0).sort((a, b) => b.interest_score - a.interest_score).slice(0, 3);
+  document.getElementById('interest-summary').innerHTML = `
+    <div style="font-size:36px;font-weight:700;color:#0f172a;line-height:1;margin-bottom:6px">${ratio}%</div>
+    <div style="font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">
+      of your CPD is self-initiated
+    </div>
+    ${topInterests.length ? `
+      <div style="font-size:13px;color:#64748b;margin-bottom:8px">Strongest interest signals:</div>
+      ${topInterests.map(s => `<div style="font-size:13px;margin-bottom:6px;color:#1e293b">→ ${s.label}</div>`).join('')}
+    ` : '<div class="reco-empty">No self-booked training yet.</div>'}
+  `;
+}
+
+function renderKPIs(skills) {
+  document.getElementById('kpi-total-topics').textContent = skills.length;
+  document.getElementById('kpi-domains').textContent = new Set(skills.map(s => s.domain)).size;
+  document.getElementById('kpi-advanced').textContent =
+    skills.filter(s => s.depth_bucket === 'advanced' || s.depth_bucket === 'intermediate').length;
+  document.getElementById('kpi-stale').textContent =
+    skills.filter(s => s.freshness !== 'current').length;
+}
+
+async function load() {
+  let skills, recommendations, name = 'Your Skill Map', lawyerId = '';
+  try {
+    if (window.LAD && window.LAD.enabled) {
+      const data = await window.LAD.call ? window.LAD.call('GET', '/api/v1/skills/me') :
+                   await fetch(window.LAD_API_BASE + '/api/v1/skills/me', {
+                     headers: { Authorization: 'Bearer ' + (localStorage.getItem('lad_token') || '') }
+                   }).then(r => r.json());
+      skills = data.skills;
+      recommendations = data.recommendations;
+      lawyerId = data.lawyer_id;
+      name = localStorage.getItem('lad_name') || 'Your Skill Map';
+    } else {
+      throw new Error('offline');
+    }
+  } catch (e) {
+    skills = DEMO_SKILLS;
+    recommendations = DEMO_RECO;
+    name = 'Yousef Al Mansouri';
+    lawyerId = 'L-01494 · Galadari Advocates';
+  }
+
+  document.getElementById('lawyer-name').textContent = name;
+  document.getElementById('lawyer-id-tag').textContent = lawyerId;
+  renderKPIs(skills);
+  renderSkillMap(skills);
+  renderTopSkills(skills);
+  renderReco(recommendations?.refresh, recommendations?.peer_gap);
+  renderInterests(skills);
+}
+
+load();
+</script>
+</body>
+</html>

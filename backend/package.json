@@ -1,0 +1,41 @@
+{
+  "name": "lad-clpd-backend",
+  "version": "1.0.0",
+  "description": "Backend API for the Dubai Legal Affairs Department CLPD platform, with UAE Pass authentication",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "init-db": "node scripts/init-db.js",
+    "migrate": "node scripts/migrate.js",
+    "migrate:status": "node scripts/migrate.js status",
+    "seed": "node scripts/seed.js",
+    "seed:demo": "node scripts/create-account.js --seed-demo",
+    "create-account": "node scripts/create-account.js",
+    "bootstrap": "bash scripts/bootstrap.sh",
+    "check-env": "NODE_ENV=production node -e \"require('./src/validateEnv').validateEnv()\""
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4",
+    "morgan": "^1.10.0",
+    "express-rate-limit": "^7.2.0",
+    "better-sqlite3": "^11.3.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "axios": "^1.7.7",
+    "qs": "^6.13.0",
+    "dotenv": "^16.4.5",
+    "xlsx": "^0.18.5",
+    "uuid": "^10.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

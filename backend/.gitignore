@@ -1,0 +1,25 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+
+# Data — contains PII
+data/*.sqlite
+data/*.sqlite-journal
+data/*.sqlite-wal
+data/*.sqlite-shm
+data/Blank_data_25.xlsx
+data/lad-clpd.sqlite
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
+
+# Build output
+dist/
+build/

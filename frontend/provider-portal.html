@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Provider Portal · Accreditation Application · LAD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0a0e14; --slate:#5a6878; --slate2:#8492a3; --slate3:#a5b1c0;
+  --paper:#f8fafb; --paper2:#f2f5f8; --line:#e8ecf1; --line2:#dfe5ec; --white:#fff;
+  --green:#006B3F; --green-l:#008a4f; --green-bg:#e9f5ee; --green-border:#b8d8c4;
+  --gold:#C9913A; --gold-l:#d9a85a; --gold-bg:#fbf3e2;
+  --amber:#d97706; --amber-bg:#fef3e2; --amber-border:#f7d499;
+  --red:#c0392b; --red-bg:#fdecea; --red-border:#f1b8b0;
+  --blue:#1d4ed8; --blue-bg:#e7eeff; --blue-border:#b7c8f0;
+  --purple:#7c3aed; --purple-bg:#f3e8ff; --purple-border:#d8b4fe;
+  --serif:'Crimson Pro',Georgia,serif; --sans:'Inter',sans-serif; --mono:'JetBrains Mono',monospace;
+  --r-sm:8px; --r-md:10px; --r-lg:14px; --r-xl:18px;
+  --sh-sm:0 1px 3px rgba(10,14,20,.04); --sh-md:0 4px 16px rgba(10,14,20,.06); --sh-lg:0 12px 40px rgba(10,14,20,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--sans);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14px;letter-spacing:-.01em}
+button,input,select,textarea{font-family:inherit}
+em{font-style:italic;color:var(--gold)}
+a{color:inherit;text-decoration:none}
+
+/* ─── Top header bar ─── */
+.topbar{background:linear-gradient(135deg,#0a2040 0%,#1c3a5e 100%);color:#fff;padding:14px 30px;display:flex;align-items:center;gap:20px;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.topbar-brand{display:flex;align-items:center;gap:13px}
+.topbar-emblem{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--gold),var(--gold-l));color:#1c1f2e;display:grid;place-items:center;font-family:var(--serif);font-size:20px;font-weight:700;flex-shrink:0}
+.topbar-text-title{font-family:var(--serif);font-size:16px;font-weight:500;letter-spacing:-.005em}
+.topbar-text-sub{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.55);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+.topbar-back{margin-left:auto;color:rgba(255,255,255,.7);font-size:12.5px;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.15);transition:all .15s}
+.topbar-back:hover{color:#fff;background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.3)}
+.topbar-back svg{width:14px;height:14px}
+
+/* ─── Page header ─── */
+.page-hd{padding:28px 30px 22px;background:var(--white);border-bottom:1px solid var(--line)}
+.page-hd-wrap{max-width:1240px;margin:0 auto}
+.page-hd-eyebrow{font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:1.6px;text-transform:uppercase;font-weight:600;margin-bottom:6px}
+.page-hd-title{font-family:var(--serif);font-size:34px;color:var(--ink);letter-spacing:-.02em;line-height:1.1;margin-bottom:8px}
+.page-hd-sub{font-size:14.5px;color:var(--slate);line-height:1.55;max-width:780px}
+.page-hd-meta{display:flex;gap:18px;margin-top:14px;flex-wrap:wrap}
+.page-hd-meta-item{font-family:var(--mono);font-size:11px;color:var(--slate2);display:flex;gap:6px;align-items:center}
+.page-hd-meta-item strong{color:var(--ink);font-weight:600}
+.page-hd-meta-item .dot{width:4px;height:4px;border-radius:50%;background:var(--green)}
+
+/* ─── Main layout ─── */
+.main{max-width:1240px;margin:0 auto;padding:24px 30px 60px;display:grid;grid-template-columns:1.15fr 1fr;gap:28px;align-items:start}
+@media (max-width:1000px){.main{grid-template-columns:1fr}}
+
+/* ─── Left column: Form ─── */
+.form-card{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-sm)}
+.form-tabs{display:flex;border-bottom:1px solid var(--line);background:var(--paper)}
+.form-tab{flex:1;padding:14px 20px;font-size:13px;font-weight:500;color:var(--slate2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;text-align:center;letter-spacing:-.005em}
+.form-tab:hover{color:var(--ink)}
+.form-tab.on{color:var(--ink);border-bottom-color:var(--green);background:var(--white);font-weight:600}
+.form-tab .tab-eyebrow{font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;display:block;margin-bottom:3px;font-weight:600}
+
+.form-pane{display:none;padding:24px 26px}
+.form-pane.on{display:block}
+
+/* ─── Login pane ─── */
+.uaepass-btn{width:100%;padding:13px 16px;background:linear-gradient(135deg,#000 0%,#1a1a1a 100%);color:#fff;border:none;border-radius:10px;font-size:13.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:-.005em;transition:all .15s;margin-bottom:14px}
+.uaepass-btn:hover{transform:translateY(-1px);box-shadow:var(--sh-md)}
+.uaepass-logo{font-family:var(--serif);font-style:italic;font-size:15px;background:#fff;color:#000;padding:3px 8px;border-radius:5px;font-weight:600;letter-spacing:0}
+.divider{display:flex;align-items:center;gap:10px;margin:18px 0;color:var(--slate3);font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--line)}
+
+.field{margin-bottom:14px}
+.field-label{font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block}
+.field-label .req{color:var(--red);margin-left:3px}
+.field-input,.field-select,.field-textarea{width:100%;padding:10px 13px;border:1.5px solid var(--line2);border-radius:9px;font-size:13.5px;color:var(--ink);outline:none;transition:all .15s;background:var(--white)}
+.field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-bg)}
+.field-textarea{resize:vertical;min-height:80px;font-family:inherit}
+.field-help{font-size:11px;color:var(--slate2);margin-top:5px;line-height:1.5}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:600px){.field-row{grid-template-columns:1fr}}
+
+.file-upload{position:relative;display:block;padding:12px 14px;border:1.5px dashed var(--line2);border-radius:9px;cursor:pointer;background:var(--paper);transition:all .15s;text-align:center}
+.file-upload:hover{border-color:var(--green);background:var(--green-bg)}
+.file-upload input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.file-upload-ico{font-family:var(--mono);font-size:10px;color:var(--slate);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:4px}
+.file-upload-name{font-size:12.5px;color:var(--ink);font-weight:500}
+.file-upload-meta{font-size:11px;color:var(--slate2);margin-top:3px}
+.file-upload.uploaded{border-color:var(--green);border-style:solid;background:var(--green-bg)}
+
+.checkbox-row{display:flex;gap:10px;align-items:flex-start;padding:12px;background:var(--paper);border:1px solid var(--line);border-radius:9px;margin-bottom:14px}
+.checkbox-row input{margin-top:2px;flex-shrink:0;cursor:pointer;accent-color:var(--green)}
+.checkbox-row label{font-size:12.5px;color:var(--slate);line-height:1.55;cursor:pointer}
+.checkbox-row label strong{color:var(--ink);font-weight:600}
+
+.btn{padding:12px 20px;border-radius:10px;font-size:13.5px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;border:none;font-family:inherit;letter-spacing:-.005em}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--sh-md)}
+.btn-primary{background:var(--green);color:#fff}
+.btn-secondary{background:var(--paper);color:var(--slate);border:1.5px solid var(--line2)}
+.btn-full{width:100%}
+
+.form-section{margin-bottom:20px}
+.form-section-title{font-family:var(--serif);font-size:16px;color:var(--ink);font-weight:600;margin-bottom:4px}
+.form-section-desc{font-size:12px;color:var(--slate2);margin-bottom:14px;line-height:1.5}
+
+.helper-link{font-size:12px;color:var(--green);cursor:pointer;font-weight:500}
+.helper-link:hover{text-decoration:underline}
+
+/* ─── Right column: Info panel ─── */
+.info-card{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px 26px;box-shadow:var(--sh-sm);position:sticky;top:24px}
+.info-eyebrow{font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:1.6px;text-transform:uppercase;font-weight:600;margin-bottom:8px}
+.info-title{font-family:var(--serif);font-size:22px;color:var(--ink);letter-spacing:-.018em;line-height:1.2;margin-bottom:10px}
+.info-intro{font-size:13px;color:var(--slate);line-height:1.6;margin-bottom:20px}
+
+.info-section{margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.info-section:last-child{border-bottom:none;padding-bottom:0;margin-bottom:0}
+.info-section-title{font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:10px}
+
+.info-row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:12.5px;line-height:1.5}
+.info-row-label{color:var(--slate2);flex-shrink:0}
+.info-row-val{color:var(--ink);font-weight:500;text-align:right}
+
+.info-list{list-style:none;padding:0;margin:0}
+.info-list li{font-size:12.5px;color:var(--slate);line-height:1.55;padding:5px 0 5px 18px;position:relative}
+.info-list li::before{content:'';position:absolute;left:0;top:11px;width:6px;height:6px;border-radius:50%;background:var(--green)}
+
+.info-steps{counter-reset:step}
+.info-steps li{counter-increment:step;padding:8px 0 8px 30px;position:relative;font-size:12.5px;color:var(--ink);line-height:1.5}
+.info-steps li::before{content:counter(step);position:absolute;left:0;top:6px;width:20px;height:20px;border-radius:50%;background:var(--green-bg);color:var(--green);font-family:var(--mono);font-size:11px;font-weight:700;display:grid;place-items:center}
+
+.info-callout{background:var(--gold-bg);border:1px solid var(--gold);border-radius:10px;padding:13px 15px;margin:14px 0;display:flex;gap:11px;align-items:flex-start}
+.info-callout-ico{flex-shrink:0;color:var(--gold);font-size:16px;line-height:1}
+.info-callout-body{font-size:12px;color:var(--ink);line-height:1.55}
+.info-callout-body strong{color:var(--ink);font-weight:600}
+
+.info-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.info-pill{padding:5px 10px;background:var(--paper);border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:10px;color:var(--slate);letter-spacing:.8px;font-weight:500}
+.info-pill.green{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+
+.info-link{font-size:12px;color:var(--green);font-weight:500;display:inline-flex;align-items:center;gap:5px;margin-top:14px}
+.info-link:hover{text-decoration:underline}
+
+/* ─── Toast ─── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(15px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:11px;font-size:13px;font-weight:500;box-shadow:var(--sh-lg);z-index:1000;opacity:0;transition:all .3s;max-width:480px}
+.toast.on{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.success{background:var(--green)}
+</style>
+</head>
+<body>
+
+<!-- ─── Header ─── -->
+<div class="topbar">
+  <a class="topbar-brand" href="clpd-portal.html">
+    <div class="topbar-emblem">⚖</div>
+    <div>
+      <div class="topbar-text-title">CLPD Portal · Provider Access</div>
+      <div class="topbar-text-sub">Legal Affairs Department · Government of Dubai</div>
+    </div>
+  </a>
+  <a class="topbar-back" href="clpd-portal.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to home
+  </a>
+</div>
+
+<!-- ─── Page header ─── -->
+<div class="page-hd">
+  <div class="page-hd-wrap">
+    <div class="page-hd-eyebrow">SERVICE · PDT-PDAL-SRV67</div>
+    <h1 class="page-hd-title">Become an <em>Accredited Training Provider</em></h1>
+    <div class="page-hd-sub">Apply for status as an Accredited Training Provider under the Continuing Legal Professional Development Programme. Once accredited, you may submit courses for accreditation and deliver them to Legal Consultants in the Emirate of Dubai.</div>
+    <div class="page-hd-meta">
+      <div class="page-hd-meta-item"><span class="dot"></span><strong>15 working days</strong>&nbsp;response time</div>
+      <div class="page-hd-meta-item"><span class="dot"></span><strong>No fees</strong></div>
+      <div class="page-hd-meta-item"><span class="dot"></span>Available <strong>24/7</strong> online</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Two-column layout ─── -->
+<div class="main">
+
+  <!-- ═══ LEFT: Form ═══ -->
+  <div class="form-card">
+    <div class="form-tabs">
+      <div class="form-tab on" data-tab="register" onclick="switchTab('register')">
+        <span class="tab-eyebrow">NEW PROVIDER</span>
+        Register
+      </div>
+      <div class="form-tab" data-tab="login" onclick="switchTab('login')">
+        <span class="tab-eyebrow">EXISTING PROVIDER</span>
+        Log in
+      </div>
+    </div>
+
+    <!-- ─── Register pane ─── -->
+    <div class="form-pane on" id="pane-register">
+
+      <form id="registerForm" onsubmit="submitRegistration(event)">
+
+        <div class="form-section">
+          <div class="form-section-title">Organisation</div>
+          <div class="form-section-desc">Tell us about the entity applying for accreditation.</div>
+
+          <div class="field">
+            <label class="field-label">Entity type <span class="req">*</span></label>
+            <select class="field-select" name="entityType" required>
+              <option value="">Select entity type…</option>
+              <option>Government Entity</option>
+              <option>Advocacy Firm</option>
+              <option>Legal Consultancy Firm</option>
+              <option>Training Company</option>
+              <option>Professional Body</option>
+              <option>Commercial Entity</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label">Entity name <span class="req">*</span></label>
+              <input class="field-input" type="text" name="entityName" required placeholder="As stated on the trade licence"/>
+            </div>
+            <div class="field">
+              <label class="field-label">Trade licence no. <span class="req">*</span></label>
+              <input class="field-input" type="text" name="tradeLicence" required placeholder="e.g. 123456"/>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label">Country of registration <span class="req">*</span></label>
+              <input class="field-input" type="text" name="country" required value="United Arab Emirates"/>
+            </div>
+            <div class="field">
+              <label class="field-label">Years in operation</label>
+              <input class="field-input" type="number" name="years" min="0" placeholder="e.g. 8"/>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Business address (Dubai) <span class="req">*</span></label>
+            <input class="field-input" type="text" name="address" required placeholder="Building, street, area"/>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Brief description of services</label>
+            <textarea class="field-textarea" name="description" placeholder="Describe the legal-training services your organisation provides…" maxlength="500"></textarea>
+            <div class="field-help">Max 500 characters. Helps us understand your specialisation.</div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Primary contact</div>
+          <div class="form-section-desc">Person responsible for the accreditation application and ongoing correspondence.</div>
+
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label">Full name <span class="req">*</span></label>
+              <input class="field-input" type="text" name="contactName" required placeholder="e.g. Fatima Al Mansouri"/>
+            </div>
+            <div class="field">
+              <label class="field-label">Position <span class="req">*</span></label>
+              <input class="field-input" type="text" name="contactRole" required placeholder="e.g. Head of Training"/>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label">Email <span class="req">*</span></label>
+              <input class="field-input" type="email" name="contactEmail" required placeholder="name@organisation.ae"/>
+            </div>
+            <div class="field">
+              <label class="field-label">Phone <span class="req">*</span></label>
+              <input class="field-input" type="tel" name="contactPhone" required placeholder="+971 ..."/>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Required documents</div>
+          <div class="form-section-desc">Upload PDF copies (max 10 MB each). You can finish uploading after submitting if needed.</div>
+
+          <div class="field">
+            <label class="field-label">Articles of association <span class="req">*</span></label>
+            <label class="file-upload" id="up-aoa">
+              <input type="file" accept=".pdf,.doc,.docx" onchange="handleUpload('aoa', this)"/>
+              <div class="file-upload-ico">📎 ATTACH</div>
+              <div class="file-upload-name">Click to upload or drag here</div>
+              <div class="file-upload-meta">PDF, DOC up to 10 MB</div>
+            </label>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Accreditation form A1 <span class="req">*</span></label>
+            <label class="file-upload" id="up-a1">
+              <input type="file" accept=".pdf,.doc,.docx" onchange="handleUpload('a1', this)"/>
+              <div class="file-upload-ico">📎 ATTACH</div>
+              <div class="file-upload-name">Click to upload or drag here</div>
+              <div class="file-upload-meta">Download blank A1 form below, complete, then upload</div>
+            </label>
+            <div class="field-help"><a class="helper-link" onclick="downloadA1()">↓ Download blank Form A1 template</a></div>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Company profile <span class="req">*</span></label>
+            <label class="file-upload" id="up-profile">
+              <input type="file" accept=".pdf,.doc,.docx" onchange="handleUpload('profile', this)"/>
+              <div class="file-upload-ico">📎 ATTACH</div>
+              <div class="file-upload-name">Click to upload or drag here</div>
+              <div class="file-upload-meta">PDF up to 10 MB</div>
+            </label>
+          </div>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="agree-obligations" required/>
+          <label for="agree-obligations">I confirm that, if accredited, my organisation will <strong>submit accreditations prior to any course being run</strong> and <strong>submit a register of attendees within 30 days of course completion</strong>, in accordance with the CLPD Programme rules.</label>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="agree-terms" required/>
+          <label for="agree-terms">I have read and agree to the <a href="#" class="helper-link" onclick="event.preventDefault();toast('Opening Terms & Conditions…');return false">Terms &amp; Conditions</a> and the <strong>CLPD Programme rules</strong>.</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">Submit application</button>
+        <div style="text-align:center;font-size:11.5px;color:var(--slate2);margin-top:11px;line-height:1.5">A reviewer will respond within 15 working days. Successful applicants receive an Accredited Provider Code by email.</div>
+
+      </form>
+    </div>
+
+    <!-- ─── Login pane ─── -->
+    <div class="form-pane" id="pane-login">
+      <form onsubmit="submitLogin(event)">
+        <div class="field">
+          <label class="field-label">Email <span class="req">*</span></label>
+          <input class="field-input" type="email" name="email" required placeholder="name@organisation.ae"/>
+        </div>
+        <div class="field">
+          <label class="field-label">Password <span class="req">*</span></label>
+          <input class="field-input" type="password" name="password" required placeholder="••••••••"/>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <label style="display:flex;gap:7px;align-items:center;font-size:12px;color:var(--slate);cursor:pointer">
+            <input type="checkbox" style="accent-color:var(--green)"/> Remember me
+          </label>
+          <a class="helper-link" onclick="toast('Password reset link sent if your email is registered.')">Forgot password?</a>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Sign in</button>
+      </form>
+
+      <div style="margin-top:18px;padding:14px;background:var(--paper);border-radius:9px;text-align:center;font-size:12.5px;color:var(--slate)">
+        Don't have an account yet? <a class="helper-link" onclick="switchTab('register')">Register as a provider →</a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ RIGHT: Info panel ═══ -->
+  <div class="info-card">
+    <div class="info-eyebrow">SERVICE INFORMATION</div>
+    <div class="info-title">Provider Accreditation <em>Request</em></div>
+    <div class="info-intro">Accrediting providers to apply for accreditation of courses as part of the Continuing Legal Professional Development Programme. This service is available to any entity that wishes to provide Accredited training to Legal Consultants in the Emirate of Dubai.</div>
+
+    <div class="info-meta">
+      <span class="info-pill">SRV67</span>
+      <span class="info-pill green">NO FEES</span>
+      <span class="info-pill">15 DAYS</span>
+      <span class="info-pill">24/7</span>
+    </div>
+
+    <div class="info-section" style="margin-top:18px">
+      <div class="info-section-title">DEFINITION OF SERVICE</div>
+      <div class="info-row"><div class="info-row-label">Code</div><div class="info-row-val">PDT-PDAL-SRV67</div></div>
+      <div class="info-row"><div class="info-row-label">Category</div><div class="info-row-val">Sub Service</div></div>
+      <div class="info-row"><div class="info-row-label">Directorate</div><div class="info-row-val" style="text-align:right;max-width:60%">Professional Development & Training for Advocates and Legal Consultants</div></div>
+      <div class="info-row"><div class="info-row-label">Channels</div><div class="info-row-val">Portal · Email · In person</div></div>
+      <div class="info-row"><div class="info-row-label">Timeframe</div><div class="info-row-val">15 working days</div></div>
+      <div class="info-row"><div class="info-row-label">Fees</div><div class="info-row-val" style="color:var(--green);font-weight:600">No fees</div></div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">ELIGIBLE BENEFICIARIES</div>
+      <ul class="info-list">
+        <li>Government Entities</li>
+        <li>Advocacy Firms</li>
+        <li>Legal Consultancy Firms</li>
+        <li>Training Companies</li>
+        <li>Professional Bodies</li>
+        <li>Commercial Entities</li>
+      </ul>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">REQUIRED DOCUMENTS</div>
+      <ul class="info-list">
+        <li>Articles of Association</li>
+        <li>Accreditation Form (A1)</li>
+        <li>Company Profile</li>
+      </ul>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">APPLICATION PROCESS</div>
+      <ol class="info-steps">
+        <li>Fill the application form and submit it with the required documents.</li>
+        <li>The Department reviews your application and submitted documents.</li>
+        <li>Application is assessed — pass mark is 80% or above.</li>
+        <li>On approval, you receive an Accredited Provider Code; the list is updated on the CLPD Portal.</li>
+      </ol>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">PROVIDER OBLIGATIONS</div>
+      <div class="info-callout">
+        <div class="info-callout-ico">⚠</div>
+        <div class="info-callout-body">
+          Accredited providers must:
+          <ol style="margin-top:6px;padding-left:18px;line-height:1.7">
+            <li>Submit accreditations <strong>prior to the course being run</strong></li>
+            <li>Submit a register of attendees <strong>within 30 days</strong> of course completion</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">OUTCOMES</div>
+      <div class="info-row"><div class="info-row-label">Approval</div><div class="info-row-val" style="color:var(--green);font-weight:600">Accredited Provider Code</div></div>
+      <div class="info-row"><div class="info-row-label">Rejection</div><div class="info-row-val">Email with reasoning</div></div>
+    </div>
+
+    <a class="info-link" href="https://training.legal.dubai.gov.ae/clpd-programme/becoming-an-accredited-training-provider/?lang=en" target="_blank" rel="noopener">
+      View full service description on dubai.gov.ae
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H8M17 7V16"/></svg>
+    </a>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// Tabs
+// ─────────────────────────────────────────────────────────────
+function switchTab(tab){
+  document.querySelectorAll('.form-tab').forEach(t => t.classList.toggle('on', t.dataset.tab === tab));
+  document.querySelectorAll('.form-pane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + tab));
+  // Update URL hash for bookmarking
+  history.replaceState(null, '', '#' + tab);
+}
+
+// ─────────────────────────────────────────────────────────────
+// File upload UI
+// ─────────────────────────────────────────────────────────────
+function handleUpload(key, input){
+  const el = document.getElementById('up-' + key);
+  const file = input.files[0];
+  if (!file) return;
+  el.classList.add('uploaded');
+  el.querySelector('.file-upload-ico').textContent = '✓ UPLOADED';
+  el.querySelector('.file-upload-name').textContent = file.name;
+  el.querySelector('.file-upload-meta').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+}
+
+// ─────────────────────────────────────────────────────────────
+// Form submission (demo)
+// ─────────────────────────────────────────────────────────────
+function submitRegistration(e){
+  e.preventDefault();
+  const data = new FormData(e.target);
+  const entity = data.get('entityName');
+  toast('✓ Application submitted for ' + entity + '. A reviewer will respond within 15 working days.', 'success');
+  setTimeout(() => {
+    document.querySelector('#pane-register').scrollIntoView({behavior:'smooth'});
+  }, 200);
+  // In production this would POST to the backend
+  console.log('Provider registration:', Object.fromEntries(data));
+  return false;
+}
+
+function submitLogin(e){
+  e.preventDefault();
+  const data = new FormData(e.target);
+  toast('Signing in as ' + data.get('email') + '…', 'success');
+  // In production this would POST to /api/v1/auth/provider/login
+  setTimeout(() => {
+    window.location.href = 'firm-compliance-portal.html'; // placeholder — provider dashboard would go here
+  }, 1000);
+  return false;
+}
+
+function uaePassRegister(){ /* removed — providers/firms sign in with email and password */ }
+function uaePassLogin(){    /* removed — providers/firms sign in with email and password */ }
+
+function downloadA1(){
+  toast('Form A1 template would download here (PDF stub)');
+}
+
+// ─────────────────────────────────────────────────────────────
+// Toast
+// ─────────────────────────────────────────────────────────────
+function toast(msg, kind=''){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast on' + (kind ? ' ' + kind : '');
+  setTimeout(() => t.classList.remove('on'), 4000);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Init — restore tab from URL hash
+// ─────────────────────────────────────────────────────────────
+if (location.hash === '#login') switchTab('login');
+</script>
+</body>
+</html>

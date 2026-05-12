@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Accreditation Review Workspace · LAD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0a0e14; --slate:#5a6878; --slate2:#8492a3; --slate3:#a5b1c0;
+  --paper:#f8fafb; --paper2:#f2f5f8; --line:#e8ecf1; --line2:#dfe5ec; --white:#fff;
+  --green:#006B3F; --green-l:#008a4f; --green-bg:#e9f5ee; --green-border:#b8d8c4;
+  --gold:#C9913A; --gold-l:#d9a85a;
+  --amber:#d97706; --amber-l:#f59e0b; --amber-bg:#fef3e2; --amber-border:#f7d499;
+  --red:#c0392b; --red-l:#dc2626; --red-bg:#fdecea; --red-border:#f1b8b0;
+  --blue:#1d4ed8; --blue-l:#3b82f6; --blue-bg:#e7eeff; --blue-border:#b7c8f0;
+  --purple:#7c3aed; --purple-l:#a855f7; --purple-bg:#f3e8ff; --purple-border:#d8b4fe;
+  --teal:#14b8a6;
+  --serif:'Crimson Pro',Georgia,serif; --sans:'Inter',sans-serif; --mono:'JetBrains Mono',monospace;
+  --r-sm:8px; --r-md:10px; --r-lg:14px; --r-xl:18px;
+  --sh-sm:0 1px 3px rgba(10,14,20,.04); --sh-md:0 4px 16px rgba(10,14,20,.06); --sh-lg:0 12px 40px rgba(10,14,20,.1); --sh-xl:0 20px 60px rgba(10,14,20,.14);
+  --lad-nav-h:54px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--sans);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14px;letter-spacing:-.01em}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+em{font-style:italic;color:var(--gold)}
+
+/* Top LAD nav */
+.lad-shared-nav{background:#1c1f2e;height:var(--lad-nav-h);display:flex;align-items:center;padding:0 24px;gap:20px;position:sticky;top:0;z-index:500;box-shadow:0 2px 12px rgba(0,0,0,.35)}
+.lad-shared-nav .lad-brand{display:flex;align-items:center;gap:11px;color:#fff;text-decoration:none}
+.lad-shared-nav .lad-brand-seal{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,var(--gold),var(--gold-l));display:grid;place-items:center;font-family:var(--serif);font-size:16px;color:#1c1f2e;font-weight:700}
+.lad-shared-nav .lad-brand-text{font-family:var(--serif);font-size:14px;letter-spacing:.5px}
+.lad-shared-nav .lad-brand-sub{font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.55);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px}
+.lad-pills{display:flex;gap:5px;margin-left:auto;align-items:center}
+.lad-pill{padding:6px 11px;border-radius:7px;font-size:11.5px;font-weight:500;color:rgba(255,255,255,.65);text-decoration:none;letter-spacing:-.005em;transition:all .15s;cursor:pointer}
+.lad-pill:hover{color:#fff;background:rgba(255,255,255,.08)}
+.lad-pill.on{color:#fff;background:rgba(255,255,255,.12)}
+
+/* Page chrome */
+.page-hd{padding:18px 30px 16px;background:var(--white);border-bottom:1px solid var(--line);display:flex;align-items:flex-end;gap:24px}
+.page-hd-eyebrow{font-family:var(--mono);font-size:9.5px;color:var(--gold);letter-spacing:1.6px;text-transform:uppercase;font-weight:600;margin-bottom:4px}
+.page-hd-title{font-family:var(--serif);font-size:30px;color:var(--ink);letter-spacing:-.02em;line-height:1.1}
+.page-hd-meta{margin-left:auto;display:flex;gap:18px;align-items:center}
+.hd-kpi{text-align:right}
+.hd-kpi-num{font-family:var(--serif);font-size:22px;color:var(--ink);line-height:1}
+.hd-kpi-num.red{color:var(--red)}
+.hd-kpi-num.amber{color:var(--amber)}
+.hd-kpi-num.green{color:var(--green)}
+.hd-kpi-lbl{font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;margin-top:3px}
+
+/* Three-pane layout */
+.workspace{display:grid;grid-template-columns:320px 1fr 460px;height:calc(100vh - var(--lad-nav-h) - 88px);overflow:hidden}
+
+/* Queue */
+.queue{background:var(--white);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+.queue-hd{padding:14px 16px 10px;border-bottom:1px solid var(--line);flex-shrink:0}
+.queue-hd-title{font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:8px}
+.queue-tabs{display:flex;gap:4px}
+.queue-tab{padding:5px 9px;border-radius:6px;font-size:11.5px;font-weight:500;color:var(--slate2);cursor:pointer;transition:all .15s}
+.queue-tab:hover{background:var(--paper2);color:var(--slate)}
+.queue-tab.on{background:var(--ink);color:#fff}
+.queue-tab .ct{font-family:var(--mono);font-size:10px;margin-left:4px;opacity:.7}
+.queue-list{flex:1;overflow-y:auto;padding:8px}
+.q-item{padding:11px 12px;border-radius:9px;cursor:pointer;border:1px solid transparent;margin-bottom:4px;transition:all .15s}
+.q-item:hover{background:var(--paper)}
+.q-item.on{background:var(--green-bg);border-color:var(--green-border)}
+.q-item-hd{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.q-ref{font-family:var(--mono);font-size:10px;color:var(--slate2);letter-spacing:.5px}
+.q-pill{font-family:var(--mono);font-size:8.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:4px;margin-left:auto}
+.q-pill.breach{background:var(--red-bg);color:var(--red)}
+.q-pill.urgent{background:var(--amber-bg);color:var(--amber)}
+.q-pill.ok{background:var(--green-bg);color:var(--green)}
+.q-pill.new{background:var(--blue-bg);color:var(--blue)}
+.q-pill.renewal{background:var(--purple-bg);color:var(--purple)}
+.q-title{font-size:13px;color:var(--ink);font-weight:500;line-height:1.35;margin-bottom:3px}
+.q-meta{font-size:11px;color:var(--slate2);display:flex;gap:8px;align-items:center}
+.q-meta-dot{width:3px;height:3px;border-radius:50%;background:var(--slate3)}
+
+/* Center pane: Materials */
+.center{background:var(--paper);overflow-y:auto;padding:22px 28px}
+.c-section{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;margin-bottom:14px;box-shadow:var(--sh-sm)}
+.c-eyebrow{font-family:var(--mono);font-size:9.5px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:8px}
+.c-h{font-family:var(--serif);font-size:24px;color:var(--ink);letter-spacing:-.018em;line-height:1.15;margin-bottom:6px}
+.c-sub{font-size:12.5px;color:var(--slate);line-height:1.55}
+.c-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.c-fact{padding:11px 14px;background:var(--paper);border:1px solid var(--line);border-radius:9px}
+.c-fact-lbl{font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:4px}
+.c-fact-val{font-size:13px;color:var(--ink);font-weight:500}
+.c-fact-val .em{color:var(--green)}
+
+.c-files{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.c-file{padding:10px 12px;background:var(--paper);border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s}
+.c-file:hover{border-color:var(--green);background:var(--green-bg)}
+.c-file-ico{width:28px;height:28px;border-radius:6px;background:var(--red-bg);color:var(--red);display:grid;place-items:center;font-family:var(--mono);font-size:9px;font-weight:600;flex-shrink:0}
+.c-file-ico.docx{background:var(--blue-bg);color:var(--blue)}
+.c-file-ico.xlsx{background:var(--green-bg);color:var(--green)}
+.c-file-name{flex:1;font-size:12.5px;color:var(--ink);font-weight:500}
+.c-file-size{font-family:var(--mono);font-size:10px;color:var(--slate3)}
+
+.c-objectives{margin-top:10px;display:flex;flex-direction:column;gap:7px}
+.c-obj{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:var(--slate);line-height:1.55}
+.c-obj-no{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--green);background:var(--green-bg);padding:2px 6px;border-radius:5px;flex-shrink:0;margin-top:1px}
+
+/* Right pane: Scoring + Decision */
+.right{background:var(--white);border-left:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+.right-tabs{display:flex;border-bottom:1px solid var(--line);background:var(--paper);flex-shrink:0}
+.r-tab{padding:13px 18px;font-size:12.5px;font-weight:500;color:var(--slate2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.r-tab:hover{color:var(--ink)}
+.r-tab.on{color:var(--ink);border-bottom-color:var(--green);background:var(--white)}
+
+.r-panel{flex:1;overflow-y:auto;padding:18px 20px;display:none}
+.r-panel.on{display:block}
+
+/* Scoring rubric */
+.rubric-hd{display:grid;grid-template-columns:1fr 60px 60px 60px;gap:6px;padding:0 4px 8px;font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;border-bottom:1px solid var(--line);margin-bottom:6px}
+.rubric-hd > div:not(:first-child){text-align:center}
+.rubric-row{display:grid;grid-template-columns:1fr 60px 60px 60px;gap:6px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.rubric-row:last-of-type{border-bottom:none}
+.rubric-crit{font-size:12.5px;color:var(--ink);font-weight:500;line-height:1.35}
+.rubric-crit-d{font-size:11px;color:var(--slate2);margin-top:2px;line-height:1.4}
+.rubric-score{display:grid;place-items:center;font-family:var(--serif);font-size:16px;font-weight:500;color:var(--ink);background:var(--paper);border-radius:7px;border:1px solid var(--line);min-height:34px}
+.rubric-score.ai{background:linear-gradient(135deg,#f3e8ff,#fdf4ff);border-color:var(--purple-border);color:var(--purple)}
+.rubric-score.pending{color:var(--slate3);background:var(--paper2)}
+.rubric-score.high{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.rubric-score.low{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+.rubric-tot{display:grid;grid-template-columns:1fr 60px 60px 60px;gap:6px;padding:14px 4px 0;margin-top:6px;border-top:2px solid var(--line)}
+.rubric-tot-lbl{font-family:var(--serif);font-size:15px;font-weight:600;color:var(--ink);align-self:center}
+.rubric-tot-score{display:grid;place-items:center;font-family:var(--serif);font-size:20px;font-weight:600;border-radius:8px;min-height:38px;color:var(--ink);background:var(--paper);border:1px solid var(--line2)}
+.rubric-tot-score.ai{background:linear-gradient(135deg,#f3e8ff,#fdf4ff);border-color:var(--purple-border);color:var(--purple)}
+.rubric-tot-score.high{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+
+.ai-rationale{margin-top:14px;padding:14px;background:linear-gradient(135deg,#f3e8ff,#fdf4ff);border:1px solid var(--purple-border);border-radius:10px}
+.ai-rationale-hd{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9.5px;color:var(--purple);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:7px}
+.ai-rationale-hd::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--purple)}
+.ai-rationale-body{font-size:12.5px;color:var(--ink);line-height:1.6}
+.ai-rationale-body em{color:var(--purple);font-style:italic}
+
+/* AI panel */
+.ai-strip{padding:14px 16px;background:linear-gradient(135deg,#f3e8ff,#fdf4ff);border-radius:10px;margin-bottom:14px;border:1px solid var(--purple-border)}
+.ai-strip-hd{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.ai-avatar{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#7c3aed,#14b8a6);display:grid;place-items:center;color:#fff;font-size:13px;font-weight:600;font-family:var(--serif)}
+.ai-strip-title{font-family:var(--serif);font-size:14px;color:var(--ink);font-weight:600}
+.ai-strip-sub{font-family:var(--mono);font-size:9px;color:var(--purple);letter-spacing:1.2px;text-transform:uppercase;margin-top:1px}
+.ai-strip-body{font-size:12.5px;color:var(--ink);line-height:1.6}
+
+.ai-topic-chip{display:inline-block;padding:4px 9px;background:var(--white);border:1px solid var(--purple-border);border-radius:6px;font-size:11.5px;color:var(--ink);margin:3px 4px 3px 0;font-weight:500}
+.ai-topic-chip .conf{font-family:var(--mono);font-size:10px;color:var(--purple);margin-left:5px}
+
+/* Decision tab */
+.decision-recap{padding:14px;background:var(--paper);border-radius:10px;border:1px solid var(--line);margin-bottom:14px}
+.decision-recap-num{font-family:var(--serif);font-size:32px;font-weight:600;color:var(--green);line-height:1}
+.decision-recap-num.amber{color:var(--amber)}
+.decision-recap-num.red{color:var(--red)}
+.decision-recap-lbl{font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px}
+.decision-recap-bd{font-size:12.5px;color:var(--slate);line-height:1.6;margin-top:8px}
+
+.decision-notes textarea{width:100%;padding:12px;border:1.5px solid var(--line2);border-radius:9px;font-family:inherit;font-size:13px;color:var(--ink);resize:vertical;min-height:80px;outline:none;transition:border-color .15s}
+.decision-notes textarea:focus{border-color:var(--green)}
+
+.decision-actions{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.btn{padding:11px 16px;border-radius:9px;font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .15s;border:1.5px solid transparent;letter-spacing:-.005em}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--sh-md)}
+.btn.btn-approve{background:var(--green);color:#fff}
+.btn.btn-reject{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+.btn.btn-changes{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border)}
+.btn.btn-ghost{background:var(--white);color:var(--slate);border-color:var(--line2)}
+.btn-sm{padding:7px 11px;font-size:12px;border-radius:7px}
+.btn-xs{padding:4px 8px;font-size:11px;border-radius:5px}
+
+
+/* Reviewer dropdown */
+.rev-select{font-family:inherit;font-size:12.5px;color:var(--ink);font-weight:500;background:var(--white);border:1px solid var(--line2);border-radius:6px;padding:5px 26px 5px 9px;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235a6878' stroke-width='2.5' stroke-linecap='round'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 8px center;transition:all .15s}
+.rev-select:hover{border-color:var(--green);color:var(--green)}
+.rev-select:focus{border-color:var(--green);box-shadow:0 0 0 2px var(--green-bg)}
+
+/* Empty state */
+.empty-state{height:100%;display:grid;place-items:center;color:var(--slate2);text-align:center;padding:40px}
+.empty-state-ico{width:60px;height:60px;border-radius:14px;background:var(--paper2);display:grid;place-items:center;margin:0 auto 14px;color:var(--slate3)}
+.empty-state h3{font-family:var(--serif);font-size:18px;color:var(--ink);font-weight:500;margin-bottom:6px}
+.empty-state p{font-size:13px;color:var(--slate2);line-height:1.5;max-width:280px}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(15px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:11px;font-size:12.5px;font-weight:500;box-shadow:var(--sh-lg);z-index:1000;opacity:0;transition:all .3s}
+.toast.on{transform:translateX(-50%) translateY(0);opacity:1}
+
+@media (max-width:1200px){
+  .workspace{grid-template-columns:280px 1fr 380px}
+  .right-tabs .r-tab{padding:13px 12px;font-size:12px}
+}
+</style>
+
+<style id="lgn-styles">
+/* ═════════ LAD Global Nav ═════════ */
+.lgn{position:sticky;top:0;z-index:600;height:54px;background:linear-gradient(90deg,#0a1e3a 0%,#1c3a5e 100%);display:flex;align-items:center;gap:6px;padding:0 18px;box-shadow:0 2px 12px rgba(0,0,0,.2);color:#fff;font-family:'Inter','IBM Plex Sans',system-ui,sans-serif;font-size:13px;letter-spacing:-.005em}
+.lgn a{text-decoration:none}
+.lgn-brand{display:flex;gap:11px;align-items:center;color:#fff;padding-right:18px;margin-right:6px;border-right:1px solid rgba(255,255,255,.15);min-width:0}
+.lgn-emblem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#C9913A,#d9a85a);color:#1c1f2e;display:grid;place-items:center;font-family:'Crimson Pro',Georgia,serif;font-size:17px;font-weight:700;flex-shrink:0}
+.lgn-brand-text{line-height:1.15;min-width:0}
+.lgn-brand-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lgn-brand-sub{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:rgba(255,255,255,.55);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px;white-space:nowrap}
+.lgn-group{display:flex;gap:3px;align-items:center}
+.lgn-group-label{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:rgba(255,255,255,.4);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin:0 8px 0 4px;flex-shrink:0}
+.lgn-pill{padding:7px 13px;border-radius:7px;font-size:12.5px;font-weight:500;color:rgba(255,255,255,.72);transition:all .15s;cursor:pointer;white-space:nowrap}
+.lgn-pill:hover{color:#fff;background:rgba(255,255,255,.08)}
+.lgn-pill.on{color:#fff;background:rgba(255,255,255,.16);font-weight:600}
+.lgn-pill-sec{padding:6px 11px;font-size:12px;color:rgba(255,255,255,.5)}
+.lgn-pill-sec:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.06)}
+.lgn-spacer{flex:1;min-width:12px}
+.lgn-divider{width:1px;height:22px;background:rgba(255,255,255,.15);margin:0 8px;flex-shrink:0}
+@media (max-width:1100px){.lgn-brand-text{display:none}.lgn-group-label{display:none}.lgn-pill{padding:7px 10px;font-size:12px}.lgn-pill-sec{padding:6px 9px}}
+
+/* Push existing sticky topbars / sidebars below the unified nav */
+.lgn ~ .topbar,.lgn ~ * .topbar{top:54px !important}
+.lgn ~ .sidebar,.lgn ~ * .sidebar{top:54px !important;height:calc(100vh - 54px) !important}
+.lgn ~ .adm-topbar,.lgn ~ * .adm-topbar{top:54px !important}
+.lgn ~ .adm-tabs-top,.lgn ~ * .adm-tabs-top{top:54px !important}
+.lgn ~ .adm-web-subtabs,.lgn ~ * .adm-web-subtabs{top:54px !important}
+@media (max-width:760px){.lgn{padding:0 10px;gap:2px}.lgn-pill{padding:6px 8px;font-size:11.5px}.lgn-emblem{width:28px;height:28px;font-size:15px}}
+</style>
+</head>
+<body>
+<!-- ═════════ Unified LAD nav ═════════ -->
+<nav class="lgn" id="lgn">
+  <a class="lgn-brand" href="lad-super-system.html">
+    <div class="lgn-emblem">⚖</div>
+    <div class="lgn-brand-text">
+      <div class="lgn-brand-title">Legal Affairs Department</div>
+      <div class="lgn-brand-sub">CLPD · Government of Dubai</div>
+    </div>
+  </a>
+  <span class="lgn-group-label" style="margin-left:0">LAD STAFF</span>
+  <div class="lgn-group">
+    <a class="lgn-pill" href="lad-intelligence-v4.html">Dashboard</a>
+    <a class="lgn-pill" href="lad-intelligence-v4.html#firms">Firms</a>
+    <a class="lgn-pill" href="lad-intelligence-v4.html#cohort">Lawyers</a>
+    <a class="lgn-pill on" href="lad-accreditation-review.html">Accreditation</a>
+    <a class="lgn-pill" href="lad-capability-heatmap.html">Heatmap</a>
+    <a class="lgn-pill" href="lad-intelligence-v4.html#reports">Reports</a>
+  </div>
+  <div class="lgn-spacer"></div>
+  <a class="lgn-pill lgn-pill-sec" href="lad-admin.html" title="Switch to operational admin tools">LAD Admin →</a>
+  <a class="lgn-pill lgn-pill-sec" onclick="['lad_token','lad_role','lad_name'].forEach(function(k){try{localStorage.removeItem(k)}catch(e){}});window.location.href='clpd-portal.html';return false;" data-lad-logout style="cursor:pointer">Sign out</a>
+</nav>
+
+<!-- Page header -->
+<div class="page-hd">
+  <div>
+    <div class="page-hd-eyebrow">REVIEWER WORKSPACE</div>
+    <div class="page-hd-title">Accreditation <em>review queue</em></div>
+  </div>
+  <div class="page-hd-meta">
+    <div class="hd-kpi"><div class="hd-kpi-num">14</div><div class="hd-kpi-lbl">PENDING</div></div>
+    <div class="hd-kpi"><div class="hd-kpi-num red">3</div><div class="hd-kpi-lbl">SLA BREACH</div></div>
+    <div class="hd-kpi"><div class="hd-kpi-num amber">5</div><div class="hd-kpi-lbl">URGENT</div></div>
+    <div class="hd-kpi"><div class="hd-kpi-num green">11.4d</div><div class="hd-kpi-lbl">AVG REVIEW</div></div>
+  </div>
+</div>
+
+<!-- Workspace -->
+<div class="workspace">
+
+  <!-- Queue -->
+  <div class="queue">
+    <div class="queue-hd">
+      <div class="queue-hd-title">Application Queue</div>
+      <div class="queue-tabs">
+        <div class="queue-tab on" data-filter="all" onclick="setFilter('all')">All <span class="ct">14</span></div>
+        <div class="queue-tab" data-filter="breach" onclick="setFilter('breach')">Breach <span class="ct">3</span></div>
+        <div class="queue-tab" data-filter="new" onclick="setFilter('new')">New <span class="ct">8</span></div>
+        <div class="queue-tab" data-filter="renewal" onclick="setFilter('renewal')">Renewal <span class="ct">4</span></div>
+      </div>
+    </div>
+    <div class="queue-list" id="queueList"></div>
+  </div>
+
+  <!-- Center: Materials -->
+  <div class="center" id="centerPane">
+    <!-- populated by JS -->
+  </div>
+
+  <!-- Right: Scoring + AI + Decision -->
+  <div class="right">
+    <div class="right-tabs">
+      <div class="r-tab on" data-tab="scoring" onclick="setTab('scoring')">Scoring</div>
+      <div class="r-tab" data-tab="ai" onclick="setTab('ai')">AI analysis</div>
+      <div class="r-tab" data-tab="decision" onclick="setTab('decision')">Decision</div>
+    </div>
+    <div class="r-panel on" id="panel-scoring"></div>
+    <div class="r-panel" id="panel-ai"></div>
+    <div class="r-panel" id="panel-decision"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const REVIEWERS = [
+  'Duncan Wood',
+  'Nasir Khamlichi',
+  'Layla Bouchart',
+  'Aisha Khalifa',
+  'Mohammed Hassan',
+  'Khalid Al Mansouri',
+  'Fatima Al Suwaidi',
+  'Omar Al Falasi',
+  'Sara Iqbal'
+];
+
+// ─────────────────────────────────────────────────────────────
+// DATA — 14 pending applications matching the KPI tile breakdown
+// ─────────────────────────────────────────────────────────────
+const APPLICATIONS = [
+  {
+    ref:'ACC-2026-0128', kind:'new', priority:'breach', days:18,
+    title:'Advanced Construction Disputes & FIDIC',
+    provider:'KTL Training', providerType:'Training Provider',
+    submitted:'22 Apr 2026', reviewer1:'Duncan Wood', reviewer2:'Nasir Khamlichi',
+    format:'Face-to-face', duration:'2 days · 16h', proposedPts:8, proposedCredits:18,
+    audience:'Construction & disputes practitioners · advanced',
+    files:[
+      {n:'Course-brief-v3.pdf',sz:'1.2 MB',t:'pdf'},
+      {n:'Trainer-CV-Mohammed-Said.pdf',sz:'480 KB',t:'pdf'},
+      {n:'Trainer-CV-Sara-Iqbal.pdf',sz:'420 KB',t:'pdf'},
+      {n:'Detailed-syllabus.docx',sz:'215 KB',t:'docx'},
+      {n:'Past-feedback-summary.xlsx',sz:'89 KB',t:'xlsx'}
+    ],
+    objectives:[
+      'Identify the practical effect of FIDIC 2017 amendments on Dubai construction practice, including the Dispute Avoidance/Adjudication Board mechanism.',
+      'Apply UAE Civil Code provisions (Federal Law 5/1985 articles 872–896) to construction defect liability scenarios.',
+      'Draft enforceable variation orders under FIDIC Red Book sub-clauses 13.1–13.3.',
+      'Advise on parallel DIFC-LCIA arbitration and onshore Dubai court enforcement strategies.',
+      'Recognise prescription periods for construction-related claims under UAE law and FIDIC clauses.'
+    ],
+    scores:{
+      r1:{relevance:9,depth:8,trainer:9,materials:7,pedagogy:8},
+      r2:{relevance:9,depth:9,trainer:9,materials:8,pedagogy:9},
+      ai:{relevance:9,depth:9,trainer:8,materials:7,pedagogy:8}
+    },
+    aiRationale:`Strong substantive content. Trainers <em>Mohammed Said</em> and <em>Sara Iqbal</em> have a combined 31 years' construction practice and have delivered 14 prior LAD-accredited sessions (avg 4.6/5). FIDIC 2017 alignment is current. Materials score lower because the past-feedback summary is six months stale — recommend updating before final approval. Topic mapping is highly specific.`,
+    topics:[
+      {label:'Construction Law',conf:0.96},
+      {label:'FIDIC Contracts',conf:0.94},
+      {label:'UAE Civil Code · Defects',conf:0.88},
+      {label:'DIFC Arbitration',conf:0.71},
+      {label:'Prescription Periods',conf:0.62}
+    ],
+    decision:null
+  },
+  {
+    ref:'ACC-2026-0142', kind:'new', priority:'breach', days:12,
+    title:'AI in Legal Practice: Compliance & Risk',
+    provider:'Galadari Academy', providerType:'Firm Internal',
+    submitted:'28 Apr 2026', reviewer1:'Layla Bouchart', reviewer2:'Aisha Khalifa',
+    format:'Hybrid', duration:'1 day · 6h', proposedPts:3, proposedCredits:7,
+    audience:'All practitioners · intermediate',
+    files:[
+      {n:'Course-outline.pdf',sz:'780 KB',t:'pdf'},
+      {n:'Slide-deck-draft.pdf',sz:'14 MB',t:'pdf'},
+      {n:'Trainer-bio-Sandra-W.pdf',sz:'310 KB',t:'pdf'}
+    ],
+    objectives:[
+      'Map AI deployment in legal workflows against UAE PDPL (Federal Decree-Law 45/2021) obligations.',
+      'Identify professional conduct risks when using generative AI for client work under the UAE Code of Practice.',
+      'Apply governance frameworks (NIST AI RMF, ISO/IEC 42001) in a UAE legal-services context.',
+      'Draft AI-use disclosure clauses for engagement letters.'
+    ],
+    scores:{
+      r1:{relevance:9,depth:7,trainer:8,materials:6,pedagogy:7},
+      r2:{relevance:9,depth:8,trainer:8,materials:7,pedagogy:8},
+      ai:{relevance:9,depth:8,trainer:8,materials:6,pedagogy:7}
+    },
+    aiRationale:`Highly relevant — flagged as priority topic in the 2026 strategic plan. Trainer <em>Sandra Wahidi</em> brings strong AI-governance background but limited UAE-specific practice experience; suggest co-presenter from local firm. Slide deck is draft only (watermarked) and lacks UAE case studies. <em>Recommend: request final materials before approval.</em>`,
+    topics:[
+      {label:'AI Governance · Legal',conf:0.95},
+      {label:'UAE PDPL',conf:0.88},
+      {label:'Professional Ethics',conf:0.79},
+      {label:'AI & Copyright',conf:0.41}
+    ],
+    decision:null
+  },
+  {
+    ref:'ACC-2026-0151', kind:'new', priority:'breach', days:11,
+    title:'UAE Corporate Tax: 2026 Update',
+    provider:'Stephenson Harwood', providerType:'Firm Internal',
+    submitted:'29 Apr 2026', reviewer1:'Mohammed Hassan', reviewer2:'Layla Bouchart',
+    format:'Face-to-face', duration:'½ day · 4h', proposedPts:2, proposedCredits:5,
+    audience:'Tax & corporate practitioners · all levels',
+    files:[
+      {n:'Course-brief.pdf',sz:'940 KB',t:'pdf'},
+      {n:'FTA-clarifications-summary.docx',sz:'180 KB',t:'docx'},
+      {n:'Trainer-CV-James-Robinson.pdf',sz:'410 KB',t:'pdf'}
+    ],
+    objectives:[
+      'Apply the 2025-2026 FTA clarifications on Qualifying Free Zone Person status.',
+      'Calculate transfer-pricing documentation obligations under Cabinet Decision 97/2023.',
+      'Advise on the corporate tax interaction with VAT and Economic Substance Regulations.',
+      'Identify high-risk restructuring triggers requiring advance ruling applications.'
+    ],
+    scores:{
+      r1:{relevance:9,depth:9,trainer:10,materials:9,pedagogy:8},
+      r2:{relevance:9,depth:9,trainer:9,materials:8,pedagogy:9},
+      ai:{relevance:9,depth:9,trainer:9,materials:9,pedagogy:8}
+    },
+    aiRationale:`Excellent submission. <em>James Robinson</em> is a recognised Dubai tax specialist (Partner, SH Tax) with 19 prior accredited sessions averaging 4.8/5. Content is fully current with FTA 2025 clarifications and recent transfer-pricing guidance. <em>Recommend approve.</em> SLA breach is administrative — application sat unallocated for 7 days.`,
+    topics:[
+      {label:'Corporate Tax · UAE',conf:0.97},
+      {label:'QFZP',conf:0.92},
+      {label:'Transfer Pricing',conf:0.89},
+      {label:'VAT · UAE',conf:0.71},
+      {label:'Economic Substance',conf:0.68}
+    ],
+    decision:null
+  },
+  {
+    ref:'ACC-2026-0167', kind:'new', priority:'urgent', days:9,
+    title:'International Arbitration Master Programme',
+    provider:'DIFC Academy', providerType:'Training Provider',
+    submitted:'1 May 2026', reviewer1:'Aisha Khalifa', reviewer2:'Mohammed Hassan',
+    format:'Face-to-face', duration:'3 days · 24h', proposedPts:10, proposedCredits:24,
+    audience:'Arbitration practitioners · advanced',
+    files:[{n:'Programme-prospectus.pdf',sz:'2.4 MB',t:'pdf'},{n:'Faculty-list.pdf',sz:'860 KB',t:'pdf'},{n:'Sample-materials.pdf',sz:'4.1 MB',t:'pdf'}],
+    objectives:['Apply UNCITRAL Model Law in DIFC and ADGM seated arbitrations.','Draft enforceable arbitration clauses for UAE-onshore commercial contracts.','Conduct cross-examination under common-law and civil-law approaches.','Strategise on parallel court proceedings and anti-suit injunctions in DIFC/ADGM.'],
+    scores:{r1:{relevance:9,depth:10,trainer:10,materials:9,pedagogy:9},r2:{relevance:9,depth:10,trainer:10,materials:9,pedagogy:9},ai:{relevance:9,depth:10,trainer:10,materials:9,pedagogy:9}},
+    aiRationale:`Flagship programme. Faculty includes Sir <em>David Steel</em>, <em>Essam Al Tamimi</em>, and three sitting DIFC arbitrators. Fully current with 2024 ADGM rules. <em>Strong recommend approve.</em>`,
+    topics:[{label:'International Arbitration',conf:0.98},{label:'DIFC Courts',conf:0.92},{label:'ADGM',conf:0.91},{label:'UNCITRAL Model Law',conf:0.86}],
+    decision:null
+  },
+  {
+    ref:'ACC-2026-0172', kind:'new', priority:'urgent', days:8,
+    title:'Construction & Real Estate Disputes',
+    provider:'Clyde & Co', providerType:'Firm Internal',
+    submitted:'2 May 2026', reviewer1:'Layla Bouchart', reviewer2:'Aisha Khalifa',
+    format:'Face-to-face', duration:'1 day · 7h', proposedPts:3, proposedCredits:8,
+    audience:'Real estate & construction · intermediate',
+    files:[{n:'Course-brief.pdf',sz:'1.1 MB',t:'pdf'},{n:'Trainer-CVs.pdf',sz:'620 KB',t:'pdf'}],
+    objectives:['Apply RERA 2023 amendments to off-plan dispute scenarios.','Advise on FIDIC variation order disputes in Dubai courts.','Identify enforcement pathways for construction-related judgments.'],
+    scores:{r1:{relevance:9,depth:8,trainer:9,materials:8,pedagogy:8},r2:{relevance:8,depth:8,trainer:9,materials:8,pedagogy:8},ai:{relevance:9,depth:8,trainer:9,materials:8,pedagogy:7}},
+    aiRationale:`Solid intermediate-level offering. Clyde & Co's construction team is well-credentialled. Suggest minor clarification on whether the session covers DLD case law from 2024-2026.`,
+    topics:[{label:'Construction Law',conf:0.94},{label:'RERA',conf:0.91},{label:'Real Estate Disputes',conf:0.88}],
+    decision:null
+  },
+  {
+    ref:'ACC-2026-0181', kind:'new', priority:'urgent', days:7,
+    title:'Aviation Law Update 2026',
+    provider:'Kwintessential', providerType:'Training Provider',
+    submitted:'3 May 2026', reviewer1:'Mohammed Hassan', reviewer2:'Layla Bouchart',
+    format:'Face-to-face', duration:'½ day · 3h', proposedPts:2, proposedCredits:5,
+    audience:'Aviation & maritime · all levels',
+    files:[{n:'Brief.pdf',sz:'710 KB',t:'pdf'}],
+    objectives:['Update on Montreal Convention amendments.','Identify GCAA enforcement trends 2024-2026.'],
+    scores:{r1:{relevance:8,depth:7,trainer:8,materials:7,pedagogy:7},r2:{relevance:8,depth:7,trainer:8,materials:7,pedagogy:8},ai:{relevance:8,depth:7,trainer:8,materials:6,pedagogy:7}},
+    aiRationale:`Niche topic with steady demand (24 lawyers in aviation practice). Materials thin — only a single PDF submitted. Request supporting slides before final approval.`,
+    topics:[{label:'Aviation Law',conf:0.96},{label:'Maritime',conf:0.42}],
+    decision:null
+  },
+  {
+    ref:'ACC-2026-0189', kind:'new', priority:'ok', days:5,
+    title:'M&A Best Practice in the UAE',
+    provider:'White & Case', providerType:'Firm Internal',
+    submitted:'5 May 2026', reviewer1:'Aisha Khalifa', reviewer2:'Mohammed Hassan',
+    format:'Face-to-face', duration:'1 day · 6h', proposedPts:3, proposedCredits:7,
+    audience:'Corporate · intermediate to advanced',
+    files:[{n:'Outline.pdf',sz:'990 KB',t:'pdf'},{n:'Faculty.pdf',sz:'520 KB',t:'pdf'},{n:'Case-studies.pdf',sz:'1.8 MB',t:'pdf'}],
+    objectives:['Structure UAE-onshore acquisition vehicles post-100%-foreign-ownership reforms.','Draft warranty and indemnity packages for SPA negotiations.','Navigate SCA & DFM disclosure obligations for listed-company transactions.'],
+    scores:{r1:{relevance:9,depth:9,trainer:9,materials:9,pedagogy:9},r2:{relevance:9,depth:9,trainer:9,materials:9,pedagogy:9},ai:{relevance:9,depth:9,trainer:9,materials:9,pedagogy:8}},
+    aiRationale:`High-quality submission. Faculty includes UAE managing partner plus three senior associates. Case studies are anonymised but specific. <em>Recommend approve.</em>`,
+    topics:[{label:'M&A',conf:0.97},{label:'Corporate · UAE',conf:0.94},{label:'Securities Regulation',conf:0.72}],
+    decision:null
+  },
+  {
+    ref:'ACC-2026-0193', kind:'new', priority:'ok', days:4,
+    title:'Ethics & AI — Practitioner Refresher',
+    provider:'LAD Academy', providerType:'Self-delivered',
+    submitted:'6 May 2026', reviewer1:'Layla Bouchart', reviewer2:'Aisha Khalifa',
+    format:'E-learning', duration:'Self-paced · ~2h', proposedPts:2, proposedCredits:5,
+    audience:'All practitioners · mandatory module',
+    files:[{n:'Module-storyboard.pdf',sz:'1.4 MB',t:'pdf'},{n:'Quiz-bank.xlsx',sz:'120 KB',t:'xlsx'}],
+    objectives:['Identify confidentiality risks when using generative AI tools.','Apply the UAE Code of Practice articles relating to client funds and conflicts.','Recognise the duty to verify AI-generated citations.'],
+    scores:{r1:{relevance:10,depth:8,trainer:10,materials:9,pedagogy:9},r2:{relevance:10,depth:8,trainer:9,materials:9,pedagogy:9},ai:{relevance:10,depth:8,trainer:9,materials:9,pedagogy:9}},
+    aiRationale:`Mandatory refresher — high strategic priority. Quality is strong. Consider adding a fifth learning objective on managed-service AI vendor due diligence.`,
+    topics:[{label:'Professional Ethics',conf:0.96},{label:'AI Governance · Legal',conf:0.84},{label:'UAE Code of Practice',conf:0.92}],
+    decision:null
+  },
+  // 4 provider renewals
+  {ref:'ACC-2026-0156', kind:'renewal', priority:'urgent', days:8, title:'Provider renewal — Galadari Academy', provider:'Galadari Academy', providerType:'Firm Internal', submitted:'2 May 2026', reviewer1:'Aisha Khalifa', reviewer2:'Mohammed Hassan', format:'—', duration:'—', proposedPts:'—', proposedCredits:'—', audience:'Provider-level renewal', files:[{n:'Annual-report-2025.pdf',sz:'3.2 MB',t:'pdf'},{n:'Quality-attestation.pdf',sz:'480 KB',t:'pdf'},{n:'Trainer-roster-update.xlsx',sz:'67 KB',t:'xlsx'}], objectives:['Provider has delivered 18 accredited sessions in the past 12 months with avg rating 4.6/5.','Quality assurance attestation signed by Managing Partner.','Three new trainers added to roster.'], scores:{r1:{compliance:9,quality:9,reach:8,governance:9,fees:9},r2:{compliance:9,quality:9,reach:8,governance:9,fees:9},ai:{compliance:9,quality:9,reach:8,governance:9,fees:9}}, aiRationale:`Standard renewal. No quality flags in 2025. <em>Recommend renew for 2-year cycle.</em>`, topics:[{label:'Provider status renewal',conf:1.0}], decision:null, isRenewal:true},
+  {ref:'ACC-2026-0163', kind:'renewal', priority:'urgent', days:8, title:'Provider renewal — DIFC Academy', provider:'DIFC Academy', providerType:'Training Provider', submitted:'2 May 2026', reviewer1:'Mohammed Hassan', reviewer2:'Layla Bouchart', format:'—', duration:'—', proposedPts:'—', proposedCredits:'—', audience:'Provider-level renewal', files:[{n:'Annual-report-2025.pdf',sz:'2.8 MB',t:'pdf'},{n:'Quality-attestation.pdf',sz:'410 KB',t:'pdf'}], objectives:['DIFC Academy delivered 47 sessions in 2025 with avg rating 4.7/5.','No quality complaints filed.','New CPD director appointed Q4 2025.'], scores:{r1:{compliance:10,quality:10,reach:10,governance:9,fees:9},r2:{compliance:10,quality:10,reach:10,governance:9,fees:9},ai:{compliance:10,quality:10,reach:10,governance:9,fees:9}}, aiRationale:`Strongest provider in the registry. <em>Recommend renew.</em>`, topics:[{label:'Provider status renewal',conf:1.0}], decision:null, isRenewal:true},
+  {ref:'ACC-2026-0175', kind:'renewal', priority:'ok', days:6, title:'Provider renewal — Kwintessential', provider:'Kwintessential', providerType:'Training Provider', submitted:'4 May 2026', reviewer1:'Aisha Khalifa', reviewer2:'Layla Bouchart', format:'—', duration:'—', proposedPts:'—', proposedCredits:'—', audience:'Provider-level renewal', files:[{n:'Annual-report.pdf',sz:'2.1 MB',t:'pdf'},{n:'Attestation.pdf',sz:'380 KB',t:'pdf'}], objectives:['Delivered 12 sessions in 2025 (down from 16 in 2024).','Average rating 4.4/5.','No quality flags.'], scores:{r1:{compliance:8,quality:8,reach:7,governance:9,fees:9},r2:{compliance:8,quality:8,reach:7,governance:9,fees:9},ai:{compliance:8,quality:8,reach:7,governance:9,fees:9}}, aiRationale:`Solid mid-tier provider. Volume declining — investigate strategic plans before renewing for full 2-year cycle. <em>Consider 1-year conditional renewal.</em>`, topics:[{label:'Provider status renewal',conf:1.0}], decision:null, isRenewal:true},
+  {ref:'ACC-2026-0188', kind:'renewal', priority:'ok', days:5, title:'Provider renewal — LAD Academy (in-house)', provider:'LAD Academy', providerType:'Self-delivered', submitted:'5 May 2026', reviewer1:'Layla Bouchart', reviewer2:'Mohammed Hassan', format:'—', duration:'—', proposedPts:'—', proposedCredits:'—', audience:'Provider-level renewal', files:[{n:'Annual-report.pdf',sz:'2.6 MB',t:'pdf'}], objectives:['Delivered 23 mandatory modules in 2025.','Avg rating 4.5/5.'], scores:{r1:{compliance:10,quality:9,reach:10,governance:10,fees:10},r2:{compliance:10,quality:9,reach:10,governance:10,fees:10},ai:{compliance:10,quality:9,reach:10,governance:10,fees:10}}, aiRationale:`In-house provider — administrative renewal.`, topics:[{label:'Provider status renewal',conf:1.0}], decision:null, isRenewal:true},
+  // 2 point value amendments
+  {ref:'ACC-2026-0194', kind:'amendment', priority:'ok', days:4, title:'Point value amendment — AML Update 2026', provider:'LAD Academy', providerType:'Self-delivered', submitted:'6 May 2026', reviewer1:'Aisha Khalifa', reviewer2:'Layla Bouchart', format:'Existing course', duration:'½ day · 4h → 6h', proposedPts:'2 → 3', proposedCredits:'5 → 7', audience:'All practitioners · mandatory', files:[{n:'Updated-syllabus.pdf',sz:'670 KB',t:'pdf'},{n:'New-module-AML-tech.docx',sz:'120 KB',t:'docx'}], objectives:['Existing AML course extended by 2 hours to cover AML-tech (blockchain analytics, transaction monitoring AI).','New compulsory case-study session added.'], scores:{r1:{relevance:9,depth:9,trainer:9,materials:9,pedagogy:9},r2:{relevance:9,depth:9,trainer:9,materials:9,pedagogy:9},ai:{relevance:9,depth:9,trainer:9,materials:9,pedagogy:9}}, aiRationale:`Justified extension. New AML-tech module aligns with FATF/UAE FIU guidance issued Feb 2026. <em>Recommend approve amendment.</em>`, topics:[{label:'AML Compliance',conf:0.98},{label:'FATF · UAE',conf:0.84}], decision:null},
+  {ref:'ACC-2026-0196', kind:'amendment', priority:'ok', days:3, title:'Point value amendment — Data Protection 2026', provider:'LAD Academy', providerType:'Self-delivered', submitted:'7 May 2026', reviewer1:'Mohammed Hassan', reviewer2:'Aisha Khalifa', format:'Existing course', duration:'3h → 4h', proposedPts:'1 → 2', proposedCredits:'3 → 5', audience:'All practitioners · mandatory', files:[{n:'Updated-modules.pdf',sz:'540 KB',t:'pdf'}], objectives:['Existing UAE PDPL course extended to cover 2025 Cabinet Decision and Data Office guidance.','Additional case studies on cross-border transfers.'], scores:{r1:{relevance:9,depth:8,trainer:9,materials:8,pedagogy:8},r2:{relevance:9,depth:8,trainer:9,materials:8,pedagogy:8},ai:{relevance:9,depth:8,trainer:9,materials:8,pedagogy:8}}, aiRationale:`Standard refresh. Update reflects regulatory developments. <em>Recommend approve.</em>`, topics:[{label:'UAE PDPL',conf:0.97},{label:'Data Protection · GCC',conf:0.81}], decision:null}
+];
+
+const RUBRIC_CRITERIA_COURSE = [
+  {key:'relevance', label:'Relevance & alignment', desc:'Alignment with UAE legal landscape and current LAD strategic priorities.'},
+  {key:'depth', label:'Substantive depth', desc:'Technical rigour appropriate for the stated audience level.'},
+  {key:'trainer', label:'Trainer credentials', desc:'Subject-matter expertise, prior delivery, peer review.'},
+  {key:'materials', label:'Quality of materials', desc:'Completeness, currency, and pedagogical clarity of supplied materials.'},
+  {key:'pedagogy', label:'Delivery & pedagogy', desc:'Method appropriate for learning objectives — discussion, case study, assessment.'}
+];
+
+const RUBRIC_CRITERIA_RENEWAL = [
+  {key:'compliance', label:'Compliance history', desc:'Filing and quality record over the prior cycle.'},
+  {key:'quality', label:'Delivery quality', desc:'Aggregate learner ratings and qualitative feedback.'},
+  {key:'reach', label:'Reach & demand', desc:'Volume delivered, breadth of practitioners served.'},
+  {key:'governance', label:'Governance & QA', desc:'Quality assurance processes, attestations, trainer roster controls.'},
+  {key:'fees', label:'Fee structure', desc:'Reasonableness and transparency of pricing to practitioners.'}
+];
+
+// ─────────────────────────────────────────────────────────────
+// STATE & RENDER
+// ─────────────────────────────────────────────────────────────
+let _selectedIdx = 0;
+let _filter = 'all';
+let _tab = 'scoring';
+
+function applyFilter(){
+  if (_filter === 'all') return APPLICATIONS;
+  if (_filter === 'breach') return APPLICATIONS.filter(a => a.priority === 'breach');
+  if (_filter === 'new') return APPLICATIONS.filter(a => a.kind === 'new');
+  if (_filter === 'renewal') return APPLICATIONS.filter(a => a.kind === 'renewal' || a.kind === 'amendment');
+  return APPLICATIONS;
+}
+
+function setFilter(f){
+  _filter = f;
+  document.querySelectorAll('.queue-tab').forEach(t => t.classList.toggle('on', t.dataset.filter === f));
+  renderQueue();
+  const visible = applyFilter();
+  if (visible.length) {
+    _selectedIdx = APPLICATIONS.indexOf(visible[0]);
+    renderDetail();
+  }
+}
+
+function setTab(t){
+  _tab = t;
+  document.querySelectorAll('.r-tab').forEach(x => x.classList.toggle('on', x.dataset.tab === t));
+  document.querySelectorAll('.r-panel').forEach(x => x.classList.toggle('on', x.id === 'panel-' + t));
+}
+
+function select(idx){
+  _selectedIdx = idx;
+  renderQueue();
+  renderDetail();
+}
+
+function pillFor(a){
+  if (a.priority === 'breach') return '<span class="q-pill breach">'+a.days+'d · breach</span>';
+  if (a.priority === 'urgent') return '<span class="q-pill urgent">'+a.days+'d</span>';
+  if (a.kind === 'renewal') return '<span class="q-pill renewal">renewal</span>';
+  if (a.kind === 'amendment') return '<span class="q-pill new">amendment</span>';
+  return '<span class="q-pill ok">'+a.days+'d</span>';
+}
+
+function renderQueue(){
+  const list = document.getElementById('queueList');
+  const visible = applyFilter();
+  list.innerHTML = visible.map((a) => {
+    const idx = APPLICATIONS.indexOf(a);
+    const on = idx === _selectedIdx ? 'on' : '';
+    return `<div class="q-item ${on}" onclick="select(${idx})">
+      <div class="q-item-hd">
+        <span class="q-ref">${a.ref}</span>
+        ${pillFor(a)}
+      </div>
+      <div class="q-title">${a.title}</div>
+      <div class="q-meta">${a.provider}<span class="q-meta-dot"></span>${a.format||'—'}</div>
+    </div>`;
+  }).join('');
+  if (!visible.length) {
+    list.innerHTML = '<div style="padding:30px;text-align:center;color:var(--slate3);font-size:12.5px">No applications match this filter.</div>';
+  }
+}
+
+function renderDetail(){
+  const a = APPLICATIONS[_selectedIdx];
+  if (!a) return;
+  renderCenter(a);
+  renderScoring(a);
+  renderAI(a);
+  renderDecision(a);
+}
+
+function renderCenter(a){
+  const c = document.getElementById('centerPane');
+  c.innerHTML = `
+    <div class="c-section">
+      <div class="c-eyebrow">${a.ref} · ${a.kind.toUpperCase()} ${a.priority==='breach'?'· SLA BREACH ('+a.days+' DAYS)':''}</div>
+      <div class="c-h">${a.title}</div>
+      <div class="c-sub">Submitted by <strong>${a.provider}</strong> · ${a.providerType} · ${a.submitted}</div>
+      <div class="c-grid">
+        <div class="c-fact"><div class="c-fact-lbl">FORMAT</div><div class="c-fact-val">${a.format}</div></div>
+        <div class="c-fact"><div class="c-fact-lbl">DURATION</div><div class="c-fact-val">${a.duration}</div></div>
+        <div class="c-fact"><div class="c-fact-lbl">PROPOSED POINTS</div><div class="c-fact-val"><span class="em">${a.proposedPts}</span> CLPD points</div></div>
+        <div class="c-fact"><div class="c-fact-lbl">PROPOSED CREDITS</div><div class="c-fact-val"><span class="em">${a.proposedCredits}</span> credits</div></div>
+        <div class="c-fact" style="grid-column:1/-1"><div class="c-fact-lbl">AUDIENCE</div><div class="c-fact-val">${a.audience}</div></div>
+        <div class="c-fact" style="grid-column:1/-1"><div class="c-fact-lbl">REVIEWERS · LAD STAFF</div><div class="c-fact-val" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select class="rev-select" onchange="updateReviewer(${_selectedIdx}, 1, this.value)">${REVIEWERS.map(r => `<option value="${r}" ${r===a.reviewer1?'selected':''}>${r}</option>`).join('')}</select>
+        <span style="color:var(--slate3)">·</span>
+        <select class="rev-select" onchange="updateReviewer(${_selectedIdx}, 2, this.value)">${REVIEWERS.map(r => `<option value="${r}" ${r===a.reviewer2?'selected':''}>${r}</option>`).join('')}</select>
+        <span style="color:var(--purple);font-size:11px;margin-left:6px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase">+ Lex AI</span>
+      </div></div>
+      </div>
+    </div>
+
+    <div class="c-section">
+      <div class="c-eyebrow">SUBMITTED MATERIALS</div>
+      <div class="c-files">
+        ${a.files.map(f => `<div class="c-file" onclick="toast('Opening ${f.n}…')">
+          <div class="c-file-ico ${f.t}">${f.t.toUpperCase()}</div>
+          <div class="c-file-name">${f.n}</div>
+          <div class="c-file-size">${f.sz}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="c-section">
+      <div class="c-eyebrow">${a.isRenewal ? 'PROVIDER FACTS' : 'LEARNING OBJECTIVES'}</div>
+      <div class="c-objectives">
+        ${a.objectives.map((o,i) => `<div class="c-obj"><div class="c-obj-no">${a.isRenewal?'•':String(i+1).padStart(2,'0')}</div><div>${o}</div></div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function scoreClass(score){
+  if (typeof score !== 'number') return 'pending';
+  if (score >= 9) return 'high';
+  if (score <= 5) return 'low';
+  return '';
+}
+
+function renderScoring(a){
+  const p = document.getElementById('panel-scoring');
+  const criteria = a.kind === 'renewal' ? RUBRIC_CRITERIA_RENEWAL : RUBRIC_CRITERIA_COURSE;
+  const totR1 = criteria.reduce((s,c) => s + (a.scores.r1[c.key]||0), 0);
+  const totR2 = criteria.reduce((s,c) => s + (a.scores.r2[c.key]||0), 0);
+  const totAI = criteria.reduce((s,c) => s + (a.scores.ai[c.key]||0), 0);
+  const max = criteria.length * 10;
+
+  p.innerHTML = `
+    <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:14px">Collaborative scoring · ${criteria.length} criteria · /10</div>
+
+    <div class="rubric-hd">
+      <div>Criterion</div>
+      <div>R1</div>
+      <div>R2</div>
+      <div>AI</div>
+    </div>
+
+    ${criteria.map(c => `
+      <div class="rubric-row">
+        <div>
+          <div class="rubric-crit">${c.label}</div>
+          <div class="rubric-crit-d">${c.desc}</div>
+        </div>
+        <div class="rubric-score ${scoreClass(a.scores.r1[c.key])}">${a.scores.r1[c.key]||'—'}</div>
+        <div class="rubric-score ${scoreClass(a.scores.r2[c.key])}">${a.scores.r2[c.key]||'—'}</div>
+        <div class="rubric-score ai">${a.scores.ai[c.key]||'—'}</div>
+      </div>
+    `).join('')}
+
+    <div class="rubric-tot">
+      <div class="rubric-tot-lbl">Total · /${max}</div>
+      <div class="rubric-tot-score ${totR1/max>=0.85?'high':''}">${totR1}</div>
+      <div class="rubric-tot-score ${totR2/max>=0.85?'high':''}">${totR2}</div>
+      <div class="rubric-tot-score ai">${totAI}</div>
+    </div>
+
+    <div class="ai-rationale">
+      <div class="ai-rationale-hd">✦ Lex AI rationale</div>
+      <div class="ai-rationale-body">${a.aiRationale}</div>
+    </div>
+  `;
+}
+
+function renderAI(a){
+  const p = document.getElementById('panel-ai');
+  p.innerHTML = `
+    <div class="ai-strip">
+      <div class="ai-strip-hd">
+        <div class="ai-avatar">L</div>
+        <div>
+          <div class="ai-strip-title">Lex · third-reviewer analysis</div>
+          <div class="ai-strip-sub">CLAUDE SONNET · ACCREDITATION MODE</div>
+        </div>
+      </div>
+      <div class="ai-strip-body">${a.aiRationale}</div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:8px">Proposed taxonomy mapping</div>
+      <div>
+        ${a.topics.map(t => `<span class="ai-topic-chip">${t.label}<span class="conf">${Math.round(t.conf*100)}%</span></span>`).join('')}
+      </div>
+      <div style="font-size:11.5px;color:var(--slate2);margin-top:8px;line-height:1.5">These topic mappings will propagate as <em>skill events</em> onto attendees' competency records. Review and adjust before approval.</div>
+      <div style="display:flex;gap:6px;margin-top:10px">
+        <button class="btn btn-xs btn-ghost" onclick="toast('Topic editor (demo) — would let reviewer add/remove/reweight topics')">Edit mapping</button>
+        <button class="btn btn-xs btn-ghost" onclick="toast('Ran AI re-mapping against full taxonomy (demo)')">Re-run AI mapping</button>
+      </div>
+    </div>
+
+    <div style="background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px">
+      <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:8px">Ask Lex about this application</div>
+      <input type="text" placeholder="e.g. 'Has this provider had complaints in the past 12 months?'" style="width:100%;padding:9px 12px;border:1.5px solid var(--line2);border-radius:8px;font-family:inherit;font-size:12.5px;outline:none" onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--line2)'" onkeydown="if(event.key==='Enter'){toast('Lex is thinking… (demo)');this.value=''}"/>
+      <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn btn-xs btn-ghost" onclick="toast('Lex: provider has 0 complaints, 18 sessions delivered, avg 4.6★')">Provider track record</button>
+        <button class="btn btn-xs btn-ghost" onclick="toast('Lex: topic gap analysis — this course addresses critical FIDIC gap (only 12% lawyers trained)')">Topic gap fit</button>
+        <button class="btn btn-xs btn-ghost" onclick="toast('Lex: compared to 3 similar past submissions, point value is in line with norms')">Compare past similar</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderDecision(a){
+  const p = document.getElementById('panel-decision');
+  const criteria = a.kind === 'renewal' ? RUBRIC_CRITERIA_RENEWAL : RUBRIC_CRITERIA_COURSE;
+  const totR1 = criteria.reduce((s,c) => s + (a.scores.r1[c.key]||0), 0);
+  const totR2 = criteria.reduce((s,c) => s + (a.scores.r2[c.key]||0), 0);
+  const totAI = criteria.reduce((s,c) => s + (a.scores.ai[c.key]||0), 0);
+  const avg = (totR1 + totR2 + totAI) / 3;
+  const max = criteria.length * 10;
+  const pct = avg / max;
+  const recommend = pct >= 0.85 ? {label:'APPROVE',color:'green',msg:'All three reviewers (including AI) score this submission in the top tier. Recommend approval at proposed point value.'} : pct >= 0.7 ? {label:'APPROVE WITH CHANGES',color:'amber',msg:'Strong submission with specific issues to address. See AI rationale for recommended changes.'} : {label:'REQUEST REWORK',color:'red',msg:'Significant concerns across reviewers. Recommend requesting rework before resubmission.'};
+
+  p.innerHTML = `
+    <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:14px">Decision summary</div>
+
+    <div class="decision-recap">
+      <div class="decision-recap-num ${recommend.color==='green'?'':recommend.color}">${avg.toFixed(1)}<span style="font-size:18px;color:var(--slate3)">/${max}</span></div>
+      <div class="decision-recap-lbl">CONSENSUS SCORE · ${Math.round(pct*100)}%</div>
+      <div class="decision-recap-bd">${recommend.msg}</div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <div style="flex:1;text-align:center;padding:8px;background:var(--paper);border:1px solid var(--line);border-radius:8px">
+        <div style="font-family:var(--serif);font-size:18px;color:var(--ink)">${totR1}</div>
+        <div style="font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:1.1px;text-transform:uppercase;margin-top:2px">R1 · ${a.reviewer1.split(' ').pop()}</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:8px;background:var(--paper);border:1px solid var(--line);border-radius:8px">
+        <div style="font-family:var(--serif);font-size:18px;color:var(--ink)">${totR2}</div>
+        <div style="font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:1.1px;text-transform:uppercase;margin-top:2px">R2 · ${a.reviewer2.split(' ').pop()}</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:8px;background:linear-gradient(135deg,#f3e8ff,#fdf4ff);border:1px solid var(--purple-border);border-radius:8px">
+        <div style="font-family:var(--serif);font-size:18px;color:var(--purple)">${totAI}</div>
+        <div style="font-family:var(--mono);font-size:8.5px;color:var(--purple);letter-spacing:1.1px;text-transform:uppercase;margin-top:2px">Lex AI</div>
+      </div>
+    </div>
+
+    <div class="decision-notes">
+      <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:7px">Decision notes</div>
+      <textarea placeholder="Reviewer notes that will be attached to the decision record…"></textarea>
+    </div>
+
+    <div class="decision-actions">
+      <button class="btn btn-approve" onclick="decide('approve')">✓ Approve at proposed value</button>
+      <button class="btn btn-changes" onclick="decide('changes')">↻ Request changes</button>
+      <button class="btn btn-reject" onclick="decide('reject')">✕ Reject</button>
+      <button class="btn btn-ghost" onclick="decide('defer')">⏸ Defer · escalate to DG</button>
+    </div>
+  `;
+}
+
+function decide(action){
+  const a = APPLICATIONS[_selectedIdx];
+  const msg = {
+    approve:`Approved ${a.ref} — propagates to ${a.audience.toLowerCase()} as accredited`,
+    changes:`Sent back to ${a.provider} with reviewer notes`,
+    reject:`Rejected ${a.ref} — decision logged`,
+    defer:`Escalated ${a.ref} to DG office`
+  }[action];
+  toast(msg);
+}
+
+function updateReviewer(appIdx, reviewerSlot, name){
+  const a = APPLICATIONS[appIdx];
+  if (!a) return;
+  if (reviewerSlot === 1) a.reviewer1 = name;
+  if (reviewerSlot === 2) a.reviewer2 = name;
+  // Re-render the parts of the UI that show reviewer names
+  renderDecision(a);
+  toast('Reviewer updated: ' + name);
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  setTimeout(() => t.classList.remove('on'), 2800);
+}
+
+// Initial render
+renderQueue();
+renderDetail();
+</script>
+</body>
+</html>

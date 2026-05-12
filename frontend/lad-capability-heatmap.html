@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profession Capability Heatmap — LAD Intelligence</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+               background: #0f172a; color: #e2e8f0; -webkit-font-smoothing: antialiased; }
+  .topbar { background: #020617; border-bottom: 1px solid #1e293b;
+            padding: 22px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-mark { width: 38px; height: 38px; border-radius: 9px; background: linear-gradient(135deg,#dc2626,#991b1b);
+                display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px; }
+  .brand h1 { margin:0;font-size:18px;font-weight:600;color:#f1f5f9; }
+  .brand p  { margin:2px 0 0;font-size:12px;color:#94a3b8; }
+  .topbar a { color: #94a3b8; text-decoration: none; font-size: 14px; }
+  .topbar a:hover { color: #f1f5f9; }
+
+  .container { max-width: 1480px; margin: 0 auto; padding: 32px 40px 80px; }
+  .pagehead { margin-bottom: 28px; }
+  .pagehead h2 { font-size: 28px; font-weight: 700; margin: 0 0 6px; color:#f1f5f9; }
+  .pagehead p { color: #94a3b8; margin: 0; font-size: 14px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 28px; }
+  .kpi { background:#1e293b;border-radius:12px;padding:18px 20px;border:1px solid #334155; }
+  .kpi .v { font-size: 30px; font-weight: 700; color: #f1f5f9; line-height: 1; margin-bottom: 4px; }
+  .kpi .l { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+  .kpi.warn .v { color: #fbbf24; }
+  .kpi.bad .v { color: #f87171; }
+
+  .grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; }
+  @media (max-width: 1200px) { .grid { grid-template-columns: 1fr; } }
+
+  .card { background:#1e293b;border-radius:14px;padding:24px;border:1px solid #334155; margin-bottom: 24px; }
+  .card h3 { margin:0 0 4px;font-size:17px;font-weight:600;color:#f1f5f9; }
+  .card .sub { color:#94a3b8;font-size:13px;margin: 0 0 18px; }
+
+  /* Heatmap grid */
+  .domain-block { margin-bottom: 22px; }
+  .domain-block h4 { margin: 0 0 10px; font-size: 13px; font-weight: 600;
+                      color:#cbd5e1; text-transform: uppercase; letter-spacing: 0.05em;
+                      display:flex; justify-content: space-between; align-items: baseline; }
+  .domain-block h4 .meta { font-size: 11px; color: #64748b; font-weight: 500; text-transform: none; letter-spacing: 0; }
+  .topics-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; }
+  .heat { padding: 10px 12px; border-radius: 8px; border: 1px solid #334155;
+          display: flex; justify-content: space-between; align-items: center; gap: 8px;
+          transition: transform 0.1s; }
+  .heat:hover { transform: scale(1.02); border-color: #475569; }
+  .heat .name { font-size: 12.5px; font-weight: 500; line-height: 1.25; }
+  .heat .val { font-size: 13px; font-weight: 700; }
+  .heat.cov-0 { background: rgba(248,113,113,0.05); color: #94a3b8; }
+  .heat.cov-1 { background: rgba(34,197,94,0.08); color: #d1fae5; }
+  .heat.cov-2 { background: rgba(34,197,94,0.18); color: #d1fae5; }
+  .heat.cov-3 { background: rgba(34,197,94,0.32); color: #ecfdf5; }
+  .heat.cov-4 { background: rgba(34,197,94,0.52); color: #fff; }
+  .heat.cov-5 { background: rgba(34,197,94,0.75); color: #fff; }
+  .heat.stale { border-style: dashed; }
+
+  /* Side lists */
+  .list-row { padding: 10px 0; border-bottom: 1px solid #334155;
+              display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+  .list-row:last-child { border-bottom: 0; }
+  .list-row .label { font-size: 13px; }
+  .list-row .meta { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+  .list-row .pct { font-size: 14px; font-weight: 700; color: #fbbf24; }
+  .list-row.bad .pct { color: #f87171; }
+  .list-row.good .pct { color: #4ade80; }
+
+  .legend { display:flex; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #334155;
+            font-size: 11px; color: #94a3b8; flex-wrap: wrap; align-items: center; }
+  .legend .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; margin-right: 4px;
+                    vertical-align: middle; }
+
+  .empty { text-align: center; color: #64748b; padding: 40px 20px; }
+
+  .filter-row { display:flex; gap:10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .filter-row button { padding: 7px 14px; border-radius: 7px; border: 1px solid #334155;
+                        background: #1e293b; color: #cbd5e1; font-size: 12.5px; cursor: pointer; }
+  .filter-row button:hover { background: #334155; }
+  .filter-row button.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+</style>
+
+<style id="lgn-styles">
+/* ═════════ LAD Global Nav ═════════ */
+.lgn{position:sticky;top:0;z-index:600;height:54px;background:linear-gradient(90deg,#0a1e3a 0%,#1c3a5e 100%);display:flex;align-items:center;gap:6px;padding:0 18px;box-shadow:0 2px 12px rgba(0,0,0,.2);color:#fff;font-family:'Inter','IBM Plex Sans',system-ui,sans-serif;font-size:13px;letter-spacing:-.005em}
+.lgn a{text-decoration:none}
+.lgn-brand{display:flex;gap:11px;align-items:center;color:#fff;padding-right:18px;margin-right:6px;border-right:1px solid rgba(255,255,255,.15);min-width:0}
+.lgn-emblem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#C9913A,#d9a85a);color:#1c1f2e;display:grid;place-items:center;font-family:'Crimson Pro',Georgia,serif;font-size:17px;font-weight:700;flex-shrink:0}
+.lgn-brand-text{line-height:1.15;min-width:0}
+.lgn-brand-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lgn-brand-sub{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:rgba(255,255,255,.55);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px;white-space:nowrap}
+.lgn-group{display:flex;gap:3px;align-items:center}
+.lgn-group-label{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:rgba(255,255,255,.4);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin:0 8px 0 4px;flex-shrink:0}
+.lgn-pill{padding:7px 13px;border-radius:7px;font-size:12.5px;font-weight:500;color:rgba(255,255,255,.72);transition:all .15s;cursor:pointer;white-space:nowrap}
+.lgn-pill:hover{color:#fff;background:rgba(255,255,255,.08)}
+.lgn-pill.on{color:#fff;background:rgba(255,255,255,.16);font-weight:600}
+.lgn-pill-sec{padding:6px 11px;font-size:12px;color:rgba(255,255,255,.5)}
+.lgn-pill-sec:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.06)}
+.lgn-spacer{flex:1;min-width:12px}
+.lgn-divider{width:1px;height:22px;background:rgba(255,255,255,.15);margin:0 8px;flex-shrink:0}
+@media (max-width:1100px){.lgn-brand-text{display:none}.lgn-group-label{display:none}.lgn-pill{padding:7px 10px;font-size:12px}.lgn-pill-sec{padding:6px 9px}}
+
+/* Push existing sticky topbars / sidebars below the unified nav */
+.lgn ~ .topbar,.lgn ~ * .topbar{top:54px !important}
+.lgn ~ .sidebar,.lgn ~ * .sidebar{top:54px !important;height:calc(100vh - 54px) !important}
+.lgn ~ .adm-topbar,.lgn ~ * .adm-topbar{top:54px !important}
+.lgn ~ .adm-tabs-top,.lgn ~ * .adm-tabs-top{top:54px !important}
+.lgn ~ .adm-web-subtabs,.lgn ~ * .adm-web-subtabs{top:54px !important}
+@media (max-width:760px){.lgn{padding:0 10px;gap:2px}.lgn-pill{padding:6px 8px;font-size:11.5px}.lgn-emblem{width:28px;height:28px;font-size:15px}}
+</style>
+</head>
+<body>
+<!-- ═════════ Unified LAD nav ═════════ -->
+<nav class="lgn" id="lgn">
+  <a class="lgn-brand" href="lad-super-system.html">
+    <div class="lgn-emblem">⚖</div>
+    <div class="lgn-brand-text">
+      <div class="lgn-brand-title">Legal Affairs Department</div>
+      <div class="lgn-brand-sub">CLPD · Government of Dubai</div>
+    </div>
+  </a>
+  <span class="lgn-group-label" style="margin-left:0">LAD STAFF</span>
+  <div class="lgn-group">
+    <a class="lgn-pill" href="lad-intelligence-v4.html">Dashboard</a>
+    <a class="lgn-pill" href="lad-intelligence-v4.html#firms">Firms</a>
+    <a class="lgn-pill" href="lad-intelligence-v4.html#cohort">Lawyers</a>
+    <a class="lgn-pill" href="lad-accreditation-review.html">Accreditation</a>
+    <a class="lgn-pill on" href="lad-capability-heatmap.html">Heatmap</a>
+    <a class="lgn-pill" href="lad-intelligence-v4.html#reports">Reports</a>
+  </div>
+  <div class="lgn-spacer"></div>
+  <a class="lgn-pill lgn-pill-sec" href="lad-admin.html" title="Switch to operational admin tools">LAD Admin →</a>
+  <a class="lgn-pill lgn-pill-sec" onclick="['lad_token','lad_role','lad_name'].forEach(function(k){try{localStorage.removeItem(k)}catch(e){}});window.location.href='clpd-portal.html';return false;" data-lad-logout style="cursor:pointer">Sign out</a>
+</nav>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">L</div>
+    <div>
+      <h1>Profession Capability Heatmap</h1>
+      <p>LAD Intelligence · Legal Affairs Department of Dubai</p>
+    </div>
+  </div>
+  <div><a href="lad-intelligence-v4.html">← Back to LAD Intelligence</a></div>
+</div>
+
+<div class="container">
+  <div class="pagehead">
+    <h2>Where Dubai's lawyers are trained — and where they're not</h2>
+    <p>Aggregated skill graph across the 4,411 practising lawyers in the Emirate. Use this to identify regulatory blind spots, plan course commissioning, and benchmark provider impact.</p>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="v" id="kpi-topics">—</div><div class="l">Topics with coverage</div></div>
+    <div class="kpi"><div class="v" id="kpi-zero">—</div><div class="l">Topics with zero coverage</div></div>
+    <div class="kpi warn"><div class="v" id="kpi-stale">—</div><div class="l">Topics going stale (avg)</div></div>
+    <div class="kpi"><div class="v" id="kpi-broadest">—</div><div class="l">Broadest coverage %</div></div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h3>Capability heatmap by domain</h3>
+        <p class="sub">Each tile = a topic. Intensity = % of profession trained. Dashed = >2yrs since last attendance recorded.</p>
+
+        <div class="filter-row">
+          <button data-filter="all" class="active">All domains</button>
+          <button data-filter="covered">Covered only</button>
+          <button data-filter="gaps">Gaps only</button>
+          <button data-filter="stale">Stale only</button>
+        </div>
+
+        <div id="heatmap"></div>
+
+        <div class="legend">
+          <span>Coverage:</span>
+          <span><span class="swatch" style="background:rgba(248,113,113,0.1)"></span>0%</span>
+          <span><span class="swatch" style="background:rgba(34,197,94,0.18)"></span>1–10%</span>
+          <span><span class="swatch" style="background:rgba(34,197,94,0.32)"></span>10–25%</span>
+          <span><span class="swatch" style="background:rgba(34,197,94,0.52)"></span>25–40%</span>
+          <span><span class="swatch" style="background:rgba(34,197,94,0.75)"></span>40%+</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h3>Best-covered topics</h3>
+        <p class="sub">Profession-wide strengths</p>
+        <div id="top-covered"></div>
+      </div>
+
+      <div class="card">
+        <h3>Critical gaps</h3>
+        <p class="sub">Active practice areas with <5% coverage — commission courses</p>
+        <div id="gaps-list"></div>
+      </div>
+
+      <div class="card">
+        <h3>Going stale</h3>
+        <p class="sub">Once-strong topics where the profession is falling behind</p>
+        <div id="stale-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="runtime-config.js"></script>
+  <script src="api-client.js"></script>
+<script src="auth-bridge.js"></script>
+<script>
+'use strict';
+
+const DOMAIN_NAMES = {
+  dr:'Dispute Resolution',cc:'Corporate & Commercial',fs:'Financial Services',
+  re:'Real Estate & Construction',em:'Employment & Immigration',ip:'IP & Technology',
+  fp:'Family & Personal Status',cr:'Criminal Law',pa:'Public & Administrative',
+  tx:'Tax & Customs',en:'Energy & Infrastructure',ma:'Maritime & Aviation',
+  hc:'Healthcare',in:'Insurance',rc:'Regulatory Compliance & Ethics',
+  jx:'UAE Jurisdictional Specialisms',ps:'Professional Skills',eg:'Emerging Areas'
+};
+
+// Demo data matching real propagation results from the spreadsheet
+const DEMO_TOPICS = [
+  // High coverage
+  { topic_id:'jx.civil_transactions', label:'UAE Civil Transactions Law', domain:'jx', level:2, lawyers_with_skill: 2237, coverage_pct: 50.7, freshness:'current' },
+  { topic_id:'ps.client_care', label:'Client Care & Practice Management', domain:'ps', level:2, lawyers_with_skill: 2108, coverage_pct: 47.8, freshness:'current' },
+  { topic_id:'rc.ethics.confidentiality', label:'Client Confidentiality', domain:'rc', level:3, lawyers_with_skill: 2108, coverage_pct: 47.8, freshness:'current' },
+  { topic_id:'rc.ethics.conflicts', label:'Conflicts of Interest', domain:'rc', level:3, lawyers_with_skill: 2108, coverage_pct: 47.8, freshness:'current' },
+  { topic_id:'rc.ethics.uae_code', label:'UAE Code of Ethics for Legal Professionals', domain:'rc', level:3, lawyers_with_skill: 2108, coverage_pct: 47.8, freshness:'current' },
+  { topic_id:'cc.contracts.civil_code', label:'UAE Civil Code (Contracts)', domain:'cc', level:3, lawyers_with_skill: 1698, coverage_pct: 38.5, freshness:'current' },
+  { topic_id:'rc.uae_legal_framework.constitution', label:'UAE Constitution & Federal Structure', domain:'rc', level:3, lawyers_with_skill: 1513, coverage_pct: 34.3, freshness:'current' },
+  { topic_id:'rc.uae_legal_framework.sources', label:'Sources of UAE Law', domain:'rc', level:3, lawyers_with_skill: 1513, coverage_pct: 34.3, freshness:'current' },
+  { topic_id:'dr.litigation.civil', label:'Civil Litigation (UAE Federal Courts)', domain:'dr', level:3, lawyers_with_skill: 1478, coverage_pct: 33.5, freshness:'current' },
+  // Medium
+  { topic_id:'cc.contracts.common_law', label:'Common Law Contract Principles', domain:'cc', level:3, lawyers_with_skill: 825, coverage_pct: 18.7, freshness:'current' },
+  { topic_id:'cc.contracts.drafting', label:'Contract Drafting', domain:'cc', level:3, lawyers_with_skill: 825, coverage_pct: 18.7, freshness:'current' },
+  { topic_id:'jx.difc.courts', label:'DIFC Courts Practice', domain:'jx', level:3, lawyers_with_skill: 825, coverage_pct: 18.7, freshness:'current' },
+  { topic_id:'dr.arbitration.difc', label:'DIFC-LCIA / DIFC Arbitration', domain:'dr', level:3, lawyers_with_skill: 612, coverage_pct: 13.9, freshness:'current' },
+  { topic_id:'dr.arbitration.icc', label:'ICC Arbitration', domain:'dr', level:3, lawyers_with_skill: 478, coverage_pct: 10.8, freshness:'current' },
+  { topic_id:'cc.contracts.exclusion', label:'Exclusion & Limitation Clauses', domain:'cc', level:3, lawyers_with_skill: 412, coverage_pct: 9.3, freshness:'current' },
+  { topic_id:'ip.tech.dp.uae_federal', label:'UAE PDPL (Federal Decree 45/2021)', domain:'ip', level:3, lawyers_with_skill: 387, coverage_pct: 8.8, freshness:'current' },
+  { topic_id:'cc.contracts.poa', label:'Powers of Attorney', domain:'cc', level:3, lawyers_with_skill: 318, coverage_pct: 7.2, freshness:'current' },
+  { topic_id:'cc.contracts.assignment', label:'Assignment of Debt & Novation', domain:'cc', level:3, lawyers_with_skill: 286, coverage_pct: 6.5, freshness:'current' },
+  { topic_id:'ip.copyright.ai', label:'AI & Copyright', domain:'ip', level:3, lawyers_with_skill: 234, coverage_pct: 5.3, freshness:'current' },
+  { topic_id:'dr.arbitration.investor_state', label:'Investor-State Arbitration', domain:'dr', level:3, lawyers_with_skill: 212, coverage_pct: 4.8, freshness:'current' },
+  { topic_id:'dr.enforcement.new_york', label:'New York Convention', domain:'dr', level:3, lawyers_with_skill: 198, coverage_pct: 4.5, freshness:'current' },
+  { topic_id:'dr.mediation.commercial', label:'Commercial Mediation', domain:'dr', level:3, lawyers_with_skill: 165, coverage_pct: 3.7, freshness:'current' },
+  { topic_id:'ps.negotiation', label:'Negotiation', domain:'ps', level:2, lawyers_with_skill: 92, coverage_pct: 2.1, freshness:'current' },
+  { topic_id:'rc.tax_updates.tax', label:'Tax Law Updates', domain:'rc', level:3, lawyers_with_skill: 74, coverage_pct: 1.7, freshness:'current' },
+  { topic_id:'tx.corporate_tax.basics', label:'Corporate Tax Fundamentals', domain:'tx', level:3, lawyers_with_skill: 55, coverage_pct: 1.2, freshness:'current' },
+  // Stale 
+  { topic_id:'fs.aml.uae_framework', label:'UAE AML Framework', domain:'fs', level:3, lawyers_with_skill: 384, coverage_pct: 8.7, freshness:'stale', most_recent:'2022-01-15' },
+  { topic_id:'fs.aml.kyc', label:'KYC & Customer Due Diligence', domain:'fs', level:3, lawyers_with_skill: 248, coverage_pct: 5.6, freshness:'stale' },
+  // Zero coverage examples
+  { topic_id:'dr.arbitration.adgm', label:'ADGM Arbitration', domain:'dr', level:3, lawyers_with_skill: 0, coverage_pct: 0, freshness:'never' },
+  { topic_id:'jx.adgm.courts', label:'ADGM Courts Practice', domain:'jx', level:3, lawyers_with_skill: 0, coverage_pct: 0, freshness:'never' },
+  { topic_id:'ip.tech.dp.adgm', label:'ADGM Data Protection', domain:'ip', level:3, lawyers_with_skill: 0, coverage_pct: 0, freshness:'never' },
+  { topic_id:'ip.tech.ai_gov.regulation', label:'AI Regulation (UAE & International)', domain:'ip', level:2, lawyers_with_skill: 0, coverage_pct: 0, freshness:'never' },
+  { topic_id:'tx.corporate_tax.qfzp', label:'Qualifying Free Zone Persons', domain:'tx', level:3, lawyers_with_skill: 0, coverage_pct: 0, freshness:'never' },
+  { topic_id:'tx.corporate_tax.transfer_pricing', label:'Transfer Pricing', domain:'tx', level:3, lawyers_with_skill: 0, coverage_pct: 0, freshness:'never' },
+  { topic_id:'fs.fintech.vara', label:'VARA Regulation (Dubai)', domain:'fs', level:3, lawyers_with_skill: 0, coverage_pct: 0, freshness:'never' },
+  { topic_id:'fs.fintech.crypto', label:'Virtual Assets & Crypto', domain:'fs', level:3, lawyers_with_skill: 0, coverage_pct: 0, freshness:'never' },
+  { topic_id:'rc.esg.climate', label:'Climate Law & COP28 Outcomes', domain:'rc', level:3, lawyers_with_skill: 0, coverage_pct: 0, freshness:'never' },
+  { topic_id:'em.uae_labour.contracts', label:'UAE Labour Law Contracts', domain:'em', level:3, lawyers_with_skill: 0, coverage_pct: 0, freshness:'never' },
+  { topic_id:'em.immigration.golden_visa', label:'Golden Visa & Long-Term Residence', domain:'em', level:3, lawyers_with_skill: 0, coverage_pct: 0, freshness:'never' },
+  { topic_id:'re.construction.fidic', label:'FIDIC Contracts', domain:'re', level:3, lawyers_with_skill: 0, coverage_pct: 0, freshness:'never' },
+  { topic_id:'cr.cyber', label:'Cybercrime', domain:'cr', level:2, lawyers_with_skill: 0, coverage_pct: 0, freshness:'never' },
+];
+
+let allTopics = [], filter = 'all';
+
+function bucketCoverage(pct) {
+  if (pct === 0) return 0;
+  if (pct < 10) return 1;
+  if (pct < 25) return 2;
+  if (pct < 40) return 3;
+  if (pct < 60) return 4;
+  return 5;
+}
+
+function renderHeatmap(topics) {
+  const filtered = topics.filter(t => {
+    if (filter === 'all') return true;
+    if (filter === 'covered') return t.coverage_pct > 0;
+    if (filter === 'gaps') return t.coverage_pct < 5;
+    if (filter === 'stale') return t.freshness && t.freshness !== 'current' && t.freshness !== 'never';
+    return true;
+  });
+  const byDomain = new Map();
+  for (const t of filtered) {
+    if (!byDomain.has(t.domain)) byDomain.set(t.domain, []);
+    byDomain.get(t.domain).push(t);
+  }
+  const sorted = [...byDomain.entries()].sort((a, b) => {
+    const totalA = a[1].reduce((x, y) => x + y.coverage_pct, 0);
+    const totalB = b[1].reduce((x, y) => x + y.coverage_pct, 0);
+    return totalB - totalA;
+  });
+  const html = sorted.map(([dom, list]) => {
+    list.sort((a, b) => b.coverage_pct - a.coverage_pct);
+    const total = list.reduce((x, y) => x + y.coverage_pct, 0) / list.length;
+    return `<div class="domain-block">
+      <h4>
+        <span>${DOMAIN_NAMES[dom] || dom}</span>
+        <span class="meta">${list.length} topic${list.length === 1 ? '' : 's'} · avg coverage ${total.toFixed(1)}%</span>
+      </h4>
+      <div class="topics-grid">
+        ${list.map(t => `<div class="heat cov-${bucketCoverage(t.coverage_pct)} ${t.freshness === 'stale' || t.freshness === 'critically_stale' ? 'stale' : ''}"
+            title="${t.lawyers_with_skill.toLocaleString()} lawyers trained">
+          <div class="name">${t.label}</div>
+          <div class="val">${t.coverage_pct.toFixed(t.coverage_pct < 1 ? 1 : 0)}%</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('heatmap').innerHTML = html || '<div class="empty">No topics match the current filter.</div>';
+}
+
+function renderKPIs(topics) {
+  const covered = topics.filter(t => t.coverage_pct > 0).length;
+  const zero = topics.filter(t => t.coverage_pct === 0).length;
+  const stale = topics.filter(t => t.freshness === 'stale' || t.freshness === 'critically_stale').length;
+  const max = topics.reduce((m, t) => Math.max(m, t.coverage_pct), 0);
+  document.getElementById('kpi-topics').textContent = covered;
+  document.getElementById('kpi-zero').textContent = zero;
+  document.getElementById('kpi-stale').textContent = stale;
+  document.getElementById('kpi-broadest').textContent = max.toFixed(1) + '%';
+}
+
+function renderSideLists(topics) {
+  const top = [...topics].filter(t => t.coverage_pct > 0).sort((a, b) => b.coverage_pct - a.coverage_pct).slice(0, 8);
+  document.getElementById('top-covered').innerHTML = top.map(t => `
+    <div class="list-row good">
+      <div>
+        <div class="label">${t.label}</div>
+        <div class="meta">${DOMAIN_NAMES[t.domain] || t.domain} · ${t.lawyers_with_skill.toLocaleString()} lawyers</div>
+      </div>
+      <div class="pct" style="color:#4ade80">${t.coverage_pct.toFixed(1)}%</div>
+    </div>`).join('');
+
+  const gaps = topics.filter(t => t.coverage_pct < 5 && t.level === 3).slice(0, 8);
+  document.getElementById('gaps-list').innerHTML = gaps.length ? gaps.map(t => `
+    <div class="list-row bad">
+      <div>
+        <div class="label">${t.label}</div>
+        <div class="meta">${DOMAIN_NAMES[t.domain] || t.domain}</div>
+      </div>
+      <div class="pct">${t.coverage_pct.toFixed(1)}%</div>
+    </div>`).join('') : '<div style="color:#64748b;font-size:13px">No major gaps detected.</div>';
+
+  const stale = topics.filter(t => (t.freshness === 'stale' || t.freshness === 'critically_stale') && t.coverage_pct > 1).slice(0, 8);
+  document.getElementById('stale-list').innerHTML = stale.length ? stale.map(t => `
+    <div class="list-row">
+      <div>
+        <div class="label">${t.label}</div>
+        <div class="meta">${DOMAIN_NAMES[t.domain] || t.domain} · ${t.lawyers_with_skill.toLocaleString()} trained, no refresh in 2+ yrs</div>
+      </div>
+      <div class="pct">${t.coverage_pct.toFixed(1)}%</div>
+    </div>`).join('') : '<div style="color:#64748b;font-size:13px">No stale topics detected.</div>';
+}
+
+async function load() {
+  let topics;
+  try {
+    if (window.LAD && window.LAD.enabled) {
+      const data = await fetch(window.LAD_API_BASE + '/api/v1/skills/heatmap', {
+        headers: { Authorization: 'Bearer ' + (localStorage.getItem('lad_token') || '') }
+      }).then(r => r.json());
+      topics = data.topics;
+    } else { throw new Error('offline'); }
+  } catch (e) {
+    topics = DEMO_TOPICS;
+  }
+  allTopics = topics;
+  renderKPIs(topics);
+  renderHeatmap(topics);
+  renderSideLists(topics);
+}
+
+document.querySelectorAll('.filter-row button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-row button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filter = btn.dataset.filter;
+    renderHeatmap(allTopics);
+  });
+});
+
+load();
+</script>
+</body>
+</html>
