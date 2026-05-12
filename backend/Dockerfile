@@ -10,7 +10,7 @@ FROM node:20-alpine AS builder
 RUN apk add --no-cache python3 make g++
 WORKDIR /build
 COPY package*.json ./
-RUNnpm install --omit=dev --no-audit --no-fund
+RUN npm install --omit=dev --no-audit --no-fund
 
 # ─── Runtime ────────────────────────────────────────────────────────────
 FROM node:20-alpine AS runtime
