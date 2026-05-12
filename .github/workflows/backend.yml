@@ -33,7 +33,7 @@ jobs:
 
       - name: Install
         working-directory: backend
-        run: npm ci --no-audit --no-fund
+        run: npm install  --no-audit --no-fund
 
       - name: Validate env (dev mode — should only warn)
         working-directory: backend
