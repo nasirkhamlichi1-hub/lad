@@ -10626,7 +10626,8 @@ async function submitAccredApp() {
   });
   renderInternalCards();
   closeAccredApp();
-  showToast(`Application submitted · Ref ${ref} · Power BI workflow triggered`);
+  const _bi = (typeof POWERBI_WEBHOOK_URL === 'string') && POWERBI_WEBHOOK_URL && !POWERBI_WEBHOOK_URL.includes('example.com');
+  showToast(`Application submitted · Ref ${ref}` + (_bi ? ' · Power BI workflow triggered' : ' · saved to LAD queue'));
 }
 
 // ════════════════════════════════════════════
