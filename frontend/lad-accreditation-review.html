@@ -269,10 +269,18 @@ em{font-style:italic;color:var(--gold)}
     <div class="queue-hd">
       <div class="queue-hd-title">Application Queue</div>
       <div class="queue-tabs">
-        <div class="queue-tab on" data-filter="all" onclick="setFilter('all')">All <span class="ct">14</span></div>
-        <div class="queue-tab" data-filter="breach" onclick="setFilter('breach')">Breach <span class="ct">3</span></div>
-        <div class="queue-tab" data-filter="new" onclick="setFilter('new')">New <span class="ct">8</span></div>
-        <div class="queue-tab" data-filter="renewal" onclick="setFilter('renewal')">Renewal <span class="ct">4</span></div>
+        <div class="queue-tab on" data-filter="pending"  onclick="setFilter('pending')">Pending  <span class="ct" id="ct-pending">·</span></div>
+        <div class="queue-tab"    data-filter="approved" onclick="setFilter('approved')">Approved <span class="ct" id="ct-approved">·</span></div>
+        <div class="queue-tab"    data-filter="rejected" onclick="setFilter('rejected')">Rejected <span class="ct" id="ct-rejected">·</span></div>
+        <div class="queue-tab"    data-filter="returned" onclick="setFilter('returned')">Returned <span class="ct" id="ct-returned">·</span></div>
+        <div class="queue-tab"    data-filter="all"      onclick="setFilter('all')">All <span class="ct" id="ct-all">·</span></div>
+      </div>
+      <div style="padding:8px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;background:var(--paper)">
+        <span style="font-family:var(--mono);font-size:9.5px;letter-spacing:1px;color:var(--slate3);text-transform:uppercase">Reviewer</span>
+        <select id="reviewerFilter" onchange="setReviewerFilter(this.value)" style="flex:1;font-family:var(--sans);font-size:12.5px;padding:5px 8px;border:1px solid var(--line2);border-radius:6px;background:#fff;color:var(--ink);cursor:pointer">
+          <option value="">All reviewers</option>
+        </select>
+        <button onclick="refreshQueue()" title="Refresh from backend" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:5px 9px;cursor:pointer;color:var(--slate);font-size:11px">↻</button>
       </div>
     </div>
     <div class="queue-list" id="queueList"></div>
@@ -313,189 +321,10 @@ const REVIEWERS = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// DATA — 14 pending applications matching the KPI tile breakdown
+// DATA — populated from /api/v1/accreditations (LAD CLPD backend)
 // ─────────────────────────────────────────────────────────────
-const APPLICATIONS = [
-  {
-    ref:'ACC-2026-0128', kind:'new', priority:'breach', days:18,
-    title:'Advanced Construction Disputes & FIDIC',
-    provider:'KTL Training', providerType:'Training Provider',
-    submitted:'22 Apr 2026', reviewer1:'Duncan Wood', reviewer2:'Nasir Khamlichi',
-    format:'Face-to-face', duration:'2 days · 16h', proposedPts:8, proposedCredits:18,
-    audience:'Construction & disputes practitioners · advanced',
-    files:[
-      {n:'Course-brief-v3.pdf',sz:'1.2 MB',t:'pdf'},
-      {n:'Trainer-CV-Mohammed-Said.pdf',sz:'480 KB',t:'pdf'},
-      {n:'Trainer-CV-Sara-Iqbal.pdf',sz:'420 KB',t:'pdf'},
-      {n:'Detailed-syllabus.docx',sz:'215 KB',t:'docx'},
-      {n:'Past-feedback-summary.xlsx',sz:'89 KB',t:'xlsx'}
-    ],
-    objectives:[
-      'Identify the practical effect of FIDIC 2017 amendments on Dubai construction practice, including the Dispute Avoidance/Adjudication Board mechanism.',
-      'Apply UAE Civil Code provisions (Federal Law 5/1985 articles 872–896) to construction defect liability scenarios.',
-      'Draft enforceable variation orders under FIDIC Red Book sub-clauses 13.1–13.3.',
-      'Advise on parallel DIFC-LCIA arbitration and onshore Dubai court enforcement strategies.',
-      'Recognise prescription periods for construction-related claims under UAE law and FIDIC clauses.'
-    ],
-    scores:{
-      r1:{relevance:9,depth:8,trainer:9,materials:7,pedagogy:8},
-      r2:{relevance:9,depth:9,trainer:9,materials:8,pedagogy:9},
-      ai:{relevance:9,depth:9,trainer:8,materials:7,pedagogy:8}
-    },
-    aiRationale:`Strong substantive content. Trainers <em>Mohammed Said</em> and <em>Sara Iqbal</em> have a combined 31 years' construction practice and have delivered 14 prior LAD-accredited sessions (avg 4.6/5). FIDIC 2017 alignment is current. Materials score lower because the past-feedback summary is six months stale — recommend updating before final approval. Topic mapping is highly specific.`,
-    topics:[
-      {label:'Construction Law',conf:0.96},
-      {label:'FIDIC Contracts',conf:0.94},
-      {label:'UAE Civil Code · Defects',conf:0.88},
-      {label:'DIFC Arbitration',conf:0.71},
-      {label:'Prescription Periods',conf:0.62}
-    ],
-    decision:null
-  },
-  {
-    ref:'ACC-2026-0142', kind:'new', priority:'breach', days:12,
-    title:'AI in Legal Practice: Compliance & Risk',
-    provider:'Galadari Academy', providerType:'Firm Internal',
-    submitted:'28 Apr 2026', reviewer1:'Layla Bouchart', reviewer2:'Aisha Khalifa',
-    format:'Hybrid', duration:'1 day · 6h', proposedPts:3, proposedCredits:7,
-    audience:'All practitioners · intermediate',
-    files:[
-      {n:'Course-outline.pdf',sz:'780 KB',t:'pdf'},
-      {n:'Slide-deck-draft.pdf',sz:'14 MB',t:'pdf'},
-      {n:'Trainer-bio-Sandra-W.pdf',sz:'310 KB',t:'pdf'}
-    ],
-    objectives:[
-      'Map AI deployment in legal workflows against UAE PDPL (Federal Decree-Law 45/2021) obligations.',
-      'Identify professional conduct risks when using generative AI for client work under the UAE Code of Practice.',
-      'Apply governance frameworks (NIST AI RMF, ISO/IEC 42001) in a UAE legal-services context.',
-      'Draft AI-use disclosure clauses for engagement letters.'
-    ],
-    scores:{
-      r1:{relevance:9,depth:7,trainer:8,materials:6,pedagogy:7},
-      r2:{relevance:9,depth:8,trainer:8,materials:7,pedagogy:8},
-      ai:{relevance:9,depth:8,trainer:8,materials:6,pedagogy:7}
-    },
-    aiRationale:`Highly relevant — flagged as priority topic in the 2026 strategic plan. Trainer <em>Sandra Wahidi</em> brings strong AI-governance background but limited UAE-specific practice experience; suggest co-presenter from local firm. Slide deck is draft only (watermarked) and lacks UAE case studies. <em>Recommend: request final materials before approval.</em>`,
-    topics:[
-      {label:'AI Governance · Legal',conf:0.95},
-      {label:'UAE PDPL',conf:0.88},
-      {label:'Professional Ethics',conf:0.79},
-      {label:'AI & Copyright',conf:0.41}
-    ],
-    decision:null
-  },
-  {
-    ref:'ACC-2026-0151', kind:'new', priority:'breach', days:11,
-    title:'UAE Corporate Tax: 2026 Update',
-    provider:'Stephenson Harwood', providerType:'Firm Internal',
-    submitted:'29 Apr 2026', reviewer1:'Mohammed Hassan', reviewer2:'Layla Bouchart',
-    format:'Face-to-face', duration:'½ day · 4h', proposedPts:2, proposedCredits:5,
-    audience:'Tax & corporate practitioners · all levels',
-    files:[
-      {n:'Course-brief.pdf',sz:'940 KB',t:'pdf'},
-      {n:'FTA-clarifications-summary.docx',sz:'180 KB',t:'docx'},
-      {n:'Trainer-CV-James-Robinson.pdf',sz:'410 KB',t:'pdf'}
-    ],
-    objectives:[
-      'Apply the 2025-2026 FTA clarifications on Qualifying Free Zone Person status.',
-      'Calculate transfer-pricing documentation obligations under Cabinet Decision 97/2023.',
-      'Advise on the corporate tax interaction with VAT and Economic Substance Regulations.',
-      'Identify high-risk restructuring triggers requiring advance ruling applications.'
-    ],
-    scores:{
-      r1:{relevance:9,depth:9,trainer:10,materials:9,pedagogy:8},
-      r2:{relevance:9,depth:9,trainer:9,materials:8,pedagogy:9},
-      ai:{relevance:9,depth:9,trainer:9,materials:9,pedagogy:8}
-    },
-    aiRationale:`Excellent submission. <em>James Robinson</em> is a recognised Dubai tax specialist (Partner, SH Tax) with 19 prior accredited sessions averaging 4.8/5. Content is fully current with FTA 2025 clarifications and recent transfer-pricing guidance. <em>Recommend approve.</em> SLA breach is administrative — application sat unallocated for 7 days.`,
-    topics:[
-      {label:'Corporate Tax · UAE',conf:0.97},
-      {label:'QFZP',conf:0.92},
-      {label:'Transfer Pricing',conf:0.89},
-      {label:'VAT · UAE',conf:0.71},
-      {label:'Economic Substance',conf:0.68}
-    ],
-    decision:null
-  },
-  {
-    ref:'ACC-2026-0167', kind:'new', priority:'urgent', days:9,
-    title:'International Arbitration Master Programme',
-    provider:'DIFC Academy', providerType:'Training Provider',
-    submitted:'1 May 2026', reviewer1:'Aisha Khalifa', reviewer2:'Mohammed Hassan',
-    format:'Face-to-face', duration:'3 days · 24h', proposedPts:10, proposedCredits:24,
-    audience:'Arbitration practitioners · advanced',
-    files:[{n:'Programme-prospectus.pdf',sz:'2.4 MB',t:'pdf'},{n:'Faculty-list.pdf',sz:'860 KB',t:'pdf'},{n:'Sample-materials.pdf',sz:'4.1 MB',t:'pdf'}],
-    objectives:['Apply UNCITRAL Model Law in DIFC and ADGM seated arbitrations.','Draft enforceable arbitration clauses for UAE-onshore commercial contracts.','Conduct cross-examination under common-law and civil-law approaches.','Strategise on parallel court proceedings and anti-suit injunctions in DIFC/ADGM.'],
-    scores:{r1:{relevance:9,depth:10,trainer:10,materials:9,pedagogy:9},r2:{relevance:9,depth:10,trainer:10,materials:9,pedagogy:9},ai:{relevance:9,depth:10,trainer:10,materials:9,pedagogy:9}},
-    aiRationale:`Flagship programme. Faculty includes Sir <em>David Steel</em>, <em>Essam Al Tamimi</em>, and three sitting DIFC arbitrators. Fully current with 2024 ADGM rules. <em>Strong recommend approve.</em>`,
-    topics:[{label:'International Arbitration',conf:0.98},{label:'DIFC Courts',conf:0.92},{label:'ADGM',conf:0.91},{label:'UNCITRAL Model Law',conf:0.86}],
-    decision:null
-  },
-  {
-    ref:'ACC-2026-0172', kind:'new', priority:'urgent', days:8,
-    title:'Construction & Real Estate Disputes',
-    provider:'Clyde & Co', providerType:'Firm Internal',
-    submitted:'2 May 2026', reviewer1:'Layla Bouchart', reviewer2:'Aisha Khalifa',
-    format:'Face-to-face', duration:'1 day · 7h', proposedPts:3, proposedCredits:8,
-    audience:'Real estate & construction · intermediate',
-    files:[{n:'Course-brief.pdf',sz:'1.1 MB',t:'pdf'},{n:'Trainer-CVs.pdf',sz:'620 KB',t:'pdf'}],
-    objectives:['Apply RERA 2023 amendments to off-plan dispute scenarios.','Advise on FIDIC variation order disputes in Dubai courts.','Identify enforcement pathways for construction-related judgments.'],
-    scores:{r1:{relevance:9,depth:8,trainer:9,materials:8,pedagogy:8},r2:{relevance:8,depth:8,trainer:9,materials:8,pedagogy:8},ai:{relevance:9,depth:8,trainer:9,materials:8,pedagogy:7}},
-    aiRationale:`Solid intermediate-level offering. Clyde & Co's construction team is well-credentialled. Suggest minor clarification on whether the session covers DLD case law from 2024-2026.`,
-    topics:[{label:'Construction Law',conf:0.94},{label:'RERA',conf:0.91},{label:'Real Estate Disputes',conf:0.88}],
-    decision:null
-  },
-  {
-    ref:'ACC-2026-0181', kind:'new', priority:'urgent', days:7,
-    title:'Aviation Law Update 2026',
-    provider:'Kwintessential', providerType:'Training Provider',
-    submitted:'3 May 2026', reviewer1:'Mohammed Hassan', reviewer2:'Layla Bouchart',
-    format:'Face-to-face', duration:'½ day · 3h', proposedPts:2, proposedCredits:5,
-    audience:'Aviation & maritime · all levels',
-    files:[{n:'Brief.pdf',sz:'710 KB',t:'pdf'}],
-    objectives:['Update on Montreal Convention amendments.','Identify GCAA enforcement trends 2024-2026.'],
-    scores:{r1:{relevance:8,depth:7,trainer:8,materials:7,pedagogy:7},r2:{relevance:8,depth:7,trainer:8,materials:7,pedagogy:8},ai:{relevance:8,depth:7,trainer:8,materials:6,pedagogy:7}},
-    aiRationale:`Niche topic with steady demand (24 lawyers in aviation practice). Materials thin — only a single PDF submitted. Request supporting slides before final approval.`,
-    topics:[{label:'Aviation Law',conf:0.96},{label:'Maritime',conf:0.42}],
-    decision:null
-  },
-  {
-    ref:'ACC-2026-0189', kind:'new', priority:'ok', days:5,
-    title:'M&A Best Practice in the UAE',
-    provider:'White & Case', providerType:'Firm Internal',
-    submitted:'5 May 2026', reviewer1:'Aisha Khalifa', reviewer2:'Mohammed Hassan',
-    format:'Face-to-face', duration:'1 day · 6h', proposedPts:3, proposedCredits:7,
-    audience:'Corporate · intermediate to advanced',
-    files:[{n:'Outline.pdf',sz:'990 KB',t:'pdf'},{n:'Faculty.pdf',sz:'520 KB',t:'pdf'},{n:'Case-studies.pdf',sz:'1.8 MB',t:'pdf'}],
-    objectives:['Structure UAE-onshore acquisition vehicles post-100%-foreign-ownership reforms.','Draft warranty and indemnity packages for SPA negotiations.','Navigate SCA & DFM disclosure obligations for listed-company transactions.'],
-    scores:{r1:{relevance:9,depth:9,trainer:9,materials:9,pedagogy:9},r2:{relevance:9,depth:9,trainer:9,materials:9,pedagogy:9},ai:{relevance:9,depth:9,trainer:9,materials:9,pedagogy:8}},
-    aiRationale:`High-quality submission. Faculty includes UAE managing partner plus three senior associates. Case studies are anonymised but specific. <em>Recommend approve.</em>`,
-    topics:[{label:'M&A',conf:0.97},{label:'Corporate · UAE',conf:0.94},{label:'Securities Regulation',conf:0.72}],
-    decision:null
-  },
-  {
-    ref:'ACC-2026-0193', kind:'new', priority:'ok', days:4,
-    title:'Ethics & AI — Practitioner Refresher',
-    provider:'LAD Academy', providerType:'Self-delivered',
-    submitted:'6 May 2026', reviewer1:'Layla Bouchart', reviewer2:'Aisha Khalifa',
-    format:'E-learning', duration:'Self-paced · ~2h', proposedPts:2, proposedCredits:5,
-    audience:'All practitioners · mandatory module',
-    files:[{n:'Module-storyboard.pdf',sz:'1.4 MB',t:'pdf'},{n:'Quiz-bank.xlsx',sz:'120 KB',t:'xlsx'}],
-    objectives:['Identify confidentiality risks when using generative AI tools.','Apply the UAE Code of Practice articles relating to client funds and conflicts.','Recognise the duty to verify AI-generated citations.'],
-    scores:{r1:{relevance:10,depth:8,trainer:10,materials:9,pedagogy:9},r2:{relevance:10,depth:8,trainer:9,materials:9,pedagogy:9},ai:{relevance:10,depth:8,trainer:9,materials:9,pedagogy:9}},
-    aiRationale:`Mandatory refresher — high strategic priority. Quality is strong. Consider adding a fifth learning objective on managed-service AI vendor due diligence.`,
-    topics:[{label:'Professional Ethics',conf:0.96},{label:'AI Governance · Legal',conf:0.84},{label:'UAE Code of Practice',conf:0.92}],
-    decision:null
-  },
-  // 4 provider renewals
-  {ref:'ACC-2026-0156', kind:'renewal', priority:'urgent', days:8, title:'Provider renewal — Galadari Academy', provider:'Galadari Academy', providerType:'Firm Internal', submitted:'2 May 2026', reviewer1:'Aisha Khalifa', reviewer2:'Mohammed Hassan', format:'—', duration:'—', proposedPts:'—', proposedCredits:'—', audience:'Provider-level renewal', files:[{n:'Annual-report-2025.pdf',sz:'3.2 MB',t:'pdf'},{n:'Quality-attestation.pdf',sz:'480 KB',t:'pdf'},{n:'Trainer-roster-update.xlsx',sz:'67 KB',t:'xlsx'}], objectives:['Provider has delivered 18 accredited sessions in the past 12 months with avg rating 4.6/5.','Quality assurance attestation signed by Managing Partner.','Three new trainers added to roster.'], scores:{r1:{compliance:9,quality:9,reach:8,governance:9,fees:9},r2:{compliance:9,quality:9,reach:8,governance:9,fees:9},ai:{compliance:9,quality:9,reach:8,governance:9,fees:9}}, aiRationale:`Standard renewal. No quality flags in 2025. <em>Recommend renew for 2-year cycle.</em>`, topics:[{label:'Provider status renewal',conf:1.0}], decision:null, isRenewal:true},
-  {ref:'ACC-2026-0163', kind:'renewal', priority:'urgent', days:8, title:'Provider renewal — DIFC Academy', provider:'DIFC Academy', providerType:'Training Provider', submitted:'2 May 2026', reviewer1:'Mohammed Hassan', reviewer2:'Layla Bouchart', format:'—', duration:'—', proposedPts:'—', proposedCredits:'—', audience:'Provider-level renewal', files:[{n:'Annual-report-2025.pdf',sz:'2.8 MB',t:'pdf'},{n:'Quality-attestation.pdf',sz:'410 KB',t:'pdf'}], objectives:['DIFC Academy delivered 47 sessions in 2025 with avg rating 4.7/5.','No quality complaints filed.','New CPD director appointed Q4 2025.'], scores:{r1:{compliance:10,quality:10,reach:10,governance:9,fees:9},r2:{compliance:10,quality:10,reach:10,governance:9,fees:9},ai:{compliance:10,quality:10,reach:10,governance:9,fees:9}}, aiRationale:`Strongest provider in the registry. <em>Recommend renew.</em>`, topics:[{label:'Provider status renewal',conf:1.0}], decision:null, isRenewal:true},
-  {ref:'ACC-2026-0175', kind:'renewal', priority:'ok', days:6, title:'Provider renewal — Kwintessential', provider:'Kwintessential', providerType:'Training Provider', submitted:'4 May 2026', reviewer1:'Aisha Khalifa', reviewer2:'Layla Bouchart', format:'—', duration:'—', proposedPts:'—', proposedCredits:'—', audience:'Provider-level renewal', files:[{n:'Annual-report.pdf',sz:'2.1 MB',t:'pdf'},{n:'Attestation.pdf',sz:'380 KB',t:'pdf'}], objectives:['Delivered 12 sessions in 2025 (down from 16 in 2024).','Average rating 4.4/5.','No quality flags.'], scores:{r1:{compliance:8,quality:8,reach:7,governance:9,fees:9},r2:{compliance:8,quality:8,reach:7,governance:9,fees:9},ai:{compliance:8,quality:8,reach:7,governance:9,fees:9}}, aiRationale:`Solid mid-tier provider. Volume declining — investigate strategic plans before renewing for full 2-year cycle. <em>Consider 1-year conditional renewal.</em>`, topics:[{label:'Provider status renewal',conf:1.0}], decision:null, isRenewal:true},
-  {ref:'ACC-2026-0188', kind:'renewal', priority:'ok', days:5, title:'Provider renewal — LAD Academy (in-house)', provider:'LAD Academy', providerType:'Self-delivered', submitted:'5 May 2026', reviewer1:'Layla Bouchart', reviewer2:'Mohammed Hassan', format:'—', duration:'—', proposedPts:'—', proposedCredits:'—', audience:'Provider-level renewal', files:[{n:'Annual-report.pdf',sz:'2.6 MB',t:'pdf'}], objectives:['Delivered 23 mandatory modules in 2025.','Avg rating 4.5/5.'], scores:{r1:{compliance:10,quality:9,reach:10,governance:10,fees:10},r2:{compliance:10,quality:9,reach:10,governance:10,fees:10},ai:{compliance:10,quality:9,reach:10,governance:10,fees:10}}, aiRationale:`In-house provider — administrative renewal.`, topics:[{label:'Provider status renewal',conf:1.0}], decision:null, isRenewal:true},
-  // 2 point value amendments
-  {ref:'ACC-2026-0194', kind:'amendment', priority:'ok', days:4, title:'Point value amendment — AML Update 2026', provider:'LAD Academy', providerType:'Self-delivered', submitted:'6 May 2026', reviewer1:'Aisha Khalifa', reviewer2:'Layla Bouchart', format:'Existing course', duration:'½ day · 4h → 6h', proposedPts:'2 → 3', proposedCredits:'5 → 7', audience:'All practitioners · mandatory', files:[{n:'Updated-syllabus.pdf',sz:'670 KB',t:'pdf'},{n:'New-module-AML-tech.docx',sz:'120 KB',t:'docx'}], objectives:['Existing AML course extended by 2 hours to cover AML-tech (blockchain analytics, transaction monitoring AI).','New compulsory case-study session added.'], scores:{r1:{relevance:9,depth:9,trainer:9,materials:9,pedagogy:9},r2:{relevance:9,depth:9,trainer:9,materials:9,pedagogy:9},ai:{relevance:9,depth:9,trainer:9,materials:9,pedagogy:9}}, aiRationale:`Justified extension. New AML-tech module aligns with FATF/UAE FIU guidance issued Feb 2026. <em>Recommend approve amendment.</em>`, topics:[{label:'AML Compliance',conf:0.98},{label:'FATF · UAE',conf:0.84}], decision:null},
-  {ref:'ACC-2026-0196', kind:'amendment', priority:'ok', days:3, title:'Point value amendment — Data Protection 2026', provider:'LAD Academy', providerType:'Self-delivered', submitted:'7 May 2026', reviewer1:'Mohammed Hassan', reviewer2:'Aisha Khalifa', format:'Existing course', duration:'3h → 4h', proposedPts:'1 → 2', proposedCredits:'3 → 5', audience:'All practitioners · mandatory', files:[{n:'Updated-modules.pdf',sz:'540 KB',t:'pdf'}], objectives:['Existing UAE PDPL course extended to cover 2025 Cabinet Decision and Data Office guidance.','Additional case studies on cross-border transfers.'], scores:{r1:{relevance:9,depth:8,trainer:9,materials:8,pedagogy:8},r2:{relevance:9,depth:8,trainer:9,materials:8,pedagogy:8},ai:{relevance:9,depth:8,trainer:9,materials:8,pedagogy:8}}, aiRationale:`Standard refresh. Update reflects regulatory developments. <em>Recommend approve.</em>`, topics:[{label:'UAE PDPL',conf:0.97},{label:'Data Protection · GCC',conf:0.81}], decision:null}
-];
+let APPLICATIONS = [];
+let LAST_COUNTS = { pending: 0, approved: 0, rejected: 0, returned: 0 };
 
 const RUBRIC_CRITERIA_COURSE = [
   {key:'relevance', label:'Relevance & alignment', desc:'Alignment with UAE legal landscape and current LAD strategic priorities.'},
@@ -517,27 +346,27 @@ const RUBRIC_CRITERIA_RENEWAL = [
 // STATE & RENDER
 // ─────────────────────────────────────────────────────────────
 let _selectedIdx = 0;
-let _filter = 'all';
+let _filter = 'pending';
+let _reviewerFilter = '';
 let _tab = 'scoring';
 
 function applyFilter(){
-  if (_filter === 'all') return APPLICATIONS;
-  if (_filter === 'breach') return APPLICATIONS.filter(a => a.priority === 'breach');
-  if (_filter === 'new') return APPLICATIONS.filter(a => a.kind === 'new');
-  if (_filter === 'renewal') return APPLICATIONS.filter(a => a.kind === 'renewal' || a.kind === 'amendment');
+  // Filtering is done server-side via fetchAccreditations(); this is just a passthrough.
   return APPLICATIONS;
 }
 
 function setFilter(f){
   _filter = f;
   document.querySelectorAll('.queue-tab').forEach(t => t.classList.toggle('on', t.dataset.filter === f));
-  renderQueue();
-  const visible = applyFilter();
-  if (visible.length) {
-    _selectedIdx = APPLICATIONS.indexOf(visible[0]);
-    renderDetail();
-  }
+  fetchAccreditations();
 }
+
+function setReviewerFilter(r){
+  _reviewerFilter = r;
+  fetchAccreditations();
+}
+
+async function refreshQueue(){ await fetchAccreditations(); }
 
 function setTab(t){
   _tab = t;
@@ -808,89 +637,162 @@ async function decide(action){
     defer:`Escalated ${a.ref} to DG office`
   }[action];
   toast(msg + (isReal ? ' · persisted' : ''));
+
+  // Refresh the queue so the entry leaves Pending and lands in Approved/Rejected/Returned tabs
+  if (isReal && newStatus) await fetchAccreditations();
 }
 
-// ── Pull real submissions from /api/v1/accreditations ──
-async function loadRealAccreditations() {
-  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
-  if (!base) return;
+// ── Helpers shared between fetch + map ──
+function _apiBase(){ return (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || ''; }
+function _authHeaders(){
   const token = (window.LAD && window.LAD.getToken && window.LAD.getToken()) || localStorage.getItem('lad_token') || '';
+  return token ? { 'Authorization': 'Bearer ' + token } : {};
+}
+function _fmtDate(iso){
+  if (!iso) return '—';
+  try { return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
+  catch { return iso; }
+}
+function _ageDays(iso){
+  if (!iso) return 0;
+  try { return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)); }
+  catch { return 0; }
+}
+function _priorityFor(d){ return d >= 10 ? 'breach' : d >= 5 ? 'urgent' : 'ok'; }
+
+function _mapRow(row){
+  const p = row.payload || {};
+  const d = _ageDays(row.submitted_at);
+  return {
+    _real: true,
+    ref: row.ref,
+    kind: row.type === 'session_submission' ? 'session' : (p.type === 'session_submission' ? 'session' : 'new'),
+    priority: _priorityFor(d),
+    days: d,
+    title: p.courseTitle || p.course || p.title || row.ref,
+    provider: p.providerName || p.firm || p.submittedBy || row.submitted_by || '—',
+    providerType: p.providerType || (p.firm ? 'Firm Internal' : 'Training Provider'),
+    submitted: _fmtDate(row.submitted_at),
+    reviewer1: row.reviewer1 || p.reviewer1 || '— Unassigned',
+    reviewer2: row.reviewer2 || p.reviewer2 || '— Unassigned',
+    format: p.format || '—',
+    duration: p.duration || '—',
+    proposedPts: p.pointsRequested ?? p.pointsPerLawyer ?? '—',
+    proposedCredits: p.proposedCredits ?? '—',
+    audience: p.audience || (p.lawyers ? `${p.lawyers.length} lawyers` : 'TBC'),
+    files: Array.isArray(p.files) ? p.files : [],
+    objectives: p.learningObjectives
+      ? (Array.isArray(p.learningObjectives) ? p.learningObjectives : [p.learningObjectives])
+      : (p.objectives || []),
+    scores: { r1: {}, r2: {}, ai: {} },
+    aiRationale: row.review_notes || '',
+    topics: p.topics || [],
+    decision: row.status && row.status !== 'pending' ? row.status : null,
+    isRenewal: (p.type === 'renewal') || row.type === 'renewal',
+    reviewedBy: row.reviewed_by,
+    reviewedAt: row.reviewed_at,
+  };
+}
+
+// ── Single source of truth: fetch from /api/v1/accreditations with current filters ──
+async function fetchAccreditations(){
+  const base = _apiBase();
+  if (!base) {
+    renderEmptyState('Backend not configured — accreditations cannot be fetched.');
+    return;
+  }
   try {
-    const r = await fetch(base + '/api/v1/accreditations?status=pending&limit=200', {
-      headers: token ? { 'Authorization': 'Bearer ' + token } : {},
-    });
-    if (!r.ok) {
-      console.warn('[accreditations] list fetch failed', r.status);
-      return;
-    }
+    const params = new URLSearchParams();
+    if (_filter && _filter !== 'all') params.set('status', _filter);
+    if (_reviewerFilter) params.set('reviewer', _reviewerFilter);
+    params.set('limit', '200');
+    const r = await fetch(base + '/api/v1/accreditations?' + params.toString(), { headers: _authHeaders(), cache: 'no-store' });
+    if (r.status === 401) { renderEmptyState('Sign in as a LAD admin to view the queue.'); return; }
+    if (!r.ok) { renderEmptyState('Could not load queue (HTTP ' + r.status + ').'); return; }
     const body = await r.json();
-    const rows = body.data || body || [];
-    if (!Array.isArray(rows) || !rows.length) return;
-
-    const now = Date.now();
-    const fmtDate = (iso) => {
-      if (!iso) return '—';
-      try { return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
-      catch { return iso; }
+    const rows = Array.isArray(body) ? body : (body.rows || body.data || []);
+    const counts = body.counts || {};
+    LAST_COUNTS = {
+      pending:  counts.pending  || 0,
+      approved: counts.approved || 0,
+      rejected: counts.rejected || 0,
+      returned: counts.returned || 0,
     };
-    const ageDays = (iso) => {
-      if (!iso) return 0;
-      try { return Math.max(0, Math.floor((now - new Date(iso).getTime()) / 86400000)); }
-      catch { return 0; }
-    };
-    const priorityFor = (d) => d >= 10 ? 'breach' : d >= 5 ? 'urgent' : 'ok';
-
-    const mapped = rows.map((row) => {
-      const p = row.payload || {};
-      const d = ageDays(row.submitted_at);
-      return {
-        _real: true,
-        ref: row.ref,
-        kind: row.type === 'session_submission' ? 'session' : (p.type === 'session_submission' ? 'session' : 'new'),
-        priority: priorityFor(d),
-        days: d,
-        title: p.courseTitle || p.course || p.title || row.ref,
-        provider: p.providerName || p.firm || p.submittedBy || row.submitted_by || '—',
-        providerType: p.providerType || (p.firm ? 'Firm Internal' : 'Training Provider'),
-        submitted: fmtDate(row.submitted_at),
-        reviewer1: p.reviewer1 || '— Unassigned',
-        reviewer2: p.reviewer2 || '— Unassigned',
-        format: p.format || '—',
-        duration: p.duration || '—',
-        proposedPts: p.pointsRequested ?? p.pointsPerLawyer ?? '—',
-        proposedCredits: p.proposedCredits ?? '—',
-        audience: p.audience || (p.lawyers ? `${p.lawyers.length} lawyers` : 'TBC'),
-        files: Array.isArray(p.files) ? p.files : [],
-        objectives: p.learningObjectives
-          ? (Array.isArray(p.learningObjectives) ? p.learningObjectives : [p.learningObjectives])
-          : (p.objectives || []),
-        scores: { r1: {}, r2: {}, ai: {} },
-        aiRationale: '',
-        topics: p.topics || [],
-        decision: null,
-        isRenewal: false,
-      };
-    });
-
-    // Prepend real submissions (newest first)
-    APPLICATIONS.unshift(...mapped.reverse());
+    APPLICATIONS = rows.map(_mapRow);
+    _selectedIdx = APPLICATIONS.length ? 0 : -1;
+    renderCounts();
     renderQueue();
-    // Refresh detail panel if nothing selected yet
-    if (typeof _selectedIdx === 'number') renderDetail();
+    renderDetail();
+    refreshReviewerOptions();
   } catch (e) {
-    console.warn('[accreditations] load failed', e);
+    console.warn('[accreditations] fetch failed', e);
+    renderEmptyState('Network error — could not reach backend.');
   }
 }
-loadRealAccreditations();
 
-function updateReviewer(appIdx, reviewerSlot, name){
+function renderEmptyState(msg){
+  APPLICATIONS = [];
+  _selectedIdx = -1;
+  const list = document.getElementById('queueList');
+  if (list) list.innerHTML = '<div style="padding:30px;text-align:center;color:var(--slate3);font-size:12.5px">' + msg + '</div>';
+  const c = document.getElementById('centerPane');
+  if (c) c.innerHTML = '<div style="padding:60px 40px;text-align:center;color:var(--slate3);font-size:13px">Select an application from the queue.</div>';
+}
+
+function renderCounts(){
+  const tot = (LAST_COUNTS.pending + LAST_COUNTS.approved + LAST_COUNTS.rejected + LAST_COUNTS.returned);
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('ct-pending',  LAST_COUNTS.pending);
+  set('ct-approved', LAST_COUNTS.approved);
+  set('ct-rejected', LAST_COUNTS.rejected);
+  set('ct-returned', LAST_COUNTS.returned);
+  set('ct-all',      tot);
+}
+
+async function refreshReviewerOptions(){
+  const base = _apiBase(); if (!base) return;
+  try {
+    const r = await fetch(base + '/api/v1/accreditations/_/reviewers', { headers: _authHeaders(), cache: 'no-store' });
+    if (!r.ok) return;
+    const body = await r.json();
+    const reviewers = body.reviewers || body.data || [];
+    const sel = document.getElementById('reviewerFilter');
+    if (!sel) return;
+    const current = sel.value;
+    const allOptions = Array.from(new Set([...REVIEWERS, ...reviewers])).filter(Boolean).sort();
+    sel.innerHTML = '<option value="">All reviewers</option>' + allOptions.map(n => `<option value="${n}"${n === current ? ' selected' : ''}>${n}</option>`).join('');
+  } catch (_) { /* non-fatal */ }
+}
+
+// ── Reviewer assignment now also persists to backend ──
+async function updateReviewer(appIdx, reviewerSlot, name){
   const a = APPLICATIONS[appIdx];
   if (!a) return;
   if (reviewerSlot === 1) a.reviewer1 = name;
   if (reviewerSlot === 2) a.reviewer2 = name;
-  // Re-render the parts of the UI that show reviewer names
   renderDecision(a);
-  toast('Reviewer updated: ' + name);
+
+  if (a._real) {
+    const base = _apiBase();
+    try {
+      const r = await fetch(base + '/api/v1/accreditations/' + encodeURIComponent(a.ref), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+        body: JSON.stringify(reviewerSlot === 1 ? { reviewer1: name } : { reviewer2: name }),
+      });
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}));
+        toast('Could not save reviewer — ' + (body.error || r.status));
+        return;
+      }
+      toast('Reviewer ' + reviewerSlot + ' assigned: ' + name + ' · persisted');
+      refreshReviewerOptions();
+    } catch (e) {
+      toast('Backend unreachable — reviewer not saved');
+    }
+  } else {
+    toast('Reviewer updated: ' + name);
+  }
 }
 
 function toast(msg){
@@ -900,9 +802,9 @@ function toast(msg){
   setTimeout(() => t.classList.remove('on'), 2800);
 }
 
-// Initial render
-renderQueue();
-renderDetail();
+// Initial render — populate from backend
+renderEmptyState('Loading queue…');
+fetchAccreditations();
 </script>
 </body>
 </html>
