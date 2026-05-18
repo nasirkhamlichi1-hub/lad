@@ -20,10 +20,10 @@
   'use strict';
 
   // ─── EDIT THIS ─────────────────────────────────────────────────────
-  // Production: 'https://api.your-domain.ae'
+  // Production (Azure West Europe — Node 22 LTS App Service):
+  window.LAD_API_BASE = 'https://clpd-lad-api-0878.azurewebsites.net';
   // Staging:    'https://lad-clpd-backend.onrender.com'
   // Demo/empty: ''  (use localStorage fallback)
-  window.LAD_API_BASE = 'https://lad-clpd-backend.onrender.com';
   // ─── END EDIT ──────────────────────────────────────────────────────
 
   // Detect environment for logging / debugging only
