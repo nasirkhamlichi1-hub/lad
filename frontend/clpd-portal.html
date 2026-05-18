@@ -1845,7 +1845,7 @@ ladCarInit();
             <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold-l)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>View accreditation status &amp; ref</div>
             <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold-l)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Submit attendance registers</div>
             <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold-l)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Apply for course accreditation</div>
-            <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold-l)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Power BI workflow tracking</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold-l)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>LAD review workflow tracking</div>
           </div>
           <div style="padding:12px;background:rgba(201,145,58,.12);border:1px solid rgba(201,145,58,.25);border-radius:9px;font-size:11.5px;color:rgba(255,255,255,.45);line-height:1.6"><strong style="color:rgba(255,255,255,.7)">Demo:</strong> provider@kwintessential.ae · any password</div>
         </div>
@@ -3022,7 +3022,7 @@ function closeMobMenu(){
       </div>
       <div style="flex:1">
         <div id="pubAccredHdTitle" style="font-family:var(--serif);font-size:21px;color:var(--ink);letter-spacing:-.016em">Apply for Accreditation</div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px">LAD CLPD · SUBMISSION TRIGGERS POWER BI REVIEW WORKFLOW</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px">LAD CLPD · SUBMISSION GOES TO LAD REVIEW QUEUE</div>
       </div>
       <button onclick="closePubAccred()" style="width:32px;height:32px;border-radius:9px;background:var(--paper2);border:1px solid var(--line);cursor:pointer;color:var(--slate);font-size:14px;display:grid;place-items:center">✕</button>
     </div>
@@ -3125,10 +3125,10 @@ function closeMobMenu(){
         </label>
       </div>
 
-      <!-- Power BI notice -->
+      <!-- LAD review notice -->
       <div style="background:var(--purple-bg);border:1px solid var(--purple-border);border-radius:10px;padding:13px 16px;display:flex;gap:10px;align-items:center">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span style="font-size:12px;color:var(--slate);line-height:1.6">Submission fires the <strong>LAD Accreditation Review</strong> workflow in Power BI. A reference number and email confirmation will be sent within 48 hours. Review takes up to 15 working days.</span>
+        <span style="font-size:12px;color:var(--slate);line-height:1.6">Submission enters the <strong>LAD Accreditation Review queue</strong>. A reference number and email confirmation will be sent within 48 hours. Review takes up to 15 working days.</span>
       </div>
     </div>
 
@@ -3187,7 +3187,7 @@ function closeMobMenu(){
         <div id="att-summary" style="display:none;margin-top:10px;background:var(--white);border:1px solid var(--line);border-radius:10px;overflow:hidden;max-height:180px;overflow-y:auto"></div>
       </div>
 
-      <!-- Power BI payload preview -->
+      <!-- Submission payload preview -->
       <div style="background:var(--ink);border-radius:10px;padding:14px">
         <div style="font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.4);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:8px">WORKFLOW PAYLOAD PREVIEW</div>
         <div id="att-payload" style="font-family:var(--mono);font-size:10.5px;color:#7dd3a8;line-height:1.7;white-space:pre-wrap;max-height:100px;overflow:auto">// Upload a CSV to preview the workflow payload</div>
@@ -3206,21 +3206,24 @@ function closeMobMenu(){
 
 <script>
 // ═══════════════════════════════════════════════
-// POWER BI WEBHOOK — PUBLIC PORTAL
+// ACCREDITATION SUBMIT — PUBLIC PORTAL (LAD CLPD backend)
 // ═══════════════════════════════════════════════
-const PUB_POWERBI_WEBHOOK = 'https://your-powerbi-endpoint.example.com/accreditation';
-
 async function pubTriggerWorkflow(payload) {
   const ref = 'LAD-' + Date.now().toString(36).toUpperCase();
   payload.referenceNumber = ref;
   payload.submittedAt = new Date().toISOString();
   payload.submittedVia = 'CLPD Public Portal';
-  console.log('[POWER BI] Payload:', JSON.stringify(payload, null, 2));
-  try {
-    if(PUB_POWERBI_WEBHOOK && !PUB_POWERBI_WEBHOOK.includes('example.com')) {
-      await fetch(PUB_POWERBI_WEBHOOK, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-    }
-  } catch(e) { console.warn('Endpoint not reachable — stored locally'); }
+  const base = (window.LAD_API_BASE) || '';
+  if (base) {
+    try {
+      await fetch(base + '/api/v1/accreditations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-actor': payload.applicantEmail || payload.applicantName || 'public' },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      });
+    } catch (e) { console.warn('[accreditations] backend unreachable; submission held locally', e); }
+  }
   return ref;
 }
 

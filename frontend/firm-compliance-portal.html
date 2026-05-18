@@ -1565,7 +1565,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
       </div>
       <div style="flex:1">
         <div style="font-family:var(--serif);font-size:20px;color:#fff;letter-spacing:-.014em">Apply for course accreditation</div>
-        <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.55);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px">LAD · ACCREDITED PROVIDER PROGRAMME · SUBMISSION TRIGGERS POWER BI WORKFLOW</div>
+        <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.55);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px">LAD · ACCREDITED PROVIDER PROGRAMME · SUBMISSION GOES TO LAD REVIEW QUEUE</div>
       </div>
       <button onclick="closeAccredApp()" style="width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);cursor:pointer;color:#fff;font-size:13px;display:grid;place-items:center">✕</button>
     </div>
@@ -1629,15 +1629,15 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
         </div>
       </div>
 
-      <!-- Power BI workflow note -->
+      <!-- LAD review workflow note -->
       <div style="background:var(--purple-bg);border:1px solid var(--purple-border);border-radius:10px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="1.6" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <div style="font-size:12.5px;color:var(--slate);line-height:1.65">Submitting this application triggers the <strong>LAD Accreditation Workflow</strong> in Power BI. You will receive a reference number and email confirmation within 48 hours. Review typically takes 5–10 working days.</div>
+        <div style="font-size:12.5px;color:var(--slate);line-height:1.65">Submitting this application enters it into the <strong>LAD Accreditation Review queue</strong>. You will receive a reference number and email confirmation within 48 hours. Review typically takes 5–10 working days.</div>
       </div>
     </div>
 
     <div style="padding:14px 26px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-shrink:0;background:var(--paper)">
-      <span style="font-family:var(--mono);font-size:10px;color:var(--slate3);margin-right:auto">Workflow fires on submit · Power BI endpoint configurable</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--slate3);margin-right:auto">Workflow fires on submit · Submissions persisted server-side</span>
       <button class="btn btn-gh btn-sm" onclick="closeAccredApp()">Cancel</button>
       <button class="btn btn-sm" style="background:var(--teal);color:#fff" onclick="submitAccredApp()">Submit for LAD review →</button>
     </div>
@@ -1645,7 +1645,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
 </div>
 
 <!-- ═══════════════════════════════════════
-     SESSION SUBMIT MODAL (with attendance + Power BI)
+     SESSION SUBMIT MODAL (with attendance)
 ═══════════════════════════════════════ -->
 <div id="sessionSubmitModal" style="position:fixed;inset:0;z-index:1300;background:rgba(10,14,20,.7);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:20px;overflow-y:auto" onclick="if(event.target===this)closeSessionSubmit()">
   <div style="background:var(--white);border-radius:var(--r-2xl);box-shadow:var(--sh-xl);width:min(100%,860px);max-height:92vh;display:flex;flex-direction:column;overflow:hidden">
@@ -1733,10 +1733,10 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
           <div id="ss-impact" style="font-size:12.5px;color:var(--slate2);padding:16px;text-align:center;border:1px dashed var(--line2);border-radius:9px">Select a course and lawyers to preview impact</div>
         </div>
 
-        <!-- Power BI workflow status -->
+        <!-- LAD review workflow status -->
         <div style="background:var(--purple-bg);border:1px solid var(--purple-border);border-radius:10px;padding:13px">
-          <div style="font-family:var(--mono);font-size:8.5px;color:var(--purple);font-weight:700;letter-spacing:1px;margin-bottom:7px">POWER BI WORKFLOW</div>
-          <div style="font-size:12px;color:var(--slate);line-height:1.6;margin-bottom:10px">On submit, a structured JSON payload fires to your configured Power BI endpoint. LAD reviews the payload and approves points within 5 working days.</div>
+          <div style="font-family:var(--mono);font-size:8.5px;color:var(--purple);font-weight:700;letter-spacing:1px;margin-bottom:7px">LAD REVIEW WORKFLOW</div>
+          <div style="font-size:12px;color:var(--slate);line-height:1.6;margin-bottom:10px">On submit, a structured JSON record is saved to the LAD CLPD backend. LAD reviews the payload and approves points within 5 working days.</div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);background:var(--ink);border-radius:7px;padding:10px;line-height:1.8;overflow:auto;max-height:120px" id="ss-payload-preview">
             <span style="color:#7dd3a8">// Payload preview appears<br>// after you select lawyers</span>
           </div>
@@ -3405,32 +3405,28 @@ function submitUpload() {
 }
 
 // ════════════════════════════════════════════
-// POWER BI WEBHOOK CONFIG
+// ACCREDITATION SUBMIT — self-contained (LAD CLPD backend)
 // ════════════════════════════════════════════
-// Set this URL to your Power BI REST endpoint / Power Automate HTTP trigger
-const POWERBI_WEBHOOK_URL = 'https://your-powerbi-endpoint.example.com/accreditation';
-
 async function triggerWorkflow(payload) {
   const ref = 'LAD-' + Date.now().toString(36).toUpperCase();
   payload.referenceNumber = ref;
-  payload.submittedBy = 'Fatima Al Mansouri';
+  payload.submittedBy = (window.LAD && window.LAD.getName && window.LAD.getName()) || localStorage.getItem('lad_name') || 'Fatima Al Mansouri';
   payload.firm = 'Galadari Advocates';
   payload.accreditationRef = 'ATP-2022-0041';
   payload.submittedAt = new Date().toISOString();
+  payload.submittedVia = 'Firm Compliance Portal';
 
-  console.log('[POWER BI WORKFLOW] Payload fired:', JSON.stringify(payload, null, 2));
-
-  // Fire to Power BI endpoint (configure POWERBI_WEBHOOK_URL above)
-  try {
-    if(POWERBI_WEBHOOK_URL && !POWERBI_WEBHOOK_URL.includes('example.com')) {
-      await fetch(POWERBI_WEBHOOK_URL, {
+  const base = (window.LAD_API_BASE) || '';
+  if (base) {
+    try {
+      await fetch(base + '/api/v1/accreditations', {
         method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
+        headers: { 'Content-Type': 'application/json', 'x-actor': payload.submittedBy || 'anonymous' },
+        body: JSON.stringify(payload),
+        keepalive: true,
       });
-    }
-  } catch(e) { console.warn('Workflow endpoint not reachable — stored locally', e); }
-
+    } catch (e) { console.warn('[accreditations] backend unreachable; submission held locally', e); }
+  }
   return ref;
 }
 
@@ -3467,8 +3463,7 @@ async function submitAccredApp() {
   });
   renderInternalCards();
   closeAccredApp();
-  const _bi = (typeof POWERBI_WEBHOOK_URL === 'string') && POWERBI_WEBHOOK_URL && !POWERBI_WEBHOOK_URL.includes('example.com');
-  showToast(`Application submitted · Ref ${ref}` + (_bi ? ' · Power BI workflow triggered' : ' · saved to LAD queue'));
+  showToast(`Application submitted · Ref ${ref} · saved to LAD queue`);
 }
 
 // ════════════════════════════════════════════
