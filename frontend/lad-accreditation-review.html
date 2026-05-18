@@ -768,16 +768,120 @@ function renderDecision(a){
   `;
 }
 
-function decide(action){
+async function decide(action){
   const a = APPLICATIONS[_selectedIdx];
+
+  // For real backend-backed submissions, PATCH the accreditation record.
+  // Mock seed data (ref starts with ACC-) keeps the toast-only behaviour.
+  const isReal = !!a._real;
+  const STATUS_MAP = { approve: 'approved', reject: 'rejected', changes: 'returned' };
+  const newStatus = STATUS_MAP[action];
+
+  if (isReal && newStatus) {
+    const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+    const token = (window.LAD && window.LAD.getToken && window.LAD.getToken()) || localStorage.getItem('lad_token') || '';
+    try {
+      const r = await fetch(base + '/api/v1/accreditations/' + encodeURIComponent(a.ref), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': 'Bearer ' + token } : {}),
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}));
+        toast(`Could not save decision — ${body.error || r.status}`);
+        return;
+      }
+      a.decision = newStatus;
+    } catch (e) {
+      toast('Backend unreachable — decision not saved');
+      return;
+    }
+  }
+
   const msg = {
-    approve:`Approved ${a.ref} — propagates to ${a.audience.toLowerCase()} as accredited`,
+    approve:`Approved ${a.ref} — propagates to ${(a.audience || 'all practitioners').toLowerCase()} as accredited`,
     changes:`Sent back to ${a.provider} with reviewer notes`,
     reject:`Rejected ${a.ref} — decision logged`,
     defer:`Escalated ${a.ref} to DG office`
   }[action];
-  toast(msg);
+  toast(msg + (isReal ? ' · persisted' : ''));
 }
+
+// ── Pull real submissions from /api/v1/accreditations ──
+async function loadRealAccreditations() {
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  if (!base) return;
+  const token = (window.LAD && window.LAD.getToken && window.LAD.getToken()) || localStorage.getItem('lad_token') || '';
+  try {
+    const r = await fetch(base + '/api/v1/accreditations?status=pending&limit=200', {
+      headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+    });
+    if (!r.ok) {
+      console.warn('[accreditations] list fetch failed', r.status);
+      return;
+    }
+    const body = await r.json();
+    const rows = body.data || body || [];
+    if (!Array.isArray(rows) || !rows.length) return;
+
+    const now = Date.now();
+    const fmtDate = (iso) => {
+      if (!iso) return '—';
+      try { return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
+      catch { return iso; }
+    };
+    const ageDays = (iso) => {
+      if (!iso) return 0;
+      try { return Math.max(0, Math.floor((now - new Date(iso).getTime()) / 86400000)); }
+      catch { return 0; }
+    };
+    const priorityFor = (d) => d >= 10 ? 'breach' : d >= 5 ? 'urgent' : 'ok';
+
+    const mapped = rows.map((row) => {
+      const p = row.payload || {};
+      const d = ageDays(row.submitted_at);
+      return {
+        _real: true,
+        ref: row.ref,
+        kind: row.type === 'session_submission' ? 'session' : (p.type === 'session_submission' ? 'session' : 'new'),
+        priority: priorityFor(d),
+        days: d,
+        title: p.courseTitle || p.course || p.title || row.ref,
+        provider: p.providerName || p.firm || p.submittedBy || row.submitted_by || '—',
+        providerType: p.providerType || (p.firm ? 'Firm Internal' : 'Training Provider'),
+        submitted: fmtDate(row.submitted_at),
+        reviewer1: p.reviewer1 || '— Unassigned',
+        reviewer2: p.reviewer2 || '— Unassigned',
+        format: p.format || '—',
+        duration: p.duration || '—',
+        proposedPts: p.pointsRequested ?? p.pointsPerLawyer ?? '—',
+        proposedCredits: p.proposedCredits ?? '—',
+        audience: p.audience || (p.lawyers ? `${p.lawyers.length} lawyers` : 'TBC'),
+        files: Array.isArray(p.files) ? p.files : [],
+        objectives: p.learningObjectives
+          ? (Array.isArray(p.learningObjectives) ? p.learningObjectives : [p.learningObjectives])
+          : (p.objectives || []),
+        scores: { r1: {}, r2: {}, ai: {} },
+        aiRationale: '',
+        topics: p.topics || [],
+        decision: null,
+        isRenewal: false,
+      };
+    });
+
+    // Prepend real submissions (newest first)
+    APPLICATIONS.unshift(...mapped.reverse());
+    renderQueue();
+    // Refresh detail panel if nothing selected yet
+    if (typeof _selectedIdx === 'number') renderDetail();
+  } catch (e) {
+    console.warn('[accreditations] load failed', e);
+  }
+}
+loadRealAccreditations();
 
 function updateReviewer(appIdx, reviewerSlot, name){
   const a = APPLICATIONS[appIdx];
