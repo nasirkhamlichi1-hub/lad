@@ -2079,7 +2079,11 @@ function saveAssign() {
 // ════════════════════════════════════════════
 // DATA
 // ════════════════════════════════════════════
-const LAWYERS = [
+// Seeded fallback list; OVERWRITTEN at boot by loadFirmLawyersFromBackend()
+// so submitted attendance maps to the real backend lawyer ids. Without this,
+// the firm portal's L-01496 ≠ the backend's L-01496 and point awards land
+// on the wrong lawyer record.
+let LAWYERS = [
   {id:1,name:'Ahmad Al Naqbi',laId:'L-01496',initials:'AN',role:'Partner',practice:'Commercial Disputes',pts:12,booked:0,credits:5,lifetime:158,email:'a.naqbi@galadari.ae'},
   {id:2,name:'Fatima Al Mansouri',laId:'L-01505',initials:'FM',role:'Partner',practice:'Real Estate',pts:10,booked:0,credits:5,lifetime:156,email:'f.mansouri@galadari.ae'},
   {id:3,name:'Mohammed Al Suwaidi',laId:'L-01483',initials:'MS',role:'Partner',practice:'Corporate',pts:10,booked:0,credits:5,lifetime:158,email:'m.suwaidi@galadari.ae'},
@@ -3539,9 +3543,56 @@ function showSubmitConfirmation(ref, title, email) {
   setTimeout(() => { try { banner.remove(); } catch {} }, 12000);
 }
 
+// Pull Galadari's actual lawyers from the backend so the picker shows
+// real records with real ids. Without this, the hardcoded seed list and
+// the seeded backend don't agree on who L-01496 is, and point awards
+// land on the wrong lawyer record.
+async function loadFirmLawyersFromBackend() {
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  if (!base) return false;
+  const token = localStorage.getItem('lad_token') || '';
+  if (!token) return false;  // firm-CO or super_admin must be signed in
+  try {
+    const r = await fetch(base + '/api/v1/firms/F-GA/lawyers', {
+      headers: { Authorization: 'Bearer ' + token },
+      cache: 'no-store',
+    });
+    if (!r.ok) { console.warn('[firm] /firms/F-GA/lawyers HTTP', r.status); return false; }
+    const body = await r.json();
+    const rows = Array.isArray(body) ? body : (body.data || body.rows || []);
+    if (!rows.length) return false;
+    // Map backend lawyers into the local LAWYERS shape used by every UI here.
+    // Keep `laId` as the backend id (used in submit payload). `id` becomes a
+    // sequential int because some legacy renderers index by it.
+    LAWYERS = rows.map((l, i) => {
+      const fullName = `${l.first_name || ''} ${l.last_name || ''}`.trim();
+      const initials = (l.first_name?.[0] || '') + (l.last_name?.[0] || '');
+      return {
+        id: i + 1,                                  // local sequence index
+        laId: l.id,                                 // backend lawyer id (canonical)
+        name: fullName,
+        initials: initials.toUpperCase(),
+        role: '—',
+        practice: '—',
+        pts: Number(l.points) || 0,
+        booked: 0,
+        credits: Number(l.credits) || 0,
+        lifetime: Number(l.points) || 0,            // best estimate without history table
+        email: l.email || '',
+      };
+    });
+    console.info('[firm] loaded ' + LAWYERS.length + ' Galadari lawyers from backend');
+    return true;
+  } catch (e) {
+    console.warn('[firm] load lawyers failed', e);
+    return false;
+  }
+}
+
 // One-click refresh for the whole accreditation section — used by the
 // "↻ Refresh" button at the top of the accreditation header.
 async function refreshAccreditationSection() {
+  await loadFirmLawyersFromBackend();
   await syncInternalSessionsFromBackend();
   if (typeof loadMyApplications === 'function') await loadMyApplications();
   if (typeof renderInternalCards === 'function') renderInternalCards();
@@ -3686,8 +3737,11 @@ async function loadMyApplications() {
 }
 // Auto-load on first render of the dashboard
 async function bootAccreditationData() {
+  await loadFirmLawyersFromBackend();
   await syncInternalSessionsFromBackend();
   if (typeof renderInternalCards === 'function') renderInternalCards();
+  // Re-render any UI that already painted with the seeded LAWYERS list
+  try { if (typeof renderSSLawyerList === 'function') renderSSLawyerList(); } catch (_) {}
   await loadMyApplications();
 }
 if (document.readyState !== 'loading') setTimeout(bootAccreditationData, 800);
