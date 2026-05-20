@@ -2659,61 +2659,18 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
           <div>
             <div class="section-eyebrow green">COMPLETED · 2026</div>
             <h2 class="section-title">Your <em>filed activities</em></h2>
-            <div class="section-desc">3 activities · 6 points earned · all verified by LAD</div>
+            <div class="section-desc" id="completedSubtitle">Loading your attendance history…</div>
           </div>
           <div class="section-actions">
+            <button class="btn btn-ghost btn-sm" onclick="loadMyAttendance()">↻ Refresh</button>
             <button class="btn btn-ghost btn-sm">Export records</button>
           </div>
         </div>
-
-        <!-- Pending accreditation sessions from firm (Power BI flow) -->
-        <div style="background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--r-lg);padding:14px 18px;margin-bottom:16px;display:flex;align-items:flex-start;gap:12px">
-          <div style="flex-shrink:0;margin-top:1px">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          </div>
-          <div style="flex:1">
-            <div style="font-weight:700;font-size:13px;color:var(--amber);margin-bottom:5px">Pending accreditation — awaiting LAD approval</div>
-            <div style="display:flex;flex-direction:column;gap:6px" id="pendingAccredSessions">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(255,255,255,.6);border-radius:8px">
-                <div>
-                  <div style="font-size:12.5px;font-weight:600;color:var(--ink)">AI in Legal Practice — Internal Seminar</div>
-                  <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);margin-top:2px">2 MAY 2026 · AL TAMIMI & CO. · ATP-2022-0041 · REF: LAD-M6XQ2P</div>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-                  <span style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--amber)">+2 pts pending</span>
-                  <span style="font-family:var(--mono);font-size:8px;font-weight:700;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);padding:2px 7px;border-radius:4px">PENDING REVIEW</span>
-                </div>
-              </div>
-            </div>
-            <div style="font-size:11.5px;color:var(--slate2);margin-top:8px">Points are credited to your record automatically once LAD approves the session. Approval typically takes 5–10 working days.</div>
-          </div>
-        </div>
-
-        <div class="activity-list">
-          <div class="activity">
-            <div class="activity-check"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-            <div class="activity-info">
-              <div class="activity-title">Data Protection &amp; Privacy – UAE</div>
-              <div class="activity-meta">25 MAR 2026 · KWINTESSENTIAL · FACE-TO-FACE · ✓ VERIFIED · CERT-2026-L01494-A</div>
-            </div>
-            <div class="activity-pts">+2<em>pts</em></div>
-          </div>
-          <div class="activity">
-            <div class="activity-check"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-            <div class="activity-info">
-              <div class="activity-title">International Arbitration and the Courts</div>
-              <div class="activity-meta">01 APR 2026 · KWINTESSENTIAL · FACE-TO-FACE · ✓ VERIFIED · CERT-2026-L01494-B</div>
-            </div>
-            <div class="activity-pts">+2<em>pts</em></div>
-          </div>
-          <div class="activity">
-            <div class="activity-check"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-            <div class="activity-info">
-              <div class="activity-title">AI &amp; Copyright in Practice</div>
-              <div class="activity-meta">13 APR 2026 · HADEF &amp; PARTNERS · IN-HOUSE · PENDING REVIEW · CERT-2026-L01494-C</div>
-            </div>
-            <div class="activity-pts">+2<em>pts</em></div>
-          </div>
+        <!-- Populated from /api/v1/lawyers/me — each row maps to one
+             session_submission accreditation that earned this lawyer points.
+             Empty state is rendered in JS when the list is empty. -->
+        <div class="activity-list" id="completedActivities">
+          <div style="padding:24px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:11px">Loading…</div>
         </div>
       </section>
 
@@ -3955,6 +3912,71 @@ function syncLawyerSessionsFromRegistry() {
 
 // Run on load
 document.addEventListener('DOMContentLoaded', syncLawyerSessionsFromRegistry);
+
+// ════════════════════════════════════════════════════════════════════
+// LIVE ATTENDANCE HISTORY — pull from backend /lawyers/me
+// Every row is one approved session_submission accreditation that
+// earned this lawyer points, with its ATP code so the obligation
+// trail (LAD-accredited course → my points) is visible end-to-end.
+// ════════════════════════════════════════════════════════════════════
+function _formatAwardedDate(s) {
+  if (!s) return '';
+  // SQLite timestamp ("2026-05-20 09:39:47") or ISO — render as "20 MAY 2026"
+  try {
+    const d = new Date(s.replace(' ', 'T') + (s.endsWith('Z') ? '' : 'Z'));
+    if (isNaN(d.getTime())) return s;
+    return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }).toUpperCase();
+  } catch { return s; }
+}
+
+async function loadMyAttendance() {
+  const listEl = document.getElementById('completedActivities');
+  const subEl  = document.getElementById('completedSubtitle');
+  if (!listEl) return;
+
+  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || '';
+  const token = localStorage.getItem('lad_token') || '';
+  if (!base || !token) {
+    listEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:11px">Sign in to see your attendance history.</div>';
+    if (subEl) subEl.textContent = 'Sign in required';
+    return;
+  }
+  try {
+    const r = await fetch(base + '/api/v1/lawyers/me', { headers: { Authorization: 'Bearer ' + token } });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const me = await r.json();
+    const att = Array.isArray(me.attendance) ? me.attendance : [];
+    if (subEl) {
+      const total = att.reduce((s, a) => s + (a.delta_points || 0), 0);
+      subEl.textContent = `${att.length} ${att.length === 1 ? 'activity' : 'activities'} · ${total} ${total === 1 ? 'point' : 'points'} earned · linked to LAD-accredited courses`;
+    }
+    if (!att.length) {
+      listEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:11px">No attended sessions yet. Once your firm files attendance for an accredited course, the points and ATP code will appear here.</div>';
+      return;
+    }
+    listEl.innerHTML = att.map(a => {
+      const title = a.course_title || a.session_ref || 'CLPD activity';
+      const provider = (a.provider || '').toUpperCase();
+      const date = _formatAwardedDate(a.date_held || a.awarded_at);
+      const code = a.accreditation_code ? `· ${a.accreditation_code}` : '';
+      const ref  = a.session_ref ? `· REF: ${a.session_ref}` : '';
+      const provBit = provider ? `· ${provider}` : '';
+      return `<div class="activity">
+        <div class="activity-check"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="activity-info">
+          <div class="activity-title">${title.replace(/</g,'&lt;')}</div>
+          <div class="activity-meta">${date} ${provBit} · ✓ VERIFIED ${code} ${ref}</div>
+        </div>
+        <div class="activity-pts">+${a.delta_points || 0}<em>pts</em></div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    console.warn('[lawyer-portal] loadMyAttendance:', e.message);
+    listEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-family:var(--mono);font-size:11px">Couldn’t load your attendance history. Try refresh.</div>';
+    if (subEl) subEl.textContent = 'Could not load attendance history';
+  }
+}
+document.addEventListener('DOMContentLoaded', loadMyAttendance);
 </script>
 
 <style>

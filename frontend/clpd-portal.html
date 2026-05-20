@@ -1687,95 +1687,25 @@ ladCarInit();
       <!-- Left -->
       <div style="overflow-y:auto;padding:22px 24px">
 
-        <!-- Step 1: Role -->
-        <div id="authStepRole">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:14px">I AM SIGNING IN AS</div>
-          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
-            <div class="auth-role-card" id="arole-lawyer" onclick="selectAuthRole(this,'lawyer')" style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--line2);border-radius:12px;cursor:pointer;transition:all .15s">
-              <div style="width:36px;height:36px;border-radius:9px;background:var(--green-bg);border:1px solid var(--green-border);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.7" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              </div>
-              <div style="flex:1">
-                <div style="font-weight:700;font-size:13px;color:var(--ink)">Lawyer / Practitioner</div>
-                <div style="font-size:11.5px;color:var(--slate2)">Book courses, track points, manage your CLPD</div>
-              </div>
-              <div class="arole-radio" style="width:17px;height:17px;border-radius:50%;border:2px solid var(--line2);flex-shrink:0;display:grid;place-items:center;transition:border-color .15s"></div>
-            </div>
-            <div class="auth-role-card" id="arole-firm" onclick="selectAuthRole(this,'firm')" style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--line2);border-radius:12px;cursor:pointer;transition:all .15s">
-              <div style="width:36px;height:36px;border-radius:9px;background:var(--blue-bg);border:1px solid var(--blue-border);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.7" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="1"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-              </div>
-              <div style="flex:1">
-                <div style="font-weight:700;font-size:13px;color:var(--ink)">Firm Compliance Officer</div>
-                <div style="font-size:11.5px;color:var(--slate2)">Manage firm lawyers, bulk bookings, credits</div>
-              </div>
-              <div class="arole-radio" style="width:17px;height:17px;border-radius:50%;border:2px solid var(--line2);flex-shrink:0;display:grid;place-items:center;transition:border-color .15s"></div>
-            </div>
-            <div class="auth-role-card" id="arole-provider" onclick="selectAuthRole(this,'provider')" style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--line2);border-radius:12px;cursor:pointer;transition:all .15s">
-              <div style="width:36px;height:36px;border-radius:9px;background:var(--gold-bg);border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.7" stroke-linecap="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
-              </div>
-              <div style="flex:1">
-                <div style="font-weight:700;font-size:13px;color:var(--ink)">Accredited Training Provider</div>
-                <div style="font-size:11.5px;color:var(--slate2)">Submit sessions, manage accreditation</div>
-              </div>
-              <div class="arole-radio" style="width:17px;height:17px;border-radius:50%;border:2px solid var(--line2);flex-shrink:0;display:grid;place-items:center;transition:border-color .15s"></div>
-            </div>
-
-            <div style="display:flex;align-items:center;gap:10px;margin:14px 0 6px"><div style="flex:1;height:1px;background:var(--line)"></div><span style="font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600">LAD STAFF</span><div style="flex:1;height:1px;background:var(--line)"></div></div>
-
-            <div class="auth-role-card" id="arole-lad_staff" onclick="selectAuthRole(this,'lad_staff')" style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--line2);border-radius:12px;cursor:pointer;transition:all .15s">
-              <div style="width:36px;height:36px;border-radius:9px;background:var(--purple-bg);border:1px solid var(--purple-border);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="1.7" stroke-linecap="round"><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>
-              </div>
-              <div style="flex:1">
-                <div style="font-weight:700;font-size:13px;color:var(--ink)">LAD Staff · Oversight</div>
-                <div style="font-size:11.5px;color:var(--slate2)">City-wide intelligence + sign off accreditations</div>
-              </div>
-              <div class="arole-radio" style="width:17px;height:17px;border-radius:50%;border:2px solid var(--line2);flex-shrink:0;display:grid;place-items:center;transition:border-color .15s"></div>
-            </div>
-
-            <div class="auth-role-card" id="arole-lad_admin" onclick="selectAuthRole(this,'lad_admin')" style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--line2);border-radius:12px;cursor:pointer;transition:all .15s">
-              <div style="width:36px;height:36px;border-radius:9px;background:var(--amber-bg);border:1px solid var(--amber-border);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              </div>
-              <div style="flex:1">
-                <div style="font-weight:700;font-size:13px;color:var(--ink)">LAD Admin · Operations</div>
-                <div style="font-size:11.5px;color:var(--slate2)">Book on behalf, purchases, schedules, website</div>
-              </div>
-              <div class="arole-radio" style="width:17px;height:17px;border-radius:50%;border:2px solid var(--line2);flex-shrink:0;display:grid;place-items:center;transition:border-color .15s"></div>
-            </div>
+        <!-- Unified login — one form for every role -->
+        <div id="authStepRole" style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:4px">SIGN IN</div>
+          <div>
+            <label style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:5px">USERNAME</label>
+            <input id="credUsername" type="text" autocomplete="username" placeholder="email address  ·  or lawyer number (L-01494)" style="width:100%;padding:10px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--line2)'" onkeydown="if(event.key==='Enter')document.getElementById('credPass').focus()"/>
+            <div style="font-size:10.5px;color:var(--slate3);margin-top:5px;line-height:1.45">Lawyers: registered email <strong style="color:var(--slate2)">or</strong> lawyer number / bar number. Everyone else: your work email.</div>
           </div>
-          <button id="authRoleNextBtn" class="btn" style="width:100%;justify-content:center;padding:11px;font-size:13px;background:var(--green);color:#fff;border:none;opacity:.4;pointer-events:none" onclick="goAuthStep2()">Continue &#x2192;</button>
-          <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--slate3)">New to CLPD? <span style="color:var(--green);cursor:pointer;font-weight:600" onclick="goAuthRegister()">Register free &#x2192;</span></div>
+          <div>
+            <label style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:5px">PASSWORD</label>
+            <input id="credPass" type="password" autocomplete="current-password" placeholder="••••••••" style="width:100%;padding:10px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--line2)'" onkeydown="if(event.key==='Enter')doLogin()"/>
+          </div>
+          <div style="text-align:right;margin-top:-6px"><span style="font-size:11.5px;color:var(--blue);cursor:pointer">Forgot password?</span></div>
+          <button id="authSignInBtn" class="btn" style="width:100%;justify-content:center;padding:11px;font-size:13px;background:var(--green);color:#fff;border:none" onclick="doLogin()">Sign in &#x2192;</button>
+          <div style="text-align:center;margin-top:4px;font-size:12px;color:var(--slate3)">New to CLPD? <span style="color:var(--green);cursor:pointer;font-weight:600" onclick="goAuthRegister()">Register free &#x2192;</span></div>
         </div>
 
-        <!-- Step 2: Credentials -->
-        <div id="authStepCreds" style="display:none;flex-direction:column;gap:14px">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-            <button onclick="goAuthStep1()" style="background:none;border:none;cursor:pointer;color:var(--blue);font-size:12px;font-weight:600;font-family:var(--sans);padding:0;display:flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>Back</button>
-            <span id="authRolePill" style="font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 10px;border-radius:10px;letter-spacing:.5px"></span>
-          </div>
-          <div id="authCredsFields" style="display:flex;flex-direction:column;gap:11px"></div>
-
-          <!-- UAE Pass — lawyers ONLY -->
-          <div id="authUaePassBlock" style="display:none">
-            <div style="display:flex;align-items:center;gap:10px;margin:4px 0">
-              <div style="flex:1;height:1px;background:var(--line)"></div>
-              <span style="font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600">OR FOR UAE NATIONALS &amp; RESIDENTS</span>
-              <div style="flex:1;height:1px;background:var(--line)"></div>
-            </div>
-            <button type="button" onclick="doUaePassLogin()" style="width:100%;padding:11px 16px;background:#000;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:-.005em;transition:transform .15s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
-              <span style="font-family:var(--serif);font-style:italic;font-size:14px;background:#fff;color:#000;padding:2px 7px;border-radius:4px;font-weight:600">UAE PASS</span>
-              Sign in with UAE Pass
-            </button>
-            <div style="font-size:11px;color:var(--slate3);text-align:center;margin-top:8px;line-height:1.5">Available only to lawyers / practitioners. Firms, LAD staff and accredited providers sign in with email and password.</div>
-          </div>
-
-          <div style="text-align:right"><span style="font-size:11.5px;color:var(--blue);cursor:pointer">Forgot password?</span></div>
-          <button id="authSignInBtn" class="btn" style="width:100%;justify-content:center;padding:11px;font-size:13px;border:none" onclick="doLogin()">Sign in &#x2192;</button>
-          <div style="text-align:center;font-size:12px;color:var(--slate3)">New? <span style="color:var(--green);cursor:pointer;font-weight:600" onclick="goAuthRegister()">Register free &#x2192;</span></div>
-        </div>
+        <!-- (kept hidden — legacy multi-step credentials block superseded by unified form above) -->
+        <div id="authStepCreds" style="display:none"></div>
 
         <!-- Step 3: Register -->
         <div id="authStepReg" style="display:none;flex-direction:column;gap:11px">
@@ -2178,214 +2108,115 @@ function openAuth(tab='login') {
   goAuthStep1();
   document.getElementById('authModal').classList.add('on');
   if(tab === 'register') setTimeout(goAuthRegister, 50);
+  setTimeout(() => document.getElementById('credUsername')?.focus(), 80);
 }
 function closeAuth() { document.getElementById('authModal').classList.remove('on'); }
 
 // Legacy compat
 function switchTab(t) { t === 'register' ? goAuthRegister() : goAuthStep1(); }
 
-function selectAuthRole(el, role) {
-  authSelectedRole = role;
-  // Reset all cards
-  document.querySelectorAll('.auth-role-card').forEach(c => {
-    c.style.borderColor = 'var(--line2)';
-    c.style.background = '';
-    c.querySelector('.arole-radio').innerHTML = '';
-    c.querySelector('.arole-radio').style.borderColor = 'var(--line2)';
-  });
-  // Highlight selected
-  const cfg = ROLE_CONFIG[role];
-  el.style.borderColor = cfg.pillColor;
-  el.style.background = cfg.pillBg;
-  el.querySelector('.arole-radio').style.borderColor = cfg.pillColor;
-  el.querySelector('.arole-radio').innerHTML = `<div style="width:9px;height:9px;border-radius:50%;background:${cfg.pillColor}"></div>`;
-  // Hide all context panels first, then show the one for this role (Default for roles without a dedicated panel)
-  ['Default','Lawyer','Firm','Provider'].forEach(k => {
-    const el2 = document.getElementById('ctx'+k);
-    if(el2) el2.style.display = 'none';
-  });
-  const ctxKey = role.charAt(0).toUpperCase() + role.slice(1);
-  const ctxEl = document.getElementById('ctx' + ctxKey);
-  if (ctxEl) {
-    ctxEl.style.display = '';
-  } else {
-    // LAD Staff / LAD Admin have no dedicated context panel — show the default
-    const dflt = document.getElementById('ctxDefault');
-    if (dflt) dflt.style.display = '';
-  }
-  // Enable continue button
-  const btn = document.getElementById('authRoleNextBtn');
-  btn.style.opacity = '1';
-  btn.style.pointerEvents = 'auto';
-  btn.style.background = cfg.btnBg;
+// Role pickers are gone — kept as no-ops so any stray markup that still
+// invokes them won't throw. The unified backend /auth/login derives the
+// role from the credentials.
+function selectAuthRole(_el, _role) { /* no-op — unified login */ }
+function goAuthStep2() { /* no-op — single-step form */ }
+function doUaePassLogin() {
+  if (window.LAD && window.LAD.enabled) window.LAD.loginWithUaePass();
+  else showToast('UAE Pass requires a running backend');
 }
 
 function goAuthStep1() {
   authSelectedRole = null;
-  document.getElementById('authStepRole').style.display = '';
-  document.getElementById('authStepCreds').style.display = 'none';
-  document.getElementById('authStepReg').style.display = 'none';
-  document.getElementById('authTitle').textContent = 'Sign in to CLPD Portal';
-  // Reset cards
-  document.querySelectorAll('.auth-role-card').forEach(c => {
-    c.style.borderColor = 'var(--line2)';
-    c.style.background = '';
-    if(c.querySelector('.arole-radio')) { c.querySelector('.arole-radio').innerHTML = ''; c.querySelector('.arole-radio').style.borderColor='var(--line2)'; }
-  });
-  // Reset context
-  document.getElementById('ctxDefault').style.display = '';
+  const role = document.getElementById('authStepRole'); if (role) role.style.display = 'flex';
+  const creds = document.getElementById('authStepCreds'); if (creds) creds.style.display = 'none';
+  const reg = document.getElementById('authStepReg'); if (reg) reg.style.display = 'none';
+  const title = document.getElementById('authTitle'); if (title) title.textContent = 'Sign in to CLPD Portal';
+  // Reset default-context panel if it exists in markup
+  const dflt = document.getElementById('ctxDefault'); if (dflt) dflt.style.display = '';
   ['Lawyer','Firm','Provider'].forEach(k => { const e=document.getElementById('ctx'+k); if(e) e.style.display='none'; });
-  const btn = document.getElementById('authRoleNextBtn');
-  btn.style.opacity = '.4';
-  btn.style.pointerEvents = 'none';
-}
-
-function goAuthStep2() {
-  if(!authSelectedRole) return;
-  const cfg = ROLE_CONFIG[authSelectedRole];
-  document.getElementById('authStepRole').style.display = 'none';
-  const credStep = document.getElementById('authStepCreds');
-  credStep.style.display = 'flex';
-  document.getElementById('authStepReg').style.display = 'none';
-  document.getElementById('authTitle').textContent = 'Sign in as ' + cfg.label;
-  // Role pill
-  const pill = document.getElementById('authRolePill');
-  pill.textContent = cfg.label.toUpperCase();
-  pill.style.background = cfg.pillBg;
-  pill.style.color = cfg.pillColor;
-  pill.style.border = '1px solid ' + cfg.pillBorder;
-  // Build fields
-  document.getElementById('authCredsFields').innerHTML = `
-    <div><label style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:5px">EMAIL ADDRESS</label>
-    <input id="credEmail" type="email" placeholder="${cfg.emailPlaceholder}" style="width:100%;padding:10px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onfocus="this.style.borderColor='${cfg.btnBg}'" onblur="this.style.borderColor='var(--line2)'"/></div>
-    ${cfg.extraField ? `<div><label style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:5px">${cfg.extraField.label}</label>
-    <input id="${cfg.extraField.id}" type="${cfg.extraField.type}" placeholder="${cfg.extraField.placeholder}" style="width:100%;padding:10px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--mono);color:var(--ink);outline:none" onfocus="this.style.borderColor='${cfg.btnBg}'" onblur="this.style.borderColor='var(--line2)'"/></div>` : ''}
-    <div><label style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:5px">PASSWORD</label>
-    <input id="credPass" type="password" placeholder="••••••••" style="width:100%;padding:10px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onfocus="this.style.borderColor='${cfg.btnBg}'" onblur="this.style.borderColor='var(--line2)'"/></div>`;
-  // Style sign in button
-  const btn = document.getElementById('authSignInBtn');
-  btn.style.background = cfg.btnBg;
-  btn.style.color = '#fff';
-  // Show UAE Pass block ONLY for lawyers (firms / LAD / providers use email + password)
-  const uaeBlock = document.getElementById('authUaePassBlock');
-  if (uaeBlock) uaeBlock.style.display = (authSelectedRole === 'lawyer') ? 'block' : 'none';
-  // Focus email
-  setTimeout(() => document.getElementById('credEmail')?.focus(), 80);
-}
-
-// UAE Pass — lawyers only. Hits the backend OIDC endpoint if wired,
-// otherwise simulates a lawyer sign-in for the static demo.
-function doUaePassLogin() {
-  if (window.LAD && window.LAD.enabled) {
-    window.LAD.loginWithUaePass();
-    return;
-  }
-  // Static / demo fallback — log in as the seeded lawyer.
-  authSelectedRole = 'lawyer';
-  showToast('UAE Pass — demo mode: signing in as Yousef Al Mansouri');
-  doLogin();
 }
 
 function goAuthRegister() {
-  document.getElementById('authStepRole').style.display = 'none';
-  document.getElementById('authStepCreds').style.display = 'none';
-  document.getElementById('authStepReg').style.display = 'flex';
-  document.getElementById('authTitle').textContent = 'Create CLPD account';
+  const role = document.getElementById('authStepRole'); if (role) role.style.display = 'none';
+  const creds = document.getElementById('authStepCreds'); if (creds) creds.style.display = 'none';
+  const reg = document.getElementById('authStepReg'); if (reg) reg.style.display = 'flex';
+  const title = document.getElementById('authTitle'); if (title) title.textContent = 'Create CLPD account';
+}
+
+// Map any backend role to its dashboard URL.
+function dashboardFor(role) {
+  switch ((role || '').toLowerCase()) {
+    case 'lawyer':                    return 'lawyer-portal-v2.html';
+    case 'firm_compliance_officer':
+    case 'firm':                      return 'firm-compliance-portal.html';
+    case 'lad_intelligence':
+    case 'lad_staff':                 return 'lad-intelligence-v4.html';
+    case 'lad_admin':
+    case 'super_admin':
+    case 'dg':                        return 'lad-admin.html';
+    case 'provider':                  return 'provider-portal.html';
+    default:                          return 'lawyer-portal-v2.html';
+  }
 }
 
 async function doLogin() {
-  const role = authSelectedRole || 'lawyer';
-  const cfg = ROLE_CONFIG[role];
-  const emailEl = document.getElementById('credEmail');
-  const passEl  = document.getElementById('credPass');
-  const email   = emailEl ? emailEl.value.trim() : '';
+  const userEl = document.getElementById('credUsername');
+  const passEl = document.getElementById('credPass');
+  const username = userEl ? userEl.value.trim() : '';
   const password = passEl ? passEl.value : '';
 
-  // Lock the button while the request is in flight
   const btn = document.getElementById('authSignInBtn');
   const originalLabel = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Signing in…'; }
+  function unlock() { if (btn) { btn.disabled = false; btn.textContent = originalLabel; } }
 
-  function unlock() {
-    if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
+  if (!username || !password) {
+    unlock();
+    showToast('Please enter your username and password');
+    return;
   }
 
-  // ─── Path A — backend wired (real auth) ──────────────────────────────
+  // ─── Backend wired (real auth) ────────────────────────────────────────
   if (window.LAD && window.LAD.enabled) {
-    if (!email || !password) {
-      unlock();
-      showToast('Please enter your email and password');
-      return;
-    }
     try {
-      const res = await window.LAD.loginWithPassword(email, password, role);
-      // Backend returned a JWT — set local user state from the response
+      const res = await window.LAD.login(username, password);
+      const role = res.role || 'lawyer';
+      const displayName = res.name || username;
       currentUser = {
-        name: res.name || cfg.user.name,
-        initials: (res.name || cfg.user.name).split(' ').map(s => s[0]).join('').slice(0,2).toUpperCase(),
-        email: email,
-        role: res.role || role,
+        name: displayName,
+        initials: displayName.split(/\s+/).map(s => s[0]).filter(Boolean).join('').slice(0,2).toUpperCase(),
+        email: (res.user && res.user.email) || username,
+        role,
       };
-      userCredits = (res.profile && typeof res.profile.credit_balance === 'number') ? res.profile.credit_balance : 0;
-      userPts     = (res.profile && typeof res.profile.lifetime_points === 'number') ? res.profile.lifetime_points : 0;
+      userCredits = (res.user && typeof res.user.credits === 'number') ? res.user.credits : 0;
+      userPts     = (res.user && typeof res.user.points === 'number')  ? res.user.points  : 0;
       userBookings = [];
-      // Persist role/name for cross-page features (users-admin.html etc.)
       try {
-        localStorage.setItem('lad_role', res.role || role);
-        localStorage.setItem('lad_name', res.name || cfg.user.name);
+        localStorage.setItem('lad_role', role);
+        localStorage.setItem('lad_name', displayName);
       } catch (_) {}
       ladUpdateAuth();
       closeAuth();
-      // First-login flow — backend says this account must rotate its password
       if (res.must_change_password) {
         showToast('Please set a new password to continue');
         window.location.href = 'change-password.html';
         return;
       }
-      showToast('Signed in as ' + currentUser.name);
-      // Redirect by role
-      const dest = role === 'lawyer'    ? 'lawyer-portal-v2.html'
-                 : role === 'firm'      ? 'firm-compliance-portal.html'
-                 : role === 'lad_staff' ? 'lad-intelligence-v4.html'
-                 : (role === 'lad_admin' || role === 'super_admin') ? 'lad-admin.html'
-                 : role === 'provider'  ? 'provider-portal.html'
-                                        : 'lawyer-portal-v2.html';
-      window.location.href = dest;
+      showToast('Signed in as ' + displayName);
+      window.location.href = dashboardFor(role);
     } catch (e) {
       unlock();
-      // Specific message for the most likely failure modes
-      if (e.status === 401) {
-        showToast('Incorrect email or password');
-      } else if (e.status === 0 || (e.message && e.message.toLowerCase().includes('failed to fetch'))) {
-        showToast('Cannot reach the server — please check your connection');
-      } else {
-        showToast('Sign-in failed: ' + (e.message || 'unknown error'));
-      }
+      if (e.status === 401) showToast('Incorrect username or password');
+      else if (e.status === 0 || (e.message && e.message.toLowerCase().includes('failed to fetch'))) showToast('Cannot reach the server — please check your connection');
+      else showToast('Sign-in failed: ' + (e.message || 'unknown error'));
     }
     return;
   }
 
-  // ─── Path B — backend not wired (demo mode) ──────────────────────────
-  // Used in Netlify Drop previews and local prototyping. Bypasses auth
-  // and seeds the UI with the demo data carried in ROLE_CONFIG.
-  currentUser = {...cfg.user};
-  userCredits = cfg.user.credits || 0;
-  userPts = cfg.user.pts || 0;
-  if(role === 'lawyer') {
-    userBookings = [
-      {course:'AI Governance (E-learning)', date:'Self-paced · Enrolled', pts:2, status:'in-progress'},
-      {course:'International Arbitration & the Courts', date:'16 Jun 2026 · 9:00–15:00', pts:2, status:'confirmed'},
-      {course:'Common Law Contract Update 2026', date:'18 Jun 2026 · 9:00–11:00', pts:2, status:'confirmed'},
-    ];
-  } else { userBookings = []; }
-  ladUpdateAuth();
-  closeAuth();
-  showToast((cfg.toast || 'Signed in') + ' · demo mode');
-  if(role === 'lawyer') { window.location.href = 'lawyer-portal-v2.html'; return; }
-  else if(role === 'firm') { window.location.href = 'firm-compliance-portal.html'; return; }
-  else if(role === 'lad_staff') { window.location.href = 'lad-intelligence-v4.html'; return; }
-  else if(role === 'lad_admin' || role === 'super_admin') { window.location.href = 'lad-admin.html'; return; }
-  else if(role === 'provider') window.location.href='provider-portal.html';
+  // Backend not configured — surface a clear error rather than the old
+  // role-shaped demo fallback (which relied on the dropped role picker).
+  unlock();
+  showToast('Backend not configured — please contact your CLPD administrator');
 }
 
 function doRegister() {

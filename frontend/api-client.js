@@ -99,25 +99,31 @@
       if (ENABLED) window.location.href = BASE + '/api/v1/auth/uaepass/login';
       else alert('Backend not configured — UAE Pass requires a running backend');
     },
-    // Password sign-in (works for every role). The backend exposes two
-    // endpoints — /auth/lawyer/login and /auth/staff/login — depending on
-    // whether the role is 'lawyer' or one of the back-office roles. This
-    // helper routes correctly, stores the JWT, and returns the {role, name}
-    // pair the caller needs to redirect.
-    loginWithPassword: async function(email, password, role) {
+    // Unified password sign-in for EVERY role (lawyer, firm CO, LAD admin,
+    // super_admin, reviewer, provider). The username field accepts:
+    //   - any registered email address, OR
+    //   - a lawyer number (e.g. L-01494), OR
+    //   - a bar number (e.g. BAR-1496)
+    // The backend tries `staff.email` first, then `lawyers.email / id / bar_no`,
+    // and bcrypt-verifies the password against the matching row. Caller does
+    // not need to know the role in advance — the response includes role + name
+    // so the frontend can redirect.
+    login: async function(username, password) {
       if (!ENABLED) throw new Error('Backend not configured');
-      const path = (role === 'lawyer')
-        ? '/api/v1/auth/lawyer/login'
-        : '/api/v1/auth/staff/login';
-      const res = await call('POST', path, { email, password });
+      const res = await call('POST', '/api/v1/auth/login', { username, password });
       if (res.token) {
         setToken(res.token);
         try {
-          localStorage.setItem('lad_role', res.role || role || '');
+          localStorage.setItem('lad_role', res.role || '');
           localStorage.setItem('lad_name', res.name || '');
         } catch (_) {}
       }
       return res;
+    },
+    // Deprecated wrapper kept so existing call sites continue to work while
+    // the frontend is migrated. New code should call `login()` above.
+    loginWithPassword: async function(usernameOrEmail, password /*, role (ignored) */) {
+      return this.login(usernameOrEmail, password);
     },
     me: () => ENABLED ? call('GET', '/api/v1/auth/me') : Promise.reject(new Error('offline')),
 
