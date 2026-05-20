@@ -751,6 +751,7 @@ async function decide(action){
   const STATUS_MAP = { approve: 'approved', reject: 'rejected', changes: 'returned' };
   const newStatus = STATUS_MAP[action];
 
+  let backendResp = null;
   if (isReal && newStatus) {
     const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
     const token = (window.LAD && window.LAD.getToken && window.LAD.getToken()) || localStorage.getItem('lad_token') || '';
@@ -768,6 +769,7 @@ async function decide(action){
         toast(`Could not save decision — ${body.error || r.status}`);
         return;
       }
+      backendResp = await r.json().catch(() => null);
       a.decision = newStatus;
     } catch (e) {
       toast('Backend unreachable — decision not saved');
@@ -775,13 +777,28 @@ async function decide(action){
     }
   }
 
-  const msg = {
+  // Build the user-facing message — if a session_submission just got approved,
+  // surface the point-award summary so the admin sees that points DID land.
+  let msg = {
     approve:`Approved ${a.ref} — propagates to ${(a.audience || 'all practitioners').toLowerCase()} as accredited`,
     changes:`Sent back to ${a.provider} with reviewer notes`,
     reject:`Rejected ${a.ref} — decision logged`,
     defer:`Escalated ${a.ref} to DG office`
   }[action];
-  toast(msg + (isReal ? ' · persisted' : ''));
+
+  if (action === 'approve' && backendResp && backendResp.pointsAwarded) {
+    const pa = backendResp.pointsAwarded;
+    if (pa.note) {
+      msg = `Approved ${a.ref} · ${pa.note}`;
+    } else if (pa.awarded && pa.awarded.length) {
+      msg = `Approved ${a.ref} · ${pa.awarded.length} lawyer${pa.awarded.length===1?'':'s'} awarded ${pa.perLawyer} pts each (${pa.total} total)`;
+      if (pa.unmatched && pa.unmatched.length) {
+        msg += ` · ${pa.unmatched.length} unmatched (see console)`;
+        console.warn('[decide] unmatched attendees:', pa.unmatched);
+      }
+    }
+  }
+  toast(msg + (isReal ? ' · persisted' : ''), 4500);
 
   // Refresh the queue so the entry leaves Pending and lands in Approved/Rejected/Returned tabs
   if (isReal && newStatus) await fetchAccreditations();
@@ -1152,11 +1169,11 @@ async function updateReviewer(appIdx, reviewerSlot, name){
   }
 }
 
-function toast(msg){
+function toast(msg, durationMs){
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('on');
-  setTimeout(() => t.classList.remove('on'), 2800);
+  setTimeout(() => t.classList.remove('on'), durationMs || 2800);
 }
 
 // Initial render — populate from backend
