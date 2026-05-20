@@ -1,0 +1,29 @@
+{
+  "routes": [
+    { "route": "/lawyer", "rewrite": "/lawyer-portal-v2.html" },
+    { "route": "/firm", "rewrite": "/firm-compliance-portal.html" },
+    { "route": "/intelligence", "rewrite": "/lad-intelligence-v4.html" },
+    { "route": "/admin", "rewrite": "/lad-admin.html" },
+    { "route": "/accreditation", "rewrite": "/lad-accreditation-review.html" },
+    { "route": "/heatmap", "rewrite": "/lad-capability-heatmap.html" },
+    { "route": "/skills", "rewrite": "/lawyer-skills.html" },
+    { "route": "/router", "rewrite": "/router.html" },
+    { "route": "/users", "rewrite": "/users-admin.html" },
+    { "route": "/change-password", "rewrite": "/change-password.html" },
+    { "route": "/firm-capabilities", "rewrite": "/firm-capabilities.html" },
+    { "route": "/provider", "rewrite": "/provider-portal.html" }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/*.{html,css,js,json,png,jpg,jpeg,svg,ico,woff,woff2}", "/api/*"]
+  },
+  "globalHeaders": {
+    "X-Frame-Options": "SAMEORIGIN",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
+  },
+  "mimeTypes": {
+    ".json": "application/json"
+  }
+}

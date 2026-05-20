@@ -1,0 +1,32 @@
+name: azure-swa
+
+# Deploys ./frontend to Azure Static Web App (clpd-frontend) on every push to
+# main that touches frontend code. Runs alongside the existing Netlify
+# workflow during the migration period; once Netlify is retired this file
+# becomes the sole frontend deploy path.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/azure-swa.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: deploy frontend to Azure SWA
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_SWA_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: frontend
+          # No api_location — the Express backend runs on App Service, not as
+          # SWA-bundled Azure Functions. SWA still serves the static frontend.
+          output_location: ''
+          skip_app_build: true
