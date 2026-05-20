@@ -1719,7 +1719,8 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
             </div>
             <div style="grid-column:1/-1">
               <label style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:4px">DATE HELD *</label>
-              <input id="ss-date" type="date" style="width:100%;padding:9px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--line2)'"/>
+              <input id="ss-date" type="date" style="width:100%;padding:9px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onchange="updateSessionImpact()" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--line2)'"/>
+              <div id="ss-date-hint" style="font-size:11px;color:var(--slate3);margin-top:5px;line-height:1.5">Session must be ≥ 7 days after the accreditation was applied for, and attendance must be filed within 30 days of the session.</div>
             </div>
             <!-- Hidden field kept so submit handler keeps working without restructuring -->
             <input id="ss-trainer" type="hidden" value=""/>
@@ -3803,8 +3804,12 @@ async function loadApprovedCoursesIntoDropdown() {
       sel.innerHTML = '<option value="">No approved courses yet — enter accreditation code manually below ↓</option>';
       return;
     }
+    // Stash full course metadata (incl. earliest_session_date) for updateSessionImpact()
+    window.__COURSE_CATALOG__ = {};
+    opts.forEach(o => { window.__COURSE_CATALOG__[o.accreditation_code] = o; });
+
     sel.innerHTML = '<option value="">Select an approved course… (' + opts.length + ' available)</option>' +
-      opts.map(o => `<option value="${o.accreditation_code}" data-pts="${o.points}" data-title="${(o.courseTitle||'').replace(/"/g,'&quot;')}" data-provider="${(o.provider||'').replace(/"/g,'&quot;')}">${o.courseTitle} · ${o.accreditation_code} · ${o.points} pts${o.provider ? ' · ' + o.provider : ''}</option>`).join('');
+      opts.map(o => `<option value="${o.accreditation_code}" data-pts="${o.points}" data-title="${(o.courseTitle||'').replace(/"/g,'&quot;')}" data-provider="${(o.provider||'').replace(/"/g,'&quot;')}" data-earliest="${o.earliest_session_date||''}" data-applied="${o.applied_at||''}">${o.courseTitle} · ${o.accreditation_code} · ${o.points} pts${o.provider ? ' · ' + o.provider : ''}</option>`).join('');
   } catch (e) {
     console.warn('[session-submit] catalog fetch failed', e);
     sel.innerHTML = '<option value="">Catalog unreachable — enter accreditation code below ↓</option>';
@@ -3868,6 +3873,37 @@ function updateSessionImpact() {
   const totalPts = pts * count;
 
   document.getElementById('ss-total-pts').textContent = count && pts ? `+${totalPts} pts` : '—';
+
+  // Enforce timing rules on the date input + show inline hint
+  const dateEl = document.getElementById('ss-date');
+  const hintEl = document.getElementById('ss-date-hint');
+  if (dateEl) {
+    const earliest = opt?.dataset?.earliest || '';
+    const today = new Date().toISOString().slice(0, 10);
+    if (earliest) {
+      dateEl.min = earliest;
+      dateEl.max = today;
+      if (hintEl) {
+        const courseTitle = opt?.dataset?.title || '';
+        hintEl.innerHTML = `<strong style="color:var(--teal)">${courseTitle}</strong> · accredited ${opt?.dataset?.applied?.split(' ')[0]||''} · earliest session date <strong>${earliest}</strong> · attendance must be filed within 30 days of the session`;
+        hintEl.style.color = 'var(--slate2)';
+      }
+      // If user already picked a date that's now out of range, flag it
+      if (dateEl.value && (dateEl.value < earliest || dateEl.value > today)) {
+        if (hintEl) {
+          hintEl.innerHTML += `<br><strong style="color:var(--red)">⚠ ${dateEl.value} is outside the allowed window — pick a date between ${earliest} and ${today}.</strong>`;
+          hintEl.style.color = 'var(--red)';
+        }
+      }
+    } else {
+      dateEl.removeAttribute('min');
+      dateEl.removeAttribute('max');
+      if (hintEl) {
+        hintEl.textContent = 'Session must be ≥ 7 days after the accreditation was applied for, and attendance must be filed within 30 days of the session.';
+        hintEl.style.color = 'var(--slate3)';
+      }
+    }
+  }
 
   if(!count || !pts) {
     document.getElementById('ss-impact').innerHTML = '<div style="font-size:12.5px;color:var(--slate2);padding:16px;text-align:center;border:1px dashed var(--line2);border-radius:9px">Select a course and lawyers to preview impact</div>';
