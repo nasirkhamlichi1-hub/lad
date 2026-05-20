@@ -1165,6 +1165,18 @@ renderEmptyState('Loading queue…');
   await refreshReviewersFromBackend();
   await fetchAccreditations();
 })();
+
+// Auto-refresh when admin returns to this tab — picks up new submissions
+// and status changes from other browsers without a manual click.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    fetchAccreditations();
+  }
+});
+// Also poll every 30s while the tab is active
+setInterval(() => {
+  if (document.visibilityState === 'visible') fetchAccreditations();
+}, 30000);
 </script>
 </body>
 </html>

@@ -3445,18 +3445,33 @@ async function triggerWorkflow(payload) {
   payload.submittedAt = new Date().toISOString();
   payload.submittedVia = 'Firm Compliance Portal';
 
-  const base = (window.LAD_API_BASE) || '';
-  if (base) {
-    try {
-      await fetch(base + '/api/v1/accreditations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-actor': payload.submittedBy || 'anonymous' },
-        body: JSON.stringify(payload),
-        keepalive: true,
-      });
-    } catch (e) { console.warn('[accreditations] backend unreachable; submission held locally', e); }
+  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || '';
+  if (!base) {
+    console.error('[accreditations] no backend base URL — submission would be lost');
+    alert('Submission not sent — backend URL not configured. Refresh the page and try again.');
+    return null;
   }
-  return ref;
+  try {
+    const r = await fetch(base + '/api/v1/accreditations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-actor': payload.submittedBy || 'anonymous' },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    });
+    if (!r.ok) {
+      const body = await r.json().catch(() => ({}));
+      console.error('[accreditations] HTTP', r.status, body);
+      alert('Submission failed: HTTP ' + r.status + ' — ' + (body?.error?.message || body?.error || 'see console'));
+      return null;
+    }
+    const body = await r.json();
+    // Backend may issue its own ref if ours collides — prefer it
+    return body.ref || body.data?.ref || ref;
+  } catch (e) {
+    console.error('[accreditations] network error', e);
+    alert('Submission failed: ' + e.message + '\\n\\nCheck your network and try again.');
+    return null;
+  }
 }
 
 // ════════════════════════════════════════════

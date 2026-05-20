@@ -8871,18 +8871,25 @@ async function pubTriggerWorkflow(payload) {
   payload.referenceNumber = ref;
   payload.submittedAt = new Date().toISOString();
   payload.submittedVia = 'CLPD Public Portal';
-  const base = (window.LAD_API_BASE) || '';
-  if (base) {
-    try {
-      await fetch(base + '/api/v1/accreditations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-actor': payload.applicantEmail || payload.applicantName || 'public' },
-        body: JSON.stringify(payload),
-        keepalive: true,
-      });
-    } catch (e) { console.warn('[accreditations] backend unreachable; submission held locally', e); }
+  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || '';
+  if (!base) { alert('Submission not sent — backend URL not configured.'); return null; }
+  try {
+    const r = await fetch(base + '/api/v1/accreditations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-actor': payload.applicantEmail || payload.applicantName || 'public' },
+      body: JSON.stringify(payload), keepalive: true,
+    });
+    if (!r.ok) {
+      const body = await r.json().catch(() => ({}));
+      alert('Submission failed: HTTP ' + r.status + ' — ' + (body?.error?.message || body?.error || 'see console'));
+      return null;
+    }
+    const body = await r.json();
+    return body.ref || body.data?.ref || ref;
+  } catch (e) {
+    alert('Submission failed: ' + e.message);
+    return null;
   }
-  return ref;
 }
 
 // ═══════════════════════════════════════════════
@@ -10596,18 +10603,25 @@ async function triggerWorkflow(payload) {
   payload.submittedAt = new Date().toISOString();
   payload.submittedVia = 'Firm Compliance Portal';
 
-  const base = (window.LAD_API_BASE) || '';
-  if (base) {
-    try {
-      await fetch(base + '/api/v1/accreditations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-actor': payload.submittedBy || 'anonymous' },
-        body: JSON.stringify(payload),
-        keepalive: true,
-      });
-    } catch (e) { console.warn('[accreditations] backend unreachable; submission held locally', e); }
+  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || '';
+  if (!base) { alert('Submission not sent — backend URL not configured.'); return null; }
+  try {
+    const r = await fetch(base + '/api/v1/accreditations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-actor': payload.submittedBy || 'anonymous' },
+      body: JSON.stringify(payload), keepalive: true,
+    });
+    if (!r.ok) {
+      const body = await r.json().catch(() => ({}));
+      alert('Submission failed: HTTP ' + r.status + ' — ' + (body?.error?.message || body?.error || 'see console'));
+      return null;
+    }
+    const body = await r.json();
+    return body.ref || body.data?.ref || ref;
+  } catch (e) {
+    alert('Submission failed: ' + e.message);
+    return null;
   }
-  return ref;
 }
 
 // ════════════════════════════════════════════
