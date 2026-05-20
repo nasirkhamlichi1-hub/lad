@@ -744,8 +744,8 @@ html,#portal-firm body{background:var(--paper);color:var(--ink);font-family:var(
 #portal-firm .btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
 #portal-firm /* ── Lawyer table ── */
 .law-table{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-sm)}
-#portal-firm .law-hd{display:grid;grid-template-columns:36px 40px 2fr 100px 100px 110px 90px 120px 110px;gap:8px;padding:11px 18px;background:var(--paper);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;align-items:center}
-#portal-firm .law-row{display:grid;grid-template-columns:36px 40px 2fr 100px 100px 110px 90px 120px 110px;gap:8px;padding:13px 18px;border-bottom:1px solid var(--line);align-items:center;transition:background .12s}
+#portal-firm .law-hd{display:grid;grid-template-columns:36px 40px 2fr 90px 90px 100px 80px 95px 110px 100px;gap:8px;padding:11px 18px;background:var(--paper);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;align-items:center}
+#portal-firm .law-row{display:grid;grid-template-columns:36px 40px 2fr 90px 90px 100px 80px 95px 110px 100px;gap:8px;padding:13px 18px;border-bottom:1px solid var(--line);align-items:center;transition:background .12s}
 #portal-firm .law-row:hover{background:var(--paper)}
 #portal-firm .law-row.selected{background:var(--green-bg) !important}
 #portal-firm .law-row:last-child{border-bottom:none}
@@ -4650,7 +4650,7 @@ function globalViewAttendance(id){typeof viewAttendance==='function'&&viewAttend
         <div class="law-table">
           <div class="law-hd">
             <div><input type="checkbox" class="law-check" id="checkAll" onchange="toggleAll(this)" style="margin:0"/></div>
-            <div>#</div><div>LAWYER</div><div style="text-align:center">PTS EARNED</div><div style="text-align:center">PTS MISSING</div><div>PROGRESS</div><div style="text-align:center">BOOKINGS</div><div style="text-align:center">STATUS</div><div style="text-align:right">ACTION</div></div>
+            <div>#</div><div>LAWYER</div><div style="text-align:center">PTS EARNED</div><div style="text-align:center">PTS MISSING</div><div>PROGRESS</div><div style="text-align:center">BOOKINGS</div><div style="text-align:center">CREDITS</div><div style="text-align:center">STATUS</div><div style="text-align:right">ACTION</div></div>
           <div id="lawRows"></div>
         </div>
       </section>
@@ -4788,14 +4788,8 @@ function globalViewAttendance(id){typeof viewAttendance==='function'&&viewAttend
           </div>
         </div>
 
-        <!-- Per-lawyer credit allocation -->
-        <div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600">CREDITS PER LAWYER</div>
-            <button class="btn btn-xs btn-gh" onclick="openAssign()">↔ Assign / rebalance</button>
-          </div>
-          <div style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-sm)" id="creditLawyerList"></div>
-        </div>
+        <!-- Per-lawyer credit allocation now lives in the main Lawyers table above.
+             Removed standalone CREDITS PER LAWYER panel to eliminate duplicated lists. -->
 
         <!-- Transaction history -->
         <div style="margin-top:16px">
@@ -9125,31 +9119,10 @@ function updateCreditUI() {
 // RENDER CREDIT LAWYER LIST
 // ════════════════════════════════════════════
 function renderCreditLawyerList() {
-  const rows = LAWYERS.map((l,i) => {
-    const c = l.credits || 0;
-    const missing = Math.max(0, 16 - l.pts);
-    const coursesCanBook = Math.floor(c / COURSE_CREDITS);
-    return `<div style="display:grid;grid-template-columns:auto 2fr 100px 100px 100px auto;gap:10px;align-items:center;padding:11px 16px;border-bottom:${i<LAWYERS.length-1?'1px solid var(--line)':'none'}">
-      <div style="width:30px;height:30px;border-radius:7px;background:hsl(${(l.id*53)%360},38%,44%);display:grid;place-items:center;font-family:var(--mono);font-size:9px;font-weight:700;color:#fff;flex-shrink:0">${l.initials}</div>
-      <div><div style="font-weight:600;font-size:12.5px;color:var(--ink)">${l.name}</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3)">${l.role} · ${l.practice}</div></div>
-      <div style="text-align:center">
-        <span style="font-family:var(--serif);font-size:20px;color:${c>=COURSE_CREDITS?'var(--gold)':'var(--slate3)'}">${c}</span>
-        <div style="font-family:var(--mono);font-size:8.5px;color:var(--slate3)">credits</div>
-      </div>
-      <div style="text-align:center">
-        <span style="font-family:var(--mono);font-size:11.5px;font-weight:700;color:${coursesCanBook>0?'var(--green)':'var(--slate3)'}">${coursesCanBook}</span>
-        <div style="font-family:var(--mono);font-size:8.5px;color:var(--slate3)">can book</div>
-      </div>
-      <div style="text-align:center">
-        <span class="pill ${l.pts>=16?'pg':l.pts>=8?'pa':'pr'}" style="font-size:9px">${l.pts}/16 pts</span>
-      </div>
-      <div style="display:flex;gap:5px">
-        <button class="btn btn-xs btn-gh" onclick="openAssignSingle(${l.id})">+ Credits</button>
-        <button class="btn btn-xs btn-b" onclick="openLawyer(${l.id})">→</button>
-      </div>
-    </div>`;
-  }).join('');
-  document.getElementById('creditLawyerList').innerHTML = rows;
+  // Credits now render as a column inside the main Lawyers table (#lawRows).
+  // Kept as a no-op shim so existing call sites that refresh after a credit
+  // change still trigger a row redraw via filterLawyers().
+  if (typeof filterLawyers === 'function') filterLawyers();
 }
 
 // ════════════════════════════════════════════
@@ -9575,6 +9548,10 @@ function renderLawyerRow(l,i) {
     <div class="dir-num" style="text-align:center;color:${missing>8?'var(--red)':missing>3?'var(--amber)':'var(--green)'}">${missing}</div>
     <div class="pts-ring"><div class="pts-track"><div class="pts-fill" style="width:${pct}%;background:${accent}"></div></div></div>
     <div style="text-align:center"><span style="font-family:var(--mono);font-size:11.5px;font-weight:700;color:${l.booked>0?'var(--blue)':'var(--slate3)'}">${l.booked}</span></div>
+    <div style="text-align:center" onclick="event.stopPropagation()">
+      <span style="font-family:var(--serif);font-size:18px;color:${(l.credits||0)>=COURSE_CREDITS?'var(--gold)':'var(--slate3)'};cursor:pointer" title="${Math.floor((l.credits||0)/COURSE_CREDITS)} courses bookable · click to assign" onclick="openAssignSingle(${l.id})">${l.credits||0}</span>
+      <div style="font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:.3px">${Math.floor((l.credits||0)/COURSE_CREDITS)} bookable</div>
+    </div>
     <div style="text-align:center"><span class="pill ${pillClass(l.pts)}" style="font-size:9px">${pillLabel(l.pts)}</span></div>
     <div onclick="event.stopPropagation()" style="display:flex;gap:5px;justify-content:flex-end;align-items:center">
       <button class="btn btn-xs btn-gh" onclick="openOR(${l.id})">✉</button>
