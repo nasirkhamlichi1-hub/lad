@@ -243,9 +243,27 @@ em{font-style:italic;color:var(--gold)}
     <a class="lgn-pill" href="lad-intelligence-v4.html#reports">Reports</a>
   </div>
   <div class="lgn-spacer"></div>
+  <span id="loggedInBadge" style="font-family:var(--mono);font-size:10.5px;letter-spacing:.8px;color:var(--slate3);padding:5px 10px;border:1px solid var(--line2);border-radius:8px;background:#fff;margin-right:8px;display:none">— signed in as <strong id="loggedInName" style="color:var(--ink);font-weight:700">·</strong></span>
   <a class="lgn-pill lgn-pill-sec" href="lad-admin.html" title="Switch to operational admin tools">LAD Admin →</a>
   <a class="lgn-pill lgn-pill-sec" onclick="['lad_token','lad_role','lad_name'].forEach(function(k){try{localStorage.removeItem(k)}catch(e){}});window.location.href='clpd-portal.html';return false;" data-lad-logout style="cursor:pointer">Sign out</a>
 </nav>
+<script>
+// Surface the logged-in name in the top nav so reviewers always know whose
+// account is active. Reads lad_name from localStorage (set by api-client on
+// loginWithPassword).
+(function () {
+  try {
+    const name = localStorage.getItem('lad_name') || '';
+    if (name) {
+      const el = document.getElementById('loggedInName');
+      const badge = document.getElementById('loggedInBadge');
+      if (el) el.textContent = name;
+      if (badge) badge.style.display = 'inline-block';
+      window.CURRENT_USER_NAME = name;
+    }
+  } catch (e) { /* ignore */ }
+})();
+</script>
 
 <!-- Page header -->
 <div class="page-hd">
@@ -323,7 +341,8 @@ em{font-style:italic;color:var(--gold)}
 <div class="toast" id="toast"></div>
 
 <script>
-const REVIEWERS = [
+// Seed list; refreshed from /api/v1/admin/users?role=lad_admin on boot.
+let REVIEWERS = [
   'Duncan Wood',
   'Nasir Khamlichi',
   'Layla Bouchart',
@@ -334,6 +353,27 @@ const REVIEWERS = [
   'Omar Al Falasi',
   'Sara Iqbal'
 ];
+
+async function refreshReviewersFromBackend(){
+  try {
+    const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+    if (!base) return;
+    const token = localStorage.getItem('lad_token') || '';
+    if (!token) return;
+    const r = await fetch(base + '/api/v1/admin/users?role=lad_admin&limit=200', {
+      headers: { Authorization: 'Bearer ' + token },
+    });
+    if (!r.ok) return;
+    const body = await r.json();
+    const rows = Array.isArray(body) ? body : (body.data || body.rows || []);
+    const live = rows
+      .map(u => `${u.first_name || ''} ${u.last_name || ''}`.trim())
+      .filter(n => n && !n.startsWith('— '));
+    if (live.length) {
+      REVIEWERS = Array.from(new Set([...REVIEWERS, ...live])).sort();
+    }
+  } catch (e) { /* keep the seed list as fallback */ }
+}
 
 // ─────────────────────────────────────────────────────────────
 // DATA — populated from /api/v1/accreditations (LAD CLPD backend)
@@ -446,9 +486,25 @@ function renderCenter(a){
         <div class="c-fact"><div class="c-fact-lbl">${a._real ? 'CREDITS (editable)' : 'PROPOSED CREDITS'}</div><div class="c-fact-val">${a._real ? `<input type="number" min="0" max="100" step="1" value="${a.proposedCredits === '' ? '' : a.proposedCredits}" oninput="onPointsInput('${a.ref}','credits',this.value)" onblur="onPointsBlur('${a.ref}')" style="width:72px;padding:4px 8px;border:1.5px solid var(--line2);border-radius:6px;font-family:var(--serif);font-size:18px;color:var(--teal);background:#fff;outline:none" onfocus="this.style.borderColor='var(--teal)'" placeholder="—"/> credits` : `<span class="em">${a.proposedCredits}</span> credits`}</div></div>
         <div class="c-fact" style="grid-column:1/-1"><div class="c-fact-lbl">AUDIENCE</div><div class="c-fact-val">${a.audience}</div></div>
         <div class="c-fact" style="grid-column:1/-1"><div class="c-fact-lbl">REVIEWERS · LAD STAFF</div><div class="c-fact-val" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <select class="rev-select" onchange="updateReviewer(${_selectedIdx}, 1, this.value)">${REVIEWERS.map(r => `<option value="${r}" ${r===a.reviewer1?'selected':''}>${r}</option>`).join('')}</select>
+        <div style="display:flex;align-items:center;gap:4px">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase">R1</span>
+          <select class="rev-select" onchange="updateReviewer(${_selectedIdx}, 1, this.value)">
+            <option value="">— Unassigned</option>
+            ${REVIEWERS.map(r => `<option value="${r}" ${r===a.reviewer1?'selected':''}>${r}</option>`).join('')}
+          </select>
+          ${(window.CURRENT_USER_NAME && a.reviewer1 !== window.CURRENT_USER_NAME) ? `<button class="btn btn-xs btn-ghost" style="padding:3px 8px;font-size:10.5px" onclick="assignMe(${_selectedIdx}, 1)" title="Assign yourself as Reviewer 1">+ me</button>` : ''}
+          ${(window.CURRENT_USER_NAME && a.reviewer1 === window.CURRENT_USER_NAME) ? `<span style="font-family:var(--mono);font-size:9.5px;color:var(--teal);font-weight:700;letter-spacing:.5px">YOU</span>` : ''}
+        </div>
         <span style="color:var(--slate3)">·</span>
-        <select class="rev-select" onchange="updateReviewer(${_selectedIdx}, 2, this.value)">${REVIEWERS.map(r => `<option value="${r}" ${r===a.reviewer2?'selected':''}>${r}</option>`).join('')}</select>
+        <div style="display:flex;align-items:center;gap:4px">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase">R2</span>
+          <select class="rev-select" onchange="updateReviewer(${_selectedIdx}, 2, this.value)">
+            <option value="">— Unassigned</option>
+            ${REVIEWERS.map(r => `<option value="${r}" ${r===a.reviewer2?'selected':''}>${r}</option>`).join('')}
+          </select>
+          ${(window.CURRENT_USER_NAME && a.reviewer2 !== window.CURRENT_USER_NAME) ? `<button class="btn btn-xs btn-ghost" style="padding:3px 8px;font-size:10.5px" onclick="assignMe(${_selectedIdx}, 2)" title="Assign yourself as Reviewer 2">+ me</button>` : ''}
+          ${(window.CURRENT_USER_NAME && a.reviewer2 === window.CURRENT_USER_NAME) ? `<span style="font-family:var(--mono);font-size:9.5px;color:var(--teal);font-weight:700;letter-spacing:.5px">YOU</span>` : ''}
+        </div>
         <span style="color:var(--purple);font-size:11px;margin-left:6px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase">+ Lex AI</span>
       </div></div>
       </div>
@@ -488,10 +544,16 @@ function renderScoring(a){
   const totR2 = criteria.reduce((s,c) => s + (Number(a.scores.r2[c.key])||0), 0);
   const totAI = criteria.reduce((s,c) => s + (Number(a.scores.ai[c.key])||0), 0);
   const max = criteria.length * 10;
-  const editable = !!a._real;
+  const isReal = !!a._real;
+  const me = window.CURRENT_USER_NAME || '';
+  const r1IsMe = isReal && me && a.reviewer1 === me;
+  const r2IsMe = isReal && me && a.reviewer2 === me;
 
-  // Editable cell for real entries; static for demo seed
-  const cell = (slot, key, val) => {
+  // Cell editability: only the assigned reviewer can edit their column.
+  // If neither slot matches the current user, scores are read-only — they
+  // need to assign themselves first via the "+ me" buttons in the Materials
+  // panel, or be assigned by an admin via the dropdowns.
+  const cell = (slot, key, val, editable) => {
     if (editable) {
       return `<input type="number" min="0" max="10" step="1" value="${val ?? ''}"
         oninput="onScoreInput('${a.ref}','${slot}','${key}',this.value)"
@@ -499,16 +561,28 @@ function renderScoring(a){
         style="width:46px;height:34px;padding:4px 6px;border:1.5px solid var(--line2);border-radius:6px;text-align:center;font-family:var(--serif);font-size:18px;color:var(--ink);background:#fff;outline:none"
         onfocus="this.style.borderColor='var(--teal)'" placeholder="—"/>`;
     }
-    return `<div class="rubric-score ${scoreClass(val)}">${val ?? '—'}</div>`;
+    return `<div class="rubric-score ${scoreClass(val)}" title="${isReal ? 'Read-only — only the assigned reviewer can score this column' : ''}">${val ?? '—'}</div>`;
   };
 
+  const r1Label = isReal && a.reviewer1 && a.reviewer1 !== '— Unassigned' ? `R1 · ${a.reviewer1.split(' ')[0]}` : 'R1';
+  const r2Label = isReal && a.reviewer2 && a.reviewer2 !== '— Unassigned' ? `R2 · ${a.reviewer2.split(' ')[0]}` : 'R2';
+
+  let mode = '';
+  if (isReal) {
+    if (r1IsMe && r2IsMe) mode = '<span style="color:var(--teal)">· you are R1 and R2 — both editable</span>';
+    else if (r1IsMe)      mode = '<span style="color:var(--teal)">· you are R1 — R1 column editable</span>';
+    else if (r2IsMe)      mode = '<span style="color:var(--teal)">· you are R2 — R2 column editable</span>';
+    else if (me)          mode = '<span style="color:var(--amber)">· you are not assigned — assign yourself in Materials panel</span>';
+    else                  mode = '<span style="color:var(--slate3)">· sign in to score</span>';
+  }
+
   p.innerHTML = `
-    <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:14px">Collaborative scoring · ${criteria.length} criteria · /10 ${editable ? '<span style="color:var(--teal)">· editable</span>' : ''}</div>
+    <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:14px">Collaborative scoring · ${criteria.length} criteria · /10 ${mode}</div>
 
     <div class="rubric-hd">
       <div>Criterion</div>
-      <div>R1</div>
-      <div>R2</div>
+      <div title="${r1Label}">${r1Label.split(' · ')[0]}${r1IsMe ? ' · YOU' : ''}</div>
+      <div title="${r2Label}">${r2Label.split(' · ')[0]}${r2IsMe ? ' · YOU' : ''}</div>
       <div>AI</div>
     </div>
 
@@ -518,8 +592,8 @@ function renderScoring(a){
           <div class="rubric-crit">${c.label}</div>
           <div class="rubric-crit-d">${c.desc}</div>
         </div>
-        ${cell('r1', c.key, a.scores.r1[c.key])}
-        ${cell('r2', c.key, a.scores.r2[c.key])}
+        ${cell('r1', c.key, a.scores.r1[c.key], r1IsMe)}
+        ${cell('r2', c.key, a.scores.r2[c.key], r2IsMe)}
         <div class="rubric-score ai">${a.scores.ai[c.key] ?? '—'}</div>
       </div>
     `).join('')}
@@ -530,6 +604,16 @@ function renderScoring(a){
       <div class="rubric-tot-score" id="score-tot-r2">${totR2}</div>
       <div class="rubric-tot-score ai" id="score-tot-ai">${totAI}</div>
     </div>
+
+    ${isReal ? `
+    <div style="margin-top:16px;padding:14px;background:linear-gradient(135deg,#f3e8ff,#fdf4ff);border:1px solid var(--purple-border);border-radius:10px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:20px">✨</div>
+      <div style="flex:1">
+        <div style="font-family:var(--mono);font-size:9.5px;color:var(--purple);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;margin-bottom:2px">Lex AI · third reviewer</div>
+        <div style="font-size:11.5px;color:var(--slate2);line-height:1.45">Ask Lex to read the submission and produce a recommendation. Saves to this application.</div>
+      </div>
+      <button id="aiGenBtnScoring" style="background:var(--purple);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;font-weight:700" onclick="generateAiRationale('${a.ref}')">${a.aiRationale ? '↻ Regenerate' : 'Generate'}</button>
+    </div>` : ''}
 
     <div class="ai-rationale">
       <div class="ai-rationale-hd">✦ Lex AI rationale</div>
@@ -956,7 +1040,16 @@ async function generateAiRationale(ref) {
     }
     const text = j.rationale || '';
     const idx = APPLICATIONS.findIndex(a => a.ref === ref);
-    if (idx >= 0) APPLICATIONS[idx].aiRationale = text;
+    if (idx >= 0) {
+      APPLICATIONS[idx].aiRationale = text;
+      // Re-render whichever right-panel tab is currently shown so the new
+      // rationale lands without a tab switch — Scoring tab has its own
+      // "✦ Lex AI rationale" strip and the AI tab shows the long form.
+      const a = APPLICATIONS[idx];
+      if (_tab === 'scoring') renderScoring(a);
+      else if (_tab === 'ai') renderAI(a);
+      else if (_tab === 'decision') renderDecision(a);
+    }
     if (body) body.innerHTML = text.replace(/\n/g, '<br>');
     if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '↻ Regenerate AI rationale'; }
     toast('AI rationale generated · ' + (j.usage?.output_tokens || '?') + ' tokens · saved');
@@ -965,6 +1058,17 @@ async function generateAiRationale(ref) {
     if (btn)  { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '✨ Generate AI rationale'; }
     toast('AI rationale failed — ' + e.message);
   }
+}
+
+// ── Assign yourself as R1 or R2 (one-click) ──
+async function assignMe(appIdx, slot) {
+  if (!window.CURRENT_USER_NAME) {
+    toast('Sign in first so the system knows who you are');
+    return;
+  }
+  await updateReviewer(appIdx, slot, window.CURRENT_USER_NAME);
+  // After backend confirms, refresh so the score input becomes editable for the assigned reviewer
+  if (typeof _selectedIdx === 'number') renderDetail();
 }
 
 // ── Reviewer assignment now also persists to backend ──
@@ -1007,7 +1111,10 @@ function toast(msg){
 
 // Initial render — populate from backend
 renderEmptyState('Loading queue…');
-fetchAccreditations();
+(async () => {
+  await refreshReviewersFromBackend();
+  await fetchAccreditations();
+})();
 </script>
 </body>
 </html>
