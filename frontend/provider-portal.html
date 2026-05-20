@@ -346,7 +346,7 @@ a{color:inherit;text-decoration:none}
           <label style="display:flex;gap:7px;align-items:center;font-size:12px;color:var(--slate);cursor:pointer">
             <input type="checkbox" style="accent-color:var(--green)"/> Remember me
           </label>
-          <a class="helper-link" onclick="toast('Password reset link sent if your email is registered.')">Forgot password?</a>
+          <a class="helper-link" onclick="requestProviderReset()">Forgot password?</a>
         </div>
         <button type="submit" class="btn btn-primary btn-full">Sign in</button>
       </form>
@@ -469,28 +469,289 @@ function handleUpload(key, input){
 // ─────────────────────────────────────────────────────────────
 // Form submission (demo)
 // ─────────────────────────────────────────────────────────────
-function submitRegistration(e){
+// Resolve the live API base — same pattern used by other portals.
+function apiBase() {
+  return (window.LAD_API_BASE)
+      || (window.LAD_SYNC && window.LAD_SYNC.base)
+      || 'https://clpd-lad-api-0878.azurewebsites.net';
+}
+
+// ─────────────────────────────────────────────────────────────
+// Registration — files an `accreditation_application` of type
+// `provider_registration` so LAD reviewers see it in the queue.
+// ─────────────────────────────────────────────────────────────
+async function submitRegistration(e){
   e.preventDefault();
   const data = new FormData(e.target);
-  const entity = data.get('entityName');
-  toast('✓ Application submitted for ' + entity + '. A reviewer will respond within 15 working days.', 'success');
-  setTimeout(() => {
-    document.querySelector('#pane-register').scrollIntoView({behavior:'smooth'});
-  }, 200);
-  // In production this would POST to the backend
-  console.log('Provider registration:', Object.fromEntries(data));
+  const obj = Object.fromEntries(data);
+  const btn = e.target.querySelector('button[type="submit"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+  const payload = {
+    type: 'provider_registration',
+    providerName: obj.entityName,
+    legalForm: obj.legalForm,
+    licenceNumber: obj.licence,
+    country: obj.country,
+    yearsInOperation: obj.years ? Number(obj.years) : null,
+    address: obj.address,
+    description: obj.description,
+    contactName: obj.contactName,
+    contactRole: obj.contactRole,
+    contactEmail: obj.contactEmail,
+    applicantEmail: obj.contactEmail,
+    contactPhone: obj.contactPhone,
+    submittedBy: obj.contactName || obj.entityName,
+    submittedVia: 'provider-portal',
+  };
+  try {
+    const r = await fetch(apiBase().replace(/\/$/,'') + '/api/v1/accreditations', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
+    });
+    const body = await r.json().catch(()=>({}));
+    if (!r.ok) throw new Error(body?.error?.message || ('HTTP '+r.status));
+    const ref = body?.data?.ref || body?.ref || 'submitted';
+    toast('✓ Application submitted for ' + (obj.entityName || 'your organisation') + ' · Ref ' + ref + ' · A reviewer will respond within 15 working days.', 'success');
+    e.target.reset();
+  } catch (err) {
+    toast('Could not submit: ' + (err.message || 'unknown error'), 'err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit application'; }
+  }
   return false;
 }
 
-function submitLogin(e){
+// ─────────────────────────────────────────────────────────────
+// Login — wired to the unified /api/v1/auth/login.
+// Stores the token in localStorage (lad_token / lad_role / lad_name)
+// and reveals the in-page provider dashboard.
+// ─────────────────────────────────────────────────────────────
+async function submitLogin(e){
   e.preventDefault();
   const data = new FormData(e.target);
-  toast('Signing in as ' + data.get('email') + '…', 'success');
-  // In production this would POST to /api/v1/auth/provider/login
-  setTimeout(() => {
-    window.location.href = 'firm-compliance-portal.html'; // placeholder — provider dashboard would go here
-  }, 1000);
+  const btn = e.target.querySelector('button[type="submit"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Signing in…'; }
+  try {
+    let json;
+    if (window.LAD && typeof window.LAD.login === 'function') {
+      json = await window.LAD.login(data.get('email'), data.get('password'));
+    } else {
+      const r = await fetch(apiBase().replace(/\/$/,'') + '/api/v1/auth/login', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ username: data.get('email'), password: data.get('password') }),
+      });
+      json = await r.json();
+      if (!r.ok) throw new Error(json?.error?.message || ('HTTP ' + r.status));
+    }
+    const d = json?.data || json;
+    const token = d.token;
+    const role  = d.role || d.user?.role;
+    const name  = d.name || (d.user ? `${d.user.firstName||''} ${d.user.lastName||''}`.trim() : data.get('email'));
+    try {
+      localStorage.setItem('lad_token', token);
+      localStorage.setItem('lad_role', role || 'provider');
+      localStorage.setItem('lad_name', name);
+      localStorage.setItem('lad_user_email', data.get('email'));
+    } catch(_) {}
+    toast('Signed in. Loading your dashboard…', 'success');
+    revealProviderDashboard({ name, email: data.get('email') });
+  } catch (err) {
+    toast('Sign-in failed: ' + (err.message || 'check your details'), 'err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Sign in'; }
+  }
   return false;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Forgot password — calls the real /auth/request-reset endpoint.
+// ─────────────────────────────────────────────────────────────
+async function requestProviderReset() {
+  const email = document.querySelector('#pane-login input[name="email"]')?.value || '';
+  if (!email) { toast('Enter your email above first.', 'err'); return; }
+  try {
+    if (window.LAD && typeof window.LAD.requestPasswordReset === 'function') {
+      await window.LAD.requestPasswordReset(email);
+    } else {
+      await fetch(apiBase().replace(/\/$/,'') + '/api/v1/auth/request-reset', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ username: email }),
+      });
+    }
+    toast('If that account exists, a reset link has been emailed.', 'success');
+  } catch (_e) {
+    toast('Could not request reset right now. Try again shortly.', 'err');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Provider dashboard — revealed inline after sign-in.
+// Loads the provider's accreditation history from the backend.
+// ─────────────────────────────────────────────────────────────
+async function revealProviderDashboard(user) {
+  const main = document.querySelector('.main');
+  if (!main) return;
+  main.style.display = 'block';
+  main.innerHTML = `
+    <div style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px 28px;box-shadow:var(--sh-sm);max-width:1180px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:14px">
+        <div>
+          <div style="font-family:var(--mono);font-size:10.5px;color:var(--gold);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:4px">PROVIDER DASHBOARD</div>
+          <h2 style="font-family:var(--serif);font-size:28px;color:var(--ink);letter-spacing:-.018em;margin:0">Welcome, ${user.name || user.email}</h2>
+          <div style="font-size:13px;color:var(--slate);margin-top:5px">${user.email}</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <a class="btn btn-light" href="help.html#provider">Help</a>
+          <button class="btn btn-light" onclick="providerSignOut()">Sign out</button>
+        </div>
+      </div>
+
+      <!-- KPI row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px" id="prov-kpis">
+        ${['Approved courses','Pending applications','Attendance filings','Total points awarded'].map(l=>`
+          <div style="border:1px solid var(--line);border-radius:var(--r-md);padding:14px 16px;background:var(--paper)">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600">${l}</div>
+            <div style="font-family:var(--serif);font-size:28px;color:var(--ink);margin-top:4px">—</div>
+          </div>`).join('')}
+      </div>
+
+      <!-- Action bar -->
+      <div style="display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="providerNewCourse()">+ Submit new course for accreditation</button>
+        <button class="btn btn-light" onclick="providerFileAttendance()">↗ File attendance against an approved course</button>
+        <button class="btn btn-light" onclick="loadProviderRecords()">↻ Refresh</button>
+      </div>
+
+      <!-- My approved courses -->
+      <div style="margin-bottom:22px">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;margin-bottom:10px">My approved courses</div>
+        <div id="prov-approved" style="border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden">
+          <div style="padding:20px;color:var(--slate3);text-align:center;font-size:13px">Loading…</div>
+        </div>
+      </div>
+
+      <!-- My pending / returned applications -->
+      <div style="margin-bottom:22px">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;margin-bottom:10px">In review</div>
+        <div id="prov-pending" style="border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden">
+          <div style="padding:16px;color:var(--slate3);text-align:center;font-size:13px">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Attendance filings -->
+      <div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;margin-bottom:10px">Attendance filings</div>
+        <div id="prov-attendance" style="border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden">
+          <div style="padding:16px;color:var(--slate3);text-align:center;font-size:13px">Loading…</div>
+        </div>
+      </div>
+    </div>
+  `;
+  loadProviderRecords();
+}
+
+async function loadProviderRecords() {
+  const token = (function(){ try { return localStorage.getItem('lad_token'); } catch(_) { return ''; } })();
+  const email = (function(){ try { return localStorage.getItem('lad_user_email'); } catch(_) { return ''; } })();
+  // The accreditation list endpoint is admin-only; use the public catalog +
+  // by-ref reads. We surface only the records the provider has submitted by
+  // filtering against the applicantEmail / submittedBy fields client-side.
+  try {
+    const cat = await fetch(apiBase().replace(/\/$/,'') + '/api/v1/accreditations/_/catalog').then(r=>r.json());
+    const allApproved = (cat.courses || []);
+    // Pull the full provider list by hitting each ref individually keeps this
+    // simple — the catalog is small in early production.
+    const mine = [];
+    for (const c of allApproved) {
+      try {
+        const det = await fetch(apiBase().replace(/\/$/,'') + '/api/v1/accreditations/' + c.ref).then(r=>r.json());
+        const p = det?.data?.payload || {};
+        if ((p.applicantEmail||'').toLowerCase() === (email||'').toLowerCase()
+            || (p.contactEmail||'').toLowerCase() === (email||'').toLowerCase()) {
+          mine.push({ ...det.data, _payload: p });
+        }
+      } catch(_) {}
+    }
+    renderProviderRecords(mine);
+  } catch (e) {
+    document.getElementById('prov-approved').innerHTML = `<div style="padding:18px;color:var(--red);font-size:13px">Could not load your records: ${e.message}</div>`;
+  }
+}
+
+function renderProviderRecords(records) {
+  const approved = records.filter(r => r.status === 'approved' && r.type === 'accreditation_application');
+  const pending  = records.filter(r => r.status !== 'approved' && (r.type === 'accreditation_application' || r.type === 'provider_registration'));
+  const attendance = records.filter(r => r.type === 'session_submission');
+  // KPIs
+  const totalPts = attendance.reduce((s,a)=>s+(Number(a.final_points)||0),0);
+  const kpiEls = document.querySelectorAll('#prov-kpis > div > div:nth-child(2)');
+  if (kpiEls.length === 4) {
+    kpiEls[0].textContent = approved.length;
+    kpiEls[1].textContent = pending.length;
+    kpiEls[2].textContent = attendance.length;
+    kpiEls[3].textContent = totalPts;
+  }
+  // Approved list
+  document.getElementById('prov-approved').innerHTML = approved.length
+    ? approved.map(r=>`<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:14px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)">
+        <div>
+          <div style="font-weight:600;font-size:14px">${r._payload?.courseTitle || r.ref}</div>
+          <div style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-top:2px">${r.accreditation_code || '—'} · approved ${(r.reviewed_at||'').slice(0,10)}</div>
+        </div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--slate2)">${r.final_points||r._payload?.pointsRequested||'—'} pts/lawyer</div>
+        <span style="background:var(--green-bg);color:var(--green);padding:3px 9px;border-radius:6px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.4px">APPROVED</span>
+        <button class="btn btn-light btn-xs" onclick="providerFileFor('${r.accreditation_code||''}')">File attendance →</button>
+      </div>`).join('')
+    : '<div style="padding:18px;color:var(--slate3);text-align:center;font-size:13px">No approved courses yet. Submit a new course for accreditation to get an ATP code.</div>';
+  // Pending list
+  document.getElementById('prov-pending').innerHTML = pending.length
+    ? pending.map(r=>`<div style="display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--line)">
+        <div>
+          <div style="font-weight:600;font-size:13.5px">${r._payload?.courseTitle || r._payload?.providerName || r.ref}</div>
+          <div style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-top:2px">${r.ref} · submitted ${(r.submitted_at||'').slice(0,10)}</div>
+        </div>
+        <span style="background:var(--amber-bg);color:var(--amber);padding:3px 9px;border-radius:6px;font-family:var(--mono);font-size:10px;font-weight:700">${(r.status||'pending').toUpperCase()}</span>
+      </div>`).join('')
+    : '<div style="padding:16px;color:var(--slate3);text-align:center;font-size:13px">Nothing in review.</div>';
+  // Attendance filings
+  document.getElementById('prov-attendance').innerHTML = attendance.length
+    ? attendance.map(r=>{
+        const att = r._payload?.lawyers || r._payload?.attendees || [];
+        return `<div style="display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--line)">
+          <div>
+            <div style="font-weight:600;font-size:13.5px">${r._payload?.courseTitle || r.ref}</div>
+            <div style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-top:2px">${r.ref} · ${(r._payload?.dateHeld||'').slice(0,10)} · ${att.length} attendees · code ${r._payload?.accreditationCode||'—'}</div>
+          </div>
+          <span style="background:var(--green-bg);color:var(--green);padding:3px 9px;border-radius:6px;font-family:var(--mono);font-size:10px;font-weight:700">FILED</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--slate2)">${r.points_awarded_at ? 'Points awarded' : '—'}</span>
+        </div>`;
+      }).join('')
+    : '<div style="padding:16px;color:var(--slate3);text-align:center;font-size:13px">No attendance filings yet.</div>';
+}
+
+function providerNewCourse() {
+  // Provider course-accreditation submissions reuse the public POST
+  // endpoint — easiest path is to send them through the existing
+  // accreditation modal in clpd-portal.
+  toast('Opening the course accreditation form…', 'success');
+  setTimeout(()=>{ window.location.href = 'clpd-portal.html#apply-accreditation'; }, 700);
+}
+
+function providerFileAttendance() {
+  toast('Pick a course from "My approved courses" and click File attendance →', 'success');
+}
+
+function providerFileFor(code) {
+  if (!code) { toast('No accreditation code on that course yet.', 'err'); return; }
+  // Redirect to the firm portal session-submit modal with the code prefilled.
+  try { localStorage.setItem('lad_pending_attend_code', code); } catch(_) {}
+  window.location.href = 'firm-compliance-portal.html#internal';
+}
+
+function providerSignOut() {
+  try { ['lad_token','lad_role','lad_name','lad_user_email'].forEach(k=>localStorage.removeItem(k)); } catch(_) {}
+  window.location.reload();
 }
 
 function uaePassRegister(){ /* removed — providers/firms sign in with email and password */ }
@@ -499,6 +760,20 @@ function uaePassLogin(){    /* removed — providers/firms sign in with email an
 function downloadA1(){
   toast('Form A1 template would download here (PDF stub)');
 }
+
+// Auto-reveal dashboard if already signed in as a provider
+(function autoReveal(){
+  try {
+    const role = localStorage.getItem('lad_role');
+    const token = localStorage.getItem('lad_token');
+    if (token && role === 'provider') {
+      const name = localStorage.getItem('lad_name') || '';
+      const email = localStorage.getItem('lad_user_email') || '';
+      // Defer so DOM is ready
+      document.addEventListener('DOMContentLoaded', () => revealProviderDashboard({ name, email }));
+    }
+  } catch(_) {}
+})();
 
 // ─────────────────────────────────────────────────────────────
 // Toast

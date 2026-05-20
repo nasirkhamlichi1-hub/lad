@@ -1020,95 +1020,47 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 
       <!-- ════ TRAJECTORY moved into FORECAST simulator below — they are now linked ════ -->
 
-      <!-- ════ COMPLIANCE TRAINING SIMULATOR (with linked trajectory) ════ -->
+      <!-- ════ COMPLIANCE FORECAST SIMULATOR (live data from /stats) ════ -->
       <section class="section" id="predict">
         <div class="section-hd">
           <div>
-            <div class="section-eyebrow purple" data-cfg="intel_sec_predict_eyebrow">FORECAST · LINKED TO TRAJECTORY</div>
+            <div class="section-eyebrow purple" data-cfg="intel_sec_predict_eyebrow">FORECAST · LIVE PRACTITIONER DATA</div>
             <h2 class="section-title" data-cfg-html="intel_sec_predict_title">Compliance <em style="color:var(--purple)">forecast simulator</em></h2>
-            <div class="section-desc">Move any slider. The trajectory above updates in real time — that's the live forecast LAD can publish to the DG.</div>
+            <div class="section-desc">Reads the live points distribution across every practicing lawyer. Move any slider to model how additional course capacity changes the December outlook.</div>
           </div>
           <div class="section-actions">
             <span class="pill pill-green pill-glow" id="trajStatusPill">▲ ON TRACK</span>
             <button class="btn btn-ghost btn-sm" onclick="resetSim()">Reset</button>
-            <button class="btn btn-ink btn-sm" onclick="showToast('Scenario saved')">Save scenario</button>
           </div>
         </div>
 
-        <!-- ─── LIVE TRAJECTORY (updates as sliders move) ─── -->
-        <div class="forecast-card" style="margin-bottom:14px;position:relative">
-          <div style="position:absolute;top:14px;right:18px;font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.5px;font-weight:700;background:var(--green-bg);color:var(--green);padding:3px 9px;border-radius:5px;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.6s ease-in-out infinite"></span>LIVE · UPDATES WITH SLIDERS</div>
-          <div style="display:flex;align-items:center;gap:18px;margin-bottom:14px">
+        <!-- ─── LIVE KPI STRIP (sourced from /api/v1/stats/aggregate) ─── -->
+        <div class="forecast-card" style="margin-bottom:14px;position:relative;padding:18px 20px">
+          <div style="position:absolute;top:14px;right:18px;font-family:var(--mono);font-size:9px;color:var(--green);letter-spacing:1.2px;font-weight:700;background:var(--green-bg);padding:3px 9px;border-radius:5px;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.6s ease-in-out infinite"></span>LIVE</div>
+          <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
             <div>
-              <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600">CURRENT</div>
-              <div style="font-family:var(--serif);font-size:32px;color:var(--ink);letter-spacing:-.025em;line-height:1;font-weight:400">10.4<em style="color:var(--green);font-size:18px;font-style:italic">%</em></div>
+              <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600">PRACTITIONERS</div>
+              <div style="font-family:var(--serif);font-size:30px;color:var(--ink);letter-spacing:-.025em;line-height:1;font-weight:400"><span id="predPractitioners">—</span></div>
+              <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);margin-top:4px">total active on roll</div>
             </div>
-            <div style="width:1px;height:36px;background:var(--line)"></div>
+            <div style="width:1px;height:46px;background:var(--line)"></div>
+            <div>
+              <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600">CURRENT COMPLIANT</div>
+              <div style="font-family:var(--serif);font-size:30px;color:var(--ink);letter-spacing:-.025em;line-height:1;font-weight:400"><span id="predCurrentPct">—</span><em style="color:var(--green);font-size:16px;font-style:italic">%</em></div>
+              <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);margin-top:4px"><span id="predCompliantCount">—</span> at ≥16 pts today</div>
+            </div>
+            <div style="width:1px;height:46px;background:var(--line)"></div>
             <div>
               <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600">DEC FORECAST</div>
-              <div style="font-family:var(--serif);font-size:32px;color:var(--green);letter-spacing:-.025em;line-height:1;font-weight:400" id="trajForecastVal">96.1<em style="color:var(--slate3);font-size:18px;font-style:italic">% ±2.3</em></div>
+              <div style="font-family:var(--serif);font-size:30px;letter-spacing:-.025em;line-height:1;font-weight:400" id="predForecastVal"><span style="color:var(--slate3)">—</span></div>
+              <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);margin-top:4px" id="predForecastSub">recomputes as sliders move</div>
             </div>
-            <div style="width:1px;height:36px;background:var(--line)"></div>
-            <div>
-              <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600">VS 2025</div>
-              <div style="font-family:var(--serif);font-size:32px;color:var(--ink);letter-spacing:-.025em;line-height:1;font-weight:400" id="trajVs2025Val">+8.4<em style="color:var(--green);font-size:18px;font-style:italic">pp</em></div>
-            </div>
-            <div style="width:1px;height:36px;background:var(--line)"></div>
+            <div style="width:1px;height:46px;background:var(--line)"></div>
             <div>
               <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600">GAP TO TARGET 96%</div>
-              <div style="font-family:var(--serif);font-size:32px;color:var(--ink);letter-spacing:-.025em;line-height:1;font-weight:400" id="trajGapVal">+0.1<em style="color:var(--green);font-size:18px;font-style:italic">pp</em></div>
+              <div style="font-family:var(--serif);font-size:30px;color:var(--ink);letter-spacing:-.025em;line-height:1;font-weight:400" id="predGapVal">—</div>
+              <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);margin-top:4px" id="predGapSub">percentage points</div>
             </div>
-          </div>
-          <div class="forecast-area">
-            <svg width="100%" height="100%" viewBox="0 0 800 200" preserveAspectRatio="none" id="trajSvg">
-              <defs>
-                <linearGradient id="g1" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#006B3F" stop-opacity="0.25"/>
-                  <stop offset="100%" stop-color="#006B3F" stop-opacity="0"/>
-                </linearGradient>
-                <linearGradient id="g2" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#C9913A" stop-opacity="0.18"/>
-                  <stop offset="100%" stop-color="#C9913A" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
-              <!-- Grid lines (50% / 70% / 85% / 95% reference lines) -->
-              <line x1="0" y1="40" x2="800" y2="40" stroke="#e8ecf1" stroke-width="1" stroke-dasharray="3,4"/>
-              <line x1="0" y1="80" x2="800" y2="80" stroke="#e8ecf1" stroke-width="1" stroke-dasharray="3,4"/>
-              <line x1="0" y1="120" x2="800" y2="120" stroke="#e8ecf1" stroke-width="1" stroke-dasharray="3,4"/>
-              <line x1="0" y1="160" x2="800" y2="160" stroke="#e8ecf1" stroke-width="1" stroke-dasharray="3,4"/>
-              <!-- Target line (96%) -->
-              <line x1="0" y1="28" x2="800" y2="28" stroke="#006B3F" stroke-width="1" stroke-dasharray="6,4" opacity="0.6"/>
-              <text x="6" y="24" font-family="JetBrains Mono" font-size="8" font-weight="700" fill="#006B3F" letter-spacing=".3">TARGET 96%</text>
-              <!-- Confidence band — updated live -->
-              <path id="trajBand" d="M 333,100 L 400,80 L 467,62 L 533,48 L 600,38 L 667,30 L 733,22 L 800,15 L 800,40 L 733,50 L 667,58 L 600,65 L 533,75 L 467,88 L 400,105 L 333,118 Z" fill="url(#g2)" style="transition:d .35s ease-out"/>
-              <!-- Actual line (fixed — history doesn't change) -->
-              <path d="M 0,180 L 67,168 L 133,150 L 200,135 L 267,118 L 333,100" fill="none" stroke="#006B3F" stroke-width="2.5" stroke-linecap="round"/>
-              <path d="M 0,180 L 67,168 L 133,150 L 200,135 L 267,118 L 333,100 L 333,200 L 0,200 Z" fill="url(#g1)"/>
-              <!-- Forecast line — updated live -->
-              <path id="trajForecast" d="M 333,100 L 400,90 L 467,75 L 533,62 L 600,52 L 667,42 L 733,35 L 800,28" fill="none" stroke="#C9913A" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="6,4" style="transition:d .35s ease-out"/>
-              <!-- Today marker -->
-              <line x1="333" y1="0" x2="333" y2="200" stroke="#0a0e14" stroke-width="1.5" stroke-dasharray="2,3" opacity="0.4"/>
-              <circle cx="333" cy="100" r="6" fill="#fff" stroke="#006B3F" stroke-width="3"/>
-              <!-- Forecast endpoint — updated live -->
-              <circle id="trajEndDot" cx="800" cy="28" r="5" fill="#C9913A" stroke="#fff" stroke-width="2" style="transition:cy .35s ease-out"/>
-              <!-- Labels -->
-              <text x="338" y="14" font-family="JetBrains Mono" font-size="9" font-weight="600" fill="#0a0e14" letter-spacing=".2">TODAY · 10.4%</text>
-              <text id="trajEndLabel" x="730" y="48" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="#C9913A" letter-spacing=".2" style="transition:y .35s ease-out">DEC · 96.1%</text>
-              <!-- X axis labels -->
-              <text x="0"   y="195" font-family="JetBrains Mono" font-size="8" fill="#8a98aa" letter-spacing=".3">JAN</text>
-              <text x="133" y="195" font-family="JetBrains Mono" font-size="8" fill="#8a98aa" letter-spacing=".3">MAR</text>
-              <text x="267" y="195" font-family="JetBrains Mono" font-size="8" fill="#8a98aa" letter-spacing=".3">MAY</text>
-              <text x="400" y="195" font-family="JetBrains Mono" font-size="8" fill="#8a98aa" letter-spacing=".3">JUL</text>
-              <text x="533" y="195" font-family="JetBrains Mono" font-size="8" fill="#8a98aa" letter-spacing=".3">SEP</text>
-              <text x="667" y="195" font-family="JetBrains Mono" font-size="8" fill="#8a98aa" letter-spacing=".3">NOV</text>
-              <text x="770" y="195" font-family="JetBrains Mono" font-size="8" fill="#8a98aa" letter-spacing=".3">DEC</text>
-            </svg>
-          </div>
-          <div class="chart-legend">
-            <div class="chart-legend-item"><div class="chart-legend-line" style="background:#006B3F"></div>Actual compliance (Jan–May)</div>
-            <div class="chart-legend-item"><div class="chart-legend-line" style="background:#C9913A;border-top:2px dashed #C9913A;background:none;height:0"></div>Forecast — moves with sliders below</div>
-            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:rgba(201,145,58,.25);border:1px solid var(--gold-border)"></div>95% confidence band</div>
-            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#006B3F"></div>Target 96%</div>
           </div>
         </div>
 
@@ -1880,66 +1832,159 @@ function renderFirms(){
   document.getElementById('firmsList').innerHTML=html;
 }
 
-// ═════════════ SIMULATOR ═════════════
-function resetSim(){
-  document.getElementById('simCourses').value=12;
-  document.getElementById('simAttendees').value=45;
-  document.getElementById('simRooms').value=6;
-  document.getElementById('simElearn').value=60;
-  document.getElementById('simOutreach').value=80;
+// ═════════════ FORECAST SIMULATOR — LIVE DATA ═════════════
+//
+// Baseline (PRED_BASELINE) is fetched from /api/v1/stats/aggregate so the
+// projection works against the actual practitioner roll, not hardcoded
+// numbers. Slider movements modulate uplift around that baseline.
+const PRED_BASELINE = {
+  practitioners: null,    // total active lawyers (from /stats/aggregate)
+  compliantNow: null,     // count at >= 16 pts today
+  currentPct: null,       // overall_pct
+  outreachPool: null,     // count of lawyers below 16 pts (the addressable pool)
+  loaded: false,
+};
+const PRED_TARGET = 96;   // LAD compliance target
+
+async function loadPredictBaseline() {
+  try {
+    const base = (window.LAD_API_BASE)
+      || (window.LAD_SYNC && window.LAD_SYNC.base)
+      || 'https://clpd-lad-api-0878.azurewebsites.net';
+    const r = await fetch(base.replace(/\/$/, '') + '/api/v1/stats/aggregate');
+    if (!r.ok) throw new Error('stats endpoint ' + r.status);
+    const j = await r.json();
+    const d = (j && j.data) || j;
+    PRED_BASELINE.practitioners = Number(d.lawyers) || 0;
+    PRED_BASELINE.compliantNow  = Number(d.compliant) || 0;
+    PRED_BASELINE.currentPct    = Number(d.overall_pct) || 0;
+    PRED_BASELINE.outreachPool  = Math.max(0, PRED_BASELINE.practitioners - PRED_BASELINE.compliantNow);
+    PRED_BASELINE.loaded        = true;
+  } catch (e) {
+    console.warn('[predict] could not load /stats/aggregate, simulator will fall back:', e.message);
+    // Sensible fallback so the page still works during local dev.
+    PRED_BASELINE.practitioners = 0;
+    PRED_BASELINE.compliantNow  = 0;
+    PRED_BASELINE.currentPct    = 0;
+    PRED_BASELINE.outreachPool  = 0;
+    PRED_BASELINE.loaded        = true;
+  }
+  // Reflect baseline into the live KPI strip
+  const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  set('predPractitioners', (PRED_BASELINE.practitioners || 0).toLocaleString());
+  set('predCurrentPct',    (PRED_BASELINE.currentPct ?? 0).toString());
+  set('predCompliantCount', (PRED_BASELINE.compliantNow || 0).toLocaleString());
+  // Adjust the outreach slider's max to the actual non-compliant pool
+  const outreachSlider = document.getElementById('simOutreach');
+  if (outreachSlider) {
+    const pool = Math.max(1, PRED_BASELINE.outreachPool || 1);
+    outreachSlider.max = pool;
+    if (parseInt(outreachSlider.value) > pool) outreachSlider.value = pool;
+  }
   runSim();
 }
+
+function resetSim(){
+  document.getElementById('simCourses').value=12;
+  document.getElementById('simAttendees').value=25;
+  document.getElementById('simRooms').value=6;
+  document.getElementById('simElearn').value=60;
+  const outreachSlider = document.getElementById('simOutreach');
+  if (outreachSlider) outreachSlider.value = Math.min(parseInt(outreachSlider.max)||80, 80);
+  runSim();
+}
+
 function runSim(){
   const courses=parseInt(document.getElementById('simCourses').value);
   const attendees=parseInt(document.getElementById('simAttendees').value);
   const rooms=parseInt(document.getElementById('simRooms').value);
   const elearn=parseInt(document.getElementById('simElearn').value);
-  const outreach=parseInt(document.getElementById('simOutreach').value);
+  const outreachSlider = document.getElementById('simOutreach');
+  const outreach=parseInt(outreachSlider.value);
+  const outreachMax=parseInt(outreachSlider.max) || Math.max(1, PRED_BASELINE.outreachPool || 1);
   document.getElementById('simCoursesVal').textContent=courses;
   document.getElementById('simAttendeesVal').textContent=attendees;
   document.getElementById('simRoomsVal').textContent=rooms;
   document.getElementById('simElearnVal').textContent=elearn;
   document.getElementById('simOutreachVal').textContent=outreach;
+  // Reflect the live-data slider max in the trailing /N label
+  const outreachLabelEl = outreachSlider.parentElement?.querySelector('.sim-value span:last-child');
+  if (outreachLabelEl) outreachLabelEl.innerHTML = ' / ' + outreachMax;
 
-  const totalSeats=courses*attendees;
-  const roomUtil=Math.min(100,Math.round((courses/rooms/10)*100));
-  const elearnReach=Math.round(4411*elearn/100);
-  const needed=Math.max(0,20-courses);
-  const baseline=89.3;
-  const cCourses=(courses/20)*2.2;
-  const cElearn=(elearn/60)*2.1;
-  const cOutreach=(outreach/197)*1.8;
-  const total=Math.min(99.5,Math.max(70,baseline+cCourses+cElearn+cOutreach));
-  const lawyers=Math.round(4411*total/100);
+  const practitioners = PRED_BASELINE.practitioners || 0;
+  const baseline = PRED_BASELINE.currentPct || 0;       // live current compliance %
 
-  document.getElementById('simOutVal').textContent=total.toFixed(1);
-  document.getElementById('simOutBar').style.width=total+'%';
-  document.getElementById('simOutMeta').innerHTML=`Practitioners compliant: <strong>${lawyers.toLocaleString()}</strong> · Total training seats created: <strong>${totalSeats.toLocaleString()}</strong> · E-learning reach: <strong>${elearnReach.toLocaleString()}</strong>`;
+  // Capacity model
+  const totalSeats     = courses * attendees;
+  const roomUtil       = rooms > 0 ? Math.min(100, Math.round((courses / (rooms * 10)) * 100)) : 0;
+  const elearnReach    = practitioners > 0 ? Math.round(practitioners * elearn / 100) : 0;
+  // How many extra at-risk lawyers can we credibly move to compliant by Dec?
+  // Each course session takes `attendees` people; if each attendee earns ~2 pts
+  // and the average at-risk lawyer needs ~6 pts to reach 16, then ~3 sessions
+  // tip one lawyer over. Calibrated conservatively against the outreach reach.
+  const tipPerLawyer   = 3;
+  const seatsForTipover = Math.floor(totalSeats / tipPerLawyer);
+  // Cap by the actual outreach focus (LAD chases at-risk lawyers explicitly)
+  const tippedByCourses = Math.min(outreach, seatsForTipover);
+  // E-learning lift: tips ~one-third of the e-learning audience that's also at risk
+  const elearnAtRisk    = Math.round(elearnReach * (PRED_BASELINE.outreachPool / Math.max(1, practitioners)));
+  const tippedByElearn  = Math.round(elearnAtRisk * 0.33);
+  // Combined uplift, clamped by available pool
+  const additionalCompliant = Math.min(PRED_BASELINE.outreachPool, tippedByCourses + tippedByElearn);
+  const projectedCompliant  = (PRED_BASELINE.compliantNow || 0) + additionalCompliant;
+  const total = practitioners > 0 ? Math.min(99.5, (projectedCompliant / practitioners) * 100) : 0;
+  // Courses needed to close the remaining gap, given current settings
+  const gapPp     = PRED_TARGET - total;
+  const tippableRemainder = Math.max(0, Math.ceil((gapPp / 100) * practitioners));
+  const needed    = total >= PRED_TARGET ? 0 : Math.ceil(tippableRemainder * tipPerLawyer / Math.max(1, attendees));
 
-  document.getElementById('capSeats').textContent=totalSeats.toLocaleString();
-  document.getElementById('capSeatsBar').style.width=Math.min(100,totalSeats/10)+'%';
-  document.getElementById('capRooms').textContent=roomUtil+'%';
-  document.getElementById('capRoomsBar').style.width=roomUtil+'%';
-  document.getElementById('capElearn').textContent=elearnReach.toLocaleString();
-  document.getElementById('capElearnBar').style.width=elearn+'%';
-  document.getElementById('capOutreach').textContent=outreach;
-  document.getElementById('capOutreachBar').style.width=Math.round(outreach/197*100)+'%';
-  document.getElementById('capNeeded').textContent=needed;
-  document.getElementById('capNeededBar').style.width=Math.min(100,needed*5)+'%';
+  // Forecast card numbers
+  document.getElementById('simOutVal').textContent = total.toFixed(1);
+  document.getElementById('simOutBar').style.width = total + '%';
+  document.getElementById('simOutMeta').innerHTML = `Practitioners compliant: <strong>${projectedCompliant.toLocaleString()}</strong> of <strong>${practitioners.toLocaleString()}</strong> · Training seats created: <strong>${totalSeats.toLocaleString()}</strong> · E-learning reach: <strong>${elearnReach.toLocaleString()}</strong>`;
 
-  const rec=needed>5
-    ?`Schedule ${needed} additional Tax & Immigration sessions across Rooms 1–${Math.min(rooms,3)}. Current trajectory: ${total.toFixed(1)}% by December. To exceed 96%, raise e-learning to ${Math.min(elearn+20,100)}% and add ${needed} sessions.`
-    :needed>0
-    ?`Nearly there — just ${needed} more course runs needed. Fill the 112 empty DIFC Day seats for an immediate 0.8pp lift.`
-    :`Training capacity is sufficient. Shift focus to e-learning adoption among solo practitioners to maximise reach.`;
+  document.getElementById('capSeats').textContent = totalSeats.toLocaleString();
+  document.getElementById('capSeatsBar').style.width = Math.min(100, totalSeats / Math.max(1, practitioners) * 100) + '%';
+  document.getElementById('capRooms').textContent = roomUtil + '%';
+  document.getElementById('capRoomsBar').style.width = roomUtil + '%';
+  document.getElementById('capElearn').textContent = elearnReach.toLocaleString();
+  document.getElementById('capElearnBar').style.width = elearn + '%';
+  document.getElementById('capOutreach').textContent = outreach;
+  document.getElementById('capOutreachBar').style.width = Math.round(outreach / Math.max(1, outreachMax) * 100) + '%';
+  document.getElementById('capNeeded').textContent = needed;
+  document.getElementById('capNeededBar').style.width = Math.min(100, needed * 5) + '%';
+
+  // Live KPI strip — forecast + gap
+  const forecastEl = document.getElementById('predForecastVal');
+  if (forecastEl) {
+    const color = total >= PRED_TARGET ? 'var(--green)' : (total >= 85 ? 'var(--amber)' : 'var(--red)');
+    forecastEl.innerHTML = `<span style="color:${color}">${total.toFixed(1)}</span><em style="color:var(--slate3);font-size:16px;font-style:italic">%</em>`;
+  }
+  const gapEl    = document.getElementById('predGapVal');
+  const gapSubEl = document.getElementById('predGapSub');
+  if (gapEl) {
+    const gap = total - PRED_TARGET;
+    const sign = gap >= 0 ? '+' : '';
+    const color = gap >= 0 ? 'var(--green)' : 'var(--red)';
+    gapEl.innerHTML = `<span style="color:${color}">${sign}${gap.toFixed(1)}</span><em style="color:var(--slate3);font-size:16px;font-style:italic">pp</em>`;
+    if (gapSubEl) gapSubEl.textContent = gap >= 0 ? 'above 96% target' : 'below 96% target';
+  }
+  const pill = document.getElementById('trajStatusPill');
+  if (pill) {
+    if (total >= PRED_TARGET) { pill.textContent = '▲ ON TRACK'; pill.className = 'pill pill-green pill-glow'; }
+    else if (total >= 85)     { pill.textContent = '! AT RISK';   pill.className = 'pill'; pill.style.background = 'var(--amber-bg)'; pill.style.color = 'var(--amber)'; }
+    else                       { pill.textContent = '▼ OFF TRACK';pill.className = 'pill'; pill.style.background = 'var(--red-bg)'; pill.style.color = 'var(--red)'; }
+  }
+
   document.getElementById('simAiRec').textContent='Generating AI analysis…';
-
-  // ─── LIVE TRAJECTORY · update SVG with the new forecast curve ───
+  // Trajectory SVG was removed — updateTrajectoryFromSim no-ops if absent
   updateTrajectoryFromSim(total);
-
-  // Call Claude for a smart recommendation
-  callClaudeForSimRec({courses,attendees,rooms,elearn,outreach,total,needed,totalSeats,elearnReach});
+  // Anthropic-backed recommendation (already gated server-side)
+  callClaudeForSimRec({courses,attendees,rooms,elearn,outreach,total,needed,totalSeats,elearnReach,practitioners,baseline});
 }
+
+// Kick the live load on first paint
+document.addEventListener('DOMContentLoaded', loadPredictBaseline);
 
 // Map a forecast compliance % onto the SVG Y coordinate.
 // The Y axis is set so that 100% → y=0, 0% → y=200. So y = 200 - (pct * 2).
@@ -2210,26 +2255,41 @@ async function callClaude(messages, systemPrompt) {
 }
 
 let simDebounce = null;
-async function callClaudeForSimRec({courses,attendees,rooms,elearn,outreach,total,needed,totalSeats,elearnReach}) {
+async function callClaudeForSimRec({courses,attendees,rooms,elearn,outreach,total,needed,totalSeats,elearnReach,practitioners,baseline}) {
   clearTimeout(simDebounce);
   simDebounce = setTimeout(async () => {
     const el = document.getElementById('simAiRec');
     el.innerHTML = '<span style="color:var(--slate3);font-style:italic">Lex is analysing your configuration…</span>';
+    const totalPract = practitioners ?? PRED_BASELINE.practitioners ?? 0;
+    const basePct    = baseline ?? PRED_BASELINE.currentPct ?? 0;
+    const atRisk     = PRED_BASELINE.outreachPool ?? 0;
     const prompt = `Training Capacity Simulator — current configuration for Dubai CLPD Programme 2026:
+- Practitioners on the roll: ${totalPract.toLocaleString()}
+- Current baseline compliance: ${basePct}% (${(PRED_BASELINE.compliantNow||0).toLocaleString()} compliant today)
+- At-risk pool (below 16 pts): ${atRisk.toLocaleString()}
 - Additional course runs scheduled this quarter: ${courses}
 - Average attendees per session: ${attendees}
 - Training rooms available: ${rooms}
 - E-learning enrolment target: ${elearn}%
-- Priority outreach to at-risk practitioners: ${outreach} of 3,492 critical
+- Priority outreach to at-risk practitioners: ${outreach} of ${atRisk.toLocaleString()}
 - Total training seats being created: ${totalSeats.toLocaleString()}
 - E-learning reach: ${elearnReach.toLocaleString()} practitioners
 - Projected December 2026 compliance: ${total.toFixed(1)}%
 - Additional courses still needed to reach 96% target: ${needed}
-- Current baseline compliance: 10.4%
 
-Give a concise, intelligent recommendation (3 sentences max) for the LAD Director. Be specific about which practice areas, session counts, and rooms. State the projected compliance outcome clearly. Write as Lex, confident and data-driven.`;
-    const result = await callClaude([{role:'user',content:prompt}]);
-    el.textContent = result;
+Give a concise, intelligent recommendation (3 sentences max) for the LAD Director. Be specific about session counts and outreach numbers. State the projected compliance outcome clearly. Write as Lex, confident and data-driven.`;
+    try {
+      const result = await callClaude([{role:'user',content:prompt}]);
+      el.textContent = result;
+    } catch (e) {
+      // Fallback to a deterministic recommendation so the panel never hangs.
+      const fallback = needed > 5
+        ? `Current configuration projects ${total.toFixed(1)}% by December. To close the gap, add ${needed} more sessions and lift e-learning to ${Math.min(elearn+20,100)}% — this would tip an additional ${needed * Math.max(1, attendees/3) | 0} practitioners over the 16-point threshold.`
+        : needed > 0
+          ? `Nearly there — ${needed} more sessions and you reach the 96% target. ${(PRED_BASELINE.outreachPool||0).toLocaleString()} practitioners remain below 16 pts; focus the outreach there.`
+          : `Capacity is sufficient to reach 96%. Shift focus to e-learning adoption among the remaining ${(PRED_BASELINE.outreachPool||0).toLocaleString()} at-risk practitioners.`;
+      el.textContent = fallback;
+    }
   }, 900);
 }
 
