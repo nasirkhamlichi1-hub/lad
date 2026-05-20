@@ -308,12 +308,18 @@ em{font-style:italic;color:var(--gold)}
         <div class="queue-tab"    data-filter="returned" onclick="setFilter('returned')">Returned <span class="ct" id="ct-returned">·</span></div>
         <div class="queue-tab"    data-filter="all"      onclick="setFilter('all')">All <span class="ct" id="ct-all">·</span></div>
       </div>
-      <div style="padding:8px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;background:var(--paper)">
-        <span style="font-family:var(--mono);font-size:9.5px;letter-spacing:1px;color:var(--slate3);text-transform:uppercase">Reviewer</span>
-        <select id="reviewerFilter" onchange="setReviewerFilter(this.value)" style="flex:1;font-family:var(--sans);font-size:12.5px;padding:5px 8px;border:1px solid var(--line2);border-radius:6px;background:#fff;color:var(--ink);cursor:pointer">
-          <option value="">All reviewers</option>
-        </select>
-        <button onclick="refreshQueue()" title="Refresh from backend" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:5px 9px;cursor:pointer;color:var(--slate);font-size:11px">↻</button>
+      <div style="padding:8px 14px;border-bottom:1px solid var(--line);background:var(--paper);display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-family:var(--mono);font-size:9.5px;letter-spacing:1px;color:var(--slate3);text-transform:uppercase">Search</span>
+          <input id="searchFilter" type="text" placeholder="ref · code · firm · title · trainer…" oninput="setSearchFilter(this.value)" style="flex:1;font-family:var(--sans);font-size:12.5px;padding:5px 8px;border:1px solid var(--line2);border-radius:6px;background:#fff;color:var(--ink);outline:none" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--line2)'"/>
+          <button onclick="refreshQueue()" title="Refresh from backend" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:5px 9px;cursor:pointer;color:var(--slate);font-size:11px">↻</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-family:var(--mono);font-size:9.5px;letter-spacing:1px;color:var(--slate3);text-transform:uppercase">Reviewer</span>
+          <select id="reviewerFilter" onchange="setReviewerFilter(this.value)" style="flex:1;font-family:var(--sans);font-size:12.5px;padding:5px 8px;border:1px solid var(--line2);border-radius:6px;background:#fff;color:var(--ink);cursor:pointer">
+            <option value="">All reviewers</option>
+          </select>
+        </div>
       </div>
     </div>
     <div class="queue-list" id="queueList"></div>
@@ -324,16 +330,28 @@ em{font-style:italic;color:var(--gold)}
     <!-- populated by JS -->
   </div>
 
-  <!-- Right: Scoring + AI + Decision -->
-  <div class="right">
+  <!-- Right: Scoring + AI + Decision + always-visible decision footer -->
+  <div class="right" style="display:flex;flex-direction:column;min-height:0">
     <div class="right-tabs">
       <div class="r-tab on" data-tab="scoring" onclick="setTab('scoring')">Scoring</div>
       <div class="r-tab" data-tab="ai" onclick="setTab('ai')">AI analysis</div>
       <div class="r-tab" data-tab="decision" onclick="setTab('decision')">Decision</div>
     </div>
-    <div class="r-panel on" id="panel-scoring"></div>
-    <div class="r-panel" id="panel-ai"></div>
-    <div class="r-panel" id="panel-decision"></div>
+    <div style="flex:1;overflow-y:auto;min-height:0">
+      <div class="r-panel on" id="panel-scoring"></div>
+      <div class="r-panel" id="panel-ai"></div>
+      <div class="r-panel" id="panel-decision"></div>
+    </div>
+    <!-- Sticky decision footer — always visible regardless of which tab is open -->
+    <div id="decisionFooter" style="border-top:2px solid var(--gold);background:linear-gradient(180deg,var(--paper),var(--white));padding:14px 16px;display:none;flex-shrink:0">
+      <div id="decisionFooterStatus" style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;margin-bottom:10px;text-align:center">Decision</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn btn-approve" style="font-size:13px;padding:11px 8px" onclick="decide('approve')">✓ Approve</button>
+        <button class="btn btn-changes"  style="font-size:13px;padding:11px 8px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)" onclick="decide('changes')">↻ Request changes</button>
+        <button class="btn btn-reject"   style="font-size:13px;padding:11px 8px" onclick="decide('reject')">✕ Reject</button>
+        <button class="btn btn-ghost"    style="font-size:13px;padding:11px 8px" onclick="decide('defer')">⏸ Defer to DG</button>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -403,6 +421,8 @@ const RUBRIC_CRITERIA_RENEWAL = [
 let _selectedIdx = 0;
 let _filter = 'pending';
 let _reviewerFilter = '';
+let _searchFilter = '';
+let _searchTimer = null;
 let _tab = 'scoring';
 
 function applyFilter(){
@@ -419,6 +439,13 @@ function setFilter(f){
 function setReviewerFilter(r){
   _reviewerFilter = r;
   fetchAccreditations();
+}
+
+function setSearchFilter(q){
+  _searchFilter = q || '';
+  // Debounce — 300ms after the last keystroke
+  if (_searchTimer) clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(() => { fetchAccreditations(); }, 300);
 }
 
 async function refreshQueue(){ await fetchAccreditations(); }
@@ -455,7 +482,7 @@ function renderQueue(){
         ${pillFor(a)}
       </div>
       <div class="q-title">${a.title}</div>
-      <div class="q-meta">${a.provider}<span class="q-meta-dot"></span>${a.format||'—'}</div>
+      <div class="q-meta">${a.provider}<span class="q-meta-dot"></span>${a.format||'—'}${a.accreditationCode ? '<span class="q-meta-dot"></span><span style="color:var(--green);font-family:var(--mono);font-weight:700">' + a.accreditationCode + '</span>' : ''}</div>
     </div>`;
   }).join('');
   if (!visible.length) {
@@ -465,11 +492,12 @@ function renderQueue(){
 
 function renderDetail(){
   const a = APPLICATIONS[_selectedIdx];
-  if (!a) return;
+  if (!a) { updateDecisionFooter(null); return; }
   renderCenter(a);
   renderScoring(a);
   renderAI(a);
   renderDecision(a);
+  updateDecisionFooter(a);
 }
 
 function renderCenter(a){
@@ -815,6 +843,7 @@ function _mapRow(row){
     isRenewal: (p.type === 'renewal') || row.type === 'renewal',
     reviewedBy: row.reviewed_by,
     reviewedAt: row.reviewed_at,
+    accreditationCode: row.accreditation_code || '',
   };
 }
 
@@ -894,6 +923,7 @@ async function fetchAccreditations(){
     const params = new URLSearchParams();
     if (_filter && _filter !== 'all') params.set('status', _filter);
     if (_reviewerFilter) params.set('reviewer', _reviewerFilter);
+    if (_searchFilter) params.set('search', _searchFilter);
     params.set('limit', '200');
     const r = await fetch(base + '/api/v1/accreditations?' + params.toString(), { headers: _authHeaders(), cache: 'no-store' });
     if (r.status === 401) { renderEmptyState('Sign in as a LAD admin to view the queue.'); return; }
@@ -926,6 +956,26 @@ function renderEmptyState(msg){
   if (list) list.innerHTML = '<div style="padding:30px;text-align:center;color:var(--slate3);font-size:12.5px">' + msg + '</div>';
   const c = document.getElementById('centerPane');
   if (c) c.innerHTML = '<div style="padding:60px 40px;text-align:center;color:var(--slate3);font-size:13px">Select an application from the queue.</div>';
+  updateDecisionFooter(null);
+}
+
+// Sticky decision footer at the bottom of the right pane.
+// Shows only when an entry is selected; reflects current status.
+function updateDecisionFooter(a){
+  const footer = document.getElementById('decisionFooter');
+  if (!footer) return;
+  if (!a) { footer.style.display = 'none'; return; }
+  footer.style.display = 'block';
+  const status = document.getElementById('decisionFooterStatus');
+  if (status) {
+    if (a.decision || (a._real && a.status && a.status !== 'pending')) {
+      const s = a.decision || a.status;
+      const color = s === 'approved' ? 'var(--green)' : s === 'rejected' ? 'var(--red)' : s === 'returned' ? 'var(--amber)' : 'var(--slate3)';
+      status.innerHTML = `<span style="color:${color}">Decision · ${s}</span> · ${a.ref}`;
+    } else {
+      status.innerHTML = `Decision · <span style="color:var(--ink)">${a.ref}</span> · ${a.title.slice(0, 50)}${a.title.length > 50 ? '…' : ''}`;
+    }
+  }
 }
 
 function renderCounts(){

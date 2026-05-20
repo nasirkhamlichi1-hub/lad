@@ -1034,6 +1034,17 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
         <!-- Submitted sessions -->
         <div id="internalCards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"></div>
 
+        <!-- My Applications · live LAD status (backend-backed) -->
+        <div style="margin-bottom:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600">MY APPLICATIONS · LIVE LAD STATUS</div>
+            <button onclick="loadMyApplications()" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:4px 10px;cursor:pointer;color:var(--slate);font-size:11px;font-family:var(--mono);letter-spacing:.6px;text-transform:uppercase">↻ Refresh</button>
+          </div>
+          <div id="myApplications" style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-sm);min-height:60px">
+            <div style="padding:14px;color:var(--slate3);font-size:12px">Loading…</div>
+          </div>
+        </div>
+
         <!-- History table -->
         <div>
           <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:10px">SUBMISSION HISTORY & WORKFLOW STATUS</div>
@@ -3486,8 +3497,97 @@ async function submitAccredApp() {
   });
   renderInternalCards();
   closeAccredApp();
-  showToast(`Application submitted · Ref ${ref} · saved to LAD queue`);
+  showSubmitConfirmation(ref, title, applicantEmail);
+  if (typeof loadMyApplications === 'function') loadMyApplications();
 }
+
+// Big, hard-to-miss confirmation when a submission lands in the LAD queue.
+// Replaces the small toast — the founder explicitly asked for a confirmation
+// notification on the dashboard so the firm knows their course is filed.
+function showSubmitConfirmation(ref, title, email) {
+  let banner = document.getElementById('submitConfirmBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'submitConfirmBanner';
+    banner.style.cssText = 'position:fixed;top:90px;right:24px;left:24px;max-width:560px;margin-left:auto;background:linear-gradient(135deg,#006B3F,#008549);color:#fff;padding:18px 22px;border-radius:14px;box-shadow:0 20px 60px rgba(0,107,63,.35);z-index:9999;font-family:var(--sans,system-ui);';
+    document.body.appendChild(banner);
+  }
+  banner.innerHTML = `
+    <div style="display:flex;gap:14px;align-items:flex-start">
+      <div style="font-size:24px;line-height:1">✓</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:14px;letter-spacing:-.2px;margin-bottom:4px">Application submitted to LAD</div>
+        <div style="font-size:12.5px;opacity:.95;line-height:1.55">
+          <strong>${title}</strong><br>
+          Reference: <code style="background:rgba(255,255,255,.18);padding:1px 6px;border-radius:4px;font-family:var(--mono,monospace)">${ref}</code>${email ? ' · Decision will be emailed to <strong>' + email + '</strong>' : ''}
+        </div>
+        <div style="font-size:11.5px;opacity:.85;margin-top:8px">It now appears in <strong>My Applications</strong> below with live status from LAD.</div>
+      </div>
+      <button onclick="document.getElementById('submitConfirmBanner').remove()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1">×</button>
+    </div>`;
+  setTimeout(() => { try { banner.remove(); } catch {} }, 12000);
+}
+
+// ── My Applications · live LAD status ──
+// Pulled from the backend so the firm sees real-time decisions on submissions
+// they (or anyone in their firm) filed previously.
+async function loadMyApplications() {
+  const container = document.getElementById('myApplications');
+  if (!container) return; // panel not on this page
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  if (!base) { container.innerHTML = '<div style="padding:14px;color:var(--slate3);font-size:12px">Backend not configured.</div>'; return; }
+  // The firm name is hardcoded in this portal as 'Galadari Advocates'. Use the
+  // /accreditations search filter (no auth required — public listing of own
+  // submissions would normally need firm-scoped auth; for now we filter
+  // client-side after a public GET by-code lookup, OR use the admin endpoint
+  // when an LAD token is available). For minimum surface area, the page just
+  // shows what's in /accreditations limited by submitter name through search.
+  try {
+    const token = localStorage.getItem('lad_token') || '';
+    if (!token) {
+      container.innerHTML = '<div style="padding:14px;color:var(--slate3);font-size:12.5px">Sign in to see your applications with LAD\'s live decisions.</div>';
+      return;
+    }
+    const r = await fetch(base + '/api/v1/accreditations?status=all&search=Galadari&limit=50', {
+      headers: { Authorization: 'Bearer ' + token },
+    });
+    if (!r.ok) { container.innerHTML = '<div style="padding:14px;color:var(--slate3);font-size:12.5px">Could not load (' + r.status + ').</div>'; return; }
+    const body = await r.json();
+    const rows = body.rows || [];
+    if (!rows.length) { container.innerHTML = '<div style="padding:14px;color:var(--slate3);font-size:12.5px">No applications yet.</div>'; return; }
+    const statusBadge = (s) => {
+      const map = {
+        pending:  ['#fef3e2', '#92540a', 'pending review'],
+        approved: ['#e3f0ea', '#006B3F', 'approved'],
+        rejected: ['#fdeae8', '#c0392b', 'rejected'],
+        returned: ['#fef3e2', '#92540a', 'returned for changes'],
+      };
+      const [bg, fg, label] = map[s] || ['#f1f4f7', '#5a6878', s];
+      return `<span style="background:${bg};color:${fg};font-family:var(--mono,monospace);font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:3px 8px;border-radius:5px">${label}</span>`;
+    };
+    container.innerHTML = rows.map(row => {
+      let p = null; try { p = row.payload; if (typeof p === 'string') p = JSON.parse(p); } catch {}
+      const title = (p && (p.courseTitle || p.course)) || row.ref;
+      const code = row.accreditation_code || '';
+      return `
+        <div style="padding:12px 14px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:8px">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px">${title}</div>
+            <div style="font-family:var(--mono,monospace);font-size:10.5px;color:var(--slate3)">${row.ref}${code ? ' · code <strong style="color:var(--green,#006B3F)">' + code + '</strong>' : ''} · submitted ${row.submitted_at?.split(' ')[0] || ''}</div>
+          </div>
+          <div style="text-align:right">
+            ${statusBadge(row.status)}
+            ${row.review_notes ? `<div style="font-size:10.5px;color:var(--slate3);margin-top:4px;max-width:280px;text-align:right">${row.review_notes.slice(0, 80)}${row.review_notes.length > 80 ? '…' : ''}</div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = '<div style="padding:14px;color:var(--red,#c0392b);font-size:12px">Failed to load: ' + e.message + '</div>';
+  }
+}
+// Auto-load on first render of the dashboard
+if (document.readyState !== 'loading') setTimeout(loadMyApplications, 800);
+else document.addEventListener('DOMContentLoaded', () => setTimeout(loadMyApplications, 800));
 
 // ════════════════════════════════════════════
 // SESSION SUBMIT MODAL
