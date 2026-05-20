@@ -473,6 +473,25 @@ function applyLADConfig() {
 </head>
 <body>
 
+<!-- ══ COOKIE / DATA-USE BANNER ══ -->
+<div id="cookieBanner" style="display:none;position:fixed;bottom:18px;left:18px;right:18px;z-index:1500;background:#0a0e14;color:#fff;border-radius:14px;box-shadow:0 16px 48px rgba(10,14,20,.32);padding:16px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;display:none">
+  <div style="max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+    <div style="flex:1;min-width:260px;font-size:13px;line-height:1.55">
+      The CLPD portal uses essential cookies and browser storage to keep you signed in and remember your preferences. We do not use third-party tracking. See our
+      <a href="privacy.html" style="color:#C9913A;font-weight:600;text-decoration:underline">Privacy notice</a> for details.
+    </div>
+    <button onclick="(function(){try{localStorage.setItem('clpd_cookie_ack','1')}catch(_){}document.getElementById('cookieBanner').style.display='none'})()" style="padding:9px 18px;background:#006B3F;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Got it</button>
+  </div>
+</div>
+<script>
+(function(){try{
+  if(!localStorage.getItem('clpd_cookie_ack')){
+    var b=document.getElementById('cookieBanner');
+    if(b){b.style.display='block'}
+  }
+}catch(_){}})();
+</script>
+
 <script>
 // ════════════════════════════════════════════════════════════════
 // CLPD CONFIG LOADER
@@ -1289,7 +1308,13 @@ ladCarInit();
         </div>
       </div>
       <div class="footer-bottom">
-        <div class="footer-copy">© 2026 Kwintessential. All rights reserved. Government of Dubai — Legal Affairs Department.</div>
+        <div class="footer-copy">© 2026 Kwintessential. All rights reserved. Government of Dubai — Legal Affairs Department.
+          <span style="margin-left:14px;font-family:var(--mono);font-size:9.5px;letter-spacing:.4px">
+            <a href="privacy.html" style="color:rgba(255,255,255,.7);text-decoration:none">PRIVACY</a>
+            <span style="opacity:.4;margin:0 8px">·</span>
+            <a href="terms.html" style="color:rgba(255,255,255,.7);text-decoration:none">TERMS</a>
+          </span>
+        </div>
         <!-- Sign in entry (one button — login decides which portal opens) -->
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <a style="font-family:var(--mono);font-size:9.5px;color:rgba(255,255,255,.7);cursor:pointer;text-decoration:none;border:1px solid rgba(255,255,255,.18);padding:4px 11px;border-radius:5px;letter-spacing:.4px" onclick="openAuth('login')">SIGN IN</a>
@@ -1699,7 +1724,7 @@ ladCarInit();
             <label style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:5px">PASSWORD</label>
             <input id="credPass" type="password" autocomplete="current-password" placeholder="••••••••" style="width:100%;padding:10px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--line2)'" onkeydown="if(event.key==='Enter')doLogin()"/>
           </div>
-          <div style="text-align:right;margin-top:-6px"><span style="font-size:11.5px;color:var(--blue);cursor:pointer">Forgot password?</span></div>
+          <div style="text-align:right;margin-top:-6px"><span style="font-size:11.5px;color:var(--blue);cursor:pointer" onclick="openForgotPassword()">Forgot password?</span></div>
           <button id="authSignInBtn" class="btn" style="width:100%;justify-content:center;padding:11px;font-size:13px;background:var(--green);color:#fff;border:none" onclick="doLogin()">Sign in &#x2192;</button>
           <div style="text-align:center;margin-top:4px;font-size:12px;color:var(--slate3)">New to CLPD? <span style="color:var(--green);cursor:pointer;font-weight:600" onclick="goAuthRegister()">Register free &#x2192;</span></div>
         </div>
@@ -2109,6 +2134,23 @@ function openAuth(tab='login') {
   document.getElementById('authModal').classList.add('on');
   if(tab === 'register') setTimeout(goAuthRegister, 50);
   setTimeout(() => document.getElementById('credUsername')?.focus(), 80);
+}
+
+// Forgot-password modal — calls /auth/request-reset. Always shows a generic
+// success message so an attacker can't enumerate accounts by probing.
+function openForgotPassword() {
+  const prefill = (document.getElementById('credUsername')?.value || '').trim();
+  const username = prompt('Enter your username (email, lawyer number, or bar number) and we will email you a reset link.', prefill);
+  if (!username) return;
+  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || '';
+  fetch(base + '/api/v1/auth/request-reset', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username }),
+  })
+  .then(r => r.json().catch(() => ({})))
+  .then(b => showToast(b.message || 'If that account exists, a reset link has been sent.'))
+  .catch(() => showToast('Could not send reset request. Please try again.'));
 }
 function closeAuth() { document.getElementById('authModal').classList.remove('on'); }
 

@@ -184,7 +184,11 @@
 
     // Self-service password change (used by the first-login flow)
     changeMyPassword: (oldPassword, newPassword) =>
-      call('POST', '/api/v1/auth/change-password', { old_password: oldPassword, new_password: newPassword }),
+      call('POST', '/api/v1/auth/change-password', { currentPassword: oldPassword, newPassword }),
+    requestPasswordReset: (username) =>
+      call('POST', '/api/v1/auth/request-reset', { username }),
+    resetPasswordWithToken: (token, newPassword) =>
+      call('POST', '/api/v1/auth/reset-password', { token, newPassword }),
   };
 
   window.LAD = api;
