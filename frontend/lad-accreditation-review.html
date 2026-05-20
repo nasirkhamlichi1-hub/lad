@@ -442,8 +442,8 @@ function renderCenter(a){
       <div class="c-grid">
         <div class="c-fact"><div class="c-fact-lbl">FORMAT</div><div class="c-fact-val">${a.format}</div></div>
         <div class="c-fact"><div class="c-fact-lbl">DURATION</div><div class="c-fact-val">${a.duration}</div></div>
-        <div class="c-fact"><div class="c-fact-lbl">PROPOSED POINTS</div><div class="c-fact-val"><span class="em">${a.proposedPts}</span> CLPD points</div></div>
-        <div class="c-fact"><div class="c-fact-lbl">PROPOSED CREDITS</div><div class="c-fact-val"><span class="em">${a.proposedCredits}</span> credits</div></div>
+        <div class="c-fact"><div class="c-fact-lbl">${a._real ? 'CLPD POINTS (editable)' : 'PROPOSED POINTS'}</div><div class="c-fact-val">${a._real ? `<input type="number" min="0" max="40" step="1" value="${a.proposedPts === '' ? '' : a.proposedPts}" oninput="onPointsInput('${a.ref}','pts',this.value)" onblur="onPointsBlur('${a.ref}')" style="width:72px;padding:4px 8px;border:1.5px solid var(--line2);border-radius:6px;font-family:var(--serif);font-size:18px;color:var(--teal);background:#fff;outline:none" onfocus="this.style.borderColor='var(--teal)'" placeholder="—"/> CLPD points` : `<span class="em">${a.proposedPts}</span> CLPD points`}</div></div>
+        <div class="c-fact"><div class="c-fact-lbl">${a._real ? 'CREDITS (editable)' : 'PROPOSED CREDITS'}</div><div class="c-fact-val">${a._real ? `<input type="number" min="0" max="100" step="1" value="${a.proposedCredits === '' ? '' : a.proposedCredits}" oninput="onPointsInput('${a.ref}','credits',this.value)" onblur="onPointsBlur('${a.ref}')" style="width:72px;padding:4px 8px;border:1.5px solid var(--line2);border-radius:6px;font-family:var(--serif);font-size:18px;color:var(--teal);background:#fff;outline:none" onfocus="this.style.borderColor='var(--teal)'" placeholder="—"/> credits` : `<span class="em">${a.proposedCredits}</span> credits`}</div></div>
         <div class="c-fact" style="grid-column:1/-1"><div class="c-fact-lbl">AUDIENCE</div><div class="c-fact-val">${a.audience}</div></div>
         <div class="c-fact" style="grid-column:1/-1"><div class="c-fact-lbl">REVIEWERS · LAD STAFF</div><div class="c-fact-val" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <select class="rev-select" onchange="updateReviewer(${_selectedIdx}, 1, this.value)">${REVIEWERS.map(r => `<option value="${r}" ${r===a.reviewer1?'selected':''}>${r}</option>`).join('')}</select>
@@ -484,13 +484,26 @@ function scoreClass(score){
 function renderScoring(a){
   const p = document.getElementById('panel-scoring');
   const criteria = a.kind === 'renewal' ? RUBRIC_CRITERIA_RENEWAL : RUBRIC_CRITERIA_COURSE;
-  const totR1 = criteria.reduce((s,c) => s + (a.scores.r1[c.key]||0), 0);
-  const totR2 = criteria.reduce((s,c) => s + (a.scores.r2[c.key]||0), 0);
-  const totAI = criteria.reduce((s,c) => s + (a.scores.ai[c.key]||0), 0);
+  const totR1 = criteria.reduce((s,c) => s + (Number(a.scores.r1[c.key])||0), 0);
+  const totR2 = criteria.reduce((s,c) => s + (Number(a.scores.r2[c.key])||0), 0);
+  const totAI = criteria.reduce((s,c) => s + (Number(a.scores.ai[c.key])||0), 0);
   const max = criteria.length * 10;
+  const editable = !!a._real;
+
+  // Editable cell for real entries; static for demo seed
+  const cell = (slot, key, val) => {
+    if (editable) {
+      return `<input type="number" min="0" max="10" step="1" value="${val ?? ''}"
+        oninput="onScoreInput('${a.ref}','${slot}','${key}',this.value)"
+        onblur="onScoreBlur('${a.ref}')"
+        style="width:46px;height:34px;padding:4px 6px;border:1.5px solid var(--line2);border-radius:6px;text-align:center;font-family:var(--serif);font-size:18px;color:var(--ink);background:#fff;outline:none"
+        onfocus="this.style.borderColor='var(--teal)'" placeholder="—"/>`;
+    }
+    return `<div class="rubric-score ${scoreClass(val)}">${val ?? '—'}</div>`;
+  };
 
   p.innerHTML = `
-    <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:14px">Collaborative scoring · ${criteria.length} criteria · /10</div>
+    <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:14px">Collaborative scoring · ${criteria.length} criteria · /10 ${editable ? '<span style="color:var(--teal)">· editable</span>' : ''}</div>
 
     <div class="rubric-hd">
       <div>Criterion</div>
@@ -505,17 +518,17 @@ function renderScoring(a){
           <div class="rubric-crit">${c.label}</div>
           <div class="rubric-crit-d">${c.desc}</div>
         </div>
-        <div class="rubric-score ${scoreClass(a.scores.r1[c.key])}">${a.scores.r1[c.key]||'—'}</div>
-        <div class="rubric-score ${scoreClass(a.scores.r2[c.key])}">${a.scores.r2[c.key]||'—'}</div>
-        <div class="rubric-score ai">${a.scores.ai[c.key]||'—'}</div>
+        ${cell('r1', c.key, a.scores.r1[c.key])}
+        ${cell('r2', c.key, a.scores.r2[c.key])}
+        <div class="rubric-score ai">${a.scores.ai[c.key] ?? '—'}</div>
       </div>
     `).join('')}
 
     <div class="rubric-tot">
-      <div class="rubric-tot-lbl">Total · /${max}</div>
-      <div class="rubric-tot-score ${totR1/max>=0.85?'high':''}">${totR1}</div>
-      <div class="rubric-tot-score ${totR2/max>=0.85?'high':''}">${totR2}</div>
-      <div class="rubric-tot-score ai">${totAI}</div>
+      <div class="rubric-tot-lbl">Total · /<span id="score-max">${max}</span></div>
+      <div class="rubric-tot-score" id="score-tot-r1">${totR1}</div>
+      <div class="rubric-tot-score" id="score-tot-r2">${totR2}</div>
+      <div class="rubric-tot-score ai" id="score-tot-ai">${totAI}</div>
     </div>
 
     <div class="ai-rationale">
@@ -683,6 +696,13 @@ function _priorityFor(d){ return d >= 10 ? 'breach' : d >= 5 ? 'urgent' : 'ok'; 
 function _mapRow(row){
   const p = row.payload || {};
   const d = _ageDays(row.submitted_at);
+  let parsedScores = { r1: {}, r2: {}, ai: {} };
+  if (row.scores) {
+    try {
+      const s = typeof row.scores === 'string' ? JSON.parse(row.scores) : row.scores;
+      parsedScores = { r1: s.r1 || {}, r2: s.r2 || {}, ai: s.ai || {} };
+    } catch { /* ignore */ }
+  }
   return {
     _real: true,
     ref: row.ref,
@@ -697,14 +717,14 @@ function _mapRow(row){
     reviewer2: row.reviewer2 || p.reviewer2 || '— Unassigned',
     format: p.format || '—',
     duration: p.duration || '—',
-    proposedPts: p.pointsRequested ?? p.pointsPerLawyer ?? '—',
-    proposedCredits: p.proposedCredits ?? '—',
+    proposedPts: row.final_points ?? p.pointsRequested ?? p.pointsPerLawyer ?? '',
+    proposedCredits: row.final_credits ?? p.proposedCredits ?? '',
     audience: p.audience || (p.lawyers ? `${p.lawyers.length} lawyers` : 'TBC'),
     files: Array.isArray(p.files) ? p.files : [],
     objectives: p.learningObjectives
       ? (Array.isArray(p.learningObjectives) ? p.learningObjectives : [p.learningObjectives])
       : (p.objectives || []),
-    scores: { r1: {}, r2: {}, ai: {} },
+    scores: parsedScores,
     aiRationale: row.ai_rationale || '',
     topics: p.topics || [],
     decision: row.status && row.status !== 'pending' ? row.status : null,
@@ -712,6 +732,71 @@ function _mapRow(row){
     reviewedBy: row.reviewed_by,
     reviewedAt: row.reviewed_at,
   };
+}
+
+// ── PATCH a score field for a real entry (debounced via blur) ──
+async function persistScores(ref, scores) {
+  const base = _apiBase(); if (!base) return;
+  try {
+    await fetch(base + '/api/v1/accreditations/' + encodeURIComponent(ref), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+      body: JSON.stringify({ scores }),
+    });
+  } catch (e) { console.warn('[scoring] persist failed', e); }
+}
+async function persistPoints(ref, final_points, final_credits) {
+  const base = _apiBase(); if (!base) return;
+  try {
+    await fetch(base + '/api/v1/accreditations/' + encodeURIComponent(ref), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+      body: JSON.stringify({ final_points, final_credits }),
+    });
+  } catch (e) { console.warn('[points] persist failed', e); }
+}
+
+// Live update — called from <input oninput=...>
+function onScoreInput(appRef, slot, critKey, value) {
+  const a = APPLICATIONS.find(x => x.ref === appRef);
+  if (!a) return;
+  const n = value === '' ? undefined : Math.max(0, Math.min(10, Number(value)));
+  if (n === undefined) delete a.scores[slot][critKey];
+  else a.scores[slot][critKey] = n;
+  // Recompute totals + recommendation in-place without rerendering inputs (would lose focus)
+  refreshScoringTotals(a);
+  refreshDecisionRecap(a);
+}
+function onScoreBlur(appRef) {
+  const a = APPLICATIONS.find(x => x.ref === appRef);
+  if (a && a._real) persistScores(a.ref, a.scores);
+}
+function onPointsInput(appRef, kind, value) {
+  const a = APPLICATIONS.find(x => x.ref === appRef);
+  if (!a) return;
+  const n = value === '' ? null : Number(value);
+  if (kind === 'pts') a.proposedPts = n ?? '';
+  else if (kind === 'credits') a.proposedCredits = n ?? '';
+}
+function onPointsBlur(appRef) {
+  const a = APPLICATIONS.find(x => x.ref === appRef);
+  if (a && a._real) persistPoints(a.ref, a.proposedPts === '' ? null : a.proposedPts, a.proposedCredits === '' ? null : a.proposedCredits);
+}
+
+function refreshScoringTotals(a){
+  const criteria = a.kind === 'renewal' ? RUBRIC_CRITERIA_RENEWAL : RUBRIC_CRITERIA_COURSE;
+  const tot = (slot) => criteria.reduce((s,c) => s + (Number(a.scores[slot][c.key])||0), 0);
+  const max = criteria.length * 10;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('score-tot-r1', tot('r1'));
+  set('score-tot-r2', tot('r2'));
+  set('score-tot-ai', tot('ai'));
+  set('score-max', max);
+}
+function refreshDecisionRecap(a){
+  // If the Decision tab is currently shown, re-render it so the recommendation updates
+  const panel = document.getElementById('panel-decision');
+  if (panel && panel.classList.contains('on')) renderDecision(a);
 }
 
 // ── Single source of truth: fetch from /api/v1/accreditations with current filters ──
