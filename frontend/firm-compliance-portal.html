@@ -3630,53 +3630,35 @@ function openUploadSession() {
 }
 
 // Populate the "SELECT ACCREDITED COURSE" dropdown from live backend data.
-// Only courses with status='approved' and an accreditation_code show up.
+// Calls the public /accreditations/_/catalog endpoint — no auth needed,
+// so any firm user (logged in or not) sees the same approved-course list.
 async function loadApprovedCoursesIntoDropdown() {
   const sel = document.getElementById('ss-course');
   if (!sel) return;
   const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
   if (!base) {
-    sel.innerHTML = '<option value="">Backend not configured</option>';
+    sel.innerHTML = '<option value="">Backend not configured — enter accreditation code manually below ↓</option>';
     return;
   }
   sel.innerHTML = '<option value="">Loading approved courses…</option>';
   try {
-    // Public list of approved courses — no auth needed because firms submitting
-    // attendance need to see this even before signing in to LAD console.
-    // We use a small admin token if available to get the full list, otherwise
-    // fall back to a public search-by-code lookup pattern. Since the queue list
-    // endpoint requires admin role, we use the admin token from the current
-    // session if available.
-    const token = localStorage.getItem('lad_token') || '';
-    const r = await fetch(base + '/api/v1/accreditations?status=approved&limit=500', {
-      headers: token ? { Authorization: 'Bearer ' + token } : {},
-    });
+    const r = await fetch(base + '/api/v1/accreditations/_/catalog', { cache: 'no-store' });
     if (!r.ok) {
-      // Fallback for firm users without admin token: show empty + ask them to use the code field
-      sel.innerHTML = '<option value="">— No course list available — enter the accreditation code below —</option>';
+      sel.innerHTML = '<option value="">Catalog unavailable (HTTP ' + r.status + ') — enter accreditation code below ↓</option>';
+      console.warn('[session-submit] catalog HTTP', r.status);
       return;
     }
     const body = await r.json();
-    const rows = body.rows || body.data || [];
-    // Build options from rows that have an accreditation_code (issued only on approval)
-    const opts = rows
-      .filter(r => r.accreditation_code)
-      .map(r => {
-        let p = null; try { p = typeof r.payload === 'string' ? JSON.parse(r.payload) : r.payload; } catch {}
-        const title = (p && (p.courseTitle || p.course)) || r.ref;
-        const provider = (p && (p.providerName || p.firm)) || '';
-        const pts = r.final_points || (p && p.pointsRequested) || 2;
-        return { code: r.accreditation_code, title, provider, pts };
-      });
+    const opts = body.courses || [];
     if (!opts.length) {
-      sel.innerHTML = '<option value="">No approved courses yet — enter accreditation code below ↓</option>';
+      sel.innerHTML = '<option value="">No approved courses yet — enter accreditation code manually below ↓</option>';
       return;
     }
-    sel.innerHTML = '<option value="">Select an approved course…</option>' +
-      opts.map(o => `<option value="${o.code}" data-pts="${o.pts}" data-title="${o.title}" data-provider="${o.provider}">${o.title} · ${o.code} · ${o.pts} pts${o.provider ? ' · ' + o.provider : ''}</option>`).join('');
+    sel.innerHTML = '<option value="">Select an approved course… (' + opts.length + ' available)</option>' +
+      opts.map(o => `<option value="${o.accreditation_code}" data-pts="${o.points}" data-title="${(o.courseTitle||'').replace(/"/g,'&quot;')}" data-provider="${(o.provider||'').replace(/"/g,'&quot;')}">${o.courseTitle} · ${o.accreditation_code} · ${o.points} pts${o.provider ? ' · ' + o.provider : ''}</option>`).join('');
   } catch (e) {
-    console.warn('[session-submit] could not load approved courses', e);
-    sel.innerHTML = '<option value="">Error loading — enter accreditation code below ↓</option>';
+    console.warn('[session-submit] catalog fetch failed', e);
+    sel.innerHTML = '<option value="">Catalog unreachable — enter accreditation code below ↓</option>';
   }
 }
 function closeSessionSubmit() { document.getElementById('sessionSubmitModal').classList.remove('on'); }
