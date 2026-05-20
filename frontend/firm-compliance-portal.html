@@ -1741,11 +1741,15 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
           <div id="ss-csv-preview" style="display:none;margin-bottom:12px"></div>
 
           <!-- Manual picker -->
-          <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;margin-bottom:8px">OR SELECT LAWYERS MANUALLY</div>
-          <div style="background:var(--paper);border:1px solid var(--line);border-radius:9px;overflow:hidden;max-height:220px;overflow-y:auto" id="ss-lawyer-list"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600">OR SELECT LAWYERS MANUALLY</div>
+            <span id="ss-lawyer-count" style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.5px">0 in firm</span>
+          </div>
+          <input id="ss-lawyer-filter" type="text" placeholder="Filter by name, bar no, or email…" oninput="renderSSLawyerList()" style="width:100%;padding:8px 11px;border:1.5px solid var(--line2);border-radius:9px;font-size:12.5px;font-family:var(--sans);color:var(--ink);outline:none;margin-bottom:8px" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--line2)'"/>
+          <div style="background:var(--paper);border:1px solid var(--line);border-radius:9px;overflow:hidden;max-height:420px;overflow-y:auto" id="ss-lawyer-list"></div>
 
           <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-            <button class="btn btn-xs btn-gh" onclick="ssSelectAll()">Select all</button>
+            <button class="btn btn-xs btn-gh" onclick="ssSelectAll()">Select all (filtered)</button>
             <button class="btn btn-xs btn-gh" onclick="ssClearAll()">Clear</button>
             <span id="ss-sel-count" style="font-family:var(--mono);font-size:10px;color:var(--slate3);margin-left:auto">0 selected</span>
           </div>
@@ -3820,15 +3824,36 @@ function closeSessionSubmit() { document.getElementById('sessionSubmitModal').cl
 // Keep closeUpload as alias (used in existing buttons)
 function closeUpload() { closeSessionSubmit(); }
 
+function ssFilteredLawyers() {
+  const q = (document.getElementById('ss-lawyer-filter')?.value || '').trim().toLowerCase();
+  if (!q) return LAWYERS;
+  return LAWYERS.filter(l => {
+    return (l.name || '').toLowerCase().includes(q)
+      || (l.laId || '').toLowerCase().includes(q)
+      || (l.email || '').toLowerCase().includes(q)
+      || (l.practice || '').toLowerCase().includes(q)
+      || (l.role || '').toLowerCase().includes(q);
+  });
+}
+
 function renderSSLawyerList() {
   const list = document.getElementById('ss-lawyer-list');
-  list.innerHTML = LAWYERS.map(l => `
+  const totalEl = document.getElementById('ss-lawyer-count');
+  if (totalEl) totalEl.textContent = LAWYERS.length + ' in firm';
+  const visible = ssFilteredLawyers();
+  if (!visible.length) {
+    list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--slate3);font-size:12.5px">' +
+      (LAWYERS.length === 0 ? 'No lawyers loaded — sign in or check backend connection.' : 'No lawyers match the filter.') + '</div>';
+    updateSSCount();
+    return;
+  }
+  list.innerHTML = visible.map(l => `
     <label class="att-row" style="cursor:pointer">
       <input type="checkbox" class="law-check ss-check" data-id="${l.id}" ${ssSelectedLawyers.has(l.id)?'checked':''} style="accent-color:var(--teal);width:15px;height:15px;cursor:pointer;flex-shrink:0" onchange="ssToggle(${l.id},this)"/>
       <div style="width:26px;height:26px;border-radius:6px;background:hsl(${(l.id*53)%360},38%,44%);display:grid;place-items:center;font-family:var(--mono);font-size:8.5px;font-weight:700;color:#fff;flex-shrink:0">${l.initials}</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;font-size:12.5px;color:var(--ink)">${l.name}</div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--slate3)">${l.role} · ${l.pts}/16 pts</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--slate3)">${l.laId} · ${l.pts}/16 pts${l.email?' · '+l.email:''}</div>
       </div>
       <span class="pill ${pillClass(l.pts)}" style="font-size:9px">${l.pts}/16</span>
     </label>`).join('');
@@ -3840,7 +3865,8 @@ function ssToggle(id, cb) {
   updateSSCount();
   updateSessionImpact();
 }
-function ssSelectAll() { LAWYERS.forEach(l=>ssSelectedLawyers.add(l.id)); renderSSLawyerList(); updateSessionImpact(); }
+// Select All respects the current filter — only adds visible lawyers
+function ssSelectAll() { ssFilteredLawyers().forEach(l=>ssSelectedLawyers.add(l.id)); renderSSLawyerList(); updateSessionImpact(); }
 function ssClearAll()  { ssSelectedLawyers.clear(); renderSSLawyerList(); updateSessionImpact(); }
 
 function updateSSCount() {
