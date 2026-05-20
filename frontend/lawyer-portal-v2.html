@@ -2892,8 +2892,58 @@ function bookSuggestedCourse(courseName, when, kind) {
   showToast(`✓ ${isElearning ? 'Enrolled in' : 'Booked'} ${name}`);
 }
 
-function scrollToById(id){const el=document.getElementById(id);if(el){el.scrollIntoView({behavior:'smooth',block:'start'});}closeCmd();}
-function scrollTo(id,e){scrollToById(id);if(e&&e.target){document.querySelectorAll('.sb-link').forEach(l=>l.classList.remove('active'));const lk=e.target.closest('.sb-link');if(lk)lk.classList.add('active');}}
+// Streamlined navigation: clicking a sidebar item shows ONLY that section
+// (instead of scrolling through 13 stacked panels). The overview section
+// always shows when "overview" is selected. Other sections show solo.
+// Keyboard / cmd-K and inline cross-section CTAs still call scrollTo(id);
+// we route those through showOnly() so the right panel becomes visible.
+const LAW_NAV_VIEWS = {
+  // sidebar id  -> [section ids that should be visible together]
+  overview:   ['overview', 'projection'],   // dashboard landing
+  coach:      ['coach'],
+  calendar:   ['calendar'],
+  skills:     ['skills'],
+  peers:      ['peers'],
+  quiz:       ['quiz'],
+  similar:    ['similar'],
+  courses:    ['courses'],
+  completed:  ['completed'],
+  trajectory: ['trajectory'],
+  file:       ['file'],
+};
+function showOnly(id) {
+  // Resolve which sections to keep visible
+  const visible = LAW_NAV_VIEWS[id] || [id];
+  document.querySelectorAll('.section').forEach(s => {
+    s.style.display = visible.includes(s.id) ? '' : 'none';
+  });
+  // Always scroll to top so the user lands at the chosen panel header
+  try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch (_) {}
+  // Update the active sidebar pill — find the link whose onclick names this id
+  document.querySelectorAll('.sb-link').forEach(l => {
+    const handler = String(l.getAttribute('onclick') || '');
+    l.classList.toggle('active', handler.includes(`'${id}'`));
+  });
+}
+function scrollToById(id) {
+  // Internal cross-section CTAs (e.g. "Get back on track" → coach) end up
+  // here. Re-route through the view switcher so the user actually sees it.
+  showOnly(id);
+  closeCmd();
+}
+function scrollTo(id, e) {
+  showOnly(id);
+  if (e && e.target) {
+    const lk = e.target.closest('.sb-link');
+    if (lk) {
+      document.querySelectorAll('.sb-link').forEach(l => l.classList.remove('active'));
+      lk.classList.add('active');
+    }
+  }
+  closeCmd();
+}
+// Boot: show only the overview section on first load.
+document.addEventListener('DOMContentLoaded', function () { showOnly('overview'); });
 
 function selQuiz(el){
   const wasSelected=el.classList.contains('selected');
