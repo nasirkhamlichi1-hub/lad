@@ -2347,7 +2347,7 @@ async function doLogin() {
       const dest = role === 'lawyer'    ? 'lawyer-portal-v2.html'
                  : role === 'firm'      ? 'firm-compliance-portal.html'
                  : role === 'lad_staff' ? 'lad-intelligence-v4.html'
-                 : role === 'lad_admin' ? 'lad-admin.html'
+                 : (role === 'lad_admin' || role === 'super_admin') ? 'lad-admin.html'
                  : role === 'provider'  ? 'provider-portal.html'
                                         : 'lawyer-portal-v2.html';
       window.location.href = dest;
@@ -2384,7 +2384,7 @@ async function doLogin() {
   if(role === 'lawyer') { window.location.href = 'lawyer-portal-v2.html'; return; }
   else if(role === 'firm') { window.location.href = 'firm-compliance-portal.html'; return; }
   else if(role === 'lad_staff') { window.location.href = 'lad-intelligence-v4.html'; return; }
-  else if(role === 'lad_admin') { window.location.href = 'lad-admin.html'; return; }
+  else if(role === 'lad_admin' || role === 'super_admin') { window.location.href = 'lad-admin.html'; return; }
   else if(role === 'provider') window.location.href='provider-portal.html';
 }
 
