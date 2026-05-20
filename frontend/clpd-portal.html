@@ -3264,8 +3264,11 @@ async function submitPubAccred() {
   const payload = {
     type: pubAccredType === 'provider' ? 'provider_accreditation_application' : 'course_accreditation_application',
     organisation: org, organisationType: type,
+    providerName: org,                  // surface in review queue's "provider" column
     licenceNumber: document.getElementById('pa-licence').value,
     contactName: contact, email,
+    applicantEmail: email,              // canonical recipient field for decision emails
+    submittedBy: contact,
     phone: document.getElementById('pa-phone').value,
     ...(pubAccredType === 'course' && {
       courseTitle: document.getElementById('pa-coursetitle').value,

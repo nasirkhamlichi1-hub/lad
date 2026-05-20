@@ -5218,6 +5218,24 @@ function globalViewAttendance(id){typeof viewAttendance==='function'&&viewAttend
             <textarea id="ac-desc" rows="3" placeholder="Describe the learning objectives, content, and how this develops legal competency…" style="width:100%;padding:9px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none;resize:vertical;line-height:1.6" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--line2)'"></textarea>
           </div>
         </div>
+
+        <!-- Applicant contact + delivery details -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+          <div>
+            <label style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:5px">APPLICANT EMAIL *</label>
+            <input id="ac-email" type="email" placeholder="contact@yourfirm.ae" style="width:100%;padding:9px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--line2)'"/>
+          </div>
+          <div>
+            <label style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:5px">DELIVERY FORMAT</label>
+            <select id="ac-format" style="width:100%;padding:9px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none;background:var(--white)">
+              <option>Face-to-face</option><option>Online · live</option><option>Online · recorded</option><option>Hybrid</option>
+            </select>
+          </div>
+          <div style="grid-column:1/-1">
+            <label style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:5px">TARGET AUDIENCE</label>
+            <input id="ac-audience" type="text" placeholder="e.g. Mid- to senior-level practitioners · corporate &amp; commercial" style="width:100%;padding:9px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--line2)'"/>
+          </div>
+        </div>
       </div>
 
       <!-- Supporting documents -->
@@ -10604,7 +10622,9 @@ async function submitAccredApp() {
   const pts   = document.getElementById('ac-pts').value;
   const trainer = document.getElementById('ac-trainer').value.trim();
   const desc  = document.getElementById('ac-desc').value.trim();
+  const applicantEmail = (document.getElementById('ac-email')?.value || '').trim();
   if(!title || !cat || !trainer || !desc) { showToast('Please complete all required fields'); return; }
+  if(!applicantEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(applicantEmail)) { showToast('Please enter a valid applicant email — decisions are emailed there'); return; }
 
   const payload = {
     type: 'accreditation_application',
@@ -10612,6 +10632,9 @@ async function submitAccredApp() {
     trainer, learningObjectives: desc,
     duration: document.getElementById('ac-duration').value,
     intendedDate: document.getElementById('ac-date').value,
+    format:   (document.getElementById('ac-format')?.value || '').trim() || 'Face-to-face',
+    audience: (document.getElementById('ac-audience')?.value || '').trim() || 'All practitioners',
+    applicantEmail,
   };
 
   const ref = await triggerWorkflow(payload);

@@ -254,10 +254,25 @@ em{font-style:italic;color:var(--gold)}
     <div class="page-hd-title">Accreditation <em>review queue</em></div>
   </div>
   <div class="page-hd-meta">
-    <div class="hd-kpi"><div class="hd-kpi-num">14</div><div class="hd-kpi-lbl">PENDING</div></div>
-    <div class="hd-kpi"><div class="hd-kpi-num red">3</div><div class="hd-kpi-lbl">SLA BREACH</div></div>
-    <div class="hd-kpi"><div class="hd-kpi-num amber">5</div><div class="hd-kpi-lbl">URGENT</div></div>
-    <div class="hd-kpi"><div class="hd-kpi-num green">11.4d</div><div class="hd-kpi-lbl">AVG REVIEW</div></div>
+    <div class="hd-kpi"><div class="hd-kpi-num" id="kpi-pending">·</div><div class="hd-kpi-lbl">PENDING</div></div>
+    <div class="hd-kpi"><div class="hd-kpi-num green" id="kpi-approved">·</div><div class="hd-kpi-lbl">APPROVED</div></div>
+    <div class="hd-kpi"><div class="hd-kpi-num red" id="kpi-rejected">·</div><div class="hd-kpi-lbl">REJECTED</div></div>
+    <div class="hd-kpi"><div class="hd-kpi-num amber" id="kpi-returned">·</div><div class="hd-kpi-lbl">RETURNED</div></div>
+    <button onclick="openNotifications()" style="background:var(--ink);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;cursor:pointer">Notifications<span id="notifBadge" style="display:none;margin-left:6px;background:var(--gold);color:var(--ink);padding:1px 7px;border-radius:10px;font-weight:700">·</span></button>
+  </div>
+</div>
+
+<!-- Notifications modal -->
+<div id="notifModal" style="display:none;position:fixed;inset:0;background:rgba(10,14,20,.55);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;padding:40px">
+  <div style="background:#fff;border-radius:16px;max-width:900px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.25)">
+    <div style="padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-family:var(--serif);font-size:22px;color:var(--ink)">Decision notifications</div>
+        <div id="notifSub" style="font-size:12px;color:var(--slate3);margin-top:2px">·</div>
+      </div>
+      <button onclick="closeNotifications()" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--slate)">Close</button>
+    </div>
+    <div id="notifList" style="overflow-y:auto;flex:1;padding:0"></div>
   </div>
 </div>
 
@@ -512,6 +527,10 @@ function renderScoring(a){
 
 function renderAI(a){
   const p = document.getElementById('panel-ai');
+  const hasRationale = a.aiRationale && a.aiRationale.trim().length > 0;
+  const generateBtn = a._real
+    ? `<button class="btn btn-xs" id="aiGenBtn" style="background:var(--purple);color:#fff;margin-top:8px" onclick="generateAiRationale('${a.ref}')">${hasRationale ? '↻ Regenerate AI rationale' : '✨ Generate AI rationale'}</button>`
+    : '';
   p.innerHTML = `
     <div class="ai-strip">
       <div class="ai-strip-hd">
@@ -521,7 +540,8 @@ function renderAI(a){
           <div class="ai-strip-sub">CLAUDE SONNET · ACCREDITATION MODE</div>
         </div>
       </div>
-      <div class="ai-strip-body">${a.aiRationale}</div>
+      <div class="ai-strip-body" id="aiStripBody">${hasRationale ? a.aiRationale : (a._real ? '<em style="color:var(--slate3)">No rationale yet. Click <strong>Generate AI rationale</strong> to ask Lex for a third-reviewer perspective on this submission.</em>' : '<em style="color:var(--slate3)">Demo entry — no AI rationale available.</em>')}</div>
+      ${generateBtn}
     </div>
 
     <div style="margin-bottom:14px">
@@ -685,7 +705,7 @@ function _mapRow(row){
       ? (Array.isArray(p.learningObjectives) ? p.learningObjectives : [p.learningObjectives])
       : (p.objectives || []),
     scores: { r1: {}, r2: {}, ai: {} },
-    aiRationale: row.review_notes || '',
+    aiRationale: row.ai_rationale || '',
     topics: p.topics || [],
     decision: row.status && row.status !== 'pending' ? row.status : null,
     isRenewal: (p.type === 'renewal') || row.type === 'renewal',
@@ -747,7 +767,71 @@ function renderCounts(){
   set('ct-rejected', LAST_COUNTS.rejected);
   set('ct-returned', LAST_COUNTS.returned);
   set('ct-all',      tot);
+  // Header KPIs mirror the same numbers
+  set('kpi-pending',  LAST_COUNTS.pending);
+  set('kpi-approved', LAST_COUNTS.approved);
+  set('kpi-rejected', LAST_COUNTS.rejected);
+  set('kpi-returned', LAST_COUNTS.returned);
 }
+
+// ── Notifications modal ──
+async function openNotifications() {
+  const modal = document.getElementById('notifModal');
+  const list = document.getElementById('notifList');
+  const sub = document.getElementById('notifSub');
+  modal.style.display = 'flex';
+  list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--slate3)">Loading…</div>';
+  const base = _apiBase();
+  try {
+    const r = await fetch(base + '/api/v1/notifications?limit=100', { headers: _authHeaders(), cache: 'no-store' });
+    if (!r.ok) { list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--red)">HTTP ' + r.status + '</div>'; return; }
+    const body = await r.json();
+    const rows = body.rows || [];
+    const counts = body.counts || {};
+    sub.textContent = 'Mailer: ' + (body.mailer || 'unknown') + ' · sent: ' + (counts.sent || 0)
+      + ' · pending: ' + ((counts.pending_credentials || 0) + (counts.no_recipient || 0))
+      + ' · failed: ' + (counts.failed || 0);
+    if (!rows.length) {
+      list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--slate3)">No notifications yet. Decisions will queue here.</div>';
+      return;
+    }
+    const statusColor = (s) => ({
+      sent: 'var(--green)',
+      failed: 'var(--red)',
+      pending_credentials: 'var(--amber)',
+      no_recipient: 'var(--amber)',
+      pending: 'var(--blue)',
+    }[s] || 'var(--slate3)');
+    list.innerHTML = rows.map(n => `
+      <div style="padding:14px 22px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:90px 1fr 130px;gap:14px;align-items:start">
+        <div>
+          <div style="background:${statusColor(n.status)};color:#fff;font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:5px;text-align:center;font-weight:700">${n.status}</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);margin-top:6px;text-align:center">${n.attempts || 0} att</div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--slate2)">${n.ref || '—'} · to ${n.to_email || '(no recipient)'}</div>
+          <div style="font-size:13.5px;color:var(--ink);margin:3px 0 6px">${n.subject || ''}</div>
+          <div style="font-size:12px;color:var(--slate2);line-height:1.55;white-space:pre-wrap;max-height:180px;overflow:auto">${(n.body || '').slice(0, 1200)}</div>
+          ${n.error ? `<div style="color:var(--red);font-size:11px;margin-top:6px"><strong>Error:</strong> ${n.error}</div>` : ''}
+        </div>
+        <div style="text-align:right;font-family:var(--mono);font-size:10px;color:var(--slate3)">
+          ${n.created_at}<br>
+          ${n.sent_at ? '✓ ' + n.sent_at : ''}
+        </div>
+      </div>
+    `).join('');
+    // Badge on the header button — pending+failed combined
+    const open = (counts.pending_credentials || 0) + (counts.no_recipient || 0) + (counts.failed || 0);
+    const badge = document.getElementById('notifBadge');
+    if (badge) {
+      if (open > 0) { badge.style.display = 'inline-block'; badge.textContent = open; }
+      else badge.style.display = 'none';
+    }
+  } catch (e) {
+    list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--red)">' + e.message + '</div>';
+  }
+}
+function closeNotifications() { document.getElementById('notifModal').style.display = 'none'; }
 
 async function refreshReviewerOptions(){
   const base = _apiBase(); if (!base) return;
@@ -762,6 +846,40 @@ async function refreshReviewerOptions(){
     const allOptions = Array.from(new Set([...REVIEWERS, ...reviewers])).filter(Boolean).sort();
     sel.innerHTML = '<option value="">All reviewers</option>' + allOptions.map(n => `<option value="${n}"${n === current ? ' selected' : ''}>${n}</option>`).join('');
   } catch (_) { /* non-fatal */ }
+}
+
+// ── Generate AI rationale via /accreditations/:ref/ai-rationale ──
+async function generateAiRationale(ref) {
+  const base = _apiBase();
+  if (!base) { toast('Backend not configured'); return; }
+  const btn = document.getElementById('aiGenBtn');
+  const body = document.getElementById('aiStripBody');
+  if (btn) { btn.disabled = true; btn.textContent = 'Lex is thinking…'; btn.style.opacity = '0.7'; }
+  if (body) body.innerHTML = '<em style="color:var(--slate3)">Asking Lex…</em>';
+  try {
+    const r = await fetch(base + '/api/v1/accreditations/' + encodeURIComponent(ref) + '/ai-rationale', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    });
+    const j = await r.json();
+    if (!r.ok) {
+      const msg = (j.error && (j.error.message || j.error)) || ('HTTP ' + r.status);
+      if (body) body.innerHTML = '<em style="color:var(--red)">' + msg + '</em>';
+      if (btn)  { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '✨ Generate AI rationale'; }
+      toast('AI rationale failed — ' + msg);
+      return;
+    }
+    const text = j.rationale || '';
+    const idx = APPLICATIONS.findIndex(a => a.ref === ref);
+    if (idx >= 0) APPLICATIONS[idx].aiRationale = text;
+    if (body) body.innerHTML = text.replace(/\n/g, '<br>');
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '↻ Regenerate AI rationale'; }
+    toast('AI rationale generated · ' + (j.usage?.output_tokens || '?') + ' tokens · saved');
+  } catch (e) {
+    if (body) body.innerHTML = '<em style="color:var(--red)">' + e.message + '</em>';
+    if (btn)  { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '✨ Generate AI rationale'; }
+    toast('AI rationale failed — ' + e.message);
+  }
 }
 
 // ── Reviewer assignment now also persists to backend ──
