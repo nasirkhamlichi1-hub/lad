@@ -3465,6 +3465,8 @@ async function triggerWorkflow(payload) {
       return null;
     }
     const body = await r.json();
+    // Stash the auto-award summary for submitSession() to surface in the confirmation banner
+    window.__LAST_SUBMIT_RESULT__ = body;
     // Backend may issue its own ref if ours collides — prefer it
     return body.ref || body.data?.ref || ref;
   } catch (e) {
@@ -3880,7 +3882,7 @@ function updateSessionImpact() {
     <div style="font-size:13px;color:var(--ink);line-height:1.7">
       <strong>${count}</strong> lawyers · <strong>+${pts} pts each</strong> · <strong>+${totalPts} pts total</strong><br>
       ${willComplete > 0 ? `<span style="color:var(--green);font-weight:600">${willComplete} lawyer${willComplete!==1?'s':''} will reach full compliance.</span><br>` : ''}
-      Points applied to each lawyer's record upon LAD approval.
+      Points apply to each lawyer's record on submission.
     </div>`;
 
   // Payload preview
@@ -3935,21 +3937,49 @@ async function submitSession() {
   };
 
   const ref = await triggerWorkflow(payload);
+  if (!ref) return;
+  // Read the auto-award summary the backend returned (set by triggerWorkflow)
+  const backendResp = window.__LAST_SUBMIT_RESULT__ || {};
+  const responseStatus = backendResp.data?.status || 'pending';
+  const pa = backendResp.pointsAwarded;
+  const autoApproved = responseStatus === 'approved';
 
   INTERNAL_SESSIONS.unshift({
     id: Date.now(), title: courseLabel, category:'Accredited',
     date: date ? new Date(date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : 'TBC',
     dateStr:'', time:'', pts,
     trainer: payload.trainer || 'Internal', attendees: lawyers.map(l=>l.name),
-    status:'pending', ref, dateObj: date ? new Date(date) : null,
+    status: autoApproved ? 'approved' : 'pending',
+    pointsAwardedAt: autoApproved && pa && pa.awarded?.length ? new Date().toISOString() : null,
+    accreditationCode: backendResp.data?.accreditationCode || courseCode || null,
+    ref, dateObj: date ? new Date(date) : null,
     pendingLawyerIds: [...ssSelectedLawyers]
   });
 
   renderInternalCards();
   closeSessionSubmit();
-  showToast(`Session submitted · Ref ${ref} · Pending LAD approval · ${lawyers.length} lawyers`);
-  // Pull authoritative status from backend in 2s (gives the POST a beat to land + LAD admin time to react if instantly approved)
-  setTimeout(() => { syncInternalSessionsFromBackend().then(renderInternalCards).then(loadMyApplications); }, 2000);
+
+  // Confirmation message — show point-award result for the typical
+  // auto-approved attendance path, fall back to the legacy "pending LAD"
+  // wording only when the parent course isn't found.
+  let toastMsg;
+  if (autoApproved && pa && pa.awarded?.length) {
+    toastMsg = `Attendance filed · Ref ${ref} · ${pa.awarded.length} lawyer${pa.awarded.length===1?'':'s'} awarded ${pa.perLawyer} pts each (${pa.total} total)`;
+    if (pa.unmatched?.length) toastMsg += ` · ${pa.unmatched.length} unmatched`;
+  } else if (autoApproved) {
+    toastMsg = `Attendance filed · Ref ${ref} · processed by LAD CLPD backend`;
+  } else {
+    toastMsg = `Attendance submitted · Ref ${ref} · awaiting LAD review (course not found — check accreditation code)`;
+  }
+  showToast(toastMsg);
+  // Pull latest from backend after a beat — gives the firm/lawyer endpoints time
+  // to reflect the auto-award (so card statuses + lawyer point totals update).
+  setTimeout(async () => {
+    await loadFirmLawyersFromBackend();
+    await syncInternalSessionsFromBackend();
+    renderInternalCards();
+    await loadMyApplications();
+  }, 1500);
 
   // ── Write to shared cross-portal registry ──
   try {
