@@ -87,6 +87,9 @@
       localStorage.removeItem('lad_name');
       localStorage.removeItem('lad_token');
     } catch (_) {}
-    window.location.href = 'clpd-portal.html';
+    // Send users back to the canonical entry — '/' resolves to index.html
+    // which then decides whether to show the public landing or route to a
+    // role portal if they're still authenticated elsewhere.
+    window.location.href = '/';
   };
 })();

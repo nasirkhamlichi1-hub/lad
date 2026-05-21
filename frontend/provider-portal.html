@@ -751,7 +751,9 @@ function providerFileFor(code) {
 
 function providerSignOut() {
   try { ['lad_token','lad_role','lad_name','lad_user_email'].forEach(k=>localStorage.removeItem(k)); } catch(_) {}
-  window.location.reload();
+  // Send back to the canonical entry — index.html will route based on the
+  // (now cleared) localStorage, which means the public landing.
+  window.location.href = '/';
 }
 
 function uaePassRegister(){ /* removed — providers/firms sign in with email and password */ }

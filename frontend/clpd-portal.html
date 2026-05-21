@@ -2188,6 +2188,8 @@ function goAuthRegister() {
 }
 
 // Map any backend role to its dashboard URL.
+// Single source of truth — mirrored in index.html and router.html so every
+// entry point routes the same way. Change one, change all three.
 function dashboardFor(role) {
   switch ((role || '').toLowerCase()) {
     case 'lawyer':                    return 'lawyer-portal-v2.html';
@@ -2197,11 +2199,27 @@ function dashboardFor(role) {
     case 'lad_staff':                 return 'lad-intelligence-v4.html';
     case 'lad_admin':
     case 'super_admin':
+    case 'lad_super_admin':
     case 'dg':                        return 'lad-admin.html';
-    case 'provider':                  return 'provider-portal.html';
+    case 'provider':
+    case 'provider_admin':            return 'provider-portal.html';
     default:                          return 'lawyer-portal-v2.html';
   }
 }
+
+// On first paint of the public landing, push already-signed-in users
+// straight to their role portal. Honour #public to override (the SIGN IN
+// link in the footer adds that hash so the landing is still reachable).
+(function autoRouteIfSignedIn() {
+  try {
+    var token = localStorage.getItem('lad_token');
+    var role  = localStorage.getItem('lad_role');
+    var forceLanding = (location.hash || '').toLowerCase().includes('public');
+    if (token && role && !forceLanding) {
+      location.replace(dashboardFor(role));
+    }
+  } catch (_) { /* ignore */ }
+})();
 
 async function doLogin() {
   const userEl = document.getElementById('credUsername');

@@ -3,22 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="0; url=clpd-portal.html">
-<title>CLPD Training Portal — Legal Affairs Department, Government of Dubai</title>
-<link rel="canonical" href="clpd-portal.html">
+<title>CLPD Portal — Legal Affairs Department, Government of Dubai</title>
+<link rel="canonical" href="/">
 <style>
   html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;background:linear-gradient(135deg,#004a2a,#006B3F);color:#fff;display:flex;align-items:center;justify-content:center;text-align:center}
-  .wrap{padding:32px}
+  .wrap{padding:32px;max-width:500px}
+  .ar{font-family:'Noto Naskh Arabic','Amiri',serif;font-size:13px;color:rgba(201,145,58,.85);margin-bottom:6px;direction:rtl}
   h1{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-size:32px;letter-spacing:-.014em;margin:0 0 10px}
-  p{font-size:13.5px;opacity:.78;margin:0 0 18px}
+  p{font-size:13.5px;opacity:.78;margin:0 0 22px;line-height:1.55}
   a{color:#C9913A;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(201,145,58,.5)}
+  .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.18);border-top-color:#C9913A;border-radius:50%;animation:s .9s linear infinite;vertical-align:middle;margin-right:8px}
+  @keyframes s{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Redirecting to the CLPD Portal…</h1>
-  <p>If you are not redirected automatically, <a href="clpd-portal.html">click here</a>.</p>
+  <div class="ar">دائرة الشؤون القانونية · حكومة دبي</div>
+  <h1 id="t">Continuing Legal Professional Development</h1>
+  <p id="m"><span class="spinner"></span>Routing you to the right portal…</p>
+  <p style="font-size:11.5px;opacity:.55">If you are not redirected, <a href="clpd-portal.html">click here to continue</a>.</p>
 </div>
-<script>location.replace('clpd-portal.html');</script>
+<script>
+(function () {
+  // The single canonical entry point. Two paths:
+  //  1. Signed in already → route straight to the role-appropriate portal
+  //  2. Not signed in     → load the public landing where they sign in
+  // After signing in, every portal's "Sign out" returns the user here.
+  function safeGet(k) { try { return localStorage.getItem(k) || ''; } catch (_) { return ''; } }
+  var token = safeGet('lad_token');
+  var role  = safeGet('lad_role');
+  // Don't redirect if the URL says #public — that's the explicit "show me
+  // the landing page" override (used by the SIGN IN footer link).
+  var forceLanding = (location.hash || '').toLowerCase().includes('public');
+  if (token && role && !forceLanding) {
+    var dest;
+    switch (role.toLowerCase()) {
+      case 'lawyer':                    dest = 'lawyer-portal-v2.html'; break;
+      case 'firm_compliance_officer':
+      case 'firm':                      dest = 'firm-compliance-portal.html'; break;
+      case 'lad_intelligence':
+      case 'lad_staff':                 dest = 'lad-intelligence-v4.html'; break;
+      case 'lad_admin':
+      case 'super_admin':
+      case 'lad_super_admin':
+      case 'dg':                        dest = 'lad-admin.html'; break;
+      case 'provider':
+      case 'provider_admin':            dest = 'provider-portal.html'; break;
+      default:                          dest = 'clpd-portal.html'; break;
+    }
+    location.replace(dest);
+    return;
+  }
+  // Not signed in (or explicit landing request) → public site
+  location.replace('clpd-portal.html');
+})();
+</script>
 </body>
 </html>
