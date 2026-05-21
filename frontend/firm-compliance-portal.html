@@ -3789,7 +3789,17 @@ function openUploadSession() {
   ssSelectedLawyers.clear();
   document.getElementById('ss-course').value = '';
   if(document.getElementById('ss-accred-code')) document.getElementById('ss-accred-code').value = '';
-  document.getElementById('ss-date').value = '';
+  const dateEl = document.getElementById('ss-date');
+  if (dateEl) {
+    dateEl.value = '';
+    // Belt-and-braces: clear any min/max left over from a previous open in
+    // an older deploy. Without this, a cached input with a future-min /
+    // today-max combination silently rejects every value.
+    dateEl.removeAttribute('min');
+    dateEl.removeAttribute('max');
+    dateEl.style.borderColor = 'var(--teal)';
+    dateEl.style.boxShadow = '';
+  }
   document.getElementById('ss-trainer').value = '';
   document.getElementById('ss-csv-preview').style.display = 'none';
   renderSSLawyerList();
@@ -3935,31 +3945,35 @@ function updateSessionImpact() {
 
   document.getElementById('ss-total-pts').textContent = count && pts ? `+${totalPts} pts` : '—';
 
-  // Enforce timing rules on the date input + show inline hint
+  // Show timing-rule guidance as a soft inline hint — but DON'T set the
+  // <input> min/max attributes. When a course is fresh (applied < 7 days
+  // ago) the "earliest" date is in the future while "today" is the natural
+  // max, which creates a min>max range and makes the picker reject every
+  // value. The backend is the source of truth on timing rules; the
+  // frontend just informs the user.
   const dateEl = document.getElementById('ss-date');
   const hintEl = document.getElementById('ss-date-hint');
   if (dateEl) {
+    dateEl.removeAttribute('min');
+    dateEl.removeAttribute('max');
     const earliest = opt?.dataset?.earliest || '';
     const today = new Date().toISOString().slice(0, 10);
-    if (earliest) {
-      dateEl.min = earliest;
-      dateEl.max = today;
-      if (hintEl) {
+    if (hintEl) {
+      if (earliest) {
         const courseTitle = opt?.dataset?.title || '';
-        hintEl.innerHTML = `<strong style="color:var(--teal)">${courseTitle}</strong> · accredited ${opt?.dataset?.applied?.split(' ')[0]||''} · earliest session date <strong>${earliest}</strong> · attendance must be filed within 30 days of the session`;
-        hintEl.style.color = 'var(--slate2)';
-      }
-      // If user already picked a date that's now out of range, flag it
-      if (dateEl.value && (dateEl.value < earliest || dateEl.value > today)) {
-        if (hintEl) {
-          hintEl.innerHTML += `<br><strong style="color:var(--red)">⚠ ${dateEl.value} is outside the allowed window — pick a date between ${earliest} and ${today}.</strong>`;
-          hintEl.style.color = 'var(--red)';
+        const earliestInFuture = earliest > today;
+        let msg = `<strong style="color:var(--teal)">${courseTitle}</strong> · accredited ${opt?.dataset?.applied?.split(' ')[0]||''} · earliest session date <strong>${earliest}</strong> · attendance must be filed within 30 days of the session`;
+        if (earliestInFuture) {
+          msg += `<br><strong style="color:var(--amber)">⏳ This course is still in its 7-day cool-down — you can file attendance once a session has run on or after ${earliest}.</strong>`;
         }
-      }
-    } else {
-      dateEl.removeAttribute('min');
-      dateEl.removeAttribute('max');
-      if (hintEl) {
+        if (dateEl.value && earliest && dateEl.value < earliest) {
+          msg += `<br><strong style="color:var(--red)">⚠ ${dateEl.value} is before the earliest allowed date (${earliest}). The backend will reject this.</strong>`;
+        } else if (dateEl.value && dateEl.value > today) {
+          msg += `<br><strong style="color:var(--red)">⚠ ${dateEl.value} is in the future. File attendance only after the session has happened.</strong>`;
+        }
+        hintEl.innerHTML = msg;
+        hintEl.style.color = 'var(--slate2)';
+      } else {
         hintEl.textContent = 'Session must be ≥ 7 days after the accreditation was applied for, and attendance must be filed within 30 days of the session.';
         hintEl.style.color = 'var(--slate3)';
       }
