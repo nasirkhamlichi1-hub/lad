@@ -806,78 +806,65 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
     </div>
 
     <div class="page">
-      <!-- ════ KPI Strip ════ -->
+      <!-- ════ OVERVIEW (slick redesign 2026-05-21 — calm hero + 4 quiet KPIs) ════ -->
       <section class="section" id="overview">
-        <div class="section-hd">
+        <!-- Headline card -->
+        <div style="background:#fff;border-radius:18px;padding:32px 36px;border:1px solid var(--line);margin-bottom:16px;display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center">
           <div>
-            <div class="section-eyebrow green" data-cfg="intel_sec_compliance_eyebrow">CITY-WIDE OVERVIEW</div>
-            <h2 class="section-title" data-cfg-html="intel_sec_compliance_title">Real-time <em>compliance intelligence</em></h2>
-            <div class="section-desc">Live data across 499 firms, 4,411 lawyers and 11 accredited providers. Updated every 5 minutes.</div>
+            <div class="section-eyebrow green" data-cfg="intel_sec_compliance_eyebrow" style="margin-bottom:6px">CITY-WIDE OVERVIEW</div>
+            <h1 class="section-title" data-cfg-html="intel_sec_compliance_title" style="font-size:38px;letter-spacing:-.022em;line-height:1.1;margin:0 0 10px">Real-time <em style="color:var(--green);font-style:italic">compliance intelligence</em></h1>
+            <div style="font-size:14px;color:var(--slate);line-height:1.55">Live data across <span id="ovDgFirms">499</span> firms, <span id="ovDgLawyers">4,411</span> lawyers and 11 accredited providers · refreshes every 5 minutes</div>
           </div>
-          <div class="section-actions">
-            <a href="lad-admin.html" class="btn btn-sm" style="background:var(--gold);color:#fff;border:none;font-weight:600;padding:8px 16px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(201,145,58,.25);transition:all .15s" onmouseover="this.style.background='#dba84e';this.style.boxShadow='0 4px 14px rgba(201,145,58,.4)'" onmouseout="this.style.background='var(--gold)';this.style.boxShadow='0 2px 8px rgba(201,145,58,.25)'" title="Manage courses, schedules, and portal content">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-              Content Admin
-            </a>
-            <button class="btn btn-ghost btn-sm">Last 30 days ▾</button>
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+            <a href="lad-admin.html" class="btn btn-sm" style="background:var(--gold);color:#fff;border:none;font-weight:600;padding:9px 16px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;border-radius:9px">Admin →</a>
           </div>
         </div>
-        <div class="kpi-grid">
-          <div class="kpi kpi-1" style="cursor:pointer" onclick="kpiDeepDive('lawyers')">
-            <div class="kpi-eyebrow"><span class="kpi-eyebrow-ico"><svg viewBox="0 0 24 24" stroke-linecap="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg></span><span data-cfg="intel_kpi1_label">TOTAL LAWYERS</span></div>
-            <div class="kpi-num"><span data-cfg="intel_kpi1_num">4,411</span></div>
-            <div class="kpi-meta">
-              <span class="kpi-delta up">▲ +94 YTD</span>
-              <div class="kpi-spark"><div class="kpi-spark-bar" style="height:38%"></div><div class="kpi-spark-bar" style="height:42%"></div><div class="kpi-spark-bar" style="height:48%"></div><div class="kpi-spark-bar" style="height:55%"></div><div class="kpi-spark-bar" style="height:62%"></div><div class="kpi-spark-bar" style="height:71%"></div><div class="kpi-spark-bar" style="height:78%"></div><div class="kpi-spark-bar" style="height:85%"></div><div class="kpi-spark-bar last" style="height:100%"></div></div>
-            </div>
+
+        <!-- 4 calm KPIs, sourced live -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+          <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--ink)'" onmouseout="this.style.borderColor='var(--line)'" onclick="kpiDeepDive('lawyers')">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px"><span data-cfg="intel_kpi1_label">Practitioners</span></div>
+            <div style="font-family:var(--serif);font-size:36px;line-height:1;letter-spacing:-.02em;font-weight:500"><span data-cfg="intel_kpi1_num" id="ovDgLawyersBig">4,411</span></div>
+            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px">Active on the Dubai Bar roll</div>
           </div>
-          <div class="kpi kpi-2" style="cursor:pointer" onclick="kpiDeepDive('compliance')">
-            <div class="kpi-eyebrow"><span class="kpi-eyebrow-ico"><svg viewBox="0 0 24 24" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-cfg="intel_kpi2_label">COMPLIANCE RATE</span></div>
-            <div class="kpi-num"><span data-cfg="intel_kpi2_num">10.4</span><em>%</em></div>
-            <div class="kpi-meta">
-              <span class="kpi-delta up">▲ +14.2pp</span>
-              <div class="kpi-spark"><div class="kpi-spark-bar" style="height:42%"></div><div class="kpi-spark-bar" style="height:50%"></div><div class="kpi-spark-bar" style="height:58%"></div><div class="kpi-spark-bar" style="height:64%"></div><div class="kpi-spark-bar" style="height:72%"></div><div class="kpi-spark-bar" style="height:78%"></div><div class="kpi-spark-bar" style="height:84%"></div><div class="kpi-spark-bar" style="height:88%"></div><div class="kpi-spark-bar last" style="height:100%"></div></div>
-            </div>
+          <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--line)'" onclick="kpiDeepDive('compliance')">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px"><span data-cfg="intel_kpi2_label">Compliance rate</span></div>
+            <div style="font-family:var(--serif);font-size:36px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--green)"><span data-cfg="intel_kpi2_num" id="ovDgPct">10.4</span><em style="color:var(--slate3);font-size:20px;font-style:italic">%</em></div>
+            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px">At or above 16 pts today</div>
           </div>
-          <div class="kpi kpi-3" style="cursor:pointer" onclick="kpiDeepDive('critical')">
-            <div class="kpi-eyebrow"><span class="kpi-eyebrow-ico"><svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span><span data-cfg="intel_kpi3_label">CRITICAL LAWYERS</span></div>
-            <div class="kpi-num"><span data-cfg="intel_kpi3_num">3492</span></div>
-            <div class="kpi-meta">
-              <span class="kpi-delta down">▼ −38 from Apr</span>
-              <div class="kpi-spark"><div class="kpi-spark-bar" style="height:90%"></div><div class="kpi-spark-bar" style="height:88%"></div><div class="kpi-spark-bar" style="height:82%"></div><div class="kpi-spark-bar" style="height:75%"></div><div class="kpi-spark-bar" style="height:68%"></div><div class="kpi-spark-bar" style="height:60%"></div><div class="kpi-spark-bar" style="height:52%"></div><div class="kpi-spark-bar" style="height:45%"></div><div class="kpi-spark-bar last" style="height:38%"></div></div>
-            </div>
+          <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='var(--line)'" onclick="kpiDeepDive('critical')">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px"><span data-cfg="intel_kpi3_label">Critical practitioners</span></div>
+            <div style="font-family:var(--serif);font-size:36px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--red)"><span data-cfg="intel_kpi3_num" id="ovDgCritical">3,492</span></div>
+            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px">Below 8 pts — priority outreach</div>
           </div>
-          <div class="kpi kpi-4" style="cursor:pointer" onclick="kpiDeepDive('deadline')">
-            <div class="kpi-eyebrow"><span class="kpi-eyebrow-ico"><svg viewBox="0 0 24 24" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><span data-cfg="intel_kpi4_label">DAYS TO DEADLINE</span></div>
-            <div class="kpi-num"><span data-cfg="intel_kpi4_num">234</span></div>
-            <div class="kpi-meta">
-              <span class="kpi-delta neutral">31 Dec 2026</span>
-              <div class="kpi-spark"><div class="kpi-spark-bar" style="height:100%"></div><div class="kpi-spark-bar" style="height:90%"></div><div class="kpi-spark-bar" style="height:80%"></div><div class="kpi-spark-bar" style="height:70%"></div><div class="kpi-spark-bar" style="height:60%"></div><div class="kpi-spark-bar" style="height:50%"></div><div class="kpi-spark-bar" style="height:40%"></div><div class="kpi-spark-bar" style="height:30%"></div><div class="kpi-spark-bar last" style="height:24%"></div></div>
-            </div>
+          <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--amber)'" onmouseout="this.style.borderColor='var(--line)'" onclick="kpiDeepDive('deadline')">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px"><span data-cfg="intel_kpi4_label">Days to deadline</span></div>
+            <div style="font-family:var(--serif);font-size:36px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--amber)"><span data-cfg="intel_kpi4_num">234</span></div>
+            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px">31 December 2026 cycle end</div>
           </div>
         </div>
-        <div class="kpi-grid" style="margin-top:0">
-          <div class="kpi" style="--accent:var(--purple);cursor:pointer" onclick="kpiDeepDive('firms')">
-            <div class="kpi-eyebrow"><span class="kpi-eyebrow-ico" style="color:var(--purple)"><svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span><span data-cfg="intel_kpi5_label">REGISTERED FIRMS</span></div>
-            <div class="kpi-num"><span data-cfg="intel_kpi5_num">499</span><em style="color:var(--purple)"></em></div>
-            <div class="kpi-meta"><span class="kpi-delta up">▲ +8 this quarter</span></div>
-          </div>
-          <div class="kpi" style="--accent:var(--teal);cursor:pointer" onclick="kpiDeepDive('courses')">
-            <div class="kpi-eyebrow"><span class="kpi-eyebrow-ico" style="color:var(--teal)"><svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span><span data-cfg="intel_kpi6_label">ACTIVE COURSES</span></div>
-            <div class="kpi-num"><span data-cfg="intel_kpi6_num">69</span><em style="color:var(--teal)"></em></div>
-            <div class="kpi-meta"><span class="kpi-delta up">▲ +12 vs 2025</span></div>
-          </div>
-          <div class="kpi" style="--accent:var(--amber);cursor:pointer" onclick="kpiDeepDive('accred')">
-            <div class="kpi-eyebrow"><span class="kpi-eyebrow-ico" style="color:var(--amber)"><svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><span data-cfg="intel_kpi7_label">PENDING ACCRED</span></div>
-            <div class="kpi-num">14<em style="color:var(--amber)"></em></div>
-            <div class="kpi-meta"><span class="kpi-delta down">▼ 3 SLA breach</span></div>
-          </div>
-          <div class="kpi" style="--accent:var(--ink);cursor:pointer" onclick="kpiDeepDive('global')">
-            <div class="kpi-eyebrow"><span class="kpi-eyebrow-ico" style="color:var(--ink)"><svg viewBox="0 0 24 24" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>GLOBAL SCORE</div>
-            <div class="kpi-num">78<em style="color:var(--ink)">/100</em></div>
-            <div class="kpi-meta"><span class="kpi-delta up">▲ Top 18%</span></div>
-          </div>
-        </div>
+
+        <!-- Live-data fetch: replaces the static numbers above as soon as /stats/aggregate responds -->
+        <script>
+        (async function(){
+          try {
+            const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://clpd-lad-api-0878.azurewebsites.net';
+            const r = await fetch(base.replace(/\/$/,'') + '/api/v1/stats/aggregate');
+            if (!r.ok) return;
+            const j = await r.json();
+            const d = (j && j.data) || j;
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            const lawyers = Number(d.lawyers) || 0;
+            const pct = Number(d.overall_pct) || 0;
+            const compliant = Number(d.compliant) || 0;
+            const critical = Math.max(0, lawyers - compliant);
+            set('ovDgLawyers', lawyers.toLocaleString());
+            set('ovDgLawyersBig', lawyers.toLocaleString());
+            set('ovDgPct', pct);
+            set('ovDgCritical', critical.toLocaleString());
+          } catch (_) { /* leave seeded numbers in place */ }
+        })();
+        </script>
       </section>
 
       <!-- ════ AI BRIEFING ════ -->

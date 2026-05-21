@@ -756,51 +756,57 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
 
     <div class="page">
 
-      <!-- ── OVERVIEW ── -->
+      <!-- ── OVERVIEW (slick redesign 2026-05-21) ── -->
       <section class="sec" id="overview">
-        <div class="sec-hd">
+        <!-- Headline card: firm identity + one big number -->
+        <div style="background:#fff;border-radius:18px;padding:30px 34px;box-shadow:0 1px 3px rgba(10,14,20,.04);border:1px solid var(--line);margin-bottom:16px;display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center">
           <div>
-            <div class="eyebrow green" data-cfg="firm_sec_overview_eyebrow">FIRM OVERVIEW · 2026 CYCLE</div>
-            <h2 class="sec-title" data-cfg-html="firm_sec_overview_title">Galadari <em>compliance</em></h2>
-            <div class="sec-desc">31 lawyers · 234 days to the 31 December 2026 deadline. Click any card for detail.</div>
+            <div class="eyebrow green" data-cfg="firm_sec_overview_eyebrow" style="margin-bottom:6px">FIRM OVERVIEW · 2026 CYCLE</div>
+            <h1 class="sec-title" data-cfg-html="firm_sec_overview_title" style="font-size:38px;letter-spacing:-.022em;line-height:1.1;margin:0 0 8px">Galadari <em style="color:var(--green);font-style:italic">compliance</em></h1>
+            <div style="font-size:14px;color:var(--slate);line-height:1.55"><span id="ovFirmLawyerCount">31</span> lawyers · 234 days to the 31&nbsp;December 2026 deadline</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:var(--serif);font-size:60px;color:var(--green);letter-spacing:-.028em;line-height:.95;font-weight:500" id="ovFirmPct">48.4<em style="color:var(--slate3);font-size:26px;font-style:italic">%</em></div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-top:8px">firm compliance today</div>
           </div>
         </div>
-        <div class="kpi-grid">
-          <div class="kpi" style="--ac:var(--green)" onclick="filterLawyers('all');scrollS('lawyers')">
-            <div class="kpi-ey"><span class="kpi-ey-ico"><svg viewBox="0 0 24 24" stroke-linecap="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg></span><span data-cfg="firm_stat1_label">TOTAL LAWYERS</span></div>
-            <div class="kpi-num"><span data-cfg="firm_kpi1_num">31</span></div>
-            <div class="kpi-sub up" data-cfg="firm_stat1_sub">▲ +12 this year</div>
+
+        <!-- 4 calm tiles — quiet borders, one accent each, clickable for drill-down -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px">
+          <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;cursor:pointer;transition:border-color .15s,transform .15s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--line)'" onclick="filterLawyers('all');scrollS('lawyers')">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px"><span data-cfg="firm_stat1_label">Total practitioners</span></div>
+            <div style="font-family:var(--serif);font-size:34px;line-height:1;letter-spacing:-.02em;font-weight:500"><span data-cfg="firm_kpi1_num">31</span></div>
+            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px" data-cfg="firm_stat1_sub">12 added this year</div>
           </div>
-          <div class="kpi" style="--ac:var(--green)" onclick="filterLawyers('compliant');scrollS('lawyers')">
-            <div class="kpi-ey"><span class="kpi-ey-ico"><svg viewBox="0 0 24 24" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></span><span data-cfg="firm_stat2_label">COMPLIANT ≥16 PTS</span></div>
-            <div class="kpi-num"><span data-cfg="firm_kpi2_num">0</span><em> / 284</em></div>
-            <div class="kpi-sub up" data-cfg="firm_stat2_sub">▲ 94.0%</div>
+          <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--line)'" onclick="filterLawyers('compliant');scrollS('lawyers')">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px"><span data-cfg="firm_stat2_label">Compliant</span></div>
+            <div style="font-family:var(--serif);font-size:34px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--green)"><span data-cfg="firm_kpi2_num">14</span><em style="color:var(--slate3);font-size:19px;font-style:italic">/31</em></div>
+            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px" data-cfg="firm_stat2_sub">At or above 16 pts</div>
           </div>
-          <div class="kpi" style="--ac:var(--amber)" onclick="filterLawyers('at-risk');scrollS('lawyers')">
-            <div class="kpi-ey"><span class="kpi-ey-ico" style="color:var(--amber)"><svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg></span><span data-cfg="firm_stat3_label">AT RISK 8–15 PTS</span></div>
-            <div class="kpi-num"><span data-cfg="firm_kpi3_num">10</span></div>
-            <div class="kpi-sub nu" data-cfg="firm_stat3_sub">Need 1–8 more pts</div>
+          <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--amber)'" onmouseout="this.style.borderColor='var(--line)'" onclick="filterLawyers('at-risk');scrollS('lawyers')">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px"><span data-cfg="firm_stat3_label">At risk</span></div>
+            <div style="font-family:var(--serif);font-size:34px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--amber)"><span data-cfg="firm_kpi3_num">10</span></div>
+            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px" data-cfg="firm_stat3_sub">Between 8 and 15 points</div>
           </div>
-          <div class="kpi" style="--ac:var(--red)" onclick="filterLawyers('critical');scrollS('lawyers')">
-            <div class="kpi-ey"><span class="kpi-ey-ico" style="color:var(--red)"><svg viewBox="0 0 24 24" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span><span data-cfg="firm_stat4_label">CRITICAL &lt;8 PTS</span></div>
-            <div class="kpi-num"><span data-cfg="firm_kpi4_num">7</span></div>
-            <div class="kpi-sub dn" data-cfg="firm_stat4_sub">▼ High priority</div>
-          </div>
-          <div class="kpi" style="--ac:var(--blue)" onclick="filterLawyers('all');scrollS('lawyers')">
-            <div class="kpi-ey"><span class="kpi-ey-ico" style="color:var(--blue)"><svg viewBox="0 0 24 24" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>AVG PTS EARNED</div>
-            <div class="kpi-num"><span data-cfg="firm_kpi5_num">13.8</span><em> / 16</em></div>
-            <div class="kpi-sub up">▲ Above city avg</div>
+          <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='var(--line)'" onclick="filterLawyers('critical');scrollS('lawyers')">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px"><span data-cfg="firm_stat4_label">Critical</span></div>
+            <div style="font-family:var(--serif);font-size:34px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--red)"><span data-cfg="firm_kpi4_num">7</span></div>
+            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px" data-cfg="firm_stat4_sub">Below 8 points — priority</div>
           </div>
         </div>
-        <!-- Deadline bar -->
-        <div class="card" style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 20px;box-shadow:var(--sh-sm);display:flex;align-items:center;gap:18px">
-          <div style="flex-shrink:0;text-align:center"><div style="font-family:var(--serif);font-size:32px;color:var(--amber);line-height:1">87</div><div style="font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:.8px">DAYS LEFT</div></div>
+
+        <!-- Deadline strip: minimal, single accent -->
+        <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;display:flex;align-items:center;gap:22px">
+          <div style="flex-shrink:0">
+            <div style="font-family:var(--serif);font-size:34px;color:var(--amber);line-height:1;font-weight:500">87</div>
+            <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:4px">days left</div>
+          </div>
           <div style="flex:1">
-            <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--slate2);margin-bottom:6px"><span>1 Jan 2026</span><strong style="color:var(--ink)">Today — 48.4% compliance</strong><span>31 Dec 2026</span></div>
-            <div style="height:8px;background:var(--line2);border-radius:4px;overflow:hidden"><div style="height:100%;width:73%;background:linear-gradient(90deg,var(--green),var(--green-l));border-radius:4px;transition:width 1.5s ease"></div></div>
-            <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--slate3);margin-top:5px;font-family:var(--mono)"><span>73% of year elapsed</span><span>Target: 100% by 31 Dec</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--slate2);margin-bottom:8px;font-family:var(--mono);letter-spacing:.4px"><span>1 JAN</span><span>31 DEC</span></div>
+            <div style="height:6px;background:var(--paper2);border-radius:4px;overflow:hidden"><div style="height:100%;width:73%;background:linear-gradient(90deg,var(--green),var(--green-l));border-radius:4px;transition:width 1.5s ease"></div></div>
+            <div style="font-size:12px;color:var(--slate);margin-top:8px">73% of the compliance year is gone · target is 100% practitioner compliance by 31 December</div>
           </div>
-          <div style="flex-shrink:0"><span class="pill pg">ON TRACK</span></div>
+          <div style="flex-shrink:0"><span class="pill pg" style="font-size:10px">ON TRACK</span></div>
         </div>
       </section>
 
