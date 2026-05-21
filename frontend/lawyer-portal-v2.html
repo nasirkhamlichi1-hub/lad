@@ -1091,9 +1091,9 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 </button>
       <div class="tb-title">
         <div class="tb-title-eyebrow">LAWYER PORTAL · 2026 PROGRAMME</div>
-        <div class="tb-title-name">Good afternoon, <em>Yousef</em></div>
+        <div class="tb-title-name">Good afternoon, <em id="tbFirstName">Yousef</em></div>
       </div>
-      <div class="tb-status"><span class="tb-status-dot"></span>AT RISK · 6/16 PTS</div>
+      <div class="tb-status" id="tbStatus"><span class="tb-status-dot"></span>Loading…</div>
       <div class="tb-time" id="liveTime">10 May 2026 · 14:32 GST</div>
       <div class="tb-actions">
         <button style="width:32px;height:32px;background:rgba(0,0,0,.06);border:1px solid var(--line);border-radius:8px;cursor:pointer;display:grid;place-items:center;color:var(--slate);transition:all .15s;font-size:14px" title="Platform launcher" onclick="window.open('index.html','_self')" onmouseover="this.style.background='var(--paper2)'" onmouseout="this.style.background='rgba(0,0,0,.06)'">⌂</button>
@@ -1112,14 +1112,14 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         <!-- Hero card -->
         <div style="background:#fff;border-radius:18px;padding:32px 36px;box-shadow:0 1px 3px rgba(10,14,20,.04);border:1px solid var(--line);margin-bottom:18px">
           <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap">
-            <div style="width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,#006B3F,#004a2a);color:#fff;display:grid;place-items:center;font-family:var(--serif);font-size:26px;font-weight:600;flex-shrink:0">YM</div>
+            <div id="ovInitials" style="width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,#006B3F,#004a2a);color:#fff;display:grid;place-items:center;font-family:var(--serif);font-size:26px;font-weight:600;flex-shrink:0">YM</div>
             <div style="flex:1;min-width:280px">
-              <div style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);letter-spacing:1.6px;text-transform:uppercase;font-weight:600;margin-bottom:6px">L-01494 · admitted oct 2015</div>
-              <h1 style="font-family:var(--serif);font-size:38px;letter-spacing:-.022em;line-height:1.1;margin:0 0 8px;font-weight:500;color:var(--ink)">Yousef Al <em style="color:var(--green);font-style:italic">Mansouri</em></h1>
-              <div style="font-size:14px;color:var(--slate);line-height:1.6">Legal Consultant · Galadari Advocates & Legal Consultants<br><span style="color:var(--slate2)">Commercial Disputes · IT · Real Estate</span></div>
+              <div id="ovEyebrow" style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);letter-spacing:1.6px;text-transform:uppercase;font-weight:600;margin-bottom:6px">L-01494 · admitted oct 2015</div>
+              <h1 style="font-family:var(--serif);font-size:38px;letter-spacing:-.022em;line-height:1.1;margin:0 0 8px;font-weight:500;color:var(--ink)" id="ovFullName">Yousef Al <em style="color:var(--green);font-style:italic">Mansouri</em></h1>
+              <div style="font-size:14px;color:var(--slate);line-height:1.6" id="ovRoleLine">Legal Consultant · Galadari Advocates & Legal Consultants<br><span style="color:var(--slate2)" id="ovPractice">Commercial Disputes · IT · Real Estate</span></div>
             </div>
             <div style="text-align:right;flex-shrink:0">
-              <div style="font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:1.4px;font-weight:700;text-transform:uppercase">234 days to 31 Dec</div>
+              <div id="ovDaysLeft" style="font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:1.4px;font-weight:700;text-transform:uppercase">— days to 31 Dec</div>
               <div style="margin-top:14px"><button class="btn btn-g" onclick="goToSection('courses',event)">Book a course →</button></div>
             </div>
           </div>
@@ -2895,6 +2895,108 @@ document.addEventListener('DOMContentLoaded', function () {
     s.style.display = '';
   });
 });
+
+// ════════════════════════════════════════════════════════════════
+// Load the signed-in lawyer's live record from the backend and paint
+// the hero + KPIs with it. Without this the dashboard showed Yousef's
+// hardcoded 4/16 to every signed-in lawyer, so filed attendance never
+// appeared to land even though the backend awarded points correctly.
+// ════════════════════════════════════════════════════════════════
+async function loadMyLawyerRecord() {
+  try {
+    const base = (window.LAD_API_BASE)
+      || (window.LAD_SYNC && window.LAD_SYNC.base)
+      || 'https://clpd-lad-api-0878.azurewebsites.net';
+    const token = (function(){ try { return localStorage.getItem('lad_token') || ''; } catch(_) { return ''; }})();
+    if (!token) return;
+    const r = await fetch(base.replace(/\/$/,'') + '/api/v1/lawyers/me', {
+      headers: { Authorization: 'Bearer ' + token },
+    });
+    if (!r.ok) return;
+    const j = await r.json();
+    const me = (j && j.data) || j;
+    if (!me || !me.id) return;
+    paintMyRecord(me);
+  } catch (e) {
+    console.warn('[lawyer-portal] loadMyLawyerRecord failed:', e.message);
+  }
+}
+
+function paintMyRecord(me) {
+  const set = (id, val) => { const el = document.getElementById(id); if (el != null && val != null) el.textContent = val; };
+  const pts = Number(me.points) || 0;
+  const credits = Number(me.credits) || 0;
+  const needed = Math.max(0, 16 - pts);
+  const pctOfTarget = Math.max(0, Math.min(100, (pts / 16) * 100));
+  const first = (me.firstName || '').trim();
+  const last  = (me.lastName  || '').trim();
+  const fullName = me.fullName || (first + ' ' + last).trim();
+  const initials = ((first[0] || '') + (last[0] || '')).toUpperCase() || 'L';
+  // Hero
+  set('tbFirstName', first || fullName);
+  set('ovInitials', initials);
+  const fullNameEl = document.getElementById('ovFullName');
+  if (fullNameEl && first && last) {
+    fullNameEl.innerHTML = first + ' <em style="color:var(--green);font-style:italic">' + last + '</em>';
+  }
+  const eyebrow = (me.id || '') + (me.barNo ? ' · ' + me.barNo : '');
+  set('ovEyebrow', eyebrow);
+  // Role line
+  const roleLine = document.getElementById('ovRoleLine');
+  if (roleLine) {
+    const role = (me.role || me.job_title || '').toString();
+    const firm = (me.firmName || me.firm_name || '').toString();
+    const practice = (me.specialisms || '').toString();
+    roleLine.innerHTML = `${role ? role + (firm ? ' · ' + firm : '') : (firm || '')}${practice ? '<br><span style="color:var(--slate2)">' + practice.split(',').slice(0,4).join(' · ') + '</span>' : ''}`;
+  }
+  // Big numbers + progress bar
+  set('ovPtsEarned', pts);
+  set('ovPtsNeeded', needed);
+  const bar = document.getElementById('ovProgressBar');
+  if (bar) {
+    bar.style.width = pctOfTarget + '%';
+    bar.style.background = pts >= 16
+      ? 'linear-gradient(90deg,#006B3F,#1c8c5a)'
+      : pts >= 8
+      ? 'linear-gradient(90deg,#C9913A,#dba85e)'
+      : 'linear-gradient(90deg,#c0392b,#dc4b3a)';
+  }
+  // Topbar status pill
+  const tb = document.getElementById('tbStatus');
+  if (tb) {
+    tb.classList.remove('compliant','critical');
+    if (pts >= 16) {
+      tb.classList.add('compliant');
+      tb.innerHTML = '<span class="tb-status-dot"></span>COMPLIANT · ' + pts + '/16 PTS';
+    } else if (pts >= 8) {
+      tb.innerHTML = '<span class="tb-status-dot"></span>AT RISK · ' + pts + '/16 PTS';
+    } else {
+      tb.classList.add('critical');
+      tb.innerHTML = '<span class="tb-status-dot"></span>CRITICAL · ' + pts + '/16 PTS';
+    }
+  }
+  // Topbar credits chip (existing #tbCreditsDisplay)
+  const cdEl = document.getElementById('tbCreditsDisplay');
+  if (cdEl) cdEl.textContent = credits;
+  // Days to 31 December of the compliance year
+  const dl = document.getElementById('ovDaysLeft');
+  if (dl) {
+    const year = Number(me.complianceYear) || new Date().getUTCFullYear();
+    const dec31 = new Date(Date.UTC(year, 11, 31));
+    const days = Math.max(0, Math.ceil((dec31.getTime() - Date.now()) / 86400000));
+    dl.textContent = days + ' days to 31 Dec';
+    dl.style.color = days < 60 ? 'var(--red)' : days < 120 ? 'var(--amber)' : 'var(--green)';
+  }
+  // Sidebar foot — name + L-ID
+  const sbName = document.querySelector('.sb-user-name');
+  const sbRole = document.querySelector('.sb-user-role');
+  const sbAv   = document.querySelector('.sb-user-av');
+  if (sbName) sbName.textContent = fullName;
+  if (sbRole) sbRole.textContent = me.id || '';
+  if (sbAv)   sbAv.textContent   = initials;
+}
+
+document.addEventListener('DOMContentLoaded', loadMyLawyerRecord);
 
 function selQuiz(el){
   const wasSelected=el.classList.contains('selected');
