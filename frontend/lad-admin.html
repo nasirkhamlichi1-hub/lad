@@ -1534,10 +1534,11 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
     <div style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;margin-bottom:18px">
       <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;margin-bottom:14px">1. CHOOSE ENTITY TYPE</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="adm-btn migrate-entity-btn" data-entity="lawyers"        onclick="setMigrateEntity('lawyers')">Lawyers</button>
-        <button class="adm-btn migrate-entity-btn" data-entity="firms"          onclick="setMigrateEntity('firms')">Firms</button>
-        <button class="adm-btn migrate-entity-btn" data-entity="providers"      onclick="setMigrateEntity('providers')">Providers</button>
-        <button class="adm-btn migrate-entity-btn" data-entity="courses"        onclick="setMigrateEntity('courses')">Courses</button>
+        <button class="adm-btn adm-btn-primary migrate-entity-btn" data-entity="legacy"         onclick="setMigrateEntity('legacy')" style="background:var(--green);color:#fff">★ Legacy bundle (combined export)</button>
+        <button class="adm-btn migrate-entity-btn" data-entity="lawyers"        onclick="setMigrateEntity('lawyers')">Lawyers only</button>
+        <button class="adm-btn migrate-entity-btn" data-entity="firms"          onclick="setMigrateEntity('firms')">Firms only</button>
+        <button class="adm-btn migrate-entity-btn" data-entity="providers"      onclick="setMigrateEntity('providers')">Providers only</button>
+        <button class="adm-btn migrate-entity-btn" data-entity="courses"        onclick="setMigrateEntity('courses')">Courses only</button>
         <button class="adm-btn migrate-entity-btn" data-entity="accreditations" onclick="setMigrateEntity('accreditations')">Accreditations (historical)</button>
       </div>
       <div id="migrateExpected" style="margin-top:14px;font-size:12.5px;color:var(--slate2);line-height:1.6;display:none">
@@ -4575,6 +4576,7 @@ let _migrateRows = [];
 let _migrateFilename = '';
 
 const MIGRATE_FIELD_HINTS = {
+  legacy:         ['Type', 'Firm/Lawyer ID', 'Name', 'Email', 'Gender', 'Phone', 'Address', 'City', 'Country', 'Jobtitle', 'Firm', 'Qualification Country', 'Specialisms', 'Prefer Language', 'Department', 'Joining Date', 'Current Credits', 'Total Purchased Credits', 'Total Refunded Credits', 'Course Name', 'Course Provider', 'Course Schedule', 'Course Status', 'Course bookedby', 'Course booked date', 'Course Admin Notes', 'Points Received', 'Total Points'],
   lawyers:        ['id', 'firm_id', 'firm_name', 'first_name', 'last_name', 'emirates_id', 'email', 'phone', 'bar_no', 'practicing', 'status', 'points', 'credits', 'compliance_year'],
   firms:          ['id', 'name', 'trn', 'email', 'phone', 'address', 'credit_pool', 'status'],
   providers:      ['id', 'name', 'contact_email', 'contact_phone', 'status'],
@@ -4635,20 +4637,56 @@ function renderMigratePreview() {
   document.getElementById('migratePreviewTable').innerHTML = '<table style="width:100%;border-collapse:collapse;background:#fff">' + head + body + '</table>' + (_migrateRows.length > 10 ? '<div style="padding:10px;background:var(--paper);text-align:center;font-size:11.5px;color:var(--slate3)">... and ' + (_migrateRows.length - 10) + ' more rows</div>' : '');
 }
 
+// Chunks legacy-bundle uploads so we don't blow the 50MB body limit and so
+// each transaction completes within the rate-limited request window.
 async function callMigrate(dryRun) {
   if (!_migrateRows.length || !_migrateEntity) return null;
   const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
   if (!base) { alert('Backend not configured'); return null; }
   const token = localStorage.getItem('lad_token') || '';
   if (!token) { alert('Sign in as LAD admin first'); return null; }
-  const r = await fetch(base + '/api/v1/import/' + _migrateEntity + (dryRun ? '?dry_run=1' : ''), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-    body: JSON.stringify({ rows: _migrateRows }),
-  });
-  const body = await r.json();
-  if (!r.ok) { alert('Import failed: ' + (body.error?.message || r.status)); return null; }
-  return body;
+
+  const isLegacy = (_migrateEntity === 'legacy' || _migrateEntity === 'legacy_bundle');
+  const CHUNK = isLegacy ? 5000 : _migrateRows.length;
+  const total = _migrateRows.length;
+  const url = base + '/api/v1/import/' + _migrateEntity + (dryRun ? '?dry_run=1' : '');
+
+  // Aggregate result tracker
+  const agg = isLegacy
+    ? { entity: _migrateEntity, errors: [], firms_inserted:0, firms_skipped:0, providers_inserted:0, providers_skipped:0, lawyers_inserted:0, lawyers_updated:0, lawyers_skipped:0, bookings_inserted:0, bookings_skipped:0, unique_lawyers:0, unique_firms:0, unique_providers:0, total_course_rows:0, skipped_rows:0 }
+    : { entity: _migrateEntity, errors: [], inserted:0, updated:0, skipped:0 };
+
+  const dropzoneSummary = document.getElementById('migrateFileSummary');
+  for (let start = 0; start < total; start += CHUNK) {
+    const chunk = _migrateRows.slice(start, Math.min(total, start + CHUNK));
+    if (dropzoneSummary) {
+      dropzoneSummary.style.display = 'block';
+      dropzoneSummary.innerHTML = `<strong>${_migrateFilename}</strong> · ${dryRun ? 'dry-run' : 'committing'} rows ${start + 1}–${start + chunk.length} of ${total.toLocaleString()}…`;
+    }
+    let r, body;
+    try {
+      r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ rows: chunk }),
+      });
+      body = await r.json();
+    } catch (e) {
+      alert('Network error mid-import at row ' + start + ': ' + e.message);
+      return null;
+    }
+    if (!r.ok) { alert('Import failed at row ' + start + ': ' + (body?.error?.message || r.status)); return null; }
+    // Merge counters
+    for (const k of Object.keys(agg)) {
+      if (k === 'entity') continue;
+      if (k === 'errors') { agg.errors.push(...(body.errors || [])); continue; }
+      if (typeof body[k] === 'number') agg[k] += body[k];
+    }
+  }
+  if (dropzoneSummary) {
+    dropzoneSummary.innerHTML = `<strong>${_migrateFilename}</strong> · ${dryRun ? 'dry-run' : 'commit'} complete · ${total.toLocaleString()} rows processed`;
+  }
+  return agg;
 }
 
 async function runMigrateDryRun() {
@@ -4658,7 +4696,7 @@ async function runMigrateDryRun() {
   btn.disabled = false; btn.textContent = '▶ Dry-run';
   if (!res) return;
   renderMigrateResult(res, true);
-  if (res.errors.length === 0) {
+  if ((res.errors || []).length === 0) {
     document.getElementById('migrateCommitBtn').disabled = false;
     document.getElementById('migrateCommitBtn').style.opacity = '1';
   }
@@ -4679,36 +4717,60 @@ async function commitMigrate() {
 function renderMigrateResult(res, isDryRun) {
   const block = document.getElementById('migrateResultBlock');
   block.style.display = 'block';
-  const ok = res.errors.length === 0;
+  const errs = res.errors || [];
+  const ok = errs.length === 0;
   const headerColor = isDryRun ? 'var(--blue)' : ok ? 'var(--green)' : 'var(--amber)';
   const headerLabel = isDryRun ? 'DRY RUN' : ok ? 'IMPORTED' : 'IMPORTED WITH WARNINGS';
-  block.innerHTML = `
-    <div style="background:var(--white);border:1px solid var(--line);border-left:4px solid ${headerColor};border-radius:var(--r-lg);padding:22px">
-      <div style="font-family:var(--mono);font-size:9.5px;color:${headerColor};letter-spacing:1.2px;text-transform:uppercase;font-weight:700;margin-bottom:14px">4. ${headerLabel} · ${res.entity}</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px">
-        <div style="background:var(--paper);padding:14px;border-radius:8px">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Inserted</div>
-          <div style="font-size:24px;font-weight:700;color:var(--green)">${res.inserted}</div>
-        </div>
-        <div style="background:var(--paper);padding:14px;border-radius:8px">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Updated</div>
-          <div style="font-size:24px;font-weight:700;color:var(--blue)">${res.updated}</div>
-        </div>
-        <div style="background:var(--paper);padding:14px;border-radius:8px">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Skipped</div>
-          <div style="font-size:24px;font-weight:700;color:var(--slate3)">${res.skipped}</div>
-        </div>
-        <div style="background:var(--paper);padding:14px;border-radius:8px">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Errors</div>
-          <div style="font-size:24px;font-weight:700;color:${res.errors.length ? 'var(--red)' : 'var(--slate3)'}">${res.errors.length}</div>
-        </div>
+
+  // Legacy-bundle responses have multi-entity counters. Render them differently.
+  const isLegacy = (res.entity === 'legacy' || res.entity === 'legacy_bundle');
+  const tile = (label, num, color) => `
+    <div style="background:var(--paper);padding:16px 18px;border-radius:10px">
+      <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:6px">${label}</div>
+      <div style="font-family:var(--serif);font-size:28px;font-weight:500;color:${color};line-height:1">${(num || 0).toLocaleString()}</div>
+    </div>`;
+
+  let tiles;
+  if (isLegacy) {
+    tiles = `
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px">
+        ${tile('Lawyers inserted', res.lawyers_inserted, 'var(--green)')}
+        ${tile('Lawyers updated',  res.lawyers_updated,  'var(--blue)')}
+        ${tile('Firms created',    res.firms_inserted,   'var(--green)')}
+        ${tile('Providers created',res.providers_inserted,'var(--green)')}
+        ${tile('Bookings imported',res.bookings_inserted,'var(--blue)')}
       </div>
-      ${res.errors.length ? `
-        <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:8px">First ${Math.min(20, res.errors.length)} errors:</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+        ${tile('Unique lawyers',   res.unique_lawyers,   'var(--ink)')}
+        ${tile('Unique firms',     res.unique_firms,     'var(--ink)')}
+        ${tile('Unique providers', res.unique_providers, 'var(--ink)')}
+        ${tile('Course rows',      res.total_course_rows,'var(--ink)')}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
+        ${tile('Non-lawyer rows skipped', res.skipped_rows, 'var(--slate3)')}
+        ${tile('Lawyer rows with errors', res.lawyers_skipped, 'var(--amber)')}
+        ${tile('Errors', errs.length, errs.length ? 'var(--red)' : 'var(--slate3)')}
+      </div>`;
+  } else {
+    tiles = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px">
+        ${tile('Inserted', res.inserted, 'var(--green)')}
+        ${tile('Updated',  res.updated,  'var(--blue)')}
+        ${tile('Skipped',  res.skipped,  'var(--slate3)')}
+        ${tile('Errors',   errs.length,  errs.length ? 'var(--red)' : 'var(--slate3)')}
+      </div>`;
+  }
+
+  block.innerHTML = `
+    <div style="background:var(--white);border:1px solid var(--line);border-left:4px solid ${headerColor};border-radius:14px;padding:24px 26px">
+      <div style="font-family:var(--mono);font-size:10px;color:${headerColor};letter-spacing:1.3px;text-transform:uppercase;font-weight:700;margin-bottom:16px">4. ${headerLabel} · ${res.entity}</div>
+      ${tiles}
+      ${errs.length ? `
+        <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin:10px 0 8px">First ${Math.min(20, errs.length)} errors:</div>
         <div style="background:var(--paper);border-radius:8px;padding:12px;max-height:240px;overflow-y:auto;font-family:var(--mono);font-size:11.5px;color:var(--slate2)">
-          ${res.errors.slice(0, 20).map(e => `<div style="padding:4px 0;border-bottom:1px dotted var(--line)"><strong style="color:var(--red)">Row ${e.row}:</strong> ${e.message}</div>`).join('')}
+          ${errs.slice(0, 20).map(e => `<div style="padding:4px 0;border-bottom:1px dotted var(--line)"><strong style="color:var(--red)">${e.row != null ? 'Row ' + e.row : (e.id || '')}:</strong> ${e.message}</div>`).join('')}
         </div>
-      ` : `<div style="color:var(--green);font-size:13px;margin-top:8px">${isDryRun ? '✓ No errors — safe to commit.' : '✓ Import completed cleanly.'}</div>`}
+      ` : `<div style="color:var(--green);font-size:13.5px;margin-top:8px">${isDryRun ? '✓ No errors — safe to commit.' : '✓ Import completed cleanly.'}</div>`}
     </div>`;
 }
 
