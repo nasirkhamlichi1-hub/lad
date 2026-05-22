@@ -2279,6 +2279,45 @@ Give a concise, intelligent recommendation (3 sentences max) for the LAD Directo
   }, 900);
 }
 
+// ════════════════════════════════════════════════════════════════
+// Hide demo-only panels until they're wired to real backend data.
+// User asked: "remove any hardcoded data, only rely on the data I
+// uploaded". The Overview KPIs + Forecast Simulator already read live
+// data from /stats/aggregate. The panels listed below seed themselves
+// from in-file constants (the morning briefing, ops feed with bookings
+// counters, anomaly fixtures, course-feedback fixtures, scheduling
+// scenarios) and would mislead anyone testing against real data.
+// ════════════════════════════════════════════════════════════════
+(function hideIntelDemoPanels() {
+  var DEMO = ['ai', 'ops', 'anomaly', 'accred-monitor', 'coursefeedback', 'scheduling', 'heatmap', 'firms', 'cohort', 'reports'];
+  function apply() {
+    DEMO.forEach(function (id) {
+      var s = document.getElementById(id);
+      if (s) s.style.display = 'none';
+    });
+    document.querySelectorAll('.sb-link').forEach(function (a) {
+      var h = String(a.getAttribute('onclick') || '');
+      if (DEMO.some(function (id) { return h.indexOf("'" + id + "'") !== -1; })) a.style.display = 'none';
+    });
+    document.querySelectorAll('.mob-nav-btn').forEach(function (b) {
+      var h = String(b.getAttribute('onclick') || '');
+      if (DEMO.some(function (id) { return h.indexOf("'" + id + "'") !== -1; })) b.style.display = 'none';
+    });
+    // Hide section-group headers in the sidebar that have no links left
+    document.querySelectorAll('.sb-section').forEach(function (label) {
+      var next = label.nextElementSibling;
+      var hasVisible = false;
+      while (next && next.classList && next.classList.contains('sb-link')) {
+        if (next.style.display !== 'none') { hasVisible = true; break; }
+        next = next.nextElementSibling;
+      }
+      if (!hasVisible) label.style.display = 'none';
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+  else apply();
+})();
+
 // ═════════════════════════════════════════════
 // LEX CHAT MODAL (Claude-powered)
 // ═════════════════════════════════════════════
