@@ -628,6 +628,10 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
     Website
   </button>
+  <button class="adm-tab-top" data-page="audit" onclick="switchPage('audit')">
+    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    Audit log
+  </button>
   <button class="adm-tab-top" data-page="support" onclick="switchPage('support')">
     <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
     Support <span class="adm-tab-badge" id="badgeSupport" style="background:var(--red-bg);color:var(--red)">0</span>
@@ -1579,6 +1583,169 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
     <div id="migrateResultBlock" style="display:none"></div>
   </div>
 </section>
+
+<!-- ═══════════════════ PAGE: AUDIT LOG ═══════════════════ -->
+<section class="adm-page" data-page="audit">
+  <div class="adm-page-head">
+    <div class="adm-page-eyebrow">SECURITY · ACTIVITY TRAIL</div>
+    <h2 class="adm-page-title">Audit log</h2>
+    <p class="adm-page-desc">Every authentication, write, and admin action is recorded here. Use the filters to drill into a lawyer, an action type, or a specific actor. The log is pruned after <code>AUDIT_RETENTION_DAYS</code> (default 365).</p>
+  </div>
+
+  <!-- KPI strip (sourced from /audit/_/summary) -->
+  <div style="padding:0 28px 0;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px">
+    <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:8px">Total events on record</div>
+      <div style="font-family:var(--serif);font-size:32px;letter-spacing:-.02em;font-weight:500" id="audKpiTotal">—</div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:8px">Distinct actions (30d)</div>
+      <div style="font-family:var(--serif);font-size:32px;letter-spacing:-.02em;font-weight:500" id="audKpiActions">—</div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:8px">Failed logins (7d)</div>
+      <div style="font-family:var(--serif);font-size:32px;letter-spacing:-.02em;font-weight:500;color:var(--red)" id="audKpiFailedLogins">—</div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:8px">Active actors (30d)</div>
+      <div style="font-family:var(--serif);font-size:32px;letter-spacing:-.02em;font-weight:500" id="audKpiActors">—</div>
+    </div>
+  </div>
+
+  <!-- Side-by-side: top actions + activity timeline -->
+  <div style="padding:0 28px;display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+    <div class="adm-section" style="margin:0">
+      <div class="adm-section-head">
+        <div class="adm-section-eyebrow">TOP ACTIONS · LAST 30 DAYS</div>
+        <div class="adm-section-title">Most frequent events</div>
+      </div>
+      <div id="audTopActions" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+    <div class="adm-section" style="margin:0">
+      <div class="adm-section-head">
+        <div class="adm-section-eyebrow">DAILY ACTIVITY · LAST 30 DAYS</div>
+        <div class="adm-section-title">Events per day</div>
+      </div>
+      <div id="audDailyChart" style="height:140px;display:flex;align-items:flex-end;gap:3px;padding:14px 0"></div>
+    </div>
+  </div>
+
+  <!-- Filter bar + table -->
+  <div class="adm-section" style="margin:0 28px 28px">
+    <div class="adm-section-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
+      <div>
+        <div class="adm-section-eyebrow">RECENT EVENTS</div>
+        <div class="adm-section-title">Drill down</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input id="audSearch" placeholder="Search action / actor / target / payload…" oninput="auditDebounce()" style="padding:8px 12px;border:1px solid var(--line2);border-radius:8px;font-size:13px;font-family:var(--sans);min-width:280px"/>
+        <select id="audAction" onchange="loadAuditTable()" style="padding:8px 10px;border:1px solid var(--line2);border-radius:8px;font-size:13px;font-family:var(--sans)">
+          <option value="">All actions</option>
+        </select>
+        <button class="adm-btn-light" onclick="loadAuditDashboard()">↻ Refresh</button>
+      </div>
+    </div>
+    <div id="audTableWrap" style="overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--paper)">
+      <div style="padding:24px;text-align:center;color:var(--slate3);font-size:13px">Loading…</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--slate3)">
+      <span id="audPageInfo">—</span>
+      <div style="display:flex;gap:6px">
+        <button class="adm-btn-light" id="audPrevBtn" onclick="auditPage(-1)">‹ Prev</button>
+        <button class="adm-btn-light" id="audNextBtn" onclick="auditPage(1)">Next ›</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// Audit-log dashboard — wired to /audit and /audit/_/summary
+// ════════════════════════════════════════════════════════════════
+let _audPage = 0;
+const _audPageSize = 50;
+let _audSearchTimer = null;
+
+function auditDebounce() {
+  clearTimeout(_audSearchTimer);
+  _audSearchTimer = setTimeout(() => { _audPage = 0; loadAuditTable(); }, 250);
+}
+function auditPage(dir) { _audPage = Math.max(0, _audPage + dir); loadAuditTable(); }
+
+async function loadAuditDashboard() {
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  const token = localStorage.getItem('lad_token') || '';
+  if (!base || !token) return;
+  try {
+    const r = await fetch(base + '/api/v1/audit/_/summary', { headers: { Authorization: 'Bearer ' + token } });
+    if (!r.ok) return;
+    const j = await r.json();
+    const d = (j && j.data) || j;
+    document.getElementById('audKpiTotal').textContent       = (d.total || 0).toLocaleString();
+    document.getElementById('audKpiActions').textContent     = (d.by_action || []).length;
+    document.getElementById('audKpiFailedLogins').textContent= (d.failed_logins_7d || 0).toLocaleString();
+    document.getElementById('audKpiActors').textContent      = (d.by_role || []).length;
+
+    // Top actions
+    const ta = document.getElementById('audTopActions');
+    const maxCount = Math.max(1, ...(d.by_action || []).map(a => a.c));
+    ta.innerHTML = (d.by_action || []).slice(0, 10).map(a => {
+      const w = Math.round((a.c / maxCount) * 100);
+      return '<div style="display:grid;grid-template-columns:170px 1fr 60px;gap:10px;align-items:center;font-size:12px"><span style="font-family:var(--mono);color:var(--ink)">' + a.action + '</span><div style="height:8px;background:var(--paper2);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + w + '%;background:var(--green);border-radius:4px"></div></div><span style="font-family:var(--mono);color:var(--slate2);text-align:right">' + a.c.toLocaleString() + '</span></div>';
+    }).join('');
+    // Populate action filter dropdown
+    const sel = document.getElementById('audAction');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">All actions</option>' + (d.by_action || []).map(a => '<option value="' + a.action + '"' + (a.action === current ? ' selected' : '') + '>' + a.action + ' (' + a.c + ')</option>').join('');
+    // Daily chart
+    const ch = document.getElementById('audDailyChart');
+    const maxDaily = Math.max(1, ...(d.by_day || []).map(x => x.c));
+    ch.innerHTML = (d.by_day || []).map(x => {
+      const h = Math.round((x.c / maxDaily) * 110);
+      return '<div title="' + x.day + ': ' + x.c + ' events" style="flex:1;background:var(--green);border-radius:2px 2px 0 0;height:' + h + 'px;min-height:2px"></div>';
+    }).join('');
+  } catch (e) { console.warn('[audit] summary:', e.message); }
+  loadAuditTable();
+}
+
+async function loadAuditTable() {
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  const token = localStorage.getItem('lad_token') || '';
+  if (!base || !token) return;
+  const q = encodeURIComponent(document.getElementById('audSearch')?.value || '');
+  const action = encodeURIComponent(document.getElementById('audAction')?.value || '');
+  const offset = _audPage * _audPageSize;
+  try {
+    const r = await fetch(base + '/api/v1/audit?limit=' + _audPageSize + '&offset=' + offset + (q ? '&search=' + q : '') + (action ? '&action=' + action : ''), { headers: { Authorization: 'Bearer ' + token } });
+    const j = await r.json();
+    const rows = j.data || [];
+    const total = j.meta?.total || 0;
+    document.getElementById('audPageInfo').textContent = total
+      ? 'Showing ' + (offset + 1) + '–' + Math.min(total, offset + rows.length) + ' of ' + total.toLocaleString()
+      : 'No matching events';
+    const wrap = document.getElementById('audTableWrap');
+    if (!rows.length) { wrap.innerHTML = '<div style="padding:24px;text-align:center;color:var(--slate3);font-size:13px">No events match the current filters.</div>'; return; }
+    wrap.innerHTML = '<table style="width:100%;border-collapse:collapse;background:#fff"><thead><tr style="background:var(--paper);border-bottom:1px solid var(--line)"><th style="text-align:left;padding:10px 12px;font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1px;font-weight:600">WHEN</th><th style="text-align:left;padding:10px 12px;font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1px;font-weight:600">ACTOR</th><th style="text-align:left;padding:10px 12px;font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1px;font-weight:600">ACTION</th><th style="text-align:left;padding:10px 12px;font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1px;font-weight:600">TARGET</th><th style="text-align:left;padding:10px 12px;font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1px;font-weight:600">DETAILS</th></tr></thead><tbody>' +
+      rows.map(r => '<tr style="border-bottom:1px solid var(--line)"><td style="padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--slate2);white-space:nowrap">' + (r.timestamp || '') + '</td><td style="padding:9px 12px;font-size:12px"><div style="font-weight:500">' + (r.actor_id || '—') + '</div><div style="font-family:var(--mono);font-size:10px;color:var(--slate3)">' + (r.actor_role || '') + '</div></td><td style="padding:9px 12px;font-family:var(--mono);font-size:11.5px;color:var(--ink);font-weight:500">' + (r.action || '') + '</td><td style="padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--slate2)"><div>' + (r.target_type || '') + '</div><div style="color:var(--ink)">' + (r.target_id || '') + '</div></td><td style="padding:9px 12px;font-family:var(--mono);font-size:10.5px;color:var(--slate3);max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + (r.payload_after || '').replace(/"/g,'&quot;') + '">' + (r.payload_after || '').slice(0, 140) + '</td></tr>').join('') +
+      '</tbody></table>';
+  } catch (e) { console.warn('[audit] table:', e.message); }
+}
+
+// Auto-load when the audit tab is opened
+(function () {
+  const obs = new MutationObserver(() => {
+    const sec = document.querySelector('section.adm-page[data-page="audit"]');
+    if (sec && sec.classList.contains('active')) {
+      if (!sec._auditLoaded) { sec._auditLoaded = true; loadAuditDashboard(); }
+    }
+  });
+  document.addEventListener('DOMContentLoaded', () => {
+    const sec = document.querySelector('section.adm-page[data-page="audit"]');
+    if (sec) obs.observe(sec, { attributes: true, attributeFilter: ['class'] });
+    if (sec && sec.classList.contains('active')) loadAuditDashboard();
+  });
+})();
+</script>
 
 <!-- ═══════════════════ PAGE: SUPPORT ═══════════════════ -->
 <section class="adm-page" data-page="support">
