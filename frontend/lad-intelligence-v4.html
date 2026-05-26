@@ -822,9 +822,9 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         <!-- 4 calm KPIs, sourced live -->
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
           <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--ink)'" onmouseout="this.style.borderColor='var(--line)'" onclick="kpiDeepDive('lawyers')">
-            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px"><span data-cfg="intel_kpi1_label">Practitioners</span></div>
-            <div style="font-family:var(--serif);font-size:36px;line-height:1;letter-spacing:-.02em;font-weight:500"><span data-cfg="intel_kpi1_num" id="ovDgLawyersBig">4,411</span></div>
-            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px">Active on the Dubai Bar roll</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px"><span data-cfg="intel_kpi1_label">Practising lawyers</span></div>
+            <div style="font-family:var(--serif);font-size:36px;line-height:1;letter-spacing:-.02em;font-weight:500"><span data-cfg="intel_kpi1_num" id="ovDgLawyersBig">—</span></div>
+            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px">Subject to the 16-point CLPD obligation<br><span style="font-family:var(--mono);font-size:10.5px;color:var(--slate3)" id="ovDgNonPractising">+ — non-practising on roll</span></div>
           </div>
           <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--line)'" onclick="kpiDeepDive('compliance')">
             <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px"><span data-cfg="intel_kpi2_label">Compliance rate</span></div>
@@ -854,13 +854,16 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
             const d = (j && j.data) || j;
             const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
             const lawyers = Number(d.lawyers) || 0;
+            const nonP = Number(d.non_practising) || 0;
             const pct = Number(d.overall_pct) || 0;
             const compliant = Number(d.compliant) || 0;
-            const critical = Math.max(0, lawyers - compliant);
+            const critical = Number(d.critical) ?? Math.max(0, lawyers - compliant);
             set('ovDgLawyers', lawyers.toLocaleString());
             set('ovDgLawyersBig', lawyers.toLocaleString());
             set('ovDgPct', pct);
             set('ovDgCritical', critical.toLocaleString());
+            const np = document.getElementById('ovDgNonPractising');
+            if (np) np.textContent = '+ ' + nonP.toLocaleString() + ' non-practising on roll';
           } catch (_) { /* leave seeded numbers in place */ }
         })();
         </script>

@@ -2924,6 +2924,46 @@ async function loadMyLawyerRecord() {
 
 function paintMyRecord(me) {
   const set = (id, val) => { const el = document.getElementById(id); if (el != null && val != null) el.textContent = val; };
+
+  // ─── Non-practising path ───
+  // Lawyers flagged practicing=0 (admin staff, support, LAD employees) don't
+  // have a 16-point CLPD obligation. Hide the compliance hero + KPIs and
+  // show a short identity card instead so the dashboard doesn't pretend
+  // they're failing a target they don't have.
+  const isPractising = me.practicing !== false && me.practicing !== 0;
+  if (!isPractising) {
+    const overview = document.getElementById('overview');
+    if (overview) {
+      const first = (me.firstName || '').trim();
+      const last  = (me.lastName  || '').trim();
+      const fullName = me.fullName || (first + ' ' + last).trim();
+      const initials = ((first[0] || '') + (last[0] || '')).toUpperCase() || 'L';
+      overview.innerHTML = `
+        <div style="background:#fff;border-radius:18px;padding:32px 36px;border:1px solid var(--line);max-width:760px">
+          <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap">
+            <div style="width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,#5a6878,#3a4453);color:#fff;display:grid;place-items:center;font-family:var(--serif);font-size:26px;font-weight:600;flex-shrink:0">${initials}</div>
+            <div style="flex:1;min-width:280px">
+              <div style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);letter-spacing:1.6px;text-transform:uppercase;font-weight:600;margin-bottom:6px">${me.id || ''} · non-practising</div>
+              <h1 style="font-family:var(--serif);font-size:32px;letter-spacing:-.018em;line-height:1.1;margin:0 0 8px;font-weight:500">${fullName}</h1>
+              <div style="font-size:14px;color:var(--slate);line-height:1.6">${me.job_title || me.role || 'Non-practising'}${me.firmName ? ' · ' + me.firmName : ''}</div>
+            </div>
+          </div>
+          <div style="margin-top:24px;padding:16px 18px;background:var(--paper);border-radius:12px;border:1px solid var(--line);font-size:13.5px;color:var(--slate);line-height:1.6">
+            You are on the LAD roll as <strong>non-practising</strong>. The annual 16-point CLPD obligation does not apply to your record. You can still browse the course catalogue and attend courses if you wish.
+          </div>
+        </div>`;
+    }
+    // Also hide every other section since the lawyer view doesn't apply
+    document.querySelectorAll('.section').forEach(s => { if (s.id !== 'overview') s.style.display = 'none'; });
+    // Topbar status
+    const tb = document.getElementById('tbStatus');
+    if (tb) { tb.innerHTML = '<span class="tb-status-dot"></span>NON-PRACTISING'; tb.style.background = 'var(--paper2)'; tb.style.color = 'var(--slate2)'; tb.style.borderColor = 'var(--line)'; }
+    const fn = document.getElementById('tbFirstName');
+    if (fn) fn.textContent = (me.firstName || '').trim() || (me.fullName || 'there');
+    return; // skip the rest of the practising-path painting
+  }
+
+  // ─── Practising path (existing logic) ───
   const pts = Number(me.points) || 0;
   const credits = Number(me.credits) || 0;
   const needed = Math.max(0, 16 - pts);

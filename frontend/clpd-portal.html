@@ -491,7 +491,11 @@ function applyLADConfig() {
     var n = function(v){ var x = Number(v); return Number.isFinite(x) ? x.toLocaleString() : '—'; };
     var line = document.getElementById('heroStatLine');
     if (line) {
-      line.textContent = n(s.lawyers) + ' licensed practitioners · ' +
+      // 'lawyers' from /stats/aggregate is the practising count (the cohort
+      // that has a CLPD obligation). Total roll = practising + non.
+      var practising = n(s.lawyers);
+      var total = n(s.total_on_roll || s.lawyers);
+      line.textContent = practising + ' practising lawyers · ' +
                          n(s.firms)   + ' registered firms · ' +
                          n(courseCount) + ' accredited courses live today.';
     }

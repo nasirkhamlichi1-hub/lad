@@ -827,13 +827,14 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
           <input id="lawSearch" type="text" placeholder="Search by name, practice area, seniority, points…" oninput="filterLawyers()"/>
         </div>
         <div class="chips">
-          <span class="chip on" data-f="all" onclick="setFilter(this,'all')">All</span>
+          <span class="chip on" data-f="all" onclick="setFilter(this,'all')">All practising</span>
           <span class="chip" data-f="critical" onclick="setFilter(this,'critical')"> Critical &lt;8 pts</span>
           <span class="chip" data-f="at-risk" onclick="setFilter(this,'at-risk')">⚠ At risk 8–15</span>
           <span class="chip" data-f="compliant" onclick="setFilter(this,'compliant')">✓ Compliant</span>
           <span class="chip" data-f="no-booking" onclick="setFilter(this,'no-booking')">No booking yet</span>
           <span class="chip" data-f="partner" onclick="setFilter(this,'partner')">Partners</span>
           <span class="chip" data-f="associate" onclick="setFilter(this,'associate')">Associates</span>
+          <span class="chip" data-f="non-practising" onclick="setFilter(this,'non-practising')" style="background:var(--paper2);color:var(--slate2)">Non-practising</span>
         </div>
         <!-- Quick select toolbar -->
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
@@ -2258,10 +2259,16 @@ function filterLawyers(forceFilter) {
     if(chip) chip.classList.add('on');
   }
   const q = (document.getElementById('lawSearch').value||'').toLowerCase();
+  // Default scope: practising only (the cohort with a CLPD obligation).
+  // The 'non-practising' chip flips the scope explicitly.
+  const scope = activeFilter === 'non-practising' ? 'non' : 'practising';
   const filtered = LAWYERS.filter(l => {
+    const isPract = l.practising !== false;  // default true
+    if (scope === 'practising' && !isPract) return false;
+    if (scope === 'non' && isPract) return false;
     const matchQ = !q || l.name.toLowerCase().includes(q) || l.practice.toLowerCase().includes(q) || l.role.toLowerCase().includes(q) || String(l.pts).includes(q);
     const st = statusOf(l.pts);
-    const matchF = activeFilter==='all' || st===activeFilter || (activeFilter==='no-booking'&&l.booked===0) || (activeFilter==='partner'&&l.role==='Partner') || (activeFilter==='associate'&&l.role.includes('Associate'));
+    const matchF = activeFilter==='all' || activeFilter==='non-practising' || st===activeFilter || (activeFilter==='no-booking'&&l.booked===0) || (activeFilter==='partner'&&l.role==='Partner') || (activeFilter==='associate'&&l.role.includes('Associate'));
     return matchQ && matchF;
   });
   document.getElementById('filtCount').textContent = `${filtered.length} shown`;
@@ -3635,6 +3642,9 @@ async function loadFirmLawyersFromBackend() {
     LAWYERS = rows.map((l, i) => {
       const fullName = `${l.first_name || ''} ${l.last_name || ''}`.trim();
       const initials = (l.first_name?.[0] || '') + (l.last_name?.[0] || '');
+      // Backend may return practicing as 0/1 or true/false. Default to
+      // practising if absent so the legacy /firms/:id/lawyers shape works.
+      const practising = (l.practicing === 0 || l.practicing === false) ? false : true;
       return {
         id: i + 1,                                  // local sequence index
         laId: l.id,                                 // backend lawyer id (canonical)
@@ -3647,6 +3657,7 @@ async function loadFirmLawyersFromBackend() {
         credits: Number(l.credits) || 0,
         lifetime: Number(l.points) || 0,            // best estimate without history table
         email: l.email || '',
+        practising,                                 // NEW — drives the non-practising filter chip
       };
     });
     console.info('[firm] loaded ' + LAWYERS.length + ' Galadari lawyers from backend');
