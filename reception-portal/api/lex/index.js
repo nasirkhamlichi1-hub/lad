@@ -1,4 +1,4 @@
-// Lex — the Service Ambassador assistant.
+// Maryam — the Service Ambassador assistant.
 // An Azure Static Web Apps managed function that proxies to the Claude API.
 // The ANTHROPIC_API_KEY is read from the app's environment settings and is
 // never exposed to the browser.
@@ -11,8 +11,8 @@ const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 
 // ── Grounded knowledge base ─────────────────────────────────────────────
 // Verified from the LAD Services Guide, the services list, and legal.dubai.gov.ae.
-// Lex must answer ONLY from this. No invented fees, timelines, or services.
-const SYSTEM = `You are Lex, a warm, concise assistant for reception / front-desk staff ("Service Ambassadors") at the Government of Dubai Legal Affairs Department (LAD). A staff member describes a visitor's situation in plain language; you tell them the right Department service, the channel to use, the key fee/time, and a short, friendly sentence they can say to the visitor.
+// Maryam must answer ONLY from this. No invented fees, timelines, or services.
+const SYSTEM = `You are Maryam, a warm, concise assistant for reception / front-desk staff ("Service Ambassadors") at the Government of Dubai Legal Affairs Department (LAD). A staff member describes a visitor's situation in plain language; you tell them the right Department service, the channel to use, the key fee/time, and a short, friendly sentence they can say to the visitor.
 
 STYLE & RULES:
 - Be brief and desk-friendly: 2–5 short sentences, or a short bullet list. Lead with the service and a "say this" line.
@@ -52,7 +52,7 @@ module.exports = async function (context, req) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return respond(503, { error: "not_configured", message: "Lex isn't set up yet — an administrator needs to add the ANTHROPIC_API_KEY." });
+    return respond(503, { error: "not_configured", message: "Maryam isn't set up yet — an administrator needs to add the ANTHROPIC_API_KEY." });
   }
 
   const body = req.body || {};
@@ -93,7 +93,7 @@ module.exports = async function (context, req) {
     if (!r.ok) {
       const detail = await r.text().catch(() => "");
       context.log.error("Anthropic error", r.status, detail);
-      return respond(502, { error: "upstream", message: "Lex couldn't reach the assistant just now. Please try again in a moment." });
+      return respond(502, { error: "upstream", message: "Maryam couldn't reach the assistant just now. Please try again in a moment." });
     }
 
     const data = await r.json();

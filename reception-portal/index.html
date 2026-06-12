@@ -707,12 +707,12 @@ body.unlocked .lex-fab{display:inline-flex}
 <!-- ── LEX ASSISTANT ── -->
 <button class="lex-fab" id="lexFab" onclick="lexToggle(true)">
   <svg viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4z"/><path d="M19 14l.7 1.8L21.5 17l-1.8.7L19 19.5l-.7-1.8L16.5 17l1.8-.5z"/></svg>
-  Ask Lex
+  Ask Maryam
 </button>
 <div class="lex-panel" id="lexPanel">
   <div class="lex-head">
     <div class="lex-orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4z"/></svg></div>
-    <div><div class="lex-h-t">Lex</div><div class="lex-h-s">Your service assistant</div></div>
+    <div><div class="lex-h-t">Maryam</div><div class="lex-h-s">Your service assistant</div></div>
     <button class="lex-close" onclick="lexToggle(false)" title="Close">&times;</button>
   </div>
   <div class="lex-body" id="lexBody"></div>
@@ -721,7 +721,7 @@ body.unlocked .lex-fab{display:inline-flex}
     <textarea class="lex-input" id="lexInput" rows="1" placeholder="Describe the visitor's situation…" onkeydown="lexKey(event)"></textarea>
     <button class="lex-send" id="lexSend" onclick="lexSend()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
   </div>
-  <div class="lex-note">Lex is an AI aid for staff — verified to the Department's services. Double-check anything critical.</div>
+  <div class="lex-note">Maryam is an AI aid for staff — verified to the Department's services. Double-check anything critical.</div>
 </div>
 
 <div id="confetti"></div>
@@ -1397,7 +1397,7 @@ var TIPS = [
   "Lead with the outcome: turn 'please take a seat' into 'here's exactly how we'll sort this'.",
   "The Department serves four groups: professionals, individuals, government entities, and private organisations.",
   "Firm licence amendments (name, address, partner, activity) are AED 1,020 and take about 5 working days.",
-  "When in doubt, the call centre is 800 523 — and you can always ask Lex.",
+  "When in doubt, the call centre is 800 523 — and you can always ask Maryam.",
   "Confidentiality first: handle every visitor's information with discretion."
 ];
 function initTip(){
@@ -1426,7 +1426,7 @@ function lexToggle(open){
   }
 }
 function lexGreet(){
-  lexAdd('bot',"Hi — I'm Lex. Tell me what a visitor needs and I'll point you to the right service, channel, and what to say.");
+  lexAdd('bot',"Hi — I'm Maryam. Tell me what a visitor needs and I'll point you to the right service, channel, and what to say.");
   var s=document.getElementById('lexSuggest'); s.innerHTML='';
   LEX_SUGGEST.forEach(function(t){ var c=el('button','lex-chip',t); c.addEventListener('click',function(){ document.getElementById('lexInput').value=t; lexSend(); }); s.appendChild(c); });
 }
