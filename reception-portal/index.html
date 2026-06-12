@@ -15,18 +15,18 @@
 ════════════════════════════════════════════════════════════ -->
 <script>
 window.RECEPTION_CONFIG = {
-  // Your Docebo tenant URL (where the SCORM training lives).
-  // Example: 'https://legalaffairs.docebosaas.com'
-  doceboUrl: 'https://YOUR-TENANT.docebosaas.com',
+  // Docebo tenant — learner area. Visitors who aren't signed in are
+  // redirected to the Docebo login page automatically.
+  doceboUrl: 'https://creativewordtraining.docebosaas.com/learn',
 
   // OPTIONAL — a direct "deep link" to the specific reception course /
-  // learning plan. Leave blank to land users on the Docebo home/login.
-  // Example: 'https://YOUR-TENANT.docebosaas.com/learn/course/123/reception-excellence'
+  // learning plan. Leave blank to land users on the Docebo learner home.
+  // Example: 'https://creativewordtraining.docebosaas.com/learn/course/123/reception-excellence'
   courseDeepLink: '',
 
   // If your Docebo login page accepts a pre-filled username via query string,
-  // set the param name here (most tenants ignore it — harmless if so).
-  usernameParam: 'login_required_username',
+  // set the param name here. Left blank = clean redirect (recommended).
+  usernameParam: '',
 
   // Support contact shown on the card.
   supportEmail: 'training@legal.dubai.gov.ae'
