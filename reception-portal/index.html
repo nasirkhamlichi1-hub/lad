@@ -3,29 +3,20 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Service Ambassador Programme — Legal Affairs Department, Government of Dubai</title>
-<meta name="description" content="The Legal Affairs Department Service Ambassador training programme. Government of Dubai."/>
+<title>Service Ambassador Hub — Legal Affairs Department, Government of Dubai</title>
+<meta name="description" content="Knowledge & training hub for Legal Affairs Department service staff. Government of Dubai."/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 
 <!-- ════════════════════════════════════════════════════════════
-     CONFIG — the two things you may want to change.
+     CONFIG
 ════════════════════════════════════════════════════════════ -->
 <script>
 window.SITE_CONFIG = {
-  // The single shared password that unlocks the briefing page.
-  accessPassword: 'Legal Affairs',
-
-  // Where the "Launch the training" button sends people. Once your
-  // Articulate SCORM course is published in Docebo, this can stay as the
-  // learner home, or be swapped for the direct course deep-link.
+  accessPassword: 'Legal Affairs',            // case-insensitive
   doceboUrl: 'https://creativewordtraining.docebosaas.com/learn',
-
-  // Set true once the course is live in Docebo. false = button shows a
-  // friendly "coming soon" message instead of opening Docebo.
-  courseLive: true,
-
+  courseLive: true,                            // false => "coming soon" message
   supportEmail: 'training@legal.dubai.gov.ae'
 };
 </script>
@@ -34,7 +25,7 @@ window.SITE_CONFIG = {
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;-webkit-tap-highlight-color:transparent}
 :root{
   --green:#006B3F;--green2:#008549;--green-d:#004d2e;--green-l:#00a85e;
-  --gold:#C9913A;--gold2:#dba84e;--gold-l:#f0cc88;
+  --gold:#C9913A;--gold2:#dba84e;--gold-l:#f0cc88;--gold-bg:#fdf6e8;
   --ink:#0a0e14;--ink2:#1a2330;--navy:#1c1f2e;--navy2:#12141e;
   --slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;--slate4:#b8c4d2;
   --line:#e8ecf1;--line2:#d8dfe7;
@@ -49,16 +40,16 @@ window.SITE_CONFIG = {
   --sh-md:0 4px 8px rgba(10,14,20,.08),0 16px 40px rgba(10,14,20,.08);
   --sh-xl:0 16px 32px rgba(10,14,20,.12),0 48px 96px rgba(10,14,20,.14);
 }
+html{scroll-behavior:smooth}
 html,body{color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;min-height:100vh}
 body{background:var(--paper)}
 ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
 em{font-style:italic}
 
-/* ════════ GATE (the first page) ════════ */
-#gate{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;
-  background:var(--navy2);overflow:hidden}
+/* ════ GATE ════ */
+#gate{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--navy2);overflow:hidden}
 #gate .gate-bg{position:absolute;inset:0;background-image:url('img/dclpd-reception.jpg');background-size:cover;background-position:center 40%}
-#gate .gate-overlay{position:absolute;inset:0;background:linear-gradient(140deg,rgba(8,12,22,.96) 0%,rgba(8,12,22,.86) 55%,rgba(8,12,22,.7) 100%)}
+#gate .gate-overlay{position:absolute;inset:0;background:linear-gradient(140deg,rgba(8,12,22,.96),rgba(8,12,22,.86) 55%,rgba(8,12,22,.7))}
 .gate-card{position:relative;z-index:1;width:100%;max-width:430px;background:#fff;border-radius:var(--r-xl);box-shadow:var(--sh-xl);overflow:hidden;animation:rise .5s cubic-bezier(.2,.7,.2,1)}
 @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 .gate-logos{background:var(--navy);padding:22px 28px;display:flex;align-items:center;gap:14px}
@@ -73,8 +64,7 @@ em{font-style:italic}
 .gate-input{display:flex;align-items:center;gap:10px;background:var(--paper);border:1.5px solid var(--line2);border-radius:11px;padding:13px 15px;transition:border-color .15s,box-shadow .15s;margin-bottom:14px}
 .gate-input:focus-within{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,107,63,.1)}
 .gate-input svg{width:17px;height:17px;stroke:var(--slate3);fill:none;stroke-width:1.8;flex-shrink:0}
-.gate-input input{border:none;outline:none;background:transparent;font-family:var(--sans);font-size:15px;color:var(--ink);flex:1;letter-spacing:.02em}
-.gate-input input::placeholder{color:var(--slate3);letter-spacing:0}
+.gate-input input{border:none;outline:none;background:transparent;font-family:var(--sans);font-size:15px;color:var(--ink);flex:1}
 .gate-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--green);color:#fff;border:none;border-radius:11px;padding:14px;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;transition:background .15s,transform .1s;box-shadow:0 4px 14px rgba(0,107,63,.28)}
 .gate-btn:hover{background:var(--green-d);transform:translateY(-1px)}
 .gate-btn svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.4}
@@ -84,45 +74,43 @@ em{font-style:italic}
 .shake{animation:shake .4s}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
 
-/* ════════ SITE (revealed after unlock) ════════ */
+/* ════ SITE ════ */
 #site{display:none}
 body.unlocked #gate{display:none}
 body.unlocked #site{display:block}
-
-/* LAD header */
 .lw{font-family:'Segoe UI',Tahoma,Arial,sans-serif}
 .lad-util{background:#f7f7f7;border-bottom:1px solid #e2e2e2}
-.lad-util-inner{max-width:1300px;margin:0 auto;padding:0 24px;height:36px;display:flex;align-items:center;justify-content:space-between}
-.lad-util-left{display:flex;align-items:center;gap:14px}
-.lad-util-link{font-size:12px;color:#444;text-decoration:none;display:flex;align-items:center;gap:5px;font-weight:500}
+.lad-util-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:34px;display:flex;align-items:center;justify-content:space-between}
+.lad-util-link{font-size:12px;color:#444;text-decoration:none;font-weight:500}
 .lad-util-link:hover{color:#006b3f}
-.lad-util-link img{height:20px;width:auto}
-.lad-util-sep{width:1px;height:14px;background:#d0d0d0}
+.lad-util-link img{height:18px;width:auto;vertical-align:middle}
 .lad-nav{background:var(--navy);position:sticky;top:0;z-index:200;box-shadow:0 3px 14px rgba(0,0,0,.38)}
-.lad-nav-inner{max-width:1300px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:0}
-.lad-logos{display:flex;align-items:center;padding-right:22px;border-right:1px solid rgba(255,255,255,.13);margin-right:20px;gap:14px;flex-shrink:0}
-.lad-logos img{height:38px;width:auto}
-.lad-logos-sep{width:1px;height:28px;background:rgba(255,255,255,.22)}
+.lad-nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:62px;display:flex;align-items:center;gap:18px}
+.lad-logos{display:flex;align-items:center;padding-right:18px;border-right:1px solid rgba(255,255,255,.13);gap:13px;flex-shrink:0}
+.lad-logos img{height:36px;width:auto}
+.lad-logos-sep{width:1px;height:26px;background:rgba(255,255,255,.22)}
 .lad-brand{display:flex;flex-direction:column;justify-content:center;min-width:0}
-.lad-brand-en{font-family:var(--serif);font-size:17px;color:#fff;line-height:1.15;letter-spacing:-.01em}
-.lad-brand-ar{font-family:var(--arabic);font-size:11px;color:rgba(255,255,255,.55);direction:rtl;margin-top:1px}
-.lad-nav-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
-.nav-cta{display:inline-flex;align-items:center;gap:7px;background:var(--gold);color:#fff;border:none;font-family:var(--sans);font-size:12.5px;font-weight:600;padding:8px 15px;border-radius:7px;cursor:pointer;transition:background .15s;text-decoration:none}
+.lad-brand-en{font-family:var(--serif);font-size:16px;color:#fff;line-height:1.15}
+.lad-brand-ar{font-family:var(--arabic);font-size:10.5px;color:rgba(255,255,255,.55);direction:rtl;margin-top:1px}
+.nav-links{display:flex;align-items:center;gap:2px;margin-left:auto}
+.nav-link{color:rgba(255,255,255,.82);font-size:12.5px;font-weight:500;padding:8px 11px;border-radius:7px;cursor:pointer;text-decoration:none;transition:background .15s,color .15s}
+.nav-link:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-cta{display:inline-flex;align-items:center;gap:7px;background:var(--gold);color:#fff;border:none;font-family:var(--sans);font-size:12.5px;font-weight:600;padding:9px 16px;border-radius:8px;cursor:pointer;transition:background .15s;text-decoration:none;white-space:nowrap}
 .nav-cta:hover{background:var(--gold2)}
-.nav-lock{font-size:12px;color:rgba(255,255,255,.6);text-decoration:none;padding:7px 10px;border-radius:5px;cursor:pointer;transition:background .15s}
-.nav-lock:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-lock{font-size:11.5px;color:rgba(255,255,255,.55);cursor:pointer;padding:7px 8px;border-radius:5px}
+.nav-lock:hover{color:#fff;background:rgba(255,255,255,.08)}
 
 /* HERO */
 .hero{position:relative;overflow:hidden;background:var(--navy2)}
-.hero-bg{position:absolute;inset:0;background-image:url('img/flag-ceremony.jpg');background-size:cover;background-position:center 30%}
-.hero-overlay{position:absolute;inset:0;background:linear-gradient(115deg,rgba(8,12,22,.95) 0%,rgba(8,12,22,.82) 50%,rgba(8,12,22,.6) 100%)}
-.hero-inner{max-width:1040px;margin:0 auto;padding:74px 24px 80px;position:relative;z-index:1}
-.hero-kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--gold-l);font-weight:600;margin-bottom:20px}
+.hero-bg{position:absolute;inset:0;background-image:url('img/flag-ceremony.jpg');background-size:cover;background-position:center 28%}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(115deg,rgba(8,12,22,.95),rgba(8,12,22,.8) 55%,rgba(8,12,22,.62))}
+.hero-inner{max-width:1000px;margin:0 auto;padding:64px 24px 70px;position:relative;z-index:1}
+.hero-kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--gold-l);font-weight:600;margin-bottom:18px}
 .hero-kicker::before{content:'';width:26px;height:1px;background:var(--gold)}
-.hero-title{font-family:var(--serif);font-size:clamp(40px,6vw,68px);color:#fff;line-height:1.04;letter-spacing:-.022em;margin-bottom:12px}
+.hero-title{font-family:var(--serif);font-size:clamp(38px,5.4vw,60px);color:#fff;line-height:1.05;letter-spacing:-.022em;margin-bottom:12px}
 .hero-title em{color:var(--gold-l)}
-.hero-ar{font-family:var(--arabic);font-size:22px;color:rgba(255,255,255,.55);direction:rtl;margin-bottom:24px}
-.hero-desc{font-size:16.5px;color:rgba(255,255,255,.8);line-height:1.75;max-width:660px;margin-bottom:32px}
+.hero-ar{font-family:var(--arabic);font-size:20px;color:rgba(255,255,255,.55);direction:rtl;margin-bottom:22px}
+.hero-desc{font-size:16px;color:rgba(255,255,255,.8);line-height:1.75;max-width:660px;margin-bottom:30px}
 .hero-btns{display:flex;gap:13px;flex-wrap:wrap}
 .btn-p{display:inline-flex;align-items:center;gap:9px;background:var(--gold);color:#fff;border:none;font-family:var(--sans);font-size:15px;font-weight:600;padding:14px 28px;border-radius:11px;cursor:pointer;transition:background .15s,transform .1s;box-shadow:0 6px 20px rgba(201,145,58,.32);text-decoration:none}
 .btn-p:hover{background:var(--gold2);transform:translateY(-2px)}
@@ -131,116 +119,126 @@ body.unlocked #site{display:block}
 .btn-s:hover{background:rgba(255,255,255,.18)}
 
 /* SECTIONS */
-.section{max-width:1100px;margin:0 auto;padding:72px 24px}
-.section.tight{padding:56px 24px}
-.sec-head{max-width:680px;margin:0 auto 44px;text-align:center}
-.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--green);font-weight:600;margin-bottom:12px}
+.section{max-width:1100px;margin:0 auto;padding:64px 24px}
+.sec-head{max-width:720px;margin:0 auto 38px;text-align:center}
+.sec-head.left{text-align:left;margin-left:0}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--green);font-weight:600;margin-bottom:11px}
 .eyebrow.gold{color:var(--gold)}
-.sec-title{font-family:var(--serif);font-size:clamp(30px,4vw,42px);color:var(--ink);letter-spacing:-.02em;line-height:1.1;margin-bottom:14px}
+.sec-title{font-family:var(--serif);font-size:clamp(28px,3.6vw,40px);color:var(--ink);letter-spacing:-.02em;line-height:1.1;margin-bottom:12px}
 .sec-title em{color:var(--green)}
-.sec-sub{font-size:15.5px;color:var(--slate2);line-height:1.7}
+.sec-sub{font-size:15px;color:var(--slate2);line-height:1.7}
+.band{background:var(--paper2)}
+.band-d{background:var(--navy2)}
 
-/* SHIFT (old vs new) */
-.shift{display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:stretch}
-.shift-card{border-radius:var(--r-lg);padding:30px 28px}
-.shift-old{background:var(--paper2);border:1px solid var(--line)}
-.shift-new{background:linear-gradient(135deg,var(--green-d),var(--green));color:#fff;box-shadow:var(--sh-md)}
-.shift-tag{font-family:var(--mono);font-size:10px;letter-spacing:1.6px;text-transform:uppercase;font-weight:600;margin-bottom:14px}
-.shift-old .shift-tag{color:var(--slate3)}
-.shift-new .shift-tag{color:var(--gold-l)}
-.shift-h{font-family:var(--serif);font-size:25px;letter-spacing:-.01em;margin-bottom:14px}
-.shift-old .shift-h{color:var(--slate)}
-.shift-li{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.55;margin-bottom:11px}
-.shift-old .shift-li{color:var(--slate2)}
-.shift-new .shift-li{color:rgba(255,255,255,.9)}
-.shift-li svg{width:16px;height:16px;flex-shrink:0;margin-top:1px;fill:none;stroke-width:2}
-.shift-old .shift-li svg{stroke:var(--slate3)}
-.shift-new .shift-li svg{stroke:var(--gold-l)}
-.shift-arrow{display:flex;align-items:center;justify-content:center;color:var(--green)}
-.shift-arrow svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.6}
+/* CHARTER */
+.charter-intro{max-width:820px;margin:0 auto 34px;text-align:center;font-size:16px;color:var(--slate);line-height:1.8;font-style:italic;border-left:0}
+.charter-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.charter-col{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-sm)}
+.charter-col-h{padding:16px 22px;font-weight:700;font-size:14.5px;color:#fff;display:flex;align-items:center;gap:9px}
+.charter-col-h svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2}
+.charter-col.commit .charter-col-h{background:var(--green)}
+.charter-col.expect .charter-col-h{background:var(--gold)}
+.charter-li{display:flex;gap:11px;padding:12px 22px;border-top:1px solid var(--line);font-size:13.5px;color:var(--slate);line-height:1.55}
+.charter-li:first-of-type{border-top:none}
+.charter-li .num{flex-shrink:0;width:20px;height:20px;border-radius:6px;background:var(--paper2);color:var(--slate2);font-family:var(--mono);font-size:10px;font-weight:700;display:grid;place-items:center;margin-top:1px}
+.charter-col.commit .charter-li .num{background:var(--gold-bg);color:var(--gold)}
+.charter-note{text-align:center;font-size:11.5px;color:var(--slate3);margin-top:18px;font-family:var(--mono)}
 
-/* FORMULA */
-.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:32px}
-.pillar{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:26px 24px;text-align:center;box-shadow:var(--sh-sm)}
-.pillar-num{font-family:var(--serif);font-size:40px;color:var(--gold);line-height:1;margin-bottom:12px}
-.pillar-h{font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:8px}
-.pillar-p{font-size:13px;color:var(--slate2);line-height:1.6}
-.chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
-.chip{display:inline-flex;align-items:center;gap:7px;background:var(--green-d);background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;font-size:13.5px;font-weight:600;padding:9px 18px;border-radius:30px;box-shadow:0 2px 8px rgba(0,107,63,.2)}
-.chip svg{width:13px;height:13px;stroke:var(--gold-l);fill:none;stroke-width:2.5}
+/* VMV */
+.vmv{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.vmv-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;box-shadow:var(--sh-sm)}
+.vmv-tag{font-family:var(--mono);font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:9px}
+.vmv-card p{font-family:var(--serif);font-size:19px;color:var(--ink);line-height:1.35}
+.values{display:flex;flex-wrap:wrap;gap:9px;justify-content:center}
+.value-chip{background:#fff;border:1px solid var(--line2);border-radius:30px;padding:8px 16px;font-size:13px;color:var(--slate);font-weight:500}
 
-/* EMPOWER GRID */
-.grid4{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
-.cap{display:flex;gap:16px;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;box-shadow:var(--sh-sm)}
-.cap-ico{width:48px;height:48px;border-radius:12px;background:var(--green-d);background:linear-gradient(135deg,var(--green),var(--green2));display:grid;place-items:center;flex-shrink:0}
-.cap-ico svg{width:23px;height:23px;stroke:#fff;fill:none;stroke-width:1.8}
-.cap-h{font-family:var(--serif);font-size:19px;color:var(--ink);margin-bottom:6px}
-.cap-p{font-size:13px;color:var(--slate2);line-height:1.6}
-.cap-p b{color:var(--green);font-weight:700}
+/* AUDIENCE */
+.aud-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.aud{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;text-align:center;box-shadow:var(--sh-sm)}
+.aud-ico{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--green),var(--green2));display:grid;place-items:center;margin:0 auto 14px}
+.aud-ico svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:1.7}
+.aud-h{font-family:var(--serif);font-size:18px;color:var(--ink);margin-bottom:6px}
+.aud-p{font-size:12.5px;color:var(--slate2);line-height:1.55}
 
-/* STATS */
-.stats-band{background:var(--navy2);position:relative;overflow:hidden}
-.stats-inner{max-width:1100px;margin:0 auto;padding:64px 24px;position:relative;z-index:1}
-.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:36px}
-.stat{text-align:center}
-.stat-num{font-family:var(--serif);font-size:clamp(44px,6vw,62px);color:var(--gold-l);line-height:1;letter-spacing:-.02em}
-.stat-lab{font-size:13.5px;color:rgba(255,255,255,.75);margin-top:8px;line-height:1.5}
-.stats-note{text-align:center;font-size:12px;color:rgba(255,255,255,.45);margin-top:30px}
+/* SERVICES (accordion) */
+.svc-list{display:flex;flex-direction:column;gap:12px}
+.svc{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-sm);overflow:hidden;transition:box-shadow .2s}
+.svc.open{box-shadow:var(--sh-md)}
+.svc-head{display:flex;align-items:center;gap:16px;padding:18px 22px;cursor:pointer}
+.svc-num{flex-shrink:0;width:38px;height:38px;border-radius:10px;background:var(--green-d);background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;font-family:var(--serif);font-size:19px;display:grid;place-items:center}
+.svc-titles{flex:1;min-width:0}
+.svc-en{font-family:var(--serif);font-size:19px;color:var(--ink);line-height:1.2}
+.svc-ar{font-family:var(--arabic);font-size:13px;color:var(--slate3);direction:rtl;margin-top:2px}
+.svc-chev{flex-shrink:0;width:20px;height:20px;stroke:var(--slate3);fill:none;stroke-width:2.2;transition:transform .25s}
+.svc.open .svc-chev{transform:rotate(180deg)}
+.svc-body{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.svc-body-inner{padding:0 22px 20px 76px}
+.svc-desc{font-size:13.5px;color:var(--slate);line-height:1.65;margin-bottom:14px}
+.svc-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.meta-tag{display:inline-flex;align-items:center;gap:6px;background:var(--paper2);border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:11.5px;color:var(--slate2);font-weight:500}
+.meta-tag b{color:var(--ink);font-weight:600}
+.meta-tag.who{background:var(--gold-bg);border-color:#edd9b5;color:var(--amber,#92540a)}
+.svc-subs-label{font-family:var(--mono);font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--slate3);font-weight:600;margin-bottom:8px}
+.svc-subs{display:flex;flex-wrap:wrap;gap:7px}
+.sub-chip{background:#fff;border:1px solid var(--line2);border-radius:7px;padding:5px 11px;font-size:12px;color:var(--slate);font-weight:500}
 
-/* MODULES */
-.modules{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
-.module{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 18px;box-shadow:var(--sh-sm);transition:transform .2s,box-shadow .2s}
-.module:hover{transform:translateY(-3px);box-shadow:var(--sh-md)}
-.module-n{font-family:var(--mono);font-size:10px;color:var(--gold);font-weight:600;letter-spacing:1px;margin-bottom:8px}
-.module-h{font-family:var(--serif);font-size:18px;color:var(--ink);margin-bottom:7px;line-height:1.2}
-.module-p{font-size:12px;color:var(--slate2);line-height:1.55}
+/* CHANNELS */
+.chan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.chan{display:flex;gap:13px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;box-shadow:var(--sh-sm)}
+.chan-ico{flex-shrink:0;width:42px;height:42px;border-radius:11px;background:var(--paper2);display:grid;place-items:center}
+.chan-ico svg{width:21px;height:21px;stroke:var(--green);fill:none;stroke-width:1.8}
+.chan-h{font-weight:600;font-size:14px;color:var(--ink);margin-bottom:3px}
+.chan-p{font-size:12px;color:var(--slate2);line-height:1.5}
 
-/* LAUNCH CTA */
-.launch{background:linear-gradient(135deg,var(--green-d),var(--green));position:relative;overflow:hidden}
-.launch-inner{max-width:760px;margin:0 auto;padding:68px 24px;text-align:center;position:relative;z-index:1}
-.launch-h{font-family:var(--serif);font-size:clamp(32px,4.5vw,46px);color:#fff;letter-spacing:-.02em;margin-bottom:14px}
+/* FAQ */
+.faq-list{max-width:840px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.faq{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-sm);overflow:hidden}
+.faq-q{display:flex;align-items:center;gap:12px;padding:16px 20px;cursor:pointer;font-weight:600;font-size:14.5px;color:var(--ink)}
+.faq-q .qmark{flex-shrink:0;width:22px;height:22px;border-radius:6px;background:var(--green-d);background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;font-family:var(--serif);font-size:14px;display:grid;place-items:center}
+.faq-q .fchev{margin-left:auto;width:18px;height:18px;stroke:var(--slate3);fill:none;stroke-width:2.2;transition:transform .25s;flex-shrink:0}
+.faq.open .fchev{transform:rotate(180deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.faq-a-inner{padding:0 20px 18px 54px;font-size:13.5px;color:var(--slate);line-height:1.7}
+.faq-a-inner b{color:var(--green);font-weight:600}
+
+/* LAUNCH */
+.launch{background:linear-gradient(135deg,var(--green-d),var(--green))}
+.launch-inner{max-width:760px;margin:0 auto;padding:64px 24px;text-align:center}
+.launch-h{font-family:var(--serif);font-size:clamp(30px,4vw,44px);color:#fff;letter-spacing:-.02em;margin-bottom:14px}
 .launch-h em{color:var(--gold-l)}
-.launch-p{font-size:16px;color:rgba(255,255,255,.82);line-height:1.65;margin-bottom:30px}
+.launch-p{font-size:16px;color:rgba(255,255,255,.82);line-height:1.65;margin-bottom:28px}
 .launch .btn-p{font-size:16px;padding:16px 34px}
-.launch-note{font-size:12.5px;color:rgba(255,255,255,.6);margin-top:18px}
-.launch-note a{color:var(--gold-l);text-decoration:none}
+.launch-note{font-size:12.5px;color:rgba(255,255,255,.6);margin-top:16px}
 
 /* FOOTER */
-.footer{background:var(--ink);color:#fff;padding:46px 24px 28px}
+.footer{background:var(--ink);color:#fff;padding:44px 24px 26px}
 .footer-inner{max-width:1100px;margin:0 auto}
-.footer-top{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;padding-bottom:28px;border-bottom:1px solid rgba(255,255,255,.1)}
+.footer-top{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;padding-bottom:26px;border-bottom:1px solid rgba(255,255,255,.1)}
 .footer-brand-title{font-family:var(--serif);font-size:20px;line-height:1.25;margin-bottom:8px}
 .footer-brand-ar{font-family:var(--arabic);font-size:13px;color:rgba(255,255,255,.5);direction:rtl}
 .footer-contact{font-size:13px;color:rgba(255,255,255,.6);line-height:1.9;text-align:right}
 .footer-contact a{color:rgba(255,255,255,.75);text-decoration:none}
-.footer-bottom{padding-top:20px;font-size:12px;color:rgba(255,255,255,.5);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.footer-bottom{padding-top:18px;font-size:12px;color:rgba(255,255,255,.5);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 
 /* TOAST */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(160%);background:var(--ink2);color:#fff;padding:13px 22px;border-radius:11px;font-size:13.5px;box-shadow:var(--sh-xl);z-index:2000;transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:9px;max-width:90vw}
 .toast.on{transform:translateX(-50%) translateY(0)}
 .toast svg{width:16px;height:16px;stroke:var(--gold-l);fill:none;stroke-width:2.2;flex-shrink:0}
 
-@media(max-width:880px){
-  .lad-brand,.lad-util{display:none}
-  .shift{grid-template-columns:1fr}
-  .shift-arrow{transform:rotate(90deg);padding:6px 0}
-  .pillars{grid-template-columns:1fr}
-  .grid4{grid-template-columns:1fr}
-  .stats-grid{grid-template-columns:1fr;gap:30px}
-  .modules{grid-template-columns:1fr 1fr}
-  .footer-top{flex-direction:column}
-  .footer-contact{text-align:left}
+@media(max-width:860px){
+  .lad-brand,.lad-util,.nav-links{display:none}
+  .charter-grid,.vmv{grid-template-columns:1fr}
+  .aud-grid{grid-template-columns:1fr 1fr}
+  .chan-grid{grid-template-columns:1fr}
+  .svc-body-inner{padding-left:22px}
+  .footer-top{flex-direction:column}.footer-contact{text-align:left}
 }
-@media(max-width:520px){
-  .modules{grid-template-columns:1fr}
-  .lad-logos img:first-child{display:none}
-  .lad-logos-sep{display:none}
-}
+@media(max-width:520px){.aud-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<!-- ════════ THE GATE (first page) ════════ -->
+<!-- ════ GATE ════ -->
 <div id="gate">
   <div class="gate-bg"></div>
   <div class="gate-overlay"></div>
@@ -252,18 +250,15 @@ body.unlocked #site{display:block}
     </div>
     <div class="gate-body">
       <div class="gate-eyebrow">Legal Affairs Department · Dubai</div>
-      <h1 class="gate-title">Service Ambassador <em>Programme</em></h1>
-      <div class="gate-ar">برنامج سفير الخدمة · دائرة الشؤون القانونية</div>
-      <p class="gate-sub">Enter your access password to open the programme briefing and begin your training.</p>
+      <h1 class="gate-title">Service Ambassador <em>Hub</em></h1>
+      <div class="gate-ar">منصة سفير الخدمة · دائرة الشؤون القانونية</div>
+      <p class="gate-sub">Enter your access password to open the knowledge hub and prepare for your training.</p>
       <form id="gateForm" onsubmit="return tryUnlock(event)">
         <div class="gate-input">
           <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <input type="password" id="pw" placeholder="Access password" autocomplete="off" autofocus/>
         </div>
-        <button type="submit" class="gate-btn">
-          Enter the programme
-          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </button>
+        <button type="submit" class="gate-btn">Enter <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
         <div class="gate-err" id="gateErr">That password isn't right — please try again.</div>
       </form>
       <div class="gate-foot">For Legal Affairs Department staff. Need the password? Contact your training administrator.</div>
@@ -271,283 +266,350 @@ body.unlocked #site{display:block}
   </div>
 </div>
 
-<!-- ════════ THE SITE (after unlock) ════════ -->
-<div id="site">
-<div class="lw">
+<!-- ════ SITE ════ -->
+<div id="site"><div class="lw">
 
-  <!-- Utility strip -->
-  <div class="lad-util">
-    <div class="lad-util-inner">
-      <div class="lad-util-left">
-        <a class="lad-util-link" href="https://www.dubai.ae/" target="_blank" rel="noopener">
-          <img src="https://legal.dubai.gov.ae/assets/govlogo/gov_new.svg" alt="Dubai.ae" onerror="this.style.display='none'"/>
-        </a>
-        <div class="lad-util-sep"></div>
-        <a class="lad-util-link" href="https://legal.dubai.gov.ae" target="_blank" rel="noopener">Legal Affairs Department</a>
-      </div>
-      <div class="lad-util-left">
-        <a class="lad-util-link" href="https://legal.dubai.gov.ae/en/AboutDepartment/Pages/Contact-us.aspx" target="_blank" rel="noopener">800 523</a>
-      </div>
-    </div>
-  </div>
+  <div class="lad-util"><div class="lad-util-inner">
+    <a class="lad-util-link" href="https://legal.dubai.gov.ae" target="_blank" rel="noopener">Legal Affairs Department</a>
+    <a class="lad-util-link" href="https://legal.dubai.gov.ae/en/AboutDepartment/Pages/Contact-us.aspx" target="_blank" rel="noopener">800 523</a>
+  </div></div>
 
-  <!-- Nav -->
-  <nav class="lad-nav">
-    <div class="lad-nav-inner">
-      <div class="lad-logos">
-        <img src="https://legal.dubai.gov.ae/assets/govlogo/DG_white.svg" alt="Government of Dubai" onerror="this.style.display='none'"/>
-        <div class="lad-logos-sep"></div>
-        <img src="https://legal.dubai.gov.ae/assets/govlogo/lad_logo_white.svg" alt="Legal Affairs Department" onerror="this.style.display='none'"/>
-      </div>
-      <div class="lad-brand">
-        <div class="lad-brand-en">Service Ambassador Programme</div>
-        <div class="lad-brand-ar">برنامج سفير الخدمة · دائرة الشؤون القانونية</div>
-      </div>
-      <div class="lad-nav-right">
-        <a class="nav-cta" onclick="launchTraining()">
-          Launch training
-          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </a>
-        <a class="nav-lock" onclick="lockSite()" title="Lock">Lock</a>
-      </div>
+  <nav class="lad-nav"><div class="lad-nav-inner">
+    <div class="lad-logos">
+      <img src="https://legal.dubai.gov.ae/assets/govlogo/DG_white.svg" alt="Government of Dubai" onerror="this.style.display='none'"/>
+      <div class="lad-logos-sep"></div>
+      <img src="https://legal.dubai.gov.ae/assets/govlogo/lad_logo_white.svg" alt="Legal Affairs Department" onerror="this.style.display='none'"/>
     </div>
-  </nav>
+    <div class="lad-brand">
+      <div class="lad-brand-en">Service Ambassador Hub</div>
+      <div class="lad-brand-ar">منصة سفير الخدمة</div>
+    </div>
+    <div class="nav-links">
+      <a class="nav-link" href="#charter">Charter</a>
+      <a class="nav-link" href="#services">Services</a>
+      <a class="nav-link" href="#channels">Channels</a>
+      <a class="nav-link" href="#faq">FAQs</a>
+      <a class="nav-cta" onclick="launchTraining()">Begin training <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      <span class="nav-lock" onclick="lockSite()" title="Lock">Lock</span>
+    </div>
+  </div></nav>
 
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-bg"></div>
-    <div class="hero-overlay"></div>
+    <div class="hero-bg"></div><div class="hero-overlay"></div>
     <div class="hero-inner">
       <div class="hero-kicker">Legal Affairs Department · Government of Dubai</div>
-      <h1 class="hero-title">From Reception<br>to <em>Service Ambassador</em></h1>
-      <div class="hero-ar">من الاستقبال إلى سفير الخدمة</div>
-      <p class="hero-desc">
-        You are the first face every visitor meets — and, in Dubai's model of government, far more than that.
-        This programme prepares you to become a <strong>Service &amp; Happiness Ambassador</strong>: someone who doesn't
-        just greet people, but actively helps them reach the services they came for.
-      </p>
+      <h1 class="hero-title">Know our services.<br><em>Serve with happiness.</em></h1>
+      <div class="hero-ar">اعرف خدماتنا · واخدم بسعادة</div>
+      <p class="hero-desc">Welcome to your Service Ambassador hub. Everything you need to greet every visitor with confidence and guide them to the right Legal Affairs Department service — the Customers Happiness Charter, the Department's services and channels, and answers to the questions you'll be asked most. When you're ready, begin your interactive training.</p>
       <div class="hero-btns">
-        <a class="btn-p" onclick="launchTraining()">
-          Launch the training programme
-          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </a>
-        <a class="btn-s" onclick="document.getElementById('briefing').scrollIntoView({behavior:'smooth'})">Read the briefing</a>
+        <a class="btn-p" onclick="launchTraining()">Begin training <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="btn-s" href="#charter">Explore the hub</a>
       </div>
     </div>
   </section>
 
-  <!-- THE SHIFT -->
-  <section class="section" id="briefing">
+  <!-- CHARTER -->
+  <section class="section" id="charter">
     <div class="sec-head">
-      <div class="eyebrow">The shift</div>
-      <h2 class="sec-title">Dubai redefined the front desk</h2>
-      <p class="sec-sub">Across the Government of Dubai, "customer service centres" became <em>Customer Happiness Centres</em>, and "service employees" became <em>Happiness Employees</em>. The job changed with the name — from processing a queue to owning the visitor's outcome.</p>
+      <div class="eyebrow gold">Customers Happiness Charter</div>
+      <h2 class="sec-title">Customers at the <em>core</em> of everything</h2>
     </div>
-    <div class="shift">
-      <div class="shift-card shift-old">
-        <div class="shift-tag">The old desk</div>
-        <div class="shift-h">A receptionist</div>
-        <div class="shift-li"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Greets, logs, and points to a counter</div>
-        <div class="shift-li"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Hands the visitor off and moves on</div>
-        <div class="shift-li"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Measured by speed at the desk</div>
+    <p class="charter-intro">"The Government of Dubai Legal Affairs Department is keen to provide distinguished Government services that satisfy its customers, exceed their expectations and make them happy. This Charter represents the Department's acknowledgement to place its customers at the core of its operations according to an integrated corporate culture in providing its services."</p>
+    <div class="charter-grid">
+      <div class="charter-col commit">
+        <div class="charter-col-h"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>The Department commits to its customers</div>
+        <div id="commitList"></div>
       </div>
-      <div class="shift-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
-      <div class="shift-card shift-new">
-        <div class="shift-tag">The new standard</div>
-        <div class="shift-h">A Service Ambassador</div>
-        <div class="shift-li"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Welcomes, understands, and resolves or routes</div>
-        <div class="shift-li"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Connects people to the right service or channel</div>
-        <div class="shift-li"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Measured by the visitor's happiness</div>
+      <div class="charter-col expect">
+        <div class="charter-col-h"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>And asks of its customers</div>
+        <div id="expectList"></div>
       </div>
     </div>
+    <div class="charter-note">Approved by Administrative Resolution No. (9) of 2026 — Customers Happiness Charter (Second Version).</div>
   </section>
 
-  <!-- THE FORMULA -->
-  <section class="section tight" style="background:var(--paper2);max-width:none">
-    <div style="max-width:1100px;margin:0 auto">
-      <div class="sec-head">
-        <div class="eyebrow gold">The Customer Happiness Formula</div>
-        <h2 class="sec-title">What "happiness" means <em>in practice</em></h2>
-        <p class="sec-sub">The UAE's national model sets out a simple formula for great government service — three ingredients, and the behaviours every ambassador brings to the desk.</p>
-      </div>
-      <div class="pillars">
-        <div class="pillar"><div class="pillar-num">1</div><div class="pillar-h">Proud people</div><div class="pillar-p">Employees who take genuine pride in delivering an excellent government service.</div></div>
-        <div class="pillar"><div class="pillar-num">2</div><div class="pillar-h">Committed entity</div><div class="pillar-p">A department dedicated, end-to-end, to making every customer happy.</div></div>
-        <div class="pillar"><div class="pillar-num">3</div><div class="pillar-h">Positive customers</div><div class="pillar-p">Visitors who leave informed, respected and confident — and stay positive.</div></div>
-      </div>
-      <div class="chips">
-        <span class="chip"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Welcoming</span>
-        <span class="chip"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Courteous</span>
-        <span class="chip"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Professional</span>
-        <span class="chip"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Understanding</span>
-        <span class="chip"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Positive</span>
-        <span class="chip"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Innovative</span>
-      </div>
+  <!-- VISION / MISSION / VALUES -->
+  <section class="band"><div class="section">
+    <div class="sec-head">
+      <div class="eyebrow">Who we are</div>
+      <h2 class="sec-title">Vision, mission &amp; <em>values</em></h2>
     </div>
-  </section>
+    <div class="vmv">
+      <div class="vmv-card"><div class="vmv-tag">Vision</div><p>A leading system in government and professional legal work, enabled by data and technology.</p></div>
+      <div class="vmv-card"><div class="vmv-tag">Mission</div><p>Innovative, proactive and smart services that strengthen the legal sectors and Dubai's sustainable development.</p></div>
+    </div>
+    <div class="values">
+      <span class="value-chip">Participation &amp; teamwork</span>
+      <span class="value-chip">Reliability &amp; commitment</span>
+      <span class="value-chip">Innovation &amp; proactivity</span>
+      <span class="value-chip">Effectiveness &amp; efficiency</span>
+      <span class="value-chip">Agility &amp; flexibility</span>
+      <span class="value-chip">Continuous learning</span>
+    </div>
+  </div></section>
 
-  <!-- EMPOWERED TO DO -->
+  <!-- AUDIENCE -->
   <section class="section">
     <div class="sec-head">
-      <div class="eyebrow">What you'll be able to do</div>
-      <h2 class="sec-title">Not just greet — <em>enable</em></h2>
-      <p class="sec-sub">A Service Ambassador turns "please take a seat" into "here's exactly how we'll sort this." That means knowing Dubai's services and channels well enough to guide people straight to them.</p>
+      <div class="eyebrow">Who we serve</div>
+      <h2 class="sec-title">Know your <em>visitor</em></h2>
+      <p class="sec-sub">Every person at the desk belongs to one of four customer groups. Knowing which one helps you point them to the right service and channel.</p>
     </div>
-    <div class="grid4">
-      <div class="cap">
-        <div class="cap-ico"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
-        <div><div class="cap-h">Connect to digital services</div><div class="cap-p">Guide visitors into <b>DubaiNow</b> — one app, <b>250+ services</b> from 35+ entities — and help them sign in with <b>UAE PASS</b> instead of queuing.</div></div>
-      </div>
-      <div class="cap">
-        <div class="cap-ico"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
-        <div><div class="cap-h">Bundle the whole journey</div><div class="cap-p">Think like Dubai's <b>one-stop shop</b>: resolve a visitor's need as a complete bundle, so they don't get bounced between departments.</div></div>
-      </div>
-      <div class="cap">
-        <div class="cap-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 2"/></svg></div>
-        <div><div class="cap-h">Inclusive, accessible service</div><div class="cap-p">Serve every visitor with confidence — including <b>autism &amp; sensory awareness</b> and multilingual support, in the spirit of Dubai Way.</div></div>
-      </div>
-      <div class="cap">
-        <div class="cap-ico"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-        <div><div class="cap-h">Discretion &amp; trust</div><div class="cap-p">Handle sensitive legal matters with the confidentiality and security a Legal Affairs front desk demands.</div></div>
-      </div>
+    <div class="aud-grid">
+      <div class="aud"><div class="aud-ico"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg></div><div class="aud-h">Professionals</div><div class="aud-p">Advocates &amp; legal consultants practising in Dubai.</div></div>
+      <div class="aud"><div class="aud-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg></div><div class="aud-h">Individuals</div><div class="aud-p">Citizens, residents and visitors — members of the public.</div></div>
+      <div class="aud"><div class="aud-ico"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg></div><div class="aud-h">Government</div><div class="aud-p">Dubai Government entities, local and non-local.</div></div>
+      <div class="aud"><div class="aud-ico"><svg viewBox="0 0 24 24"><path d="M3 21h18M6 21V8h12v13M10 12h4M10 16h4"/></svg></div><div class="aud-h">Private organisations</div><div class="aud-p">Companies and sole establishments.</div></div>
     </div>
   </section>
 
-  <!-- THE STANDARD (stats) -->
-  <section class="stats-band">
-    <div class="stats-inner">
-      <div class="sec-head" style="margin-bottom:0">
-        <div class="eyebrow gold">The standard you'll be held to</div>
-        <h2 class="sec-title" style="color:#fff">Dubai measures <em style="color:var(--gold-l)">happiness</em></h2>
-        <p class="sec-sub" style="color:rgba(255,255,255,.7)">Government entities are scored every year on customer happiness, employee happiness, and a live Mystery Shopper survey. This is the bar an ambassador is trained to meet — and yes, you may be mystery-shopped.</p>
-      </div>
-      <div class="stats-grid">
-        <div class="stat"><div class="stat-num">93.8%</div><div class="stat-lab">Customer happiness across Dubai Government</div></div>
-        <div class="stat"><div class="stat-num">95.8%</div><div class="stat-lab">Mystery Shopper score</div></div>
-        <div class="stat"><div class="stat-num">86.7%</div><div class="stat-lab">Employee happiness</div></div>
-      </div>
-      <div class="stats-note">Dubai Government Customer &amp; Employee Happiness Indices, 2024 (city-wide averages).</div>
-    </div>
-  </section>
-
-  <!-- MODULES -->
-  <section class="section">
+  <!-- SERVICES -->
+  <section class="band"><div class="section" id="services">
     <div class="sec-head">
-      <div class="eyebrow">Your curriculum</div>
-      <h2 class="sec-title">Five modules to <em>certification</em></h2>
-      <p class="sec-sub">Delivered as a self-paced interactive course. Complete all five to earn your Service Ambassador certificate.</p>
+      <div class="eyebrow gold">The Department's services</div>
+      <h2 class="sec-title">Eleven services to <em>know by heart</em></h2>
+      <p class="sec-sub">The Legal Affairs Department offers 11 main services with 29 essential and 16 complementary sub-services. Tap any service to see what it covers, who it's for, and how people access it.</p>
     </div>
-    <div class="modules">
-      <div class="module"><div class="module-n">01</div><div class="module-h">Welcome &amp; Happiness</div><div class="module-p">First impressions, the official greeting, and the happiness mindset.</div></div>
-      <div class="module"><div class="module-n">02</div><div class="module-h">Inclusive Service</div><div class="module-p">Accessibility, autism &amp; sensory awareness, and bilingual courtesy.</div></div>
-      <div class="module"><div class="module-n">03</div><div class="module-h">Connecting to Services</div><div class="module-p">UAE PASS, DubaiNow, and one-stop bundling of a visitor's needs.</div></div>
-      <div class="module"><div class="module-n">04</div><div class="module-h">Confidentiality &amp; Security</div><div class="module-p">Handling sensitive legal matters and visitor verification.</div></div>
-      <div class="module"><div class="module-n">05</div><div class="module-h">Service Standards</div><div class="module-p">Meeting the happiness bar and Mystery-Shopper readiness.</div></div>
+    <div class="svc-list" id="svcList"></div>
+  </div></section>
+
+  <!-- CHANNELS -->
+  <section class="section" id="channels">
+    <div class="sec-head">
+      <div class="eyebrow">How people reach us</div>
+      <h2 class="sec-title">Service <em>channels</em></h2>
+      <p class="sec-sub">Most services are digital and available 24/7. As an ambassador, your job is often to guide a visitor to the right channel rather than a counter.</p>
     </div>
+    <div class="chan-grid" id="chanGrid"></div>
   </section>
+
+  <!-- FAQ -->
+  <section class="band"><div class="section" id="faq">
+    <div class="sec-head">
+      <div class="eyebrow gold">At the desk</div>
+      <h2 class="sec-title">Questions you'll be <em>asked</em></h2>
+      <p class="sec-sub">The answers a Service Ambassador should have ready. Tap a question to reveal the answer.</p>
+    </div>
+    <div class="faq-list" id="faqList"></div>
+  </div></section>
 
   <!-- LAUNCH -->
-  <section class="launch">
-    <div class="launch-inner">
-      <div class="launch-h">Ready to become an <em>ambassador</em>?</div>
-      <p class="launch-p">Your interactive training lives on the Legal Affairs learning platform. Click below, sign in with your training account, and complete the programme at your own pace.</p>
-      <a class="btn-p" onclick="launchTraining()">
-        Launch the training programme
-        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      </a>
-      <div class="launch-note" id="launchNote">Opens the training platform · sign in with your Docebo account to begin.</div>
-    </div>
-  </section>
+  <section class="launch"><div class="launch-inner">
+    <div class="launch-h">Ready to <em>begin training</em>?</div>
+    <p class="launch-p">You've seen the Charter, the services and the channels. Now put it into practice with the interactive Service Ambassador course on the Legal Affairs learning platform.</p>
+    <a class="btn-p" onclick="launchTraining()">Begin training <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+    <div class="launch-note" id="launchNote">Opens the training platform · sign in with your Docebo account to begin.</div>
+  </div></section>
 
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="footer-inner">
-      <div class="footer-top">
-        <div>
-          <div class="footer-brand-title">Legal Affairs Department<br>Government of Dubai</div>
-          <div class="footer-brand-ar">دائرة الشؤون القانونية · حكومة دبي</div>
-        </div>
-        <div class="footer-contact">
-          <a href="https://legal.dubai.gov.ae" target="_blank" rel="noopener">legal.dubai.gov.ae</a><br>
-          800 523 · Al Hudaiba Awards Building<br>
-          Sun–Thu · 8:00 – 17:00 GST
-        </div>
+  <footer class="footer"><div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <div class="footer-brand-title">Legal Affairs Department<br>Government of Dubai</div>
+        <div class="footer-brand-ar">دائرة الشؤون القانونية · حكومة دبي</div>
       </div>
-      <div class="footer-bottom">
-        <span>© 2026 Government of Dubai — Legal Affairs Department. All rights reserved.</span>
-        <span>Service Ambassador Programme</span>
+      <div class="footer-contact">
+        <a href="https://legal.dubai.gov.ae" target="_blank" rel="noopener">legal.dubai.gov.ae</a><br>
+        800 523 · +971 4 353 3337<br>
+        Al Hudaiba Awards Building · Dubai
       </div>
     </div>
-  </footer>
+    <div class="footer-bottom">
+      <span>© 2026 Government of Dubai — Legal Affairs Department. All rights reserved.</span>
+      <span>Service Ambassador Hub</span>
+    </div>
+  </div></footer>
 
-</div>
-</div>
+</div></div>
 
-<!-- Toast -->
 <div class="toast" id="toast"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span id="toastMsg"></span></div>
 
 <script>
 var CFG = window.SITE_CONFIG || {};
-var UNLOCK_KEY = 'lad_sa_unlocked';
+var UNLOCK_KEY='lad_sa_unlocked';
 
-// ── Gate ──
-function reveal(){
-  document.body.classList.add('unlocked');
-  applyLaunchState();
+/* ── Content data (edit here to update the hub) ── */
+var COMMITMENTS = [
+  "Keep customer data and information confidential, per the Department's approved policies.",
+  "Provide a distinguished service marked by quality and efficiency.",
+  "Meet needs with professionalism, transparency and fairness.",
+  "Provide each service's requirements and observe its completion deadlines.",
+  "Provide accurate information and apply sound procedures.",
+  "Continuously improve and streamline procedures for a flexible, quick, smooth service.",
+  "Deal with customers with the utmost attention, appreciation and decency.",
+  "Serve through a cooperative, knowledgeable, skilled team able to answer enquiries.",
+  "Welcome feedback and suggestions to develop services and achieve their happiness.",
+  "Serve People of Determination in line with their needs."
+];
+var EXPECTATIONS = [
+  "Prepare and provide the required documents within the deadlines.",
+  "Ensure submitted information is correct; promptly report and correct any error or gap.",
+  "Immediately inform the Department of any change to personal details, documents or data.",
+  "Reply to staff enquiries accurately and promptly so the service can be completed.",
+  "Appreciate staff efforts and understand their responsibilities and keenness to serve.",
+  "Share feedback, suggestions and remarks through the available channels."
+];
+
+var SERVICES = [
+  {en:"Registration of Advocates & Legal Consultants", ar:"قيد المحامين والمستشارين القانونيين", who:"Advocates & legal consultants",
+   ch:"Legal Professions System · Smart App · Dubai Justice",
+   desc:"Join and maintain your place on the Dubai roll of practising advocates and legal consultants — the gateway to practising law in the Emirate. New advocate registration is AED 2,020 and takes about 14 working days; new advocates receive 50% off the registration fee for their first 3 years.",
+   subs:["New Registration","Registration Renewal","Reinstatement","Amendment of Details","Replacement Card","To-Whom-It-May-Concern Certificate","Temporary rights of audience permit","Visiting Legal Consultant Permit"]},
+  {en:"Licensing of Advocacy & Legal Consultancy Firms", ar:"ترخيص مكاتب المحاماة والاستشارات القانونية", who:"Law & consultancy firms",
+   ch:"Legal Professions System · Smart App · Invest in Dubai",
+   desc:"License and manage an advocacy or legal-consultancy firm in Dubai, including changes to partners, managers, name, address and activities.",
+   subs:["New Firm Licence","Firm Licence Renewal","Amendment of Licence Details","Temporary / Permanent cessation","To-Whom-It-May-Concern Certificate"]},
+  {en:"Violations & Fines", ar:"المخالفات والغرامات", who:"Advocates & legal consultants",
+   ch:"Legal Professions System · Smart App · Dubai Justice",
+   desc:"Settle professional fines, arrange instalments, or grieve a decision to impose a fine.",
+   subs:["Payment of Fines","Amicable Settlement","Payment by Instalments","Grievance against a fine","Grievance against other decisions"]},
+  {en:"Voluntary Legal Services", ar:"الخدمات القانونية التطوعية", who:"Members of the public",
+   ch:"Smart App · DubaiNow",
+   desc:"Free smart legal services for the community — including 'Ask a lawyer', where the public can get legal guidance from a volunteer legal consultant.",
+   subs:["Ask a lawyer (free legal advice)"]},
+  {en:"Professional Training & Development (CLPD)", ar:"التدريب والتطوير المهني", who:"Advocates · legal consultants · training providers",
+   ch:"CLPD Portal",
+   desc:"The Continuing Legal Professional Development programme — register for CLPD, and for providers, get accredited and accredit training courses.",
+   subs:["Register in the CLPD Programme","Provider Accreditation","Training Course Accreditation"]},
+  {en:"Representation in Government Cases", ar:"التمثيل في الدعاوى الحكومية", who:"Dubai Government entities",
+   ch:"Central Legal Services Portal (Gov Portal)",
+   desc:"The Department represents the Government and its entities before the courts and in arbitration.",
+   subs:["Representation in civil cases","Representation in criminal cases","Representation in arbitration"]},
+  {en:"Execution of Judgments & Instruments", ar:"تنفيذ الأحكام والسندات", who:"Government entities · individuals",
+   ch:"Gov Portal · Email",
+   desc:"Execute judgments and executory instruments issued for or against the Government, its entities, individuals and companies.",
+   subs:["Execution of cheques","Execution of administrative resolutions","Execution of criminal judgments","Execution of judgments against individuals"]},
+  {en:"Government Legal Support", ar:"الدعم القانوني الحكومي", who:"Dubai Government entities",
+   ch:"Central Legal Services Portal (Gov Portal)",
+   desc:"End-to-end legal support for government bodies — legislation, advice, company governance, intellectual property, and contracts.",
+   subs:["Legislative Support","Legal Advice","Company incorporation & governance","IP rights support","General Legal Support","Contract drafting","Contract review","Advice on contracting"]},
+  {en:"Government & Legal Professional Complaints", ar:"الشكاوى الحكومية والمهنية", who:"Public · private organisations",
+   ch:"Website · Smart App",
+   desc:"Raise a dispute with a government entity for amicable settlement, or file a complaint against an advocate or legal consultant.",
+   subs:["Amicable Settlement with a Government Entity","Certificate of Compliance","Complaint against an Advocate / Consultant","Grievance against a Conduct Committee decision"]},
+  {en:"Monitoring & Inspection", ar:"الرقابة والتفتيش", who:"Public · the profession",
+   ch:"Report · field inspection",
+   desc:"Safeguard the profession — report unlicensed legal practice and flag breaches of professional conduct rules.",
+   subs:["Report unlicensed practice","Monitor professional-conduct violations"]},
+  {en:"Informational Services", ar:"الخدمات المعلوماتية", who:"Everyone",
+   ch:"Website · Smart App",
+   desc:"Verify the profession — search whether an advocate or legal consultant is registered, or whether a firm is licensed in Dubai.",
+   subs:["Search for a registered advocate / consultant","Search for a licensed firm"]}
+];
+
+var CHANNELS = [
+  {h:"Smart App", p:"The Department's mobile app — most services, 24/7.", i:'<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>'},
+  {h:"Website", p:"legal.dubai.gov.ae — services, information and search.", i:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>'},
+  {h:"Central Legal Services Portal", p:"Gov Portal — for Dubai Government entities.", i:'<path d="M3 21h18M5 21V7l7-4 7 4v14"/>'},
+  {h:"Legal Professions System (LPS)", p:"Registration, licensing, fines for the profession.", i:'<path d="M12 3l9 4-9 4-9-4 9-4zM3 12l9 4 9-4M3 17l9 4 9-4"/>'},
+  {h:"CLPD Portal", p:"Continuing Legal Professional Development.", i:'<path d="M4 19V5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h8M8 11h6"/>'},
+  {h:"Email & Call Centre", p:"Email plus 800 523 / +971 4 353 3337.", i:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/>'}
+];
+
+var FAQS = [
+  {q:"What does the Legal Affairs Department do?", a:"It <b>regulates the legal profession</b> in Dubai — advocates, legal consultants and firms — and provides <b>legal services to the Government of Dubai</b>. That covers registration & licensing, the CLPD training programme, fines, complaints, free legal advice to the public, and representation and legal support for government."},
+  {q:"Someone wants to become an advocate in Dubai — what do they do?", a:"They apply for <b>New Registration</b> under 'Registration of Advocates & Legal Consultants' via the <b>Legal Professions System</b> or <b>Smart App</b>. The fee is <b>AED 2,020</b> and it takes about <b>14 working days</b>. New advocates get <b>50% off the registration fee for their first 3 years</b>."},
+  {q:"How can a member of the public get free legal advice?", a:"Through <b>Voluntary Legal Services</b> — the <b>'Ask a lawyer'</b> service — available on the <b>Smart App</b> and <b>DubaiNow</b>."},
+  {q:"How do I check whether a lawyer or law firm is licensed?", a:"Use the Department's <b>search</b> (Informational Services) on the <b>website</b> or <b>Smart App</b> to confirm a registered advocate/consultant or a licensed firm."},
+  {q:"How do I complain about a lawyer or legal consultant?", a:"File under <b>Government & Legal Professional Complaints</b> via the <b>website</b> or <b>Smart App</b>. Decisions can be grieved through the <b>Professional Conduct Committee</b> process."},
+  {q:"A government entity needs legal support or representation — where do they go?", a:"Through the <b>Central Legal Services Portal (Gov Portal)</b>: legal support, contract drafting & review, representation in cases and arbitration, and execution of judgments."},
+  {q:"Where do lawyers pay fines?", a:"Under <b>Violations & Fines</b> via the <b>Legal Professions System</b> / <b>Smart App</b> / <b>Dubai Justice</b>. <b>Amicable settlement</b> and <b>instalments</b> are available."},
+  {q:"What are the Department's service channels?", a:"<b>Smart App</b>, <b>Website</b>, <b>Central Legal Services Portal</b>, <b>Legal Professions System (LPS)</b>, <b>CLPD Portal</b>, and <b>Email</b> — plus shared channels Dubai Justice, Invest in Dubai and DubaiNow. Call centre: <b>800 523</b> (and +971 4 353 3337)."},
+  {q:"What hours are services available?", a:"Digital services are available <b>24/7</b>. The call centre and the centre follow published hours (Sun–Thu)."},
+  {q:"What does the Customers Happiness Charter promise?", a:"That customers are at the <b>core of operations</b>: confidentiality, distinguished and efficient service, accurate information, deadlines observed, respectful treatment, accessibility for <b>People of Determination</b>, and welcoming feedback."}
+];
+
+/* ── Render ── */
+function el(tag, cls, html){var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e;}
+
+function renderCharter(){
+  var c=document.getElementById('commitList'), x=document.getElementById('expectList');
+  COMMITMENTS.forEach(function(t,i){ c.appendChild(el('div','charter-li','<span class="num">'+(i+1)+'</span><span>'+t+'</span>')); });
+  EXPECTATIONS.forEach(function(t,i){ x.appendChild(el('div','charter-li','<span class="num">'+(i+1)+'</span><span>'+t+'</span>')); });
 }
-// Stay unlocked across refreshes within this browser.
-try { if (localStorage.getItem(UNLOCK_KEY) === '1') reveal(); } catch(_){}
+function renderServices(){
+  var list=document.getElementById('svcList');
+  SERVICES.forEach(function(s,i){
+    var subs=s.subs.map(function(z){return '<span class="sub-chip">'+z+'</span>';}).join('');
+    var card=el('div','svc');
+    card.innerHTML =
+      '<div class="svc-head"><div class="svc-num">'+(i+1)+'</div>'+
+        '<div class="svc-titles"><div class="svc-en">'+s.en+'</div><div class="svc-ar">'+s.ar+'</div></div>'+
+        '<svg class="svc-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>'+
+      '<div class="svc-body"><div class="svc-body-inner">'+
+        '<div class="svc-desc">'+s.desc+'</div>'+
+        '<div class="svc-meta"><span class="meta-tag who"><b>For:</b> '+s.who+'</span><span class="meta-tag"><b>Channel:</b> '+s.ch+'</span></div>'+
+        '<div class="svc-subs-label">Includes</div><div class="svc-subs">'+subs+'</div>'+
+      '</div></div>';
+    var head=card.querySelector('.svc-head'), body=card.querySelector('.svc-body');
+    head.addEventListener('click',function(){
+      var open=card.classList.toggle('open');
+      body.style.maxHeight = open ? body.scrollHeight+'px' : 0;
+    });
+    list.appendChild(card);
+  });
+}
+function renderChannels(){
+  var g=document.getElementById('chanGrid');
+  CHANNELS.forEach(function(c){
+    g.appendChild(el('div','chan',
+      '<div class="chan-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">'+c.i+'</svg></div>'+
+      '<div><div class="chan-h">'+c.h+'</div><div class="chan-p">'+c.p+'</div></div>'));
+  });
+}
+function renderFaq(){
+  var l=document.getElementById('faqList');
+  FAQS.forEach(function(f){
+    var item=el('div','faq');
+    item.innerHTML='<div class="faq-q"><span class="qmark">?</span>'+f.q+'<svg class="fchev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>'+
+                   '<div class="faq-a"><div class="faq-a-inner">'+f.a+'</div></div>';
+    var q=item.querySelector('.faq-q'), a=item.querySelector('.faq-a');
+    q.addEventListener('click',function(){
+      var open=item.classList.toggle('open');
+      a.style.maxHeight = open ? a.scrollHeight+'px' : 0;
+    });
+    l.appendChild(item);
+  });
+}
+function renderAll(){ renderCharter(); renderServices(); renderChannels(); renderFaq(); applyLaunchState(); }
 
+/* ── Gate ── */
+function reveal(){ document.body.classList.add('unlocked'); }
+try{ if(localStorage.getItem(UNLOCK_KEY)==='1') reveal(); }catch(_){}
 function tryUnlock(e){
   e.preventDefault();
-  var entered = (document.getElementById('pw').value || '').trim();
-  var expected = (CFG.accessPassword || '').trim();
-  if (entered.toLowerCase() === expected.toLowerCase() && expected !== ''){
-    try { localStorage.setItem(UNLOCK_KEY, '1'); } catch(_){}
-    reveal();
-    window.scrollTo(0,0);
-  } else {
-    var err = document.getElementById('gateErr');
-    var card = document.querySelector('.gate-card');
-    err.classList.add('on');
-    card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+  var entered=(document.getElementById('pw').value||'').trim();
+  var expected=(CFG.accessPassword||'').trim();
+  if(expected!=='' && entered.toLowerCase()===expected.toLowerCase()){
+    try{localStorage.setItem(UNLOCK_KEY,'1');}catch(_){}
+    reveal(); window.scrollTo(0,0);
+  }else{
+    var err=document.getElementById('gateErr'), card=document.querySelector('.gate-card');
+    err.classList.add('on'); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
     document.getElementById('pw').select();
   }
   return false;
 }
-
-function lockSite(){
-  try { localStorage.removeItem(UNLOCK_KEY); } catch(_){}
-  document.body.classList.remove('unlocked');
-  document.getElementById('pw').value='';
-  document.getElementById('gateErr').classList.remove('on');
-  window.scrollTo(0,0);
+function lockSite(){ try{localStorage.removeItem(UNLOCK_KEY);}catch(_){}
+  document.body.classList.remove('unlocked'); document.getElementById('pw').value='';
+  document.getElementById('gateErr').classList.remove('on'); window.scrollTo(0,0);
 }
 
-// ── Launch training (Docebo) ──
-function applyLaunchState(){
-  var note = document.getElementById('launchNote');
-  if (!CFG.courseLive && note){
-    note.innerHTML = 'The course is being finalised — launching soon. Check back shortly.';
-  }
-}
+/* ── Launch training ── */
+function applyLaunchState(){ var n=document.getElementById('launchNote');
+  if(CFG.courseLive===false && n) n.innerHTML='The course is being finalised — launching here soon.'; }
 function launchTraining(){
-  if (CFG.courseLive === false){
-    showToast('The training course is being finalised and will be available here shortly.');
-    return;
-  }
-  var url = (CFG.doceboUrl || '').trim();
-  if (!url){ showToast('Training platform not configured yet.'); return; }
-  window.open(url, '_blank', 'noopener');
+  if(CFG.courseLive===false){ showToast('The training course is being finalised and will be available here shortly.'); return; }
+  var url=(CFG.doceboUrl||'').trim();
+  if(!url){ showToast('Training platform not configured yet.'); return; }
+  window.open(url,'_blank','noopener');
 }
 
-// ── Toast ──
-function showToast(msg){
-  var t = document.getElementById('toast');
-  document.getElementById('toastMsg').textContent = msg;
-  t.classList.add('on');
-  clearTimeout(window._tt); window._tt = setTimeout(function(){ t.classList.remove('on'); }, 4200);
-}
+/* ── Toast ── */
+function showToast(m){ var t=document.getElementById('toast'); document.getElementById('toastMsg').textContent=m;
+  t.classList.add('on'); clearTimeout(window._tt); window._tt=setTimeout(function(){t.classList.remove('on');},4200); }
+
+renderAll();
 </script>
 </body>
 </html>
