@@ -1,0 +1,7 @@
+{
+  "name": "lad-reception-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Azure Functions API for the Service Ambassador Hub — Lex assistant (proxies to the Claude API).",
+  "engines": { "node": ">=18" }
+}

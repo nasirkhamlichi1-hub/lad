@@ -103,3 +103,27 @@ Add the Department's custom domain (e.g. `training.legal.dubai.gov.ae`) under
 > Tip: keep `RECEPTION_CONFIG` as the single source of truth for the Docebo
 > URL. To change platforms or course links later, edit that block and push —
 > the GitHub Action redeploys in ~1 minute.
+
+## 4. Turn on "Lex" — the AI assistant (optional)
+
+Lex is an in-page assistant for desk staff: a "Ask Lex" button opens a chat
+where staff describe a visitor's situation and get the right service, channel,
+fee and a "say this" line. It runs as an **Azure Static Web Apps managed
+function** (`reception-portal/api/lex`) that proxies to the Claude API — the API
+key lives in Azure, never in the browser. Until a key is set, Lex answers with a
+friendly "not set up yet" message, so the site is safe to ship without it.
+
+To switch it on:
+
+1. Get an Anthropic API key from **console.anthropic.com** → API Keys.
+2. Azure Portal → your Static Web App → **Settings → Environment variables**
+   (a.k.a. *Configuration / Application settings*) → **+ Add**:
+   - Name `ANTHROPIC_API_KEY`, Value your `sk-ant-…` key → Save.
+3. Done — Lex starts answering. The function deploys automatically because the
+   workflow's `api_location` is set to `reception-portal/api`.
+
+**Model & cost.** Lex uses `claude-opus-4-8`. For a busy desk you can trade some
+quality for lower cost/faster replies by changing `MODEL` to `claude-haiku-4-5`
+at the top of `api/lex/index.js`. Lex answers only from the verified Department
+knowledge baked into the function's system prompt — it won't invent fees or
+services.
