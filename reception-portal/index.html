@@ -463,6 +463,39 @@ body.unlocked .lex-fab{display:inline-flex}
 .spot-tag svg{width:13px;height:13px;stroke:var(--green);fill:none;stroke-width:2.2}
 .spot.gold .spot-tag svg{stroke:var(--gold)}
 @media(max-width:900px){.spot-grid{grid-template-columns:1fr}}
+/* ── Service journey strip ── */
+.journey{display:flex;flex-wrap:wrap;margin-top:4px}
+.journey-step{position:relative;flex:1 1 0;min-width:108px;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 4px}
+.journey-step::before{content:'';position:absolute;top:17px;left:-50%;width:100%;height:2px;background:var(--green);z-index:0;transform:scaleX(0);transform-origin:left;transition:transform .45s ease}
+.journey-step:first-child::before{display:none}
+.jdot{position:relative;z-index:1;width:34px;height:34px;border-radius:50%;background:#fff;border:2px solid var(--line2);color:var(--slate3);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:700;margin-bottom:10px;transition:border-color .35s ease,background .35s ease,color .35s ease,box-shadow .35s ease,transform .35s cubic-bezier(.2,.7,.2,1)}
+.jdot svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.6}
+.jlabel{font-size:11.8px;color:var(--slate2);line-height:1.45;max-width:140px}
+/* animated state — fill left to right */
+.journey.go .journey-step::before{transform:scaleX(1)}
+.journey.go .jdot{border-color:var(--green);background:var(--green);color:#fff;box-shadow:0 5px 14px rgba(0,107,63,.26);transform:scale(1.04)}
+.journey.go .journey-step:last-child .jdot{background:var(--gold);border-color:var(--gold);box-shadow:0 5px 14px rgba(201,145,58,.3)}
+/* sequential reveal (supports up to 5 steps) */
+.journey.go .journey-step:nth-child(1) .jdot{transition-delay:.05s}
+.journey.go .journey-step:nth-child(2)::before{transition-delay:.15s}
+.journey.go .journey-step:nth-child(2) .jdot{transition-delay:.35s}
+.journey.go .journey-step:nth-child(3)::before{transition-delay:.55s}
+.journey.go .journey-step:nth-child(3) .jdot{transition-delay:.75s}
+.journey.go .journey-step:nth-child(4)::before{transition-delay:.95s}
+.journey.go .journey-step:nth-child(4) .jdot{transition-delay:1.15s}
+.journey.go .journey-step:nth-child(5)::before{transition-delay:1.35s}
+.journey.go .journey-step:nth-child(5) .jdot{transition-delay:1.55s}
+@media(max-width:560px){
+  .journey{flex-direction:column;align-items:flex-start}
+  .journey-step{flex:none;width:100%;flex-direction:row;align-items:flex-start;text-align:left;gap:13px;padding:0 0 16px 0;min-width:0}
+  .journey-step::before{top:-50%;left:17px;width:2px;height:100%;transform:scaleY(0);transform-origin:top;transition:transform .45s ease}
+  .journey.go .journey-step::before{transform:scaleY(1)}
+  .jdot{margin-bottom:0}
+  .jlabel{max-width:none;padding-top:7px}
+}
+@media(prefers-reduced-motion:reduce){
+  .journey-step::before,.jdot{transition-duration:.001s!important;transition-delay:0s!important}
+}
 </style>
 </head>
 <body class="unlocked">
@@ -1255,6 +1288,7 @@ function showNeed(pIdx,nIdx){
     '</div>';
   document.getElementById('finderStep2').style.display='none';
   box.classList.add('on');
+  startJourneys(box);
 }
 function finderHome(){
   curPersona=null;
@@ -1263,6 +1297,12 @@ function finderHome(){
   document.getElementById('finderStep1').style.display='';
 }
 function goHome(){ window.scrollTo({top:0,behavior:'smooth'}); }
+// Trigger the step-by-step "journey" fill animation for any strips inside `root`.
+function startJourneys(root){
+  (root||document).querySelectorAll('.journey:not(.go)').forEach(function(j){
+    setTimeout(function(){ j.classList.add('go'); }, 140);
+  });
+}
 function svcDetailHTML(i){
   var d=SERVICE_DETAIL[i]||{}; var detail='<div class="svc-detail">';
   if(d.rows&&d.rows.length){
@@ -1277,8 +1317,12 @@ function svcDetailHTML(i){
       d.docs.map(function(x){return '<li><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span>'+x+'</span></li>';}).join('')+'</ul>';
   }
   if(d.steps&&d.steps.length){
-    detail+='<div class="svc-block-label">How it works</div><ol class="svc-steps">'+
-      d.steps.map(function(x){return '<li><span>'+x+'</span></li>';}).join('')+'</ol>';
+    detail+='<div class="svc-block-label">The journey</div><div class="journey">'+
+      d.steps.map(function(x,si){
+        var last=si===d.steps.length-1;
+        var dot=last?'<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>':(si+1);
+        return '<div class="journey-step"><span class="jdot">'+dot+'</span><span class="jlabel">'+x+'</span></div>';
+      }).join('')+'</div>';
   }
   return detail+'</div>';
 }
@@ -1301,7 +1345,7 @@ function renderServices(){
         (s.url?'<a class="svc-link" href="'+s.url+'" target="_blank" rel="noopener">Open the official service <svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></a>':'')+
       '</div></div>';
     var head=card.querySelector('.svc-head'), body=card.querySelector('.svc-body');
-    head.addEventListener('click',function(){var open=card.classList.toggle('open');body.style.maxHeight=open?body.scrollHeight+'px':0;});
+    head.addEventListener('click',function(){var open=card.classList.toggle('open');body.style.maxHeight=open?body.scrollHeight+'px':0;if(open)startJourneys(card);});
     list.appendChild(card);
   });
 }
