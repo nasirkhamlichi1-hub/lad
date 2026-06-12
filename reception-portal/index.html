@@ -11,7 +11,6 @@
 
 <script>
 window.SITE_CONFIG = {
-  accessPassword: 'Legal Affairs',            // case-insensitive
   doceboUrl: 'https://creativewordtraining.docebosaas.com/learn',
   courseLive: true,                            // false => "coming soon"
   supportEmail: 'training@legal.dubai.gov.ae',
@@ -448,37 +447,9 @@ body.unlocked .lex-fab{display:inline-flex}
 @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}.flip:hover .flip-inner{transform:none}#gate .gate-bg{animation:none}.hero-glow{animation:none}}
 </style>
 </head>
-<body>
+<body class="unlocked">
 
 <div id="progress"></div>
-
-<!-- ════ GATE ════ -->
-<div id="gate">
-  <div class="gate-bg"></div>
-  <div class="gate-overlay"></div>
-  <div class="gate-card">
-    <div class="gate-logos">
-      <img src="https://legal.dubai.gov.ae/assets/govlogo/DG_white.svg" alt="Government of Dubai" onerror="this.style.display='none'"/>
-      <div class="gate-logos-sep"></div>
-      <img src="https://legal.dubai.gov.ae/assets/govlogo/lad_logo_white.svg" alt="Legal Affairs Department" onerror="this.style.display='none'"/>
-    </div>
-    <div class="gate-body">
-      <div class="gate-eyebrow">Legal Affairs Department · Dubai</div>
-      <h1 class="gate-title">Service Ambassador <em>Hub</em></h1>
-      <div class="gate-ar">منصة سفير الخدمة · دائرة الشؤون القانونية</div>
-      <p class="gate-sub">Enter your access password to open the interactive hub and prepare for your training.</p>
-      <form id="gateForm" onsubmit="return tryUnlock(event)">
-        <div class="gate-input">
-          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <input type="password" id="pw" placeholder="Access password" autocomplete="off" autofocus/>
-        </div>
-        <button type="submit" class="gate-btn">Enter <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
-        <div class="gate-err" id="gateErr">That password isn't right — please try again.</div>
-      </form>
-      <div class="gate-foot">For Legal Affairs Department staff. Need the password? Contact your training administrator.</div>
-    </div>
-  </div>
-</div>
 
 <!-- ════ SITE ════ -->
 <div id="site"><div class="lw">
@@ -758,7 +729,7 @@ body.unlocked .lex-fab{display:inline-flex}
 
 <script>
 var CFG = window.SITE_CONFIG || {};
-var UNLOCK_KEY='lad_sa_unlocked', BEST_KEY='lad_sa_quizbest';
+var BEST_KEY='lad_sa_quizbest';
 
 /* ─────────── CONTENT (edit here) ─────────── */
 var COMMITMENTS = [
@@ -1373,27 +1344,9 @@ function confetti(){
   })();}
 }
 
-/* ─────────── Gate ─────────── */
+/* ─────────── Reveal ─────────── */
 function reveal(){ document.body.classList.add('unlocked'); initReveal(); startQuiz(); }
-try{ if(localStorage.getItem(UNLOCK_KEY)==='1') reveal(); }catch(_){}
-function tryUnlock(e){
-  e.preventDefault();
-  var entered=(document.getElementById('pw').value||'').trim();
-  var expected=(CFG.accessPassword||'').trim();
-  if(expected!=='' && entered.toLowerCase()===expected.toLowerCase()){
-    try{localStorage.setItem(UNLOCK_KEY,'1');}catch(_){}
-    reveal(); window.scrollTo(0,0);
-  }else{
-    var err=document.getElementById('gateErr'), card=document.querySelector('.gate-card');
-    err.classList.add('on'); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
-    document.getElementById('pw').select();
-  }
-  return false;
-}
-function lockSite(){ try{localStorage.removeItem(UNLOCK_KEY);}catch(_){}
-  document.body.classList.remove('unlocked'); document.getElementById('pw').value='';
-  document.getElementById('gateErr').classList.remove('on'); window.scrollTo(0,0);
-}
+reveal();
 
 /* ─────────── Launch ─────────── */
 function applyLaunchState(){ var n=document.getElementById('launchNote');
