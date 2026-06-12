@@ -159,6 +159,8 @@ body.unlocked #site{display:block}
 .finder-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2}
 .crumb{font-family:var(--mono);font-size:11px;color:var(--slate3);margin-bottom:14px}
 .crumb b{color:var(--green)}.crumb .arr{color:var(--gold);margin:0 5px}
+.crumb-link{color:var(--green);cursor:pointer;font-weight:600}.crumb-link:hover{text-decoration:underline}
+.crumb-cur{color:var(--slate2)}
 .intent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .intent{display:flex;flex-direction:column;gap:9px;align-items:flex-start;text-align:left;background:var(--paper);border:1.5px solid var(--line2);border-radius:13px;padding:14px;cursor:pointer;transition:all .16s;font-family:var(--sans)}
 .intent:hover{border-color:var(--green);background:#fff;box-shadow:var(--sh);transform:translateY(-2px)}
@@ -1010,7 +1012,12 @@ function showNeed(pIdx,nIdx){
   var link = s.url ? '<a class="ans-link" href="'+s.url+'" target="_blank" rel="noopener">Open the official service <svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></a>' : '';
   var box=document.getElementById('finderAnswer');
   box.innerHTML=
-    '<div class="crumb"><b>'+p.label+'</b><span class="arr">→</span>'+n.t+'<span class="arr">→</span><b>'+s.en+'</b></div>'+
+    '<div class="crumb">'+
+      '<a class="crumb-link" onclick="finderHome()">Find a service</a><span class="arr">→</span>'+
+      '<a class="crumb-link" onclick="pickPersona('+pIdx+')">'+p.label+'</a><span class="arr">→</span>'+
+      '<span class="crumb-cur">'+n.t+'</span><span class="arr">→</span>'+
+      '<b>'+s.en+'</b>'+
+    '</div>'+
     '<div class="ans-card">'+
       '<div class="ans-en">'+s.en+'</div><div class="ans-ar">'+s.ar+'</div>'+
       '<div class="ans-say"><div class="ans-say-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>'+
