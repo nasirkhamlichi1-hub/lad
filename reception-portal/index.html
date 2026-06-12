@@ -445,6 +445,24 @@ body.unlocked .lex-fab{display:inline-flex}
 }
 @media(max-width:520px){.intent-grid,.behav-grid,.aud-grid{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}.flip:hover .flip-inner{transform:none}#gate .gate-bg{animation:none}.hero-glow{animation:none}}
+/* ── Service spotlights ("Did you know?") ── */
+.spot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.spot{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 22px 20px;overflow:hidden;transition:transform .18s,box-shadow .18s,border-color .18s}
+.spot:hover{transform:translateY(-4px);box-shadow:0 14px 34px rgba(10,14,20,.09);border-color:var(--line2)}
+.spot::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(var(--green),var(--green2))}
+.spot.gold::before{background:linear-gradient(var(--gold),var(--gold2))}
+.spot-ico{width:42px;height:42px;border-radius:12px;background:var(--paper);display:grid;place-items:center;margin-bottom:15px}
+.spot-ico svg{width:21px;height:21px;stroke:var(--green);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.spot.gold .spot-ico{background:var(--gold-bg)}
+.spot.gold .spot-ico svg{stroke:var(--gold)}
+.spot-stat{font-family:var(--serif);font-size:36px;color:var(--green);line-height:1;letter-spacing:-.02em;margin-bottom:9px}
+.spot.gold .spot-stat{color:var(--amber)}
+.spot-h{font-size:15.5px;font-weight:700;color:var(--ink);margin-bottom:6px;letter-spacing:-.01em}
+.spot-t{font-size:13.5px;color:var(--slate2);line-height:1.62;margin-bottom:15px}
+.spot-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--slate3);font-weight:600}
+.spot-tag svg{width:13px;height:13px;stroke:var(--green);fill:none;stroke-width:2.2}
+.spot.gold .spot-tag svg{stroke:var(--gold)}
+@media(max-width:900px){.spot-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body class="unlocked">
@@ -473,6 +491,7 @@ body.unlocked .lex-fab{display:inline-flex}
       <a class="nav-link" href="#finder">Find a service</a>
       <a class="nav-link" href="#charter">Charter</a>
       <a class="nav-link" href="#services">Services</a>
+      <a class="nav-link" href="#spotlights">Did you know?</a>
       <a class="nav-link" href="#quiz">Knowledge check</a>
       <a class="nav-link" href="#scenarios">Practice</a>
       <a class="nav-link" href="#faq">FAQs</a>
@@ -608,6 +627,66 @@ body.unlocked .lex-fab{display:inline-flex}
     <div class="svc-list reveal" id="svcList"></div>
     <div class="no-results" id="svcNone">No services match that search.</div>
   </div></section>
+
+  <!-- SPOTLIGHTS — Did you know? -->
+  <section class="section" id="spotlights">
+    <div class="sec-head reveal">
+      <div class="eyebrow gold">Did you know?</div>
+      <h2 class="sec-title">A few things <em>worth saying</em></h2>
+      <p class="sec-sub">Real facts from the Department's services — the kind that put a visitor at ease. Each one is true, and each one points to a service you already know.</p>
+    </div>
+    <div class="spot-grid reveal">
+
+      <div class="spot gold">
+        <div class="spot-ico"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></div>
+        <div class="spot-stat"><span data-count="395">0</span></div>
+        <div class="spot-h">Free legal advice — genuinely free</div>
+        <div class="spot-t">Through Voluntary Legal Services, 395 volunteer lawyers help members of the public at no cost — a visitor picks an area of law and a firm, and can talk in their preferred language.</div>
+        <div class="spot-tag"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> Pro Bono service</div>
+      </div>
+
+      <div class="spot">
+        <div class="spot-ico"><svg viewBox="0 0 24 24"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></div>
+        <div class="spot-stat"><span data-count="50" data-suffix="%">0</span></div>
+        <div class="spot-h">Half price for new advocates</div>
+        <div class="spot-t">A newly registered advocate pays 50% off the registration fee for their first three years on the Roll — a real encouragement for lawyers starting out in Dubai.</div>
+        <div class="spot-tag"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> Registration of Advocates</div>
+      </div>
+
+      <div class="spot gold">
+        <div class="spot-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <div class="spot-stat"><span data-count="24" data-suffix="/7">0</span></div>
+        <div class="spot-h">The desk that never closes</div>
+        <div class="spot-t">Most of the Department's services are fully digital and available around the clock — on the Smart App, the website, and DubaiNow. Often your best help is pointing to the right channel.</div>
+        <div class="spot-tag"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> Service channels</div>
+      </div>
+
+      <div class="spot">
+        <div class="spot-ico"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg></div>
+        <div class="spot-stat">1 day</div>
+        <div class="spot-h">Some things are same-day</div>
+        <div class="spot-t">A replacement registration card, a name or office amendment, a 'to whom it may concern' certificate — each is turned around in a single working day. Reassuring news for an anxious visitor.</div>
+        <div class="spot-tag"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> Registration &amp; certificates</div>
+      </div>
+
+      <div class="spot">
+        <div class="spot-ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M8.4 11l1.9 1.9L14 9.2"/></svg></div>
+        <div class="spot-stat">Instant</div>
+        <div class="spot-h">Check any lawyer is registered</div>
+        <div class="spot-t">The Advocates &amp; Legal Consultants Directory lets anyone confirm a lawyer or firm is licensed in Dubai — free, instantly, just by searching a name. A simple way to protect a visitor.</div>
+        <div class="spot-tag"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> Legal Directory</div>
+      </div>
+
+      <div class="spot gold">
+        <div class="spot-ico"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <div class="spot-stat">AED 0</div>
+        <div class="spot-h">Some complaints settle by conversation</div>
+        <div class="spot-t">Under Law No. 16 of 2025, a claim against a government entity is resolved by amicable settlement — no fees and no court, with a response due within set timelines. Calm, fair, and free.</div>
+        <div class="spot-tag"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> Government Complaints</div>
+      </div>
+
+    </div>
+  </section>
 
   <!-- CHANNELS -->
   <section class="section" id="channels">
