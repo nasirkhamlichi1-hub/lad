@@ -148,7 +148,18 @@ body.unlocked #site{display:block}
 .finder-sub{font-size:13px;color:var(--slate2);margin-top:2px}
 .finder-body{padding:22px 28px 26px}
 .finder-q{font-size:13px;font-weight:600;color:var(--slate);margin-bottom:14px}
-.intent-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.persona-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+.persona{display:flex;flex-direction:column;gap:11px;align-items:flex-start;text-align:left;background:var(--paper);border:1.5px solid var(--line2);border-radius:14px;padding:17px;cursor:pointer;transition:all .16s;font-family:var(--sans)}
+.persona:hover{border-color:var(--green);background:#fff;box-shadow:var(--sh);transform:translateY(-2px)}
+.persona-ico{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--green),var(--green2));display:grid;place-items:center}
+.persona-ico svg{width:21px;height:21px;stroke:#fff;fill:none;stroke-width:1.8}
+.persona-l{font-size:14px;font-weight:700;color:var(--ink);line-height:1.2}
+.persona-s{font-size:11.5px;color:var(--slate2);line-height:1.3}
+.finder-back{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--green);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:14px;padding:0}
+.finder-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2}
+.crumb{font-family:var(--mono);font-size:11px;color:var(--slate3);margin-bottom:14px}
+.crumb b{color:var(--green)}.crumb .arr{color:var(--gold);margin:0 5px}
+.intent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .intent{display:flex;flex-direction:column;gap:9px;align-items:flex-start;text-align:left;background:var(--paper);border:1.5px solid var(--line2);border-radius:13px;padding:14px;cursor:pointer;transition:all .16s;font-family:var(--sans)}
 .intent:hover{border-color:var(--green);background:#fff;box-shadow:var(--sh);transform:translateY(-2px)}
 .intent-ico{width:34px;height:34px;border-radius:9px;background:var(--gold-bg);display:grid;place-items:center}
@@ -174,6 +185,10 @@ body.unlocked #site{display:block}
 .meta-tag.who{background:var(--gold-bg);border-color:#edd9b5;color:var(--amber)}
 .ans-reset{margin-top:16px;display:inline-flex;align-items:center;gap:7px;background:none;border:none;color:var(--green);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer}
 .ans-reset svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2}
+.ans-link,.svc-link{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--green);text-decoration:none}
+.ans-link{margin-top:14px}.svc-link{margin-top:12px}
+.ans-link:hover,.svc-link:hover{text-decoration:underline}
+.ans-link svg,.svc-link svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
 
 /* CHARTER */
 .charter-intro{max-width:820px;margin:0 auto 30px;text-align:center;font-size:16px;color:var(--slate);line-height:1.8;font-style:italic}
@@ -332,6 +347,7 @@ body.unlocked #site{display:block}
   .lad-brand,.lad-util,.nav-links .nav-link{display:none}
   .nav-links{margin-left:auto}
   .charter-grid,.vmv{grid-template-columns:1fr}
+  .persona-grid{grid-template-columns:1fr 1fr}
   .intent-grid{grid-template-columns:1fr 1fr}
   .behav-grid{grid-template-columns:1fr 1fr 1fr}
   .aud-grid{grid-template-columns:1fr 1fr}
@@ -431,12 +447,17 @@ body.unlocked #site{display:block}
     <div class="finder-card reveal">
       <div class="finder-top">
         <div class="finder-badge"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6M8 11h6"/></svg></div>
-        <div><div class="finder-ttl">Guide a visitor</div><div class="finder-sub">Tap what your visitor needs — get the right service, channel, and what to say.</div></div>
+        <div><div class="finder-ttl">Guide a visitor</div><div class="finder-sub">Two taps — who's at your desk, and what they need — to the right service, channel and what to say.</div></div>
       </div>
       <div class="finder-body">
-        <div id="finderPick">
-          <div class="finder-q">What does your visitor want to do?</div>
-          <div class="intent-grid" id="intentGrid"></div>
+        <div id="finderStep1">
+          <div class="finder-q">Who is at your desk?</div>
+          <div class="persona-grid" id="personaGrid"></div>
+        </div>
+        <div id="finderStep2" style="display:none">
+          <button class="finder-back" onclick="finderHome()"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Different visitor</button>
+          <div class="finder-q" id="finderStep2Q"></div>
+          <div class="intent-grid" id="needGrid"></div>
         </div>
         <div class="finder-answer" id="finderAnswer"></div>
       </div>
@@ -595,7 +616,7 @@ body.unlocked #site{display:block}
       <div class="footer-contact">
         <a href="https://legal.dubai.gov.ae" target="_blank" rel="noopener">legal.dubai.gov.ae</a><br>
         800 523 · +971 4 353 3337<br>
-        Al Hudaiba Awards Building · Dubai
+        Al Fahidi · Dubai · P.O. Box 446
       </div>
     </div>
     <div class="footer-bottom">
@@ -643,62 +664,106 @@ var BEHAVIOURS = [
   {w:"Innovative", d:"Guide people to smart channels — DubaiNow, the app — not just a counter.", i:'<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12c1 1 1 2 1 3h6c0-1 0-2 1-3a7 7 0 0 0-4-12z"/>'}
 ];
 
+var LPS='https://lps.legal.dubai.gov.ae/';
 var SERVICES = [
   {en:"Registration of Advocates & Legal Consultants", ar:"قيد المحامين والمستشارين القانونيين", who:"Advocates & legal consultants",
-   ch:"Legal Professions System · Smart App · Dubai Justice",
-   desc:"Join and maintain your place on the Dubai roll of practising advocates and legal consultants — the gateway to practising law in the Emirate. New advocate registration is AED 2,020 and takes about 14 working days; new advocates receive 50% off the registration fee for their first 3 years.",
-   subs:["New Registration","Registration Renewal","Reinstatement","Amendment of Details","Replacement Card","To-Whom-It-May-Concern Certificate","Temporary rights of audience permit","Visiting Legal Consultant Permit"]},
+   ch:"Legal Professions System (LPS) · Smart App",
+   url:LPS,
+   desc:"Join and maintain your place on the Roll of practising advocates and legal consultants — the gateway to practising law in Dubai. New advocate registration is AED 2,020 (incl. innovation & knowledge fees) and takes about 14 working days; new advocates receive 50% off the registration fee for their first 3 years. A 'to whom it may concern' certificate is AED 220.",
+   subs:["New Registration","Registration Renewal","Reinstatement","Amendment of Details","Replacement Card","To-Whom-It-May-Concern Certificate (AED 220)","Right of audience — Court of Cassation","Visiting Legal Consultant Permit"]},
   {en:"Licensing of Advocacy & Legal Consultancy Firms", ar:"ترخيص مكاتب المحاماة والاستشارات القانونية", who:"Law & consultancy firms",
-   ch:"Legal Professions System · Smart App · Invest in Dubai",
-   desc:"License and manage an advocacy or legal-consultancy firm in Dubai, including changes to partners, managers, name, address and activities.",
-   subs:["New Firm Licence","Firm Licence Renewal","Amendment of Licence Details","Temporary / Permanent cessation","To-Whom-It-May-Concern Certificate"]},
+   ch:"Legal Professions System (LPS) · Invest in Dubai",
+   url:LPS,
+   desc:"License and manage an advocacy or legal-consultancy firm in Dubai — including changes to partners, managers, name, address and activities, and temporary or permanent cessation.",
+   subs:["New Firm Licence","Firm Licence Renewal","Add / remove a partner","Change name, address or activity","Appoint a manager","Temporary / Permanent cessation","To-Whom-It-May-Concern Certificate"]},
   {en:"Violations & Fines", ar:"المخالفات والغرامات", who:"Advocates & legal consultants",
-   ch:"Legal Professions System · Smart App · Dubai Justice",
+   ch:"Legal Professions System (LPS) · Smart App",
+   url:LPS,
    desc:"Settle professional fines, arrange instalments, or grieve a decision to impose a fine.",
    subs:["Payment of Fines","Amicable Settlement","Payment by Instalments","Grievance against a fine","Grievance against other decisions"]},
-  {en:"Voluntary Legal Services", ar:"الخدمات القانونية التطوعية", who:"Members of the public",
-   ch:"Smart App · DubaiNow",
-   desc:"Free smart legal services for the community — including 'Ask a lawyer', where the public can get legal guidance from a volunteer legal consultant.",
-   subs:["Ask a lawyer (free legal advice)"]},
+  {en:"Voluntary Legal Services (Pro Bono)", ar:"الخدمات القانونية التطوعية", who:"Members of the public",
+   ch:"Voluntary Legal Services Smart Portal · Smart App · DubaiNow",
+   url:'https://legal.dubai.gov.ae/en/Pages/Probono.aspx',
+   desc:"A free pro bono service that connects members of the public to volunteering advocates and legal consultants. The public register on the Voluntary Legal Services Smart Portal, choose an area of law and a firm, and receive free legal advice. 395 lawyers participate across 48 areas of law.",
+   subs:["Register for free legal advice","Choose an area of law & a firm","Communicate in your preferred language"]},
   {en:"Professional Training & Development (CLPD)", ar:"التدريب والتطوير المهني", who:"Advocates · consultants · training providers",
    ch:"CLPD Portal",
-   desc:"The Continuing Legal Professional Development programme — register for CLPD, and for providers, get accredited and accredit training courses.",
+   url:'https://clpdportal.legal.dubai.gov.ae/',
+   desc:"The Continuing Legal Professional Development programme — register for CLPD, and for providers, become accredited and accredit training courses.",
    subs:["Register in the CLPD Programme","Provider Accreditation","Training Course Accreditation"]},
   {en:"Representation in Government Cases", ar:"التمثيل في الدعاوى الحكومية", who:"Dubai Government entities",
    ch:"Central Legal Services Portal (Gov Portal)",
+   url:'',
    desc:"The Department represents the Government and its entities before the courts and in arbitration.",
    subs:["Representation in civil cases","Representation in criminal cases","Representation in arbitration"]},
   {en:"Execution of Judgments & Instruments", ar:"تنفيذ الأحكام والسندات", who:"Government entities · individuals",
    ch:"Gov Portal · Email",
-   desc:"Execute judgments and executory instruments issued for or against the Government, its entities, individuals and companies.",
+   url:'',
+   desc:"Execute judgments and executory instruments issued for or against the Government, its entities, individuals and companies. Submit the judgment together with its executory wording and any related Court of Appeal / Cassation judgments.",
    subs:["Execution of cheques","Execution of administrative resolutions","Execution of criminal judgments","Execution of judgments against individuals"]},
   {en:"Government Legal Support", ar:"الدعم القانوني الحكومي", who:"Dubai Government entities",
    ch:"Central Legal Services Portal (Gov Portal)",
+   url:'https://legal.dubai.gov.ae/en/ServicesToGovernment/Pages/ContractsandAgreements.aspx',
    desc:"End-to-end legal support for government bodies — legislation, advice, company governance, intellectual property, and contracts.",
    subs:["Legislative Support","Legal Advice","Company incorporation & governance","IP rights support","General Legal Support","Contract drafting","Contract review","Advice on contracting"]},
   {en:"Government & Legal Professional Complaints", ar:"الشكاوى الحكومية والمهنية", who:"Public · private organisations",
    ch:"Website · Smart App",
-   desc:"Raise a dispute with a government entity for amicable settlement, or file a complaint against an advocate or legal consultant.",
-   subs:["Amicable Settlement with a Government Entity","Certificate of Compliance","Complaint against an Advocate / Consultant","Grievance against a Conduct Committee decision"]},
+   url:'https://cms.legal.dubai.gov.ae/en/Website/Pages/ComplaintAgainstGovernmentEntity.aspx',
+   desc:"Raise a complaint or claim against a government entity (under Law No. 16 of 2025 — no fees, resolved by amicable settlement; not for criminal matters), or file a complaint against an advocate or legal consultant for the Professional Conduct process.",
+   subs:["Claim / complaint against a Government Entity","Amicable Settlement","Certificate of Compliance","Complaint against an Advocate / Consultant","Grievance against a Conduct Committee decision"]},
   {en:"Monitoring & Inspection", ar:"الرقابة والتفتيش", who:"Public · the profession",
    ch:"Report · field inspection",
+   url:'',
    desc:"Safeguard the profession — report unlicensed legal practice and flag breaches of professional conduct rules.",
    subs:["Report unlicensed practice","Monitor professional-conduct violations"]},
-  {en:"Informational Services", ar:"الخدمات المعلوماتية", who:"Everyone",
+  {en:"Informational Services — Legal Directory", ar:"الخدمات المعلوماتية", who:"Everyone",
    ch:"Website · Smart App",
-   desc:"Verify the profession — search whether an advocate or legal consultant is registered, or whether a firm is licensed in Dubai.",
-   subs:["Search for a registered advocate / consultant","Search for a licensed firm"]}
+   url:'https://lps.legal.dubai.gov.ae/AreasOfLaws',
+   desc:"The Advocates & Legal Consultants Directory — verify whether an advocate or legal consultant is registered, or whether a firm is licensed in Dubai. Search by full or partial name of the person or the firm.",
+   subs:["Search for a registered advocate / consultant","Search for a licensed firm","Browse by area of law"]}
 ];
 
-var INTENTS = [
-  {t:"Become an advocate or legal consultant", si:0, say:"Direct them to apply for New Registration on the Legal Professions System or Smart App — AED 2,020, about 14 working days, with 50% off the fee for the first 3 years.", i:'<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>'},
-  {t:"Open or license a law / consultancy firm", si:1, say:"They'll apply for a New Firm Licence via the Legal Professions System / Invest in Dubai.", i:'<path d="M3 21h18M6 21V8h12v13M10 12h4M10 16h4"/>'},
-  {t:"Get free legal advice (public)", si:3, say:"Point them to 'Ask a lawyer' on the Smart App or DubaiNow — it's a free voluntary legal service.", i:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'},
-  {t:"Check a lawyer or firm is licensed", si:10, say:"Use the search on the website or Smart App to verify a registered advocate/consultant or a licensed firm.", i:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>'},
-  {t:"Pay or dispute a fine", si:2, say:"Via Violations & Fines on the Legal Professions System / Smart App — instalments and amicable settlement are available.", i:'<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>'},
-  {t:"Complain about a lawyer or entity", si:8, say:"File via the website or Smart App; grievances go through the Professional Conduct Committee.", i:'<path d="M10.3 3.3 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.3a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'},
-  {t:"Government legal support or contracts", si:7, say:"All through the Central Legal Services Portal — legal support, contract drafting & review, representation and execution.", i:'<path d="M3 21h18M5 21V7l7-4 7 4v14"/>'},
-  {t:"Register for CLPD / accredit training", si:4, say:"Through the CLPD Portal — registration, provider accreditation and course accreditation.", i:'<path d="M4 19V5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h8M8 11h6"/>'}
+var PERSONAS = [
+  {label:"Professional", ar:"المهنيون", sub:"Advocate or legal consultant",
+   i:'<path d="M12 3v18M4 7h16M8 7l-3 6a3 3 0 0 0 6 0zM16 7l-3 6a3 3 0 0 0 6 0z"/>',
+   needs:[
+     {t:"Register for the first time", si:0, say:"New Registration on the Legal Professions System / Smart App — AED 2,020 and about 14 working days; new advocates get 50% off the registration fee for their first 3 years."},
+     {t:"Renew, reinstate or amend registration", si:0, say:"Renewal, reinstatement and amendment of details are all on the Legal Professions System."},
+     {t:"Replace a lost registration card", si:0, say:"Apply for a replacement registration card on the Legal Professions System."},
+     {t:"Get a 'to whom it may concern' certificate", si:0, say:"Email the Advocates & Legal Consultants Affairs Section — the certificate is AED 220 (200 + 10 innovation + 10 knowledge)."},
+     {t:"Right of audience — Court of Cassation", si:0, say:"They must be on the Roll of Practising Advocates and take the oath before the Court of Cassation; apply via the Legal Professions System."},
+     {t:"Pay or dispute a fine", si:2, say:"Pay, settle amicably, or pay by instalments on the Legal Professions System; grievances against a fine are here too."},
+     {t:"CLPD points & training", si:4, say:"Register and track Continuing Legal Professional Development on the CLPD Portal."}
+   ]},
+  {label:"Member of the public", ar:"الأفراد", sub:"Citizen, resident or visitor",
+   i:'<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/>',
+   needs:[
+     {t:"Get free legal advice", si:3, say:"Free Voluntary Legal Services (Pro Bono) — register on the Voluntary Legal Services Smart Portal to be matched with a volunteer lawyer (395 lawyers across 48 areas of law). Also on the Smart App / DubaiNow."},
+     {t:"Check a lawyer or firm is licensed", si:10, say:"Search the Advocates & Legal Consultants Directory by name or firm on the website."},
+     {t:"Complain about a lawyer or consultant", si:8, say:"File online via the website / Smart App — it goes to the Professional Conduct process (Professional.conduct@legal.dubai.gov.ae)."},
+     {t:"Complaint / claim vs a government entity", si:8, say:"Filed through the Department under Law No. 16 of 2025 — no fees, resolved by amicable settlement (negotiation or mediation). Not for criminal matters."},
+     {t:"Report unlicensed legal practice", si:9, say:"Report someone practising law without a licence to the Department for inspection."},
+     {t:"Enforce a judgment", si:6, say:"Submit the judgment together with its executory wording; the Department handles the enforcement."}
+   ]},
+  {label:"Law / consultancy firm", ar:"المؤسسات الخاصة", sub:"Advocacy or legal-consultancy firm",
+   i:'<path d="M3 21h18M6 21V8h12v13M10 12h4M10 16h4M10 8V4h4v4"/>',
+   needs:[
+     {t:"License a new firm", si:1, say:"Apply for a New Firm Licence on the Legal Professions System / Invest in Dubai."},
+     {t:"Renew or amend a firm licence", si:1, say:"Renew, change name/address/activity, add or remove a partner, or appoint a manager — all on the Legal Professions System."},
+     {t:"Temporarily or permanently close a firm", si:1, say:"Apply for temporary or permanent cessation on the Legal Professions System."},
+     {t:"Firm 'to whom it may concern' certificate", si:1, say:"Request the certificate via the Legal Professions System."},
+     {t:"Become a CLPD training provider", si:4, say:"Apply for Provider Accreditation and accredit your courses on the CLPD Portal."}
+   ]},
+  {label:"Government entity", ar:"الجهات الحكومية", sub:"Dubai Government body",
+   i:'<path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/>',
+   needs:[
+     {t:"Legal advice or legislative support", si:7, say:"Submit via the Central Legal Services Portal — legislative support and legal advice."},
+     {t:"Draft or review a contract", si:7, say:"Contract drafting, review and contracting advice via the Central Legal Services Portal."},
+     {t:"Company governance or IP support", si:7, say:"Support on incorporating and governing government companies and protecting IP rights — via the Gov Portal."},
+     {t:"Representation in a case or arbitration", si:5, say:"The Department represents the entity in civil, criminal and arbitration cases — via the Gov Portal."},
+     {t:"Enforce a judgment or instrument", si:6, say:"Cheques, administrative resolutions and criminal judgments — submit the judgment with its executory wording via the Gov Portal."},
+     {t:"Amicable settlement with another entity", si:8, say:"Request amicable settlement / a certificate of compliance via the Gov Portal."}
+   ]}
 ];
 
 var CHANNELS = [
@@ -711,15 +776,18 @@ var CHANNELS = [
 ];
 
 var FAQS = [
-  {q:"What does the Legal Affairs Department do?", a:"It <b>regulates the legal profession</b> in Dubai — advocates, legal consultants and firms — and provides <b>legal services to the Government of Dubai</b>: registration & licensing, the CLPD training programme, fines, complaints, free legal advice to the public, and representation and legal support for government."},
-  {q:"Someone wants to become an advocate in Dubai — what do they do?", a:"They apply for <b>New Registration</b> via the <b>Legal Professions System</b> or <b>Smart App</b>. Fee <b>AED 2,020</b>, about <b>14 working days</b>; new advocates get <b>50% off the registration fee for their first 3 years</b>."},
-  {q:"How can a member of the public get free legal advice?", a:"Through <b>Voluntary Legal Services</b> — the <b>'Ask a lawyer'</b> service — on the <b>Smart App</b> and <b>DubaiNow</b>."},
-  {q:"How do I check whether a lawyer or law firm is licensed?", a:"Use the Department's <b>search</b> (Informational Services) on the <b>website</b> or <b>Smart App</b>."},
-  {q:"How do I complain about a lawyer or legal consultant?", a:"File under <b>Government & Legal Professional Complaints</b> via the <b>website</b> or <b>Smart App</b>; decisions can be grieved through the <b>Professional Conduct Committee</b>."},
-  {q:"A government entity needs legal support or representation — where do they go?", a:"Through the <b>Central Legal Services Portal (Gov Portal)</b>: legal support, contract drafting & review, representation and execution of judgments."},
-  {q:"Where do lawyers pay fines?", a:"Under <b>Violations & Fines</b> via the <b>Legal Professions System</b> / <b>Smart App</b> / <b>Dubai Justice</b>. <b>Amicable settlement</b> and <b>instalments</b> are available."},
-  {q:"What are the Department's service channels?", a:"<b>Smart App</b>, <b>Website</b>, <b>Central Legal Services Portal</b>, <b>Legal Professions System (LPS)</b>, <b>CLPD Portal</b>, and <b>Email</b> — plus Dubai Justice, Invest in Dubai and DubaiNow. Call centre: <b>800 523</b> (and +971 4 353 3337)."},
-  {q:"What hours are services available?", a:"Digital services are available <b>24/7</b>. The call centre and centre follow published hours (Sun–Thu)."},
+  {q:"What does the Legal Affairs Department do?", a:"It <b>regulates the legal profession</b> in Dubai — advocates, legal consultants and firms — and provides <b>legal services to the Government of Dubai</b>: registration & licensing, the CLPD training programme, fines, complaints, free legal advice to the public, and representation and legal support for government entities."},
+  {q:"Someone wants to become an advocate in Dubai — what do they do?", a:"They apply for <b>New Registration</b> via the <b>Legal Professions System (LPS)</b> or <b>Smart App</b>. Fee <b>AED 2,020</b>, about <b>14 working days</b>; new advocates get <b>50% off the registration fee for their first 3 years</b>."},
+  {q:"Who can register as an advocate?", a:"Generally, someone holding a <b>law degree</b> (or an equivalent qualification plus valid professional membership abroad). UAE nationals may also register if they have served as a <b>judge or public prosecutor for at least a year</b>, hold a <b>doctorate in law as a faculty member</b>, or have worked in the <b>legal field for at least two years</b>."},
+  {q:"How can a member of the public get free legal advice?", a:"Through <b>Voluntary Legal Services (Pro Bono)</b>. The public register on the <b>Voluntary Legal Services Smart Portal</b>, pick an area of law and a participating firm, and receive free advice — <b>395 lawyers across 48 areas of law</b>. Also reachable via the Smart App / DubaiNow."},
+  {q:"How is a 'to whom it may concern' certificate issued, and what does it cost?", a:"A registered advocate can request it by email to the <b>Advocates & Legal Consultants Affairs Section</b>. The fee is <b>AED 220</b> — AED 200 plus a 10 innovation fee and a 10 knowledge fee."},
+  {q:"How do I check whether a lawyer or law firm is licensed?", a:"Search the <b>Advocates & Legal Consultants Directory</b> on the website — by full or partial name of the person, or by firm name."},
+  {q:"How do I complain about a lawyer or legal consultant?", a:"File online via the <b>website</b> or <b>Smart App</b>; it goes to the <b>Professional Conduct</b> process (Professional.conduct@legal.dubai.gov.ae). Decisions can be grieved to the Professional Conduct Committee."},
+  {q:"How do I make a complaint or claim against a government entity?", a:"It's filed <b>through the Department</b> under <b>Law No. 16 of 2025</b>. There are <b>no fees</b>; it's resolved by <b>amicable settlement</b> (negotiation or mediation). The claim is referred to the entity within <b>5 working days</b>, with a <b>15-day</b> response window. The Department does <b>not</b> handle criminal matters or urgent/provisional requests."},
+  {q:"A government entity needs legal support or representation — where do they go?", a:"Through the <b>Central Legal Services Portal (Gov Portal)</b>: legal support, contract drafting & review, representation in cases and arbitration, and execution of judgments."},
+  {q:"Where do lawyers pay fines?", a:"Under <b>Violations & Fines</b> via the <b>Legal Professions System</b> / <b>Smart App</b>. <b>Amicable settlement</b> and <b>instalments</b> are available."},
+  {q:"What are the Department's service channels?", a:"<b>Smart App</b>, <b>Website</b>, <b>Central Legal Services Portal</b>, <b>Legal Professions System (LPS)</b>, <b>CLPD Portal</b>, the <b>Voluntary Legal Services Smart Portal</b>, and <b>Email</b> — plus DubaiNow and Invest in Dubai. Call centre: <b>800 523</b> / <b>+971 4 353 3337</b>."},
+  {q:"What hours are services available?", a:"Digital services are available <b>24/7</b>. The call centre and customer service centre follow published hours (Sun–Thu)."},
   {q:"What does the Customers Happiness Charter promise?", a:"That customers are at the <b>core of operations</b>: confidentiality, distinguished and efficient service, accurate information, deadlines observed, respectful treatment, accessibility for <b>People of Determination</b>, and welcoming feedback."}
 ];
 
@@ -760,32 +828,50 @@ function renderBehaviours(){
     g.appendChild(card);
   });
 }
-function renderIntents(){
-  var g=document.getElementById('intentGrid');
-  INTENTS.forEach(function(it){
-    var b=el('button','intent','<div class="intent-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">'+it.i+'</svg></div><div class="intent-t">'+it.t+'</div>');
-    b.addEventListener('click',function(){ showIntent(it); });
+var curPersona=null;
+function renderPersonas(){
+  var g=document.getElementById('personaGrid');
+  PERSONAS.forEach(function(p,idx){
+    var b=el('button','persona','<div class="persona-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">'+p.i+'</svg></div><div><div class="persona-l">'+p.label+'</div><div class="persona-s">'+p.sub+'</div></div>');
+    b.addEventListener('click',function(){ pickPersona(idx); });
     g.appendChild(b);
   });
 }
-function showIntent(it){
-  var s=SERVICES[it.si];
+function pickPersona(idx){
+  curPersona=idx; var p=PERSONAS[idx];
+  document.getElementById('finderStep2Q').innerHTML='What does your <b style="color:var(--green)">'+p.label.toLowerCase()+'</b> visitor need?';
+  var g=document.getElementById('needGrid'); g.innerHTML='';
+  p.needs.forEach(function(n,ni){
+    var b=el('button','intent','<div class="intent-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 18l6-6-6-6"/></svg></div><div class="intent-t">'+n.t+'</div>');
+    b.addEventListener('click',function(){ showNeed(idx,ni); });
+    g.appendChild(b);
+  });
+  document.getElementById('finderStep1').style.display='none';
+  document.getElementById('finderStep2').style.display='';
+  document.getElementById('finderAnswer').classList.remove('on');
+}
+function showNeed(pIdx,nIdx){
+  var p=PERSONAS[pIdx], n=p.needs[nIdx], s=SERVICES[n.si];
+  var link = s.url ? '<a class="ans-link" href="'+s.url+'" target="_blank" rel="noopener">Open the official service <svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></a>' : '';
   var box=document.getElementById('finderAnswer');
   box.innerHTML=
-    '<div class="ans-route"><b>Visitor wants</b><span class="arr">→</span>'+it.t+'<span class="arr">→</span><b>'+s.en+'</b></div>'+
+    '<div class="crumb"><b>'+p.label+'</b><span class="arr">→</span>'+n.t+'<span class="arr">→</span><b>'+s.en+'</b></div>'+
     '<div class="ans-card">'+
       '<div class="ans-en">'+s.en+'</div><div class="ans-ar">'+s.ar+'</div>'+
       '<div class="ans-say"><div class="ans-say-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>'+
-        '<div><div class="ans-say-l">Say this</div><div class="ans-say-t">'+it.say+'</div></div></div>'+
+        '<div><div class="ans-say-l">Say this</div><div class="ans-say-t">'+n.say+'</div></div></div>'+
       '<div class="ans-meta"><span class="meta-tag who"><b>For:</b> '+s.who+'</span><span class="meta-tag"><b>Channel:</b> '+s.ch+'</span></div>'+
-      '<button class="ans-reset" onclick="resetFinder()"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Choose another</button>'+
+      link+
+      '<div><button class="ans-reset" onclick="pickPersona('+pIdx+')"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Another need</button></div>'+
     '</div>';
-  document.getElementById('finderPick').style.display='none';
+  document.getElementById('finderStep2').style.display='none';
   box.classList.add('on');
 }
-function resetFinder(){
+function finderHome(){
+  curPersona=null;
   document.getElementById('finderAnswer').classList.remove('on');
-  document.getElementById('finderPick').style.display='';
+  document.getElementById('finderStep2').style.display='none';
+  document.getElementById('finderStep1').style.display='';
 }
 function renderServices(){
   var list=document.getElementById('svcList');
@@ -801,6 +887,7 @@ function renderServices(){
         '<div class="svc-desc">'+s.desc+'</div>'+
         '<div class="svc-meta"><span class="meta-tag who"><b>For:</b> '+s.who+'</span><span class="meta-tag"><b>Channel:</b> '+s.ch+'</span></div>'+
         '<div class="svc-subs-label">Includes</div><div class="svc-subs">'+subs+'</div>'+
+        (s.url?'<a class="svc-link" href="'+s.url+'" target="_blank" rel="noopener">Open the official service <svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></a>':'')+
       '</div></div>';
     var head=card.querySelector('.svc-head'), body=card.querySelector('.svc-body');
     head.addEventListener('click',function(){var open=card.classList.toggle('open');body.style.maxHeight=open?body.scrollHeight+'px':0;});
@@ -961,7 +1048,7 @@ window.addEventListener('scroll',function(){
 });
 
 /* ─────────── Boot ─────────── */
-renderCharter(); renderBehaviours(); renderIntents(); renderServices(); renderChannels(); renderFaq();
+renderCharter(); renderBehaviours(); renderPersonas(); renderServices(); renderChannels(); renderFaq();
 applyLaunchState(); startQuiz();
 </script>
 </body>
