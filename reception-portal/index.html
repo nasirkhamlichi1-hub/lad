@@ -91,7 +91,8 @@ body.unlocked #site{display:block}
 .lad-util-link:hover{color:#006b3f}
 .lad-nav{background:var(--navy);position:sticky;top:0;z-index:200;box-shadow:0 3px 14px rgba(0,0,0,.38)}
 .lad-nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:62px;display:flex;align-items:center;gap:16px}
-.lad-logos{display:flex;align-items:center;padding-right:16px;border-right:1px solid rgba(255,255,255,.13);gap:12px;flex-shrink:0}
+.lad-logos{display:flex;align-items:center;padding-right:16px;border-right:1px solid rgba(255,255,255,.13);gap:12px;flex-shrink:0;cursor:pointer}
+.finder-badge{cursor:pointer}
 .lad-logos img{height:34px;width:auto}
 .lad-logos-sep{width:1px;height:24px;background:rgba(255,255,255,.22)}
 .lad-brand{display:flex;flex-direction:column;justify-content:center;min-width:0}
@@ -116,7 +117,6 @@ body.unlocked #site{display:block}
 .hero-kicker::before{content:'';width:26px;height:1px;background:var(--gold)}
 .hero-title{font-family:var(--serif);font-size:clamp(38px,5.4vw,60px);color:#fff;line-height:1.05;letter-spacing:-.022em;margin-bottom:12px}
 .hero-title em{color:var(--gold-l)}
-.hero-ar{font-family:var(--arabic);font-size:20px;color:rgba(255,255,255,.55);direction:rtl;margin-bottom:22px}
 .hero-desc{font-size:16px;color:rgba(255,255,255,.8);line-height:1.75;max-width:640px;margin-bottom:28px}
 .hero-btns{display:flex;gap:13px;flex-wrap:wrap;margin-bottom:40px}
 .btn-p{display:inline-flex;align-items:center;gap:9px;background:var(--gold);color:#fff;border:none;font-family:var(--sans);font-size:15px;font-weight:600;padding:14px 28px;border-radius:11px;cursor:pointer;transition:background .15s,transform .1s;box-shadow:0 6px 20px rgba(201,145,58,.32);text-decoration:none}
@@ -444,7 +444,7 @@ body.unlocked #site{display:block}
   </div></div>
 
   <nav class="lad-nav"><div class="lad-nav-inner">
-    <div class="lad-logos">
+    <div class="lad-logos" onclick="goHome()" title="Back to top" role="button">
       <img src="https://legal.dubai.gov.ae/assets/govlogo/DG_white.svg" alt="Government of Dubai" onerror="this.style.display='none'"/>
       <div class="lad-logos-sep"></div>
       <img src="https://legal.dubai.gov.ae/assets/govlogo/lad_logo_white.svg" alt="Legal Affairs Department" onerror="this.style.display='none'"/>
@@ -489,7 +489,7 @@ body.unlocked #site{display:block}
   <div class="finder" id="finder">
     <div class="finder-card reveal">
       <div class="finder-top">
-        <div class="finder-badge"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6M8 11h6"/></svg></div>
+        <div class="finder-badge" onclick="finderHome()" title="Start over"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6M8 11h6"/></svg></div>
         <div><div class="finder-ttl">Guide a visitor</div><div class="finder-sub">Two taps — who's at your desk, and what they need — to the right service, channel and what to say.</div></div>
       </div>
       <div class="finder-body">
@@ -1030,6 +1030,7 @@ function finderHome(){
   document.getElementById('finderStep2').style.display='none';
   document.getElementById('finderStep1').style.display='';
 }
+function goHome(){ window.scrollTo({top:0,behavior:'smooth'}); }
 function svcDetailHTML(i){
   var d=SERVICE_DETAIL[i]||{}; var detail='<div class="svc-detail">';
   if(d.rows&&d.rows.length){
