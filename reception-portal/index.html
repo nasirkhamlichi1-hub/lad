@@ -602,7 +602,7 @@ body.unlocked #site{display:block}
     <div class="sec-head reveal">
       <div class="eyebrow gold">Knowledge check</div>
       <h2 class="sec-title">Are you <em>desk-ready</em>?</h2>
-      <p class="sec-sub">Five quick scenarios. Answer as if a visitor were standing in front of you.</p>
+      <p class="sec-sub">Five questions, pulled fresh from a bank of 90+ each time you play. Answer as if a visitor were standing in front of you.</p>
     </div>
     <div class="quiz-wrap reveal">
       <div class="quiz-card">
@@ -953,23 +953,122 @@ var FAQS = [
   {q:"What does the Customers Happiness Charter promise?", a:"That customers are at the <b>core of operations</b>: confidentiality, distinguished and efficient service, accurate information, deadlines observed, respectful treatment, accessibility for <b>People of Determination</b>, and welcoming feedback."}
 ];
 
-var QUIZ = [
-  {q:"A visitor wants to become a lawyer in Dubai. Which service do you point them to?",
-   o:["Registration of Advocates & Legal Consultants","Licensing of Firms","Voluntary Legal Services","Violations & Fines"],
-   c:0, e:"New Registration — via the Legal Professions System or Smart App (AED 2,020, ~14 working days)."},
-  {q:"A member of the public asks where to get free legal advice. You direct them to…",
-   o:["The Gov Portal","'Ask a lawyer' (Voluntary Legal Services)","CLPD Portal","Representation in Government Cases"],
-   c:1, e:"'Ask a lawyer' is a free voluntary legal service on the Smart App and DubaiNow."},
-  {q:"A government entity needs a contract drafted. What's the right channel?",
-   o:["DubaiNow","Smart App","Central Legal Services Portal (Gov Portal)","Email only"],
-   c:2, e:"Government legal support — including contracts — runs through the Central Legal Services Portal."},
-  {q:"A lawyer wants to pay a fine. Which service and channel?",
-   o:["Registration · Website","Violations & Fines · Legal Professions System / Smart App","Informational · Website","CLPD · CLPD Portal"],
-   c:1, e:"Violations & Fines via the Legal Professions System / Smart App — instalments and amicable settlement are available."},
-  {q:"The Customers Happiness Charter says customers should be…",
-   o:["Served on a first-come basis only","At the core of the Department's operations","Directed to a counter to wait","Asked to email everything"],
-   c:1, e:"The Charter places customers at the core of operations — that's the ambassador mindset."}
+// QUESTION BANK — every item is grounded in the verified primary material
+// (LAD Services Guide fees/timelines/documents, channels, the Customers
+// Happiness Charter, and the Voluntary Legal Services facts). The quiz draws
+// a random 5 each time. To add a question, append {q, o:[4 options], c, e}.
+var QUIZ_POOL = [
+  // ── Which service? ──
+  {q:"A visitor wants to become a lawyer in Dubai. Which service?", o:["Registration of Advocates & Legal Consultants","Licensing of Firms","Voluntary Legal Services","Violations & Fines"], c:0, e:"New Registration — via the Legal Professions System or Smart App."},
+  {q:"A member of the public wants free legal advice. Which service?", o:["Government Legal Support","Voluntary Legal Services (Pro Bono)","Representation in Government Cases","Informational Services"], c:1, e:"Voluntary Legal Services (Pro Bono) matches the public to volunteer lawyers."},
+  {q:"Someone wants to open a law firm in Dubai. Which service?", o:["Registration of Advocates","Licensing of Advocacy & Legal Consultancy Firms","Monitoring & Inspection","CLPD"], c:1, e:"Firm licensing — via the Legal Professions System / Invest in Dubai."},
+  {q:"A visitor wants to check whether a lawyer is licensed. Which service?", o:["Informational Services — Legal Directory","Complaints","Registration","Monitoring & Inspection"], c:0, e:"The Advocates & Legal Consultants Directory verifies registration/licensing."},
+  {q:"A lawyer needs to pay a professional fine. Which service?", o:["Government Legal Support","Violations & Fines","Execution of Judgments","Complaints"], c:1, e:"Violations & Fines — on the Legal Professions System."},
+  {q:"A government entity needs a contract reviewed. Which service?", o:["Government Legal Support","Voluntary Legal Services","Registration","Violations & Fines"], c:0, e:"Government Legal Support covers contract drafting, review and advice."},
+  {q:"A visitor wants to complain about a legal consultant. Which service?", o:["Monitoring & Inspection","Government & Legal Professional Complaints","Registration","Execution"], c:1, e:"Complaints — it goes to the Professional Conduct process."},
+  {q:"A government entity needs to be represented in court. Which service?", o:["Representation in Government Cases","Government Legal Support","Execution of Judgments","Complaints"], c:0, e:"The Department represents the Government and its entities in court and arbitration."},
+  {q:"A lawyer wants to record CLPD points. Which service?", o:["Registration","Professional Training & Development (CLPD)","Monitoring & Inspection","Informational Services"], c:1, e:"Continuing Legal Professional Development — on the CLPD Portal."},
+  {q:"Someone wants to report a person practising law without a licence. Which service?", o:["Complaints","Monitoring & Inspection","Violations & Fines","Directory"], c:1, e:"Monitoring & Inspection handles unlicensed-practice reports."},
+  {q:"A government entity wants to enforce a bounced cheque. Which service?", o:["Execution of Judgments & Instruments","Representation","Violations & Fines","Government Legal Support"], c:0, e:"Execution of Judgments & Instruments — includes cheque execution."},
+  {q:"A training company wants to deliver accredited CLPD courses. Which service?", o:["Registration","Professional Training & Development (CLPD)","Licensing of Firms","Government Legal Support"], c:1, e:"CLPD — Provider Accreditation and Course Accreditation."},
+  {q:"A firm wants to add a partner to its licence. Which service?", o:["Registration","Licensing of Advocacy & Legal Consultancy Firms","Complaints","CLPD"], c:1, e:"Firm licence amendments include adding/removing a partner."},
+  {q:"A resident wants to claim against a government department. Which service?", o:["Government & Legal Professional Complaints","Representation","Execution","Monitoring & Inspection"], c:0, e:"Claims against a government entity are filed through the Department."},
+  {q:"A lawyer wants the right to appear before the Court of Cassation. Which service?", o:["Registration of Advocates & Legal Consultants","Representation","CLPD","Licensing"], c:0, e:"Right of audience before the Court of Cassation is a registration sub-service."},
+  {q:"A government entity needs help drafting a new regulation. Which service?", o:["Government Legal Support","Representation","Complaints","CLPD"], c:0, e:"Government Legal Support includes legislative support."},
+  {q:"A lawyer lost their registration card. Which service?", o:["Registration (replacement card)","Violations & Fines","Complaints","Directory"], c:0, e:"A replacement registration card is a registration sub-service."},
+  {q:"A visiting foreign lawyer needs a short-term permit. Which service?", o:["Registration (visiting legal consultant permit)","Licensing","CLPD","Monitoring"], c:0, e:"The visiting legal-consultant permit is under Registration."},
+
+  // ── Fees ──
+  {q:"How much is new advocate registration?", o:["AED 520","AED 2,020","AED 3,020","Free"], c:1, e:"AED 2,020 (2,000 + 10 innovation + 10 knowledge)."},
+  {q:"How much is a 'to whom it may concern' certificate?", o:["AED 120","AED 220","AED 520","Free"], c:1, e:"AED 220 (200 + 10 + 10)."},
+  {q:"How much is a replacement registration card?", o:["AED 120","AED 220","AED 520","AED 2,020"], c:0, e:"AED 120."},
+  {q:"How much is a new firm licence?", o:["AED 1,020","AED 2,020","AED 3,020","AED 5,020"], c:2, e:"AED 3,020 (3,000 per partner for companies)."},
+  {q:"How much is a temporary rights-of-audience permit for an advocate?", o:["AED 520","AED 1,020","AED 3,020","AED 5,020"], c:3, e:"AED 5,020."},
+  {q:"How much to amend a lawyer's name on the roll?", o:["AED 120","AED 520","AED 1,020","Free"], c:1, e:"AED 520 (1 working day)."},
+  {q:"How much is registering in a CLPD activity?", o:["Free","AED 520","AED 1,050","AED 2,020"], c:2, e:"AED 1,050 (1,000 + 50 VAT)."},
+  {q:"What does it cost to claim against a government entity?", o:["AED 220","AED 520","No fee","AED 1,020"], c:2, e:"No fee — resolved by amicable settlement (Law No. 16 of 2025)."},
+  {q:"What does free legal advice (Pro Bono) cost the public?", o:["AED 50","AED 220","Free","AED 1,050"], c:2, e:"Free — Voluntary Legal Services (Pro Bono)."},
+  {q:"How much to change a firm's address on its licence?", o:["AED 220","AED 1,020","AED 3,020","Free"], c:1, e:"Firm amendments are AED 1,020 (5 working days)."},
+  {q:"What does it cost a government entity to be represented in a case?", o:["No fee","AED 1,020","AED 5,020","2% of the claim"], c:0, e:"Representation in Government Cases carries no fee."},
+  {q:"What discount do new advocates get on the registration fee?", o:["10% for 1 year","25% for 2 years","50% for their first 3 years","None"], c:2, e:"50% off the registration fee for the first 3 years."},
+  {q:"What does it cost to search the Legal Directory?", o:["AED 50","AED 220","Free","AED 120"], c:2, e:"Directory search is free."},
+  {q:"What does CLPD provider accreditation cost?", o:["No fee","AED 1,050","AED 3,020","AED 5,000"], c:0, e:"No fee (about 30 days)."},
+  {q:"How much is a visiting legal-consultant permit?", o:["AED 120","AED 220","AED 520","AED 5,020"], c:1, e:"AED 220 (2 working days)."},
+  {q:"What is the firm licence renewal fee?", o:["AED 1,020 flat","AED 3,000 per advocate / consultant","AED 220","Free"], c:1, e:"AED 3,000 per advocate/consultant (1 working day)."},
+  {q:"What does paying a fine by instalments cost?", o:["10% surcharge","AED 220","No fee","AED 520"], c:2, e:"No fee — amicable settlement and instalments are available."},
+  {q:"The extra AED 20 added to most fees is made up of…", o:["VAT only","An innovation fee (10) + a knowledge fee (10)","A service charge","A stamp duty"], c:1, e:"AED 10 innovation + AED 10 knowledge fees."},
+  {q:"What does executing a cheque cost a government entity?", o:["No fee","AED 220","1% of the cheque","AED 1,020"], c:0, e:"Execution carries no fee."},
+
+  // ── Timelines ──
+  {q:"How long does new advocate registration take?", o:["1 working day","14 working days","30 working days","60 working days"], c:1, e:"About 14 working days."},
+  {q:"How long does a new legal-consultant registration take?", o:["1 working day","18 working days","30 working days","Immediate"], c:1, e:"About 18 working days."},
+  {q:"How long does a new firm licence take?", o:["5 working days","20 working days","30 working days","60 working days"], c:1, e:"About 20 working days."},
+  {q:"How long for a 'to whom it may concern' certificate?", o:["1 working day","5 working days","14 working days","30 working days"], c:0, e:"1 working day."},
+  {q:"How long does a grievance against a fine take?", o:["1 working day","5 working days","60 working days","Immediate"], c:2, e:"Up to 60 working days."},
+  {q:"How quickly is free legal advice (Pro Bono) available?", o:["Instant","5 working days","14 working days","30 days"], c:0, e:"The request is instant; you then pick a firm and time."},
+  {q:"How long does CLPD provider accreditation take?", o:["1 day","5 working days","30 days","60 days"], c:2, e:"About 30 days."},
+  {q:"How long does a firm licence amendment take?", o:["1 working day","5 working days","20 working days","30 working days"], c:1, e:"About 5 working days."},
+  {q:"A government claim is referred to the entity within…", o:["1 working day","5 working days","15 working days","30 working days"], c:1, e:"Within 5 working days (then a 15-day response window)."},
+  {q:"When are the Department's digital services available?", o:["Sun–Thu only","Office hours","24/7","Weekends only"], c:2, e:"Digital services are available 24/7."},
+  {q:"How long does a temporary rights-of-audience permit take?", o:["1 working day","5 working days","20 working days","60 working days"], c:1, e:"About 5 working days."},
+  {q:"How long does legislative support for a government entity take?", o:["1 day","10–30 working days","60 working days","90 days"], c:1, e:"10–30 working days depending on the request."},
+  {q:"How long does a complaint typically take to resolve?", o:["1 working day","5 working days","Up to 60 working days","6 months"], c:2, e:"Up to 60 working days."},
+  {q:"What is the response window once a government claim is referred?", o:["48 hours","15 days","30 days","60 days"], c:1, e:"A 15-day response window."},
+
+  // ── Channels ──
+  {q:"Which channel registers and licenses the profession?", o:["DubaiNow","Legal Professions System (LPS)","Dubai Police app","UAE Pass only"], c:1, e:"The Legal Professions System (LPS)."},
+  {q:"Where does a government entity submit a legal request?", o:["Smart App","Central Legal Services Portal (Gov Portal)","The Directory","DubaiNow"], c:1, e:"The Central Legal Services Portal (Gov Portal)."},
+  {q:"Where do members of the public get Pro Bono legal advice?", o:["Legal Professions System","Voluntary Legal Services Smart Portal","Gov Portal","Invest in Dubai"], c:1, e:"The Voluntary Legal Services Smart Portal (also Smart App / DubaiNow)."},
+  {q:"Where is CLPD registration done?", o:["CLPD Portal","Invest in Dubai","Gov Portal","Dubai Justice"], c:0, e:"The CLPD Portal."},
+  {q:"How does a visitor verify a licensed firm?", o:["By calling the firm","The Advocates & Legal Consultants Directory","Dubai Police","They can't"], c:1, e:"The Directory on the website / Smart App."},
+  {q:"What is the Department's main call-centre number?", o:["999","800 523","901","800 4888"], c:1, e:"800 523 (also +971 4 353 3337)."},
+  {q:"Which is NOT a Department service channel?", o:["Smart App","Website","Walk-in only, no digital option","Legal Professions System"], c:2, e:"Services are digital and available 24/7 — not walk-in only."},
+  {q:"Where would a firm apply for a new licence?", o:["Legal Professions System / Invest in Dubai","DubaiNow","Dubai Courts","UAE Pass"], c:0, e:"Legal Professions System / Invest in Dubai."},
+  {q:"Which sign-in does DubaiNow use for government services?", o:["A new password each time","UAE PASS single sign-on","Email link","No sign-in"], c:1, e:"UAE PASS single sign-on."},
+
+  // ── Documents ──
+  {q:"Which document is required to register as an advocate?", o:["A university law degree","A driving licence","A tenancy contract","A trade licence"], c:0, e:"A university law degree is required (plus passport, good-conduct cert, etc.)."},
+  {q:"A registration employment contract must be attested by…", o:["The Dubai Courts","MOHRE","The applicant's bank","Dubai Police"], c:1, e:"Attested by MOHRE."},
+  {q:"Which document proves an applicant's good conduct for registration?", o:["A bank statement","A good-conduct (criminal status) certificate","A utility bill","A reference letter"], c:1, e:"A good-conduct (criminal status) certificate."},
+  {q:"To execute a bounced cheque, what must be submitted?", o:["Only the cheque","The cheque plus the bank return notice","A police report","Nothing"], c:1, e:"Copy of the cheque and the bank return notice (with reason)."},
+  {q:"What documents does free legal advice (Pro Bono) require?", o:["None","Emirates ID + salary certificate","A court order","A trade licence"], c:0, e:"None — just register and pick a firm."},
+  {q:"A complaint against a government entity must include…", o:["A signed statement of claim and ID","A bank guarantee","A medical report","A trade licence only"], c:0, e:"A signed statement of claim plus ID of the complainant."},
+  {q:"For cheque execution, a non-Arabic cheque needs…", o:["Nothing extra","A certified translation","A notarised photocopy","A police stamp"], c:1, e:"A certified translation of the cheque and bank notice."},
+  {q:"An overseas firm owner applying for a Dubai licence must name…", o:["A local sponsor","A proposed UAE-national managing advocate","A bank","An auditor"], c:1, e:"A proposed UAE-national managing advocate, who must accept and qualify."},
+
+  // ── Who is it for? ──
+  {q:"Who can use Voluntary Legal Services (Pro Bono)?", o:["Only lawyers","Members of the public","Only government","Only companies"], c:1, e:"All members of the public."},
+  {q:"Representation in Government Cases is for…", o:["Any resident","Dubai Government entities","Law firms","Tourists"], c:1, e:"Dubai Government entities."},
+  {q:"How many customer groups does the Department serve?", o:["Two","Three","Four","Six"], c:2, e:"Four: Professionals, Individuals, Government, Private organisations."},
+  {q:"Government Legal Support is provided to…", o:["The public","Dubai Government entities","Tourists","Law students"], c:1, e:"Dubai Government entities."},
+  {q:"Who can search the Legal Directory?", o:["Only lawyers","Only government","Everyone","Only firms"], c:2, e:"Everyone."},
+  {q:"CLPD is primarily for…", o:["The general public","Advocates, legal consultants & training providers","Tourists","Government only"], c:1, e:"Advocates, consultants and training providers."},
+
+  // ── Charter, happiness & behaviours ──
+  {q:"The Customers Happiness Charter places customers…", o:["After internal process","At the core of operations","On a first-come basis only","Behind government clients"], c:1, e:"At the core of the Department's operations."},
+  {q:"Which is one of the six service behaviours?", o:["Indifferent","Welcoming","Hurried","Formal-only"], c:1, e:"Welcoming (also Courteous, Professional, Understanding, Positive, Innovative)."},
+  {q:"Which is a customer's right under the charter?", o:["To be treated with courtesy and respect","To skip required documents","To unlimited free services","To set their own fees"], c:0, e:"Courtesy, respect and fair treatment are customer rights."},
+  {q:"How must the Department treat customer data?", o:["Share it across entities","Keep it confidential and private","Publish it","Sell it"], c:1, e:"Kept confidential and private."},
+  {q:"People of Determination have the right to…", o:["Pay more for priority","Accessible service tailored to their needs","Use a separate building only","Wait longer"], c:1, e:"Accessible service tailored to their needs."},
+  {q:"What are the three pillars of the Customer Happiness Formula?", o:["Speed, price, location","Proud employees, a committed entity, positive customers","Forms, queues, counters","Apps, kiosks, call centres"], c:1, e:"Proud people, a committed entity, and positive customers."},
+  {q:"A 'Mystery Shopper' programme is used to…", o:["Sell services","Measure the quality of service","Recruit staff","Audit finances"], c:1, e:"It measures service quality from the customer's view."},
+  {q:"Across Dubai Government, 'service centres' were renamed…", o:["Help desks","Customer Happiness Centres","Front offices","Service kiosks"], c:1, e:"Customer Happiness Centres, with Happiness Employees."},
+  {q:"What's the best first action when a visitor arrives?", o:["Ask for documents","Welcome them warmly and offer help","Point to a form","Tell them to wait"], c:1, e:"Welcome first — the 'Welcoming' behaviour."},
+  {q:"A visitor's right 'to be heard' means…", o:["They can give feedback or complain and have it addressed","They can interrupt staff","They get free services","They can set policy"], c:0, e:"The right to give feedback/complaints and have them addressed."},
+
+  // ── Edge cases, redirects & general ──
+  {q:"A visitor wants to file a criminal case against a neighbour. You…", o:["Open a case at LAD","Politely redirect them to Dubai Police / Public Prosecution","Refuse and dismiss them","Tell them to email LAD"], c:1, e:"LAD does not handle criminal matters — redirect to Police / Prosecution."},
+  {q:"Claims against a government entity are governed by…", o:["Law No. 16 of 2025","The penal code","Federal labour law","No law"], c:0, e:"Law No. 16 of 2025."},
+  {q:"How many advocates take part in the Pro Bono portal?", o:["About 50","About 150","About 395","About 1,000"], c:2, e:"395 lawyers across 48 areas of law."},
+  {q:"How many main services does the Department offer?", o:["6","9","11","20"], c:2, e:"11 main services (with 45 sub-services)."},
+  {q:"Right of audience before the Court of Cassation requires…", o:["A separate company","Being on the Roll of Practising Advocates and taking the oath","A master's degree","Ten years' experience"], c:1, e:"On the Roll of Practising Advocates, then take the oath."},
+  {q:"Which does the Department NOT handle?", o:["Lawyer registration","Criminal complaints","Firm licensing","CLPD"], c:1, e:"It does not handle criminal complaints — those go to Police / Prosecution."},
+  {q:"How many sub-services sit under the 11 main services?", o:["20","45","69","100"], c:1, e:"45 (29 essential + 16 complementary)."},
+  {q:"Amicable settlement of a government claim is reached through…", o:["A public auction","Negotiation or mediation","A criminal trial","A lottery"], c:1, e:"Negotiation or mediation — no fees."},
+  {q:"A foreign cheque submitted for execution must be…", o:["Notarised abroad","Translated by a certified translator","Re-issued","Cancelled"], c:1, e:"Accompanied by a certified translation."},
+  {q:"In Pro Bono, how is the public matched to a lawyer?", o:["The visitor selects an area of law, then a firm and a time","A random assignment","The courts decide","Dubai Police assigns one"], c:0, e:"The user selects the area of law, then chooses a firm and a convenient time."}
 ];
+var QUIZ = [];
 
 /* ─────────── Render ─────────── */
 function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
@@ -1133,7 +1232,13 @@ function filterFaq(q){
 
 /* ─────────── Quiz ─────────── */
 var qi=0, qscore=0, qlocked=false;
-function startQuiz(){ qi=0; qscore=0; document.getElementById('quizResult').classList.remove('on'); document.getElementById('quizQuestion').style.display=''; renderQuestion(); }
+var QUIZ_N=5;
+function pickQuiz(){
+  var pool=QUIZ_POOL.slice();
+  for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t;}
+  return pool.slice(0, Math.min(QUIZ_N, pool.length));
+}
+function startQuiz(){ QUIZ=pickQuiz(); qi=0; qscore=0; document.getElementById('quizResult').classList.remove('on'); document.getElementById('quizQuestion').style.display=''; renderQuestion(); }
 function renderQuestion(){
   qlocked=false;
   var item=QUIZ[qi];
