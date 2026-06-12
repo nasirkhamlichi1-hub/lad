@@ -179,7 +179,9 @@ body.unlocked #site{display:block}
 .ans-say-ico svg{width:16px;height:16px;stroke:var(--gold);fill:none;stroke-width:2}
 .ans-say-l{font-family:var(--mono);font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:3px}
 .ans-say-t{font-size:13.5px;color:var(--slate);line-height:1.55}
+.ans-desc{font-size:13px;color:var(--slate2);line-height:1.65;margin-bottom:14px}
 .ans-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.ans-card .svc-detail{border-top:1px dashed var(--green-border,#b8d8c5);margin-top:14px}
 .meta-tag{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:11.5px;color:var(--slate2);font-weight:500}
 .meta-tag b{color:var(--ink);font-weight:600}
 .meta-tag.who{background:var(--gold-bg);border-color:#edd9b5;color:var(--amber)}
@@ -268,6 +270,14 @@ body.unlocked #site{display:block}
 .svc-steps{list-style:none;counter-reset:st;display:grid;gap:9px;margin:0;padding:0}
 .svc-steps li{display:flex;gap:11px;font-size:12.5px;color:var(--slate);line-height:1.5;counter-increment:st;align-items:flex-start}
 .svc-steps li::before{content:counter(st);flex-shrink:0;width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;display:grid;place-items:center;margin-top:1px}
+.svc-tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:11px}
+.svc-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.svc-table th{font-family:var(--mono);font-size:8.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--slate3);text-align:left;padding:8px 12px;background:var(--paper2);border-bottom:1px solid var(--line2);font-weight:700;white-space:nowrap}
+.svc-table td{padding:9px 12px;border-bottom:1px solid var(--line);color:var(--slate);vertical-align:top;line-height:1.4}
+.svc-table tr:last-child td{border-bottom:none}
+.svc-table td.svc-fee{font-weight:600;color:var(--ink);white-space:nowrap}
+.svc-table td.svc-time{color:var(--slate2);white-space:nowrap}
+.svc-note{font-size:11.5px;color:var(--slate2);font-style:italic;line-height:1.5;margin-top:9px;padding-left:2px}
 
 /* SCENARIO CARDS */
 .scn-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -461,7 +471,6 @@ body.unlocked #site{display:block}
     <div class="hero-inner">
       <div class="hero-kicker">Legal Affairs Department · Government of Dubai</div>
       <h1 class="hero-title">Know our services.<br><em>Serve with happiness.</em></h1>
-      <div class="hero-ar">اعرف خدماتنا · واخدم بسعادة</div>
       <p class="hero-desc">Welcome to your Service Ambassador hub — an interactive guide to greeting every visitor with confidence and guiding them to the right Legal Affairs Department service. Explore, test yourself, then begin your training.</p>
       <div class="hero-btns">
         <a class="btn-p" onclick="launchTraining()">Begin training <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
@@ -770,48 +779,77 @@ var SERVICES = [
 // Per-service deep detail — fees, time, required documents and steps,
 // summarised from the official LAD Services Guide.
 var SERVICE_DETAIL = {
-  0:{fee:"AED 2,020 (2,000 registration + 10 innovation + 10 knowledge). New advocates get 50% off the registration fee for their first 3 years. 'To whom it may concern' certificate: AED 220.",
-     time:"About 14 working days · available 24/7",
-     docs:["University law degree","Passport","Good-conduct (criminal status) certificate","Certificate of passing the Ministry of Justice theoretical & practical training","Employment contract attested by MOHRE","Certificate from the commercial-licensing authority that issued the applicant's passport, confirming no commercial licences in their name (not required if the passport is Dubai-issued)","Curriculum vitae (CV)"],
+  0:{rows:[
+       {n:"New advocate registration", fee:"AED 2,020", time:"14 working days"},
+       {n:"New legal-consultant registration", fee:"AED 2,020", time:"18 working days"},
+       {n:"Registration renewal", fee:"from AED 1,020", time:"Immediate"},
+       {n:"Reinstatement of registration", fee:"AED 2,020", time:"10–14 working days"},
+       {n:"Amend name / nationality, change office, or transfer roll", fee:"AED 520", time:"1 working day"},
+       {n:"Right of audience — Court of Cassation", fee:"AED 520", time:"1 working day"},
+       {n:"Replacement registration card", fee:"AED 120", time:"1 working day"},
+       {n:"'To whom it may concern' certificate", fee:"AED 220", time:"1 working day"},
+       {n:"Temporary rights of audience permit", fee:"AED 5,020", time:"5 working days"},
+       {n:"Visiting legal-consultant permit", fee:"AED 220", time:"2 working days"}],
+     note:"Fees include a 10 innovation fee + 10 knowledge fee. New advocates get 50% off the registration fee for their first 3 years.",
+     docs:["University law degree","Passport","Good-conduct (criminal status) certificate","Certificate of passing the Ministry of Justice theoretical & practical training","Employment contract attested by MOHRE","Certificate from the commercial-licensing authority that issued the applicant's passport, confirming no commercial licences in their name (not required if Dubai-issued)","Curriculum vitae (CV)"],
      steps:["Apply on the Legal Professions System or Smart App","The Department reviews the application and documents","Pay the fees","Registration decision and registration card issued"]},
-  1:{fee:"AED 3,020 (3,000 licence + 10 innovation + 10 knowledge). New advocates get 50% off the licence fees for their first 3 years.",
-     time:"About 20 working days · available 24/7",
-     docs:["Detailed experience certificate from the previous employer (for advocates with under 2 years' practice)","Owners of a legal office outside Dubai: an undertaking naming a proposed UAE-national managing advocate","Signed acceptance from the proposed manager to join the Dubai office full-time","Proof the proposed manager is registered with the Department or the Ministry of Justice (or meets the Article 7 registration requirements)","Proof the proposed manager has at least 2 consecutive years' legal experience"],
+  1:{rows:[
+       {n:"New firm licence (sole establishment, company or branch)", fee:"AED 3,020 (AED 3,000 per partner for companies)", time:"20 working days"},
+       {n:"Firm licence renewal", fee:"AED 3,000 per advocate / consultant", time:"1 working day"},
+       {n:"Amend licence — name, address, manager, activity, partner, legal form, or add a branch", fee:"AED 1,020", time:"5 working days"},
+       {n:"Temporary or permanent cessation", fee:"No fee", time:"5 working days"},
+       {n:"'To whom it may concern' certificate", fee:"AED 220", time:"1 working day"}],
+     note:"Fees include a 10 innovation fee + 10 knowledge fee. New advocates get 50% off the licence fees for their first 3 years.",
+     docs:["Detailed experience certificate from the previous employer (for advocates with under 2 years' practice)","Owners of a legal office outside Dubai: an undertaking naming a proposed UAE-national managing advocate","Signed acceptance from the proposed manager to join the Dubai office full-time","Proof the proposed manager is registered with the Department or the Ministry of Justice (or meets the Article 7 requirements)","Proof the proposed manager has at least 2 consecutive years' legal experience"],
      steps:["Apply on the Legal Professions System / Invest in Dubai","The Department reviews the application","Pay the fees","No-objection certificate and professional licence issued"]},
-  2:{fee:"Fines are paid in the system, with amicable settlement and instalments available. Grievance against a fine: no fee.",
-     time:"Fine payment is immediate · a grievance against a fine takes up to 60 working days",
+  2:{rows:[
+       {n:"Pay a fine", fee:"Fine amount", time:"Immediate"},
+       {n:"Amicable settlement of a fine", fee:"No fee", time:"5 working days"},
+       {n:"Pay a fine by instalments", fee:"No fee", time:"5 working days"},
+       {n:"Grievance against a fine (or other decision)", fee:"No fee", time:"60 working days"}],
      docs:["A written grievance stating the reasons","Any supporting documents"],
      steps:["Submit the payment, settlement or grievance on the Legal Professions System","The Grievances Committee reviews (for grievances)","A decision is issued and the person is notified"]},
-  3:{fee:"Free — no fee",
-     time:"Instant request · available 24/7",
+  3:{rows:[
+       {n:"Ask a lawyer (free legal advice)", fee:"Free", time:"Instant"}],
      docs:["None"],
      steps:["Register on the Voluntary Legal Services Smart Portal","Choose the area of law and preferred language","Pick an available firm and a convenient time","Receive the free legal consultation"]},
-  4:{fee:"AED 1,050 per professional-development activity (1,000 + 50 VAT)",
-     time:"About 1 day to register · portal available 24/7",
+  4:{rows:[
+       {n:"Register in a CLPD activity", fee:"AED 1,050 (1,000 + 50 VAT)", time:"1 day"},
+       {n:"Provider accreditation", fee:"No fee", time:"30 days"},
+       {n:"Training-course accreditation", fee:"No fee", time:"30 days"}],
      docs:["Not applicable"],
      steps:["Log in to the CLPD Portal","Buy enough units (online or via the customer reception team)","Choose the development activity","Choose the date and time","Register for the activity"]},
-  5:{fee:"No fee",
-     time:"Tied to the final court judgment (not fixed) · 24/7 submission",
+  5:{rows:[
+       {n:"Representation in civil, criminal or arbitration cases", fee:"No fee", time:"Tied to the final judgment"}],
      docs:["For a case brought by the government: a request form/letter from the entity, with documents supporting the right claimed","For a case against the government: the judicial notice with the statement of claim naming the entity"],
      steps:["The entity submits the request via the Central Legal Services Portal or email","The Department takes up the representation","Amicable settlement, or a final judgment/order — with the executory copy for judgments in the entity's favour"]},
-  6:{fee:"No fee",
-     time:"Submission available 24/7 (varies by case)",
+  6:{rows:[
+       {n:"Execution of cheques", fee:"No fee", time:"Varies by case"},
+       {n:"Execution of administrative resolutions", fee:"No fee", time:"Varies by case"},
+       {n:"Execution of criminal judgments", fee:"No fee", time:"Varies by case"},
+       {n:"Execution of judgments against individuals", fee:"No fee", time:"60 working days"}],
      docs:["Copy of the cheque","Bank notice (cheque-return advice and reason — no/insufficient funds, account closed or frozen)","Certified translation of the cheque and bank notice","Copy of ID (if the defendant is an individual)","Company licence and authorised-signatory ID (if the defendant is a company)","Explanatory memo of why the cheque was issued","Letter from the entity regarding any partial payment"],
      steps:["Submit via the Gov Portal or email with the judgment and its executory wording","The Department prepares and approves the enforcement letter","The entity is notified and complies — amicable settlement, or the claim is registered with a case number"]},
-  7:{fee:"No fee",
-     time:"10–30 working days depending on the request type · 24/7 submission",
-     docs:["An official request from the government entity via the service channels","The draft legislation to prepare or review (or the key provisions to include if there is no draft)","Related correspondence and relevant federal/local legislation or resolutions","Any other documents the Department requests"],
-     steps:["Submit the request via the Central Legal Services Portal or email","The Department classifies and works the request","The output is delivered — e.g. a draft law/regulation/resolution, or legal observations on a draft"]},
-  8:{fee:"No fee",
-     time:"Up to 60 working days · government claims are referred to the entity within 5 working days, with a 15-day response window",
+  7:{rows:[
+       {n:"Legislative support", fee:"No fee", time:"10–30 working days"},
+       {n:"Legal advice", fee:"No fee", time:"10–20 working days"},
+       {n:"Company incorporation & governance", fee:"No fee", time:"First response 5–30 working days"},
+       {n:"IP rights support", fee:"No LAD fee (Ministry of Economy fees may apply)", time:"Trademark 3–6 months"},
+       {n:"Contract drafting / review / advice", fee:"No fee", time:"First response 5–30 working days"}],
+     docs:["An official request from the government entity via the service channels","The draft legislation or contract to prepare or review (or the key provisions to include if there is no draft)","Related correspondence and relevant federal/local legislation or resolutions","Any other documents the Department requests"],
+     steps:["Submit the request via the Central Legal Services Portal or email","The Department classifies and works the request","The output is delivered — e.g. a draft law/regulation, contract, or legal observations"]},
+  8:{rows:[
+       {n:"Claim / complaint against a government entity", fee:"No fee", time:"Up to 60 working days"},
+       {n:"Complaint against an advocate / consultant", fee:"No fee", time:"Up to 60 working days"}],
+     note:"Government claims are referred to the entity within 5 working days, with a 15-day response window (Law No. 16 of 2025).",
      docs:["A signed statement of claim with: claimant name, title, ID details, contact and domicile","The legal representative's details and power of attorney (if any)","The name of the respondent government entity","The subject, details, requests and grounds of the claim","ID of the complainant (Emirates ID or valid passport; power of attorney if via an agent; commercial licence for organisations)"],
      steps:["File via the website, Smart App or in person","Amicable settlement is attempted (negotiation or mediation)","A settlement agreement, or a certificate of compliance with the Government Claims Law procedures, is issued"]},
-  9:{fee:"Free — no fee",
-     time:"Reporting available 24/7",
+  9:{rows:[
+       {n:"Report unlicensed practice / conduct breach", fee:"No fee", time:"Reporting 24/7"}],
      docs:["Details of the person or activity being reported","Any supporting evidence (e.g. adverts, documents)"],
      steps:["Report the suspected unlicensed practice to the Department","The Department reviews and inspects","Action is taken where a breach is confirmed"]},
-  10:{fee:"Free — no fee",
-     time:"Instant · available 24/7",
+  10:{rows:[
+       {n:"Search advocates, consultants & firms", fee:"Free", time:"Instant"}],
      docs:["None"],
      steps:["Open the Advocates & Legal Consultants Directory on the website","Search by the person's or firm's name (full or partial)","View the registration / licensing status"]}
 };
@@ -977,7 +1015,9 @@ function showNeed(pIdx,nIdx){
       '<div class="ans-en">'+s.en+'</div><div class="ans-ar">'+s.ar+'</div>'+
       '<div class="ans-say"><div class="ans-say-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>'+
         '<div><div class="ans-say-l">Say this</div><div class="ans-say-t">'+n.say+'</div></div></div>'+
+      '<div class="ans-desc">'+s.desc+'</div>'+
       '<div class="ans-meta"><span class="meta-tag who"><b>For:</b> '+s.who+'</span><span class="meta-tag"><b>Channel:</b> '+s.ch+'</span></div>'+
+      svcDetailHTML(n.si)+
       link+
       '<div><button class="ans-reset" onclick="pickPersona('+pIdx+')"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Another need</button></div>'+
     '</div>';
@@ -990,32 +1030,33 @@ function finderHome(){
   document.getElementById('finderStep2').style.display='none';
   document.getElementById('finderStep1').style.display='';
 }
+function svcDetailHTML(i){
+  var d=SERVICE_DETAIL[i]||{}; var detail='<div class="svc-detail">';
+  if(d.rows&&d.rows.length){
+    detail+='<div class="svc-block-label">Fees &amp; timelines — by sub-service</div>'+
+      '<div class="svc-tablewrap"><table class="svc-table"><thead><tr><th>Sub-service</th><th>Fee</th><th>Time</th></tr></thead><tbody>'+
+      d.rows.map(function(r){return '<tr><td>'+r.n+'</td><td class="svc-fee">'+r.fee+'</td><td class="svc-time">'+r.time+'</td></tr>';}).join('')+
+      '</tbody></table></div>'+
+      (d.note?'<div class="svc-note">'+d.note+'</div>':'');
+  }
+  if(d.docs&&d.docs.length){
+    detail+='<div class="svc-block-label">Required documents</div><ul class="svc-docs">'+
+      d.docs.map(function(x){return '<li><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span>'+x+'</span></li>';}).join('')+'</ul>';
+  }
+  if(d.steps&&d.steps.length){
+    detail+='<div class="svc-block-label">How it works</div><ol class="svc-steps">'+
+      d.steps.map(function(x){return '<li><span>'+x+'</span></li>';}).join('')+'</ol>';
+  }
+  return detail+'</div>';
+}
 function renderServices(){
   var list=document.getElementById('svcList');
   SERVICES.forEach(function(s,i){
-    var subs=s.subs.map(function(z){return '<span class="sub-chip">'+z+'</span>';}).join('');
     var card=el('div','svc');
-    card.dataset.search=(s.en+' '+s.ar+' '+s.desc+' '+s.who+' '+s.subs.join(' ')+' '+s.ch).toLowerCase();
     var d=SERVICE_DETAIL[i]||{};
-    var detail='';
-    if(d.fee||d.time||(d.docs&&d.docs.length)||(d.steps&&d.steps.length)){
-      detail='<div class="svc-detail">';
-      if(d.fee||d.time){
-        detail+='<div class="svc-facts">'+
-          (d.fee?'<div class="fact"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.5a2.5 2.5 0 0 0-2.5-1.5c-1.4 0-2.5.9-2.5 2s1.1 2 2.5 2 2.5.9 2.5 2-1.1 2-2.5 2a2.5 2.5 0 0 1-2.5-1.5M12 6.5v11"/></svg><div><b>Fee</b>'+d.fee+'</div></div>':'')+
-          (d.time?'<div class="fact"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div><b>Time</b>'+d.time+'</div></div>':'')+
-        '</div>';
-      }
-      if(d.docs&&d.docs.length){
-        detail+='<div class="svc-block-label">Required documents</div><ul class="svc-docs">'+
-          d.docs.map(function(x){return '<li><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span>'+x+'</span></li>';}).join('')+'</ul>';
-      }
-      if(d.steps&&d.steps.length){
-        detail+='<div class="svc-block-label">How it works</div><ol class="svc-steps">'+
-          d.steps.map(function(x){return '<li><span>'+x+'</span></li>';}).join('')+'</ol>';
-      }
-      detail+='</div>';
-    }
+    var rowsTxt=(d.rows||[]).map(function(r){return r.n+' '+r.fee+' '+r.time;}).join(' ');
+    card.dataset.search=(s.en+' '+s.ar+' '+s.desc+' '+s.who+' '+s.subs.join(' ')+' '+s.ch+' '+rowsTxt).toLowerCase();
+    var detail=svcDetailHTML(i);
     card.innerHTML=
       '<div class="svc-head"><div class="svc-num">'+(i+1)+'</div>'+
         '<div class="svc-titles"><div class="svc-en">'+s.en+'</div><div class="svc-ar">'+s.ar+'</div></div>'+
@@ -1023,7 +1064,6 @@ function renderServices(){
       '<div class="svc-body"><div class="svc-body-inner">'+
         '<div class="svc-desc">'+s.desc+'</div>'+
         '<div class="svc-meta"><span class="meta-tag who"><b>For:</b> '+s.who+'</span><span class="meta-tag"><b>Channel:</b> '+s.ch+'</span></div>'+
-        '<div class="svc-subs-label">Includes</div><div class="svc-subs">'+subs+'</div>'+
         detail+
         (s.url?'<a class="svc-link" href="'+s.url+'" target="_blank" rel="noopener">Open the official service <svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></a>':'')+
       '</div></div>';
