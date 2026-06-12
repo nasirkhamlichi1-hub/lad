@@ -256,6 +256,38 @@ body.unlocked #site{display:block}
 .svc-subs-label{font-family:var(--mono);font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--slate3);font-weight:600;margin-bottom:8px}
 .svc-subs{display:flex;flex-wrap:wrap;gap:7px}
 .sub-chip{background:#fff;border:1px solid var(--line2);border-radius:7px;padding:5px 11px;font-size:12px;color:var(--slate);font-weight:500}
+.svc-detail{margin-top:16px;border-top:1px dashed var(--line2);padding-top:16px}
+.svc-facts{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:6px}
+.fact{display:flex;gap:9px;align-items:flex-start;background:var(--paper2);border:1px solid var(--line);border-radius:11px;padding:10px 13px;font-size:12.5px;color:var(--slate);line-height:1.45;flex:1;min-width:200px}
+.fact svg{width:16px;height:16px;stroke:var(--gold);flex-shrink:0;margin-top:1px;fill:none;stroke-width:1.9}
+.fact b{display:block;font-family:var(--mono);font-size:8.5px;letter-spacing:1px;text-transform:uppercase;color:var(--slate3);margin-bottom:3px;font-weight:700}
+.svc-block-label{font-family:var(--mono);font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--slate3);font-weight:600;margin:16px 0 9px}
+.svc-docs{list-style:none;display:grid;gap:7px}
+.svc-docs li{display:flex;gap:9px;font-size:12.5px;color:var(--slate);line-height:1.5}
+.svc-docs li svg{width:14px;height:14px;stroke:var(--green);flex-shrink:0;margin-top:2px;fill:none;stroke-width:2.2}
+.svc-steps{list-style:none;counter-reset:st;display:grid;gap:9px;margin:0;padding:0}
+.svc-steps li{display:flex;gap:11px;font-size:12.5px;color:var(--slate);line-height:1.5;counter-increment:st;align-items:flex-start}
+.svc-steps li::before{content:counter(st);flex-shrink:0;width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;display:grid;place-items:center;margin-top:1px}
+
+/* SCENARIO CARDS */
+.scn-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.scn{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-sm);overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .2s}
+.scn.open{box-shadow:var(--sh-md)}
+.scn-top{padding:20px 22px 16px}
+.scn-vlabel{font-family:var(--mono);font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--slate3);font-weight:600;margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.scn-vlabel svg{width:14px;height:14px;stroke:var(--gold);fill:none;stroke-width:1.9}
+.scn-quote{font-family:var(--serif);font-size:19px;color:var(--ink);line-height:1.3;font-style:italic}
+.scn-btn{margin:0 22px 18px;align-self:flex-start;display:inline-flex;align-items:center;gap:7px;background:var(--paper2);border:1px solid var(--line2);color:var(--green);font-family:var(--sans);font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:9px;cursor:pointer;transition:all .15s}
+.scn-btn:hover{background:var(--green);color:#fff;border-color:var(--green)}
+.scn-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.2;transition:transform .25s}
+.scn.open .scn-btn svg{transform:rotate(180deg)}
+.scn-ans{max-height:0;overflow:hidden;transition:max-height .3s ease;background:linear-gradient(180deg,#f4faf6,#fff);border-top:1px solid var(--line)}
+.scn-ans-inner{padding:16px 22px 20px}
+.scn-ans-l{font-family:var(--mono);font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--green);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.scn-ans-l svg{width:14px;height:14px;stroke:var(--green);fill:none;stroke-width:2.2}
+.scn-ans-t{font-size:13.5px;color:var(--slate);line-height:1.65}
+.scn-ans-t b{color:var(--green);font-weight:600}
+.scn-tag{display:inline-block;margin-top:13px;background:var(--gold-bg);border:1px solid #edd9b5;color:var(--amber);font-family:var(--mono);font-size:10px;font-weight:600;padding:3px 10px;border-radius:6px}
 
 /* CHANNELS */
 .chan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -349,6 +381,7 @@ body.unlocked #site{display:block}
   .charter-grid,.vmv{grid-template-columns:1fr}
   .persona-grid{grid-template-columns:1fr 1fr}
   .intent-grid{grid-template-columns:1fr 1fr}
+  .scn-grid{grid-template-columns:1fr}
   .behav-grid{grid-template-columns:1fr 1fr 1fr}
   .aud-grid{grid-template-columns:1fr 1fr}
   .chan-grid{grid-template-columns:1fr}
@@ -415,6 +448,7 @@ body.unlocked #site{display:block}
       <a class="nav-link" href="#charter">Charter</a>
       <a class="nav-link" href="#services">Services</a>
       <a class="nav-link" href="#quiz">Knowledge check</a>
+      <a class="nav-link" href="#scenarios">Practice</a>
       <a class="nav-link" href="#faq">FAQs</a>
       <a class="nav-cta" onclick="launchTraining()">Begin training <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
       <span class="nav-lock" onclick="lockSite()" title="Lock">Lock</span>
@@ -584,8 +618,18 @@ body.unlocked #site{display:block}
     </div>
   </div></section>
 
+  <!-- SCENARIOS -->
+  <section class="section" id="scenarios">
+    <div class="sec-head reveal">
+      <div class="eyebrow gold">Scenario practice</div>
+      <h2 class="sec-title">A visitor says… <em>what do you do?</em></h2>
+      <p class="sec-sub">Real moments at the desk. Read each one, decide your response, then reveal the model answer.</p>
+    </div>
+    <div class="scn-grid reveal" id="scnGrid"></div>
+  </section>
+
   <!-- FAQ -->
-  <section class="section" id="faq">
+  <section class="band"><div class="section" id="faq">
     <div class="sec-head reveal">
       <div class="eyebrow gold">At the desk</div>
       <h2 class="sec-title">Questions you'll be <em>asked</em></h2>
@@ -597,7 +641,7 @@ body.unlocked #site{display:block}
     </div>
     <div class="faq-list reveal" id="faqList"></div>
     <div class="no-results" id="faqNone">No questions match that search.</div>
-  </section>
+  </div></section>
 
   <!-- LAUNCH -->
   <section class="launch"><div class="launch-glow"></div><div class="launch-inner">
@@ -721,6 +765,79 @@ var SERVICES = [
    url:'https://lps.legal.dubai.gov.ae/AreasOfLaws',
    desc:"The Advocates & Legal Consultants Directory — verify whether an advocate or legal consultant is registered, or whether a firm is licensed in Dubai. Search by full or partial name of the person or the firm.",
    subs:["Search for a registered advocate / consultant","Search for a licensed firm","Browse by area of law"]}
+];
+
+// Per-service deep detail — fees, time, required documents and steps,
+// summarised from the official LAD Services Guide.
+var SERVICE_DETAIL = {
+  0:{fee:"AED 2,020 (2,000 registration + 10 innovation + 10 knowledge). New advocates get 50% off the registration fee for their first 3 years. 'To whom it may concern' certificate: AED 220.",
+     time:"About 14 working days · available 24/7",
+     docs:["University law degree","Passport","Good-conduct (criminal status) certificate","Certificate of passing the Ministry of Justice theoretical & practical training","Employment contract attested by MOHRE","Certificate from the commercial-licensing authority that issued the applicant's passport, confirming no commercial licences in their name (not required if the passport is Dubai-issued)","Curriculum vitae (CV)"],
+     steps:["Apply on the Legal Professions System or Smart App","The Department reviews the application and documents","Pay the fees","Registration decision and registration card issued"]},
+  1:{fee:"AED 3,020 (3,000 licence + 10 innovation + 10 knowledge). New advocates get 50% off the licence fees for their first 3 years.",
+     time:"About 20 working days · available 24/7",
+     docs:["Detailed experience certificate from the previous employer (for advocates with under 2 years' practice)","Owners of a legal office outside Dubai: an undertaking naming a proposed UAE-national managing advocate","Signed acceptance from the proposed manager to join the Dubai office full-time","Proof the proposed manager is registered with the Department or the Ministry of Justice (or meets the Article 7 registration requirements)","Proof the proposed manager has at least 2 consecutive years' legal experience"],
+     steps:["Apply on the Legal Professions System / Invest in Dubai","The Department reviews the application","Pay the fees","No-objection certificate and professional licence issued"]},
+  2:{fee:"Fines are paid in the system, with amicable settlement and instalments available. Grievance against a fine: no fee.",
+     time:"Fine payment is immediate · a grievance against a fine takes up to 60 working days",
+     docs:["A written grievance stating the reasons","Any supporting documents"],
+     steps:["Submit the payment, settlement or grievance on the Legal Professions System","The Grievances Committee reviews (for grievances)","A decision is issued and the person is notified"]},
+  3:{fee:"Free — no fee",
+     time:"Instant request · available 24/7",
+     docs:["None"],
+     steps:["Register on the Voluntary Legal Services Smart Portal","Choose the area of law and preferred language","Pick an available firm and a convenient time","Receive the free legal consultation"]},
+  4:{fee:"AED 1,050 per professional-development activity (1,000 + 50 VAT)",
+     time:"About 1 day to register · portal available 24/7",
+     docs:["Not applicable"],
+     steps:["Log in to the CLPD Portal","Buy enough units (online or via the customer reception team)","Choose the development activity","Choose the date and time","Register for the activity"]},
+  5:{fee:"No fee",
+     time:"Tied to the final court judgment (not fixed) · 24/7 submission",
+     docs:["For a case brought by the government: a request form/letter from the entity, with documents supporting the right claimed","For a case against the government: the judicial notice with the statement of claim naming the entity"],
+     steps:["The entity submits the request via the Central Legal Services Portal or email","The Department takes up the representation","Amicable settlement, or a final judgment/order — with the executory copy for judgments in the entity's favour"]},
+  6:{fee:"No fee",
+     time:"Submission available 24/7 (varies by case)",
+     docs:["Copy of the cheque","Bank notice (cheque-return advice and reason — no/insufficient funds, account closed or frozen)","Certified translation of the cheque and bank notice","Copy of ID (if the defendant is an individual)","Company licence and authorised-signatory ID (if the defendant is a company)","Explanatory memo of why the cheque was issued","Letter from the entity regarding any partial payment"],
+     steps:["Submit via the Gov Portal or email with the judgment and its executory wording","The Department prepares and approves the enforcement letter","The entity is notified and complies — amicable settlement, or the claim is registered with a case number"]},
+  7:{fee:"No fee",
+     time:"10–30 working days depending on the request type · 24/7 submission",
+     docs:["An official request from the government entity via the service channels","The draft legislation to prepare or review (or the key provisions to include if there is no draft)","Related correspondence and relevant federal/local legislation or resolutions","Any other documents the Department requests"],
+     steps:["Submit the request via the Central Legal Services Portal or email","The Department classifies and works the request","The output is delivered — e.g. a draft law/regulation/resolution, or legal observations on a draft"]},
+  8:{fee:"No fee",
+     time:"Up to 60 working days · government claims are referred to the entity within 5 working days, with a 15-day response window",
+     docs:["A signed statement of claim with: claimant name, title, ID details, contact and domicile","The legal representative's details and power of attorney (if any)","The name of the respondent government entity","The subject, details, requests and grounds of the claim","ID of the complainant (Emirates ID or valid passport; power of attorney if via an agent; commercial licence for organisations)"],
+     steps:["File via the website, Smart App or in person","Amicable settlement is attempted (negotiation or mediation)","A settlement agreement, or a certificate of compliance with the Government Claims Law procedures, is issued"]},
+  9:{fee:"Free — no fee",
+     time:"Reporting available 24/7",
+     docs:["Details of the person or activity being reported","Any supporting evidence (e.g. adverts, documents)"],
+     steps:["Report the suspected unlicensed practice to the Department","The Department reviews and inspects","Action is taken where a breach is confirmed"]},
+  10:{fee:"Free — no fee",
+     time:"Instant · available 24/7",
+     docs:["None"],
+     steps:["Open the Advocates & Legal Consultants Directory on the website","Search by the person's or firm's name (full or partial)","View the registration / licensing status"]}
+};
+
+var SCENARIOS = [
+  {q:"I just graduated in law — how do I become a lawyer here?",
+   a:"Welcome them warmly. This is <b>New Registration</b> (Registration of Advocates). They apply on the <b>Legal Professions System</b> or Smart App — <b>AED 2,020</b>, about <b>14 working days</b>, with <b>50% off the fee for their first 3 years</b>. Offer the document list: degree, passport, good-conduct certificate, Ministry of Justice training certificate, MOHRE-attested contract and CV.",
+   tag:"Registration"},
+  {q:"A lawyer treated me badly and took my money!",
+   a:"Stay calm and empathetic — reassure them you'll help. This is a <b>complaint against an advocate or legal consultant</b>: file via the website or Smart App; it goes to the <b>Professional Conduct</b> process (Professional.conduct@legal.dubai.gov.ae). Don't take sides — note the lawyer's name and the details.",
+   tag:"Complaints"},
+  {q:"I can't afford a lawyer but I really need legal advice.",
+   a:"Reassure them — the Department offers <b>free Voluntary Legal Services (Pro Bono)</b>. Help them register on the <b>Voluntary Legal Services Smart Portal</b> (also on the Smart App / DubaiNow), choose the area of law, and they'll be matched with a volunteer lawyer. <b>No fee.</b>",
+   tag:"Pro Bono"},
+  {q:"How do I know if 'XYZ Law Firm' is actually licensed?",
+   a:"Great question to encourage. Use the <b>Advocates & Legal Consultants Directory</b> on the website — search by the firm or person's name (full or partial) to confirm they're licensed. Offer to show them how.",
+   tag:"Directory"},
+  {q:"Our government department needs a contract reviewed — urgently.",
+   a:"That's <b>Government Legal Support</b> via the <b>Central Legal Services Portal (Gov Portal)</b> — contract drafting, review and advice. Typically <b>10–30 working days</b> by request type; <b>no fee</b>. Help them find the portal and the documents to attach.",
+   tag:"Gov support"},
+  {q:"I want to file a criminal case against my neighbour!",
+   a:"Empathise, then redirect correctly. The Legal Affairs Department <b>does not handle criminal reports or complaints</b> — politely direct them to <b>Dubai Police / Public Prosecution</b>. (For a non-criminal dispute with a <i>government entity</i>, the Department can help under Law No. 16 of 2025.)",
+   tag:"Redirect"},
+  {q:"(A visitor using a wheelchair approaches your desk.)",
+   a:"Lead with the Charter: serve <b>People of Determination in line with their needs</b>. Proactively offer help, make sure the channel is accessible, be patient, and guide them through the service or the smart channel yourself.",
+   tag:"Inclusive service"}
 ];
 
 var PERSONAS = [
@@ -879,6 +996,26 @@ function renderServices(){
     var subs=s.subs.map(function(z){return '<span class="sub-chip">'+z+'</span>';}).join('');
     var card=el('div','svc');
     card.dataset.search=(s.en+' '+s.ar+' '+s.desc+' '+s.who+' '+s.subs.join(' ')+' '+s.ch).toLowerCase();
+    var d=SERVICE_DETAIL[i]||{};
+    var detail='';
+    if(d.fee||d.time||(d.docs&&d.docs.length)||(d.steps&&d.steps.length)){
+      detail='<div class="svc-detail">';
+      if(d.fee||d.time){
+        detail+='<div class="svc-facts">'+
+          (d.fee?'<div class="fact"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.5a2.5 2.5 0 0 0-2.5-1.5c-1.4 0-2.5.9-2.5 2s1.1 2 2.5 2 2.5.9 2.5 2-1.1 2-2.5 2a2.5 2.5 0 0 1-2.5-1.5M12 6.5v11"/></svg><div><b>Fee</b>'+d.fee+'</div></div>':'')+
+          (d.time?'<div class="fact"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div><b>Time</b>'+d.time+'</div></div>':'')+
+        '</div>';
+      }
+      if(d.docs&&d.docs.length){
+        detail+='<div class="svc-block-label">Required documents</div><ul class="svc-docs">'+
+          d.docs.map(function(x){return '<li><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span>'+x+'</span></li>';}).join('')+'</ul>';
+      }
+      if(d.steps&&d.steps.length){
+        detail+='<div class="svc-block-label">How it works</div><ol class="svc-steps">'+
+          d.steps.map(function(x){return '<li><span>'+x+'</span></li>';}).join('')+'</ol>';
+      }
+      detail+='</div>';
+    }
     card.innerHTML=
       '<div class="svc-head"><div class="svc-num">'+(i+1)+'</div>'+
         '<div class="svc-titles"><div class="svc-en">'+s.en+'</div><div class="svc-ar">'+s.ar+'</div></div>'+
@@ -887,6 +1024,7 @@ function renderServices(){
         '<div class="svc-desc">'+s.desc+'</div>'+
         '<div class="svc-meta"><span class="meta-tag who"><b>For:</b> '+s.who+'</span><span class="meta-tag"><b>Channel:</b> '+s.ch+'</span></div>'+
         '<div class="svc-subs-label">Includes</div><div class="svc-subs">'+subs+'</div>'+
+        detail+
         (s.url?'<a class="svc-link" href="'+s.url+'" target="_blank" rel="noopener">Open the official service <svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></a>':'')+
       '</div></div>';
     var head=card.querySelector('.svc-head'), body=card.querySelector('.svc-body');
@@ -915,6 +1053,21 @@ function renderFaq(){
     var q=item.querySelector('.faq-q'), a=item.querySelector('.faq-a');
     q.addEventListener('click',function(){var open=item.classList.toggle('open');a.style.maxHeight=open?a.scrollHeight+'px':0;});
     l.appendChild(item);
+  });
+}
+function renderScenarios(){
+  var g=document.getElementById('scnGrid');
+  SCENARIOS.forEach(function(s){
+    var c=el('div','scn');
+    c.innerHTML=
+      '<div class="scn-top"><div class="scn-vlabel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>A visitor says</div>'+
+        '<div class="scn-quote">"'+s.q+'"</div></div>'+
+      '<button class="scn-btn">What do you do? <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button>'+
+      '<div class="scn-ans"><div class="scn-ans-inner"><div class="scn-ans-l"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Your move</div>'+
+        '<div class="scn-ans-t">'+s.a+'</div><span class="scn-tag">'+s.tag+'</span></div></div>';
+    var btn=c.querySelector('.scn-btn'), ans=c.querySelector('.scn-ans');
+    btn.addEventListener('click',function(){var open=c.classList.toggle('open');ans.style.maxHeight=open?ans.scrollHeight+'px':0;});
+    g.appendChild(c);
   });
 }
 function filterFaq(q){
@@ -1048,7 +1201,7 @@ window.addEventListener('scroll',function(){
 });
 
 /* ─────────── Boot ─────────── */
-renderCharter(); renderBehaviours(); renderPersonas(); renderServices(); renderChannels(); renderFaq();
+renderCharter(); renderBehaviours(); renderPersonas(); renderServices(); renderChannels(); renderScenarios(); renderFaq();
 applyLaunchState(); startQuiz();
 </script>
 </body>
