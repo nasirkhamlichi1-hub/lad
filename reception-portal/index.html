@@ -1303,7 +1303,7 @@ function confetti(){
 }
 
 /* ─────────── Gate ─────────── */
-function reveal(){ document.body.classList.add('unlocked'); initReveal(); }
+function reveal(){ document.body.classList.add('unlocked'); initReveal(); startQuiz(); }
 try{ if(localStorage.getItem(UNLOCK_KEY)==='1') reveal(); }catch(_){}
 function tryUnlock(e){
   e.preventDefault();
