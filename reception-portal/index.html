@@ -3,32 +3,29 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Reception Training Academy — Legal Affairs Department, Government of Dubai</title>
-<meta name="description" content="Official training portal for Legal Affairs Department reception staff. Government of Dubai."/>
+<title>Service Ambassador Programme — Legal Affairs Department, Government of Dubai</title>
+<meta name="description" content="The Legal Affairs Department Service Ambassador training programme. Government of Dubai."/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 
 <!-- ════════════════════════════════════════════════════════════
-     CONFIG — one place to wire this landing page into Docebo.
-     Edit these values, save, redeploy. Nothing else needs to change.
+     CONFIG — the two things you may want to change.
 ════════════════════════════════════════════════════════════ -->
 <script>
-window.RECEPTION_CONFIG = {
-  // Docebo tenant — learner area. Visitors who aren't signed in are
-  // redirected to the Docebo login page automatically.
+window.SITE_CONFIG = {
+  // The single shared password that unlocks the briefing page.
+  accessPassword: 'Legal Affairs',
+
+  // Where the "Launch the training" button sends people. Once your
+  // Articulate SCORM course is published in Docebo, this can stay as the
+  // learner home, or be swapped for the direct course deep-link.
   doceboUrl: 'https://creativewordtraining.docebosaas.com/learn',
 
-  // OPTIONAL — a direct "deep link" to the specific reception course /
-  // learning plan. Leave blank to land users on the Docebo learner home.
-  // Example: 'https://creativewordtraining.docebosaas.com/learn/course/123/reception-excellence'
-  courseDeepLink: '',
+  // Set true once the course is live in Docebo. false = button shows a
+  // friendly "coming soon" message instead of opening Docebo.
+  courseLive: true,
 
-  // If your Docebo login page accepts a pre-filled username via query string,
-  // set the param name here. Left blank = clean redirect (recommended).
-  usernameParam: '',
-
-  // Support contact shown on the card.
   supportEmail: 'training@legal.dubai.gov.ae'
 };
 </script>
@@ -55,21 +52,52 @@ window.RECEPTION_CONFIG = {
 html,body{color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;min-height:100vh}
 body{background:var(--paper)}
 ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+em{font-style:italic}
 
-/* ════ LAD OFFICIAL HEADER — legal.dubai.gov.ae replica ════ */
+/* ════════ GATE (the first page) ════════ */
+#gate{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:var(--navy2);overflow:hidden}
+#gate .gate-bg{position:absolute;inset:0;background-image:url('img/dclpd-reception.jpg');background-size:cover;background-position:center 40%}
+#gate .gate-overlay{position:absolute;inset:0;background:linear-gradient(140deg,rgba(8,12,22,.96) 0%,rgba(8,12,22,.86) 55%,rgba(8,12,22,.7) 100%)}
+.gate-card{position:relative;z-index:1;width:100%;max-width:430px;background:#fff;border-radius:var(--r-xl);box-shadow:var(--sh-xl);overflow:hidden;animation:rise .5s cubic-bezier(.2,.7,.2,1)}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.gate-logos{background:var(--navy);padding:22px 28px;display:flex;align-items:center;gap:14px}
+.gate-logos img{height:34px;width:auto}
+.gate-logos-sep{width:1px;height:26px;background:rgba(255,255,255,.22)}
+.gate-body{padding:30px 32px 34px;text-align:center}
+.gate-eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:2.2px;text-transform:uppercase;color:var(--green);font-weight:600;margin-bottom:10px}
+.gate-title{font-family:var(--serif);font-size:30px;color:var(--ink);letter-spacing:-.015em;line-height:1.12;margin-bottom:6px}
+.gate-title em{color:var(--green)}
+.gate-ar{font-family:var(--arabic);font-size:13px;color:var(--slate3);direction:rtl;margin-bottom:18px}
+.gate-sub{font-size:13.5px;color:var(--slate2);line-height:1.6;margin-bottom:22px}
+.gate-input{display:flex;align-items:center;gap:10px;background:var(--paper);border:1.5px solid var(--line2);border-radius:11px;padding:13px 15px;transition:border-color .15s,box-shadow .15s;margin-bottom:14px}
+.gate-input:focus-within{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,107,63,.1)}
+.gate-input svg{width:17px;height:17px;stroke:var(--slate3);fill:none;stroke-width:1.8;flex-shrink:0}
+.gate-input input{border:none;outline:none;background:transparent;font-family:var(--sans);font-size:15px;color:var(--ink);flex:1;letter-spacing:.02em}
+.gate-input input::placeholder{color:var(--slate3);letter-spacing:0}
+.gate-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--green);color:#fff;border:none;border-radius:11px;padding:14px;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;transition:background .15s,transform .1s;box-shadow:0 4px 14px rgba(0,107,63,.28)}
+.gate-btn:hover{background:var(--green-d);transform:translateY(-1px)}
+.gate-btn svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.4}
+.gate-err{font-size:12.5px;color:#c0392b;font-weight:500;margin-top:12px;min-height:16px;opacity:0;transition:opacity .15s}
+.gate-err.on{opacity:1}
+.gate-foot{margin-top:20px;font-size:11px;color:var(--slate3);line-height:1.6}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+
+/* ════════ SITE (revealed after unlock) ════════ */
+#site{display:none}
+body.unlocked #gate{display:none}
+body.unlocked #site{display:block}
+
+/* LAD header */
 .lw{font-family:'Segoe UI',Tahoma,Arial,sans-serif}
 .lad-util{background:#f7f7f7;border-bottom:1px solid #e2e2e2}
 .lad-util-inner{max-width:1300px;margin:0 auto;padding:0 24px;height:36px;display:flex;align-items:center;justify-content:space-between}
 .lad-util-left{display:flex;align-items:center;gap:14px}
-.lad-util-right{display:flex;align-items:center;gap:12px}
-.lad-util-link{font-size:12px;color:#444;text-decoration:none;display:flex;align-items:center;gap:5px;cursor:pointer;transition:color .12s;font-weight:500}
+.lad-util-link{font-size:12px;color:#444;text-decoration:none;display:flex;align-items:center;gap:5px;font-weight:500}
 .lad-util-link:hover{color:#006b3f}
 .lad-util-link img{height:20px;width:auto}
 .lad-util-sep{width:1px;height:14px;background:#d0d0d0}
-.lad-util-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;color:#555;transition:background .12s}
-.lad-util-icon:hover{background:#e8e8e8}
-.lad-util-icon svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7}
-
 .lad-nav{background:var(--navy);position:sticky;top:0;z-index:200;box-shadow:0 3px 14px rgba(0,0,0,.38)}
 .lad-nav-inner{max-width:1300px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:0}
 .lad-logos{display:flex;align-items:center;padding-right:22px;border-right:1px solid rgba(255,255,255,.13);margin-right:20px;gap:14px;flex-shrink:0}
@@ -79,122 +107,175 @@ body{background:var(--paper)}
 .lad-brand-en{font-family:var(--serif);font-size:17px;color:#fff;line-height:1.15;letter-spacing:-.01em}
 .lad-brand-ar{font-family:var(--arabic);font-size:11px;color:rgba(255,255,255,.55);direction:rtl;margin-top:1px}
 .lad-nav-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
-.lad-nav-lang{font-family:var(--arabic);font-size:13px;color:rgba(255,255,255,.7);cursor:pointer;padding:5px 9px;border-radius:4px;transition:background .15s;border:1px solid rgba(255,255,255,.18)}
-.lad-nav-lang:hover{background:rgba(255,255,255,.1);color:#fff}
-.lad-nav-help{font-size:12.5px;color:rgba(255,255,255,.8);text-decoration:none;padding:7px 12px;border-radius:5px;transition:background .15s}
-.lad-nav-help:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-cta{display:inline-flex;align-items:center;gap:7px;background:var(--gold);color:#fff;border:none;font-family:var(--sans);font-size:12.5px;font-weight:600;padding:8px 15px;border-radius:7px;cursor:pointer;transition:background .15s;text-decoration:none}
+.nav-cta:hover{background:var(--gold2)}
+.nav-lock{font-size:12px;color:rgba(255,255,255,.6);text-decoration:none;padding:7px 10px;border-radius:5px;cursor:pointer;transition:background .15s}
+.nav-lock:hover{background:rgba(255,255,255,.08);color:#fff}
 
-/* ════ HERO ════ */
+/* HERO */
 .hero{position:relative;overflow:hidden;background:var(--navy2)}
-.hero-bg{position:absolute;inset:0;background-image:url('img/dclpd-reception.jpg');background-size:cover;background-position:center 40%}
-.hero-overlay{position:absolute;inset:0;background:linear-gradient(110deg,rgba(8,12,22,.95) 0%,rgba(8,12,22,.82) 45%,rgba(8,12,22,.55) 100%)}
-.hero-inner{max-width:1300px;margin:0 auto;padding:64px 24px 72px;position:relative;z-index:1;display:grid;grid-template-columns:1.15fr .85fr;gap:56px;align-items:center}
-.hero-kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--gold-l);font-weight:600;margin-bottom:18px}
+.hero-bg{position:absolute;inset:0;background-image:url('img/flag-ceremony.jpg');background-size:cover;background-position:center 30%}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(115deg,rgba(8,12,22,.95) 0%,rgba(8,12,22,.82) 50%,rgba(8,12,22,.6) 100%)}
+.hero-inner{max-width:1040px;margin:0 auto;padding:74px 24px 80px;position:relative;z-index:1}
+.hero-kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--gold-l);font-weight:600;margin-bottom:20px}
 .hero-kicker::before{content:'';width:26px;height:1px;background:var(--gold)}
-.hero-title{font-family:var(--serif);font-size:clamp(38px,5vw,58px);color:#fff;line-height:1.05;letter-spacing:-.02em;margin-bottom:10px}
-.hero-title em{color:var(--gold-l);font-style:italic}
-.hero-title-ar{font-family:var(--arabic);font-size:21px;color:rgba(255,255,255,.55);direction:rtl;margin-bottom:22px;line-height:1.4}
-.hero-desc{font-size:15.5px;color:rgba(255,255,255,.78);line-height:1.75;max-width:560px;margin-bottom:26px}
-.hero-points{display:flex;flex-direction:column;gap:11px}
-.hero-point{display:flex;align-items:flex-start;gap:11px;font-size:14px;color:rgba(255,255,255,.82)}
-.hero-point svg{width:18px;height:18px;stroke:var(--gold-l);fill:none;stroke-width:2;flex-shrink:0;margin-top:1px}
+.hero-title{font-family:var(--serif);font-size:clamp(40px,6vw,68px);color:#fff;line-height:1.04;letter-spacing:-.022em;margin-bottom:12px}
+.hero-title em{color:var(--gold-l)}
+.hero-ar{font-family:var(--arabic);font-size:22px;color:rgba(255,255,255,.55);direction:rtl;margin-bottom:24px}
+.hero-desc{font-size:16.5px;color:rgba(255,255,255,.8);line-height:1.75;max-width:660px;margin-bottom:32px}
+.hero-btns{display:flex;gap:13px;flex-wrap:wrap}
+.btn-p{display:inline-flex;align-items:center;gap:9px;background:var(--gold);color:#fff;border:none;font-family:var(--sans);font-size:15px;font-weight:600;padding:14px 28px;border-radius:11px;cursor:pointer;transition:background .15s,transform .1s;box-shadow:0 6px 20px rgba(201,145,58,.32);text-decoration:none}
+.btn-p:hover{background:var(--gold2);transform:translateY(-2px)}
+.btn-p svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2.4}
+.btn-s{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.22);font-family:var(--sans);font-size:15px;font-weight:600;padding:14px 26px;border-radius:11px;cursor:pointer;transition:background .15s;text-decoration:none}
+.btn-s:hover{background:rgba(255,255,255,.18)}
 
-/* ════ LOGIN CARD ════ */
-.login-card{background:#fff;border-radius:var(--r-lg);box-shadow:var(--sh-xl);overflow:hidden}
-.login-head{background:var(--green);padding:22px 28px;color:#fff;position:relative}
-.login-head::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--gold)}
-.login-head-eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:5px}
-.login-head-title{font-family:var(--serif);font-size:23px;letter-spacing:-.01em}
-.login-body{padding:26px 28px 28px}
-.field{margin-bottom:16px}
-.field label{display:block;font-size:12px;font-weight:600;color:var(--slate);margin-bottom:6px;letter-spacing:.01em}
-.field-input{display:flex;align-items:center;gap:9px;background:var(--paper);border:1.5px solid var(--line2);border-radius:10px;padding:11px 13px;transition:border-color .15s,box-shadow .15s}
-.field-input:focus-within{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,107,63,.1)}
-.field-input svg{width:16px;height:16px;stroke:var(--slate3);fill:none;stroke-width:1.8;flex-shrink:0}
-.field-input input{border:none;outline:none;background:transparent;font-family:var(--sans);font-size:14px;color:var(--ink);flex:1}
-.field-input input::placeholder{color:var(--slate3)}
-.field-row{display:flex;align-items:center;justify-content:space-between;margin:-4px 0 18px}
-.remember{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--slate2);cursor:pointer}
-.remember input{accent-color:var(--green);width:14px;height:14px}
-.link-gold{font-size:12.5px;color:var(--green);font-weight:600;text-decoration:none;cursor:pointer}
-.link-gold:hover{text-decoration:underline}
-.btn-signin{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--green);color:#fff;border:none;border-radius:10px;padding:13px;font-family:var(--sans);font-size:14.5px;font-weight:600;cursor:pointer;transition:background .15s,transform .1s;box-shadow:0 4px 14px rgba(0,107,63,.28)}
-.btn-signin:hover{background:var(--green-d);transform:translateY(-1px)}
-.btn-signin:active{transform:translateY(0)}
-.btn-signin svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.4}
-.btn-signin.loading{opacity:.7;pointer-events:none}
-.login-foot{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
-.powered{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--slate3)}
-.powered b{color:var(--slate);font-weight:700}
-.secure-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--green);font-weight:600}
-.secure-badge svg{width:13px;height:13px;stroke:var(--green);fill:none;stroke-width:2}
-.form-note{font-size:11.5px;color:var(--slate2);line-height:1.55;background:var(--paper2);border-radius:9px;padding:10px 12px;margin-top:14px}
+/* SECTIONS */
+.section{max-width:1100px;margin:0 auto;padding:72px 24px}
+.section.tight{padding:56px 24px}
+.sec-head{max-width:680px;margin:0 auto 44px;text-align:center}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--green);font-weight:600;margin-bottom:12px}
+.eyebrow.gold{color:var(--gold)}
+.sec-title{font-family:var(--serif);font-size:clamp(30px,4vw,42px);color:var(--ink);letter-spacing:-.02em;line-height:1.1;margin-bottom:14px}
+.sec-title em{color:var(--green)}
+.sec-sub{font-size:15.5px;color:var(--slate2);line-height:1.7}
 
-/* ════ MODULES SECTION ════ */
-.section{max-width:1300px;margin:0 auto;padding:64px 24px}
-.section-head{text-align:center;max-width:620px;margin:0 auto 40px}
-.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--green);font-weight:600;margin-bottom:10px}
-.section-title{font-family:var(--serif);font-size:36px;color:var(--ink);letter-spacing:-.02em;line-height:1.12;margin-bottom:10px}
-.section-title em{color:var(--green);font-style:italic}
-.section-sub{font-size:14.5px;color:var(--slate2);line-height:1.65}
-.modules{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
-.module{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:24px 22px;box-shadow:var(--sh-sm);transition:transform .2s,box-shadow .2s,border-color .2s}
-.module:hover{transform:translateY(-3px);box-shadow:var(--sh-md);border-color:var(--line2)}
-.module-ico{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--green),var(--green2));display:grid;place-items:center;margin-bottom:16px}
-.module-ico svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:1.8}
-.module-num{font-family:var(--mono);font-size:10px;color:var(--gold);font-weight:600;letter-spacing:1px;margin-bottom:6px}
-.module-title{font-family:var(--serif);font-size:19px;color:var(--ink);margin-bottom:8px;letter-spacing:-.01em}
-.module-desc{font-size:13px;color:var(--slate2);line-height:1.6}
+/* SHIFT (old vs new) */
+.shift{display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:stretch}
+.shift-card{border-radius:var(--r-lg);padding:30px 28px}
+.shift-old{background:var(--paper2);border:1px solid var(--line)}
+.shift-new{background:linear-gradient(135deg,var(--green-d),var(--green));color:#fff;box-shadow:var(--sh-md)}
+.shift-tag{font-family:var(--mono);font-size:10px;letter-spacing:1.6px;text-transform:uppercase;font-weight:600;margin-bottom:14px}
+.shift-old .shift-tag{color:var(--slate3)}
+.shift-new .shift-tag{color:var(--gold-l)}
+.shift-h{font-family:var(--serif);font-size:25px;letter-spacing:-.01em;margin-bottom:14px}
+.shift-old .shift-h{color:var(--slate)}
+.shift-li{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.55;margin-bottom:11px}
+.shift-old .shift-li{color:var(--slate2)}
+.shift-new .shift-li{color:rgba(255,255,255,.9)}
+.shift-li svg{width:16px;height:16px;flex-shrink:0;margin-top:1px;fill:none;stroke-width:2}
+.shift-old .shift-li svg{stroke:var(--slate3)}
+.shift-new .shift-li svg{stroke:var(--gold-l)}
+.shift-arrow{display:flex;align-items:center;justify-content:center;color:var(--green)}
+.shift-arrow svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.6}
 
-/* ════ STRIP / CTA ════ */
-.strip{background:var(--navy2);position:relative;overflow:hidden}
-.strip-inner{max-width:1300px;margin:0 auto;padding:56px 24px;position:relative;z-index:1;text-align:center}
-.strip-title{font-family:var(--serif);font-size:34px;color:#fff;letter-spacing:-.02em;margin-bottom:12px}
-.strip-title em{color:var(--gold-l);font-style:italic}
-.strip-sub{font-size:15px;color:rgba(255,255,255,.65);max-width:520px;margin:0 auto 26px;line-height:1.65}
-.strip-btn{display:inline-flex;align-items:center;gap:9px;background:var(--gold);color:#fff;border:none;font-family:var(--sans);font-size:15px;font-weight:600;padding:14px 30px;border-radius:11px;cursor:pointer;transition:background .15s,transform .1s;box-shadow:0 6px 20px rgba(201,145,58,.32);text-decoration:none}
-.strip-btn:hover{background:var(--gold2);transform:translateY(-2px)}
-.strip-btn svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2.4}
+/* FORMULA */
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:32px}
+.pillar{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:26px 24px;text-align:center;box-shadow:var(--sh-sm)}
+.pillar-num{font-family:var(--serif);font-size:40px;color:var(--gold);line-height:1;margin-bottom:12px}
+.pillar-h{font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:8px}
+.pillar-p{font-size:13px;color:var(--slate2);line-height:1.6}
+.chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--green-d);background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;font-size:13.5px;font-weight:600;padding:9px 18px;border-radius:30px;box-shadow:0 2px 8px rgba(0,107,63,.2)}
+.chip svg{width:13px;height:13px;stroke:var(--gold-l);fill:none;stroke-width:2.5}
 
-/* ════ FOOTER ════ */
-.footer{background:var(--ink);color:#fff;padding:48px 24px 28px}
-.footer-inner{max-width:1300px;margin:0 auto}
-.footer-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:40px;padding-bottom:32px;border-bottom:1px solid rgba(255,255,255,.1)}
-.footer-brand-title{font-family:var(--serif);font-size:20px;line-height:1.25;margin-bottom:10px}
-.footer-brand-ar{font-family:var(--arabic);font-size:13px;color:rgba(255,255,255,.5);direction:rtl;margin-bottom:12px}
-.footer-brand-desc{font-size:13px;color:rgba(255,255,255,.55);line-height:1.7;max-width:380px}
-.footer-heading{font-family:var(--mono);font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--gold-l);font-weight:600;margin-bottom:14px}
-.footer-link{display:block;font-size:13px;color:rgba(255,255,255,.7);text-decoration:none;margin-bottom:10px;transition:color .12s;cursor:pointer}
-.footer-link:hover{color:#fff}
-.footer-bottom{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:22px;flex-wrap:wrap}
-.footer-copy{font-size:12px;color:rgba(255,255,255,.5)}
-.footer-copy a{color:rgba(255,255,255,.7);text-decoration:none}
+/* EMPOWER GRID */
+.grid4{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.cap{display:flex;gap:16px;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;box-shadow:var(--sh-sm)}
+.cap-ico{width:48px;height:48px;border-radius:12px;background:var(--green-d);background:linear-gradient(135deg,var(--green),var(--green2));display:grid;place-items:center;flex-shrink:0}
+.cap-ico svg{width:23px;height:23px;stroke:#fff;fill:none;stroke-width:1.8}
+.cap-h{font-family:var(--serif);font-size:19px;color:var(--ink);margin-bottom:6px}
+.cap-p{font-size:13px;color:var(--slate2);line-height:1.6}
+.cap-p b{color:var(--green);font-weight:700}
 
-/* ════ TOAST ════ */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120%);background:var(--ink2);color:#fff;padding:13px 22px;border-radius:11px;font-size:13.5px;box-shadow:var(--sh-xl);z-index:2000;transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:9px;max-width:90vw}
+/* STATS */
+.stats-band{background:var(--navy2);position:relative;overflow:hidden}
+.stats-inner{max-width:1100px;margin:0 auto;padding:64px 24px;position:relative;z-index:1}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:36px}
+.stat{text-align:center}
+.stat-num{font-family:var(--serif);font-size:clamp(44px,6vw,62px);color:var(--gold-l);line-height:1;letter-spacing:-.02em}
+.stat-lab{font-size:13.5px;color:rgba(255,255,255,.75);margin-top:8px;line-height:1.5}
+.stats-note{text-align:center;font-size:12px;color:rgba(255,255,255,.45);margin-top:30px}
+
+/* MODULES */
+.modules{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.module{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 18px;box-shadow:var(--sh-sm);transition:transform .2s,box-shadow .2s}
+.module:hover{transform:translateY(-3px);box-shadow:var(--sh-md)}
+.module-n{font-family:var(--mono);font-size:10px;color:var(--gold);font-weight:600;letter-spacing:1px;margin-bottom:8px}
+.module-h{font-family:var(--serif);font-size:18px;color:var(--ink);margin-bottom:7px;line-height:1.2}
+.module-p{font-size:12px;color:var(--slate2);line-height:1.55}
+
+/* LAUNCH CTA */
+.launch{background:linear-gradient(135deg,var(--green-d),var(--green));position:relative;overflow:hidden}
+.launch-inner{max-width:760px;margin:0 auto;padding:68px 24px;text-align:center;position:relative;z-index:1}
+.launch-h{font-family:var(--serif);font-size:clamp(32px,4.5vw,46px);color:#fff;letter-spacing:-.02em;margin-bottom:14px}
+.launch-h em{color:var(--gold-l)}
+.launch-p{font-size:16px;color:rgba(255,255,255,.82);line-height:1.65;margin-bottom:30px}
+.launch .btn-p{font-size:16px;padding:16px 34px}
+.launch-note{font-size:12.5px;color:rgba(255,255,255,.6);margin-top:18px}
+.launch-note a{color:var(--gold-l);text-decoration:none}
+
+/* FOOTER */
+.footer{background:var(--ink);color:#fff;padding:46px 24px 28px}
+.footer-inner{max-width:1100px;margin:0 auto}
+.footer-top{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;padding-bottom:28px;border-bottom:1px solid rgba(255,255,255,.1)}
+.footer-brand-title{font-family:var(--serif);font-size:20px;line-height:1.25;margin-bottom:8px}
+.footer-brand-ar{font-family:var(--arabic);font-size:13px;color:rgba(255,255,255,.5);direction:rtl}
+.footer-contact{font-size:13px;color:rgba(255,255,255,.6);line-height:1.9;text-align:right}
+.footer-contact a{color:rgba(255,255,255,.75);text-decoration:none}
+.footer-bottom{padding-top:20px;font-size:12px;color:rgba(255,255,255,.5);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(160%);background:var(--ink2);color:#fff;padding:13px 22px;border-radius:11px;font-size:13.5px;box-shadow:var(--sh-xl);z-index:2000;transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:9px;max-width:90vw}
 .toast.on{transform:translateX(-50%) translateY(0)}
 .toast svg{width:16px;height:16px;stroke:var(--gold-l);fill:none;stroke-width:2.2;flex-shrink:0}
 
-@media(max-width:960px){
-  .hero-inner{grid-template-columns:1fr;gap:36px}
-  .lad-brand{display:none}
+@media(max-width:880px){
+  .lad-brand,.lad-util{display:none}
+  .shift{grid-template-columns:1fr}
+  .shift-arrow{transform:rotate(90deg);padding:6px 0}
+  .pillars{grid-template-columns:1fr}
+  .grid4{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr;gap:30px}
   .modules{grid-template-columns:1fr 1fr}
-  .footer-grid{grid-template-columns:1fr}
+  .footer-top{flex-direction:column}
+  .footer-contact{text-align:left}
 }
-@media(max-width:560px){
-  .lad-util,.lad-logos-sep{display:none}
-  .lad-logos img:first-child{display:none}
+@media(max-width:520px){
   .modules{grid-template-columns:1fr}
-  .hero-inner{padding:44px 20px 52px}
-  .section{padding:48px 20px}
+  .lad-logos img:first-child{display:none}
+  .lad-logos-sep{display:none}
 }
 </style>
 </head>
 <body>
 
+<!-- ════════ THE GATE (first page) ════════ -->
+<div id="gate">
+  <div class="gate-bg"></div>
+  <div class="gate-overlay"></div>
+  <div class="gate-card">
+    <div class="gate-logos">
+      <img src="https://legal.dubai.gov.ae/assets/govlogo/DG_white.svg" alt="Government of Dubai" onerror="this.style.display='none'"/>
+      <div class="gate-logos-sep"></div>
+      <img src="https://legal.dubai.gov.ae/assets/govlogo/lad_logo_white.svg" alt="Legal Affairs Department" onerror="this.style.display='none'"/>
+    </div>
+    <div class="gate-body">
+      <div class="gate-eyebrow">Legal Affairs Department · Dubai</div>
+      <h1 class="gate-title">Service Ambassador <em>Programme</em></h1>
+      <div class="gate-ar">برنامج سفير الخدمة · دائرة الشؤون القانونية</div>
+      <p class="gate-sub">Enter your access password to open the programme briefing and begin your training.</p>
+      <form id="gateForm" onsubmit="return tryUnlock(event)">
+        <div class="gate-input">
+          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input type="password" id="pw" placeholder="Access password" autocomplete="off" autofocus/>
+        </div>
+        <button type="submit" class="gate-btn">
+          Enter the programme
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <div class="gate-err" id="gateErr">That password isn't right — please try again.</div>
+      </form>
+      <div class="gate-foot">For Legal Affairs Department staff. Need the password? Contact your training administrator.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ THE SITE (after unlock) ════════ -->
+<div id="site">
 <div class="lw">
 
-  <!-- ════ Utility strip ════ -->
+  <!-- Utility strip -->
   <div class="lad-util">
     <div class="lad-util-inner">
       <div class="lad-util-left">
@@ -204,17 +285,13 @@ body{background:var(--paper)}
         <div class="lad-util-sep"></div>
         <a class="lad-util-link" href="https://legal.dubai.gov.ae" target="_blank" rel="noopener">Legal Affairs Department</a>
       </div>
-      <div class="lad-util-right">
-        <div class="lad-util-icon" title="Accessibility">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-        </div>
-        <div class="lad-util-sep"></div>
+      <div class="lad-util-left">
         <a class="lad-util-link" href="https://legal.dubai.gov.ae/en/AboutDepartment/Pages/Contact-us.aspx" target="_blank" rel="noopener">800 523</a>
       </div>
     </div>
   </div>
 
-  <!-- ════ Navigation ════ -->
+  <!-- Nav -->
   <nav class="lad-nav">
     <div class="lad-nav-inner">
       <div class="lad-logos">
@@ -223,254 +300,253 @@ body{background:var(--paper)}
         <img src="https://legal.dubai.gov.ae/assets/govlogo/lad_logo_white.svg" alt="Legal Affairs Department" onerror="this.style.display='none'"/>
       </div>
       <div class="lad-brand">
-        <div class="lad-brand-en">Reception Training Academy</div>
-        <div class="lad-brand-ar">أكاديمية تدريب الاستقبال · دائرة الشؤون القانونية</div>
+        <div class="lad-brand-en">Service Ambassador Programme</div>
+        <div class="lad-brand-ar">برنامج سفير الخدمة · دائرة الشؤون القانونية</div>
       </div>
       <div class="lad-nav-right">
-        <a class="lad-nav-help" href="#modules">Programme</a>
-        <a class="lad-nav-help" id="navSupport" href="#">Support</a>
-        <div class="lad-nav-lang" onclick="toggleLang()">العربية</div>
+        <a class="nav-cta" onclick="launchTraining()">
+          Launch training
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <a class="nav-lock" onclick="lockSite()" title="Lock">Lock</a>
       </div>
     </div>
   </nav>
 
-  <!-- ════ HERO + LOGIN ════ -->
+  <!-- HERO -->
   <section class="hero">
     <div class="hero-bg"></div>
     <div class="hero-overlay"></div>
     <div class="hero-inner">
-
-      <div class="hero-left">
-        <div class="hero-kicker">Legal Affairs Department · Government of Dubai</div>
-        <h1 class="hero-title">Reception <em>Excellence</em><br>Training Programme</h1>
-        <div class="hero-title-ar">برنامج تدريب التميز في الاستقبال</div>
-        <p class="hero-desc">
-          The official onboarding and continuing-development programme for front-of-house
-          and reception staff at the Legal Affairs Department. Sign in to begin your
-          certified training and track your progress.
-        </p>
-        <div class="hero-points">
-          <div class="hero-point">
-            <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
-            Government-of-Dubai standard for visitor reception and service
-          </div>
-          <div class="hero-point">
-            <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
-            Self-paced interactive modules with completion certificates
-          </div>
-          <div class="hero-point">
-            <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
-            Progress is saved automatically — pick up where you left off
-          </div>
-        </div>
+      <div class="hero-kicker">Legal Affairs Department · Government of Dubai</div>
+      <h1 class="hero-title">From Reception<br>to <em>Service Ambassador</em></h1>
+      <div class="hero-ar">من الاستقبال إلى سفير الخدمة</div>
+      <p class="hero-desc">
+        You are the first face every visitor meets — and, in Dubai's model of government, far more than that.
+        This programme prepares you to become a <strong>Service &amp; Happiness Ambassador</strong>: someone who doesn't
+        just greet people, but actively helps them reach the services they came for.
+      </p>
+      <div class="hero-btns">
+        <a class="btn-p" onclick="launchTraining()">
+          Launch the training programme
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <a class="btn-s" onclick="document.getElementById('briefing').scrollIntoView({behavior:'smooth'})">Read the briefing</a>
       </div>
-
-      <!-- Login card -->
-      <div class="login-card">
-        <div class="login-head">
-          <div class="login-head-eyebrow">Secure Sign-in</div>
-          <div class="login-head-title">Begin your training</div>
-        </div>
-        <div class="login-body">
-          <form id="loginForm" onsubmit="return handleSignIn(event)">
-            <div class="field">
-              <label for="email">Email address</label>
-              <div class="field-input">
-                <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/></svg>
-                <input type="email" id="email" name="email" placeholder="name@legal.dubai.gov.ae" autocomplete="username" required/>
-              </div>
-            </div>
-            <div class="field">
-              <label for="password">Password</label>
-              <div class="field-input">
-                <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <input type="password" id="password" name="password" placeholder="Your training password" autocomplete="current-password" required/>
-              </div>
-            </div>
-            <div class="field-row">
-              <label class="remember"><input type="checkbox" id="remember"/> Remember me</label>
-              <a class="link-gold" onclick="showToast('Contact your training administrator to reset your password.')">Forgot password?</a>
-            </div>
-            <button type="submit" class="btn-signin" id="signinBtn">
-              <span id="signinLabel">Sign in to training</span>
-              <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-            </button>
-          </form>
-          <div class="form-note" id="formNote">
-            You'll be securely handed to the Legal Affairs training platform to complete sign-in.
-          </div>
-          <div class="login-foot">
-            <div class="powered">Powered by <b>Docebo</b></div>
-            <div class="secure-badge">
-              <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              Encrypted
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
   </section>
 
-  <!-- ════ MODULES ════ -->
-  <section class="section" id="modules">
-    <div class="section-head">
-      <div class="eyebrow">What you'll learn</div>
-      <h2 class="section-title">The reception <em>curriculum</em></h2>
-      <p class="section-sub">Four certified modules covering everything a Legal Affairs receptionist needs — from the first greeting to handling confidential matters with discretion.</p>
+  <!-- THE SHIFT -->
+  <section class="section" id="briefing">
+    <div class="sec-head">
+      <div class="eyebrow">The shift</div>
+      <h2 class="sec-title">Dubai redefined the front desk</h2>
+      <p class="sec-sub">Across the Government of Dubai, "customer service centres" became <em>Customer Happiness Centres</em>, and "service employees" became <em>Happiness Employees</em>. The job changed with the name — from processing a queue to owning the visitor's outcome.</p>
+    </div>
+    <div class="shift">
+      <div class="shift-card shift-old">
+        <div class="shift-tag">The old desk</div>
+        <div class="shift-h">A receptionist</div>
+        <div class="shift-li"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Greets, logs, and points to a counter</div>
+        <div class="shift-li"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Hands the visitor off and moves on</div>
+        <div class="shift-li"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Measured by speed at the desk</div>
+      </div>
+      <div class="shift-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+      <div class="shift-card shift-new">
+        <div class="shift-tag">The new standard</div>
+        <div class="shift-h">A Service Ambassador</div>
+        <div class="shift-li"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Welcomes, understands, and resolves or routes</div>
+        <div class="shift-li"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Connects people to the right service or channel</div>
+        <div class="shift-li"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Measured by the visitor's happiness</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE FORMULA -->
+  <section class="section tight" style="background:var(--paper2);max-width:none">
+    <div style="max-width:1100px;margin:0 auto">
+      <div class="sec-head">
+        <div class="eyebrow gold">The Customer Happiness Formula</div>
+        <h2 class="sec-title">What "happiness" means <em>in practice</em></h2>
+        <p class="sec-sub">The UAE's national model sets out a simple formula for great government service — three ingredients, and the behaviours every ambassador brings to the desk.</p>
+      </div>
+      <div class="pillars">
+        <div class="pillar"><div class="pillar-num">1</div><div class="pillar-h">Proud people</div><div class="pillar-p">Employees who take genuine pride in delivering an excellent government service.</div></div>
+        <div class="pillar"><div class="pillar-num">2</div><div class="pillar-h">Committed entity</div><div class="pillar-p">A department dedicated, end-to-end, to making every customer happy.</div></div>
+        <div class="pillar"><div class="pillar-num">3</div><div class="pillar-h">Positive customers</div><div class="pillar-p">Visitors who leave informed, respected and confident — and stay positive.</div></div>
+      </div>
+      <div class="chips">
+        <span class="chip"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Welcoming</span>
+        <span class="chip"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Courteous</span>
+        <span class="chip"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Professional</span>
+        <span class="chip"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Understanding</span>
+        <span class="chip"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Positive</span>
+        <span class="chip"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Innovative</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- EMPOWERED TO DO -->
+  <section class="section">
+    <div class="sec-head">
+      <div class="eyebrow">What you'll be able to do</div>
+      <h2 class="sec-title">Not just greet — <em>enable</em></h2>
+      <p class="sec-sub">A Service Ambassador turns "please take a seat" into "here's exactly how we'll sort this." That means knowing Dubai's services and channels well enough to guide people straight to them.</p>
+    </div>
+    <div class="grid4">
+      <div class="cap">
+        <div class="cap-ico"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+        <div><div class="cap-h">Connect to digital services</div><div class="cap-p">Guide visitors into <b>DubaiNow</b> — one app, <b>250+ services</b> from 35+ entities — and help them sign in with <b>UAE PASS</b> instead of queuing.</div></div>
+      </div>
+      <div class="cap">
+        <div class="cap-ico"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
+        <div><div class="cap-h">Bundle the whole journey</div><div class="cap-p">Think like Dubai's <b>one-stop shop</b>: resolve a visitor's need as a complete bundle, so they don't get bounced between departments.</div></div>
+      </div>
+      <div class="cap">
+        <div class="cap-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 2"/></svg></div>
+        <div><div class="cap-h">Inclusive, accessible service</div><div class="cap-p">Serve every visitor with confidence — including <b>autism &amp; sensory awareness</b> and multilingual support, in the spirit of Dubai Way.</div></div>
+      </div>
+      <div class="cap">
+        <div class="cap-ico"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div><div class="cap-h">Discretion &amp; trust</div><div class="cap-p">Handle sensitive legal matters with the confidentiality and security a Legal Affairs front desk demands.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE STANDARD (stats) -->
+  <section class="stats-band">
+    <div class="stats-inner">
+      <div class="sec-head" style="margin-bottom:0">
+        <div class="eyebrow gold">The standard you'll be held to</div>
+        <h2 class="sec-title" style="color:#fff">Dubai measures <em style="color:var(--gold-l)">happiness</em></h2>
+        <p class="sec-sub" style="color:rgba(255,255,255,.7)">Government entities are scored every year on customer happiness, employee happiness, and a live Mystery Shopper survey. This is the bar an ambassador is trained to meet — and yes, you may be mystery-shopped.</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-num">93.8%</div><div class="stat-lab">Customer happiness across Dubai Government</div></div>
+        <div class="stat"><div class="stat-num">95.8%</div><div class="stat-lab">Mystery Shopper score</div></div>
+        <div class="stat"><div class="stat-num">86.7%</div><div class="stat-lab">Employee happiness</div></div>
+      </div>
+      <div class="stats-note">Dubai Government Customer &amp; Employee Happiness Indices, 2024 (city-wide averages).</div>
+    </div>
+  </section>
+
+  <!-- MODULES -->
+  <section class="section">
+    <div class="sec-head">
+      <div class="eyebrow">Your curriculum</div>
+      <h2 class="sec-title">Five modules to <em>certification</em></h2>
+      <p class="sec-sub">Delivered as a self-paced interactive course. Complete all five to earn your Service Ambassador certificate.</p>
     </div>
     <div class="modules">
-      <div class="module">
-        <div class="module-ico"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg></div>
-        <div class="module-num">MODULE 01</div>
-        <div class="module-title">Welcoming Visitors</div>
-        <div class="module-desc">First impressions, the official greeting, bilingual courtesy, and representing the Department with poise and warmth.</div>
-      </div>
-      <div class="module">
-        <div class="module-ico"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
-        <div class="module-num">MODULE 02</div>
-        <div class="module-title">Telephone &amp; Enquiries</div>
-        <div class="module-desc">Professional call handling, transferring and triaging enquiries, and managing the switchboard during busy periods.</div>
-      </div>
-      <div class="module">
-        <div class="module-ico"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-        <div class="module-num">MODULE 03</div>
-        <div class="module-title">Confidentiality &amp; Security</div>
-        <div class="module-desc">Handling sensitive legal matters, visitor verification, data-protection duties, and escalation procedures.</div>
-      </div>
-      <div class="module">
-        <div class="module-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-        <div class="module-num">MODULE 04</div>
-        <div class="module-title">Scheduling &amp; Systems</div>
-        <div class="module-desc">Appointment booking, meeting-room coordination, the visitor log, and the digital tools used at the front desk.</div>
-      </div>
+      <div class="module"><div class="module-n">01</div><div class="module-h">Welcome &amp; Happiness</div><div class="module-p">First impressions, the official greeting, and the happiness mindset.</div></div>
+      <div class="module"><div class="module-n">02</div><div class="module-h">Inclusive Service</div><div class="module-p">Accessibility, autism &amp; sensory awareness, and bilingual courtesy.</div></div>
+      <div class="module"><div class="module-n">03</div><div class="module-h">Connecting to Services</div><div class="module-p">UAE PASS, DubaiNow, and one-stop bundling of a visitor's needs.</div></div>
+      <div class="module"><div class="module-n">04</div><div class="module-h">Confidentiality &amp; Security</div><div class="module-p">Handling sensitive legal matters and visitor verification.</div></div>
+      <div class="module"><div class="module-n">05</div><div class="module-h">Service Standards</div><div class="module-p">Meeting the happiness bar and Mystery-Shopper readiness.</div></div>
     </div>
   </section>
 
-  <!-- ════ CTA STRIP ════ -->
-  <section class="strip">
-    <div class="strip-inner">
-      <div class="strip-title">Ready to start your <em>training</em>?</div>
-      <p class="strip-sub">Sign in above with the credentials issued by your training administrator, or launch the platform directly.</p>
-      <a class="strip-btn" onclick="goToDocebo()">
-        Launch the training platform
+  <!-- LAUNCH -->
+  <section class="launch">
+    <div class="launch-inner">
+      <div class="launch-h">Ready to become an <em>ambassador</em>?</div>
+      <p class="launch-p">Your interactive training lives on the Legal Affairs learning platform. Click below, sign in with your training account, and complete the programme at your own pace.</p>
+      <a class="btn-p" onclick="launchTraining()">
+        Launch the training programme
         <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
       </a>
+      <div class="launch-note" id="launchNote">Opens the training platform · sign in with your Docebo account to begin.</div>
     </div>
   </section>
 
-  <!-- ════ FOOTER ════ -->
+  <!-- FOOTER -->
   <footer class="footer">
     <div class="footer-inner">
-      <div class="footer-grid">
+      <div class="footer-top">
         <div>
           <div class="footer-brand-title">Legal Affairs Department<br>Government of Dubai</div>
           <div class="footer-brand-ar">دائرة الشؤون القانونية · حكومة دبي</div>
-          <div class="footer-brand-desc">The Reception Training Academy is the official learning portal for front-of-house staff, delivered on the Department's training platform.</div>
         </div>
-        <div>
-          <div class="footer-heading">Programme</div>
-          <a class="footer-link" href="#modules">Curriculum</a>
-          <a class="footer-link" onclick="goToDocebo()">Training platform</a>
-          <a class="footer-link" id="footSupport" href="#">Support</a>
-        </div>
-        <div>
-          <div class="footer-heading">Department</div>
-          <a class="footer-link" href="https://legal.dubai.gov.ae" target="_blank" rel="noopener">legal.dubai.gov.ae</a>
-          <a class="footer-link" href="https://legal.dubai.gov.ae/en/AboutDepartment/Pages/Contact-us.aspx" target="_blank" rel="noopener">Contact · 800 523</a>
-          <a class="footer-link">Al Hudaiba Awards Bldg, Dubai</a>
+        <div class="footer-contact">
+          <a href="https://legal.dubai.gov.ae" target="_blank" rel="noopener">legal.dubai.gov.ae</a><br>
+          800 523 · Al Hudaiba Awards Building<br>
+          Sun–Thu · 8:00 – 17:00 GST
         </div>
       </div>
       <div class="footer-bottom">
-        <div class="footer-copy">© 2026 Government of Dubai — Legal Affairs Department. All rights reserved.</div>
-        <div class="footer-copy">Sun–Thu · 8:00 – 17:00 GST</div>
+        <span>© 2026 Government of Dubai — Legal Affairs Department. All rights reserved.</span>
+        <span>Service Ambassador Programme</span>
       </div>
     </div>
   </footer>
 
+</div>
 </div>
 
 <!-- Toast -->
 <div class="toast" id="toast"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span id="toastMsg"></span></div>
 
 <script>
-// ════════════════════════════════════════════════════════════
-// Reception Training landing — behaviour
-// ════════════════════════════════════════════════════════════
-var CFG = window.RECEPTION_CONFIG || {};
+var CFG = window.SITE_CONFIG || {};
+var UNLOCK_KEY = 'lad_sa_unlocked';
 
-// Wire support links to the configured email.
-(function(){
-  var mailto = 'mailto:' + (CFG.supportEmail || 'training@legal.dubai.gov.ae');
-  ['navSupport','footSupport'].forEach(function(id){
-    var el = document.getElementById(id); if (el) el.href = mailto;
-  });
-})();
+// ── Gate ──
+function reveal(){
+  document.body.classList.add('unlocked');
+  applyLaunchState();
+}
+// Stay unlocked across refreshes within this browser.
+try { if (localStorage.getItem(UNLOCK_KEY) === '1') reveal(); } catch(_){}
 
-// Restore remembered email.
-(function(){
-  try {
-    var saved = localStorage.getItem('reception_email');
-    if (saved) {
-      document.getElementById('email').value = saved;
-      document.getElementById('remember').checked = true;
-    }
-  } catch(_){}
-})();
+function tryUnlock(e){
+  e.preventDefault();
+  var entered = (document.getElementById('pw').value || '').trim();
+  var expected = (CFG.accessPassword || '').trim();
+  if (entered.toLowerCase() === expected.toLowerCase() && expected !== ''){
+    try { localStorage.setItem(UNLOCK_KEY, '1'); } catch(_){}
+    reveal();
+    window.scrollTo(0,0);
+  } else {
+    var err = document.getElementById('gateErr');
+    var card = document.querySelector('.gate-card');
+    err.classList.add('on');
+    card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+    document.getElementById('pw').select();
+  }
+  return false;
+}
 
+function lockSite(){
+  try { localStorage.removeItem(UNLOCK_KEY); } catch(_){}
+  document.body.classList.remove('unlocked');
+  document.getElementById('pw').value='';
+  document.getElementById('gateErr').classList.remove('on');
+  window.scrollTo(0,0);
+}
+
+// ── Launch training (Docebo) ──
+function applyLaunchState(){
+  var note = document.getElementById('launchNote');
+  if (!CFG.courseLive && note){
+    note.innerHTML = 'The course is being finalised — launching soon. Check back shortly.';
+  }
+}
+function launchTraining(){
+  if (CFG.courseLive === false){
+    showToast('The training course is being finalised and will be available here shortly.');
+    return;
+  }
+  var url = (CFG.doceboUrl || '').trim();
+  if (!url){ showToast('Training platform not configured yet.'); return; }
+  window.open(url, '_blank', 'noopener');
+}
+
+// ── Toast ──
 function showToast(msg){
   var t = document.getElementById('toast');
   document.getElementById('toastMsg').textContent = msg;
   t.classList.add('on');
-  clearTimeout(window._toastTimer);
-  window._toastTimer = setTimeout(function(){ t.classList.remove('on'); }, 4200);
-}
-
-// Build the destination URL into Docebo. We hand the user off to Docebo
-// to complete authentication — credentials are never stored here.
-function buildDoceboUrl(email){
-  var base = (CFG.courseDeepLink && CFG.courseDeepLink.trim()) ||
-             (CFG.doceboUrl || '').trim();
-  if (!base) return '';
-  if (email && CFG.usernameParam){
-    var sep = base.indexOf('?') === -1 ? '?' : '&';
-    base += sep + encodeURIComponent(CFG.usernameParam) + '=' + encodeURIComponent(email);
-  }
-  return base;
-}
-
-function goToDocebo(email){
-  var url = buildDoceboUrl(email);
-  if (!url || url.indexOf('YOUR-TENANT') !== -1){
-    showToast('Training platform not configured yet — set your Docebo URL in the page config.');
-    return;
-  }
-  window.location.href = url;
-}
-
-function handleSignIn(e){
-  e.preventDefault();
-  var email = document.getElementById('email').value.trim();
-
-  // Remember-me
-  try {
-    if (document.getElementById('remember').checked) localStorage.setItem('reception_email', email);
-    else localStorage.removeItem('reception_email');
-  } catch(_){}
-
-  // Brief "authenticating" affordance, then hand off to Docebo.
-  var btn = document.getElementById('signinBtn');
-  var label = document.getElementById('signinLabel');
-  btn.classList.add('loading');
-  label.textContent = 'Connecting to platform…';
-
-  setTimeout(function(){ goToDocebo(email); btn.classList.remove('loading'); label.textContent='Sign in to training'; }, 650);
-  return false;
-}
-
-// Language toggle — placeholder hook for the Arabic version.
-function toggleLang(){
-  showToast('النسخة العربية قادمة قريباً · Arabic version coming soon.');
+  clearTimeout(window._tt); window._tt = setTimeout(function(){ t.classList.remove('on'); }, 4200);
 }
 </script>
 </body>
