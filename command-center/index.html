@@ -8,7 +8,7 @@
 <script>
 /* Pluggable AI backend — leave empty to use the built-in offline analyst.
    Point aiEndpoint at a Maryam-style route ({question,context}->{answer}) to use a real model. */
-window.ORBIT_CONFIG = { aiEndpoint:'/api/analyst', orgName:'Legal Affairs Department · Dubai' };
+window.ORBIT_CONFIG = { aiEndpoint:'/api/analyst', ttsEndpoint:'/api/tts', orgName:'Legal Affairs Department · Dubai' };
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
@@ -45,14 +45,14 @@ body{background:#04050d;color:var(--ink);font-family:var(--sans);overflow:hidden
 .pill .dot{width:9px;height:9px;border-radius:50%}
 .pill b{font-weight:700}.pill small{color:var(--mut);font-size:11px}
 
-.legend{position:fixed;right:20px;bottom:20px;z-index:20;display:flex;flex-direction:column;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 15px;backdrop-filter:blur(12px);font-size:12px;max-width:215px}
+.legend{position:fixed;left:20px;bottom:20px;z-index:20;display:flex;flex-direction:column;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 15px;backdrop-filter:blur(12px);font-size:12px;max-width:215px}
 .legend .lh{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:3px}
 .legend .row{display:flex;align-items:center;gap:9px;color:var(--mut)}
 .legend .row .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .legend .hint{margin-top:5px;font-size:11px;color:var(--mut);line-height:1.5}
 
 /* inspector */
-.inspector{position:fixed;top:0;right:0;bottom:0;width:398px;max-width:92vw;z-index:30;background:linear-gradient(180deg,rgba(12,16,32,.95),rgba(7,9,20,.97));border-left:1px solid var(--line);backdrop-filter:blur(18px);transform:translateX(100%);transition:transform .34s cubic-bezier(.22,.7,.2,1);display:flex;flex-direction:column;box-shadow:-30px 0 60px rgba(0,0,0,.45)}
+.inspector{position:fixed;top:0;left:0;bottom:0;width:398px;max-width:92vw;z-index:30;background:linear-gradient(180deg,rgba(12,16,32,.95),rgba(7,9,20,.97));border-right:1px solid var(--line);backdrop-filter:blur(18px);transform:translateX(-100%);transition:transform .34s cubic-bezier(.22,.7,.2,1);display:flex;flex-direction:column;box-shadow:30px 0 60px rgba(0,0,0,.45)}
 .inspector.on{transform:none}
 .insp-head{padding:20px 22px 16px;border-bottom:1px solid var(--line);position:relative}
 .insp-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:2.2px;text-transform:uppercase;color:var(--mut);margin-bottom:9px}
@@ -98,7 +98,7 @@ select option{background:#0d1124}
 .ghost-btn:hover{color:var(--ink);border-color:var(--blue)}
 
 /* voice */
-.voice{position:fixed;left:20px;bottom:20px;z-index:25;width:min(360px,46vw)}
+.voice{position:fixed;right:20px;bottom:20px;z-index:35;width:min(360px,40vw)}
 .voice-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(16px);box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden}
 .voice-answer{padding:15px 18px;font-size:14px;line-height:1.55;max-height:232px;overflow-y:auto;display:none;border-bottom:1px solid var(--line)}
 .voice-answer.on{display:block}
@@ -418,9 +418,28 @@ if(SR){recog=new SR();recog.lang='en-US';recog.interimResults=true;recog.continu
   recog.onresult=e=>{let txt='';for(const r of e.results)txt+=r[0].transcript;document.getElementById('vtext').value=txt;if(e.results[e.results.length-1].isFinal)handleQuery(txt);};
   micBtn.addEventListener('click',()=>{if(recognising){recog.stop();return;}try{recog.start();}catch(e){}});
 }else{micBtn.addEventListener('click',()=>{document.getElementById('vtext').focus();showAnswer('<span class="who">Note</span>Voice input needs Chrome or Edge. You can type your question instead.');});}
-function speak(text){if(!speakOn||!window.speechSynthesis||!text)return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.rate=1.04;u.lang='en-US';const vs=window.speechSynthesis.getVoices();const pref=vs.find(v=>/Google US English|Samantha|Aria|Jenny/i.test(v.name));if(pref)u.voice=pref;window.speechSynthesis.speak(u);}
+let ttsAudio=null;
+function stopSpeak(){if(ttsAudio){try{ttsAudio.pause();}catch(e){}ttsAudio=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();}
+async function speak(text){
+  if(!speakOn||!text)return;
+  stopSpeak();
+  const ep=window.ORBIT_CONFIG.ttsEndpoint;            // neural voice (Claude-like) when deployed
+  if(ep){try{
+    const r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    if(r.ok){const j=await r.json();if(j&&j.audio){ttsAudio=new Audio('data:audio/mp3;base64,'+j.audio);ttsAudio.play().catch(()=>browserSpeak(text));return;}}
+  }catch(e){}}
+  browserSpeak(text);                                  // best available browser voice otherwise
+}
+function browserSpeak(text){if(!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(text);u.rate=1.0;u.pitch=1.0;u.lang='en-US';const v=pickVoice();if(v)u.voice=v;window.speechSynthesis.speak(u);}
+function pickVoice(){
+  const vs=window.speechSynthesis?window.speechSynthesis.getVoices():[];if(!vs.length)return null;
+  const pats=[/Natural/i,/Aria|Ava|Emma|Jenny|Libby|Sonia|Michelle|Andrew/i,/Google US English/i,/Google UK English Female/i,/Samantha/i];
+  for(const p of pats){const v=vs.find(x=>(x.lang||'').toLowerCase().startsWith('en')&&p.test(x.name));if(v)return v;}
+  return vs.find(x=>(x.lang||'').toLowerCase().startsWith('en'))||vs[0];
+}
+if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){};window.speechSynthesis.getVoices();}
 const spk=document.getElementById('spk');
-spk.addEventListener('click',()=>{speakOn=!speakOn;spk.classList.toggle('on',speakOn);spk.classList.toggle('off',!speakOn);if(!speakOn&&window.speechSynthesis)window.speechSynthesis.cancel();});
+spk.addEventListener('click',()=>{speakOn=!speakOn;spk.classList.toggle('on',speakOn);spk.classList.toggle('off',!speakOn);if(!speakOn)stopSpeak();});
 document.getElementById('vtext').addEventListener('keydown',e=>{if(e.key==='Enter')handleQuery(e.target.value);});
 const CHIPS=['Which project is failing?','What should I be concerned about?','What\'s overdue?','How is Litigation doing?','Give me a summary','Rank the divisions'];
 document.getElementById('chips').innerHTML=CHIPS.map(c=>`<button class="chip">${esc(c)}</button>`).join('');

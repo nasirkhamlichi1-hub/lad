@@ -23,6 +23,21 @@ never in the browser.
 - With the key set, answers come from Claude with full reasoning, and the
   dashboard still highlights any projects the answer names.
 
+## Natural voice (text‑to‑speech)
+For a fully conversational, human voice (instead of the robotic browser voice),
+the app calls **`/api/tts`** — a function that proxies to **Azure AI Speech**
+(neural voices, e.g. `en-US-AvaMultilingualNeural`) and returns MP3 audio.
+
+- Create a **Speech** resource in Azure and add two environment variables to the
+  Static Web App: **`SPEECH_KEY`** and **`SPEECH_REGION`** (e.g. `uaenorth`).
+- Until those are set, the function returns 503 and the app **falls back to the
+  best available browser voice** (so it still talks, just not neural‑quality).
+- Change the `VOICE` constant in `command-center/api/tts/index.js` to pick a
+  different neural voice.
+
+> On the GitHub Pages preview there's no backend, so you'll hear the improved
+> browser voice. The neural voice activates on the Azure deployment.
+
 ## Deploy to Azure Static Web Apps
 A workflow is included: `.github/workflows/azure-static-web-apps-command-center.yml`
 (app `command-center`, api `command-center/api`, no build step).
