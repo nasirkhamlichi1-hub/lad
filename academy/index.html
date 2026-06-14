@@ -86,7 +86,8 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 .st-exit:hover{color:#fff}
 .st-title{position:absolute;top:52px;left:0;right:0;text-align:center;font-family:var(--serif);font-size:21px;color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.85);pointer-events:none}
 /* coach avatar is docked as a small badge on the caption bubble — never floats over the lesson */
-.orb-dock{position:absolute;top:-24px;left:50%;transform:translateX(-50%);z-index:3;width:48px;height:48px;cursor:pointer}
+.cap-wrap{position:relative;display:flex;width:92%;max-width:660px;margin:30px 0 10px}
+.orb-dock{position:absolute;top:-23px;left:50%;transform:translateX(-50%);z-index:3;width:46px;height:46px;cursor:pointer}
 .orb{width:48px;height:48px;border-radius:50%;display:block;position:relative;
   background:radial-gradient(circle at 38% 32%,#cbb6ff,#7c5cff 55%,#3a1d9e);box-shadow:0 0 20px rgba(124,92,255,.55),inset 0 0 16px rgba(255,255,255,.25);transition:transform .25s}
 .orb::after{content:'';position:absolute;inset:-7px;border-radius:50%;border:2px solid rgba(167,139,250,.4);opacity:0}
@@ -95,7 +96,7 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 @keyframes orbpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
 @keyframes orbring{0%{opacity:.5;transform:scale(1)}100%{opacity:0;transform:scale(1.45)}}
 .orb.cust{background:radial-gradient(circle at 38% 32%,#bfe0ff,#5b8def 55%,#1e4fa8);box-shadow:0 0 20px rgba(91,141,239,.55),inset 0 0 16px rgba(255,255,255,.25)}
-.cap{position:relative;max-width:660px;width:92%;text-align:center;font-size:16px;line-height:1.5;color:#fff;min-height:48px;max-height:26vh;overflow-y:auto;margin:28px 0 10px;background:rgba(6,8,18,.9);border:1px solid var(--line);border-radius:16px;padding:26px 20px 15px;backdrop-filter:blur(10px);transition:opacity .22s;box-shadow:0 12px 40px rgba(0,0,0,.55)}
+.cap{position:relative;width:100%;text-align:center;font-size:16px;line-height:1.5;color:#fff;min-height:48px;max-height:26vh;overflow-y:auto;background:rgba(6,8,18,.92);border:1px solid var(--line);border-radius:16px;padding:26px 20px 15px;backdrop-filter:blur(10px);transition:opacity .22s;box-shadow:0 12px 40px rgba(0,0,0,.55)}
 .cap::-webkit-scrollbar{width:6px}.cap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:6px}
 .cap .role{display:block;font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--violet);margin-bottom:7px}
 .cap.cust .role{color:var(--blue)}
@@ -233,7 +234,7 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
   <button class="st-exit" id="stExit">Exit to galaxy ✕</button>
   <div class="st-title" id="stTitle"></div>
   <div class="board" id="board"></div>
-  <div class="cap" id="cap"><span class="orb-dock"><span class="orb" id="orb"></span></span><span class="role" id="capRole">Coach</span><span id="capText"></span></div>
+  <div class="cap-wrap"><span class="orb-dock"><span class="orb" id="orb"></span></span><div class="cap" id="cap"><span class="role" id="capRole">Coach</span><span id="capText"></span></div></div>
   <div class="coach" id="coach"></div>
   <div class="listening" id="listening">● listening…</div>
   <button class="askbtn" id="askBtn">✋ Pause &amp; ask a question</button>
