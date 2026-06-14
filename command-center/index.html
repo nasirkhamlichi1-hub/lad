@@ -220,7 +220,7 @@ select option{background:#0d1124}
     <label>Anthropic API key <small>· full intelligent analyst</small><input type="password" id="cfgAnthropic" placeholder="sk-ant-…" autocomplete="off"></label>
     <label>ElevenLabs API key <small>· natural voice (optional)</small><input type="password" id="cfgEleven" placeholder="optional — for a human voice" autocomplete="off"></label>
     <label>Model <small>· intelligence vs speed</small><select id="cfgModel"><option value="claude-sonnet-4-6">Claude Sonnet 4.6 — balanced</option><option value="claude-opus-4-8">Claude Opus 4.8 — deepest</option><option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — fastest</option></select></label>
-    <div class="cfg-row"><button class="cfg-save" id="cfgSave">Save &amp; connect</button><span class="cfg-status" id="cfgStatus"></span></div>
+    <div class="cfg-row"><button class="cfg-save" id="cfgSave">Save &amp; test connection</button><span class="cfg-status" id="cfgStatus"></span></div>
     <div class="cfg-note">Keys stay in your browser (localStorage) and call the providers directly — nothing is uploaded or committed. For a shared/public deployment, use the Azure backend instead.</div>
   </div>
   <div class="voice-answer" id="answer"></div>
@@ -613,15 +613,40 @@ async function askLLM(q){
     if(r.ok){const j=await r.json();if(j&&j.answer)return pack(j.answer);}}catch(e){}}
   // 2) direct Anthropic call with the user's own key (runs in this browser)
   const key=effKey();window.ORBIT_CONFIG.anthropicKey=key;
-  if(key){try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
-      headers:{'x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},
-      body:JSON.stringify({model:window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6',max_tokens:700,system:ANALYST_SYSTEM,
-        messages:[{role:'user',content:'Question: '+q+'\n\nLive portfolio snapshot (JSON):\n'+JSON.stringify(context())}]})});
-    if(r.ok){const j=await r.json();const a=(((j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n'))||'').trim();if(a)return pack(a);window.__llmError='Claude returned an empty response.';}
-    else{let detail='';try{const ej=await r.json();detail=ej.error?(ej.error.type+': '+ej.error.message):JSON.stringify(ej);}catch(_){detail=(await r.text().catch(()=>''))||'';}window.__llmError='Claude API error '+r.status+' — '+String(detail).slice(0,400);console.warn(window.__llmError);}
-  }catch(e){window.__llmError='Could not reach Claude (network/CORS): '+((e&&e.message)?e.message:e);console.warn(window.__llmError);}}
+  if(key){
+    const models=[window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6','claude-sonnet-4-6','claude-opus-4-8','claude-haiku-4-5-20251001'].filter((m,i,a)=>m&&a.indexOf(m)===i);
+    for(const model of models){
+      try{
+        const r=await callClaude(q,model);
+        if(r.ok){const j=await r.json();const a=(((j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n'))||'').trim();
+          if(a){window.ORBIT_CONFIG.anthropicModel=model;try{localStorage.setItem('orbit_model',model);}catch(_){}return pack(a);}
+          window.__llmError='Claude returned an empty response.';break;}
+        let detail='',type='';try{const ej=await r.json();type=ej.error?ej.error.type:'';detail=ej.error?ej.error.message:'';}catch(_){detail=(await r.text().catch(()=>''))||'';}
+        window.__llmError='Claude API '+r.status+(type?' ('+type+')':'')+': '+String(detail).slice(0,260);console.warn(window.__llmError);
+        if(r.status===401||r.status===403)break;                       /* bad key — don't retry other models */
+      }catch(e){window.__llmError='Could not reach Claude (network/CORS): '+((e&&e.message)?e.message:e);console.warn(window.__llmError);break;}
+    }
+  }
   return null;
+}
+async function callClaude(q,model){const key=effKey();
+  return fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+    headers:{'x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},
+    body:JSON.stringify({model:model,max_tokens:700,system:ANALYST_SYSTEM,messages:[{role:'user',content:'Question: '+q+'\n\nLive portfolio snapshot (JSON):\n'+JSON.stringify(context())}]})});}
+async function testClaude(){const s=document.getElementById('cfgStatus');const key=effKey();
+  if(!key){if(s){s.style.color='var(--mut)';s.textContent='Paste a key first';}return;}
+  if(s){s.style.color='var(--mut)';s.textContent='Testing…';}
+  const models=[window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6','claude-sonnet-4-6','claude-opus-4-8','claude-haiku-4-5-20251001'].filter((m,i,a)=>m&&a.indexOf(m)===i);
+  let lastErr='unknown error';
+  for(const m of models){try{
+    const r=await callClaude('Reply with the single word OK.',m);
+    if(r.ok){window.ORBIT_CONFIG.anthropicModel=m;try{localStorage.setItem('orbit_model',m);}catch(_){}const sel=document.getElementById('cfgModel');if(sel)sel.value=m;
+      if(s){s.style.color='var(--green)';s.textContent='● Claude responding ('+m.replace('claude-','').replace('-20251001','')+')';}return true;}
+    let detail='',type='';try{const ej=await r.json();type=ej.error?ej.error.type:'';detail=ej.error?ej.error.message:'';}catch(_){}
+    lastErr=r.status+(type?' '+type:'')+': '+String(detail).slice(0,90);
+    if(r.status===401||r.status===403)break;
+  }catch(e){lastErr=(e&&e.message)?e.message:'network/CORS blocked';break;}}
+  if(s){s.style.color='var(--red)';s.textContent='✗ '+lastErr;}return false;
 }
 function showAnswer(html){const a=document.getElementById('answer');a.innerHTML=html;a.classList.add('on');}
 function stripHtml(h){const d=document.createElement('div');d.innerHTML=h.replace(/<br>/g,'. ').replace(/•/g,'');return (d.textContent||'').replace(/Analyst/,'').replace(/\s+/g,' ').trim();}
@@ -692,9 +717,8 @@ document.getElementById('cfgSave').addEventListener('click',()=>{
   const a=document.getElementById('cfgAnthropic').value.trim(),e=document.getElementById('cfgEleven').value.trim(),m=document.getElementById('cfgModel').value;
   window.ORBIT_CONFIG.anthropicKey=a;window.ORBIT_CONFIG.elevenKey=e;window.ORBIT_CONFIG.anthropicModel=m;
   try{a?localStorage.setItem('orbit_anthropic_key',a):localStorage.removeItem('orbit_anthropic_key');e?localStorage.setItem('orbit_eleven_key',e):localStorage.removeItem('orbit_eleven_key');localStorage.setItem('orbit_model',m);}catch(_){}
-  document.getElementById('cfgStatus').textContent=a?'● Claude connected':'saved';
   updateHUD();
-  setTimeout(()=>document.getElementById('cfgPanel').classList.remove('on'),900);
+  if(a)testClaude();else{const s=document.getElementById('cfgStatus');if(s){s.style.color='var(--mut)';s.textContent='saved';}}
 });
 /* apply keys the instant they're typed/pasted — no Save click needed */
 function applyKeysFromFields(){
@@ -745,7 +769,12 @@ function showBriefing(){activeFilter=null;document.querySelectorAll('.fchip').fo
 }
 (function(){const el=document.getElementById('filters');if(!el)return;let h=`<button class="fchip brief" onclick="showBriefing()">✦ Executive briefing</button>`;Object.keys(FILTERS).forEach(k=>{h+=`<button class="fchip" data-k="${k}" onclick="applyFilter('${k}')">${esc(FILTERS[k].label)}</button>`;});el.innerHTML=h;})();
 document.getElementById('pmodal').addEventListener('click',e=>{if(e.target.id==='pmodal')closeProject();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProject();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeProject();closeInspector();var cp=document.getElementById('cfgPanel');if(cp)cp.classList.remove('on');}});
+/* robust close — works even if inline onclick is ever blocked */
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;
+  if(t.closest('.insp-close')){closeInspector();}
+  if(t.closest('.pm-close')){closeProject();}
+},true);
 
 /* Bridge for the 3D module */
 window.OrbitData={get state(){return state;},deptScore,statusOf,colorOf,COL,orgScore,allProjects};
