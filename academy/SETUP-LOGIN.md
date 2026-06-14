@@ -35,13 +35,10 @@ On the Static Web App → **Configuration** (or the Function app settings), add:
 | `TRAINEE_PASSWORD` | ✅ | `Legal@2026` | Initial shared password for trainees (changeable later in the console) |
 | `ADMIN_PASSWORD` | ✅ | *(a strong secret)* | Password for the Trainer Console at `/admin.html` |
 | `AUTH_SECRET` | ✅ | *(a long random string)* | Signs login/certificate tokens |
-| `SITE_URL` | recommended | `https://www.legalaffairstraining.com` | Used in certificate links |
 | `ALLOWED_EMAILS` | optional | `a@x.gov.ae, b@x.gov.ae` | Bootstrap whitelist (you can instead add people in the console) |
-| `SENDGRID_KEY` | optional | `SG.xxxx` | Enables emailing certificates automatically |
-| `CERT_FROM` | optional | `academy@legalaffairs.gov.ae` | Verified sender address for certificate emails |
 
-> If you don't set the email keys, certificates are still issued as a
-> **shareable link** you copy/send from the console — everything else works.
+> Certificates are **downloaded** by the trainer from the console (PNG or
+> print-to-PDF) and sent out manually — no email service is required.
 
 ## 4. Run it
 - **Trainees:** open the site → **Training Solar System** → sign in with their
@@ -50,10 +47,8 @@ On the Static Web App → **Configuration** (or the Function app settings), add:
   - see everyone's progress (X/11, per-service, last active) and export CSV,
   - **＋ Add trainees** (paste emails),
   - **Change shared password**, or set a personal password / remove a trainee,
-  - **issue a certificate** for anyone who's completed all 11 (emailed if
-    configured, otherwise a copyable link).
-- When a trainee certifies all 11, they're emailed their certificate
-  automatically (if email is configured).
+  - **download a certificate** (PNG or print-to-PDF) for anyone who's completed
+    all 11, and send it to them yourself.
 
 ## Notes
 - A trainee can have their **own** password (set in the console); otherwise they

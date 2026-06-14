@@ -488,8 +488,7 @@ function shortName(s){return s.name.split(' (')[0].split(' — ')[0];}
 function dirhams(t){return String(t==null?'':t).replace(/AED\s*([\d.,]+)/gi,'$1 Dirhams').replace(/\bAED\b/gi,'Dirhams');}
 function key(){const f=document.getElementById('kAnthropic');return window.ORBIT_CONFIG.anthropicKey||(f?f.value.trim():'')||'';}
 
-function updateHUD(){const n=certCount();document.getElementById('progN').textContent=n;document.getElementById('progFill').style.width=Math.round(n/11*100)+'%';const cb=document.getElementById('certBtn');cb.disabled=n<11;cb.textContent=n<11?('🏅 Certificate ('+n+'/11)'):'🏅 Get certificate';renderSidebar();if(window.orbit3d)window.orbit3d.refresh();
-  if(n>=11&&window.AUTH&&window.AUTH.hosted&&window.AUTH.token&&!localStorage.getItem('academy_certdone')){try{localStorage.setItem('academy_certdone','1');}catch(_){}fetch('api/cert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:window.AUTH.token})}).catch(()=>{});}}
+function updateHUD(){const n=certCount();document.getElementById('progN').textContent=n;document.getElementById('progFill').style.width=Math.round(n/11*100)+'%';const cb=document.getElementById('certBtn');cb.disabled=n<11;cb.textContent=n<11?('🏅 Certificate ('+n+'/11)'):'🏅 Get certificate';renderSidebar();if(window.orbit3d)window.orbit3d.refresh();}
 function renderSidebar(){const el=document.getElementById('sbList');if(!el)return;
   el.innerHTML=SERVICES.map((s,i)=>{const cert=certified(s.id),p=P(s.id),prog=!cert&&(p.quiz||p.sim);
     const cls=cert?'done':(prog?'prog':'');const tick=cert?'✓':(prog?'◐':(i+1));
