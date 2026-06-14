@@ -435,50 +435,44 @@ setTimeout(()=>{const s=orgScore();const f=allProjects().filter(p=>p.status==='f
   showAnswer(`<span class="who"><span style="width:7px;height:7px;border-radius:50%;background:var(--violet);display:inline-block"></span> Analyst</span>Welcome to mission control for the <b>${esc(window.ORBIT_CONFIG.orgName)}</b>. Portfolio health is <b>${pct(s*100)}</b>${f?` with <span class="sev">${f} failing project${f>1?'s':''}</span>`:''}. Tap the mic or a chip and ask me what's at risk.`);},900);
 </script>
 
-<!-- ════════ MODULE: three.js 3D render ════════ -->
-<script type="importmap">
-{"imports":{
-  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-}}
-</script>
-<script type="module">
-import * as THREE from 'three';
-import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
-import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
-import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
-import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
-import {CSS2DRenderer,CSS2DObject} from 'three/addons/renderers/CSS2DRenderer.js';
+<!-- ════════ three.js 3D render — classic build so it works on file:// AND https ════════ -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/renderers/CSS2DRenderer.js"></script>
+<script>
+(function(){
+  var loaderEl=document.getElementById('loader');
+  function fail(m){loaderEl.classList.remove('gone');loaderEl.innerHTML='<div style="max-width:440px;text-align:center;padding:0 26px"><p style="color:#f87171;letter-spacing:1.5px;font-family:JetBrains Mono,monospace;font-size:11px">COULD NOT RENDER</p><p style="text-transform:none;letter-spacing:0;color:#c9d2e6;margin-top:12px;line-height:1.6;font-size:13px;font-family:Inter,sans-serif">'+m+'</p></div>';}
+  if(typeof THREE==='undefined'){fail('The 3D library (three.js) could not load from the CDN. Check the internet connection and reload the page.');return;}
+  var glok=false;try{var tc=document.createElement('canvas');glok=!!(tc.getContext('webgl2')||tc.getContext('webgl'));}catch(e){}
+  if(!glok){fail('This browser/GPU does not support WebGL, which the 3D view needs. Try Chrome or Edge with hardware acceleration enabled.');return;}
+  try{ main(); }catch(err){ console.error(err); fail('Error building the scene: '+((err&&err.message)?err.message:err)); }
 
+  function main(){
 const D=window.OrbitData;
 const sceneEl=document.getElementById('scene'),labelEl=document.getElementById('labels');
 let W=innerWidth,H=innerHeight;
 
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(W,H);
-renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.0;
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
 sceneEl.appendChild(renderer.domElement);
 
-const labelRenderer=new CSS2DRenderer();labelRenderer.setSize(W,H);
+const labelRenderer=new THREE.CSS2DRenderer();labelRenderer.setSize(W,H);
 labelRenderer.domElement.style.position='absolute';labelRenderer.domElement.style.top='0';
 labelEl.appendChild(labelRenderer.domElement);
 
 const scene=new THREE.Scene();scene.background=new THREE.Color('#04050d');
-const camera=new THREE.PerspectiveCamera(52,W/H,0.1,2000);camera.position.set(0,24,52);
+const camera=new THREE.PerspectiveCamera(52,W/H,0.1,3000);camera.position.set(0,24,52);
 
-const controls=new OrbitControls(camera,renderer.domElement);
-controls.enableDamping=true;controls.dampingFactor=0.06;controls.minDistance=6;controls.maxDistance=160;
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;controls.dampingFactor=0.06;controls.minDistance=6;controls.maxDistance=170;
 controls.autoRotate=true;controls.autoRotateSpeed=0.32;controls.enablePan=false;controls.maxPolarAngle=Math.PI*0.92;
 
-const composer=new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene,camera));
-const bloom=new UnrealBloomPass(new THREE.Vector2(W,H),0.85,0.5,0.55);
-composer.addPass(bloom);composer.addPass(new OutputPass());
-
-/* lights — sun is the key light (constant falloff so every orbit reads well) */
-const sunLight=new THREE.PointLight(0xfff2d6,3.0,0,0);scene.add(sunLight);
-scene.add(new THREE.AmbientLight(0x445277,0.5));
+/* lights — sun is the key light (legacy lighting; distance 0 = even illumination) */
+const sunLight=new THREE.PointLight(0xfff2d6,2.4,0,1);scene.add(sunLight);
+scene.add(new THREE.AmbientLight(0x4a5880,0.85));
 
 /* starfield */
 (function(){const N=4200,g=new THREE.BufferGeometry(),pos=new Float32Array(N*3),col=new Float32Array(N*3);
@@ -512,21 +506,22 @@ function makeTexture(type,baseHex){
       else if(type==='rocky'){col=e<0.45?[84,66,58]:e<0.6?[136,98,70]:e<0.8?[168,138,102]:[202,182,150];col=L3(col,base,0.14);}
       else{if(e<0.48)col=L3([18,46,104],[28,88,156],e/0.48);else if(e<0.52)col=[198,188,140];else if(e<0.7)col=L3([58,128,68],[92,150,82],(e-0.52)/0.18);else if(e<0.85)col=L3([112,94,68],[88,72,52],(e-0.7)/0.15);else col=[236,241,246];col=L3(col,base,0.12);}
       const i=(y*w+x)*4;data[i]=col[0];data[i+1]=col[1];data[i+2]=col[2];data[i+3]=255;}}
-  c2.putImageData(img,0,0);const t=new THREE.CanvasTexture(cnv);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;}
+  c2.putImageData(img,0,0);const t=new THREE.CanvasTexture(cnv);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;}
 function makeClouds(){const w=512,h=256,cnv=document.createElement('canvas');cnv.width=w;cnv.height=h;
   const c2=cnv.getContext('2d'),img=c2.createImageData(w,h),data=img.data,seed=Math.random()*40;
   for(let y=0;y<h;y++){const lat=(y/h-0.5)*Math.PI;for(let x=0;x<w;x++){const lon=(x/w)*2*Math.PI;
     const dx=Math.cos(lat)*Math.cos(lon),dy=Math.sin(lat),dz=Math.cos(lat)*Math.sin(lon);
     let v=fbm(dx*3+seed,dy*3+seed,dz*3+seed,5);v=clampN((v-0.5)*2.4,0,1);
     const i=(y*w+x)*4;data[i]=data[i+1]=data[i+2]=255;data[i+3]=v*200;}}
-  c2.putImageData(img,0,0);const t=new THREE.CanvasTexture(cnv);t.colorSpace=THREE.SRGBColorSpace;return t;}
+  c2.putImageData(img,0,0);const t=new THREE.CanvasTexture(cnv);t.encoding=THREE.sRGBEncoding;return t;}
 function clampN(v,a,b){return Math.max(a,Math.min(b,v));}
 
 /* ── the system ── */
 const SUN_R=2.4;
 const sunMat=new THREE.MeshBasicMaterial({color:0xffe9b0});
 const sun=new THREE.Mesh(new THREE.SphereGeometry(SUN_R,48,48),sunMat);scene.add(sun);
-const corona=new THREE.Mesh(new THREE.SphereGeometry(SUN_R*1.5,32,32),new THREE.MeshBasicMaterial({color:0xffcf7a,transparent:true,opacity:0.28,side:THREE.BackSide,blending:THREE.AdditiveBlending}));sun.add(corona);
+sun.add(new THREE.Mesh(new THREE.SphereGeometry(SUN_R*1.45,32,32),new THREE.MeshBasicMaterial({color:0xffcf7a,transparent:true,opacity:0.34,side:THREE.BackSide,blending:THREE.AdditiveBlending,depthWrite:false})));
+sun.add(new THREE.Mesh(new THREE.SphereGeometry(SUN_R*2.4,24,24),new THREE.MeshBasicMaterial({color:0xffb347,transparent:true,opacity:0.13,side:THREE.BackSide,blending:THREE.AdditiveBlending,depthWrite:false})));
 
 let planetReg={},focus={deptId:null,user:false};
 const sysGroup=new THREE.Group();scene.add(sysGroup);
@@ -553,7 +548,7 @@ function buildSystem(){
     if((d.type||'')==='terran'){clouds=new THREE.Mesh(new THREE.SphereGeometry(pr*1.02,40,40),new THREE.MeshStandardMaterial({map:makeClouds(),transparent:true,opacity:0.9,roughness:1}));planet.add(clouds);}
     // label
     const el=document.createElement('div');el.className='lbl';el.innerHTML=`<b>${esc(d.name.split(' (')[0])}</b><span>${Math.round(D.deptScore(d)*100)}%</span>`;
-    const label=new CSS2DObject(el);label.position.set(0,pr+0.7,0);planet.add(label);
+    const label=new THREE.CSS2DObject(el);label.position.set(0,pr+0.7,0);planet.add(label);
     const pgroup=new THREE.Group();pgroup.add(planet);
     pgroup.position.set(orbR,0,0);
     pivot.add(pgroup);
@@ -566,9 +561,11 @@ function buildSystem(){
       const moon=new THREE.Mesh(new THREE.SphereGeometry(mr,20,20),new THREE.MeshBasicMaterial({color:new THREE.Color(COL_(p.status))}));
       moon.position.set(pr+0.55+j*0.42,0,0);
       moon.userData={type:'project',id:p.id,deptId:d.id};
+      const halo=new THREE.Mesh(new THREE.SphereGeometry(mr*2.7,16,16),new THREE.MeshBasicMaterial({color:new THREE.Color(COL_(p.status)),transparent:true,opacity:0.12,blending:THREE.AdditiveBlending,depthWrite:false}));
+      moon.add(halo);
       mPivot.add(moon);mPivot.rotation.x=(Math.random()-0.5)*0.5;mPivot.userData.spin=0.4+j*0.16+Math.random()*0.2;mPivot.rotation.y=Math.random()*6.28;
       planet.add(mPivot);
-      moons.push({p,mPivot,moon,base:mr});
+      moons.push({p,mPivot,moon,halo,base:mr});
     });
     planetReg[d.id]={d,pivot,pgroup,planet,atm,clouds,label,el,moons,orbR,pr,spin:0.12+0.02*(i%3)};
   });
@@ -616,7 +613,7 @@ window.orbit3d={
   refreshDept(id){const pr=planetReg[id];if(!pr)return;const d=pr.d;
     pr.atm.material.color.set(D.colorOf(D.deptScore(d)));
     pr.el.querySelector('span').textContent=Math.round(D.deptScore(d)*100)+'%';
-    pr.moons.forEach(m=>{const p=d.projects.find(x=>x.id===m.p.id);if(p){m.p=p;m.moon.material.color.set(COL_(p.status));}});
+    pr.moons.forEach(m=>{const p=d.projects.find(x=>x.id===m.p.id);if(p){m.p=p;m.moon.material.color.set(COL_(p.status));m.halo.material.color.set(COL_(p.status));}});
     updatePillsExternal();},
   rebuild(){buildSystem();},
   setAlerts(){/* read live each frame */}
@@ -642,18 +639,23 @@ function animate(){
       const sc=on?1.6+0.5*Math.sin(t*7):(m.p.status!=='on-track'?1.15+0.12*Math.sin(t*3):1);
       m.moon.scale.setScalar(sc);
       m.moon.material.color.set(COL_(m.p.status));
+      const hb=m.p.status==='failing'?0.34:m.p.status==='at-risk'?0.22:0.1;
+      m.halo.material.color.set(COL_(m.p.status));
+      m.halo.material.opacity=on?(0.5+0.28*Math.sin(t*7)):hb;
     });
   });
   applyFocus();
   controls.update();
-  composer.render();labelRenderer.render(scene,camera);
+  renderer.render(scene,camera);labelRenderer.render(scene,camera);
 }
 
 addEventListener('resize',()=>{W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();
-  renderer.setSize(W,H);composer.setSize(W,H);labelRenderer.setSize(W,H);bloom.setSize(W,H);});
+  renderer.setSize(W,H);labelRenderer.setSize(W,H);});
 
 /* build (defer a tick so the loader paints) */
 setTimeout(()=>{buildSystem();animate();document.getElementById('loader').classList.add('gone');setTimeout(()=>document.getElementById('loader').remove(),700);},60);
+  } // main
+})();
 </script>
 </body>
 </html>
