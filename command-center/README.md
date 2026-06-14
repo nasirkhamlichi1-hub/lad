@@ -10,6 +10,32 @@ Single self‑contained file (`index.html`). three.js loads from a CDN. All data
 lives in the browser (`localStorage`) — each division edits its own KPIs and
 project progress/status/concerns in the inspector panel.
 
+## What it actually analyses (not a gimmick)
+Orbit runs a real portfolio‑analytics engine over the live data, so it helps you
+oversee many projects at a glance and on demand:
+
+- **Schedule variance** — actual progress vs where the plan says it should be
+  (from start/due dates); flags what's *materially behind*.
+- **Budget burn & variance** — spend vs budget, and whether spend is *outpacing
+  delivery* (the early sign of an overrun).
+- **Dependencies** — each project's blockers; surfaces work *blocked by an
+  unhealthy dependency* and what it blocks downstream.
+- **Milestones** — done / total, overdue, and the next gate.
+- **Momentum** — improving / steady / declining trend.
+- **Reported‑vs‑analytical divergence** — catches "watermelon" projects reported
+  greener than the metrics justify.
+- **Explainable risk score + recommended next step** per project.
+
+How to use it:
+- **Click a moon** → a per‑project deep dive (progress‑vs‑plan, budget burn,
+  momentum, milestones, dependency chain, why it needs attention, what to do).
+- **Click a planet** → edit that division's KPIs and projects.
+- **Filters** (top) and **✦ Executive briefing** highlight risk across the whole
+  system.
+- **Ask the analyst** anything in natural language — offline it answers budget /
+  schedule / dependency / momentum / milestone / optimism / priority questions
+  with reasons; with a Claude key it reasons over the full analytics snapshot.
+
 ## The AI analyst
 The voice console calls **`/api/analyst`** — an Azure Static Web Apps managed
 function (`command-center/api/analyst`) that proxies to the Claude API
