@@ -10,13 +10,8 @@ window.ORBIT_CONFIG={ anthropicModel:'claude-sonnet-4-6', anthropicKey:'', eleve
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
-:root{
-  --ink:#e8ecf6;--mut:#8a93b0;--line:rgba(255,255,255,.10);--panel:rgba(14,18,34,.78);
-  --green:#34d399;--amber:#fbbf24;--red:#f87171;--gold:#ffd479;--blue:#6aa6ff;--violet:#a78bfa;
-  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--serif:'Instrument Serif',serif;--mono:'JetBrains Mono',ui-monospace,monospace;
-}
-html,body{height:100%}
-body{background:#04050d;color:var(--ink);font-family:var(--sans);overflow:hidden}
+:root{--ink:#e8ecf6;--mut:#8a93b0;--line:rgba(255,255,255,.10);--panel:rgba(14,18,34,.78);--green:#34d399;--amber:#fbbf24;--red:#f87171;--gold:#ffd479;--blue:#6aa6ff;--violet:#a78bfa;--sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--serif:'Instrument Serif',serif;--mono:'JetBrains Mono',ui-monospace,monospace;}
+html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(--sans);overflow:hidden}
 #scene{position:fixed;inset:0;z-index:1}#scene canvas{display:block}
 #labels{position:fixed;inset:0;z-index:2;pointer-events:none}
 .lbl{text-align:center;transform:translate(-50%,-50%);text-shadow:0 1px 6px rgba(0,0,0,.9);white-space:nowrap}
@@ -28,108 +23,77 @@ body{background:#04050d;color:var(--ink);font-family:var(--sans);overflow:hidden
 .lspin{width:46px;height:46px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:var(--gold);animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 #loader p{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--mut)}
-/* HUD */
 .hud{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:16px;padding:14px 20px;pointer-events:none}
 .brand{display:flex;align-items:center;gap:11px;pointer-events:auto}
 .brand .logo{width:34px;height:34px;border-radius:10px;background:radial-gradient(circle at 32% 30%,var(--gold),#b5781b 70%);box-shadow:0 0 22px rgba(255,196,90,.45)}
-.brand b{font-size:14.5px;letter-spacing:.1px}
-.brand span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:2.4px;text-transform:uppercase;color:var(--mut)}
+.brand b{font-size:14.5px}.brand span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:2.4px;text-transform:uppercase;color:var(--mut)}
 .hud-sp{flex:1}
 .prog-pill{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 14px;backdrop-filter:blur(12px);font-size:13px;pointer-events:auto}
 .prog-pill b{font-weight:700}.prog-pill small{color:var(--mut)}
 .prog-bar{width:90px;height:7px;border-radius:5px;background:rgba(255,255,255,.1);overflow:hidden}
 .prog-bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--gold));border-radius:5px;transition:width .5s}
 .cert-btn{pointer-events:auto;background:rgba(255,212,121,.12);border:1px solid rgba(255,212,121,.4);color:var(--gold);border-radius:11px;padding:9px 15px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans)}
-.cert-btn[disabled]{opacity:.45;cursor:not-allowed}
-.cert-btn:not([disabled]):hover{background:rgba(255,212,121,.2)}
-.help{position:fixed;left:20px;bottom:20px;z-index:18;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 15px;backdrop-filter:blur(12px);font-size:12px;max-width:230px;color:var(--mut);line-height:1.55}
+.cert-btn[disabled]{opacity:.45;cursor:not-allowed}.cert-btn:not([disabled]):hover{background:rgba(255,212,121,.2)}
+.gearbtn{position:fixed;top:62px;right:20px;z-index:20;width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--mut);cursor:pointer;display:grid;place-items:center;backdrop-filter:blur(12px)}
+.gearbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7}
+.help{position:fixed;left:20px;bottom:20px;z-index:18;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 15px;backdrop-filter:blur(12px);font-size:12px;max-width:240px;color:var(--mut);line-height:1.55}
 .help b{color:var(--ink)}
 @media(max-width:600px){.help{display:none}}
-/* service panel */
-.panel{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:94vw;z-index:30;background:linear-gradient(180deg,rgba(12,16,32,.96),rgba(7,9,20,.98));border-left:1px solid var(--line);backdrop-filter:blur(18px);transform:translateX(100%);transition:transform .34s cubic-bezier(.22,.7,.2,1);display:flex;flex-direction:column;box-shadow:-30px 0 60px rgba(0,0,0,.45)}
-.panel.on{transform:none}
-.pn-head{padding:20px 22px 14px;border-bottom:1px solid var(--line);position:relative}
-.pn-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:8px;display:flex;align-items:center;gap:8px}
-.pn-title{font-family:var(--serif);font-size:24px;line-height:1.12;letter-spacing:.01em}
-.pn-ar{font-size:13px;color:var(--mut);margin-top:3px;direction:rtl}
-.pn-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--mut);cursor:pointer;font-size:17px;display:grid;place-items:center}
-.pn-close:hover{color:var(--ink)}
-.pn-tabs{display:flex;gap:6px;padding:12px 16px 0;border-bottom:1px solid var(--line)}
-.pn-tab{flex:1;text-align:center;font-size:12.5px;font-weight:600;color:var(--mut);background:none;border:none;border-bottom:2px solid transparent;padding:9px 6px;cursor:pointer;position:relative}
-.pn-tab.on{color:var(--ink);border-bottom-color:var(--gold)}
-.pn-tab .tick{color:var(--green);margin-left:4px}
-.pn-body{flex:1;overflow-y:auto;padding:18px 22px 26px}
-.pn-body::-webkit-scrollbar{width:8px}.pn-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:8px}
-.lbl2{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin:18px 0 9px}.lbl2:first-child{margin-top:0}
-.desc{font-size:13.5px;line-height:1.6;color:var(--ink)}
-.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.tag{font-size:11.5px;color:var(--mut);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;padding:5px 11px}
-.tag b{color:var(--ink)}
-/* journey */
-.journey{display:flex;flex-wrap:wrap;margin-top:4px}
-.jstep{position:relative;flex:1 1 0;min-width:96px;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 4px}
-.jstep::before{content:'';position:absolute;top:15px;left:-50%;width:100%;height:2px;background:var(--green);z-index:0}
-.jstep:first-child::before{display:none}
-.jdot{position:relative;z-index:1;width:30px;height:30px;border-radius:50%;background:var(--green);color:#04060e;display:grid;place-items:center;font-family:var(--mono);font-size:11px;font-weight:700;margin-bottom:8px}
-.jlabel{font-size:11px;color:var(--mut);line-height:1.4}
-/* fee table */
-.ft{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
-.ft th{text-align:left;font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--mut);padding:7px 8px;border-bottom:1px solid var(--line)}
-.ft td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
-.ft .fee{color:var(--gold);font-weight:600;white-space:nowrap}
-.ft .time{color:var(--mut);white-space:nowrap}
-.note{font-size:12px;color:var(--mut);font-style:italic;margin-top:9px;line-height:1.5}
-.docs{list-style:none;display:grid;gap:7px;margin-top:4px}
-.docs li{display:flex;gap:9px;font-size:12.5px;line-height:1.5;color:var(--ink)}
-.docs li svg{width:15px;height:15px;flex-shrink:0;stroke:var(--green);fill:none;stroke-width:2.4;margin-top:2px}
-/* guide chat */
-.guide{background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.25);border-radius:13px;padding:14px 15px;font-size:13.5px;line-height:1.6;margin-top:4px}
-.guide .who{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--violet);margin-bottom:8px;display:flex;align-items:center;gap:7px}
-.guide b{color:#fff}
-.row{display:flex;gap:9px;margin-top:12px;align-items:center}
-.row input,.row textarea{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px 12px;font-size:13px;font-family:var(--sans);outline:none}
-.row textarea{min-height:64px;resize:vertical;line-height:1.5}
-.row input:focus,.row textarea:focus{border-color:var(--violet)}
-.mic{width:42px;height:42px;border-radius:11px;flex-shrink:0;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--violet);cursor:pointer;display:grid;place-items:center}
-.mic.live{background:radial-gradient(circle at 35% 30%,var(--red),#b91c1c);color:#fff;animation:pulse 1.4s infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(248,113,113,.5)}70%{box-shadow:0 0 0 14px rgba(248,113,113,0)}100%{box-shadow:0 0 0 0 rgba(248,113,113,0)}}
-.mic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2}
-.btn{background:var(--violet);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans)}
-.btn.gold{background:var(--gold);color:#1a1407}
-.btn.ghost{background:rgba(255,255,255,.05);color:var(--ink);border:1px solid var(--line)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-/* quiz */
-.q{margin-bottom:18px}
-.q-q{font-size:13.5px;font-weight:600;margin-bottom:10px;line-height:1.45}
-.opt{display:block;width:100%;text-align:left;background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--ink);cursor:pointer;margin-bottom:7px;font-family:var(--sans)}
-.opt:hover{border-color:var(--violet)}
-.opt.correct{border-color:var(--green);background:rgba(52,211,153,.12)}
-.opt.wrong{border-color:var(--red);background:rgba(248,113,113,.12)}
-.opt.dim{opacity:.55}
-.fb{font-size:12px;color:var(--mut);margin-top:4px;line-height:1.5}
-.scorebar{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center;margin-top:10px}
-.scorebar .big{font-family:var(--serif);font-size:34px}
-.scorebar .ok{color:var(--green)}.scorebar .no{color:var(--amber)}
-.sim-cust{display:flex;gap:11px;background:#fff;color:#0a0e14;border-radius:12px;padding:13px 15px;margin:6px 0 4px}
-.sim-cust .av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6aa6ff,#a78bfa);flex-shrink:0;display:grid;place-items:center;color:#fff;font-weight:700}
-.sim-cust .t{font-size:13.5px;line-height:1.5}
-.sim-cust .t small{display:block;color:#5a6878;font-size:11px;margin-top:2px}
+/* ── Immersive stage ── */
+.stage{position:fixed;inset:0;z-index:28;display:none;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 0 36px;
+  background:radial-gradient(120% 90% at 50% 30%,rgba(4,6,16,.05),rgba(3,4,12,.62) 60%,rgba(2,3,9,.92));opacity:0;transition:opacity .6s}
+.stage.on{display:flex;opacity:1}
+.st-top{position:absolute;top:18px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 20px}
+.phase-rail{display:flex;gap:8px;background:rgba(10,13,26,.6);border:1px solid var(--line);border-radius:30px;padding:6px;backdrop-filter:blur(12px)}
+.phase{font-size:12px;font-weight:600;color:var(--mut);padding:6px 14px;border-radius:24px;display:flex;align-items:center;gap:7px}
+.phase.on{color:#fff;background:rgba(167,139,250,.22)}
+.phase .d{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.6}
+.phase.done{color:var(--green)}
+.st-exit{position:absolute;top:18px;right:20px;background:rgba(10,13,26,.6);border:1px solid var(--line);color:var(--mut);border-radius:10px;padding:8px 13px;font-size:12.5px;cursor:pointer;backdrop-filter:blur(12px)}
+.st-exit:hover{color:#fff}
+.st-title{position:absolute;top:64px;left:0;right:0;text-align:center;font-family:var(--serif);font-size:26px;color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.8);pointer-events:none}
+.orb{width:120px;height:120px;border-radius:50%;margin-bottom:22px;flex-shrink:0;position:relative;
+  background:radial-gradient(circle at 38% 32%,#cbb6ff,#7c5cff 55%,#3a1d9e);box-shadow:0 0 60px rgba(124,92,255,.5),inset 0 0 30px rgba(255,255,255,.25);transition:transform .25s}
+.orb::after{content:'';position:absolute;inset:-14px;border-radius:50%;border:2px solid rgba(167,139,250,.4);opacity:0}
+.orb.speak{animation:orbpulse 1.1s ease-in-out infinite}
+.orb.speak::after{animation:orbring 1.1s ease-out infinite}
+@keyframes orbpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes orbring{0%{opacity:.5;transform:scale(1)}100%{opacity:0;transform:scale(1.4)}}
+.orb.cust{background:radial-gradient(circle at 38% 32%,#bfe0ff,#5b8def 55%,#1e4fa8);box-shadow:0 0 60px rgba(91,141,239,.5),inset 0 0 30px rgba(255,255,255,.25)}
+.cap{max-width:720px;width:92%;text-align:center;font-size:19px;line-height:1.55;color:#fff;text-shadow:0 2px 16px rgba(0,0,0,.85);min-height:64px;margin-bottom:8px}
+.cap .role{display:block;font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--violet);margin-bottom:8px}
+.cap.cust .role{color:var(--blue)}
+.coach{max-width:680px;width:92%;text-align:center;font-size:13.5px;color:var(--gold);min-height:20px;margin-bottom:14px;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+.listening{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--green);margin-bottom:10px;opacity:0;transition:opacity .2s}
+.listening.on{opacity:1}
+.st-controls{display:flex;gap:10px;align-items:center;width:92%;max-width:640px;justify-content:center}
+.st-controls .mic{width:54px;height:54px;border-radius:50%;flex-shrink:0;border:none;cursor:pointer;background:radial-gradient(circle at 35% 30%,var(--violet),#6d28d9);color:#fff;display:grid;place-items:center}
+.st-controls .mic.live{background:radial-gradient(circle at 35% 30%,var(--red),#b91c1c);animation:miclive 1.4s infinite}
+@keyframes miclive{0%{box-shadow:0 0 0 0 rgba(248,113,113,.5)}70%{box-shadow:0 0 0 16px rgba(248,113,113,0)}100%{box-shadow:0 0 0 0 rgba(248,113,113,0)}}
+.st-controls .mic svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2}
+.st-input{flex:1;max-width:360px;background:rgba(255,255,255,.07);border:1px solid var(--line);color:#fff;border-radius:26px;padding:13px 18px;font-size:14px;font-family:var(--sans);outline:none}
+.st-input:focus{border-color:var(--violet)}
+.sbtn{background:rgba(255,255,255,.08);border:1px solid var(--line);color:#fff;border-radius:24px;padding:12px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);white-space:nowrap}
+.sbtn:hover{background:rgba(255,255,255,.14)}
+.sbtn.go{background:var(--violet);border-color:var(--violet)}
+.sbtn.gold{background:var(--gold);border-color:var(--gold);color:#1a1407}
+.st-controls.hide{display:none}
+.peek{position:absolute;bottom:26px;left:20px;font-size:11.5px;color:var(--mut);max-width:230px;line-height:1.5}
 /* certificate */
 .cmodal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(4,6,14,.7);backdrop-filter:blur(5px)}
 .cmodal.on{display:flex}
-.cert{width:min(680px,94vw);background:linear-gradient(160deg,#0e1226,#0a0d1f);border:1px solid rgba(255,212,121,.4);border-radius:18px;padding:0;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6);position:relative}
+.cert{width:min(680px,94vw);background:linear-gradient(160deg,#0e1226,#0a0d1f);border:1px solid rgba(255,212,121,.4);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6);position:relative}
 .cert-x{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--mut);cursor:pointer;font-size:17px;display:grid;place-items:center;z-index:2}
 .cert-in{padding:38px 40px;text-align:center;border:2px solid rgba(255,212,121,.25);margin:14px;border-radius:12px}
 .cert-k{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold)}
-.cert-h{font-family:var(--serif);font-size:34px;margin:14px 0 6px}
-.cert-sub{color:var(--mut);font-size:13px;margin-bottom:22px}
-.cert-name{font-family:var(--serif);font-size:30px;color:var(--gold);border-bottom:1px solid var(--line);display:inline-block;padding:0 24px 6px;min-width:280px}
-.cert-name input{background:none;border:none;color:var(--gold);font-family:var(--serif);font-size:30px;text-align:center;width:100%;outline:none}
-.cert-body{font-size:13.5px;color:var(--ink);line-height:1.6;margin:22px 0;max-width:480px;margin-left:auto;margin-right:auto}
+.cert-h{font-family:var(--serif);font-size:34px;margin:14px 0 6px}.cert-sub{color:var(--mut);font-size:13px;margin-bottom:22px}
+.cert-name input{background:none;border:none;border-bottom:1px solid var(--line);color:var(--gold);font-family:var(--serif);font-size:30px;text-align:center;min-width:280px;padding:0 24px 6px;outline:none}
+.cert-body{font-size:13.5px;color:var(--ink);line-height:1.6;margin:22px auto;max-width:480px}
 .cert-foot{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-top:20px}
 .cert-actions{display:flex;gap:10px;justify-content:center;padding:0 40px 30px}
+.btn{background:var(--violet);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+.btn.gold{background:var(--gold);color:#1a1407}.btn.ghost{background:rgba(255,255,255,.05);color:var(--ink);border:1px solid var(--line)}
 @media print{body *{visibility:hidden}.cmodal,.cmodal *{visibility:visible}.cmodal{position:absolute;inset:0;background:#fff}.cert{box-shadow:none}.cert-x,.cert-actions{display:none}}
-/* AI key popup */
 .kpop{position:fixed;inset:0;z-index:55;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(4,6,14,.62);backdrop-filter:blur(5px)}
 .kpop.on{display:flex}
 .kcard{position:relative;width:min(440px,94vw);background:linear-gradient(180deg,rgba(16,20,38,.99),rgba(9,11,24,1));border:1px solid var(--line);border-radius:16px;padding:20px 22px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
@@ -137,11 +101,10 @@ body{background:#04050d;color:var(--ink);font-family:var(--sans);overflow:hidden
 .kcard label{display:block;font-size:11px;color:var(--mut);margin-bottom:9px}
 .kcard input{width:100%;margin-top:4px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 10px;font-size:12.5px;outline:none}
 .kcard .pr input{border-color:var(--violet)}
+.kclose{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--mut);cursor:pointer;font-size:17px;display:grid;place-items:center}
 .kstatus{font-size:11.5px;color:var(--green);margin-left:10px}
 #tip{position:fixed;z-index:40;pointer-events:none;background:rgba(10,12,26,.95);border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:12px;display:none;max-width:230px}
 #tip .n{font-weight:700;margin-bottom:2px}#tip .m{color:var(--mut);font-size:11px}
-.gearbtn{position:fixed;top:62px;right:20px;z-index:20;width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--mut);cursor:pointer;display:grid;place-items:center;backdrop-filter:blur(12px)}
-.gearbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7}
 </style>
 </head>
 <body>
@@ -154,398 +117,342 @@ body{background:#04050d;color:var(--ink);font-family:var(--sans);overflow:hidden
   <div class="prog-pill"><div class="prog-bar"><i id="progFill"></i></div><b id="progN">0</b><small>/ 11 certified</small></div>
   <button class="cert-btn" id="certBtn" disabled>🏅 Certificate</button>
 </div>
-<button class="gearbtn" id="gearBtn" title="Connect Claude for a smarter guide"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+<button class="gearbtn" id="gearBtn" title="Connect Claude + ElevenLabs"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+<div class="help"><b>Welcome, ambassador.</b> Each planet is one of the 11 services. <b>Click a planet to dive in</b> — your AI coach will teach you the service out loud, quiz you, then run three live customer role‑plays. Certify all 11 to earn your certificate. For the full voice experience, connect your keys with the ⚙.</div>
 
-<div class="help"><b>Welcome, ambassador.</b> Each planet is one of the Department's 11 services. Click a planet to learn it with your guide, pass the quiz, then handle a live customer simulation. Certify all 11 to earn your certificate. Move freely between planets anytime.</div>
-
-<aside class="panel" id="panel">
-  <button class="pn-close" onclick="closePanel()">&times;</button>
-  <div class="pn-head"><div class="pn-eyebrow" id="pnEyebrow">Service</div><div class="pn-title" id="pnTitle">—</div><div class="pn-ar" id="pnAr"></div></div>
-  <div class="pn-tabs">
-    <button class="pn-tab on" data-tab="learn" onclick="setTab('learn')">Learn <span class="tick" id="tickLearn"></span></button>
-    <button class="pn-tab" data-tab="quiz" onclick="setTab('quiz')">Quiz <span class="tick" id="tickQuiz"></span></button>
-    <button class="pn-tab" data-tab="sim" onclick="setTab('sim')">Simulation <span class="tick" id="tickSim"></span></button>
+<div class="stage" id="stage">
+  <div class="st-top"><div class="phase-rail"><div class="phase" data-ph="learn"><span class="d"></span>Learn</div><div class="phase" data-ph="quiz"><span class="d"></span>Skills test</div><div class="phase" data-ph="sim"><span class="d"></span>Simulation</div></div></div>
+  <button class="st-exit" id="stExit">Exit to galaxy ✕</button>
+  <div class="st-title" id="stTitle"></div>
+  <div class="orb" id="orb"></div>
+  <div class="cap" id="cap"><span class="role" id="capRole">Coach</span><span id="capText"></span></div>
+  <div class="coach" id="coach"></div>
+  <div class="listening" id="listening">● listening…</div>
+  <div class="st-controls" id="stControls">
+    <button class="mic" id="stMic" title="Speak"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg></button>
+    <input class="st-input" id="stInput" placeholder="…or type your answer"/>
+    <button class="sbtn go" id="stSubmit">Send</button>
+    <button class="sbtn" id="stSkip">Skip</button>
   </div>
-  <div class="pn-body" id="pnBody"></div>
-</aside>
+  <div class="peek" id="peek"></div>
+</div>
 
 <div class="cmodal" id="cmodal"><div class="cert"><button class="cert-x" onclick="document.getElementById('cmodal').classList.remove('on')">&times;</button>
   <div class="cert-in">
     <div class="cert-k">Government of Dubai · Legal Affairs Department</div>
-    <div class="cert-h">Certificate of Completion</div>
-    <div class="cert-sub">Service Ambassador Academy</div>
-    <div class="cert-name"><input id="certName" placeholder="Type your name" value=""/></div>
-    <div class="cert-body">has successfully completed training across all <b>eleven</b> Legal Affairs Department services — mastering the steps, fees and channels, passing every knowledge check and handling each customer simulation — and is hereby certified a <b>Service Ambassador</b>.</div>
+    <div class="cert-h">Certificate of Completion</div><div class="cert-sub">Service Ambassador Academy</div>
+    <div class="cert-name"><input id="certName" placeholder="Type your name"/></div>
+    <div class="cert-body">has completed voice‑led training across all <b>eleven</b> Legal Affairs Department services — learning each service from the AI coach, passing every skills test and handling live customer simulations — and is hereby certified a <b>Service Ambassador</b>.</div>
     <div class="cert-foot"><span id="certDate"></span><span>Know our services. Serve with happiness.</span></div>
   </div>
   <div class="cert-actions"><button class="btn gold" onclick="window.print()">Print / Save PDF</button><button class="btn ghost" onclick="document.getElementById('cmodal').classList.remove('on')">Close</button></div>
 </div></div>
 
 <div class="kpop" id="kpop"><div class="kcard">
-  <button class="pn-close" style="position:absolute;top:14px;right:14px" onclick="document.getElementById('kpop').classList.remove('on')">&times;</button>
-  <h3>Smarter guide (optional)</h3>
-  <p>The academy works fully on its own. Paste a Claude key to make your guide conversational and have it grade your simulations like a real coach. Keys stay in your browser only.</p>
-  <label class="pr">Anthropic API key<input type="password" id="kAnthropic" placeholder="sk-ant-…" autocomplete="off"></label>
-  <label>ElevenLabs API key <span style="opacity:.6">· natural voice (optional)</span><input type="password" id="kEleven" placeholder="optional" autocomplete="off"></label>
+  <button class="kclose" onclick="document.getElementById('kpop').classList.remove('on')">&times;</button>
+  <h3>Connect your AI coach</h3>
+  <p>The academy works on its own, but for the full <b>talking</b> experience paste a Claude key (conversational teaching + live grading) and an ElevenLabs key (natural voice). Keys stay in your browser only.</p>
+  <label class="pr">① Anthropic API key <span style="opacity:.6">· the coach's brain</span><input type="password" id="kAnthropic" placeholder="sk-ant-…"></label>
+  <label>② ElevenLabs API key <span style="opacity:.6">· natural voice</span><input type="password" id="kEleven" placeholder="optional but recommended"></label>
   <div style="display:flex;align-items:center;margin-top:6px"><button class="btn" id="kSave">Save &amp; test</button><span class="kstatus" id="kStatus"></span></div>
 </div></div>
-
 <div id="tip"></div>
 
-<!-- ════════ DATA + LOGIC ════════ -->
+<!-- ════════ DATA + DIRECTOR ════════ -->
 <script>
-const LPS='Legal Professions System (LPS)';
 const SERVICES=[
  {id:'reg',name:'Registration of Advocates & Legal Consultants',ar:'قيد المحامين والمستشارين القانونيين',who:'Advocates & legal consultants',color:'#6aa6ff',type:'terran',
-  channels:['Legal Professions System (LPS)','Smart App'],
-  desc:"Join and maintain your place on the Roll of practising advocates and legal consultants — the gateway to practising law in Dubai.",
+  channels:['Legal Professions System (LPS)','Smart App'],desc:"Joining and maintaining a place on the Roll of practising advocates and legal consultants — the gateway to practising law in Dubai.",
   steps:['Apply on the Legal Professions System or Smart App','The Department reviews the application and documents','Pay the fees','Registration decision and registration card issued'],
-  fees:[{n:'New advocate registration',fee:'AED 2,020',time:'14 working days'},{n:'New legal-consultant registration',fee:'AED 2,020',time:'18 working days'},{n:'Registration renewal',fee:'from AED 1,020',time:'Immediate'},{n:'Amend details / change office',fee:'AED 520',time:'1 working day'},{n:'Replacement card',fee:'AED 120',time:'1 working day'},{n:"'To whom it may concern' certificate",fee:'AED 220',time:'1 working day'},{n:'Visiting legal-consultant permit',fee:'AED 220',time:'2 working days'}],
-  note:'Fees include a 10 innovation + 10 knowledge fee. New advocates get 50% off the registration fee for their first 3 years.',
-  docs:['University law degree','Passport','Good-conduct (criminal status) certificate','Ministry of Justice training certificate','MOHRE-attested employment contract','Curriculum vitae (CV)'],
-  quiz:[
-   {q:'How much is new advocate registration?',o:['AED 520','AED 2,020','AED 3,020','Free'],c:1,e:'AED 2,020 (2,000 + 10 innovation + 10 knowledge).'},
-   {q:'How long does new advocate registration take?',o:['1 working day','14 working days','30 working days','60 working days'],c:1,e:'About 14 working days.'},
-   {q:'Which channel is used to register?',o:['DubaiNow','Legal Professions System (LPS) / Smart App','Dubai Police','Email only'],c:1,e:'Registration is on the Legal Professions System (LPS) or Smart App.'}],
-  sim:{cust:"I just graduated in law and I want to become a registered advocate in Dubai. What do I do?",label:'A new law graduate',
-   rubric:[{l:'Right service & channel',kw:['registration','legal professions','lps','smart app']},{l:'States the fee',kw:['2,020','2020']},{l:'States the timeline',kw:['14','fourteen']},{l:'Mentions key documents',kw:['degree','passport','good-conduct','good conduct','ministry of justice','mohre']},{l:'Mentions the 50% discount',kw:['50','half','discount']}]}},
+  fees:[{n:'New advocate registration',fee:'AED 2,020',time:'14 working days'},{n:'New legal-consultant registration',fee:'AED 2,020',time:'18 working days'},{n:'Replacement card',fee:'AED 120',time:'1 working day'},{n:"'To whom it may concern' certificate",fee:'AED 220',time:'1 working day'}],
+  note:'New advocates get 50% off the registration fee for their first 3 years.',
+  docs:['University law degree','Passport','Good-conduct certificate','Ministry of Justice training certificate','MOHRE-attested employment contract','CV'],
+  quiz:[{q:'How much is new advocate registration, and how long does it take?',a:'AED 2,020, about 14 working days.',kw:['2,020','2020','14']},
+        {q:'Which channel do they use to register?',a:'The Legal Professions System (LPS) or the Smart App.',kw:['legal professions','lps','smart app']},
+        {q:'Name two documents a new advocate must bring.',a:'Any two of: law degree, passport, good-conduct certificate, MoJ training certificate, MOHRE contract, CV.',kw:['degree','passport','good','ministry','mohre','cv','conduct']}],
+  sims:["I just graduated in law and want to become a registered advocate in Dubai — what do I do?","How much will it cost me to register, and how long does it take?","I've lost my registration card. Can I get a replacement?"]},
 
  {id:'firm',name:'Licensing of Advocacy & Legal Consultancy Firms',ar:'ترخيص مكاتب المحاماة',who:'Law & consultancy firms',color:'#a78bfa',type:'terran',
-  channels:['Legal Professions System (LPS)','Invest in Dubai'],
-  desc:"License and manage an advocacy or legal-consultancy firm in Dubai — partners, managers, name, address, activities, and cessation.",
+  channels:['Legal Professions System (LPS)','Invest in Dubai'],desc:"Licensing and managing an advocacy or legal-consultancy firm in Dubai — partners, managers, name, address, activities and cessation.",
   steps:['Apply on the Legal Professions System / Invest in Dubai','The Department reviews the application','Pay the fees','No-objection certificate and professional licence issued'],
-  fees:[{n:'New firm licence',fee:'AED 3,020 (AED 3,000 per partner)',time:'20 working days'},{n:'Firm licence renewal',fee:'AED 3,000 per advocate/consultant',time:'1 working day'},{n:'Amend licence',fee:'AED 1,020',time:'5 working days'},{n:'Temporary / permanent cessation',fee:'No fee',time:'5 working days'},{n:"'To whom it may concern' certificate",fee:'AED 220',time:'1 working day'}],
+  fees:[{n:'New firm licence',fee:'AED 3,020 (AED 3,000 per partner)',time:'20 working days'},{n:'Firm licence renewal',fee:'AED 3,000 per advocate/consultant',time:'1 working day'},{n:'Amend licence',fee:'AED 1,020',time:'5 working days'},{n:'Temporary / permanent cessation',fee:'No fee',time:'5 working days'}],
   note:'New advocates get 50% off the licence fees for their first 3 years.',
-  docs:['Experience certificate from the previous employer (advocates under 2 years)','Undertaking naming a proposed UAE-national managing advocate (for offices outside Dubai)','Signed acceptance from the proposed manager','Proof the manager is registered and has 2+ years experience'],
-  quiz:[
-   {q:'How much is a new firm licence?',o:['AED 1,020','AED 2,020','AED 3,020','AED 5,020'],c:2,e:'AED 3,020 (AED 3,000 per partner for companies).'},
-   {q:'How long does a new firm licence take?',o:['5 working days','20 working days','30 working days','60 working days'],c:1,e:'About 20 working days.'},
-   {q:'Where does a firm apply for a licence?',o:['Legal Professions System / Invest in Dubai','DubaiNow','Dubai Courts','UAE Pass'],c:0,e:'Legal Professions System / Invest in Dubai.'}],
-  sim:{cust:"My partners and I want to open a new law firm in Dubai. How does the licence work?",label:'A managing partner',
-   rubric:[{l:'Right service & channel',kw:['licence','license','legal professions','invest in dubai']},{l:'States the fee',kw:['3,020','3020','3,000','3000','per partner']},{l:'States the timeline',kw:['20','twenty']},{l:'Mentions amendments/cessation',kw:['amend','partner','manager','cessation','renew']}]}},
+  docs:['Experience certificate (advocates under 2 years)','Undertaking naming a UAE-national managing advocate (offices outside Dubai)','Signed acceptance from the proposed manager','Proof the manager has 2+ years experience'],
+  quiz:[{q:'How much is a new firm licence, and how long does it take?',a:'AED 3,020 (AED 3,000 per partner for companies), about 20 working days.',kw:['3,020','3020','3,000','3000','20']},
+        {q:'Where does a firm apply for its licence?',a:'The Legal Professions System or Invest in Dubai.',kw:['legal professions','lps','invest in dubai']},
+        {q:'Can a firm add a partner later, and how?',a:'Yes — amend the licence on the Legal Professions System (AED 1,020).',kw:['amend','partner','legal professions','1,020','1020']}],
+  sims:["My partners and I want to open a new law firm in Dubai. How does licensing work?","We need to add a new partner to our firm's licence — what's the process?","How much is it to renew our firm licence each year?"]},
 
  {id:'fines',name:'Violations & Fines',ar:'المخالفات والغرامات',who:'Advocates & legal consultants',color:'#f472b6',type:'rocky',
-  channels:['Legal Professions System (LPS)','Smart App'],
-  desc:"Settle professional fines, arrange instalments, or grieve a decision to impose a fine.",
+  channels:['Legal Professions System (LPS)','Smart App'],desc:"Settling professional fines, arranging instalments, or grieving a decision to impose a fine.",
   steps:['Submit the payment, settlement or grievance on the LPS','The Grievances Committee reviews (for grievances)','A decision is issued and the person is notified'],
   fees:[{n:'Pay a fine',fee:'Fine amount',time:'Immediate'},{n:'Amicable settlement',fee:'No fee',time:'5 working days'},{n:'Pay by instalments',fee:'No fee',time:'5 working days'},{n:'Grievance against a fine',fee:'No fee',time:'60 working days'}],
-  note:'',
-  docs:['A written grievance stating the reasons','Any supporting documents'],
-  quiz:[
-   {q:'What does paying a fine by instalments cost?',o:['A 10% surcharge','AED 220','No fee','AED 520'],c:2,e:'No fee — settlement and instalments are available.'},
-   {q:'How long can a grievance against a fine take?',o:['1 day','5 days','60 working days','Immediate'],c:2,e:'Up to 60 working days.'},
-   {q:'Where are fines handled?',o:['Dubai Police','Legal Professions System / Smart App','DubaiNow','The courts'],c:1,e:'On the Legal Professions System / Smart App.'}],
-  sim:{cust:"I received a professional fine but I can't pay it all at once. What are my options?",label:'An advocate with a fine',
-   rubric:[{l:'Right service & channel',kw:['fine','legal professions','lps','smart app']},{l:'Instalments / amicable settlement',kw:['instalment','installment','settle','amicable']},{l:'No fee to settle',kw:['no fee','free','no cost']},{l:'Grievance option',kw:['grievance','dispute','appeal']}]}},
+  note:'',docs:['A written grievance stating the reasons','Any supporting documents'],
+  quiz:[{q:'Can a lawyer pay a fine in instalments, and does it cost extra?',a:'Yes — instalments and amicable settlement are available at no fee.',kw:['instalment','installment','no fee','free','settle']},
+        {q:'If they think a fine is unfair, what can they do?',a:'Lodge a grievance — no fee, up to 60 working days.',kw:['grievance','dispute','appeal','60']},
+        {q:'Which channel handles fines?',a:'The Legal Professions System or Smart App.',kw:['legal professions','lps','smart app']}],
+  sims:["I received a professional fine but I can't pay it all at once. What are my options?","I think this fine is completely unfair — can I challenge it?","Where do I actually go to pay a fine?"]},
 
  {id:'probono',name:'Voluntary Legal Services (Pro Bono)',ar:'الخدمات القانونية التطوعية',who:'Members of the public',color:'#34d399',type:'terran',
-  channels:['Voluntary Legal Services Smart Portal','Smart App','DubaiNow'],
-  desc:"A free service that connects members of the public to volunteering lawyers — 395 lawyers across 48 areas of law.",
+  channels:['Voluntary Legal Services Smart Portal','Smart App','DubaiNow'],desc:"A free service connecting members of the public to volunteering lawyers — 395 lawyers across 48 areas of law.",
   steps:['Register on the Voluntary Legal Services Smart Portal','Choose the area of law and preferred language','Pick an available firm and a convenient time','Receive the free legal consultation'],
-  fees:[{n:'Ask a lawyer (free legal advice)',fee:'Free',time:'Instant'}],
-  note:'395 volunteer lawyers participate across 48 areas of law.',
-  docs:['None'],
-  quiz:[
-   {q:'What does Pro Bono legal advice cost the public?',o:['AED 50','AED 220','Free','AED 1,050'],c:2,e:'Free — Voluntary Legal Services.'},
-   {q:'Who can use Pro Bono?',o:['Only lawyers','Members of the public','Only government','Only companies'],c:1,e:'All members of the public.'},
-   {q:'Where do the public register for Pro Bono?',o:['Legal Professions System','Voluntary Legal Services Smart Portal','Gov Portal','Dubai Courts'],c:1,e:'The Voluntary Legal Services Smart Portal (also Smart App / DubaiNow).'}],
-  sim:{cust:"I have a legal problem but I really can't afford a lawyer. Is there any help?",label:'A worried member of the public',
-   rubric:[{l:'Reassures & names Pro Bono',kw:['pro bono','voluntary','free','no cost']},{l:'Channel to register',kw:['smart portal','voluntary legal services','smart app','dubainow']},{l:'How matching works',kw:['area of law','firm','language','volunteer']},{l:'It is free',kw:['free','no fee']}]}},
+  fees:[{n:'Ask a lawyer (free legal advice)',fee:'Free',time:'Instant'}],note:'395 volunteer lawyers across 48 areas of law.',docs:['None'],
+  quiz:[{q:'What does Pro Bono legal advice cost the public?',a:'It is completely free.',kw:['free','no cost','no fee']},
+        {q:'Where does a member of the public register for it?',a:'The Voluntary Legal Services Smart Portal (also Smart App / DubaiNow).',kw:['voluntary','smart portal','smart app','dubainow']},
+        {q:'Who is allowed to use Pro Bono?',a:'Any member of the public.',kw:['public','anyone','everyone']}],
+  sims:["I have a legal problem but I really can't afford a lawyer. Is there any help?","Does the free legal advice cost anything at all?","I only speak Urdu — can I still get the free advice?"]},
 
  {id:'clpd',name:'Professional Training & Development (CLPD)',ar:'التدريب والتطوير المهني',who:'Advocates · consultants · providers',color:'#c084fc',type:'ice',
-  channels:['CLPD Portal'],
-  desc:"The Continuing Legal Professional Development programme — register for CLPD activities; providers become accredited and accredit courses.",
+  channels:['CLPD Portal'],desc:"The Continuing Legal Professional Development programme — registering for CLPD activities; providers become accredited and accredit courses.",
   steps:['Log in to the CLPD Portal','Buy enough units','Choose the development activity','Choose the date and time','Register for the activity'],
-  fees:[{n:'Register in a CLPD activity',fee:'AED 1,050 (1,000 + 50 VAT)',time:'1 day'},{n:'Provider accreditation',fee:'No fee',time:'30 days'},{n:'Training-course accreditation',fee:'No fee',time:'30 days'}],
-  note:'',
-  docs:['Not applicable'],
-  quiz:[
-   {q:'How much is registering in a CLPD activity?',o:['Free','AED 520','AED 1,050','AED 2,020'],c:2,e:'AED 1,050 (1,000 + 50 VAT).'},
-   {q:'What does CLPD provider accreditation cost?',o:['No fee','AED 1,050','AED 3,020','AED 5,000'],c:0,e:'No fee (about 30 days).'},
-   {q:'Where is CLPD done?',o:['CLPD Portal','Invest in Dubai','Gov Portal','Dubai Justice'],c:0,e:'The CLPD Portal.'}],
-  sim:{cust:"I run a training company and want to deliver accredited CLPD courses. What's the process?",label:'A training provider',
-   rubric:[{l:'Provider & course accreditation',kw:['provider accreditation','course accreditation','accredit']},{l:'No fee for accreditation',kw:['no fee','free']},{l:'Channel',kw:['clpd portal','clpd']},{l:'Timeline ~30 days',kw:['30','thirty']}]}},
+  fees:[{n:'Register in a CLPD activity',fee:'AED 1,050 (1,000 + 50 VAT)',time:'1 day'},{n:'Provider accreditation',fee:'No fee',time:'30 days'},{n:'Course accreditation',fee:'No fee',time:'30 days'}],note:'',docs:['Not applicable'],
+  quiz:[{q:'How much is registering in a CLPD activity?',a:'AED 1,050 (1,000 + 50 VAT).',kw:['1,050','1050']},
+        {q:'What does provider or course accreditation cost?',a:'No fee, about 30 days.',kw:['no fee','free','30']},
+        {q:'Which channel is used for CLPD?',a:'The CLPD Portal.',kw:['clpd portal','clpd']}],
+  sims:["I run a training company and want to deliver accredited CLPD courses — what's the process?","How much does it cost to register for a CLPD activity?","Where do I sign up for CLPD?"]},
 
  {id:'rep',name:'Representation in Government Cases',ar:'التمثيل في الدعاوى الحكومية',who:'Dubai Government entities',color:'#22d3ee',type:'gas',
-  channels:['Central Legal Services Portal (Gov Portal)'],
-  desc:"The Department represents the Government and its entities before the courts and in arbitration.",
+  channels:['Central Legal Services Portal (Gov Portal)'],desc:"The Department representing the Government and its entities before the courts and in arbitration.",
   steps:['The entity submits the request via the Gov Portal or email','The Department takes up the representation','Amicable settlement, or a final judgment/order'],
-  fees:[{n:'Representation in civil, criminal or arbitration cases',fee:'No fee',time:'Tied to the final judgment'}],
-  note:'For Dubai Government entities only.',
-  docs:['Government request form/letter with supporting documents','Or the judicial notice with the statement of claim naming the entity'],
-  quiz:[
-   {q:'Who is Representation in Government Cases for?',o:['Any resident','Dubai Government entities','Law firms','Tourists'],c:1,e:'Dubai Government entities.'},
-   {q:'What does it cost the entity?',o:['No fee','AED 1,020','AED 5,020','2% of the claim'],c:0,e:'No fee.'},
-   {q:'Which channel is used?',o:['Smart App','Central Legal Services Portal (Gov Portal)','The Directory','DubaiNow'],c:1,e:'The Central Legal Services Portal (Gov Portal).'}],
-  sim:{cust:"Our government department is being taken to court. Can the Legal Affairs Department represent us?",label:'A government legal officer',
-   rubric:[{l:'Yes — represents government entities',kw:['represent','government','entity','court','arbitration']},{l:'Channel',kw:['gov portal','central legal services']},{l:'No fee',kw:['no fee','free']}]}},
+  fees:[{n:'Representation in civil, criminal or arbitration cases',fee:'No fee',time:'Tied to the final judgment'}],note:'For Dubai Government entities only.',docs:['Government request form/letter with supporting documents'],
+  quiz:[{q:'Who is this service for?',a:'Dubai Government entities.',kw:['government','entity','entities']},
+        {q:'What does representation cost the entity?',a:'No fee.',kw:['no fee','free']},
+        {q:'Which channel is used?',a:'The Central Legal Services Portal — the Gov Portal.',kw:['gov portal','central legal services']}],
+  sims:["Our government department is being taken to court. Can the Department represent us?","Do you handle arbitration cases for us too?","What does it cost our entity to be represented?"]},
 
  {id:'exec',name:'Execution of Judgments & Instruments',ar:'تنفيذ الأحكام والسندات',who:'Government entities · individuals',color:'#fb923c',type:'rocky',
-  channels:['Gov Portal','Email'],
-  desc:"Execute judgments and instruments — cheques, administrative resolutions, criminal judgments — for or against the Government, entities and individuals.",
+  channels:['Gov Portal','Email'],desc:"Executing judgments and instruments — cheques, administrative resolutions, criminal judgments — for or against the Government, entities and individuals.",
   steps:['Submit via the Gov Portal or email with the judgment and its executory wording','The Department prepares and approves the enforcement letter','The entity is notified and complies — settlement, or the claim is registered'],
-  fees:[{n:'Execution of cheques',fee:'No fee',time:'Varies by case'},{n:'Execution of judgments against individuals',fee:'No fee',time:'60 working days'}],
-  note:'',
-  docs:['Copy of the cheque','Bank return notice (with reason)','Certified translation of the cheque and bank notice','ID or company licence of the defendant','Explanatory memo of why the cheque was issued'],
-  quiz:[
-   {q:'What does executing a cheque cost?',o:['No fee','AED 220','1% of the cheque','AED 1,020'],c:0,e:'No fee.'},
-   {q:'For cheque execution, a non-Arabic cheque needs…',o:['Nothing extra','A certified translation','A notarised copy','A police stamp'],c:1,e:'A certified translation of the cheque and bank notice.'},
-   {q:'Which channel handles execution?',o:['Gov Portal / Email','DubaiNow','Dubai Police','UAE Pass'],c:0,e:'The Gov Portal or email.'}],
-  sim:{cust:"Someone gave us a cheque that bounced. How do we enforce it through the Department?",label:'A finance officer',
-   rubric:[{l:'Right service',kw:['execution','enforce','cheque']},{l:'Documents — cheque + bank notice',kw:['cheque','bank','return','notice']},{l:'Certified translation',kw:['translation','translate','certified']},{l:'Channel',kw:['gov portal','email']}]}},
+  fees:[{n:'Execution of cheques',fee:'No fee',time:'Varies by case'},{n:'Execution of judgments against individuals',fee:'No fee',time:'60 working days'}],note:'',
+  docs:['Copy of the cheque','Bank return notice (with reason)','Certified translation of the cheque and bank notice','ID or company licence of the defendant'],
+  quiz:[{q:'What does executing a cheque cost?',a:'No fee.',kw:['no fee','free']},
+        {q:'A non-Arabic cheque needs what extra document?',a:'A certified translation.',kw:['translation','translate','certified']},
+        {q:'Which channel handles execution?',a:'The Gov Portal or email.',kw:['gov portal','email']}],
+  sims:["Someone gave us a cheque that bounced. How do we enforce it through the Department?","What documents do we need to execute a cheque?","How long does enforcing a judgment against an individual take?"]},
 
  {id:'govsup',name:'Government Legal Support',ar:'الدعم القانوني الحكومي',who:'Dubai Government entities',color:'#60a5fa',type:'terran',
-  channels:['Central Legal Services Portal (Gov Portal)'],
-  desc:"End-to-end legal support for government bodies — legislation, advice, company governance, IP, and contracts.",
+  channels:['Central Legal Services Portal (Gov Portal)'],desc:"End-to-end legal support for government bodies — legislation, advice, company governance, IP, and contracts.",
   steps:['Submit the request via the Gov Portal or email','The Department classifies and works the request','The output is delivered — a draft law, contract or legal observations'],
-  fees:[{n:'Legislative support',fee:'No fee',time:'10–30 working days'},{n:'Legal advice',fee:'No fee',time:'10–20 working days'},{n:'Contract drafting / review',fee:'No fee',time:'First response 5–30 working days'}],
-  note:'No LAD fee (Ministry of Economy fees may apply for IP).',
-  docs:['Official request from the government entity','The draft legislation or contract to prepare or review','Related correspondence and relevant legislation'],
-  quiz:[
-   {q:'A government entity needs a contract reviewed. Which service?',o:['Government Legal Support','Voluntary Legal Services','Registration','Violations & Fines'],c:0,e:'Government Legal Support covers contract drafting and review.'},
-   {q:'What does legal advice for a government entity cost?',o:['No fee','AED 1,020','AED 5,020','2% of value'],c:0,e:'No fee.'},
-   {q:'How long does legislative support take?',o:['1 day','10–30 working days','60 working days','90 days'],c:1,e:'10–30 working days by request type.'}],
-  sim:{cust:"We need a contract reviewed urgently for our government entity. Can you help and how long will it take?",label:'A government department head',
-   rubric:[{l:'Right service & channel',kw:['government legal support','gov portal','central legal services']},{l:'Covers contracts/advice/legislation',kw:['contract','draft','review','advice','legislat']},{l:'Timeline',kw:['10','30','working days']},{l:'No fee',kw:['no fee','free']}]}},
+  fees:[{n:'Legislative support',fee:'No fee',time:'10–30 working days'},{n:'Legal advice',fee:'No fee',time:'10–20 working days'},{n:'Contract drafting / review',fee:'No fee',time:'First response 5–30 working days'}],note:'No LAD fee (Ministry of Economy fees may apply for IP).',
+  docs:['Official request from the government entity','The draft legislation or contract to prepare or review'],
+  quiz:[{q:'A government entity needs a contract reviewed — does it cost anything, and how long?',a:'No fee; typically 5–30 working days.',kw:['no fee','free','30','5']},
+        {q:'Name two things this service covers.',a:'Any two of: legislation, legal advice, governance, IP, contracts.',kw:['legislat','advice','contract','governance','ip']},
+        {q:'Which channel is used?',a:'The Central Legal Services Portal — the Gov Portal.',kw:['gov portal','central legal services']}],
+  sims:["We need a contract reviewed urgently for our government entity. Can you help, and how long?","Can the Department help us draft a new regulation?","Is there any fee for legal advice to a government entity?"]},
 
  {id:'complaints',name:'Government & Legal Professional Complaints',ar:'الشكاوى الحكومية والمهنية',who:'Public · private organisations',color:'#f87171',type:'rocky',
-  channels:['Website','Smart App'],
-  desc:"Raise a claim against a government entity (Law No. 16 of 2025 — no fees, amicable settlement), or complain about an advocate or legal consultant for the Professional Conduct process.",
+  channels:['Website','Smart App'],desc:"Raising a claim against a government entity (Law No. 16 of 2025 — no fees, amicable settlement), or complaining about an advocate or legal consultant for the Professional Conduct process.",
   steps:['File via the website, Smart App or in person','Amicable settlement is attempted (negotiation or mediation)','A settlement agreement or certificate of compliance is issued'],
   fees:[{n:'Claim against a government entity',fee:'No fee',time:'Up to 60 working days'},{n:'Complaint against an advocate / consultant',fee:'No fee',time:'Up to 60 working days'}],
-  note:'Government claims are referred to the entity within 5 working days, with a 15-day response window (Law No. 16 of 2025). Not for criminal matters.',
-  docs:['A signed statement of claim (name, ID, contact, domicile)','The respondent government entity name','The subject, details, requests and grounds of the claim','ID of the complainant'],
-  quiz:[
-   {q:'Claims against a government entity are governed by…',o:['Law No. 16 of 2025','The penal code','Federal labour law','No law'],c:0,e:'Law No. 16 of 2025 — no fee, amicable settlement.'},
-   {q:'A complaint against a lawyer goes to…',o:['Dubai Police','The Professional Conduct process','The courts directly','Nowhere'],c:1,e:'The Professional Conduct process.'},
-   {q:'Does the Department handle criminal complaints?',o:['Yes, all of them','No — redirect to Police / Prosecution','Only serious ones','Only against lawyers'],c:1,e:'No — criminal matters go to Dubai Police / Public Prosecution.'}],
-  sim:{cust:"A lawyer treated me badly and took my money. I'm furious. What can I do?",label:'An upset member of the public',
-   rubric:[{l:'Stays calm & empathetic',kw:['sorry','understand','help','calm','reassure']},{l:'Right route — complaint vs lawyer',kw:['complaint','professional conduct','advocate','consultant']},{l:'Channel',kw:['website','smart app','file']},{l:'Does not take sides',kw:['note','details','impartial','both sides',"don't take sides"]}]}},
+  note:'Government claims fall under Law No. 16 of 2025. The Department does NOT handle criminal matters — redirect those to Dubai Police / Public Prosecution.',
+  docs:['A signed statement of claim (name, ID, contact)','The respondent entity name','The subject, details and grounds of the claim','ID of the complainant'],
+  quiz:[{q:'A complaint about a lawyer goes to which process?',a:'The Professional Conduct process.',kw:['professional conduct','conduct']},
+        {q:'Does the Department handle criminal complaints?',a:'No — redirect to Dubai Police or Public Prosecution.',kw:['no','police','prosecution','redirect']},
+        {q:'What does a claim against a government entity cost?',a:'No fee — resolved by amicable settlement under Law No. 16 of 2025.',kw:['no fee','free','amicable','16']}],
+  sims:["A lawyer treated me badly and took my money — I'm furious. What can I do?","I want to make a claim against a government department. How does that work?","My neighbour assaulted me — I want to file a criminal case here."]},
 
  {id:'monitor',name:'Monitoring & Inspection',ar:'الرقابة والتفتيش',who:'Public · the profession',color:'#fbbf24',type:'rocky',
-  channels:['Report','Field inspection'],
-  desc:"Safeguard the profession — report unlicensed legal practice and flag breaches of professional conduct rules.",
+  channels:['Report','Field inspection'],desc:"Safeguarding the profession — reporting unlicensed legal practice and flagging breaches of professional conduct rules.",
   steps:['Report the suspected unlicensed practice to the Department','The Department reviews and inspects','Action is taken where a breach is confirmed'],
-  fees:[{n:'Report unlicensed practice / conduct breach',fee:'No fee',time:'Reporting 24/7'}],
-  note:'',
-  docs:['Details of the person or activity being reported','Any supporting evidence (e.g. adverts, documents)'],
-  quiz:[
-   {q:'Reporting unlicensed legal practice costs…',o:['AED 220','AED 520','No fee','AED 120'],c:2,e:'No fee — reporting is open 24/7.'},
-   {q:'Who handles unlicensed-practice reports?',o:['Complaints','Monitoring & Inspection','Violations & Fines','The Directory'],c:1,e:'Monitoring & Inspection.'},
-   {q:'What helps an inspection?',o:['Nothing','Details and supporting evidence','A court order','A trade licence'],c:1,e:'Details of the activity and any supporting evidence.'}],
-  sim:{cust:"I think someone is practising law without a licence. Can I report them?",label:'A concerned citizen',
-   rubric:[{l:'Yes — Monitoring & Inspection',kw:['report','monitoring','inspection','unlicensed']},{l:'No fee, 24/7',kw:['no fee','free','24/7','anytime']},{l:'What to provide',kw:['details','evidence','name','activity']}]}},
+  fees:[{n:'Report unlicensed practice / conduct breach',fee:'No fee',time:'Reporting 24/7'}],note:'',docs:['Details of the person or activity being reported','Any supporting evidence'],
+  quiz:[{q:'Does reporting unlicensed practice cost anything?',a:'No — it is free and open 24/7.',kw:['no fee','free','24']},
+        {q:'Which service handles unlicensed-practice reports?',a:'Monitoring & Inspection.',kw:['monitoring','inspection']},
+        {q:'What should a report include?',a:'Details of the activity and any supporting evidence.',kw:['details','evidence','name']}],
+  sims:["I think someone is practising law without a licence. Can I report them?","Does it cost anything to make a report?","What information should I include in my report?"]},
 
  {id:'directory',name:'Informational Services — Legal Directory',ar:'الخدمات المعلوماتية',who:'Everyone',color:'#2dd4bf',type:'ice',
-  channels:['Website','Smart App'],
-  desc:"The Advocates & Legal Consultants Directory — verify whether an advocate, consultant or firm is registered/licensed in Dubai. Search by name.",
-  steps:['Open the Advocates & Legal Consultants Directory on the website','Search by the person or firm name (full or partial)','View the registration / licensing status'],
-  fees:[{n:'Search advocates, consultants & firms',fee:'Free',time:'Instant'}],
-  note:'Free and instant, available to everyone.',
-  docs:['None'],
-  quiz:[
-   {q:'What does a Directory search cost?',o:['AED 50','AED 220','Free','AED 120'],c:2,e:'Free and instant.'},
-   {q:'Who can search the Directory?',o:['Only lawyers','Only government','Everyone','Only firms'],c:2,e:'Everyone.'},
-   {q:'How do you verify a firm is licensed?',o:['Call the firm','The Advocates & Legal Consultants Directory','Dubai Police','You can’t'],c:1,e:'The Directory on the website / Smart App.'}],
-  sim:{cust:"How do I check that 'XYZ Law Firm' is actually licensed before I hire them?",label:'A cautious client',
-   rubric:[{l:'Right tool — the Directory',kw:['directory','search','verify','registered','licensed']},{l:'Channel',kw:['website','smart app']},{l:'Free & instant',kw:['free','instant']},{l:'Search by name',kw:['name','firm','search']}]}}
+  channels:['Website','Smart App'],desc:"The Advocates & Legal Consultants Directory — verifying whether an advocate, consultant or firm is registered/licensed in Dubai by searching a name.",
+  steps:['Open the Advocates & Legal Consultants Directory on the website','Search by the person or firm name','View the registration / licensing status'],
+  fees:[{n:'Search advocates, consultants & firms',fee:'Free',time:'Instant'}],note:'Free and instant, available to everyone.',docs:['None'],
+  quiz:[{q:'What does a Directory search cost?',a:'It is free and instant.',kw:['free','instant','no fee']},
+        {q:'Who can use the Directory?',a:'Everyone.',kw:['everyone','anyone','public']},
+        {q:'How do you verify a firm is licensed?',a:'Search the Advocates & Legal Consultants Directory by name.',kw:['directory','search','name']}],
+  sims:["How do I check that 'XYZ Law Firm' is actually licensed before I hire them?","Is there a fee to search the directory?","Can anyone use the directory, or just lawyers?"]}
 ];
 
-const PASS_QUIZ=0.67, PASS_SIM=0.6;
-const LS='academy_progress_v1';
+const LS='academy_v2';
 let progress=load();
 function load(){try{const s=JSON.parse(localStorage.getItem(LS));if(s)return s;}catch(e){}return {};}
 function save(){try{localStorage.setItem(LS,JSON.stringify(progress));}catch(e){}}
-function P(id){return progress[id]||(progress[id]={learn:false,quiz:false,sim:false});}
+function P(id){return progress[id]||(progress[id]={quiz:false,sim:false});}
 function certified(id){const p=P(id);return p.quiz&&p.sim;}
 function certCount(){return SERVICES.filter(s=>certified(s.id)).length;}
-function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function findS(id){return SERVICES.find(s=>s.id===id);}
+function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function shortName(s){return s.name.split(' (')[0].split(' — ')[0];}
+function key(){const f=document.getElementById('kAnthropic');return window.ORBIT_CONFIG.anthropicKey||(f?f.value.trim():'')||'';}
 
-/* ── HUD / progress ── */
-function updateHUD(){
-  const n=certCount();document.getElementById('progN').textContent=n;
-  document.getElementById('progFill').style.width=Math.round(n/11*100)+'%';
-  const cb=document.getElementById('certBtn');cb.disabled=n<11;cb.textContent=n<11?('🏅 Certificate ('+n+'/11)'):'🏅 Get certificate';
-  if(window.orbit3d)window.orbit3d.refresh();
-}
+function updateHUD(){const n=certCount();document.getElementById('progN').textContent=n;document.getElementById('progFill').style.width=Math.round(n/11*100)+'%';const cb=document.getElementById('certBtn');cb.disabled=n<11;cb.textContent=n<11?('🏅 Certificate ('+n+'/11)'):'🏅 Get certificate';if(window.orbit3d)window.orbit3d.refresh();}
 
-/* ── Panel ── */
-let activeId=null, activeTab='learn';
-const panel=document.getElementById('panel');
-function openService(id,tab){
-  activeId=id;const s=findS(id);if(!s)return;
-  P(id);
-  document.getElementById('pnEyebrow').innerHTML='Service · '+esc(s.who);
-  document.getElementById('pnTitle').textContent=s.name;
-  document.getElementById('pnAr').textContent=s.ar;
-  panel.classList.add('on');
-  setTab(tab||'learn');
-  if(window.orbit3d)window.orbit3d.focus(id);
-}
-function closePanel(){panel.classList.remove('on');activeId=null;if(window.orbit3d)window.orbit3d.clearFocus();}
-function setTab(t){activeTab=t;document.querySelectorAll('.pn-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));renderTab();refreshTicks();}
-function refreshTicks(){const p=P(activeId);document.getElementById('tickLearn').textContent=p.learn?'✓':'';document.getElementById('tickQuiz').textContent=p.quiz?'✓':'';document.getElementById('tickSim').textContent=p.sim?'✓':'';}
-function renderTab(){const s=findS(activeId);if(!s)return;const b=document.getElementById('pnBody');
-  if(activeTab==='learn')b.innerHTML=learnHTML(s);
-  else if(activeTab==='quiz')b.innerHTML=quizHTML(s);
-  else b.innerHTML=simHTML(s);
-}
-function learnHTML(s){
-  let h=`<div class="guide" id="guideBox"><div class="who"><span style="width:7px;height:7px;border-radius:50%;background:var(--violet);display:inline-block"></span> Your guide</div><span id="guideText">${esc(guideIntro(s))}</span></div>`;
-  h+=`<div class="row"><button class="btn ghost" onclick="askGuide()">Ask the guide a question</button><button class="mic" id="guideMic" title="Speak" onclick="micFor('guideInput')"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg></button></div>`;
-  h+=`<div class="row" style="margin-top:8px"><input id="guideInput" placeholder="e.g. what documents are needed?" onkeydown="if(event.key==='Enter')askGuide()"/></div>`;
-  h+=`<div class="lbl2">The journey</div><div class="journey">`+s.steps.map((st,i)=>`<div class="jstep"><span class="jdot">${i+1}</span><span class="jlabel">${esc(st)}</span></div>`).join('')+`</div>`;
-  h+=`<div class="lbl2">Fees &amp; timelines</div><table class="ft"><tr><th>Service</th><th>Fee</th><th>Time</th></tr>`+s.fees.map(f=>`<tr><td>${esc(f.n)}</td><td class="fee">${esc(f.fee)}</td><td class="time">${esc(f.time)}</td></tr>`).join('')+`</table>`;
-  if(s.note)h+=`<div class="note">${esc(s.note)}</div>`;
-  h+=`<div class="lbl2">Channels</div><div class="meta">`+s.channels.map(c=>`<span class="tag">${esc(c)}</span>`).join('')+`</div>`;
-  const docs=s.docs.filter(d=>d&&d!=='None'&&d!=='Not applicable');
-  if(docs.length)h+=`<div class="lbl2">Required documents</div><ul class="docs">`+docs.map(d=>`<li><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span>${esc(d)}</span></li>`).join('')+`</ul>`;
-  h+=`<div class="row" style="margin-top:20px"><button class="btn" onclick="markLearn()">${P(s.id).learn?'✓ Reviewed':'Mark as reviewed →'}</button></div>`;
-  return h;
-}
-function markLearn(){P(activeId).learn=true;save();refreshTicks();renderTab();}
+/* ════ Claude + voice helpers ════ */
+async function callClaude(messages,system,model){return fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'x-api-key':key(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},body:JSON.stringify({model:model||window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6',max_tokens:500,system,messages})});}
+async function claudeText(messages,system){if(!key())return null;const models=[window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6','claude-sonnet-4-6','claude-opus-4-8','claude-haiku-4-5-20251001'].filter((m,i,a)=>a.indexOf(m)===i);
+  for(const m of models){try{const r=await callClaude(messages,system,m);if(r.ok){const j=await r.json();window.ORBIT_CONFIG.anthropicModel=m;return (((j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n'))||'').trim();}if(r.status===401||r.status===403)break;}catch(e){break;}}return null;}
+function facts(s){return JSON.stringify({service:s.name,for:s.who,channels:s.channels,about:s.desc,steps:s.steps,fees:s.fees,note:s.note,documents:s.docs});}
 
-/* ── Quiz ── */
-let quizState={};
-function quizHTML(s){
-  quizState={i:0,score:0,answered:false};
-  return `<div id="quizArea">${quizQuestion(s,0,0)}</div>`;
-}
-function quizQuestion(s,i,score){
-  const q=s.quiz[i];
-  let h=`<div class="lbl2">Knowledge check · ${i+1} of ${s.quiz.length}</div><div class="q"><div class="q-q">${esc(q.q)}</div>`;
-  q.o.forEach((opt,oi)=>{h+=`<button class="opt" data-oi="${oi}" onclick="answerQuiz(${oi})">${esc(opt)}</button>`;});
-  h+=`<div class="fb" id="quizFb"></div></div>`;
-  return h;
-}
-function answerQuiz(oi){
-  if(quizState.answered)return;quizState.answered=true;
-  const s=findS(activeId),q=s.quiz[quizState.i];
-  document.querySelectorAll('#quizArea .opt').forEach((b,idx)=>{b.classList.add('dim');if(idx===q.c)b.classList.add('correct');if(idx===oi&&oi!==q.c)b.classList.add('wrong');});
-  if(oi===q.c)quizState.score++;
-  document.getElementById('quizFb').innerHTML=(oi===q.c?'<b style="color:var(--green)">Correct.</b> ':'<b style="color:var(--red)">Not quite.</b> ')+esc(q.e)+`<div class="row" style="margin-top:10px"><button class="btn" onclick="nextQuiz()">${quizState.i+1<s.quiz.length?'Next question →':'See result'}</button></div>`;
-}
-function nextQuiz(){
-  const s=findS(activeId);quizState.i++;quizState.answered=false;
-  if(quizState.i<s.quiz.length){document.getElementById('quizArea').innerHTML=quizQuestion(s,quizState.i,quizState.score);}
-  else{
-    const frac=quizState.score/s.quiz.length, pass=frac>=PASS_QUIZ;
-    if(pass){P(s.id).quiz=true;save();updateHUD();}
-    document.getElementById('quizArea').innerHTML=`<div class="scorebar"><div class="big ${pass?'ok':'no'}">${quizState.score}/${s.quiz.length}</div><div style="color:var(--mut);font-size:13px;margin:6px 0 12px">${pass?'Passed — knowledge check cleared.':'Almost — you need '+Math.ceil(PASS_QUIZ*s.quiz.length)+' correct to pass.'}</div><button class="btn ${pass?'gold':''}" onclick="setTab('${pass?'sim':'quiz'}')">${pass?'On to the simulation →':'Try again'}</button></div>`;
-    refreshTicks();
-  }
-}
-
-/* ── Simulation ── */
-function simHTML(s){
-  if(!P(s.id).quiz)return `<div class="lbl2">Simulation</div><div class="desc" style="color:var(--mut)">Pass the <b>Quiz</b> first to unlock the customer simulation.</div>`;
-  let h=`<div class="lbl2">Customer simulation</div><div class="desc" style="color:var(--mut)">A real customer walks up to your desk. Read what they say, then respond as a Service Ambassador would — by voice or by typing. Your guide will score how well you handled it.</div>`;
-  h+=`<div class="sim-cust"><div class="av">${esc(s.sim.label.split(' ').slice(-1)[0][0]||'C')}</div><div class="t">"${esc(s.sim.cust)}"<small>— ${esc(s.sim.label)}</small></div></div>`;
-  h+=`<div class="row"><textarea id="simAnswer" placeholder="Type your response to the customer…"></textarea></div>`;
-  h+=`<div class="row"><button class="mic" id="simMic" title="Speak your answer" onclick="micFor('simAnswer')"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg></button><button class="btn" id="simSubmit" onclick="gradeSim()">Submit response</button></div>`;
-  h+=`<div id="simResult"></div>`;
-  return h;
-}
-async function gradeSim(){
-  const s=findS(activeId);const ans=(document.getElementById('simAnswer').value||'').trim();
-  if(!ans){document.getElementById('simResult').innerHTML='<div class="fb">Type or speak a response first.</div>';return;}
-  document.getElementById('simSubmit').disabled=true;
-  document.getElementById('simResult').innerHTML='<div class="fb">Your guide is reviewing your response…</div>';
-  let res=await gradeWithClaude(s,ans);
-  if(!res)res=gradeOffline(s,ans);
-  const pass=res.score>=PASS_SIM*100;
-  if(pass){P(s.id).sim=true;save();updateHUD();}
-  document.getElementById('simResult').innerHTML=`<div class="scorebar"><div class="big ${pass?'ok':'no'}">${res.score}<span style="font-size:16px">/100</span></div><div style="color:var(--ink);font-size:13px;margin:8px 0 4px;line-height:1.55">${esc(res.feedback)}</div><div style="color:var(--mut);font-size:12px;margin-bottom:12px">${pass?'Passed — this service is now certified.':'Aim higher: cover the service, channel, fee/timeline and reassurance.'}</div><div class="row" style="justify-content:center">${pass?'<button class="btn gold" onclick="closePanel()">Back to the galaxy →</button>':'<button class="btn" onclick="retrySim()">Try again</button>'}</div></div>`;
-  document.getElementById('simSubmit').disabled=false;
-  speak(res.feedback);
-  refreshTicks();
-}
-function retrySim(){renderTab();}
-function gradeOffline(s,ans){
-  const a=ans.toLowerCase();let hit=0;const missed=[];
-  s.sim.rubric.forEach(r=>{const ok=r.kw.some(k=>a.includes(k.toLowerCase()));if(ok)hit++;else missed.push(r.l.toLowerCase());});
-  const score=Math.round(hit/s.sim.rubric.length*100);
-  let fb=`You covered ${hit} of ${s.sim.rubric.length} key points.`;
-  if(missed.length)fb+=` Make sure to also: ${missed.slice(0,3).join('; ')}.`;else fb+=' Excellent — a complete, confident answer.';
-  return {score,feedback:fb};
-}
-
-/* ── AI guide (Claude optional) ── */
-function effKey(){const f=document.getElementById('kAnthropic');return window.ORBIT_CONFIG.anthropicKey||(f?f.value.trim():'')||'';}
-function svcFacts(s){return JSON.stringify({service:s.name,who:s.who,channels:s.channels,description:s.desc,steps:s.steps,fees:s.fees,note:s.note,documents:s.docs});}
-function guideIntro(s){
-  const fee=s.fees[0];return `Welcome to ${s.name}. This service is for ${s.who.toLowerCase()}. In short: ${s.desc} It runs through ${s.channels.join(' or ')}. The headline: ${fee.n} is ${fee.fee}${fee.time&&fee.time!=='Instant'?', about '+fee.time:''}. Read the journey, fees and documents below — then ask me anything, and when you're ready, take the quiz.`;
-}
-async function callClaude(messages,system,model){const key=effKey();
-  return fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},body:JSON.stringify({model:model||window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6',max_tokens:500,system:system,messages:messages})});}
-async function claudeText(messages,system){const key=effKey();if(!key)return null;
-  const models=[window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6','claude-sonnet-4-6','claude-opus-4-8','claude-haiku-4-5-20251001'].filter((m,i,a)=>a.indexOf(m)===i);
-  for(const m of models){try{const r=await callClaude(messages,system,m);if(r.ok){const j=await r.json();window.ORBIT_CONFIG.anthropicModel=m;return (((j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n'))||'').trim();}if(r.status===401||r.status===403)break;}catch(e){break;}}
-  return null;
-}
-async function askGuide(){
-  const inp=document.getElementById('guideInput');const q=(inp.value||'').trim();if(!q)return;inp.value='';
-  const s=findS(activeId);const gt=document.getElementById('guideText');gt.textContent='…';
-  const sys="You are a warm, encouraging training guide for a new Service Ambassador at the Government of Dubai Legal Affairs Department. Answer ONLY from the service facts provided. Be conversational and concise (1-3 sentences), plain spoken text (no markdown), as if coaching someone at the desk. Facts: "+svcFacts(s);
-  let ans=await claudeText([{role:'user',content:q}],sys);
-  if(!ans)ans=guideOffline(s,q);
-  gt.innerHTML=esc(ans);speak(ans);
-}
-function guideOffline(s,q){
-  const ql=q.toLowerCase();
-  if(/document|need|bring|paper/.test(ql)){const d=s.docs.filter(x=>x&&x!=='None'&&x!=='Not applicable');return d.length?('They’ll need: '+d.join(', ')+'.'):'No documents are required for this one.';}
-  if(/fee|cost|how much|price|pay/.test(ql))return s.fees.map(f=>f.n+': '+f.fee).join('; ')+'.'+(s.note?' '+s.note:'');
-  if(/how long|time|days|when/.test(ql))return s.fees.map(f=>f.n+' takes '+f.time).join('; ')+'.';
-  if(/channel|where|apply|portal|how do/.test(ql))return 'It runs through '+s.channels.join(' or ')+'. Steps: '+s.steps.join(' → ')+'.';
-  if(/who|for whom/.test(ql))return 'This service is for '+s.who+'.';
-  return s.desc+' Channels: '+s.channels.join(', ')+'. Ask me about fees, timelines, documents or the steps.';
-}
-async function gradeWithClaude(s,ans){
-  if(!effKey())return null;
-  const sys="You are a fair, supportive examiner scoring how a trainee Service Ambassador answered a real customer at the Government of Dubai Legal Affairs Department. Score 0-100 based on: correct service identified, right channel, correct fee/timeline, required documents where relevant, and a warm/appropriate manner (including redirecting non-LAD matters). Use ONLY these service facts: "+svcFacts(s)+". Respond with STRICT JSON only: {\"score\": <0-100 integer>, \"feedback\": \"<two short, specific sentences of coaching>\"}.";
-  const msg="The customer said: \""+s.sim.cust+"\"\nThe trainee answered: \""+ans+"\"\nScore it.";
-  const txt=await claudeText([{role:'user',content:msg}],sys);
-  if(!txt)return null;
-  try{const m=txt.match(/\{[\s\S]*\}/);const j=JSON.parse(m?m[0]:txt);if(typeof j.score==='number')return {score:Math.max(0,Math.min(100,Math.round(j.score))),feedback:j.feedback||'Reviewed.'};}catch(e){}
-  return null;
-}
-
-/* ── Voice (TTS + mic input) ── */
-let recog=null,recognising=false,micTarget=null;
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(SR){recog=new SR();recog.lang='en-US';recog.interimResults=true;recog.continuous=false;
-  recog.onend=()=>{recognising=false;document.querySelectorAll('.mic').forEach(m=>m.classList.remove('live'));};
-  recog.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript;const el=document.getElementById(micTarget);if(el)el.value=t;if(e.results[e.results.length-1].isFinal&&micTarget==='guideInput')askGuide();};
-}
-function micFor(id){if(!recog){const el=document.getElementById(id);if(el){el.focus();}return;}micTarget=id;if(recognising){recog.stop();return;}try{recog.start();recognising=true;const m=document.getElementById(id==='guideInput'?'guideMic':'simMic');if(m)m.classList.add('live');}catch(e){}}
-let ttsAudio=null;
-function speak(text){
-  if(!text)return;if(ttsAudio){try{ttsAudio.pause();}catch(e){}ttsAudio=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();
+let curAudio=null;
+function stopAudio(){if(curAudio){try{curAudio.onended=null;curAudio.pause();}catch(e){}curAudio=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();}
+function speakAsync(text,onEnd){
+  stopAudio();
+  const safety=setTimeout(onEnd,Math.min(22000,1600+text.length*60));
+  const done=()=>{clearTimeout(safety);onEnd();};
   const ek=window.ORBIT_CONFIG.elevenKey;
-  if(ek){const vid=window.ORBIT_CONFIG.elevenVoice;
-    fetch('https://api.elevenlabs.io/v1/text-to-speech/'+vid+'?output_format=mp3_44100_128',{method:'POST',headers:{'xi-api-key':ek,'Content-Type':'application/json'},body:JSON.stringify({text,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.45,similarity_boost:0.8,style:0.35,use_speaker_boost:true}})}).then(r=>{if(r.ok)return r.arrayBuffer();throw 0;}).then(buf=>{ttsAudio=new Audio(URL.createObjectURL(new Blob([buf],{type:'audio/mpeg'})));ttsAudio.play().catch(()=>browserSpeak(text));}).catch(()=>browserSpeak(text));
-    return;}
-  browserSpeak(text);
+  if(ek){fetch('https://api.elevenlabs.io/v1/text-to-speech/'+window.ORBIT_CONFIG.elevenVoice+'?output_format=mp3_44100_128',{method:'POST',headers:{'xi-api-key':ek,'Content-Type':'application/json'},body:JSON.stringify({text,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.45,similarity_boost:0.8,style:0.4,use_speaker_boost:true}})}).then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(buf=>{curAudio=new Audio(URL.createObjectURL(new Blob([buf],{type:'audio/mpeg'})));curAudio.onended=done;curAudio.onerror=()=>browserSpeak(text,done);curAudio.play().catch(()=>browserSpeak(text,done));}).catch(()=>browserSpeak(text,done));return;}
+  browserSpeak(text,done);
 }
-function browserSpeak(text){if(!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(text);u.rate=1.02;u.lang='en-US';const vs=window.speechSynthesis.getVoices();const p=vs.find(v=>/Natural|Aria|Ava|Jenny|Google US English|Samantha/i.test(v.name)&&(v.lang||'').toLowerCase().startsWith('en'));if(p)u.voice=p;window.speechSynthesis.speak(u);}
+function browserSpeak(text,done){if(!window.speechSynthesis){done();return;}const u=new SpeechSynthesisUtterance(text);u.rate=1.02;u.lang='en-US';const vs=window.speechSynthesis.getVoices();const p=vs.find(v=>/Natural|Aria|Ava|Jenny|Google US English|Samantha/i.test(v.name)&&(v.lang||'').toLowerCase().startsWith('en'));if(p)u.voice=p;u.onend=done;u.onerror=done;window.speechSynthesis.speak(u);}
 if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){};window.speechSynthesis.getVoices();}
 
-/* ── certificate + key popup ── */
-document.getElementById('certBtn').addEventListener('click',()=>{if(certCount()<11)return;document.getElementById('certDate').textContent='Dubai · '+new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});document.getElementById('cmodal').classList.add('on');try{const n=localStorage.getItem('academy_name');if(n)document.getElementById('certName').value=n;}catch(e){}});
+/* speech recognition */
+let recog=null,recognising=false,onUserFinal=null;
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(SR){recog=new SR();recog.lang='en-US';recog.interimResults=true;recog.continuous=false;
+  recog.onend=()=>{recognising=false;document.getElementById('stMic').classList.remove('live');};
+  recog.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript;document.getElementById('stInput').value=t;if(e.results[e.results.length-1].isFinal&&onUserFinal){onUserFinal(t);}};}
+
+/* ════ Stage UI ════ */
+const stage=document.getElementById('stage');
+function setOrb(mode){const o=document.getElementById('orb');o.classList.toggle('cust',mode==='cust');}
+function setSpeaking(b,cust){document.getElementById('orb').classList.toggle('speak',b);setOrb(cust?'cust':'coach');}
+function setCaption(text,cust){document.getElementById('capRole').textContent=cust?'Customer':'Coach';document.getElementById('cap').classList.toggle('cust',!!cust);document.getElementById('capText').textContent=text;}
+function setCoach(text){document.getElementById('coach').textContent=text||'';}
+function setListening(b){document.getElementById('listening').classList.toggle('on',b);document.getElementById('stControls').classList.toggle('hide',false);}
+function showControls(show){document.getElementById('stControls').classList.toggle('hide',!show);}
+function setPhase(ph){document.querySelectorAll('.phase').forEach(p=>{const k=p.dataset.ph;p.classList.toggle('on',k===ph);});}
+function markPhaseDone(ph){const el=document.querySelector('.phase[data-ph="'+ph+'"]');if(el)el.classList.add('done');}
+
+/* ════ Awaitable say / listen ════ */
+function say(text,cust){
+  setCaption(text,cust);setSpeaking(true,cust);showControls(false);
+  return new Promise(res=>{let done=false;const finish=()=>{if(done)return;done=true;setSpeaking(false,cust);res();};window._skip=()=>{stopAudio();finish();};speakAsync(text,finish);});
+}
+function listen(placeholder){
+  const inp=document.getElementById('stInput');inp.value='';inp.placeholder=placeholder||'…or type your answer';
+  setListening(true);showControls(true);
+  return new Promise(res=>{
+    let done=false;const finish=v=>{if(done)return;done=true;setListening(false);onUserFinal=null;window._submit=null;window._skipL=null;if(recog&&recognising){try{recog.stop();}catch(e){}}res((v||'').trim());};
+    onUserFinal=finish;window._submit=()=>finish(inp.value);window._skipL=()=>finish('');
+    if(recog){try{recog.start();recognising=true;document.getElementById('stMic').classList.add('live');}catch(e){}}
+  });
+}
+document.getElementById('stMic').addEventListener('click',()=>{if(!recog){document.getElementById('stInput').focus();return;}if(recognising){recog.stop();return;}try{recog.start();recognising=true;document.getElementById('stMic').classList.add('live');}catch(e){}});
+document.getElementById('stSubmit').addEventListener('click',()=>{if(window._submit)window._submit();});
+document.getElementById('stInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&window._submit)window._submit();});
+document.getElementById('stSkip').addEventListener('click',()=>{if(window._skip)window._skip();else if(window._skipL)window._skipL();});
+document.getElementById('stExit').addEventListener('click',exitStage);
+
+/* ════ Grading ════ */
+async function gradeAnswer(s,question,correct,answer){
+  if(key()){const sys="You are a warm, encouraging training coach for a Service Ambassador at the Government of Dubai Legal Affairs Department. Judge the trainee's spoken answer to a knowledge question, using ONLY these facts: "+facts(s)+". The question was: \""+question+"\". A model answer: \""+correct+"\". Reply STRICT JSON only: {\"correct\": <true|false>, \"feedback\": \"<one or two warm spoken sentences: confirm if right, or gently correct with the right answer, plus a quick memory tip>\"}.";
+    const t=await claudeText([{role:'user',content:'The trainee said: "'+answer+'"'}],sys);
+    if(t){try{const m=t.match(/\{[\s\S]*\}/);const j=JSON.parse(m?m[0]:t);return {correct:!!j.correct,feedback:j.feedback||correct};}catch(e){}}}
+  // offline
+  const a=(answer||'').toLowerCase();const kw=(findQ(s,question)||{}).kw||[];const hit=kw.filter(k=>a.includes(k.toLowerCase())).length;const ok=hit>=Math.max(1,Math.ceil(kw.length/2));
+  return {correct:ok,feedback:ok?('Exactly right. '+correct):("Not quite — the answer is: "+correct+" Keep that one in mind.")};
+}
+function findQ(s,question){return s.quiz.find(q=>q.q===question);}
+async function gradeSim(s,line,answer){
+  if(key()){const sys="You are a fair, supportive examiner scoring how a trainee Service Ambassador handled a real customer at the Government of Dubai Legal Affairs Department. Score 0-100 on: correct service, right channel, correct fee/timeline, key documents where relevant, warm manner, and correctly redirecting non-LAD matters (e.g. criminal cases go to Dubai Police / Public Prosecution). Use ONLY these facts: "+facts(s)+". Reply STRICT JSON only: {\"score\": <0-100 int>, \"feedback\": \"<two short, specific, encouraging spoken sentences of coaching>\"}.";
+    const t=await claudeText([{role:'user',content:'The customer said: "'+line+'"\nThe trainee answered: "'+answer+'"'}],sys);
+    if(t){try{const m=t.match(/\{[\s\S]*\}/);const j=JSON.parse(m?m[0]:t);if(typeof j.score==='number')return {score:Math.max(0,Math.min(100,Math.round(j.score))),feedback:j.feedback||'Good effort.'};}catch(e){}}}
+  // offline: match service key terms
+  const a=(answer||'').toLowerCase();const terms=[shortName(s).toLowerCase().split(' ')[0],...s.channels.map(c=>c.toLowerCase().split(' ')[0]),(s.fees[0].fee||'').toLowerCase().replace('aed ','')];
+  let hit=0;terms.forEach(t=>{if(t&&t.length>2&&a.includes(t))hit++;});const score=Math.min(100,Math.round(hit/Math.max(3,terms.length)*100)+ (a.length>40?15:0));
+  return {score,feedback:score>=60?'Well handled — you pointed them to the right service and channel.':'Cover the service name, the channel they should use, and the fee or timeline — and reassure them warmly.'};
+}
+
+/* ════ The Director ════ */
+let session=null;
+async function enterPlanet(id){
+  const s=findS(id);if(!s||session)return;
+  session={s,aborted:false};
+  document.getElementById('stTitle').textContent=shortName(s);
+  document.getElementById('peek').textContent='Tip: speak naturally, or type. Say "repeat" if you miss something.';
+  document.querySelectorAll('.phase').forEach(p=>p.classList.remove('done','on'));
+  stage.classList.add('on');
+  if(window.orbit3d)window.orbit3d.dive(id);
+  try{await runLesson(s);}catch(e){console.error(e);setCoach('(Something interrupted the lesson — you can exit and try again.)');}
+}
+function ab(){return !session||session.aborted;}
+async function runLesson(s){
+  setPhase('learn');setCoach('');
+  await say("Welcome. I'm your training coach — let me walk you through "+shortName(s)+".");if(ab())return;
+  await say(await teachNarration(s));if(ab())return;
+  await say("That's the essence of it. Now — let's test your skills. I'll ask you a few questions; just answer out loud, or type if you prefer.");if(ab())return;
+  markPhaseDone('learn');setPhase('quiz');
+  let correct=0;
+  for(let i=0;i<s.quiz.length;i++){
+    if(ab())return;const q=s.quiz[i];
+    await say(q.q);if(ab())return;
+    const ans=await listen('Answer the question…');if(ab())return;
+    const g=await gradeAnswer(s,q.q,q.a,ans);if(ab())return;
+    if(g.correct)correct++;
+    setCoach(g.correct?'✓ correct':'↻ tip');
+    await say(g.feedback);if(ab())return;setCoach('');
+  }
+  P(s.id).quiz=correct>=2;save();updateHUD();
+  markPhaseDone('quiz');setPhase('sim');
+  await say(correct>=2?"Great — you clearly know the service. Now for the real thing: three live customer simulations. I'll play the customer; you respond exactly as you would at the desk.":"Good effort — let's reinforce it with practice. Three customer simulations now. I'll be the customer; you respond as a Service Ambassador.");if(ab())return;
+  let total=0;
+  for(let i=0;i<s.sims.length;i++){
+    if(ab())return;const line=s.sims[i];
+    await say("Customer "+(i+1)+" of "+s.sims.length+":");if(ab())return;
+    await say(line,true);if(ab())return;
+    const ans=await listen('Respond to the customer…');if(ab())return;
+    const g=await gradeSim(s,line,ans);if(ab())return;
+    total+=g.score;setCoach('Score: '+g.score+'/100');
+    await say(g.feedback);if(ab())return;setCoach('');
+  }
+  const avg=total/s.sims.length;P(s.id).sim=avg>=55;save();updateHUD();
+  markPhaseDone('sim');
+  const done=certified(s.id);
+  await say(done?"Outstanding work — you've certified "+shortName(s)+". Head back to the galaxy and choose your next planet whenever you're ready.":"Nicely done. You've made real progress on "+shortName(s)+" — revisit it any time to sharpen the tricky parts and lock in your certification.");
+  showControls(true);document.getElementById('stControls').innerHTML='<button class="sbtn gold" onclick="exitStage()">Back to the galaxy →</button>';
+}
+async function teachNarration(s){
+  const sys="You are a warm, energising training coach for new Service Ambassadors at the Government of Dubai Legal Affairs Department. In 4-6 flowing spoken sentences (no lists, no markdown), teach this ONE service so a beginner gets it: who it's for, what it does, the channel they use, the key steps, and the headline fee and timeline, plus one memorable tip. Be conversational and encouraging. Use ONLY these facts: "+facts(s);
+  const t=await claudeText([{role:'user',content:'Teach me '+s.name+'.'}],sys);
+  if(t)return t;
+  // offline scripted
+  const f=s.fees[0];
+  return `${shortName(s)} is for ${s.who.toLowerCase()}. ${s.desc} People use ${s.channels.join(' or ')}. The journey is simple: ${s.steps.join('; then ')}. The headline: ${f.n} is ${f.fee}${f.time&&f.time!=='Instant'?', taking about '+f.time:''}.${s.note?' Remember — '+s.note:''} Keep the channel and the fee on the tip of your tongue, and you'll handle this one with confidence.`;
+}
+function exitStage(){
+  if(session)session.aborted=true;session=null;
+  stopAudio();if(recog&&recognising){try{recog.stop();}catch(e){}}
+  onUserFinal=null;window._submit=null;window._skip=null;window._skipL=null;
+  stage.classList.remove('on');
+  document.getElementById('stControls').innerHTML='<button class="mic" id="stMic" title="Speak"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg></button><input class="st-input" id="stInput" placeholder="…or type your answer"/><button class="sbtn go" id="stSubmit">Send</button><button class="sbtn" id="stSkip">Skip</button>';
+  document.getElementById('stMic').addEventListener('click',()=>{if(!recog){document.getElementById('stInput').focus();return;}if(recognising){recog.stop();return;}try{recog.start();recognising=true;document.getElementById('stMic').classList.add('live');}catch(e){}});
+  document.getElementById('stSubmit').addEventListener('click',()=>{if(window._submit)window._submit();});
+  document.getElementById('stInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&window._submit)window._submit();});
+  document.getElementById('stSkip').addEventListener('click',()=>{if(window._skip)window._skip();else if(window._skipL)window._skipL();});
+  if(window.orbit3d)window.orbit3d.surface();
+}
+
+/* ════ certificate + keys ════ */
+document.getElementById('certBtn').addEventListener('click',()=>{if(certCount()<11)return;document.getElementById('certDate').textContent='Dubai · '+new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});try{const n=localStorage.getItem('academy_name');if(n)document.getElementById('certName').value=n;}catch(e){}document.getElementById('cmodal').classList.add('on');});
 document.getElementById('certName').addEventListener('input',e=>{try{localStorage.setItem('academy_name',e.target.value);}catch(_){}});
-document.getElementById('gearBtn').addEventListener('click',()=>{const k=document.getElementById('kpop');k.classList.add('on');try{document.getElementById('kAnthropic').value=localStorage.getItem('academy_anthropic')||'';document.getElementById('kEleven').value=localStorage.getItem('academy_eleven')||'';}catch(e){}});
+document.getElementById('gearBtn').addEventListener('click',()=>{const k=document.getElementById('kpop');try{document.getElementById('kAnthropic').value=localStorage.getItem('academy_anthropic')||'';document.getElementById('kEleven').value=localStorage.getItem('academy_eleven')||'';}catch(e){}k.classList.add('on');});
 document.getElementById('kpop').addEventListener('click',e=>{if(e.target.id==='kpop')e.currentTarget.classList.remove('on');});
+document.getElementById('cmodal').addEventListener('click',e=>{if(e.target.id==='cmodal')e.currentTarget.classList.remove('on');});
+/* robust close — works even if an inline handler is ever blocked */
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;
+  if(t.closest('.cert-x'))document.getElementById('cmodal').classList.remove('on');
+  if(t.closest('.kclose'))document.getElementById('kpop').classList.remove('on');
+  if(t.closest('.st-exit')&&stage.classList.contains('on'))exitStage();
+},true);
 function applyKeys(){const a=document.getElementById('kAnthropic').value.trim(),e=document.getElementById('kEleven').value.trim();window.ORBIT_CONFIG.anthropicKey=a;window.ORBIT_CONFIG.elevenKey=e;try{a?localStorage.setItem('academy_anthropic',a):localStorage.removeItem('academy_anthropic');e?localStorage.setItem('academy_eleven',e):localStorage.removeItem('academy_eleven');}catch(_){}}
 document.getElementById('kAnthropic').addEventListener('input',applyKeys);document.getElementById('kEleven').addEventListener('input',applyKeys);
-document.getElementById('kSave').addEventListener('click',async()=>{applyKeys();const st=document.getElementById('kStatus');if(!effKey()){st.style.color='var(--mut)';st.textContent='saved (guide runs offline)';return;}st.style.color='var(--mut)';st.textContent='testing…';const t=await claudeText([{role:'user',content:'Reply OK'}],'Reply with OK.');st.style.color=t?'var(--green)':'var(--red)';st.textContent=t?'● Claude connected':'✗ could not connect — check the key';});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePanel();document.getElementById('cmodal').classList.remove('on');document.getElementById('kpop').classList.remove('on');}});
+document.getElementById('kSave').addEventListener('click',async()=>{applyKeys();const st=document.getElementById('kStatus');if(!key()){st.style.color='var(--mut)';st.textContent='saved (coach runs offline)';return;}st.style.color='var(--mut)';st.textContent='testing…';const t=await claudeText([{role:'user',content:'Reply OK'}],'Reply with OK.');st.style.color=t?'var(--green)':'var(--red)';st.textContent=t?'● Claude connected':'✗ could not connect — check the key';});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(stage.classList.contains('on'))exitStage();document.getElementById('cmodal').classList.remove('on');document.getElementById('kpop').classList.remove('on');}});
 try{window.ORBIT_CONFIG.anthropicKey=localStorage.getItem('academy_anthropic')||'';window.ORBIT_CONFIG.elevenKey=localStorage.getItem('academy_eleven')||'';}catch(e){}
-window.AcademyData={SERVICES,certified,P,findS,esc};
+window.AcademyData={SERVICES,certified,P,findS,esc,shortName};
+window.enterPlanet=enterPlanet;
 updateHUD();
 </script>
 
-<!-- ════════ 3D ENGINE (classic three.js) ════════ -->
+<!-- ════════ 3D ENGINE ════════ -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/renderers/CSS2DRenderer.js"></script>
@@ -553,11 +460,10 @@ updateHUD();
 (function(){
   const loaderEl=document.getElementById('loader');
   function fail(m){loaderEl.classList.remove('gone');loaderEl.innerHTML='<div style="max-width:430px;text-align:center;padding:0 26px"><p style="color:#f87171;font-family:JetBrains Mono,monospace;font-size:11px;letter-spacing:1.5px">COULD NOT RENDER</p><p style="text-transform:none;letter-spacing:0;color:#c9d2e6;margin-top:12px;font-size:13px;font-family:Inter,sans-serif;line-height:1.6">'+m+'</p></div>';}
-  if(typeof THREE==='undefined'){fail('The 3D library (three.js) could not load from the CDN. Check the connection and reload.');return;}
+  if(typeof THREE==='undefined'){fail('The 3D library (three.js) could not load. Check the connection and reload.');return;}
   let glok=false;try{const c=document.createElement('canvas');glok=!!(c.getContext('webgl2')||c.getContext('webgl'));}catch(e){}
   if(!glok){fail('This browser/GPU does not support WebGL. Try Chrome or Edge.');return;}
   try{main();}catch(err){console.error(err);fail('Error building the scene: '+((err&&err.message)?err.message:err));}
-
   function main(){
   const D=window.AcademyData;
   const sceneEl=document.getElementById('scene'),labelEl=document.getElementById('labels');
@@ -566,11 +472,10 @@ updateHUD();
   const labelRenderer=new THREE.CSS2DRenderer();labelRenderer.setSize(W,H);labelRenderer.domElement.style.position='absolute';labelRenderer.domElement.style.top='0';labelEl.appendChild(labelRenderer.domElement);
   const scene=new THREE.Scene();scene.background=new THREE.Color('#04050d');
   const camera=new THREE.PerspectiveCamera(52,W/H,0.1,3000);camera.position.set(0,26,58);
-  const controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=0.06;controls.minDistance=8;controls.maxDistance=180;controls.autoRotate=true;controls.autoRotateSpeed=0.3;controls.enablePan=false;controls.maxPolarAngle=Math.PI*0.92;
-  const sunLight=new THREE.PointLight(0xfff2d6,2.4,0,1);scene.add(sunLight);scene.add(new THREE.AmbientLight(0x4a5880,0.85));
-  controls.addEventListener('start',()=>{focusId=null;});
+  const controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=0.06;controls.minDistance=4;controls.maxDistance=180;controls.autoRotate=true;controls.autoRotateSpeed=0.3;controls.enablePan=false;controls.maxPolarAngle=Math.PI*0.92;
+  scene.add(new THREE.PointLight(0xfff2d6,2.4,0,1));scene.add(new THREE.AmbientLight(0x4a5880,0.85));
+  controls.addEventListener('start',()=>{if(!diveId)focusId=null;});
   (function(){const N=4000,g=new THREE.BufferGeometry(),pos=new Float32Array(N*3),col=new Float32Array(N*3);const pal=[[1,1,1],[0.7,0.8,1],[1,0.9,0.75]];for(let i=0;i<N;i++){const r=200+Math.random()*700,th=Math.random()*Math.PI*2,ph=Math.acos(2*Math.random()-1);pos[i*3]=r*Math.sin(ph)*Math.cos(th);pos[i*3+1]=r*Math.cos(ph);pos[i*3+2]=r*Math.sin(ph)*Math.sin(th);const c=pal[(Math.random()*pal.length)|0];col[i*3]=c[0];col[i*3+1]=c[1];col[i*3+2]=c[2];}g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));scene.add(new THREE.Points(g,new THREE.PointsMaterial({size:1.1,sizeAttenuation:true,vertexColors:true,transparent:true,opacity:0.9})));})();
-  // procedural texture
   function hx(c){const n=parseInt(c.slice(1),16);return [n>>16&255,n>>8&255,n&255];}
   function L3(a,b,t){return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];}
   function hash(x,y,z){let n=(x*374761393+y*668265263+z*1274126177)|0;n=(n^(n>>13))*1274126177|0;return ((n^(n>>16))>>>0)/4294967295;}
@@ -584,50 +489,37 @@ updateHUD();
       else{if(e<0.48)col=L3([18,46,104],[28,88,156],e/0.48);else if(e<0.52)col=[198,188,140];else if(e<0.7)col=L3([58,128,68],[92,150,82],(e-0.52)/0.18);else if(e<0.85)col=L3([112,94,68],[88,72,52],(e-0.7)/0.15);else col=[236,241,246];col=L3(col,b,0.12);}
       const i=(y*w+x)*4;d[i]=col[0];d[i+1]=col[1];d[i+2]=col[2];d[i+3]=255;}}
     c2.putImageData(img,0,0);const t=new THREE.CanvasTexture(cnv);t.encoding=THREE.sRGBEncoding;return t;}
-  // sun
   const sun=new THREE.Mesh(new THREE.SphereGeometry(2.6,48,48),new THREE.MeshBasicMaterial({color:0xffe9b0}));scene.add(sun);
-  sun.add(new THREE.Mesh(new THREE.SphereGeometry(2.6*1.5,32,32),new THREE.MeshBasicMaterial({color:0xffcf7a,transparent:true,opacity:0.32,side:THREE.BackSide,blending:THREE.AdditiveBlending,depthWrite:false})));
-  const sunLabelEl=document.createElement('div');sunLabelEl.className='lbl';sunLabelEl.innerHTML='<b style="font-family:Instrument Serif,serif;font-size:13px">The Academy</b>';const sunLabel=new THREE.CSS2DObject(sunLabelEl);sunLabel.position.set(0,3.6,0);sun.add(sunLabel);
-
+  sun.add(new THREE.Mesh(new THREE.SphereGeometry(3.9,32,32),new THREE.MeshBasicMaterial({color:0xffcf7a,transparent:true,opacity:0.32,side:THREE.BackSide,blending:THREE.AdditiveBlending,depthWrite:false})));
+  const sl=document.createElement('div');sl.className='lbl';sl.innerHTML='<b style="font-family:Instrument Serif,serif;font-size:13px">The Academy</b>';sun.add(Object.assign(new THREE.CSS2DObject(sl),{position:new THREE.Vector3(0,3.6,0)}));
   const reg={};const sys=new THREE.Group();scene.add(sys);
-  const MOON_COL={step:0x9fb0cc,fees:0xffd479,channels:0x6aa6ff,docs:0x2dd4bf};
+  const MC={step:0x9fb0cc,fees:0xffd479,channels:0x6aa6ff,docs:0x2dd4bf};
   function build(){
-    Object.values(reg).forEach(p=>sys.remove(p.pivot));for(const k in reg)delete reg[k];sys.clear();
     const list=D.SERVICES,n=list.length;
-    list.forEach((s,i)=>{
-      const orbR=9+i*2.7;const pivot=new THREE.Group();sys.add(pivot);
-      const ring=new THREE.Mesh(new THREE.RingGeometry(orbR-0.015,orbR+0.015,128),new THREE.MeshBasicMaterial({color:0x445072,transparent:true,opacity:0.25,side:THREE.DoubleSide}));ring.rotation.x=Math.PI/2;sys.add(ring);
-      const pr=1.0;const planet=new THREE.Mesh(new THREE.SphereGeometry(pr,40,40),new THREE.MeshStandardMaterial({map:tex(s.type,s.color),roughness:0.95,metalness:0.05}));planet.userData={type:'planet',id:s.id};
+    list.forEach((s,i)=>{const orbR=9+i*2.7;const pivot=new THREE.Group();sys.add(pivot);
+      const ring=new THREE.Mesh(new THREE.RingGeometry(orbR-0.015,orbR+0.015,128),new THREE.MeshBasicMaterial({color:0x445072,transparent:true,opacity:0.22,side:THREE.DoubleSide}));ring.rotation.x=Math.PI/2;sys.add(ring);
+      const pr=1.0;const planet=new THREE.Mesh(new THREE.SphereGeometry(pr,40,40),new THREE.MeshStandardMaterial({map:tex(s.type,s.color),roughness:0.95,metalness:0.05}));planet.userData={id:s.id};
       const atm=new THREE.Mesh(new THREE.SphereGeometry(pr*1.14,28,28),new THREE.MeshBasicMaterial({color:new THREE.Color(s.color),transparent:true,opacity:0.22,side:THREE.BackSide,blending:THREE.AdditiveBlending}));planet.add(atm);
-      const el=document.createElement('div');el.className='lbl';const label=new THREE.CSS2DObject(el);label.position.set(0,pr+0.7,0);planet.add(label);
+      const el=document.createElement('div');el.className='lbl';planet.add(Object.assign(new THREE.CSS2DObject(el),{position:new THREE.Vector3(0,pr+0.7,0)}));
       const pg=new THREE.Group();pg.add(planet);pg.position.set(orbR,0,0);pivot.add(pg);pivot.rotation.y=(i/n)*Math.PI*2;
-      const moons=[];
-      const facets=[];s.steps.forEach((st,j)=>facets.push({type:'step',i:j,label:'Step '+(j+1)}));facets.push({type:'fees',label:'Fees'});facets.push({type:'channels',label:'Channels'});if(s.docs.filter(d=>d&&d!=='None'&&d!=='Not applicable').length)facets.push({type:'docs',label:'Documents'});
-      facets.forEach((f,j)=>{const mp=new THREE.Group();const mr=f.type==='step'?0.13:0.17;const moon=new THREE.Mesh(new THREE.SphereGeometry(mr,16,16),new THREE.MeshBasicMaterial({color:MOON_COL[f.type]}));moon.position.set(pr+0.5+j*0.32,0,0);moon.userData={type:'moon',id:s.id,facet:f};mp.add(moon);mp.rotation.x=(Math.random()-0.5)*0.5;mp.userData.spin=0.4+j*0.12+Math.random()*0.2;mp.rotation.y=Math.random()*6.28;planet.add(mp);moons.push({mp});});
-      reg[s.id]={s,pivot,pg,planet,atm,label,el,moons,pr,spin:0.1+0.02*(i%3)};
-    });
+      const moons=[];const facets=[];s.steps.forEach((st,j)=>facets.push('step'));facets.push('fees');facets.push('channels');if(s.docs.filter(x=>x&&x!=='None'&&x!=='Not applicable').length)facets.push('docs');
+      facets.forEach((f,j)=>{const mp=new THREE.Group();const mr=f==='step'?0.13:0.17;const moon=new THREE.Mesh(new THREE.SphereGeometry(mr,16,16),new THREE.MeshBasicMaterial({color:MC[f]}));moon.position.set(pr+0.5+j*0.32,0,0);moon.userData={id:s.id};mp.add(moon);mp.rotation.x=(Math.random()-0.5)*0.5;mp.userData.spin=0.4+j*0.12+Math.random()*0.2;mp.rotation.y=Math.random()*6.28;planet.add(mp);moons.push(mp);});
+      reg[s.id]={s,pivot,pg,planet,atm,el,moons,pr,spin:0.1+0.02*(i%3)};});
     refreshVisuals();
   }
-  function refreshVisuals(){
-    for(const id in reg){const r=reg[id];const cert=D.certified(id);const p=D.P(id);
-      r.atm.material.color.set(cert?0xffd479:(p.learn||p.quiz?r.s.color:0x55607a));
-      r.el.innerHTML='<b>'+D.esc(r.s.name.split(' (')[0].split(' — ')[0])+'</b><span'+(cert?' class="ok"':'')+'>'+(cert?'✓ certified':(p.quiz?'quiz ✓':(p.learn?'learning':'not started')))+'</span>';
-    }
-  }
-  window.orbit3d={focus(id){focusId=id;controls.autoRotate=false;},clearFocus(){focusId=null;controls.autoRotate=true;},refresh(){refreshVisuals();}};
-
+  function refreshVisuals(){for(const id in reg){const r=reg[id];const cert=D.certified(id);const p=D.P(id);r.atm.material.color.set(cert?0xffd479:(p.quiz?r.s.color:0x55607a));r.el.innerHTML='<b>'+D.esc(D.shortName(r.s))+'</b><span'+(cert?' class="ok"':'')+'>'+(cert?'✓ certified':(p.quiz?'in progress':'not started'))+'</span>';}}
+  window.orbit3d={dive(id){diveId=id;focusId=id;controls.autoRotate=false;},surface(){diveId=null;focusId=null;controls.autoRotate=true;},focus(id){focusId=id;controls.autoRotate=false;},clearFocus(){focusId=null;controls.autoRotate=true;},refresh(){refreshVisuals();}};
   const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();const tip=document.getElementById('tip');
-  function pick(ev){mouse.x=(ev.clientX/W)*2-1;mouse.y=-(ev.clientY/H)*2+1;ray.setFromCamera(mouse,camera);const ms=[];for(const id in reg){ms.push(reg[id].planet);reg[id].moons.forEach(m=>ms.push(m.mp.children[0]));}const hit=ray.intersectObjects(ms,false);return hit.length?hit[0].object:null;}
-  renderer.domElement.addEventListener('pointermove',ev=>{const o=pick(ev);renderer.domElement.style.cursor=o?'pointer':'grab';if(o){const ud=o.userData;const s=D.findS(ud.id);tip.style.display='block';tip.style.left=(ev.clientX+14)+'px';tip.style.top=(ev.clientY+14)+'px';tip.innerHTML='<div class="n">'+D.esc(s.name)+'</div><div class="m">'+(ud.type==='moon'?D.esc(ud.facet.label):(D.certified(ud.id)?'Certified ✓':'Click to train'))+'</div>';}else tip.style.display='none';});
+  function pick(ev){mouse.x=(ev.clientX/W)*2-1;mouse.y=-(ev.clientY/H)*2+1;ray.setFromCamera(mouse,camera);const ms=[];for(const id in reg){ms.push(reg[id].planet);reg[id].moons.forEach(m=>ms.push(m.children[0]));}const hit=ray.intersectObjects(ms,false);return hit.length?hit[0].object:null;}
+  renderer.domElement.addEventListener('pointermove',ev=>{if(diveId){tip.style.display='none';return;}const o=pick(ev);renderer.domElement.style.cursor=o?'pointer':'grab';if(o){const s=D.findS(o.userData.id);tip.style.display='block';tip.style.left=(ev.clientX+14)+'px';tip.style.top=(ev.clientY+14)+'px';tip.innerHTML='<div class="n">'+D.esc(s.name)+'</div><div class="m">'+(D.certified(s.id)?'Certified ✓ · click to revisit':'Click to dive in &amp; train')+'</div>';}else tip.style.display='none';});
   renderer.domElement.addEventListener('mouseleave',()=>{tip.style.display='none';});
   let downXY=null;renderer.domElement.addEventListener('pointerdown',ev=>{downXY=[ev.clientX,ev.clientY];});
-  renderer.domElement.addEventListener('pointerup',ev=>{if(!downXY)return;const moved=Math.hypot(ev.clientX-downXY[0],ev.clientY-downXY[1]);downXY=null;if(moved>6)return;const o=pick(ev);if(!o)return;openService(o.userData.id,'learn');});
-
-  let focusId=null;const tmp=new THREE.Vector3(),des=new THREE.Vector3();
-  function applyFocus(){if(!focusId||!reg[focusId])return;reg[focusId].planet.getWorldPosition(tmp);controls.target.lerp(tmp,0.07);const out=tmp.clone().normalize();des.copy(tmp).add(out.multiplyScalar(8)).add(new THREE.Vector3(0,3,0));camera.position.lerp(des,0.06);}
+  renderer.domElement.addEventListener('pointerup',ev=>{if(!downXY)return;const moved=Math.hypot(ev.clientX-downXY[0],ev.clientY-downXY[1]);downXY=null;if(moved>6||diveId)return;const o=pick(ev);if(!o)return;window.enterPlanet(o.userData.id);});
+  let focusId=null,diveId=null;const tmp=new THREE.Vector3(),des=new THREE.Vector3();
+  function applyFocus(){if(!focusId||!reg[focusId])return;reg[focusId].planet.getWorldPosition(tmp);const close=!!diveId;controls.target.lerp(tmp,close?0.1:0.07);const out=tmp.clone().normalize();des.copy(tmp).add(out.multiplyScalar(close?3.4:8)).add(new THREE.Vector3(0,close?1.2:3,0));camera.position.lerp(des,close?0.08:0.06);}
   const clock=new THREE.Clock();
   function animate(){requestAnimationFrame(animate);const dt=clock.getDelta(),t=clock.elapsedTime;sun.scale.setScalar(1+0.04*Math.sin(t*1.5));
-    for(const id in reg){const r=reg[id];r.pivot.rotation.y+=r.spin*dt*0.12;r.planet.rotation.y+=dt*0.08;r.moons.forEach(m=>{m.mp.rotation.y+=m.mp.userData.spin*dt;});const cert=D.certified(id);if(cert){r.atm.material.opacity=0.3+0.12*Math.sin(t*2);} }
+    for(const id in reg){const r=reg[id];r.pivot.rotation.y+=r.spin*dt*0.12;r.planet.rotation.y+=dt*(diveId===id?0.05:0.08);r.moons.forEach(m=>{m.rotation.y+=m.userData.spin*dt;});if(D.certified(id))r.atm.material.opacity=0.3+0.12*Math.sin(t*2);}
     applyFocus();controls.update();renderer.render(scene,camera);labelRenderer.render(scene,camera);}
   addEventListener('resize',()=>{W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);labelRenderer.setSize(W,H);});
   build();animate();
