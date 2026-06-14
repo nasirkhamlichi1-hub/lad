@@ -137,6 +137,45 @@ select option{background:#0d1124}
 #tip{position:fixed;z-index:40;pointer-events:none;background:rgba(10,12,26,.95);border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:12px;display:none;max-width:240px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 #tip .t-name{font-weight:700;margin-bottom:3px}#tip .t-meta{color:var(--mut);font-size:11px}
 @media(max-width:560px){.legend{display:none}.chips{display:none}}
+/* filters bar */
+.filters{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:18;display:flex;gap:7px;flex-wrap:wrap;justify-content:center;max-width:78vw}
+.fchip{font-size:11.5px;color:var(--mut);background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:6px 12px;cursor:pointer;backdrop-filter:blur(12px);white-space:nowrap}
+.fchip:hover{color:var(--ink)}
+.fchip.on{color:#04060e;background:var(--amber);border-color:var(--amber);font-weight:600}
+.fchip.brief{color:var(--gold);border-color:rgba(255,212,121,.4)}
+.fchip.brief:hover{background:rgba(255,212,121,.12)}
+@media(max-width:760px){.filters{display:none}}
+/* project deep-dive modal */
+.pmodal{position:fixed;inset:0;z-index:45;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(4,6,14,.62);backdrop-filter:blur(4px)}
+.pmodal.on{display:flex}
+.pmodal-card{width:min(620px,94vw);max-height:88vh;overflow-y:auto;background:linear-gradient(180deg,rgba(15,19,36,.98),rgba(9,11,24,.99));border:1px solid var(--line);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.pmodal-card::-webkit-scrollbar{width:8px}.pmodal-card::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:8px}
+.pm-head{padding:20px 24px;border-bottom:1px solid var(--line);position:relative}
+.pm-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.pm-title{font-size:21px;font-weight:700;letter-spacing:-.01em;line-height:1.15}
+.pm-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--mut);cursor:pointer;font-size:17px;display:grid;place-items:center}
+.pm-close:hover{color:var(--ink)}
+.pm-body{padding:20px 24px 26px}
+.pm-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pm-stat{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:12px 13px}
+.pm-stat .l{font-family:var(--mono);font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.pm-stat .v{font-size:15px;font-weight:700}
+.pm-stat .s{font-size:11px;color:var(--mut);margin-top:3px;line-height:1.4}
+.pm-section{margin-top:18px}
+.pm-section .h{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:9px}
+.pm-section .s{font-size:11px;color:var(--mut);margin-top:5px;line-height:1.45}
+.pm-dual{height:10px;border-radius:6px;background:rgba(255,255,255,.08);position:relative;overflow:visible;margin:4px 0}
+.pm-dual>i{position:absolute;left:0;top:0;height:100%;border-radius:6px}
+.pm-plan{position:absolute;top:-3px;width:2px;height:16px;background:#fff;opacity:.8;border-radius:2px}
+.pm-ms{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.pm-ms .dot{width:15px;height:15px;border-radius:50%;flex-shrink:0;margin-top:2px;display:grid;place-items:center;font-size:10px;color:#04060e}
+.pm-reason{display:flex;gap:9px;font-size:13px;padding:5px 0;line-height:1.5}
+.pm-reason svg{width:15px;height:15px;flex-shrink:0;stroke:var(--amber);fill:none;stroke-width:2;margin-top:2px}
+.pm-rec{margin-top:16px;background:rgba(106,166,255,.08);border:1px solid rgba(106,166,255,.3);border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.55}
+.pm-rec b{color:var(--blue)}
+.spark{display:inline-flex;align-items:flex-end;gap:3px;height:24px}
+.spark i{width:6px;border-radius:2px;opacity:.9}
+.pm-chip{display:inline-block;font-size:11px;color:var(--mut);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:20px;padding:4px 11px;margin:3px 5px 3px 0}
 </style>
 </head>
 <body>
@@ -151,6 +190,8 @@ select option{background:#0d1124}
     <div class="pill"><span class="dot" id="ovDot"></span><b id="ovScore">—</b><small>overall</small></div>
     <div class="pill"><span class="dot" style="background:var(--red)"></span><b id="cntFail">0</b><small>failing</small></div>
     <div class="pill"><span class="dot" style="background:var(--amber)"></span><b id="cntRisk">0</b><small>at risk</small></div>
+    <div class="pill"><span class="dot" style="background:#fb923c"></span><b id="cntOverdue">0</b><small>overdue</small></div>
+    <div class="pill"><b id="budgetPill">—</b><small>budget used</small></div>
   </div>
 </div>
 
@@ -159,7 +200,7 @@ select option{background:#0d1124}
   <div class="row"><span class="dot" style="background:var(--green)"></span>On track</div>
   <div class="row"><span class="dot" style="background:var(--amber)"></span>At risk</div>
   <div class="row"><span class="dot" style="background:var(--red)"></span>Failing</div>
-  <div class="hint">Planets are divisions · moons are projects. Drag to orbit, scroll to zoom, click a planet to update it.</div>
+  <div class="hint">Planets are divisions · moons are projects (bigger = higher priority). Click a moon for a deep dive, a planet to edit. Use the filters up top, or just ask the analyst.</div>
 </div>
 
 <aside class="inspector" id="inspector">
@@ -192,64 +233,67 @@ select option{background:#0d1124}
   </div>
   <div class="chips" id="chips"></div>
 </div></div>
+<div class="filters" id="filters"></div>
+<div class="pmodal" id="pmodal"><div class="pmodal-card" id="pmodalCard"></div></div>
 <div id="tip"></div>
 
 <!-- ════════ CLASSIC SCRIPT: data, health, editor, analyst, voice (global scope) ════════ -->
 <script>
 const PALETTE=['#6aa6ff','#a78bfa','#22d3ee','#f472b6','#fb923c','#34d399','#c084fc','#ffd479'];
+function mk(o){return Object.assign({priority:'medium',team:4,budget:300,spend:200,trend:'flat',deps:[],milestones:[]},o);}
 function seed(){return {departments:[
  {id:'profession',name:'Advocates & Legal Consultants Affairs',weight:5,color:'#6aa6ff',type:'terran',
   kpis:[{name:'Registrations within SLA',actual:88,target:95,unit:'%'},{name:'Avg registration time',actual:16,target:14,unit:'d',higherIsBetter:false},{name:'Active on the Roll',actual:5400,target:6000,unit:''}],
   projects:[
-   {id:'p1',name:'LPS Smart App upgrade',progress:62,status:'at-risk',owner:'Digital / IT',due:'2026-07-20',concern:'Vendor sprint slip on the renewals module.'},
-   {id:'p2',name:'Roll data cleanse',progress:80,status:'on-track',owner:'Registration',due:'2026-06-30',concern:''},
-   {id:'p3',name:'Visiting consultant permit automation',progress:40,status:'at-risk',owner:'Registration',due:'2026-08-10',concern:'Integration with the Ministry of Justice still pending.'},
-   {id:'p4',name:'Court of Cassation audience workflow',progress:90,status:'on-track',owner:'Registration',due:'2026-06-25',concern:''}]},
+   mk({id:'p1',name:'LPS Smart App upgrade',progress:62,status:'at-risk',owner:'Digital / IT',priority:'high',team:9,start:'2026-02-01',due:'2026-07-20',budget:1800,spend:1300,trend:'down',milestones:[{name:'Renewals module',due:'2026-06-10',done:false},{name:'UAT',due:'2026-07-05',done:false}],concern:'Vendor sprint slip on the renewals module.'}),
+   mk({id:'p2',name:'Roll data cleanse',progress:80,status:'on-track',owner:'Registration',priority:'medium',team:4,start:'2026-03-01',due:'2026-06-30',budget:300,spend:230,trend:'up',milestones:[{name:'Dedup pass',due:'2026-05-20',done:true},{name:'Final reconciliation',due:'2026-06-25',done:false}],concern:''}),
+   mk({id:'p3',name:'Visiting consultant permit automation',progress:40,status:'at-risk',owner:'Registration',priority:'medium',team:5,start:'2026-03-15',due:'2026-08-10',budget:600,spend:280,trend:'flat',deps:['p1'],milestones:[{name:'MoJ integration',due:'2026-06-01',done:false},{name:'Pilot',due:'2026-07-20',done:false}],concern:'Integration with the Ministry of Justice still pending.'}),
+   mk({id:'p4',name:'Court of Cassation audience workflow',progress:90,status:'on-track',owner:'Registration',priority:'high',team:3,start:'2026-02-10',due:'2026-06-25',budget:250,spend:210,trend:'up',milestones:[{name:'Build',due:'2026-05-15',done:true},{name:'Go-live',due:'2026-06-24',done:false}],concern:''})]},
  {id:'govlegal',name:'Government Legal Services',weight:4.5,color:'#a78bfa',type:'terran',
   kpis:[{name:'Advice within SLA',actual:84,target:95,unit:'%'},{name:'Contracts reviewed / mo',actual:120,target:150,unit:''},{name:'Entity satisfaction',actual:91,target:95,unit:'%'}],
   projects:[
-   {id:'p5',name:'Central Legal Services Portal v2',progress:55,status:'at-risk',owner:'Digital',due:'2026-08-01',concern:'Scope creep across 12 government entities.'},
-   {id:'p6',name:'Contract template library',progress:78,status:'on-track',owner:'Contracts',due:'2026-07-10',concern:''},
-   {id:'p7',name:'AI contract-review pilot',progress:35,status:'on-track',owner:'Innovation',due:'2026-09-15',concern:''}]},
+   mk({id:'p5',name:'Central Legal Services Portal v2',progress:55,status:'at-risk',owner:'Digital',priority:'critical',team:14,start:'2026-01-15',due:'2026-08-01',budget:3200,spend:2100,trend:'down',milestones:[{name:'Phase 1 entities',due:'2026-05-30',done:false},{name:'Phase 2',due:'2026-07-20',done:false}],concern:'Scope creep across 12 government entities.'}),
+   mk({id:'p6',name:'Contract template library',progress:78,status:'on-track',owner:'Contracts',priority:'medium',team:4,start:'2026-03-01',due:'2026-07-10',budget:400,spend:300,trend:'up',milestones:[{name:'Top 50 templates',due:'2026-06-05',done:true},{name:'Publish',due:'2026-07-08',done:false}],concern:''}),
+   mk({id:'p7',name:'AI contract-review pilot',progress:35,status:'on-track',owner:'Innovation',priority:'high',team:6,start:'2026-04-01',due:'2026-09-15',budget:900,spend:250,trend:'up',deps:['p6'],milestones:[{name:'Model eval',due:'2026-07-01',done:false},{name:'Pilot 3 entities',due:'2026-09-01',done:false}],concern:''})]},
  {id:'legislation',name:'Legislation & Drafting',weight:3.5,color:'#22d3ee',type:'ice',
   kpis:[{name:'Drafts within 10–30 days',actual:90,target:95,unit:'%'},{name:'Legislative requests cleared',actual:60,target:72,unit:''}],
   projects:[
-   {id:'p8',name:'Law No. 16 of 2025 rollout',progress:70,status:'on-track',owner:'Legislation',due:'2026-07-01',concern:''},
-   {id:'p9',name:'Legislative tracker dashboard',progress:45,status:'at-risk',owner:'Strategy',due:'2026-08-20',concern:'Data feed from entities is incomplete.'},
-   {id:'p10',name:'Bilingual drafting QA',progress:85,status:'on-track',owner:'Legislation',due:'2026-06-28',concern:''}]},
+   mk({id:'p8',name:'Law No. 16 of 2025 rollout',progress:70,status:'on-track',owner:'Legislation',priority:'critical',team:7,start:'2026-02-01',due:'2026-07-01',budget:500,spend:360,trend:'flat',milestones:[{name:'Entity guidance',due:'2026-05-20',done:true},{name:'Full enforcement',due:'2026-06-30',done:false}],concern:''}),
+   mk({id:'p9',name:'Legislative tracker dashboard',progress:45,status:'at-risk',owner:'Strategy',priority:'medium',team:4,start:'2026-03-20',due:'2026-08-20',budget:350,spend:200,trend:'down',deps:['p5'],milestones:[{name:'Data feeds',due:'2026-06-10',done:false},{name:'Launch',due:'2026-08-15',done:false}],concern:'Data feed from entities is incomplete.'}),
+   mk({id:'p10',name:'Bilingual drafting QA',progress:85,status:'on-track',owner:'Legislation',priority:'medium',team:3,start:'2026-02-15',due:'2026-06-28',budget:200,spend:170,trend:'up',milestones:[{name:'Glossary',due:'2026-05-10',done:true},{name:'QA cycle',due:'2026-06-26',done:false}],concern:''})]},
  {id:'litigation',name:'Litigation & Representation',weight:4,color:'#f472b6',type:'rocky',
   kpis:[{name:'Cases resolved within target',actual:76,target:90,unit:'%'},{name:'Active caseload',actual:210,target:180,unit:'',higherIsBetter:false},{name:'Favourable outcomes',actual:82,target:80,unit:'%'}],
   projects:[
-   {id:'p11',name:'Case management system',progress:48,status:'failing',owner:'Cases',due:'2026-06-15',concern:'Migration stalled; legacy records not reconciled. Now overdue.'},
-   {id:'p12',name:'Arbitration playbook',progress:88,status:'on-track',owner:'Cases',due:'2026-07-05',concern:''},
-   {id:'p13',name:'E-bundling for hearings',progress:60,status:'at-risk',owner:'Cases',due:'2026-08-12',concern:'Court e-filing integration delayed.'}]},
+   mk({id:'p11',name:'Case management system',progress:48,status:'failing',owner:'Cases',priority:'critical',team:11,start:'2025-11-01',due:'2026-06-13',budget:2600,spend:2200,trend:'down',milestones:[{name:'Data migration',due:'2026-05-01',done:false},{name:'Cutover',due:'2026-06-12',done:false}],concern:'Migration stalled; legacy records not reconciled. Now overdue.'}),
+   mk({id:'p12',name:'Arbitration playbook',progress:88,status:'on-track',owner:'Cases',priority:'medium',team:3,start:'2026-03-01',due:'2026-07-05',budget:180,spend:150,trend:'up',milestones:[{name:'Draft',due:'2026-05-20',done:true},{name:'Sign-off',due:'2026-07-03',done:false}],concern:''}),
+   mk({id:'p13',name:'E-bundling for hearings',progress:60,status:'at-risk',owner:'Cases',priority:'high',team:5,start:'2026-03-10',due:'2026-08-12',budget:700,spend:420,trend:'flat',deps:['p11'],milestones:[{name:'Court integration',due:'2026-06-20',done:false},{name:'Rollout',due:'2026-08-10',done:false}],concern:'Court e-filing integration delayed.'})]},
  {id:'conduct',name:'Professional Conduct & Inspection',weight:3.5,color:'#fb923c',type:'rocky',
   kpis:[{name:'Complaints within 60 days',actual:71,target:90,unit:'%'},{name:'Inspections completed',actual:140,target:160,unit:''},{name:'Unlicensed reports actioned',actual:95,target:100,unit:'%'}],
   projects:[
-   {id:'p14',name:'Conduct case backlog clearance',progress:33,status:'failing',owner:'Conduct Committee',due:'2026-06-05',concern:'60-day cases piling up; committee capacity short. Overdue.'},
-   {id:'p15',name:'Field inspection programme',progress:65,status:'on-track',owner:'Inspection',due:'2026-09-01',concern:''},
-   {id:'p16',name:'Unlicensed-practice crackdown',progress:58,status:'at-risk',owner:'Inspection',due:'2026-07-25',concern:'Awaiting an enforcement MoU.'}]},
+   mk({id:'p14',name:'Conduct case backlog clearance',progress:33,status:'failing',owner:'Conduct Committee',priority:'critical',team:6,start:'2026-01-10',due:'2026-06-05',budget:450,spend:380,trend:'down',milestones:[{name:'Triage 200 cases',due:'2026-04-30',done:false},{name:'Clear backlog',due:'2026-06-01',done:false}],concern:'60-day cases piling up; committee capacity short. Overdue.'}),
+   mk({id:'p15',name:'Field inspection programme',progress:65,status:'on-track',owner:'Inspection',priority:'medium',team:8,start:'2026-03-01',due:'2026-09-01',budget:600,spend:340,trend:'up',milestones:[{name:'Inspector training',due:'2026-06-15',done:false},{name:'200 inspections',due:'2026-08-30',done:false}],concern:''}),
+   mk({id:'p16',name:'Unlicensed-practice crackdown',progress:58,status:'at-risk',owner:'Inspection',priority:'high',team:5,start:'2026-03-15',due:'2026-07-25',budget:300,spend:190,trend:'flat',milestones:[{name:'Enforcement MoU',due:'2026-06-10',done:false},{name:'Campaign',due:'2026-07-20',done:false}],concern:'Awaiting an enforcement MoU.'})]},
  {id:'probono',name:'Voluntary Legal Services (Pro Bono)',weight:3,color:'#34d399',type:'terran',
   kpis:[{name:'Public served / mo',actual:540,target:600,unit:''},{name:'Volunteer lawyers',actual:395,target:450,unit:''},{name:'Avg match time',actual:3,target:2,unit:'d',higherIsBetter:false}],
   projects:[
-   {id:'p17',name:'Pro Bono portal expansion',progress:72,status:'on-track',owner:'Pro Bono',due:'2026-07-30',concern:''},
-   {id:'p18',name:'Coverage to 48 areas of law',progress:90,status:'on-track',owner:'Pro Bono',due:'2026-06-26',concern:''},
-   {id:'p19',name:'Multilingual matching',progress:50,status:'at-risk',owner:'Digital',due:'2026-08-18',concern:'Language coverage gaps for three dialects.'}]},
+   mk({id:'p17',name:'Pro Bono portal expansion',progress:72,status:'on-track',owner:'Pro Bono',priority:'medium',team:5,start:'2026-03-01',due:'2026-07-30',budget:500,spend:330,trend:'up',milestones:[{name:'New intake flow',due:'2026-06-20',done:true},{name:'Launch',due:'2026-07-28',done:false}],concern:''}),
+   mk({id:'p18',name:'Coverage to 48 areas of law',progress:90,status:'on-track',owner:'Pro Bono',priority:'high',team:4,start:'2026-02-01',due:'2026-06-26',budget:200,spend:180,trend:'up',milestones:[{name:'Recruit firms',due:'2026-05-30',done:true},{name:'Go-live',due:'2026-06-25',done:false}],concern:''}),
+   mk({id:'p19',name:'Multilingual matching',progress:50,status:'at-risk',owner:'Digital',priority:'medium',team:4,start:'2026-04-01',due:'2026-08-18',budget:350,spend:180,trend:'down',deps:['p17'],milestones:[{name:'3 dialects',due:'2026-06-25',done:false},{name:'Pilot',due:'2026-08-15',done:false}],concern:'Language coverage gaps for three dialects.'})]},
  {id:'clpd',name:'Professional Training & Development (CLPD)',weight:3,color:'#c084fc',type:'ice',
   kpis:[{name:'Activities delivered',actual:24,target:30,unit:''},{name:'Providers accredited',actual:18,target:25,unit:''},{name:'CLPD points logged',actual:12000,target:15000,unit:''}],
   projects:[
-   {id:'p20',name:'CLPD portal migration',progress:44,status:'at-risk',owner:'Digital',due:'2026-08-05',concern:'UAE PASS single sign-on still pending.'},
-   {id:'p21',name:'Provider accreditation drive',progress:68,status:'on-track',owner:'CLPD',due:'2026-07-15',concern:''},
-   {id:'p22',name:'16-point cycle dashboard',progress:82,status:'on-track',owner:'CLPD',due:'2026-06-29',concern:''}]},
+   mk({id:'p20',name:'CLPD portal migration',progress:44,status:'at-risk',owner:'Digital',priority:'high',team:6,start:'2026-02-20',due:'2026-08-05',budget:800,spend:480,trend:'flat',milestones:[{name:'UAE PASS SSO',due:'2026-06-05',done:false},{name:'Migrate users',due:'2026-07-25',done:false}],concern:'UAE PASS single sign-on still pending.'}),
+   mk({id:'p21',name:'Provider accreditation drive',progress:68,status:'on-track',owner:'CLPD',priority:'medium',team:4,start:'2026-03-10',due:'2026-07-15',budget:250,spend:160,trend:'up',milestones:[{name:'25 providers',due:'2026-06-20',done:false},{name:'Audit',due:'2026-07-12',done:false}],concern:''}),
+   mk({id:'p22',name:'16-point cycle dashboard',progress:82,status:'on-track',owner:'CLPD',priority:'medium',team:3,start:'2026-02-25',due:'2026-06-29',budget:220,spend:180,trend:'up',deps:['p20'],milestones:[{name:'Build',due:'2026-05-25',done:true},{name:'Launch',due:'2026-06-28',done:false}],concern:''})]},
  {id:'happiness',name:'Customer Happiness & Excellence',weight:3.5,color:'#ffd479',type:'gas',
   kpis:[{name:'Customer happiness',actual:89,target:95,unit:'%'},{name:'Mystery shopper',actual:86,target:90,unit:'%'},{name:'Ambassadors ready',actual:60,target:100,unit:'%'}],
   projects:[
-   {id:'p23',name:'Service Ambassador Hub launch',progress:92,status:'on-track',owner:'L&D',due:'2026-06-20',concern:''},
-   {id:'p24',name:'Maryam AI assistant',progress:70,status:'at-risk',owner:'Digital',due:'2026-06-30',concern:'Goes live once the ANTHROPIC_API_KEY is set in Azure.'},
-   {id:'p25',name:'Customers Happiness Charter v2 rollout',progress:75,status:'on-track',owner:'Excellence',due:'2026-07-10',concern:''}]}
+   mk({id:'p23',name:'Service Ambassador Hub launch',progress:92,status:'on-track',owner:'L&D',priority:'high',team:4,start:'2026-04-01',due:'2026-06-20',budget:180,spend:150,trend:'up',milestones:[{name:'Content build',due:'2026-05-30',done:true},{name:'Public launch',due:'2026-06-19',done:false}],concern:''}),
+   mk({id:'p24',name:'Maryam AI assistant',progress:70,status:'at-risk',owner:'Digital',priority:'high',team:3,start:'2026-04-15',due:'2026-06-30',budget:120,spend:70,trend:'flat',deps:['p23'],milestones:[{name:'Function ready',due:'2026-06-12',done:true},{name:'API key + go-live',due:'2026-06-28',done:false}],concern:'Goes live once the ANTHROPIC_API_KEY is set in Azure.'}),
+   mk({id:'p25',name:'Customers Happiness Charter v2 rollout',progress:75,status:'on-track',owner:'Excellence',priority:'medium',team:3,start:'2026-03-01',due:'2026-07-10',budget:90,spend:60,trend:'up',milestones:[{name:'Approval',due:'2026-05-15',done:true},{name:'Rollout',due:'2026-07-08',done:false}],concern:''})]}
 ]};}
 
-const LS='orbit_lad_v1';
+const LS='orbit_lad_v2';
 let state=load();
 function load(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.departments)return s;}catch(e){}return seed();}
 function save(){try{localStorage.setItem(LS,JSON.stringify(state));}catch(e){}}
@@ -266,6 +310,102 @@ function colorOf(s){return COL[statusOf(s)];}
 function orgScore(){const t=state.departments.reduce((s,d)=>s+d.weight,0)||1;return state.departments.reduce((s,d)=>s+deptScore(d)*d.weight,0)/t;}
 function allProjects(){const a=[];state.departments.forEach(d=>d.projects.forEach(p=>a.push(Object.assign({},p,{deptName:d.name,deptId:d.id}))));return a;}
 
+/* ════════ ANALYTICS ENGINE — the real oversight intelligence ════════ */
+const DAY=86400000;
+function dnum(s){const t=s?Date.parse(s):NaN;return isNaN(t)?null:t;}
+function dDays(a,b){return Math.round((b-a)/DAY);}
+function money(k){k=+k||0;return k>=1000?'AED '+(k/1000).toFixed(1)+'m':'AED '+Math.round(k)+'k';}
+function expectedProgress(p){const s=dnum(p.start),e=dnum(p.due);if(s==null||e==null||e<=s)return null;return clamp((Date.now()-s)/(e-s),0,1)*100;}
+function scheduleVar(p){const ep=expectedProgress(p);return ep==null?null:(+p.progress||0)-ep;}      /* <0 = behind plan */
+function isOverdue(p){const e=dnum(p.due);return e!=null&&Date.now()>e&&(+p.progress||0)<100;}
+function daysToDue(p){const e=dnum(p.due);return e==null?null:dDays(Date.now(),e);}
+function budgetBurn(p){return p.budget?(+p.spend||0)/p.budget:null;}                                  /* 0..1+ */
+function budgetVar(p){return p.budget?((+p.progress||0)/100)-((+p.spend||0)/p.budget):null;}          /* <0 = spending ahead of delivery */
+function milestoneInfo(p){const ms=p.milestones||[];const done=ms.filter(m=>m.done).length;
+  const overdue=ms.filter(m=>!m.done&&dnum(m.due)!=null&&Date.now()>dnum(m.due));
+  const upcoming=ms.filter(m=>!m.done&&dnum(m.due)!=null&&dnum(m.due)>=Date.now()).sort((a,b)=>dnum(a.due)-dnum(b.due));
+  return {total:ms.length,done,overdue,next:upcoming[0]||null};}
+function momentum(p){if(p.history&&p.history.length>1){const h=p.history,sl=h[h.length-1].h-h[0].h;return sl>0.06?'improving':sl<-0.06?'declining':'steady';}
+  return p.trend==='up'?'improving':p.trend==='down'?'declining':'steady';}
+function blockedBy(p){if(!p.deps||!p.deps.length)return [];const map={};allProjects().forEach(x=>map[x.id]=x);
+  return p.deps.map(id=>map[id]).filter(x=>x&&(x.status==='failing'||x.status==='at-risk'||isOverdue(x)));}
+function dependents(id){return allProjects().filter(p=>(p.deps||[]).indexOf(id)>-1);}
+function reportedHealth(p){return p.status==='failing'?0.32:p.status==='at-risk'?0.6:0.85;}
+function analyticalHealth(p){let h=(+p.progress||0)/100;
+  const sv=scheduleVar(p);if(sv!=null)h+=clamp(sv/100,-0.35,0.1);
+  const bv=budgetVar(p);if(bv!=null)h+=clamp(bv,-0.2,0.08);
+  const mi=milestoneInfo(p);if(mi.total)h-=0.06*mi.overdue.length;
+  if(isOverdue(p))h-=0.18;
+  if(blockedBy(p).length)h-=0.12;
+  const m=momentum(p);h+=m==='improving'?0.05:m==='declining'?-0.07:0;
+  return clamp(h,0,1);}
+function divergence(p){return reportedHealth(p)-analyticalHealth(p);}                                 /* >0.18 = reported greener than reality */
+function sparkline(p){if(p.history&&p.history.length)return p.history.map(x=>x.h);
+  const end=analyticalHealth(p),dir=p.trend==='up'?-1:p.trend==='down'?1:0,a=[];
+  for(let i=5;i>=0;i--)a.push(clamp(end+dir*0.045*i+Math.sin(i*1.3)*0.012,0.05,0.98));return a;}
+const PW={critical:1.6,high:1.3,medium:1,low:0.7};
+function priorityWeight(p){return PW[p.priority||'medium']||1;}
+function riskScore(p){let r=0;
+  r+=p.status==='failing'?3:p.status==='at-risk'?1.6:0;
+  const sv=scheduleVar(p);if(sv!=null&&sv<0)r+=Math.min(2.5,-sv/15);
+  const bv=budgetVar(p);if(bv!=null&&bv<0)r+=Math.min(1.6,-bv*4);
+  if(isOverdue(p))r+=1.8;
+  r+=milestoneInfo(p).overdue.length*0.6;
+  r+=blockedBy(p).length*1.2;
+  if(momentum(p)==='declining')r+=0.8;
+  if(divergence(p)>0.18)r+=1.2;
+  return r*priorityWeight(p);}
+function riskReasons(p){const out=[];
+  const sv=scheduleVar(p);if(sv!=null&&sv<-8)out.push(Math.round(-sv)+'% behind plan');
+  if(isOverdue(p))out.push('overdue by '+Math.abs(daysToDue(p))+' days');
+  const bv=budgetVar(p);if(bv!=null&&bv<-0.08)out.push(Math.round(budgetBurn(p)*100)+'% of budget spent at '+(+p.progress||0)+'% complete');
+  const mi=milestoneInfo(p);if(mi.overdue.length)out.push(mi.overdue.length+' milestone'+(mi.overdue.length>1?'s':'')+' overdue ('+mi.overdue.map(m=>m.name).join(', ')+')');
+  const bl=blockedBy(p);if(bl.length)out.push('blocked by '+bl.map(x=>x.name+' ('+x.status.replace('-',' ')+')').join(', '));
+  if(momentum(p)==='declining')out.push('momentum declining');
+  if(divergence(p)>0.18)out.push('reported '+p.status.replace('-',' ')+' but the data looks more like '+statusOf(analyticalHealth(p)).replace('-',' '));
+  if(!out.length&&p.concern)out.push(p.concern);
+  return out;}
+function recommend(p){
+  if(blockedBy(p).length)return 'Unblock the dependency ('+blockedBy(p).map(x=>x.name).join(', ')+') or de-scope around it.';
+  if(isOverdue(p))return 'Re-baseline the date and agree a recovery plan this week.';
+  const sv=scheduleVar(p);if(sv!=null&&sv<-12)return 'Add capacity or cut scope — it is materially behind plan.';
+  const bv=budgetVar(p);if(bv!=null&&bv<-0.1)return 'Review burn rate before the next milestone; spend is outpacing delivery.';
+  if(milestoneInfo(p).overdue.length)return 'Close out the overdue milestone before starting new work.';
+  if(divergence(p)>0.18)return 'Validate the reported status with the team — the metrics tell a tougher story.';
+  if(momentum(p)==='declining')return 'Check in with the owner — momentum is slipping.';
+  return 'On track — keep the current cadence.';}
+function projAnalytics(p){return {scheduleVarPct:scheduleVar(p)==null?null:Math.round(scheduleVar(p)),expectedPct:expectedProgress(p)==null?null:Math.round(expectedProgress(p)),overdue:isOverdue(p),daysToDue:daysToDue(p),budgetBurnPct:budgetBurn(p)==null?null:Math.round(budgetBurn(p)*100),budgetVarPct:budgetVar(p)==null?null:Math.round(budgetVar(p)*100),milestones:milestoneInfo(p),momentum:momentum(p),blockedBy:blockedBy(p).map(x=>x.name),analyticalStatus:statusOf(analyticalHealth(p)),divergence:+divergence(p).toFixed(2),riskScore:+riskScore(p).toFixed(2),reasons:riskReasons(p),recommendation:recommend(p)};}
+function portfolio(){const ps=allProjects();
+  const byStatus={'on-track':0,'at-risk':0,'failing':0};ps.forEach(p=>{byStatus[p.status]=(byStatus[p.status]||0)+1;});
+  const overdue=ps.filter(isOverdue);
+  const behind=ps.filter(p=>{const sv=scheduleVar(p);return sv!=null&&sv<-10;});
+  const overBudget=ps.filter(p=>{const bv=budgetVar(p);return bv!=null&&bv<-0.1;});
+  const blocked=ps.filter(p=>blockedBy(p).length);
+  const watermelon=ps.filter(p=>divergence(p)>0.18);
+  const declining=ps.filter(p=>momentum(p)==='declining');
+  const budget=ps.reduce((s,p)=>s+(+p.budget||0),0),spend=ps.reduce((s,p)=>s+(+p.spend||0),0);
+  const ranked=ps.slice().sort((a,b)=>riskScore(b)-riskScore(a));
+  return {ps,byStatus,overdue,behind,overBudget,blocked,watermelon,declining,budget,spend,ranked};}
+const FILTERS={
+  attention:{label:'Needs attention',test:p=>riskScore(p)>=1.4},
+  overdue:{label:'Overdue',test:isOverdue},
+  behind:{label:'Behind plan',test:p=>{const s=scheduleVar(p);return s!=null&&s<-10;}},
+  budget:{label:'Over budget',test:p=>{const b=budgetVar(p);return b!=null&&b<-0.1;}},
+  blocked:{label:'Blocked',test:p=>blockedBy(p).length>0},
+  watermelon:{label:'Optimistic',test:p=>divergence(p)>0.18}
+};
+let activeFilter=null;
+function applyFilter(key){
+  activeFilter=(activeFilter===key)?null:key;
+  const set=new Set();
+  if(activeFilter){allProjects().forEach(p=>{if(FILTERS[activeFilter].test(p))set.add(p.id);});}
+  alertFocus=set;if(window.orbit3d)window.orbit3d.setAlerts(alertFocus);
+  document.querySelectorAll('.fchip').forEach(c=>c.classList.toggle('on',c.dataset.k===activeFilter));
+  if(activeFilter){const items=allProjects().filter(p=>FILTERS[activeFilter].test(p)).sort((a,b)=>riskScore(b)-riskScore(a));
+    const body=items.length?items.map(p=>`<b>${esc(p.name)}</b> (${esc(p.deptName)})${riskReasons(p).length?' — '+esc(riskReasons(p)[0]):''}`).join('<br>• '):'Nothing matches this filter — good news.';
+    showAnswer(`<span class="who"><span style="width:7px;height:7px;border-radius:50%;background:var(--amber);display:inline-block"></span> ${FILTERS[activeFilter].label} · ${items.length}</span>${items.length?'• '+body:body}`);}
+}
+
 let selectedId=null, alertFocus=new Set();
 function pct(n){return Math.round(n)+'%';}
 function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -277,6 +417,8 @@ function updateHUD(){
   const all=allProjects();
   document.getElementById('cntFail').textContent=all.filter(p=>p.status==='failing').length;
   document.getElementById('cntRisk').textContent=all.filter(p=>p.status==='at-risk').length;
+  const odEl=document.getElementById('cntOverdue');if(odEl)odEl.textContent=all.filter(isOverdue).length;
+  const bp=document.getElementById('budgetPill');if(bp){const f=portfolio();bp.textContent=Math.round(f.spend/(f.budget||1)*100)+'%';}
   document.getElementById('orgName').textContent=window.ORBIT_CONFIG.orgName||'Mission Control';
 }
 
@@ -309,10 +451,11 @@ function renderInspBody(d){
         <label>Unit<input value="${esc(k.unit||'')}" oninput="editKpi('${d.id}',${i},'unit',this.value)"></label>
       </div></div>`;});
   h+=`<div class="block-label">Projects (moons) <button class="addbtn" onclick="addProject('${d.id}')">+ Add project</button></div>`;
-  d.projects.forEach(p=>{const c=COL[p.status];const al=alertFocus.has(p.id)?' alert':'';
+  d.projects.forEach(p=>{const c=COL[p.status];const al=alertFocus.has(p.id)?' alert':'';const a=projAnalytics(p),rs=riskReasons(p);
     h+=`<div class="proj${al}" id="proj_${p.id}"><button class="delbtn" title="Remove" onclick="delProject('${d.id}','${p.id}')">✕</button>
-      <div class="proj-top"><span class="proj-dot" style="background:${c}"></span><span class="proj-name">${esc(p.name)}</span></div>
-      <div class="proj-meta"><span>Owner <b>${esc(p.owner||'—')}</b></span><span>Due <b>${esc(p.due||'—')}</b></span></div>
+      <div class="proj-top"><span class="proj-dot" style="background:${c}"></span><span class="proj-name">${esc(p.name)}</span><button class="addbtn" style="margin-left:auto;flex-shrink:0" onclick="openProject('${p.id}')">Deep dive ▸</button></div>
+      <div class="proj-meta"><span>${esc(p.priority||'medium')} priority</span><span>Due <b>${esc(p.due||'—')}</b></span>${a.scheduleVarPct!=null&&a.scheduleVarPct<-8?`<span style="color:var(--amber)">${-a.scheduleVarPct}% behind</span>`:''}</div>
+      ${rs.length?`<div class="proj-meta" style="color:var(--amber);margin-top:-4px">⚠ ${esc(rs[0])}</div>`:''}
       <div class="proj-controls">
         <div class="field"><label>Name</label><input value="${esc(p.name)}" oninput="editProj('${d.id}','${p.id}','name',this.value)"></div>
         <div class="range-row"><input type="range" min="0" max="100" value="${p.progress}" oninput="editProj('${d.id}','${p.id}','progress',this.value);this.nextElementSibling.textContent=this.value+'%'"><span class="pct">${p.progress}%</span></div>
@@ -337,10 +480,13 @@ function addDept(){const id='d'+Math.random().toString(36).slice(2,6);const col=
 function resetData(){if(!confirm('Reset all divisions and projects to the sample data?'))return;localStorage.removeItem(LS);location.reload();}
 
 /* ── Analyst (offline NLU) ── */
-function context(){return {organisation:window.ORBIT_CONFIG.orgName,overallHealthPct:Math.round(orgScore()*100),today:new Date().toISOString().slice(0,10),
+function context(){const f=portfolio();const nm=id=>{const x=allProjects().find(y=>y.id===id);return x?x.name:id;};
+  return {organisation:window.ORBIT_CONFIG.orgName,today:new Date().toISOString().slice(0,10),overallHealthPct:Math.round(orgScore()*100),
+  portfolio:{projects:f.ps.length,onTrack:f.byStatus['on-track'],atRisk:f.byStatus['at-risk'],failing:f.byStatus['failing'],overdue:f.overdue.length,behindPlan:f.behind.length,overBudget:f.overBudget.length,blocked:f.blocked.length,optimisticReporting:f.watermelon.length,decliningMomentum:f.declining.length,budgetK:f.budget,spendK:f.spend,
+    topRisks:f.ranked.slice(0,6).map(p=>({project:p.name,division:p.deptName,riskScore:+riskScore(p).toFixed(1),reasons:riskReasons(p)}))},
   departments:state.departments.map(d=>({name:d.name,healthPct:Math.round(deptScore(d)*100),status:statusOf(deptScore(d)),
     kpis:d.kpis.map(k=>({name:k.name,actual:k.actual,target:k.target,unit:k.unit,attainmentPct:Math.round(kpiAtt(k)*100)})),
-    projects:d.projects.map(p=>({name:p.name,status:p.status,progressPct:p.progress,owner:p.owner,due:p.due,concern:p.concern}))}))};}
+    projects:d.projects.map(p=>{const a=projAnalytics(p);return {name:p.name,status:p.status,progressPct:p.progress,priority:p.priority,owner:p.owner,start:p.start,due:p.due,budgetK:p.budget,spentK:p.spend,team:p.team,concern:p.concern,dependsOn:(p.deps||[]).map(nm),analytics:a};})}))};}
 function overdue(){const t=new Date();return allProjects().filter(p=>p.due&&new Date(p.due)<t&&(p.progress||0)<100);}
 function laggingKpis(){const out=[];state.departments.forEach(d=>d.kpis.forEach(k=>{if(kpiAtt(k)<0.8)out.push({dept:d.name,name:k.name,att:kpiAtt(k)});}));return out.sort((a,b)=>a.att-b.att);}
 function findEntity(q){const ql=q.toLowerCase();let best=null,bl=0;
@@ -352,68 +498,111 @@ function findEntity(q){const ql=q.toLowerCase();let best=null,bl=0;
   state.departments.forEach(d=>d.projects.forEach(p=>{const pn=p.name.toLowerCase().split(/\W+/).filter(w=>w.length>3);const hit=pn.filter(w=>words.includes(w)).length;if(hit>bl){best={type:'project',p,d};bl=hit;}}));
   return best;
 }
+function briefing(){const f=portfolio(),s=orgScore(),L=[];
+  L.push(`<b>Portfolio health ${pct(s*100)}</b> (${statusOf(s).replace('-',' ')}) · ${f.ps.length} projects across ${state.departments.length} divisions — ${f.byStatus['on-track']} on track, ${f.byStatus['at-risk']} at risk, <span class="sev">${f.byStatus['failing']} failing</span>.`);
+  const top=f.ranked.slice(0,3).filter(p=>riskScore(p)>=1.2);
+  if(top.length)L.push(`<u>Focus first</u><br>• `+top.map(p=>`<b>${p.name}</b> (${p.deptName}) — ${(riskReasons(p).slice(0,2).join('; ')||p.status.replace('-',' '))}`).join('<br>• '));
+  if(f.overdue.length)L.push(`<u>Overdue (${f.overdue.length})</u>: ${f.overdue.map(p=>p.name).join(', ')}.`);
+  L.push(`<u>Budget</u>: ${money(f.spend)} of ${money(f.budget)} committed (${Math.round(f.spend/(f.budget||1)*100)}%)${f.overBudget.length?` — watch ${f.overBudget.map(p=>p.name).join(', ')}, spending ahead of delivery`:''}.`);
+  if(f.blocked.length)L.push(`<u>Dependencies</u>: ${f.blocked.map(p=>`${p.name} ← ${blockedBy(p).map(x=>x.name).join(', ')}`).join('; ')}.`);
+  if(f.watermelon.length)L.push(`<u>Optimistic reporting</u>: ${f.watermelon.map(p=>p.name).join(', ')} look greener than the metrics suggest.`);
+  return L;}
 function localAnswer(q){
   const ql=' '+q.toLowerCase().replace(/[^\w\s%]/g,' ')+' ';
-  const projs=allProjects();
-  const failing=projs.filter(p=>p.status==='failing').sort((a,b)=>a.progress-b.progress);
-  const risk=projs.filter(p=>p.status==='at-risk').sort((a,b)=>a.progress-b.progress);
-  const od=overdue();const focus=new Set();const has=(...w)=>w.some(x=>ql.includes(x));
+  const f=portfolio(),projs=f.ps;
+  const failing=projs.filter(p=>p.status==='failing').sort((a,b)=>riskScore(b)-riskScore(a));
+  const risk=projs.filter(p=>p.status==='at-risk').sort((a,b)=>riskScore(b)-riskScore(a));
+  const focus=new Set();const has=(...w)=>w.some(x=>ql.includes(x));const top=p=>{focus.add(p.id);return p;};
   const ent=findEntity(q);
-  if(ent&&!has('summary','overall','everything','portfolio','which','concern','worried','worry')){
+  if(ent&&!has('summary','overall','everything','portfolio','which','concern','worried','worry','rank','brief','focus','budget')){
     if(ent.type==='dept'){const d=ent.d,sc=deptScore(d);d.projects.forEach(p=>{if(p.status!=='on-track')focus.add(p.id);});
-      const bad=d.projects.filter(p=>p.status!=='on-track');
-      let t=`<b>${d.name}</b> is at <b>${pct(sc*100)} health</b> — ${statusOf(sc).replace('-',' ')}. `;
-      const lk=d.kpis.filter(k=>kpiAtt(k)<0.85);t+=lk.length?`KPIs to watch: ${lk.map(k=>`${k.name} at ${pct(kpiAtt(k)*100)} of target`).join(', ')}. `:`KPIs are broadly on target. `;
-      if(bad.length){t+=`${bad.length} project${bad.length>1?'s need':' needs'} attention — `+bad.map(p=>`<b>${p.name}</b> (${p.status.replace('-',' ')}, ${p.progress}%)`).join(', ')+'. ';const wc=bad.find(p=>p.concern);if(wc)t+=`Top concern: ${wc.concern}`;}
-      else t+=`All projects are on track.`;
+      const bad=d.projects.slice().sort((a,b)=>riskScore(b)-riskScore(a)).filter(p=>p.status!=='on-track');
+      let t=`<b>${d.name}</b> — health <b>${pct(sc*100)}</b> (${statusOf(sc).replace('-',' ')}). `;
+      const lk=d.kpis.filter(k=>kpiAtt(k)<0.85);t+=lk.length?`KPIs to watch: ${lk.map(k=>`${k.name} ${pct(kpiAtt(k)*100)} of target`).join(', ')}. `:`KPIs broadly on target. `;
+      if(bad.length)t+=`${bad.length} project${bad.length>1?'s need':' needs'} attention:<br>• `+bad.slice(0,4).map(p=>`<b>${p.name}</b> (${p.status.replace('-',' ')}, ${p.progress}%)${riskReasons(p).length?' — '+riskReasons(p)[0]:''}`).join('<br>• ');
+      else t+=`All projects on track.`;
       return {text:t,focus,select:d.id};}
-    const p=ent.p;focus.add(p.id);
-    let t=`<b>${p.name}</b> (${p.deptName}) is <b class="${p.status==='failing'?'sev':''}">${p.status.replace('-',' ')}</b> at <b>${p.progress}%</b>, owned by ${p.owner||'—'}${p.due?`, due ${p.due}`:''}. `;
-    t+=p.concern?`Concern: ${p.concern}`:`No specific concern logged.`;
+    const p=top(ent.p),a=projAnalytics(p);
+    let t=`<b>${p.name}</b> (${ent.d.name}) — ${p.status.replace('-',' ')}, <b>${p.progress}%</b> complete`;
+    if(a.expectedPct!=null)t+=` vs ${a.expectedPct}% planned (${a.scheduleVarPct>=0?'+':''}${a.scheduleVarPct}%)`;
+    t+=`. ${p.priority} priority, owner ${p.owner||'—'}, due ${p.due}. `;
+    if(a.budgetBurnPct!=null)t+=`Budget ${money(p.spend)} of ${money(p.budget)} (${a.budgetBurnPct}%). `;
+    if(a.blockedBy.length)t+=`Blocked by ${a.blockedBy.join(', ')}. `;
+    if(a.milestones.next)t+=`Next milestone: ${a.milestones.next.name} (${a.milestones.next.due}). `;
+    t+=`Momentum ${a.momentum}. <i>${a.recommendation}</i>`;
     return {text:t,focus,select:ent.d.id};
   }
-  if(has('failing','fail','worst','red','trouble','off track','off-track','biggest risk','biggest problem')){
-    if(!failing.length&&!risk.length)return {text:`Good news — <b>nothing is failing</b>. Every project is on track and no division is below threshold.`,focus};
-    const list=failing.length?failing:risk;list.forEach(p=>focus.add(p.id));
-    const head=failing.length?`<span class="sev">${failing.length} project${failing.length>1?'s are':' is'} failing.</span>`:`Nothing is outright failing, but ${risk.length} need watching.`;
-    const lines=list.slice(0,4).map(p=>`<b>${p.name}</b> (${p.deptName}) at ${p.progress}%${p.concern?` — ${p.concern}`:''}`).join('<br>• ');
-    return {text:`${head}<br>• ${lines}`,focus,select:list[0].deptId};
+  if(has('what should i do','what do i do','recommend','prioriti','focus','action','next step','where do i start',' fix')){
+    const r=f.ranked.slice(0,3);r.forEach(top);
+    return {text:`<u>Do these first</u><br>• `+r.map(p=>`<b>${p.name}</b> (${p.deptName}) — <i>${recommend(p)}</i>`).join('<br>• '),focus,select:r[0]?r[0].deptId:null};
   }
-  if(has('concern','worried','worry','attention','watch','flag','risk','careful')){
-    [...failing,...risk].forEach(p=>focus.add(p.id));
-    if(!failing.length&&!risk.length&&!od.length)return {text:`Things look healthy — overall portfolio health is <b>${pct(orgScore()*100)}</b> with nothing failing or overdue.`,focus};
-    const parts=[];
-    if(failing.length)parts.push(`<span class="sev">Most serious: <b>${failing[0].name}</b> (${failing[0].deptName}) at ${failing[0].progress}%${failing[0].concern?` — ${failing[0].concern}`:''}</span>`);
-    if(od.length){od.forEach(p=>focus.add(p.id));parts.push(`<b>${od.length} overdue</b>: ${od.map(p=>p.name).join(', ')}`);}
-    const lk=laggingKpis();if(lk.length)parts.push(`KPIs furthest from target: ${lk.slice(0,3).map(k=>`${k.dept} · ${k.name} (${pct(k.att*100)})`).join(', ')}`);
-    if(risk.length)parts.push(`Also watch ${risk.length} at-risk project${risk.length>1?'s':''}: ${risk.slice(0,3).map(p=>p.name).join(', ')}`);
-    return {text:`Here's what I'd put in front of leadership:<br>• `+parts.join('<br>• '),focus,select:failing[0]?failing[0].deptId:(risk[0]?risk[0].deptId:null)};
+  if(has('budget','cost','spend','spent','money','burn','financ')){
+    f.overBudget.forEach(top);
+    let t=`Portfolio spend <b>${money(f.spend)}</b> of ${money(f.budget)} (${Math.round(f.spend/(f.budget||1)*100)}%). `;
+    if(f.overBudget.length)t+=`Spending ahead of delivery:<br>• `+f.overBudget.slice().sort((a,b)=>budgetVar(a)-budgetVar(b)).map(p=>`<b>${p.name}</b> — ${Math.round(budgetBurn(p)*100)}% of budget at ${p.progress}% done`).join('<br>• ');
+    else t+=`No project is materially over budget relative to progress.`;
+    return {text:t,focus,select:f.overBudget[0]?f.overBudget[0].deptId:null};
   }
-  if(has('overdue','late','behind','deadline','due','slipping','slipped')){
-    if(!od.length)return {text:`Nothing is overdue. Nearest deadlines: `+projs.filter(p=>p.due).sort((a,b)=>new Date(a.due)-new Date(b.due)).slice(0,3).map(p=>`<b>${p.name}</b> (${p.due})`).join(', ')+'.',focus};
-    od.forEach(p=>focus.add(p.id));
-    return {text:`<b>${od.length} project${od.length>1?'s are':' is'} past due:</b><br>• `+od.map(p=>`<b>${p.name}</b> (${p.deptName}) — due ${p.due}, ${p.progress}% done${p.concern?` — ${p.concern}`:''}`).join('<br>• '),focus,select:od[0].deptId};
+  if(has('behind','schedule','slipp','timeline',' plan ','on time')){
+    f.behind.forEach(top);
+    if(!f.behind.length)return {text:`Nothing is materially behind plan right now.`,focus};
+    return {text:`<u>Behind plan</u><br>• `+f.behind.slice().sort((a,b)=>scheduleVar(a)-scheduleVar(b)).map(p=>`<b>${p.name}</b> (${p.deptName}) — ${Math.round(-scheduleVar(p))}% behind (${p.progress}% vs ${Math.round(expectedProgress(p))}% planned)`).join('<br>• '),focus,select:f.behind[0].deptId};
   }
-  if(has('best','on track','on-track','green','going well','good news','strongest','healthiest')){
-    const good=projs.filter(p=>p.status==='on-track'&&p.progress>=70).sort((a,b)=>b.progress-a.progress);
-    const top=[...state.departments].sort((a,b)=>deptScore(b)-deptScore(a))[0];
-    return {text:`Strongest division is <b>${top.name}</b> at ${pct(deptScore(top)*100)}. `+(good.length?`Furthest along: `+good.slice(0,4).map(p=>`<b>${p.name}</b> (${p.progress}%)`).join(', ')+'.':''),focus,select:top.id};
+  if(has('block','depend','waiting on','stuck')){
+    f.blocked.forEach(top);
+    if(!f.blocked.length)return {text:`No project is currently blocked by an unhealthy dependency.`,focus};
+    return {text:`<u>Blocked by dependencies</u><br>• `+f.blocked.map(p=>`<b>${p.name}</b> ← ${blockedBy(p).map(x=>`${x.name} (${x.status.replace('-',' ')})`).join(', ')}`).join('<br>• '),focus,select:f.blocked[0].deptId};
   }
-  if(has('which division','division','department','team','rank','compare','leaderboard')){
+  if(has('momentum','trend','stall','declin','improv','moving','direction')){
+    f.declining.forEach(top);const improving=projs.filter(p=>momentum(p)==='improving');
+    let t=f.declining.length?`<u>Losing momentum</u><br>• `+f.declining.map(p=>`<b>${p.name}</b> (${p.deptName}, ${p.progress}%)`).join('<br>• '):`Nothing is visibly losing momentum.`;
+    t+=`<br><u>Building</u>: ${improving.slice(0,4).map(p=>p.name).join(', ')||'—'}.`;
+    return {text:t,focus,select:f.declining[0]?f.declining[0].deptId:null};
+  }
+  if(has('milestone','deliverable','gate')){
+    const overdueMs=[],nextMs=[];projs.forEach(p=>{const mi=milestoneInfo(p);mi.overdue.forEach(m=>overdueMs.push({p,m}));if(mi.next)nextMs.push({p,m:mi.next});});
+    overdueMs.forEach(x=>top(x.p));nextMs.sort((a,b)=>dnum(a.m.due)-dnum(b.m.due));
+    let t=overdueMs.length?`<u>Overdue milestones</u><br>• `+overdueMs.map(x=>`<b>${x.m.name}</b> — ${x.p.name} (was due ${x.m.due})`).join('<br>• '):`No overdue milestones.`;
+    t+=`<br><u>Next up</u>: `+nextMs.slice(0,4).map(x=>`${x.m.name} (${x.p.name}, ${x.m.due})`).join('; ');
+    return {text:t,focus};
+  }
+  if(has('optimist','watermelon','sandbag','hiding','honest','reported','true picture','sugarcoat','really')){
+    f.watermelon.forEach(top);
+    if(!f.watermelon.length)return {text:`Reported statuses line up with the underlying metrics — no obvious optimism.`,focus};
+    return {text:`<u>Reported greener than the data</u><br>• `+f.watermelon.map(p=>`<b>${p.name}</b> (${p.deptName}) — reported ${p.status.replace('-',' ')}, metrics look more like ${statusOf(analyticalHealth(p)).replace('-',' ')}: ${riskReasons(p).slice(0,2).join('; ')}`).join('<br>• '),focus,select:f.watermelon[0].deptId};
+  }
+  if(has('failing','fail','worst','red','trouble','off track','off-track','biggest risk','biggest problem','most at risk','top risk')){
+    const show=(failing.length?failing:f.ranked).slice(0,4);show.forEach(top);
+    if(!failing.length&&!risk.length)return {text:`Good news — nothing is failing and no project is materially at risk.`,focus};
+    const head=failing.length?`<span class="sev">${failing.length} failing.</span>`:`Top risks by impact:`;
+    return {text:`${head}<br>• `+show.map(p=>`<b>${p.name}</b> (${p.deptName}, ${p.progress}%) — ${riskReasons(p).slice(0,2).join('; ')||p.status.replace('-',' ')}`).join('<br>• '),focus,select:show[0].deptId};
+  }
+  if(has('concern','worried','worry','attention','watch','flag','careful','risk')){
+    const r=f.ranked.slice(0,5).filter(p=>riskScore(p)>=1);r.forEach(top);
+    if(!r.length)return {text:`Healthy — overall ${pct(orgScore()*100)} with nothing failing or overdue.`,focus};
+    return {text:`<u>What I'd put in front of leadership</u><br>• `+r.map(p=>`<b>${p.name}</b> (${p.deptName}) — ${riskReasons(p).slice(0,2).join('; ')}`).join('<br>• '),focus,select:r[0].deptId};
+  }
+  if(has('overdue','past due','late','missed')){
+    f.overdue.forEach(top);
+    if(!f.overdue.length)return {text:`Nothing is overdue. Nearest deadlines: `+projs.filter(p=>p.due).sort((a,b)=>dnum(a.due)-dnum(b.due)).slice(0,3).map(p=>`<b>${p.name}</b> (${p.due})`).join(', ')+'.',focus};
+    return {text:`<b>${f.overdue.length} overdue:</b><br>• `+f.overdue.map(p=>`<b>${p.name}</b> (${p.deptName}) — due ${p.due}, ${p.progress}% done`).join('<br>• '),focus,select:f.overdue[0].deptId};
+  }
+  if(has('best','on track','on-track','green','going well','good news','strongest','healthiest','star')){
+    const good=projs.filter(p=>p.status==='on-track').sort((a,b)=>b.progress-a.progress);
+    const topd=[...state.departments].sort((a,b)=>deptScore(b)-deptScore(a))[0];
+    return {text:`Strongest division: <b>${topd.name}</b> (${pct(deptScore(topd)*100)}). Furthest along: ${good.slice(0,4).map(p=>`<b>${p.name}</b> (${p.progress}%)`).join(', ')}.`,focus,select:topd.id};
+  }
+  if(has('which division','division','department','rank','compare','leaderboard','team')){
     const ranked=[...state.departments].sort((a,b)=>deptScore(b)-deptScore(a));
-    return {text:`Divisions by health:<br>`+ranked.map((d,i)=>`${i+1}. <b>${d.name}</b> — ${pct(deptScore(d)*100)} (${statusOf(deptScore(d)).replace('-',' ')})`).join('<br>'),focus};
+    return {text:`<u>Divisions by health</u><br>`+ranked.map((d,i)=>`${i+1}. <b>${d.name}</b> — ${pct(deptScore(d)*100)} (${statusOf(deptScore(d)).replace('-',' ')})`).join('<br>'),focus};
   }
-  if(has('summary','overall','how are we','health','state of','big picture','brief','report')){
-    failing.forEach(p=>focus.add(p.id));const s=orgScore();
-    let t=`<b>Portfolio health is ${pct(s*100)}</b> — ${statusOf(s).replace('-',' ')}. ${failing.length} failing, ${risk.length} at risk, ${projs.filter(p=>p.status==='on-track').length} on track across ${state.departments.length} divisions. `;
-    if(failing.length)t+=`Biggest worry: <b>${failing[0].name}</b> (${failing[0].deptName}) at ${failing[0].progress}%. `;
-    if(od.length)t+=`${od.length} overdue. `;
-    const top=[...state.departments].sort((a,b)=>deptScore(b)-deptScore(a))[0];t+=`Strongest: ${top.name}.`;
-    return {text:t,focus,select:failing[0]?failing[0].deptId:null};
+  if(has('summary','overall','how are we','health','state of','big picture','brief','report','status','overview','update')){
+    f.ranked.slice(0,3).forEach(top);
+    return {text:briefing().join('<br><br>'),focus,select:f.ranked[0]?f.ranked[0].deptId:null};
   }
-  return {text:`Try: <b>“which project is failing?”</b>, <b>“what should I be concerned about?”</b>, <b>“how is Litigation doing?”</b>, <b>“what's overdue?”</b>, or <b>“give me a summary.”</b>`,focus};
+  return {text:`I can analyse this portfolio in depth. Try: <b>“what should I focus on?”</b>, <b>“what's behind plan?”</b>, <b>“which projects are over budget?”</b>, <b>“what's blocked?”</b>, <b>“any optimistic reporting?”</b>, <b>“how is Litigation doing?”</b>, or <b>“give me the executive briefing.”</b>`,focus};
 }
-const ANALYST_SYSTEM="You are the analyst for an executive portfolio 'mission control' for the Government of Dubai Legal Affairs Department. You are given a live JSON snapshot of divisions, each with KPIs (actual vs target, attainment %) and projects (status on-track/at-risk/failing, progress %, owner, due date, free-text concern), plus today's date and overall health %. Answer ONLY from that snapshot — never invent projects, numbers, owners or dates. You can do real analysis: rank divisions, work out what's most at risk and why, weigh trade-offs, spot overdue or stalled work, and suggest what to do next. Be concise and built for the spoken word: 2-5 short sentences, plain text only (no markdown, bullets or emoji). Lead with the most serious risk and name the project, its division, progress % and concern. 'Failing' outranks 'at-risk'; a project is overdue if its due date is before today and progress is under 100%. Use exact project names so they can be highlighted. If something genuinely isn't in the data, say so briefly.";
+const ANALYST_SYSTEM="You are the analyst for an executive portfolio 'mission control' for the Government of Dubai Legal Affairs Department, helping a senior leader oversee many projects at once. You receive a live JSON snapshot: a 'portfolio' summary (counts, budget vs spend in thousands AED, and topRisks) and, per division, its KPIs and projects. Each project includes status, progress %, priority, owner, start/due dates, budgetK vs spentK, team size, dependsOn, and an 'analytics' object: scheduleVarPct (progress minus planned; negative = behind), expectedPct, overdue, daysToDue, budgetBurnPct, budgetVarPct (negative = spending ahead of delivery), milestones (done/total, overdue list, next), momentum (improving/steady/declining), blockedBy, analyticalStatus, divergence (how much the reported status flatters the data; >0.18 = optimistic/'watermelon'), riskScore, reasons, and a recommendation. Answer ONLY from this data — never invent projects, numbers, owners or dates. Think like a seasoned PMO director: surface what genuinely needs attention and WHY (schedule slip, budget burn, blocked dependency, missed milestone, declining momentum, or optimistic reporting), weigh priority and dependencies, and say what to do next. Be concise and built for the spoken word: 2-5 short sentences, plain text only (no markdown, bullet characters or emoji). Lead with the most serious, highest-priority item; name the project, its division and the key number. Use exact project names. For a 'briefing' give a crisp executive summary across health, top risks, overdue, budget and dependencies. If something isn't in the data, say so briefly.";
 function focusFromText(t){const s=new Set();const tl=(t||'').toLowerCase();allProjects().forEach(p=>{if(p.name&&p.name.length>4&&tl.includes(p.name.toLowerCase()))s.add(p.id);});return s;}
 function effKey(){const f=document.getElementById('cfgAnthropic');return (window.ORBIT_CONFIG.anthropicKey||(f?f.value.trim():'')||'');}
 function pack(answer){const focus=focusFromText(answer);let select=null;for(const p of allProjects()){if(focus.has(p.id)){select=p.deptId;break;}}return {text:answer,focus,select};}
@@ -491,7 +680,7 @@ if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){};w
 const spk=document.getElementById('spk');
 spk.addEventListener('click',()=>{speakOn=!speakOn;spk.classList.toggle('on',speakOn);spk.classList.toggle('off',!speakOn);if(!speakOn)stopSpeak();});
 document.getElementById('vtext').addEventListener('keydown',e=>{if(e.key==='Enter')handleQuery(e.target.value);});
-const CHIPS=['Which project is failing?','What should I be concerned about?','What\'s overdue?','How is Litigation doing?','Give me a summary','Rank the divisions'];
+const CHIPS=['What should I focus on?','What\'s behind plan?','Which projects are over budget?','What\'s blocked?','Any optimistic reporting?','Executive briefing'];
 document.getElementById('chips').innerHTML=CHIPS.map(c=>`<button class="chip">${esc(c)}</button>`).join('');
 document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{document.getElementById('vtext').value=c.textContent;handleQuery(c.textContent);}));
 
@@ -518,6 +707,45 @@ function applyKeysFromFields(){
 document.getElementById('cfgAnthropic').addEventListener('input',applyKeysFromFields);
 document.getElementById('cfgEleven').addEventListener('input',applyKeysFromFields);
 document.getElementById('cfgModel').addEventListener('change',()=>{window.ORBIT_CONFIG.anthropicModel=document.getElementById('cfgModel').value;try{localStorage.setItem('orbit_model',window.ORBIT_CONFIG.anthropicModel);}catch(_){}});
+
+/* ════════ Project deep-dive modal, filters & briefing ════════ */
+function openProject(pid){
+  const p=allProjects().find(x=>x.id===pid);if(!p)return;
+  const a=projAnalytics(p),c=COL[p.status],burn=a.budgetBurnPct,spark=sparkline(p);
+  const mcol=a.momentum==='declining'?'var(--red)':a.momentum==='improving'?'var(--green)':'var(--amber)';
+  let h=`<div class="pm-head"><button class="pm-close" onclick="closeProject()">&times;</button>`+
+    `<div class="pm-eyebrow"><span style="width:8px;height:8px;border-radius:50%;background:${c};display:inline-block"></span> ${esc(p.deptName)} · ${esc(p.priority||'medium')} priority</div>`+
+    `<div class="pm-title">${esc(p.name)}</div></div><div class="pm-body">`;
+  h+=`<div class="pm-grid">`+
+    `<div class="pm-stat"><div class="l">Status</div><div class="v" style="color:${c}">${p.status.replace('-',' ')}</div><div class="s">analytics read ${a.analyticalStatus.replace('-',' ')}${a.divergence>0.18?' — optimistic ⚠':''}</div></div>`+
+    `<div class="pm-stat"><div class="l">Schedule</div><div class="v">${a.scheduleVarPct==null?'—':(a.scheduleVarPct>=0?'+':'')+a.scheduleVarPct+'%'}</div><div class="s">${a.expectedPct==null?'no dates set':p.progress+'% done vs '+a.expectedPct+'% planned'}</div></div>`+
+    `<div class="pm-stat"><div class="l">Budget</div><div class="v">${burn==null?'—':burn+'%'}</div><div class="s">${p.budget?money(p.spend)+' of '+money(p.budget):'no budget set'}</div></div>`+
+    `<div class="pm-stat"><div class="l">Due</div><div class="v">${esc(p.due||'—')}</div><div class="s">${a.overdue?'<span style="color:var(--red)">overdue by '+Math.abs(a.daysToDue)+' days</span>':(a.daysToDue!=null?a.daysToDue+' days left':'')}</div></div>`+
+    `</div>`;
+  h+=`<div class="pm-section"><div class="h">Progress vs plan</div><div class="pm-dual"><i style="width:${p.progress}%;background:${c}"></i>${a.expectedPct!=null?`<span class="pm-plan" style="left:${a.expectedPct}%"></span>`:''}</div><div class="s">Coloured bar = actual (${p.progress}%). White marker = where the plan says it should be${a.expectedPct!=null?' ('+a.expectedPct+'%)':''}.</div></div>`;
+  if(p.budget){const bcol=burn>p.progress+10?'var(--red)':burn>p.progress?'var(--amber)':'var(--green)';h+=`<div class="pm-section"><div class="h">Budget burn</div><div class="pm-dual"><i style="width:${Math.min(100,burn)}%;background:${bcol}"></i><span class="pm-plan" style="left:${Math.min(100,p.progress)}%"></span></div><div class="s">${burn}% of budget spent; marker = ${p.progress}% delivered. Bar past the marker means spending faster than delivering.</div></div>`;}
+  h+=`<div class="pm-section"><div class="h">Momentum — ${a.momentum}</div><div class="spark">`+spark.map(v=>`<i style="height:${Math.round(6+v*18)}px;background:${mcol}"></i>`).join('')+`</div></div>`;
+  if((p.milestones||[]).length){h+=`<div class="pm-section"><div class="h">Milestones (${a.milestones.done}/${a.milestones.total})</div>`+p.milestones.map(m=>{const od=!m.done&&dnum(m.due)!=null&&Date.now()>dnum(m.due);const col=m.done?'var(--green)':od?'var(--red)':'var(--mut)';return `<div class="pm-ms"><span class="dot" style="background:${col}">${m.done?'✓':''}</span><div><div>${esc(m.name)}</div><div class="s" style="margin-top:1px;color:${od?'var(--red)':'var(--mut)'}">${m.done?'done':'due '+esc(m.due)+(od?' · overdue':'')}</div></div></div>`;}).join('')+`</div>`;}
+  if((p.deps||[]).length){h+=`<div class="pm-section"><div class="h">Depends on</div>`+p.deps.map(id=>{const x=allProjects().find(y=>y.id===id);return x?`<span class="pm-chip" style="cursor:pointer" onclick="openProject('${id}')">${esc(x.name)} · ${x.status.replace('-',' ')}</span>`:'';}).join('')+`</div>`;}
+  const deps=dependents(p.id);if(deps.length){h+=`<div class="pm-section"><div class="h">Blocks downstream</div>`+deps.map(x=>`<span class="pm-chip" style="cursor:pointer" onclick="openProject('${x.id}')">${esc(x.name)}</span>`).join('')+`</div>`;}
+  if(a.reasons.length){h+=`<div class="pm-section"><div class="h">Why it needs attention</div>`+a.reasons.map(r=>`<div class="pm-reason"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>${esc(r)}</span></div>`).join('')+`</div>`;}
+  if(p.concern)h+=`<div class="pm-section"><div class="h">Owner's note</div><div style="font-size:13px;color:var(--mut);line-height:1.55">${esc(p.concern)}</div></div>`;
+  h+=`<div class="pm-rec"><b>Recommended next step:</b> ${esc(a.recommendation)}</div>`;
+  h+=`<div class="pm-section"><span class="pm-chip">Owner: ${esc(p.owner||'—')}</span><span class="pm-chip">Team: ${esc(p.team||'—')}</span><span class="pm-chip">Started ${esc(p.start||'—')}</span><button class="pm-chip" style="cursor:pointer;border-color:var(--blue);color:var(--blue)" onclick="closeProject();openInspector('${p.deptId}','${p.id}')">Edit in division ▸</button></div></div>`;
+  document.getElementById('pmodalCard').innerHTML=h;
+  document.getElementById('pmodal').classList.add('on');
+  if(window.orbit3d){alertFocus=new Set([p.id]);window.orbit3d.setAlerts(alertFocus);window.orbit3d.focusDept(p.deptId);}
+}
+function closeProject(){document.getElementById('pmodal').classList.remove('on');}
+function showBriefing(){activeFilter=null;document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('on'));
+  const b=portfolio();alertFocus=new Set(b.ranked.slice(0,3).map(p=>p.id));if(window.orbit3d)window.orbit3d.setAlerts(alertFocus);
+  const txt=briefing().join('<br><br>');
+  showAnswer(`<span class="who"><span style="width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block"></span> Executive briefing</span>`+txt);
+  speak(stripHtml(txt));
+}
+(function(){const el=document.getElementById('filters');if(!el)return;let h=`<button class="fchip brief" onclick="showBriefing()">✦ Executive briefing</button>`;Object.keys(FILTERS).forEach(k=>{h+=`<button class="fchip" data-k="${k}" onclick="applyFilter('${k}')">${esc(FILTERS[k].label)}</button>`;});el.innerHTML=h;})();
+document.getElementById('pmodal').addEventListener('click',e=>{if(e.target.id==='pmodal')closeProject();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProject();});
 
 /* Bridge for the 3D module */
 window.OrbitData={get state(){return state;},deptScore,statusOf,colorOf,COL,orgScore,allProjects};
@@ -650,7 +878,7 @@ function buildSystem(){
     const moons=[];
     d.projects.forEach((p,j)=>{
       const mPivot=new THREE.Group();
-      const mr=0.14+(p.status==='on-track'?0.04:0.06);
+      const mr=(0.14+(p.status==='on-track'?0.04:0.06))*(p.priority==='critical'?1.5:p.priority==='high'?1.22:p.priority==='low'?0.85:1);
       const moon=new THREE.Mesh(new THREE.SphereGeometry(mr,20,20),new THREE.MeshBasicMaterial({color:new THREE.Color(COL_(p.status))}));
       moon.position.set(pr+0.55+j*0.42,0,0);
       moon.userData={type:'project',id:p.id,deptId:d.id};
@@ -684,7 +912,7 @@ renderer.domElement.addEventListener('pointerdown',ev=>{downXY=[ev.clientX,ev.cl
 renderer.domElement.addEventListener('pointerup',ev=>{
   if(!downXY)return;const moved=Math.hypot(ev.clientX-downXY[0],ev.clientY-downXY[1]);downXY=null;if(moved>6)return;
   const o=pick(ev);if(!o)return;const ud=o.userData;
-  window.openInspector(ud.deptId||ud.id, ud.type==='project'?ud.id:null);
+  if(ud.type==='project'&&window.openProject)window.openProject(ud.id);else window.openInspector(ud.deptId||ud.id,null);
 });
 controls.addEventListener('start',()=>{focus.user=true;focus.deptId=null;});
 
