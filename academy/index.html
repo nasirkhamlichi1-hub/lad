@@ -324,7 +324,7 @@ function markPhaseDone(ph){const el=document.querySelector('.phase[data-ph="'+ph
 /* ════ Awaitable say / listen ════ */
 function say(text,cust){
   setCaption(text,cust);setSpeaking(true,cust);showControls(false);
-  return new Promise(res=>{let done=false;const finish=()=>{if(done)return;done=true;setSpeaking(false,cust);res();};window._skip=()=>{stopAudio();finish();};speakAsync(text,finish);});
+  return new Promise(res=>{let done=false;const finish=()=>{if(done)return;done=true;window._skip=null;setSpeaking(false,cust);res();};window._skip=()=>{stopAudio();finish();};speakAsync(text,finish);});
 }
 function listen(placeholder){
   const inp=document.getElementById('stInput');inp.value='';inp.placeholder=placeholder||'…or type your answer';
@@ -340,6 +340,7 @@ document.getElementById('stSubmit').addEventListener('click',()=>{if(window._sub
 document.getElementById('stInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&window._submit)window._submit();});
 document.getElementById('stSkip').addEventListener('click',()=>{if(window._skip)window._skip();else if(window._skipL)window._skipL();});
 document.getElementById('stExit').addEventListener('click',exitStage);
+document.getElementById('orb').addEventListener('click',()=>{if(window._skip)window._skip();});
 
 /* ════ Grading ════ */
 async function gradeAnswer(s,question,correct,answer){

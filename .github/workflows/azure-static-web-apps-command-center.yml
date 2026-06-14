@@ -1,20 +1,14 @@
 name: Azure Static Web Apps CI/CD (Command Center)
 
+# Manual-only: this Azure deploy needs the AZURE_STATIC_WEB_APPS_API_TOKEN_COMMAND_CENTER
+# secret. Until that's configured, run it on demand from the Actions tab so it doesn't
+# fail automatically on every push. Switch back to a push trigger once the token is set.
 on:
-  push:
-    branches:
-      - claude/jolly-mendel-yihc4d
-    paths:
-      - "command-center/**"
-      - ".github/workflows/azure-static-web-apps-command-center.yml"
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-    branches:
-      - claude/jolly-mendel-yihc4d
+  workflow_dispatch:
 
 jobs:
   build_and_deploy_job:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
