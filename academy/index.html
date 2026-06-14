@@ -14,6 +14,7 @@ window.ORBIT_CONFIG={ anthropicModel:'claude-sonnet-4-6', anthropicKey:'', eleve
 html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(--sans);overflow:hidden}
 #scene{position:fixed;inset:0;z-index:1}#scene canvas{display:block}
 #labels{position:fixed;inset:0;z-index:2;pointer-events:none}
+#vignette{position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(125% 125% at 50% 46%,transparent 50%,rgba(2,4,12,.55) 100%)}
 .lbl{text-align:center;transform:translate(-50%,-50%);text-shadow:0 1px 6px rgba(0,0,0,.9);white-space:nowrap}
 .lbl b{font-size:11px;font-weight:600;color:#fff;display:block;letter-spacing:-.01em}
 .lbl span{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.55)}
@@ -142,7 +143,7 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 </head>
 <body>
 <div id="loader"><div class="lspin"></div><p>Building the academy…</p></div>
-<div id="scene"></div><div id="labels"></div>
+<div id="scene"></div><div id="labels"></div><div id="vignette"></div>
 
 <div class="hud">
   <div class="brand"><div class="logo"></div><div><b>Service Ambassador Academy</b><span>Legal Affairs Department · Dubai</span></div></div>
@@ -581,7 +582,20 @@ updateHUD();
   const controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=0.06;controls.minDistance=4;controls.maxDistance=180;controls.autoRotate=true;controls.autoRotateSpeed=0.3;controls.enablePan=false;controls.maxPolarAngle=Math.PI*0.92;
   scene.add(new THREE.PointLight(0xfff2d6,2.4,0,1));scene.add(new THREE.AmbientLight(0x4a5880,0.85));
   controls.addEventListener('start',()=>{if(!diveId)focusId=null;});
-  (function(){const N=4000,g=new THREE.BufferGeometry(),pos=new Float32Array(N*3),col=new Float32Array(N*3);const pal=[[1,1,1],[0.7,0.8,1],[1,0.9,0.75]];for(let i=0;i<N;i++){const r=200+Math.random()*700,th=Math.random()*Math.PI*2,ph=Math.acos(2*Math.random()-1);pos[i*3]=r*Math.sin(ph)*Math.cos(th);pos[i*3+1]=r*Math.cos(ph);pos[i*3+2]=r*Math.sin(ph)*Math.sin(th);const c=pal[(Math.random()*pal.length)|0];col[i*3]=c[0];col[i*3+1]=c[1];col[i*3+2]=c[2];}g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));scene.add(new THREE.Points(g,new THREE.PointsMaterial({size:1.1,sizeAttenuation:true,vertexColors:true,transparent:true,opacity:0.9})));})();
+  // ── deep-space backdrop: procedural nebula + layered stars ──
+  function makeSpace(){
+    const w=1024,h=512,c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d'),img=ctx.createImageData(w,h),d=img.data,seed=Math.random()*30;
+    for(let y=0;y<h;y++){const lat=(y/h-0.5)*Math.PI;for(let x=0;x<w;x++){const lon=(x/w)*2*Math.PI,dx=Math.cos(lat)*Math.cos(lon),dy=Math.sin(lat),dz=Math.cos(lat)*Math.sin(lon);
+      let r=4,g=6,b=15;const n1=fbm(dx*1.4+seed,dy*1.4+seed,dz*1.4+seed,5),n2=fbm(dx*2.7+seed*2,dy*2.7,dz*2.7+seed*2,5);
+      const cl=Math.max(0,n1-0.46)*1.9,c2=Math.max(0,n2-0.55)*1.7;
+      r+=cl*42+c2*26;g+=cl*20+c2*52;b+=cl*86+c2*72;
+      const i=(y*w+x)*4;d[i]=Math.min(255,r);d[i+1]=Math.min(255,g);d[i+2]=Math.min(255,b);d[i+3]=255;}}
+    ctx.putImageData(img,0,0);
+    for(let i=0;i<1500;i++){const x=Math.random()*w,y=Math.random()*h,s=Math.random(),rr=s>0.975?1.9:s>0.86?1.1:0.6,a=0.35+Math.random()*0.6,tint=Math.random();ctx.fillStyle=tint>0.82?'rgba(180,210,255,'+a+')':tint>0.62?'rgba(255,225,200,'+a+')':'rgba(255,255,255,'+a+')';ctx.beginPath();ctx.arc(x,y,rr,0,6.28);ctx.fill();if(s>0.99){ctx.save();ctx.globalAlpha=a*0.45;ctx.fillStyle='#cfe2ff';ctx.fillRect(x-rr*3.5,y-0.4,rr*7,0.8);ctx.fillRect(x-0.4,y-rr*3.5,0.8,rr*7);ctx.restore();}}
+    const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t;
+  }
+  const space=new THREE.Mesh(new THREE.SphereGeometry(900,48,48),new THREE.MeshBasicMaterial({map:makeSpace(),side:THREE.BackSide,depthWrite:false}));scene.add(space);
+  const starPts=(function(){const N=1300,g=new THREE.BufferGeometry(),pos=new Float32Array(N*3),col=new Float32Array(N*3);const pal=[[1,1,1],[0.65,0.78,1],[1,0.86,0.7],[0.8,0.72,1]];for(let i=0;i<N;i++){const r=120+Math.random()*480,th=Math.random()*Math.PI*2,ph=Math.acos(2*Math.random()-1);pos[i*3]=r*Math.sin(ph)*Math.cos(th);pos[i*3+1]=r*Math.cos(ph);pos[i*3+2]=r*Math.sin(ph)*Math.sin(th);const c=pal[(Math.random()*pal.length)|0],b=0.5+Math.random()*0.5;col[i*3]=c[0]*b;col[i*3+1]=c[1]*b;col[i*3+2]=c[2]*b;}g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));const p=new THREE.Points(g,new THREE.PointsMaterial({size:1.4,sizeAttenuation:true,vertexColors:true,transparent:true,opacity:0.85}));scene.add(p);return p;})();
   function hx(c){const n=parseInt(c.slice(1),16);return [n>>16&255,n>>8&255,n&255];}
   function L3(a,b,t){return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];}
   function hash(x,y,z){let n=(x*374761393+y*668265263+z*1274126177)|0;n=(n^(n>>13))*1274126177|0;return ((n^(n>>16))>>>0)/4294967295;}
@@ -624,7 +638,7 @@ updateHUD();
   let focusId=null,diveId=null;const tmp=new THREE.Vector3(),des=new THREE.Vector3();
   function applyFocus(){if(!focusId||!reg[focusId])return;reg[focusId].planet.getWorldPosition(tmp);const close=!!diveId;controls.target.lerp(tmp,close?0.12:0.07);const out=tmp.clone().normalize();des.copy(tmp).add(out.multiplyScalar(close?2.6:8)).add(new THREE.Vector3(0,close?0.8:3,0));camera.position.lerp(des,close?0.1:0.06);}
   const clock=new THREE.Clock();
-  function animate(){requestAnimationFrame(animate);const dt=clock.getDelta(),t=clock.elapsedTime;sun.scale.setScalar(1+0.04*Math.sin(t*1.5));
+  function animate(){requestAnimationFrame(animate);const dt=clock.getDelta(),t=clock.elapsedTime;sun.scale.setScalar(1+0.04*Math.sin(t*1.5));space.rotation.y+=dt*0.004;starPts.material.opacity=0.7+0.16*Math.sin(t*0.7);
     for(const id in reg){const r=reg[id];r.pivot.rotation.y+=r.spin*dt*0.12;r.planet.rotation.y+=dt*(diveId===id?0.05:0.08);r.moons.forEach(m=>{m.rotation.y+=m.userData.spin*dt;});if(D.certified(id))r.atm.material.opacity=0.3+0.12*Math.sin(t*2);}
     applyFocus();controls.update();renderer.render(scene,camera);labelRenderer.render(scene,camera);}
   addEventListener('resize',()=>{W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);labelRenderer.setSize(W,H);});
