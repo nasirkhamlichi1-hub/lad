@@ -118,6 +118,16 @@ select option{background:#0d1124}
 .chips{display:flex;gap:7px;flex-wrap:wrap;padding:0 12px 12px}
 .chip{font-size:11.5px;color:var(--mut);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:20px;padding:6px 12px;cursor:pointer;white-space:nowrap}
 .chip:hover{color:var(--ink);border-color:var(--violet)}
+.convo-row{display:flex;gap:8px;align-items:center;padding:0 12px 8px}
+.convo-btn{flex:1;font-size:12px;color:var(--mut);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:20px;padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;justify-content:center}
+.convo-btn .cdot{width:8px;height:8px;border-radius:50%;background:var(--mut);flex-shrink:0}
+.convo-btn.on{color:var(--green);border-color:var(--green)}
+.convo-btn.on .cdot{background:var(--green);box-shadow:0 0 8px var(--green)}
+.stopbtn{display:none;font-size:12px;color:#fff;background:var(--red);border:none;border-radius:20px;padding:7px 14px;cursor:pointer;font-weight:600;flex-shrink:0}
+.stopbtn.on{display:inline-block}
+.mic.stop{background:radial-gradient(circle at 35% 30%,var(--red),#b91c1c)!important;animation:none}
+.ume{font-size:12.5px;color:var(--mut);margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.ume b{color:var(--violet);font-weight:600}
 .listening{font-size:11px;color:var(--violet);padding:0 16px 10px;display:none;font-family:var(--mono)}
 .listening.on{display:block}
 .cfgbtn{width:40px;height:40px;border-radius:11px;flex-shrink:0;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--mut);cursor:pointer;display:grid;place-items:center}
@@ -235,6 +245,7 @@ select option{background:#0d1124}
     <button class="cfgbtn" id="cfgBtn" title="Connect AI keys"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     <button class="spk on" id="spk" title="Toggle voice replies"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14"/></svg></button>
   </div>
+  <div class="convo-row"><button class="convo-btn" id="convoBtn"><span class="cdot"></span> Hands-free conversation</button><button class="stopbtn" id="stopBtn">■ Stop</button></div>
   <div class="chips" id="chips"></div>
 </div></div>
 <div class="filters" id="filters"></div>
@@ -606,7 +617,9 @@ function localAnswer(q){
   }
   return {text:`I can analyse this portfolio in depth. Try: <b>“what should I focus on?”</b>, <b>“what's behind plan?”</b>, <b>“which projects are over budget?”</b>, <b>“what's blocked?”</b>, <b>“any optimistic reporting?”</b>, <b>“how is Litigation doing?”</b>, or <b>“give me the executive briefing.”</b>`,focus};
 }
-const ANALYST_SYSTEM="You are the analyst for an executive portfolio 'mission control' for the Government of Dubai Legal Affairs Department, helping a senior leader oversee many projects at once. You receive a live JSON snapshot: a 'portfolio' summary (counts, budget vs spend in thousands AED, and topRisks) and, per division, its KPIs and projects. Each project includes status, progress %, priority, owner, start/due dates, budgetK vs spentK, team size, dependsOn, and an 'analytics' object: scheduleVarPct (progress minus planned; negative = behind), expectedPct, overdue, daysToDue, budgetBurnPct, budgetVarPct (negative = spending ahead of delivery), milestones (done/total, overdue list, next), momentum (improving/steady/declining), blockedBy, analyticalStatus, divergence (how much the reported status flatters the data; >0.18 = optimistic/'watermelon'), riskScore, reasons, and a recommendation. Answer ONLY from this data — never invent projects, numbers, owners or dates. Think like a seasoned PMO director: surface what genuinely needs attention and WHY (schedule slip, budget burn, blocked dependency, missed milestone, declining momentum, or optimistic reporting), weigh priority and dependencies, and say what to do next. Be concise and built for the spoken word: 2-5 short sentences, plain text only (no markdown, bullet characters or emoji). Lead with the most serious, highest-priority item; name the project, its division and the key number. Use exact project names. For a 'briefing' give a crisp executive summary across health, top risks, overdue, budget and dependencies. If something isn't in the data, say so briefly.";
+const ANALYST_SYSTEM="You are Orbit — a sharp, personable portfolio advisor, like a trusted chief of staff to a senior leader at the Government of Dubai Legal Affairs Department who is overseeing many projects at once. You are in a natural, spoken, back-and-forth CONVERSATION, so talk like a real person: warm, direct, plain-spoken and engaging — never a robotic status report. Keep most replies to 1-3 sentences and get to the point, but it's good to occasionally ask a clarifying question or invite a follow-up so it feels like a dialogue. You remember the conversation so far, so handle follow-ups naturally ('why?', 'tell me more', 'what about the other one?', 'what should I do about it?'). Everything you say must be grounded in the LIVE PORTFOLIO SNAPSHOT given to you below (divisions, projects, KPIs, and per-project analytics: scheduleVarPct negative=behind, budgetVarPct negative=spending ahead of delivery, overdue, milestones, momentum, blockedBy, divergence>0.18=reported greener than reality, riskScore, reasons, recommendation). Never invent projects, numbers, owners or dates; if it's not in the data, just say so. Lead with what matters most, explain WHY in human terms, and say what you'd actually do about it. Speak plainly — no markdown, asterisks, bullet characters, headings or emoji, since this is read aloud.";
+let convoHistory=[];
+function claudeSystem(){return ANALYST_SYSTEM+"\n\nLIVE PORTFOLIO SNAPSHOT (JSON) — your single source of truth, refreshed every turn:\n"+JSON.stringify(context());}
 function focusFromText(t){const s=new Set();const tl=(t||'').toLowerCase();allProjects().forEach(p=>{if(p.name&&p.name.length>4&&tl.includes(p.name.toLowerCase()))s.add(p.id);});return s;}
 function effKey(){const f=document.getElementById('cfgAnthropic');return (window.ORBIT_CONFIG.anthropicKey||(f?f.value.trim():'')||'');}
 function pack(answer){const focus=focusFromText(answer);let select=null;for(const p of allProjects()){if(focus.has(p.id)){select=p.deptId;break;}}return {text:answer,focus,select};}
@@ -621,9 +634,11 @@ async function askLLM(q){
     const models=[window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6','claude-sonnet-4-6','claude-opus-4-8','claude-haiku-4-5-20251001'].filter((m,i,a)=>m&&a.indexOf(m)===i);
     for(const model of models){
       try{
-        const r=await callClaude(q,model);
+        const r=await callClaude(q,model,true);
         if(r.ok){const j=await r.json();const a=(((j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n'))||'').trim();
-          if(a){window.ORBIT_CONFIG.anthropicModel=model;try{localStorage.setItem('orbit_model',model);}catch(_){}return pack(a);}
+          if(a){window.ORBIT_CONFIG.anthropicModel=model;try{localStorage.setItem('orbit_model',model);}catch(_){}
+            convoHistory.push({role:'user',content:q},{role:'assistant',content:a});if(convoHistory.length>16)convoHistory=convoHistory.slice(-16);
+            return pack(a);}
           window.__llmError='Claude returned an empty response.';break;}
         let detail='',type='';try{const ej=await r.json();type=ej.error?ej.error.type:'';detail=ej.error?ej.error.message:'';}catch(_){detail=(await r.text().catch(()=>''))||'';}
         window.__llmError='Claude API '+r.status+(type?' ('+type+')':'')+': '+String(detail).slice(0,260);console.warn(window.__llmError);
@@ -633,17 +648,18 @@ async function askLLM(q){
   }
   return null;
 }
-async function callClaude(q,model){const key=effKey();
+async function callClaude(q,model,withHistory){const key=effKey();
+  const msgs=(withHistory?convoHistory.slice(-12):[]).concat([{role:'user',content:q}]);
   return fetch('https://api.anthropic.com/v1/messages',{method:'POST',
     headers:{'x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},
-    body:JSON.stringify({model:model,max_tokens:700,system:ANALYST_SYSTEM,messages:[{role:'user',content:'Question: '+q+'\n\nLive portfolio snapshot (JSON):\n'+JSON.stringify(context())}]})});}
+    body:JSON.stringify({model:model,max_tokens:600,system:claudeSystem(),messages:msgs})});}
 async function testClaude(){const s=document.getElementById('cfgStatus');const key=effKey();
   if(!key){if(s){s.style.color='var(--mut)';s.textContent='Paste a key first';}return;}
   if(s){s.style.color='var(--mut)';s.textContent='Testing…';}
   const models=[window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6','claude-sonnet-4-6','claude-opus-4-8','claude-haiku-4-5-20251001'].filter((m,i,a)=>m&&a.indexOf(m)===i);
   let lastErr='unknown error';
   for(const m of models){try{
-    const r=await callClaude('Reply with the single word OK.',m);
+    const r=await callClaude('Reply with the single word OK.',m,false);
     if(r.ok){window.ORBIT_CONFIG.anthropicModel=m;try{localStorage.setItem('orbit_model',m);}catch(_){}const sel=document.getElementById('cfgModel');if(sel)sel.value=m;
       if(s){s.style.color='var(--green)';s.textContent='● Claude responding ('+m.replace('claude-','').replace('-20251001','')+')';}return true;}
     let detail='',type='';try{const ej=await r.json();type=ej.error?ej.error.type:'';detail=ej.error?ej.error.message:'';}catch(_){}
@@ -655,50 +671,69 @@ async function testClaude(){const s=document.getElementById('cfgStatus');const k
 function showAnswer(html){const a=document.getElementById('answer');a.innerHTML=html;a.classList.add('on');}
 function stripHtml(h){const d=document.createElement('div');d.innerHTML=h.replace(/<br>/g,'. ').replace(/•/g,'');return (d.textContent||'').replace(/Analyst/,'').replace(/\s+/g,' ').trim();}
 async function handleQuery(q){q=(q||'').trim();if(!q)return;
-  showAnswer('<span class="who"><span style="width:7px;height:7px;border-radius:50%;background:var(--violet);display:inline-block"></span> thinking…</span>…');
+  setBusy(true);
+  showAnswer(`<div class="ume"><b>You</b> · ${esc(q)}</div><span class="who"><span style="width:7px;height:7px;border-radius:50%;background:var(--violet);display:inline-block"></span> thinking…</span>`);
   alertFocus=new Set();window.__llmError='';
   let res=await askLLM(q),who='Analyst',dot='var(--violet)',spoken=true;
   if(res){who='Claude';dot='#34d399';}
   else if(effKey()){res={text:'⚠ '+(window.__llmError||'Claude did not return a response — re-check the key/model in the ⚙ panel.'),focus:new Set()};who='Error';dot='var(--red)';spoken=false;}
   else res=localAnswer(q);
   alertFocus=res.focus||new Set();if(window.orbit3d)window.orbit3d.setAlerts(alertFocus);
-  showAnswer(`<span class="who"><span style="width:7px;height:7px;border-radius:50%;background:${dot};display:inline-block"></span> ${who}</span>${res.text}`);
+  showAnswer(`<div class="ume"><b>You</b> · ${esc(q)}</div><span class="who"><span style="width:7px;height:7px;border-radius:50%;background:${dot};display:inline-block"></span> ${who}</span>${res.text}`);
   if(res.select)openInspector(res.select);
-  if(spoken)speak(stripHtml(res.text));
+  if(spoken)speak(stripHtml(res.text));else setBusy(false);
 }
 
 /* ── Voice ── */
-let speakOn=true,recog=null,recognising=false;
+let speakOn=true,recog=null,recognising=false,convoMode=false,aiBusy=false,interrupted=false,ttsAudio=null;
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 const micBtn=document.getElementById('mic'),listenEl=document.getElementById('listening');
+const stopBtn=document.getElementById('stopBtn'),convoBtn=document.getElementById('convoBtn');
+const MIC_SVG='<svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg>';
+const STOP_SVG='<svg viewBox="0 0 24 24" style="fill:#fff;stroke:none"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+function updateMicUI(){
+  if(aiBusy){micBtn.innerHTML=STOP_SVG;micBtn.classList.add('stop');micBtn.classList.remove('live');micBtn.title='Stop';}
+  else{micBtn.innerHTML=MIC_SVG;micBtn.classList.remove('stop');micBtn.classList.toggle('live',recognising);micBtn.title=convoMode?'Conversation on — tap to interrupt':'Tap to speak';}
+  if(stopBtn)stopBtn.classList.toggle('on',aiBusy||recognising);
+  if(convoBtn)convoBtn.classList.toggle('on',convoMode);
+}
+function setBusy(b){aiBusy=b;updateMicUI();}
+function startListen(){if(!recog)return;interrupted=false;try{recog.start();}catch(e){}}
+function fullStop(){convoMode=false;interrupted=true;if(recog&&recognising){try{recog.stop();}catch(e){}}stopSpeak();setBusy(false);}
 if(SR){recog=new SR();recog.lang='en-US';recog.interimResults=true;recog.continuous=false;
-  recog.onstart=()=>{recognising=true;micBtn.classList.add('live');listenEl.classList.add('on');};
-  recog.onend=()=>{recognising=false;micBtn.classList.remove('live');listenEl.classList.remove('on');};
-  recog.onerror=e=>{listenEl.textContent='● mic error: '+e.error;setTimeout(()=>listenEl.textContent='● listening…',1500);};
-  recog.onresult=e=>{let txt='';for(const r of e.results)txt+=r[0].transcript;document.getElementById('vtext').value=txt;if(e.results[e.results.length-1].isFinal)handleQuery(txt);};
-  micBtn.addEventListener('click',()=>{if(recognising){recog.stop();return;}try{recog.start();}catch(e){}});
-}else{micBtn.addEventListener('click',()=>{document.getElementById('vtext').focus();showAnswer('<span class="who">Note</span>Voice input needs Chrome or Edge. You can type your question instead.');});}
-let ttsAudio=null;
-function stopSpeak(){if(ttsAudio){try{ttsAudio.pause();}catch(e){}ttsAudio=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();}
+  recog.onstart=()=>{recognising=true;listenEl.classList.add('on');updateMicUI();};
+  recog.onend=()=>{recognising=false;listenEl.classList.remove('on');updateMicUI();};
+  recog.onerror=e=>{listenEl.textContent='● mic: '+e.error;setTimeout(()=>{listenEl.textContent='● listening…';},1600);};
+  recog.onresult=e=>{let txt='';for(const r of e.results)txt+=r[0].transcript;document.getElementById('vtext').value=txt;if(e.results[e.results.length-1].isFinal){const qq=txt.trim();if(qq)handleQuery(qq);}};
+  micBtn.addEventListener('click',()=>{
+    if(aiBusy){interrupted=true;stopSpeak();setBusy(false);if(convoMode)startListen();return;}  // barge-in / stop
+    if(recognising){recog.stop();return;}
+    startListen();
+  });
+}else{micBtn.addEventListener('click',()=>{if(aiBusy){stopSpeak();setBusy(false);return;}document.getElementById('vtext').focus();showAnswer('<span class="who">Note</span>Voice input needs Chrome or Edge — you can type your question instead.');});}
+if(convoBtn)convoBtn.addEventListener('click',()=>{convoMode=!convoMode;updateMicUI();if(convoMode){interrupted=false;startListen();}else{fullStop();}});
+if(stopBtn)stopBtn.addEventListener('click',fullStop);
+function stopSpeak(){if(ttsAudio){try{ttsAudio.onended=null;ttsAudio.pause();}catch(e){}ttsAudio=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();}
+function afterSpeak(){setBusy(false);if(convoMode&&!interrupted)startListen();}
 async function speak(text){
-  if(!speakOn||!text)return;
+  if(!speakOn||!text){afterSpeak();return;}
   stopSpeak();
-  const ek=window.ORBIT_CONFIG.elevenKey;              // natural voice via the user's ElevenLabs key (browser)
+  const ek=window.ORBIT_CONFIG.elevenKey;              // natural neural voice via the user's ElevenLabs key
   if(ek){try{
     const vid=window.ORBIT_CONFIG.elevenVoice||'EXAVITQu4vr4xnSDxMaL';
     const r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+vid+'?output_format=mp3_44100_128',{method:'POST',
       headers:{'xi-api-key':ek,'Content-Type':'application/json'},
-      body:JSON.stringify({text,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.4,similarity_boost:0.75,style:0.3}})});
-    if(r.ok){const blob=new Blob([await r.arrayBuffer()],{type:'audio/mpeg'});ttsAudio=new Audio(URL.createObjectURL(blob));ttsAudio.play().catch(()=>browserSpeak(text));return;}
+      body:JSON.stringify({text,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.45,similarity_boost:0.8,style:0.35,use_speaker_boost:true}})});
+    if(r.ok){const blob=new Blob([await r.arrayBuffer()],{type:'audio/mpeg'});ttsAudio=new Audio(URL.createObjectURL(blob));ttsAudio.onended=afterSpeak;ttsAudio.onerror=()=>browserSpeak(text);ttsAudio.play().catch(()=>browserSpeak(text));return;}
   }catch(e){}}
   const ep=window.ORBIT_CONFIG.ttsEndpoint;            // neural voice via the Azure backend when deployed
   if(ep){try{
     const r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
-    if(r.ok){const j=await r.json();if(j&&j.audio){ttsAudio=new Audio('data:audio/mp3;base64,'+j.audio);ttsAudio.play().catch(()=>browserSpeak(text));return;}}
+    if(r.ok){const j=await r.json();if(j&&j.audio){ttsAudio=new Audio('data:audio/mp3;base64,'+j.audio);ttsAudio.onended=afterSpeak;ttsAudio.onerror=()=>browserSpeak(text);ttsAudio.play().catch(()=>browserSpeak(text));return;}}
   }catch(e){}}
   browserSpeak(text);                                  // best available browser voice otherwise
 }
-function browserSpeak(text){if(!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(text);u.rate=1.0;u.pitch=1.0;u.lang='en-US';const v=pickVoice();if(v)u.voice=v;window.speechSynthesis.speak(u);}
+function browserSpeak(text){if(!window.speechSynthesis){afterSpeak();return;}const u=new SpeechSynthesisUtterance(text);u.rate=1.02;u.pitch=1.0;u.lang='en-US';const v=pickVoice();if(v)u.voice=v;u.onend=afterSpeak;u.onerror=afterSpeak;window.speechSynthesis.speak(u);}
 function pickVoice(){
   const vs=window.speechSynthesis?window.speechSynthesis.getVoices():[];if(!vs.length)return null;
   const pats=[/Natural/i,/Aria|Ava|Emma|Jenny|Libby|Sonia|Michelle|Andrew/i,/Google US English/i,/Google UK English Female/i,/Samantha/i];
@@ -708,7 +743,7 @@ function pickVoice(){
 if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){};window.speechSynthesis.getVoices();}
 const spk=document.getElementById('spk');
 spk.addEventListener('click',()=>{speakOn=!speakOn;spk.classList.toggle('on',speakOn);spk.classList.toggle('off',!speakOn);if(!speakOn)stopSpeak();});
-document.getElementById('vtext').addEventListener('keydown',e=>{if(e.key==='Enter')handleQuery(e.target.value);});
+document.getElementById('vtext').addEventListener('keydown',e=>{if(e.key==='Enter'){const qq=e.target.value.trim();if(qq)handleQuery(qq);}});
 const CHIPS=['What should I focus on?','What\'s behind plan?','Which projects are over budget?','What\'s blocked?','Any optimistic reporting?','Executive briefing'];
 document.getElementById('chips').innerHTML=CHIPS.map(c=>`<button class="chip">${esc(c)}</button>`).join('');
 document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{document.getElementById('vtext').value=c.textContent;handleQuery(c.textContent);}));
