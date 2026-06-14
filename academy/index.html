@@ -120,27 +120,42 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 .warp.go{animation:warpf 1s ease-out}
 @keyframes warpf{0%{opacity:0;transform:scale(1.7)}25%{opacity:1}100%{opacity:0;transform:scale(.55)}}
 /* lesson board */
-.board{position:absolute;top:104px;left:0;right:0;bottom:auto;max-height:50vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:18px;pointer-events:none;padding:0 24px;overflow:hidden}
-.bd-cover{display:flex;flex-direction:column;gap:11px;align-items:center;opacity:0;transition:opacity .5s}
-.bd-cover.on{opacity:1}
-.bd-cover .h{font-family:var(--mono);font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--violet)}
-.bd-cover .it{font-size:16px;color:#eaf0ff;opacity:0;transform:translateY(8px);transition:all .55s}
-.bd-cover.on .it{opacity:1;transform:none}
-.bd-proc{display:flex;align-items:flex-start;flex-wrap:wrap;justify-content:center;max-width:780px}
-.bd-step{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;width:155px;opacity:0;transform:translateY(12px) scale(.92);transition:all .5s cubic-bezier(.2,.7,.2,1)}
+.board{position:absolute;top:100px;left:0;right:0;bottom:auto;max-height:54vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:16px;pointer-events:none;padding:0 24px;overflow:hidden}
+/* holographic section header: centred mono label with flanking energy rules */
+.bd-sec{display:flex;flex-direction:column;align-items:center;gap:13px;width:100%}
+.bd-hd{font-family:var(--mono);font-size:10px;letter-spacing:3.4px;text-transform:uppercase;color:#9ec6ff;display:flex;align-items:center;gap:11px;text-shadow:0 0 14px rgba(106,166,255,.55)}
+.bd-hd::before,.bd-hd::after{content:'';width:42px;height:1px;background:linear-gradient(90deg,transparent,rgba(143,182,255,.85))}
+.bd-hd::after{transform:scaleX(-1)}
+.bd-proc{display:flex;align-items:flex-start;flex-wrap:wrap;justify-content:center;max-width:820px;gap:4px}
+.bd-step{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;width:152px;opacity:0;transform:translateY(14px) scale(.9);transition:all .55s cubic-bezier(.2,.7,.2,1)}
 .bd-step.on{opacity:1;transform:none}
-.bd-step::before{content:'';position:absolute;top:23px;left:-50%;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--green));opacity:0;transition:opacity .5s}
-.bd-step:first-child::before{display:none}.bd-step.on::before{opacity:.85}
-.bd-dot{width:48px;height:48px;border-radius:50%;background:rgba(52,211,153,.14);border:2px solid var(--green);color:var(--green);display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:17px;margin-bottom:11px;box-shadow:0 0 22px rgba(52,211,153,.35)}
-.bd-step .t{font-size:12.5px;color:#dfe6f5;line-height:1.4;max-width:145px}
-.bd-cards{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-.bd-card{background:rgba(14,18,34,.78);border:1px solid var(--line);border-radius:14px;padding:14px 20px;backdrop-filter:blur(10px);opacity:0;transform:translateY(10px);transition:all .5s;text-align:center}
+/* flowing connector beam between holographic nodes */
+.bd-step::before{content:'';position:absolute;top:25px;left:-50%;width:100%;height:2px;background:linear-gradient(90deg,transparent,rgba(45,212,191,.15) 20%,#2dd4bf,rgba(45,212,191,.15) 80%,transparent);background-size:200% 100%;opacity:0;transition:opacity .6s;animation:beam 2.4s linear infinite}
+@keyframes beam{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.bd-step:first-child::before{display:none}.bd-step.on::before{opacity:.9}
+.bd-node{position:relative;width:52px;height:52px;margin-bottom:12px;display:grid;place-items:center}
+.bd-node::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#2dd4bf,#3a9ff5);clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);filter:drop-shadow(0 0 11px rgba(45,212,191,.7))}
+.bd-node::after{content:'';position:absolute;inset:2.5px;background:#091227;clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%)}
+.bd-node b{position:relative;z-index:2;font-family:var(--mono);font-weight:700;font-size:16px;color:#8df3da;text-shadow:0 0 12px rgba(125,240,208,.9)}
+.bd-step.on .bd-node{animation:nodepop .6s cubic-bezier(.2,1.4,.4,1)}
+@keyframes nodepop{0%{transform:scale(.4)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+.bd-step .t{font-size:12px;color:#dfe6f5;line-height:1.4;max-width:142px}
+.bd-cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+/* sci-fi framed cards with corner brackets + inner glow */
+.bd-card{position:relative;background:linear-gradient(160deg,rgba(16,22,46,.86),rgba(8,11,26,.86));border:1px solid rgba(106,166,255,.3);border-radius:12px;padding:15px 26px;min-width:150px;backdrop-filter:blur(12px);box-shadow:0 0 30px rgba(106,166,255,.12),inset 0 0 24px rgba(106,166,255,.05);opacity:0;transform:translateY(12px) scale(.96);transition:all .55s;text-align:center;overflow:hidden}
 .bd-card.on{opacity:1;transform:none}
-.bd-card .k{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
-.bd-card .v{font-size:20px;font-weight:700}.bd-card.fee .v{color:var(--gold)}.bd-card .s{font-size:11.5px;color:var(--mut);margin-top:4px}
-.bd-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-.bd-chip{font-size:12.5px;color:#cfe3ff;background:rgba(106,166,255,.13);border:1px solid rgba(106,166,255,.4);border-radius:20px;padding:7px 14px;opacity:0;transform:scale(.9);transition:all .45s}
-.bd-chip.on{opacity:1;transform:none}.bd-chip.docs{color:var(--gold);background:rgba(255,212,121,.1);border-color:rgba(255,212,121,.35)}
+.bd-card::before,.bd-card::after{content:'';position:absolute;width:13px;height:13px;border:2px solid var(--blue);opacity:.8}
+.bd-card::before{top:7px;left:7px;border-right:0;border-bottom:0}
+.bd-card::after{bottom:7px;right:7px;border-left:0;border-top:0}
+.bd-card .k{font-family:var(--mono);font-size:9px;letter-spacing:2.2px;text-transform:uppercase;color:#9ec6ff;margin-bottom:6px}
+.bd-card .v{font-size:21px;font-weight:700;color:#eaf2ff;text-shadow:0 0 16px rgba(106,166,255,.4)}.bd-card .s{font-size:11.5px;color:var(--mut);margin-top:4px}
+.bd-card.fee{border-color:rgba(255,212,121,.42);box-shadow:0 0 30px rgba(255,212,121,.14),inset 0 0 24px rgba(255,212,121,.05)}
+.bd-card.fee::before,.bd-card.fee::after{border-color:var(--gold)}
+.bd-card.fee .k{color:#ffd97a}.bd-card.fee .v{color:var(--gold);text-shadow:0 0 16px rgba(255,212,121,.5)}
+.bd-card.docs::before,.bd-card.docs::after{border-color:#2dd4bf}.bd-card.docs .k{color:#7df0d0}.bd-card.docs .v{color:#7df0d0}
+.bd-chips{display:flex;gap:9px;flex-wrap:wrap;justify-content:center}
+.bd-chip{font-size:12.5px;color:#d4e6ff;background:rgba(106,166,255,.14);border:1px solid rgba(106,166,255,.45);border-radius:20px;padding:7px 15px;opacity:0;transform:scale(.85);transition:all .45s;box-shadow:0 0 18px rgba(106,166,255,.16);text-shadow:0 0 9px rgba(106,166,255,.4)}
+.bd-chip.on{opacity:1;transform:none}.bd-chip.docs{color:#8df3da;background:rgba(45,212,191,.12);border-color:rgba(45,212,191,.42);box-shadow:0 0 18px rgba(45,212,191,.18)}
 .bd-cust{display:flex;gap:14px;align-items:flex-start;background:#fff;color:#0a0e14;border-radius:16px;padding:18px 22px;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.5);opacity:0;transform:translateY(12px);transition:all .5s}
 .bd-cust.on{opacity:1;transform:none}
 .bd-cust-av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#6aa6ff,#a78bfa);flex-shrink:0;display:grid;place-items:center;color:#fff;font-weight:700;font-size:18px}
@@ -371,7 +386,7 @@ SERVICES.forEach(s=>{if(QEXTRA[s.id])s.quiz=s.quiz.concat(QEXTRA[s.id]);});
 const ABOUT={
   name:"The Government of Dubai Legal Affairs Department",
   ar:"دائرة الشؤون القانونية لحكومة دبي",
-  dg:"His Excellency Dr. Lowai Mohamed Belhoul Al Falasi",
+  dg:"His Excellency Dr. Lowai Mohamed Belhoul",
   dgTitle:"Director General",
   who:"The legal arm of the Government of Dubai — established to serve government entities, the legal profession and the public.",
   vision:"Excellence in government legal work — pioneering the future of legal services.",
@@ -539,15 +554,19 @@ function ab(){return !session||session.aborted;}
 /* ── lesson board (animated process visualisation) ── */
 function buildBoard(s){
   const docs=s.docs.filter(d=>d&&d!=='None'&&d!=='Not applicable');
-  let h='<div class="bd-proc" id="bdProc">'+s.steps.map((st,i)=>'<div class="bd-step" data-i="'+i+'"><span class="bd-dot">'+(i+1)+'</span><span class="t">'+esc(st)+'</span></div>').join('')+'</div>';
-  h+='<div class="bd-cards"><div class="bd-card fee" id="bdFee"><div class="k">Headline</div><div class="v">'+esc(s.fees[0].fee)+'</div><div class="s">'+esc(s.fees[0].n)+(s.fees[0].time&&s.fees[0].time!=='Instant'?' · '+esc(s.fees[0].time):'')+'</div></div></div>';
-  h+='<div class="bd-chips" id="bdChips">'+s.channels.map(c=>'<span class="bd-chip">'+esc(c)+'</span>').join('')+(docs.length?'<span class="bd-chip docs">📄 '+docs.length+' documents</span>':'')+'</div>';
+  const fee=s.fees[0];
+  let h='<div class="bd-sec"><div class="bd-hd">The customer journey</div>';
+  h+='<div class="bd-proc" id="bdProc">'+s.steps.map((st,i)=>'<div class="bd-step" data-i="'+i+'"><span class="bd-node"><b>'+(i+1)+'</b></span><span class="t">'+esc(st)+'</span></div>').join('')+'</div></div>';
+  h+='<div class="bd-cards" id="bdCards"><div class="bd-card fee" id="bdFee"><div class="k">Fee &amp; time</div><div class="v">'+esc(fee.fee)+'</div><div class="s">'+esc(fee.n)+(fee.time&&fee.time!=='Instant'?' · '+esc(fee.time):'')+'</div></div>';
+  if(docs.length)h+='<div class="bd-card docs" id="bdDocs"><div class="k">'+docs.length+' document'+(docs.length>1?'s':'')+'</div><div class="v">📄</div><div class="s">'+esc(docs.slice(0,3).join(' · '))+(docs.length>3?' …':'')+'</div></div>';
+  h+='</div>';
+  h+='<div class="bd-chips" id="bdChips">'+s.channels.map(c=>'<span class="bd-chip">'+esc(c)+'</span>').join('')+'</div>';
   document.getElementById('board').innerHTML=h;
 }
 function showCover(){const c=document.getElementById('bdCover');if(c){c.classList.add('on');c.querySelectorAll('.it').forEach((el,i)=>setTimeout(()=>el.style.transitionDelay=(i*0.12)+'s',0));}}
 function hideCover(){const c=document.getElementById('bdCover');if(c)c.style.display='none';}
 function revealSteps(){document.querySelectorAll('#bdProc .bd-step').forEach((el,i)=>setTimeout(()=>el.classList.add('on'),i*420));}
-function revealFees(){const f=document.getElementById('bdFee');if(f)f.classList.add('on');}
+function revealFees(){const f=document.getElementById('bdFee');if(f)f.classList.add('on');const d=document.getElementById('bdDocs');if(d)setTimeout(()=>d.classList.add('on'),200);}
 function revealChannels(){document.querySelectorAll('#bdChips .bd-chip').forEach((el,i)=>setTimeout(()=>el.classList.add('on'),i*180));}
 function hideBoard(){document.getElementById('board').innerHTML='';}
 function showCustomerCard(line,label){document.getElementById('board').innerHTML='<div class="bd-cust on"><div class="bd-cust-av">'+esc((label||'C').replace(/^a |^an /i,'').charAt(0).toUpperCase())+'</div><div class="bd-cust-t">“'+esc(line)+'”<small>— '+esc(label||'a customer')+'</small></div></div>';}
@@ -581,7 +600,7 @@ function guideOffline(s,q){const ql=(q||'').toLowerCase();
 }
 async function getLesson(s){
   const sys="You are an expert, engaging training coach with warmth and personality at the Government of Dubai Legal Affairs Department. You are training a SUPPORT-STAFF member (a Service Ambassador) so they can confidently GUIDE and TEACH members of the public through this service at the desk — they are NOT the applicant themselves, so never talk to them as if they are using the service; talk to them as the helper who will explain it to customers. Produce a short, lively spoken lesson on this ONE service as STRICT JSON only: {\"steps\":\"2-3 vivid spoken sentences explaining how the service works so the ambassador can walk a customer through it; open with a quick hook or why it matters to the public\",\"fees\":\"1-2 spoken sentences on the headline fee and timeline the ambassador should quote to customers; say 'dirhams', never 'AED'\",\"channels\":\"1-2 spoken sentences on where to send the customer (the channel/s), any documents to ask the customer to bring, and one genuinely useful insider tip for handling these customers\",\"tip\":\"one short, warm, motivating closing line\"}. Be conversational and interesting, never dry or list-like. No markdown. Use ONLY these facts: "+facts(s);
-  const t=await claudeText([{role:'user',content:'Create the lesson for '+s.name}],sys);
+  const t=await claudeText([{role:'user',content:'Create the lesson for '+s.name+'. Department context (weave in lightly where it adds meaning, do not recite): the Government of Dubai Legal Affairs Department\'s mission is '+ABOUT.mission+' Its people serve with the values of '+ABOUT.values.join(', ')+'.'}],sys);
   if(t){try{const m=t.match(/\{[\s\S]*\}/);const j=JSON.parse(m?m[0]:t);if(j.steps&&j.fees&&j.channels)return {steps:j.steps,fees:j.fees,channels:j.channels,tip:j.tip||"You've got this."};}catch(e){}}
   const f=s.fees[0],docs=s.docs.filter(d=>d&&d!=='None'&&d!=='Not applicable');
   return {steps:"Here's the journey: "+s.steps.join('; then ')+".",
@@ -590,9 +609,9 @@ async function getLesson(s){
     tip:"That's the essence of "+shortName(s)+" — nicely done."};
 }
 async function acknowledge(s,known){
-  const sys="You are a warm expert coach training a Legal Affairs Department support-staff member so they can teach the public about "+s.name+". The learner just told you what they already know. In ONE or TWO encouraging spoken sentences, acknowledge what they got right, gently note anything missing, and say you'll fill in the rest together so they can confidently guide customers. Use ONLY these facts: "+facts(s)+". No markdown.";
+  const sys="You are a warm expert coach training a Legal Affairs Department support-staff member so they can teach the public about "+s.name+". The learner just told you what they already know. In TWO encouraging spoken sentences, acknowledge what they got right, gently note anything missing, then flow naturally into the lesson — say you'll build on that so they can confidently guide customers, and invite them to pause you anytime to ask. It must feel like one smooth continuation, not an abrupt topic change. Use ONLY these facts: "+facts(s)+". No markdown.";
   const a=await claudeText([{role:'user',content:'The learner said: "'+known+'"'}],sys);
-  return a||"Good — that's a solid start. Let me fill in the details so you've got the whole picture.";
+  return a||"Good — that's a solid start to build on. Let me join the dots so you've got the whole picture and can explain it to anyone; pause me anytime to ask.";
 }
 
 function pick(a){return a[Math.floor(Math.random()*a.length)];}
@@ -603,7 +622,8 @@ const L_GREET=[
  "Let's get into {S}. First the lay of the land, then I'll see what you know, we cover it properly, and round off with a skills test and three role-plays.",
  "Right — {S}. I'll set the scene, find out what you already know, walk you through it, then test you with questions and three live customers."];
 const L_DIAG=["Before we dive in — what do you already know about {S}? Tell me, or just say 'not much'.","Quick one first: what's your sense of {S} so far? No problem if it's nothing yet.","Tell me honestly — how familiar are you with {S} already?","What comes to mind when you think of {S}? Say whatever you've got."];
-const L_GO=["Perfect — let's go through it together. Pause me anytime to ask.","Great. Let's walk through it; if something's unclear, just pause and ask.","Good stuff — into the detail now. Stop me whenever you want a question answered.","Let's build the full picture. Pause and ask anything as we go."];
+const L_GO=["Love it — let me build on that and join the dots, so you could explain this to anyone. Pause me whenever.","Great foundation. I'll fill in the gaps now so the whole picture clicks — stop me anytime to ask.","Nice — let's take what you know and round it out. Jump in whenever something's unclear.","Good start. Let me layer in the detail so you can teach it with confidence — pause me anytime."];
+const L_FRESH=["No problem at all — that's exactly what I'm here for. Let's build it from the ground up, and pause me whenever you like.","Totally fine — we'll start fresh and I'll make it stick. Stop me anytime to ask.","That's alright — by the end you'll be teaching this to customers yourself. Let's walk through it; pause me whenever.","Don't worry — we'll cover everything you need. Jump in with questions as we go."];
 const L_TOQUIZ=["Now — let's test your skills. Three questions; answer out loud or type.","Time to check what stuck. I'll ask three — take your time.","Let's see how it landed. Three quick questions coming up.","Skills test time — three questions, answer however you like."];
 const L_SIMGOOD=["You clearly know it — now for the real thing. Three live customers; I'll play them, you respond like you would at the desk.","Strong work. Let's make it real: three customer role-plays. I'm the customer, you're the ambassador.","You've got the knowledge — let's pressure-test it. Three customers, back to back."];
 const L_SIMOK=["Good effort — practice will lock it in. Three customer role-plays now; I'm the customer.","Let's reinforce it with the real thing — three role-plays. I'll be the customer.","No worries — repetition helps. Three customers coming up; respond as the ambassador."];
@@ -620,8 +640,9 @@ async function runLesson(s){
   await say(pick(L_GREET).replace('{S}',shortName(s)));if(ab())return;
   await say(pick(L_DIAG).replace('{S}',shortName(s)));if(ab())return;
   const known=await listen("Tell me what you know…");if(ab())return;
-  if(known){const ack=await acknowledge(s,known);if(ab())return;await say(ack);if(ab())return;}
-  await say(pick(L_GO));if(ab())return;
+  const shared=known&&known.trim().length>2&&!/^(no|not|nope|nah|nothing|none|dunno|don'?t|never|zero)\b/i.test(known.trim());
+  if(shared){const ack=await acknowledge(s,known);if(ab())return;await say(ack);if(ab())return;}
+  else{await say(pick(L_FRESH));if(ab())return;}
   const L=await getLesson(s);if(ab())return;
   revealSteps();await teachSay(L.steps);if(ab())return;
   revealFees();await teachSay(L.fees);if(ab())return;
