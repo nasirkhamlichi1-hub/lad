@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Orbit — Mission Control</title>
+<script>
+/* ── Pluggable AI backend ──────────────────────────────────────────────
+   Leave aiEndpoint empty to use the built‑in offline analyst.
+   To use a real model later, point aiEndpoint at a server route (like the
+   Maryam /api/lex function) that accepts { question, context } and returns
+   { answer }.  The system prompt that route should use is in askLLM().     */
+window.ORBIT_CONFIG = { aiEndpoint: '', orgName: 'Acme Corp' };
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{
+  --bg:#05060f;--bg2:#0a0d1f;--ink:#e8ecf6;--mut:#8a93b0;--mut2:#5b6480;
+  --line:rgba(255,255,255,.10);--panel:rgba(16,20,38,.72);
+  --green:#34d399;--amber:#fbbf24;--red:#f87171;--gold:#ffd479;--blue:#6aa6ff;--violet:#a78bfa;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono:'JetBrains Mono','SF Mono',ui-monospace,Menlo,monospace;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);overflow:hidden}
+#sky{position:fixed;inset:0;display:block;cursor:grab}
+#sky.pointing{cursor:pointer}
+
+/* ── Top HUD ── */
+.hud{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:18px;
+  padding:14px 20px;pointer-events:none}
+.brand{display:flex;align-items:center;gap:11px;pointer-events:auto}
+.brand .logo{width:34px;height:34px;border-radius:10px;background:
+  radial-gradient(circle at 32% 30%,var(--gold),#b5781b 70%);box-shadow:0 0 22px rgba(255,196,90,.45)}
+.brand b{font-size:15px;letter-spacing:.2px}
+.brand span{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:2.5px;
+  text-transform:uppercase;color:var(--mut)}
+.hud-spacer{flex:1}
+.pills{display:flex;gap:9px;pointer-events:auto}
+.pill{display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);
+  border-radius:11px;padding:8px 13px;backdrop-filter:blur(12px);font-size:12.5px}
+.pill .dot{width:9px;height:9px;border-radius:50%}
+.pill b{font-weight:700}
+.pill small{color:var(--mut);font-size:11px}
+
+/* ── Legend ── */
+.legend{position:fixed;left:20px;bottom:20px;z-index:20;display:flex;flex-direction:column;gap:7px;
+  background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 15px;
+  backdrop-filter:blur(12px);font-size:12px;max-width:210px}
+.legend .lh{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:3px}
+.legend .row{display:flex;align-items:center;gap:9px;color:var(--mut)}
+.legend .row .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.legend .hint{margin-top:5px;font-size:11px;color:var(--mut);line-height:1.5}
+
+/* ── Inspector panel ── */
+.inspector{position:fixed;top:0;right:0;bottom:0;width:390px;max-width:92vw;z-index:30;
+  background:linear-gradient(180deg,rgba(12,16,32,.94),rgba(8,10,22,.96));
+  border-left:1px solid var(--line);backdrop-filter:blur(18px);
+  transform:translateX(100%);transition:transform .34s cubic-bezier(.22,.7,.2,1);
+  display:flex;flex-direction:column;box-shadow:-30px 0 60px rgba(0,0,0,.4)}
+.inspector.on{transform:none}
+.insp-head{padding:20px 22px 16px;border-bottom:1px solid var(--line)}
+.insp-eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:2.4px;text-transform:uppercase;color:var(--mut);margin-bottom:9px;display:flex;align-items:center;gap:8px}
+.insp-title{display:flex;align-items:center;gap:12px}
+.insp-orb{width:30px;height:30px;border-radius:50%;flex-shrink:0;box-shadow:0 0 18px currentColor}
+.insp-title h2{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.insp-sub{margin-top:6px;font-size:12.5px;color:var(--mut)}
+.insp-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:9px;
+  border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--mut);cursor:pointer;
+  font-size:17px;line-height:1;display:grid;place-items:center}
+.insp-close:hover{color:var(--ink);background:rgba(255,255,255,.08)}
+.insp-body{flex:1;overflow-y:auto;padding:18px 22px 30px}
+.insp-body::-webkit-scrollbar{width:8px}.insp-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:8px}
+
+.block-label{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--mut);margin:18px 0 10px;display:flex;align-items:center;justify-content:space-between}
+.block-label:first-child{margin-top:0}
+.addbtn{font-family:var(--sans);font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;letter-spacing:0;text-transform:none}
+.addbtn:hover{text-decoration:underline}
+
+/* health bar */
+.healthbar{height:8px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden;margin:2px 0 4px}
+.healthbar>i{display:block;height:100%;border-radius:6px;transition:width .4s,background .4s}
+
+/* KPI card */
+.kpi{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:10px}
+.kpi-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}
+.kpi-name{font-size:13px;font-weight:600}
+.kpi-att{font-family:var(--mono);font-size:12px;font-weight:700}
+.kpi-edit{display:flex;gap:8px;align-items:center;margin-top:8px}
+.kpi-edit label{font-size:10.5px;color:var(--mut);display:flex;flex-direction:column;gap:3px;flex:1}
+input,select,textarea{font-family:var(--sans);background:rgba(255,255,255,.05);border:1px solid var(--line);
+  color:var(--ink);border-radius:8px;padding:7px 9px;font-size:12.5px;width:100%;outline:none}
+input:focus,select,textarea:focus{border-color:var(--blue)}
+select option{background:#0d1124}
+
+/* project card */
+.proj{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:11px;position:relative}
+.proj.alert{border-color:rgba(248,113,113,.5);box-shadow:0 0 0 1px rgba(248,113,113,.25),0 0 22px rgba(248,113,113,.14)}
+.proj-top{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.proj-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.proj-name{font-size:13.5px;font-weight:600;flex:1}
+.proj-status{font-family:var(--mono);font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;padding:3px 8px;border-radius:20px;border:1px solid currentColor}
+.proj-meta{display:flex;gap:14px;font-size:11px;color:var(--mut);margin:4px 0 9px}
+.proj-meta b{color:var(--ink);font-weight:600}
+.proj-controls{display:grid;gap:9px;margin-top:9px}
+.range-row{display:flex;align-items:center;gap:10px}
+.range-row input[type=range]{flex:1;accent-color:var(--blue);padding:0}
+.range-row .pct{font-family:var(--mono);font-size:12px;font-weight:700;width:42px;text-align:right}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field label{font-size:10.5px;color:var(--mut);display:block;margin-bottom:3px}
+.concern textarea{min-height:48px;resize:vertical;line-height:1.45}
+.delbtn{position:absolute;top:11px;right:11px;background:none;border:none;color:var(--mut);cursor:pointer;font-size:13px}
+.delbtn:hover{color:var(--red)}
+
+.ghost-btn{width:100%;padding:9px;border:1px dashed var(--line);background:none;color:var(--mut);
+  border-radius:10px;cursor:pointer;font-size:12.5px;font-family:var(--sans)}
+.ghost-btn:hover{color:var(--ink);border-color:var(--blue)}
+
+/* ── Voice console ── */
+.voice{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:25;width:min(680px,92vw)}
+.voice-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(16px);
+  box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden}
+.voice-answer{padding:15px 18px;font-size:14px;line-height:1.55;color:var(--ink);max-height:230px;overflow-y:auto;
+  display:none;border-bottom:1px solid var(--line)}
+.voice-answer.on{display:block}
+.voice-answer .who{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--violet);margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.voice-answer b{color:#fff}
+.voice-answer .sev{color:var(--red);font-weight:700}
+.voice-input{display:flex;align-items:center;gap:11px;padding:11px 12px 11px 16px}
+.mic{width:46px;height:46px;border-radius:50%;flex-shrink:0;border:none;cursor:pointer;
+  background:radial-gradient(circle at 35% 30%,var(--violet),#6d28d9);color:#fff;
+  display:grid;place-items:center;transition:transform .15s,box-shadow .2s}
+.mic:hover{transform:scale(1.05)}
+.mic.live{background:radial-gradient(circle at 35% 30%,var(--red),#b91c1c);
+  box-shadow:0 0 0 0 rgba(248,113,113,.6);animation:miclive 1.4s infinite}
+@keyframes miclive{0%{box-shadow:0 0 0 0 rgba(248,113,113,.5)}70%{box-shadow:0 0 0 16px rgba(248,113,113,0)}100%{box-shadow:0 0 0 0 rgba(248,113,113,0)}}
+.mic svg{width:21px;height:21px;fill:none;stroke:#fff;stroke-width:2}
+.voice-text{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;
+  padding:11px 13px;font-size:13.5px}
+.voice-text::placeholder{color:var(--mut)}
+.spk{width:40px;height:40px;border-radius:11px;flex-shrink:0;border:1px solid var(--line);
+  background:rgba(255,255,255,.04);color:var(--mut);cursor:pointer;display:grid;place-items:center}
+.spk.off{color:var(--mut)}.spk.on{color:var(--violet);border-color:var(--violet)}
+.spk svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2}
+.chips{display:flex;gap:7px;flex-wrap:wrap;padding:0 12px 12px}
+.chip{font-size:11.5px;color:var(--mut);background:rgba(255,255,255,.04);border:1px solid var(--line);
+  border-radius:20px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+.chip:hover{color:var(--ink);border-color:var(--violet)}
+.listening{font-size:11px;color:var(--violet);padding:0 16px 10px;display:none;font-family:var(--mono)}
+.listening.on{display:block}
+
+/* tooltip */
+#tip{position:fixed;z-index:40;pointer-events:none;background:rgba(10,12,26,.95);border:1px solid var(--line);
+  border-radius:9px;padding:8px 11px;font-size:12px;display:none;max-width:230px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+#tip .t-name{font-weight:700;margin-bottom:3px}
+#tip .t-meta{color:var(--mut);font-size:11px}
+
+@media(max-width:560px){.legend{display:none}.chips{display:none}}
+</style>
+</head>
+<body>
+<canvas id="sky"></canvas>
+
+<div class="hud">
+  <div class="brand">
+    <div class="logo"></div>
+    <div><b id="orgName">Mission Control</b><span>Orbit · Portfolio Health</span></div>
+  </div>
+  <div class="hud-spacer"></div>
+  <div class="pills">
+    <div class="pill"><span class="dot" id="ovDot"></span><b id="ovScore">—</b><small>overall</small></div>
+    <div class="pill"><span class="dot" style="background:var(--red)"></span><b id="cntFail">0</b><small>failing</small></div>
+    <div class="pill"><span class="dot" style="background:var(--amber)"></span><b id="cntRisk">0</b><small>at risk</small></div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="lh">Project health</div>
+  <div class="row"><span class="dot" style="background:var(--green)"></span>On track</div>
+  <div class="row"><span class="dot" style="background:var(--amber)"></span>At risk</div>
+  <div class="row"><span class="dot" style="background:var(--red)"></span>Failing</div>
+  <div class="hint">Planets are departments · moons are projects. Click a planet to update its KPIs &amp; projects.</div>
+</div>
+
+<!-- Inspector -->
+<aside class="inspector" id="inspector">
+  <button class="insp-close" onclick="closeInspector()">&times;</button>
+  <div class="insp-head">
+    <div class="insp-eyebrow" id="inspEyebrow">Department</div>
+    <div class="insp-title"><div class="insp-orb" id="inspOrb"></div><h2 id="inspName">—</h2></div>
+    <div class="insp-sub" id="inspSub"></div>
+    <div class="healthbar" style="margin-top:13px"><i id="inspHealth"></i></div>
+  </div>
+  <div class="insp-body" id="inspBody"></div>
+</aside>
+
+<!-- Voice console -->
+<div class="voice">
+  <div class="voice-card">
+    <div class="voice-answer" id="answer"></div>
+    <div class="listening" id="listening">● listening…</div>
+    <div class="voice-input">
+      <button class="mic" id="mic" title="Hold to speak"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg></button>
+      <input class="voice-text" id="vtext" placeholder="Ask: which project is failing? what should I be concerned about?" />
+      <button class="spk on" id="spk" title="Toggle voice replies"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14"/></svg></button>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+</div>
+
+<div id="tip"></div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   ORBIT — Mission Control.  A department/project portfolio rendered as a
+   solar system, with an offline natural‑language analyst + optional voice.
+   Single file, no build, no backend.  Data persists in localStorage.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Seed data (editable; persisted) ── */
+const PALETTE=['#6aa6ff','#a78bfa','#f472b6','#34d399','#fbbf24','#22d3ee','#fb923c','#c084fc'];
+function seed(){return {departments:[
+ {id:'eng',name:'Engineering',weight:5,color:'#6aa6ff',
+  kpis:[{name:'Uptime',actual:99.2,target:99.9,unit:'%'},{name:'Deploys / week',actual:14,target:20,unit:''},{name:'Cycle time',actual:5.5,target:3,unit:'d',higherIsBetter:false}],
+  projects:[
+   {id:'p1',name:'Platform v3 Migration',progress:38,status:'failing',owner:'R. Haddad',due:'2026-06-20',concern:'Data‑layer rewrite is two sprints behind; rollback plan unproven.'},
+   {id:'p2',name:'Mobile App 2.0',progress:72,status:'on-track',owner:'S. Okafor',due:'2026-08-01',concern:''},
+   {id:'p3',name:'API Gateway',progress:55,status:'at-risk',owner:'T. Müller',due:'2026-07-10',concern:'Waiting on security review before GA.'},
+   {id:'p4',name:'Observability Stack',progress:90,status:'on-track',owner:'L. Park',due:'2026-06-28',concern:''}]},
+ {id:'prod',name:'Product',weight:3.5,color:'#a78bfa',
+  kpis:[{name:'Feature adoption',actual:41,target:55,unit:'%'},{name:'NPS',actual:38,target:45,unit:''}],
+  projects:[
+   {id:'p5',name:'Onboarding Revamp',progress:60,status:'at-risk',owner:'M. Costa',due:'2026-07-05',concern:'Activation lift below hypothesis in early test.'},
+   {id:'p6',name:'Pricing Experiment',progress:80,status:'on-track',owner:'A. Singh',due:'2026-06-30',concern:''},
+   {id:'p7',name:'AI Assistant',progress:45,status:'on-track',owner:'J. Werner',due:'2026-09-01',concern:''}]},
+ {id:'sales',name:'Sales',weight:4,color:'#f472b6',
+  kpis:[{name:'Quota attainment',actual:74,target:100,unit:'%'},{name:'Pipeline coverage',actual:2.4,target:3.5,unit:'x'}],
+  projects:[
+   {id:'p8',name:'Enterprise Expansion',progress:30,status:'failing',owner:'D. Abboud',due:'2026-06-10',concern:'Two flagship deals slipped to next quarter; champion left at lead account.'},
+   {id:'p9',name:'Partner Channel',progress:50,status:'at-risk',owner:'K. Ito',due:'2026-08-15',concern:'Partner enablement behind schedule.'},
+   {id:'p10',name:'CRM Migration',progress:85,status:'on-track',owner:'P. Novak',due:'2026-06-25',concern:''}]},
+ {id:'mkt',name:'Marketing',weight:3,color:'#22d3ee',
+  kpis:[{name:'MQLs / mo',actual:820,target:1000,unit:''},{name:'CAC',actual:310,target:250,unit:'$',higherIsBetter:false}],
+  projects:[
+   {id:'p11',name:'Brand Refresh',progress:70,status:'on-track',owner:'E. Rossi',due:'2026-07-20',concern:''},
+   {id:'p12',name:'Q3 Campaign',progress:40,status:'at-risk',owner:'N. Yusuf',due:'2026-07-01',concern:'Creative approvals stalled with legal.'},
+   {id:'p13',name:'Website Relaunch',progress:88,status:'on-track',owner:'G. Tan',due:'2026-06-22',concern:''}]},
+ {id:'ops',name:'Operations',weight:3.5,color:'#fb923c',
+  kpis:[{name:'On‑time delivery',actual:88,target:96,unit:'%'},{name:'Cost variance',actual:7,target:2,unit:'%',higherIsBetter:false}],
+  projects:[
+   {id:'p14',name:'ERP Rollout',progress:25,status:'failing',owner:'F. Khan',due:'2026-05-30',concern:'Vendor missed two milestones; finance module blocked. Now overdue.'},
+   {id:'p15',name:'Warehouse Automation',progress:65,status:'on-track',owner:'B. Olsen',due:'2026-09-10',concern:''},
+   {id:'p16',name:'Supplier Audit',progress:92,status:'on-track',owner:'H. Reyes',due:'2026-06-18',concern:''}]},
+ {id:'people',name:'People',weight:2.5,color:'#34d399',
+  kpis:[{name:'Attrition',actual:14,target:10,unit:'%',higherIsBetter:false},{name:'Time to hire',actual:42,target:30,unit:'d',higherIsBetter:false}],
+  projects:[
+   {id:'p17',name:'Hiring Sprint',progress:55,status:'at-risk',owner:'C. Diallo',due:'2026-07-15',concern:'Engineering reqs aging past 60 days.'},
+   {id:'p18',name:'L&D Platform',progress:78,status:'on-track',owner:'V. Petrova',due:'2026-08-05',concern:''}]}
+]};}
+
+const LS='orbit_state_v1';
+let state=load();
+function load(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.departments)return s;}catch(e){}return seed();}
+function save(){try{localStorage.setItem(LS,JSON.stringify(state));}catch(e){}}
+
+/* ── Health math (transparent & explainable) ── */
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:1;
+function kpiAtt(k){const a=+k.actual,t=+k.target;if(!t)return 1;const r=k.higherIsBetter===false?(a?t/a:1):a/t;return clamp(r,0,1.25);}
+function deptKpiScore(d){return d.kpis&&d.kpis.length?clamp(avg(d.kpis.map(kpiAtt)),0,1):0.9;}
+function projScore(p){const base=(+p.progress||0)/100;const w=p.status==='failing'?0.45:p.status==='at-risk'?0.82:1;return clamp(base*w+(p.status==='on-track'?0.04:0),0,1);}
+function deptScore(d){const ps=d.projects&&d.projects.length?avg(d.projects.map(projScore)):0.8;let s=0.55*ps+0.45*deptKpiScore(d);if(d.projects&&d.projects.some(p=>p.status==='failing'))s=Math.min(s,0.6);return clamp(s,0,1);}
+function statusOf(score){return score>=0.8?'on-track':score>=0.6?'at-risk':'failing';}
+const COL={'on-track':'#34d399','at-risk':'#fbbf24','failing':'#f87171'};
+function colorOf(score){return COL[statusOf(score)];}
+function orgScore(){const t=state.departments.reduce((s,d)=>s+d.weight,0)||1;return state.departments.reduce((s,d)=>s+deptScore(d)*d.weight,0)/t;}
+
+/* ════════════════════ CANVAS SOLAR SYSTEM ════════════════════ */
+const cv=document.getElementById('sky'),ctx=cv.getContext('2d');
+let W,H,DPR,cx,cy,stars=[];
+function resize(){
+  DPR=Math.min(window.devicePixelRatio||1,2);
+  W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR;
+  cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';
+  cx=W/2;cy=H/2;
+  stars=[];const n=Math.round((innerWidth*innerHeight)/9000);
+  for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:(Math.random()*1.2+.2)*DPR,t:Math.random()*6.28,s:Math.random()*.8+.2});
+}
+addEventListener('resize',resize);resize();
+
+// per-department orbital state
+const orbit={};
+state.departments.forEach((d,i)=>{orbit[d.id]={ang:(i/state.departments.length)*6.283,sp:(0.018+0.004*((i%3)))/60};
+  d.projects.forEach((p,j)=>{orbit[p.id]={ang:Math.random()*6.283,sp:(0.5+j*0.18+Math.random()*0.2)/60};});});
+
+let bodies=[];               // hit-test cache (screen space, in CSS px)
+let selectedId=null, hoverId=null, alertFocus=new Set();
+let t0=performance.now();
+
+function layout(){
+  const n=state.departments.length;
+  const R=Math.min(cx,cy)-70*DPR;
+  return state.departments.map((d,i)=>{
+    const orbR=R*(0.34+0.66*(n>1?i/(n-1):0));
+    return {d,orbR};
+  });
+}
+
+function draw(now){
+  const dt=Math.min(40,now-t0);t0=now;
+  ctx.clearRect(0,0,W,H);
+  // background nebula
+  const bg=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*.7);
+  bg.addColorStop(0,'#0a0f24');bg.addColorStop(.5,'#070a18');bg.addColorStop(1,'#04050d');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  // stars
+  for(const s of stars){s.t+=0.02*s.s;const a=0.35+0.45*Math.sin(s.t);ctx.globalAlpha=a;ctx.fillStyle='#cfe0ff';ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,6.283);ctx.fill();}
+  ctx.globalAlpha=1;
+
+  bodies=[];
+  const orgC=colorOf(orgScore());
+  const L=layout();
+
+  // orbit rings
+  for(const {orbR} of L){ctx.strokeStyle='rgba(255,255,255,.055)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,orbR,0,6.283);ctx.stroke();}
+
+  // sun (organisation health)
+  const sunR=26*DPR+8*DPR*Math.sin(now/900);
+  const sg=ctx.createRadialGradient(cx,cy,2,cx,cy,sunR*2.4);
+  sg.addColorStop(0,'#fff7e0');sg.addColorStop(.3,orgC);sg.addColorStop(1,'rgba(255,212,121,0)');
+  ctx.fillStyle=sg;ctx.beginPath();ctx.arc(cx,cy,sunR*2.4,0,6.283);ctx.fill();
+  ctx.fillStyle='#fff3d6';ctx.beginPath();ctx.arc(cx,cy,24*DPR,0,6.283);ctx.fill();
+
+  const dimOthers=selectedId&&state.departments.some(d=>d.id===selectedId);
+
+  for(const {d,orbR} of L){
+    const o=orbit[d.id];o.ang+=o.sp*(dt/16.7);
+    const px=cx+Math.cos(o.ang)*orbR, py=cy+Math.sin(o.ang)*orbR;
+    const sc=deptScore(d),col=colorOf(sc);
+    const pr=(13+d.weight*3.4)*DPR;
+    const isSel=selectedId===d.id, isHov=hoverId===d.id;
+    const focusDim=dimOthers&&!isSel?0.32:1;
+    ctx.globalAlpha=focusDim;
+
+    // moons (projects) — draw orbit + body
+    d.projects.forEach((p,j)=>{
+      const mo=orbit[p.id];mo.ang+=mo.sp*(dt/16.7);
+      const mR=pr+ (16+j*11)*DPR;
+      const mx=px+Math.cos(mo.ang)*mR, my=py+Math.sin(mo.ang)*mR;
+      ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(px,py,mR,0,6.283);ctx.stroke();
+      const ms=COL[p.status]||'#9aa';
+      const alert=alertFocus.has(p.id);
+      let rad=(4.2+ (p.status==='on-track'?1.4:1))*DPR;
+      if(p.status==='failing')rad+=1.2*DPR;
+      if(alert)rad+=(2.2+1.8*Math.sin(now/180))*DPR;
+      // glow for risk/fail
+      if(p.status!=='on-track'||alert){const gg=ctx.createRadialGradient(mx,my,0,mx,my,rad*4);gg.addColorStop(0,ms);gg.addColorStop(1,'rgba(0,0,0,0)');ctx.globalAlpha=focusDim*(alert?0.5:0.3);ctx.fillStyle=gg;ctx.beginPath();ctx.arc(mx,my,rad*4,0,6.283);ctx.fill();ctx.globalAlpha=focusDim;}
+      ctx.fillStyle=ms;ctx.beginPath();ctx.arc(mx,my,rad,0,6.283);ctx.fill();
+      bodies.push({type:'project',id:p.id,deptId:d.id,x:mx/DPR,y:my/DPR,r:(rad+6*DPR)/DPR,name:p.name,status:p.status,progress:p.progress});
+    });
+
+    // planet glow
+    const halo=ctx.createRadialGradient(px,py,pr*.4,px,py,pr*2.1);
+    halo.addColorStop(0,col);halo.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.globalAlpha=focusDim*(isSel?0.55:0.32);ctx.fillStyle=halo;ctx.beginPath();ctx.arc(px,py,pr*2.1,0,6.283);ctx.fill();
+    ctx.globalAlpha=focusDim;
+    // planet body
+    const pg=ctx.createRadialGradient(px-pr*.35,py-pr*.4,pr*.2,px,py,pr);
+    pg.addColorStop(0,mix(col,'#ffffff',.45));pg.addColorStop(.6,col);pg.addColorStop(1,mix(col,'#05060f',.55));
+    ctx.fillStyle=pg;ctx.beginPath();ctx.arc(px,py,pr,0,6.283);ctx.fill();
+    if(isSel||isHov){ctx.strokeStyle='#fff';ctx.globalAlpha=focusDim*(isSel?.9:.5);ctx.lineWidth=2*DPR;ctx.beginPath();ctx.arc(px,py,pr+5*DPR,0,6.283);ctx.stroke();ctx.globalAlpha=focusDim;}
+    // label
+    ctx.fillStyle='rgba(255,255,255,.92)';ctx.font=`${13*DPR}px Inter,sans-serif`;ctx.textAlign='center';
+    ctx.fillText(d.name,px,py+pr+18*DPR);
+    ctx.fillStyle='rgba(255,255,255,.4)';ctx.font=`${10*DPR}px JetBrains Mono,monospace`;
+    ctx.fillText(Math.round(sc*100)+'%',px,py+pr+32*DPR);
+
+    bodies.push({type:'dept',id:d.id,x:px/DPR,y:py/DPR,r:(pr+8*DPR)/DPR,name:d.name});
+    ctx.globalAlpha=1;
+  }
+  requestAnimationFrame(draw);
+}
+function mix(a,b,t){const ca=hx(a),cb=hx(b);return `rgb(${Math.round(ca[0]+(cb[0]-ca[0])*t)},${Math.round(ca[1]+(cb[1]-ca[1])*t)},${Math.round(ca[2]+(cb[2]-ca[2])*t)})`;}
+function hx(c){if(c[0]==='#'){const n=parseInt(c.slice(1),16);return c.length===7?[n>>16&255,n>>8&255,n&255]:[0,0,0];}const m=c.match(/\d+/g);return m?m.map(Number):[0,0,0];}
+requestAnimationFrame(draw);
+
+/* ── Interaction ── */
+const tip=document.getElementById('tip');
+function bodyAt(mx,my){let best=null,bd=1e9;for(const b of bodies){const dx=mx-b.x,dy=my-b.y,d=Math.hypot(dx,dy);if(d<b.r&&d<bd){bd=d;best=b;}}return best;}
+cv.addEventListener('mousemove',e=>{
+  const b=bodyAt(e.clientX,e.clientY);
+  hoverId=b&&b.type==='dept'?b.id:(b&&b.type==='project'?b.deptId:null);
+  cv.classList.toggle('pointing',!!b);
+  if(b){tip.style.display='block';tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY+14)+'px';
+    if(b.type==='dept'){const d=state.departments.find(x=>x.id===b.id);tip.innerHTML=`<div class="t-name">${esc(d.name)}</div><div class="t-meta">${d.projects.length} projects · ${Math.round(deptScore(d)*100)}% health</div>`;}
+    else{tip.innerHTML=`<div class="t-name">${esc(b.name)}</div><div class="t-meta">${b.status} · ${b.progress}% complete</div>`;}
+  }else tip.style.display='none';
+});
+cv.addEventListener('mouseleave',()=>{tip.style.display='none';hoverId=null;});
+cv.addEventListener('click',e=>{const b=bodyAt(e.clientX,e.clientY);if(!b)return;openInspector(b.deptId||b.id,b.type==='project'?b.id:null);});
+
+/* ════════════════════ INSPECTOR / EDITOR ════════════════════ */
+const insp=document.getElementById('inspector');
+function openInspector(deptId,projId){
+  selectedId=deptId;const d=state.departments.find(x=>x.id===deptId);if(!d)return;
+  const sc=deptScore(d),col=colorOf(sc);
+  document.getElementById('inspOrb').style.background=col;
+  document.getElementById('inspOrb').style.color=col;
+  document.getElementById('inspName').textContent=d.name;
+  document.getElementById('inspSub').textContent=`${d.projects.length} projects · health ${Math.round(sc*100)}% · ${statusOf(sc).replace('-',' ')}`;
+  const hb=document.getElementById('inspHealth');hb.style.width=Math.round(sc*100)+'%';hb.style.background=col;
+  renderInspBody(d);
+  insp.classList.add('on');
+  if(projId)setTimeout(()=>{const el=document.getElementById('proj_'+projId);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},120);
+}
+function closeInspector(){insp.classList.remove('on');selectedId=null;}
+function refreshInsp(){if(selectedId)openInspector(selectedId);updateHUD();save();}
+
+function renderInspBody(d){
+  const b=document.getElementById('inspBody');let h='';
+  // KPIs
+  h+=`<div class="block-label">Key performance indicators <button class="addbtn" onclick="addKpi('${d.id}')">+ Add KPI</button></div>`;
+  d.kpis.forEach((k,i)=>{const att=kpiAtt(k);const c=att>=0.95?'var(--green)':att>=0.75?'var(--amber)':'var(--red)';
+    h+=`<div class="kpi"><div class="kpi-top"><span class="kpi-name">${esc(k.name)}</span><span class="kpi-att" style="color:${c}">${Math.round(att*100)}%</span></div>
+      <div class="healthbar"><i style="width:${Math.round(clamp(att,0,1)*100)}%;background:${c}"></i></div>
+      <div class="kpi-edit">
+        <label>Actual<input type="number" step="any" value="${k.actual}" oninput="editKpi('${d.id}',${i},'actual',this.value)"></label>
+        <label>Target<input type="number" step="any" value="${k.target}" oninput="editKpi('${d.id}',${i},'target',this.value)"></label>
+        <label>Unit<input value="${esc(k.unit||'')}" oninput="editKpi('${d.id}',${i},'unit',this.value)"></label>
+      </div></div>`;});
+  // Projects
+  h+=`<div class="block-label">Projects (moons) <button class="addbtn" onclick="addProject('${d.id}')">+ Add project</button></div>`;
+  d.projects.forEach(p=>{const c=COL[p.status];const al=alertFocus.has(p.id)?' alert':'';
+    h+=`<div class="proj${al}" id="proj_${p.id}">
+      <button class="delbtn" title="Remove" onclick="delProject('${d.id}','${p.id}')">✕</button>
+      <div class="proj-top"><span class="proj-dot" style="background:${c}"></span><span class="proj-name">${esc(p.name)}</span></div>
+      <div class="proj-meta"><span>Owner <b>${esc(p.owner||'—')}</b></span><span>Due <b>${esc(p.due||'—')}</b></span></div>
+      <div class="proj-controls">
+        <div class="field"><label>Name</label><input value="${esc(p.name)}" oninput="editProj('${d.id}','${p.id}','name',this.value)"></div>
+        <div class="range-row"><input type="range" min="0" max="100" value="${p.progress}" oninput="editProj('${d.id}','${p.id}','progress',this.value);this.nextElementSibling.textContent=this.value+'%'"><span class="pct">${p.progress}%</span></div>
+        <div class="twocol">
+          <div class="field"><label>Status</label><select onchange="editProj('${d.id}','${p.id}','status',this.value)">
+            ${['on-track','at-risk','failing'].map(s=>`<option value="${s}"${p.status===s?' selected':''}>${s.replace('-',' ')}</option>`).join('')}
+          </select></div>
+          <div class="field"><label>Due date</label><input type="date" value="${esc(p.due||'')}" oninput="editProj('${d.id}','${p.id}','due',this.value)"></div>
+        </div>
+        <div class="field"><label>Owner</label><input value="${esc(p.owner||'')}" oninput="editProj('${d.id}','${p.id}','owner',this.value)"></div>
+        <div class="field concern"><label>Concern / note (the AI reads this)</label><textarea oninput="editProj('${d.id}','${p.id}','concern',this.value)" placeholder="What's the risk?">${esc(p.concern||'')}</textarea></div>
+      </div></div>`;});
+  h+=`<button class="ghost-btn" style="margin-top:6px" onclick="addDept()">+ Add a department (planet)</button>`;
+  h+=`<button class="ghost-btn" style="margin-top:9px" onclick="resetData()">↺ Reset to sample data</button>`;
+  b.innerHTML=h;
+}
+function findD(id){return state.departments.find(x=>x.id===id);}
+function findP(d,id){return d.projects.find(x=>x.id===id);}
+function editKpi(did,i,f,v){const d=findD(did);d.kpis[i][f]=(f==='unit')?v:(v===''?'':+v);liveHealth(d);save();updateHUD();}
+function editProj(did,pid,f,v){const d=findD(did);const p=findP(d,pid);p[f]=(f==='progress')?+v:v;liveHealth(d);save();updateHUD();}
+function liveHealth(d){const sc=deptScore(d),col=colorOf(sc);const hb=document.getElementById('inspHealth');if(hb){hb.style.width=Math.round(sc*100)+'%';hb.style.background=col;}document.getElementById('inspOrb').style.background=col;document.getElementById('inspSub').textContent=`${d.projects.length} projects · health ${Math.round(sc*100)}% · ${statusOf(sc).replace('-',' ')}`;}
+function addKpi(did){const d=findD(did);d.kpis.push({name:'New KPI',actual:0,target:100,unit:'%'});refreshInsp();}
+function addProject(did){const d=findD(did);const id='p'+Math.random().toString(36).slice(2,7);d.projects.push({id,name:'New project',progress:0,status:'on-track',owner:'',due:'',concern:''});orbit[id]={ang:Math.random()*6.283,sp:(0.5+Math.random()*0.4)/60};refreshInsp();}
+function delProject(did,pid){const d=findD(did);d.projects=d.projects.filter(p=>p.id!==pid);refreshInsp();}
+function addDept(){const id='d'+Math.random().toString(36).slice(2,6);const col=PALETTE[state.departments.length%PALETTE.length];
+  const d={id,name:'New Department',weight:3,color:col,kpis:[{name:'KPI',actual:50,target:100,unit:'%'}],projects:[]};
+  state.departments.push(d);orbit[id]={ang:Math.random()*6.283,sp:0.02/60};save();openInspector(id);}
+function resetData(){if(!confirm('Reset all departments and projects to the sample data?'))return;state.departments=seed().departments;save();location.reload();}
+
+/* ════════════════════ HUD ════════════════════ */
+function updateHUD(){
+  const s=orgScore();document.getElementById('ovScore').textContent=Math.round(s*100)+'%';
+  document.getElementById('ovDot').style.background=colorOf(s);
+  const all=state.departments.flatMap(d=>d.projects);
+  document.getElementById('cntFail').textContent=all.filter(p=>p.status==='failing').length;
+  document.getElementById('cntRisk').textContent=all.filter(p=>p.status==='at-risk').length;
+  document.getElementById('orgName').textContent=(window.ORBIT_CONFIG.orgName||'Mission Control');
+}
+updateHUD();
+
+/* ════════════════════ THE ANALYST (offline NLU) ════════════════════ */
+function context(){
+  return {organisation:window.ORBIT_CONFIG.orgName,overallHealthPct:Math.round(orgScore()*100),
+    today:new Date().toISOString().slice(0,10),
+    departments:state.departments.map(d=>({name:d.name,healthPct:Math.round(deptScore(d)*100),status:statusOf(deptScore(d)),
+      kpis:d.kpis.map(k=>({name:k.name,actual:k.actual,target:k.target,unit:k.unit,attainmentPct:Math.round(kpiAtt(k)*100)})),
+      projects:d.projects.map(p=>({name:p.name,status:p.status,progressPct:p.progress,owner:p.owner,due:p.due,concern:p.concern}))}))};
+}
+function allProjects(){const a=[];state.departments.forEach(d=>d.projects.forEach(p=>a.push({...p,deptName:d.name,deptId:d.id})));return a;}
+function sevRank(p){return p.status==='failing'?0:p.status==='at-risk'?1:2;}
+function pct(n){return Math.round(n)+'%';}
+function overdue(){const t=new Date();return allProjects().filter(p=>p.due&&new Date(p.due)<t&&(p.progress||0)<100);}
+function laggingKpis(){const out=[];state.departments.forEach(d=>d.kpis.forEach(k=>{if(kpiAtt(k)<0.8)out.push({dept:d.name,name:k.name,att:kpiAtt(k),actual:k.actual,target:k.target,unit:k.unit||''});}));return out.sort((a,b)=>a.att-b.att);}
+
+function localAnswer(q){
+  const ql=' '+q.toLowerCase().replace(/[^\w\s%]/g,' ')+' ';
+  const projs=allProjects();
+  const failing=projs.filter(p=>p.status==='failing').sort((a,b)=>a.progress-b.progress);
+  const risk=projs.filter(p=>p.status==='at-risk').sort((a,b)=>a.progress-b.progress);
+  const od=overdue();
+  const focus=new Set();
+  const has=(...w)=>w.some(x=>ql.includes(x));
+
+  // 1) Entity lookup (specific dept or project)
+  const ent=findEntity(q);
+  if(ent&&!has('summary','overall','everything','portfolio','which','what should','concern','worried','worry')){
+    if(ent.type==='dept'){const d=ent.d;const sc=deptScore(d);d.projects.forEach(p=>{if(p.status!=='on-track')focus.add(p.id);});
+      const bad=d.projects.filter(p=>p.status!=='on-track');
+      let t=`<b>${d.name}</b> is at <b>${pct(sc*100)} health</b> — ${statusOf(sc).replace('-',' ')}. `;
+      const lk=d.kpis.filter(k=>kpiAtt(k)<0.85);
+      if(lk.length)t+=`KPIs to watch: ${lk.map(k=>`${k.name} at ${pct(kpiAtt(k)*100)} of target`).join(', ')}. `;
+      else t+=`KPIs are broadly on target. `;
+      if(bad.length){t+=`${bad.length} project${bad.length>1?'s need':' needs'} attention — `+bad.map(p=>`<b>${p.name}</b> (${p.status.replace('-',' ')}, ${p.progress}%)`).join(', ')+'. ';
+        const wc=bad.find(p=>p.concern);if(wc)t+=`Top concern: ${wc.concern}`;}
+      else t+=`All projects are on track.`;
+      return {text:t,focus,select:d.id};}
+    else{const p=ent.p;focus.add(p.id);
+      let t=`<b>${p.name}</b> (${p.deptName}) is <b class="${p.status==='failing'?'sev':''}">${p.status.replace('-',' ')}</b> at <b>${p.progress}%</b> complete, owned by ${p.owner||'—'}${p.due?`, due ${p.due}`:''}. `;
+      t+=p.concern?`Concern: ${p.concern}`:`No specific concern logged.`;
+      return {text:t,focus,select:ent.d.id};}
+  }
+
+  // 2) Failing / worst
+  if(has('failing','fail','worst','red','trouble','sinking','biggest problem','biggest risk','off track','off-track')){
+    if(!failing.length&&!risk.length)return {text:`Good news — <b>nothing is failing</b>. Every project is on track and no department is below its threshold.`,focus};
+    const list=failing.length?failing:risk;list.forEach(p=>focus.add(p.id));
+    const head=failing.length?`<span class="sev">${failing.length} project${failing.length>1?'s are':' is'} failing.</span>`:`Nothing is outright failing, but ${risk.length} need watching.`;
+    const lines=list.slice(0,4).map(p=>`<b>${p.name}</b> (${p.deptName}) at ${p.progress}%${p.concern?` — ${p.concern}`:''}`).join('<br>• ');
+    return {text:`${head}<br>• ${lines}`,focus};
+  }
+
+  // 3) Concerns / what should I worry about
+  if(has('concern','worried','worry','attention','watch out','flag','risk','at risk','keep an eye','careful')){
+    const items=[...failing,...risk];items.forEach(p=>focus.add(p.id));
+    if(!items.length&&!od.length&&!laggingKpis().length)return {text:`Honestly, things look healthy — overall portfolio health is <b>${pct(orgScore()*100)}</b> with nothing failing or overdue.`,focus};
+    let parts=[];
+    if(failing.length)parts.push(`<span class="sev">The most serious issue is <b>${failing[0].name}</b> in ${failing[0].deptName}</b> at ${failing[0].progress}%${failing[0].concern?` — ${failing[0].concern}`:''}</span>`);
+    if(od.length){od.forEach(p=>focus.add(p.id));parts.push(`<b>${od.length} project${od.length>1?'s are':' is'} overdue</b>: ${od.map(p=>p.name).join(', ')}`);}
+    const lk=laggingKpis();if(lk.length)parts.push(`KPIs furthest from target: ${lk.slice(0,3).map(k=>`${k.dept} · ${k.name} (${pct(k.att*100)})`).join(', ')}`);
+    if(risk.length)parts.push(`Also watch ${risk.length} at‑risk project${risk.length>1?'s':''}: ${risk.slice(0,3).map(p=>p.name).join(', ')}`);
+    return {text:`Here's what I'd put in front of leadership:<br>• `+parts.join('<br>• '),focus};
+  }
+
+  // 4) Overdue / behind / deadlines
+  if(has('overdue','late','behind','deadline','due','slipping','slipped')){
+    if(!od.length)return {text:`Nothing is overdue right now. The nearest deadlines: `+projs.filter(p=>p.due).sort((a,b)=>new Date(a.due)-new Date(b.due)).slice(0,3).map(p=>`<b>${p.name}</b> (${p.due})`).join(', ')+'.',focus};
+    od.forEach(p=>focus.add(p.id));
+    return {text:`<b>${od.length} project${od.length>1?'s are':' is'} past due:</b><br>• `+od.map(p=>`<b>${p.name}</b> (${p.deptName}) — due ${p.due}, only ${p.progress}% done${p.concern?` — ${p.concern}`:''}`).join('<br>• '),focus};
+  }
+
+  // 5) Best / on track / good news
+  if(has('best','on track','on-track','green','going well','good news','healthiest','strongest')){
+    const good=projs.filter(p=>p.status==='on-track'&&p.progress>=70).sort((a,b)=>b.progress-a.progress);
+    const topDept=[...state.departments].sort((a,b)=>deptScore(b)-deptScore(a))[0];
+    return {text:`Strongest department is <b>${topDept.name}</b> at ${pct(deptScore(topDept)*100)} health. `+(good.length?`Furthest‑along projects: `+good.slice(0,4).map(p=>`<b>${p.name}</b> (${p.progress}%)`).join(', ')+'.':'No projects above 70% yet.'),focus};
+  }
+
+  // 6) Department ranking
+  if(has('which department','department','team','rank','compare','leaderboard')){
+    const ranked=[...state.departments].sort((a,b)=>deptScore(b)-deptScore(a));
+    ranked.forEach(d=>d.projects.forEach(p=>{if(p.status==='failing')focus.add(p.id);}));
+    return {text:`Departments by health:<br>`+ranked.map((d,i)=>`${i+1}. <b>${d.name}</b> — ${pct(deptScore(d)*100)} (${statusOf(deptScore(d)).replace('-',' ')})`).join('<br>'),focus};
+  }
+
+  // 7) Summary / overall
+  if(has('summary','overall','how are we','health','state of','big picture','everything','portfolio','status report','brief me')){
+    failing.forEach(p=>focus.add(p.id));
+    const s=orgScore();
+    let t=`<b>Portfolio health is ${pct(s*100)}</b> — ${statusOf(s).replace('-',' ')}. `;
+    t+=`${failing.length} failing, ${risk.length} at risk, ${projs.filter(p=>p.status==='on-track').length} on track across ${state.departments.length} departments. `;
+    if(failing.length)t+=`Biggest worry: <b>${failing[0].name}</b> (${failing[0].deptName}) at ${failing[0].progress}%. `;
+    if(od.length)t+=`${od.length} overdue. `;
+    const top=[...state.departments].sort((a,b)=>deptScore(b)-deptScore(a))[0];t+=`Strongest: ${top.name}.`;
+    return {text:t,focus};
+  }
+
+  // Fallback
+  return {text:`I can answer things like: <b>“which project is failing?”</b>, <b>“what should I be concerned about?”</b>, <b>“how is Sales doing?”</b>, <b>“what's overdue?”</b>, or <b>“give me a summary.”</b>`,focus};
+}
+
+function findEntity(q){
+  const ql=q.toLowerCase();let best=null,bestLen=0;
+  state.departments.forEach(d=>{
+    if(ql.includes(d.name.toLowerCase())&&d.name.length>bestLen){best={type:'dept',d};bestLen=d.name.length;}
+    d.projects.forEach(p=>{if(ql.includes(p.name.toLowerCase())&&p.name.length>bestLen){best={type:'project',p,d};bestLen=p.name.length;}});
+  });
+  if(best)return best;
+  // looser: significant word overlap
+  const words=ql.split(/\W+/).filter(w=>w.length>3);
+  state.departments.forEach(d=>{d.projects.forEach(p=>{const pn=p.name.toLowerCase().split(/\W+/).filter(w=>w.length>3);const hit=pn.filter(w=>words.includes(w)).length;if(hit&&hit>bestLen){best={type:'project',p,d};bestLen=hit;}});});
+  return best;
+}
+
+/* ── Optional real‑LLM hook ── */
+async function askLLM(q){
+  const ep=window.ORBIT_CONFIG.aiEndpoint;
+  if(!ep)return null;
+  try{
+    const r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({question:q,context:context(),
+        system:"You are the analyst for an executive portfolio 'mission control'. Answer in 2-4 spoken sentences using ONLY the JSON context (departments, projects, KPIs, statuses, concerns, due dates vs today). Lead with the most serious risk. Never invent projects or numbers."})});
+    if(!r.ok)return null;const j=await r.json();return j.answer?{text:j.answer,focus:new Set()}:null;
+  }catch(e){return null;}
+}
+
+async function handleQuery(q){
+  q=(q||'').trim();if(!q)return;
+  showAnswer('<span class="who">Analyst · thinking…</span>…');
+  alertFocus=new Set();
+  let res=await askLLM(q);
+  if(!res)res=localAnswer(q);
+  alertFocus=res.focus||new Set();
+  showAnswer(`<span class="who"><span style="width:7px;height:7px;border-radius:50%;background:var(--violet);display:inline-block"></span> Analyst</span>${res.text}`);
+  if(res.select)openInspector(res.select);
+  speak(stripHtml(res.text));
+}
+function showAnswer(html){const a=document.getElementById('answer');a.innerHTML=html;a.classList.add('on');}
+function stripHtml(h){const d=document.createElement('div');d.innerHTML=h.replace(/<br>/g,'. ').replace(/•/g,'');return (d.textContent||'').replace(/\s+/g,' ').replace('Analyst','').trim();}
+
+/* ════════════════════ VOICE (Web Speech API) ════════════════════ */
+let speakOn=true, recog=null, recognising=false;
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const micBtn=document.getElementById('mic'),listenEl=document.getElementById('listening');
+if(SR){
+  recog=new SR();recog.lang='en-US';recog.interimResults=true;recog.continuous=false;
+  recog.onstart=()=>{recognising=true;micBtn.classList.add('live');listenEl.classList.add('on');};
+  recog.onend=()=>{recognising=false;micBtn.classList.remove('live');listenEl.classList.remove('on');};
+  recog.onerror=e=>{listenEl.textContent='● mic error: '+e.error;setTimeout(()=>listenEl.textContent='● listening…',1500);};
+  recog.onresult=e=>{let txt='';for(const r of e.results)txt+=r[0].transcript;document.getElementById('vtext').value=txt;
+    if(e.results[e.results.length-1].isFinal){handleQuery(txt);}};
+  micBtn.addEventListener('click',()=>{if(recognising){recog.stop();return;}try{recog.start();}catch(e){}});
+}else{
+  micBtn.title='Voice input not supported in this browser — type instead';
+  micBtn.addEventListener('click',()=>{document.getElementById('vtext').focus();showAnswer('<span class="who">Note</span>Voice input needs Chrome/Edge. You can type your question instead.');});
+}
+function speak(text){
+  if(!speakOn||!window.speechSynthesis||!text)return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);u.rate=1.04;u.pitch=1;u.lang='en-US';
+  const vs=window.speechSynthesis.getVoices();const pref=vs.find(v=>/Google US English|Samantha|Microsoft Aria|Jenny/i.test(v.name));if(pref)u.voice=pref;
+  window.speechSynthesis.speak(u);
+}
+const spk=document.getElementById('spk');
+spk.addEventListener('click',()=>{speakOn=!speakOn;spk.classList.toggle('on',speakOn);spk.classList.toggle('off',!speakOn);if(!speakOn&&window.speechSynthesis)window.speechSynthesis.cancel();});
+document.getElementById('vtext').addEventListener('keydown',e=>{if(e.key==='Enter'){handleQuery(e.target.value);}});
+
+/* example chips */
+const CHIPS=['Which project is failing?','What should I be concerned about?','What\'s overdue?','How is Sales doing?','Give me a summary','Rank the departments'];
+document.getElementById('chips').innerHTML=CHIPS.map(c=>`<button class="chip">${c}</button>`).join('');
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{document.getElementById('vtext').value=c.textContent;handleQuery(c.textContent);}));
+
+function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// greet
+setTimeout(()=>{const s=orgScore();const f=allProjects().filter(p=>p.status==='failing').length;
+  showAnswer(`<span class="who"><span style="width:7px;height:7px;border-radius:50%;background:var(--violet);display:inline-block"></span> Analyst</span>Welcome to mission control. Portfolio health is <b>${pct(s*100)}</b>${f?` with <span class="sev">${f} failing project${f>1?'s':''}</span>`:''}. Tap the mic or a chip and ask me what's at risk.`);},600);
+</script>
+</body>
+</html>
