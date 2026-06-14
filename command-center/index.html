@@ -713,11 +713,34 @@ if(SR){recog=new SR();recog.lang='en-US';recog.interimResults=true;recog.continu
 }else{micBtn.addEventListener('click',()=>{if(aiBusy){stopSpeak();setBusy(false);return;}document.getElementById('vtext').focus();showAnswer('<span class="who">Note</span>Voice input needs Chrome or Edge — you can type your question instead.');});}
 if(convoBtn)convoBtn.addEventListener('click',()=>{convoMode=!convoMode;updateMicUI();if(convoMode){interrupted=false;startListen();}else{fullStop();}});
 if(stopBtn)stopBtn.addEventListener('click',fullStop);
-function stopSpeak(){if(ttsAudio){try{ttsAudio.onended=null;ttsAudio.pause();}catch(e){}ttsAudio=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();}
-function afterSpeak(){setBusy(false);if(convoMode&&!interrupted)startListen();}
+function stopSpeak(){stopVAD();if(ttsAudio){try{ttsAudio.onended=null;ttsAudio.pause();}catch(e){}ttsAudio=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();}
+function afterSpeak(){stopVAD();setBusy(false);if(convoMode&&!interrupted)startListen();}
+/* ── barge-in: listen (with echo cancellation) while the AI talks; stop it the moment you speak ── */
+let vadStream=null,vadCtx=null,vadRAF=null;
+function armBargeIn(){
+  if(vadStream||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return;
+  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).then(function(stream){
+    if(!aiBusy){try{stream.getTracks().forEach(t=>t.stop());}catch(e){}return;}        // already finished
+    vadStream=stream;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+    vadCtx=new AC();const src=vadCtx.createMediaStreamSource(stream);const an=vadCtx.createAnalyser();an.fftSize=512;src.connect(an);
+    const data=new Uint8Array(an.fftSize);let voiced=0,baseline=0,frames=0;
+    const tick=function(){ if(!vadStream)return;
+      an.getByteTimeDomainData(data);let sum=0;for(let i=0;i<data.length;i++){const v=(data[i]-128)/128;sum+=v*v;}
+      const rms=Math.sqrt(sum/data.length);frames++;
+      if(frames<16){baseline=Math.max(baseline,rms);}                                  // calibrate noise floor (~250ms)
+      const thresh=Math.max(0.05,baseline*2.4);
+      if(rms>thresh){voiced++;if(voiced>=5){bargeIn();return;}}else{voiced=voiced>0?voiced-1:0;}
+      vadRAF=requestAnimationFrame(tick);
+    };
+    vadRAF=requestAnimationFrame(tick);
+  }).catch(function(){});
+}
+function stopVAD(){if(vadRAF){cancelAnimationFrame(vadRAF);vadRAF=null;}if(vadStream){try{vadStream.getTracks().forEach(t=>t.stop());}catch(e){}vadStream=null;}if(vadCtx){try{vadCtx.close();}catch(e){}vadCtx=null;}}
+function bargeIn(){stopVAD();interrupted=false;if(ttsAudio){try{ttsAudio.onended=null;ttsAudio.pause();}catch(e){}ttsAudio=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();setBusy(false);startListen();}
 async function speak(text){
   if(!speakOn||!text){afterSpeak();return;}
   stopSpeak();
+  if(convoMode)armBargeIn();                            // listen for you while the AI talks
   const ek=window.ORBIT_CONFIG.elevenKey;              // natural neural voice via the user's ElevenLabs key
   if(ek){try{
     const vid=window.ORBIT_CONFIG.elevenVoice||'EXAVITQu4vr4xnSDxMaL';
