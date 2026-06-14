@@ -415,6 +415,7 @@ function localAnswer(q){
 }
 const ANALYST_SYSTEM="You are the analyst for an executive portfolio 'mission control' for the Government of Dubai Legal Affairs Department. You are given a live JSON snapshot of divisions, each with KPIs (actual vs target, attainment %) and projects (status on-track/at-risk/failing, progress %, owner, due date, free-text concern), plus today's date and overall health %. Answer ONLY from that snapshot — never invent projects, numbers, owners or dates. You can do real analysis: rank divisions, work out what's most at risk and why, weigh trade-offs, spot overdue or stalled work, and suggest what to do next. Be concise and built for the spoken word: 2-5 short sentences, plain text only (no markdown, bullets or emoji). Lead with the most serious risk and name the project, its division, progress % and concern. 'Failing' outranks 'at-risk'; a project is overdue if its due date is before today and progress is under 100%. Use exact project names so they can be highlighted. If something genuinely isn't in the data, say so briefly.";
 function focusFromText(t){const s=new Set();const tl=(t||'').toLowerCase();allProjects().forEach(p=>{if(p.name&&p.name.length>4&&tl.includes(p.name.toLowerCase()))s.add(p.id);});return s;}
+function effKey(){const f=document.getElementById('cfgAnthropic');return (window.ORBIT_CONFIG.anthropicKey||(f?f.value.trim():'')||'');}
 function pack(answer){const focus=focusFromText(answer);let select=null;for(const p of allProjects()){if(focus.has(p.id)){select=p.deptId;break;}}return {text:answer,focus,select};}
 async function askLLM(q){
   // 1) secure server backend (Azure) — preferred when deployed
@@ -422,7 +423,7 @@ async function askLLM(q){
   if(ep){try{const r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,context:context()})});
     if(r.ok){const j=await r.json();if(j&&j.answer)return pack(j.answer);}}catch(e){}}
   // 2) direct Anthropic call with the user's own key (runs in this browser)
-  const key=window.ORBIT_CONFIG.anthropicKey;
+  const key=effKey();window.ORBIT_CONFIG.anthropicKey=key;
   if(key){try{
     const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
       headers:{'x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},
@@ -440,7 +441,7 @@ async function handleQuery(q){q=(q||'').trim();if(!q)return;
   alertFocus=new Set();window.__llmError='';
   let res=await askLLM(q),who='Analyst',dot='var(--violet)',spoken=true;
   if(res){who='Claude';dot='#34d399';}
-  else if(window.ORBIT_CONFIG.anthropicKey&&window.__llmError){res={text:'⚠ '+window.__llmError+'  —  open the ⚙ panel to re-check the key or pick another model.',focus:new Set()};who='Error';dot='var(--red)';spoken=false;}
+  else if(effKey()){res={text:'⚠ '+(window.__llmError||'Claude did not return a response — re-check the key/model in the ⚙ panel.'),focus:new Set()};who='Error';dot='var(--red)';spoken=false;}
   else res=localAnswer(q);
   alertFocus=res.focus||new Set();if(window.orbit3d)window.orbit3d.setAlerts(alertFocus);
   showAnswer(`<span class="who"><span style="width:7px;height:7px;border-radius:50%;background:${dot};display:inline-block"></span> ${who}</span>${res.text}`);
@@ -506,6 +507,17 @@ document.getElementById('cfgSave').addEventListener('click',()=>{
   updateHUD();
   setTimeout(()=>document.getElementById('cfgPanel').classList.remove('on'),900);
 });
+/* apply keys the instant they're typed/pasted — no Save click needed */
+function applyKeysFromFields(){
+  const a=(document.getElementById('cfgAnthropic').value||'').trim();
+  const e=(document.getElementById('cfgEleven').value||'').trim();
+  window.ORBIT_CONFIG.anthropicKey=a;window.ORBIT_CONFIG.elevenKey=e;
+  try{a?localStorage.setItem('orbit_anthropic_key',a):localStorage.removeItem('orbit_anthropic_key');e?localStorage.setItem('orbit_eleven_key',e):localStorage.removeItem('orbit_eleven_key');}catch(_){}
+  const s=document.getElementById('cfgStatus');if(s)s.textContent=a?'● Claude connected':'';
+}
+document.getElementById('cfgAnthropic').addEventListener('input',applyKeysFromFields);
+document.getElementById('cfgEleven').addEventListener('input',applyKeysFromFields);
+document.getElementById('cfgModel').addEventListener('change',()=>{window.ORBIT_CONFIG.anthropicModel=document.getElementById('cfgModel').value;try{localStorage.setItem('orbit_model',window.ORBIT_CONFIG.anthropicModel);}catch(_){}});
 
 /* Bridge for the 3D module */
 window.OrbitData={get state(){return state;},deptScore,statusOf,colorOf,COL,orgScore,allProjects};
