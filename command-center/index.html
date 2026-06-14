@@ -8,7 +8,7 @@
 <script>
 /* Pluggable AI backend — leave empty to use the built-in offline analyst.
    Point aiEndpoint at a Maryam-style route ({question,context}->{answer}) to use a real model. */
-window.ORBIT_CONFIG = { aiEndpoint:'', orgName:'Legal Affairs Department · Dubai' };
+window.ORBIT_CONFIG = { aiEndpoint:'/api/analyst', orgName:'Legal Affairs Department · Dubai' };
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
@@ -390,10 +390,12 @@ function localAnswer(q){
   }
   return {text:`Try: <b>“which project is failing?”</b>, <b>“what should I be concerned about?”</b>, <b>“how is Litigation doing?”</b>, <b>“what's overdue?”</b>, or <b>“give me a summary.”</b>`,focus};
 }
+function focusFromText(t){const s=new Set();const tl=(t||'').toLowerCase();allProjects().forEach(p=>{if(p.name&&p.name.length>4&&tl.includes(p.name.toLowerCase()))s.add(p.id);});return s;}
 async function askLLM(q){const ep=window.ORBIT_CONFIG.aiEndpoint;if(!ep)return null;
-  try{const r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,context:context(),
-    system:"You are the analyst for an executive portfolio 'mission control'. Answer in 2-4 spoken sentences using ONLY the JSON context. Lead with the most serious risk. Never invent projects or numbers."})});
-   if(!r.ok)return null;const j=await r.json();return j.answer?{text:j.answer,focus:new Set()}:null;}catch(e){return null;}}
+  try{const r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,context:context()})});
+   if(!r.ok)return null;const j=await r.json();if(!j.answer)return null;
+   const focus=focusFromText(j.answer);let select=null;for(const p of allProjects()){if(focus.has(p.id)){select=p.deptId;break;}}
+   return {text:j.answer,focus,select};}catch(e){return null;}}
 function showAnswer(html){const a=document.getElementById('answer');a.innerHTML=html;a.classList.add('on');}
 function stripHtml(h){const d=document.createElement('div');d.innerHTML=h.replace(/<br>/g,'. ').replace(/•/g,'');return (d.textContent||'').replace(/Analyst/,'').replace(/\s+/g,' ').trim();}
 async function handleQuery(q){q=(q||'').trim();if(!q)return;
