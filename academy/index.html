@@ -230,7 +230,7 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 
 <div class="warp" id="warp"></div>
 <div class="stage" id="stage">
-  <div class="st-top"><div class="phase-rail"><div class="phase" data-ph="learn"><span class="d"></span>Learn</div><div class="phase" data-ph="quiz"><span class="d"></span>Skills test</div><div class="phase" data-ph="sim"><span class="d"></span>Simulation</div></div></div>
+  <div class="st-top"><div class="phase-rail"><div class="phase" data-ph="learn"><span class="d"></span>Learn &amp; check</div><div class="phase" data-ph="sim"><span class="d"></span>Role-play</div></div></div>
   <button class="st-exit" id="stExit">Exit to galaxy ✕</button>
   <div class="st-title" id="stTitle"></div>
   <div class="board" id="board"></div>
@@ -683,14 +683,12 @@ async function acknowledge(s,known){
 function pick(a){return a[Math.floor(Math.random()*a.length)];}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;const t=a[i];a[i]=a[j];a[j]=t;}return a;}
 const L_GREET=[
- "Welcome — I'm your coach for {S}. Quick plan: the big picture, then I'll hear what you know, we work through it, and finish with a short quiz and three live role-plays.",
- "Good to have you on {S}. Here's the shape of it — an overview, a check on what you already know, the detail together, then a quiz and three customer role-plays.",
- "Let's get into {S}. First the lay of the land, then I'll see what you know, we cover it properly, and round off with a skills test and three role-plays.",
- "Right — {S}. I'll set the scene, find out what you already know, walk you through it, then test you with questions and three live customers."];
-const L_DIAG=["Before we dive in — what do you already know about {S}? Tell me, or just say 'not much'.","Quick one first: what's your sense of {S} so far? No problem if it's nothing yet.","Tell me honestly — how familiar are you with {S} already?","What comes to mind when you think of {S}? Say whatever you've got."];
-const L_GO=["Love it — let me build on that and join the dots, so you could explain this to anyone. Pause me whenever.","Great foundation. I'll fill in the gaps now so the whole picture clicks — stop me anytime to ask.","Nice — let's take what you know and round it out. Jump in whenever something's unclear.","Good start. Let me layer in the detail so you can teach it with confidence — pause me anytime."];
-const L_FRESH=["No problem at all — that's exactly what I'm here for. Let's build it from the ground up, and pause me whenever you like.","Totally fine — we'll start fresh and I'll make it stick. Stop me anytime to ask.","That's alright — by the end you'll be teaching this to customers yourself. Let's walk through it; pause me whenever.","Don't worry — we'll cover everything you need. Jump in with questions as we go."];
-const L_TOQUIZ=["Now — let's test your skills. Three questions; answer out loud or type.","Time to check what stuck. I'll ask three — take your time.","Let's see how it landed. Three quick questions coming up.","Skills test time — three questions, answer however you like."];
+ "Welcome — I'm your coach for {S}. I'll teach it in three short parts and check in with a quick question after each, so it really sticks. Then three live customer role-plays. Pause me anytime.",
+ "Good to have you on {S}. Here's how it works: I'll walk you through it section by section, ask you a question after each part to lock it in, then we'll run three customer role-plays. Stop me whenever you like.",
+ "Let's get into {S}. I'll cover it in a few short pieces, and after each one I'll pop you a question so you're learning by doing — then three role-plays at the desk. Jump in anytime.",
+ "Right — {S}. We'll learn it in small chunks, with a quick check after each so nothing slips past, then three live customers. Pause me whenever you want."];
+const L_CHECK=["Quick check —","Let's lock that in —","One for you —","Here's a question on that —","Let me test that —","Quick one —","So you've got it —"];
+const L_MORECHECKS=["Almost there — let's nail it down with a couple more quick questions before the role-plays.","You're close. A few more quick ones to make sure it's solid, then we'll go live.","Let's tighten it up with a couple more questions before you face real customers.","Nearly — one or two more checks to lock it in, then the role-plays."];
 const L_SIMGOOD=["You clearly know it — now for the real thing. Three live customers; I'll play them, you respond like you would at the desk.","Strong work. Let's make it real: three customer role-plays. I'm the customer, you're the ambassador.","You've got the knowledge — let's pressure-test it. Three customers, back to back."];
 const L_SIMOK=["Good effort — practice will lock it in. Three customer role-plays now; I'm the customer.","Let's reinforce it with the real thing — three role-plays. I'll be the customer.","No worries — repetition helps. Three customers coming up; respond as the ambassador."];
 const L_ROLE=["Here comes a customer.","Next one — someone steps up to your desk.","A customer approaches.","Okay, customer {N}.","Right, here's another."];
@@ -701,42 +699,51 @@ const L_FAILQUIZ=["That's {C} out of 3 — you need at least 2 to pass, so we ha
 const L_REDO=["Fresh set of questions — here we go.","New questions this time. Take your time.","Round two, different questions. You've got this.","Let's try again with a different mix."];
 const L_CERT=["Outstanding — you've certified {S}. Head back and pick your next planet whenever you're ready.","Brilliant work — {S} is certified. Choose your next planet when you like.","That's a certification on {S}. Back to the galaxy when you're ready for the next."];
 const L_NOTCERT=["Good progress on {S} — revisit it any time to sharpen up and certify.","Solid effort on {S}. Come back to tighten the tricky bits and lock in the certificate.","Nice work on {S} — another pass and you'll have it certified."];
+// pull a question from the remaining pool that best fits the section just taught
+function pickQFor(cat,pool){
+  if(!pool||!pool.length)return null;
+  const pats={steps:/\b(step|first|how do|process|apply|who|after|begin|start|register)\b/i,
+    fees:/\b(fee|cost|dirham|pay|price|much|long|day|time|vat|free|discount|certificate)\b/i,
+    channels:/\b(channel|portal|app|online|system|document|need|bring|where|search|report|24)\b/i};
+  const pat=pats[cat];let idx=-1;
+  if(pat)idx=pool.findIndex(q=>pat.test(q.q)||(q.kw||[]).some(k=>pat.test(k)));
+  if(idx<0)idx=0;
+  return pool.splice(idx,1)[0];
+}
+// ask one embedded check (with a single retry); returns 1 if correct, else 0
+async function askCheck(s,q){
+  if(!q)return 0;
+  await say(pick(L_CHECK)+' '+q.q);if(ab())return 0;
+  let ans=await listen('Answer the question…');if(ab())return 0;
+  let g=await gradeAnswer(s,q.q,q.a,ans);if(ab())return 0;
+  if(!g.correct){setCoach('↻ one more try');await say(pick(L_RETRY));if(ab())return 0;ans=await listen('Try once more…');if(ab())return 0;g=await gradeAnswer(s,q.q,q.a,ans);if(ab())return 0;}
+  setCoach(g.correct?'✓ correct':'✗ noted');await say(g.feedback);setCoach('');
+  return g.correct?1:0;
+}
 async function runLesson(s){
   buildBoard(s);setPhase('learn');setCoach('');
-  let L=null;const lessonP=getLesson(s).then(v=>{L=v;return v;});  // prefetch during the intro so there's no dead pause
+  let L=null;const lessonP=getLesson(s).then(v=>{L=v;return v;});  // prefetch during the greeting so there's no dead pause
   await say(pick(L_GREET).replace('{S}',shortName(s)));if(ab())return;
-  await say(pick(L_DIAG).replace('{S}',shortName(s)));if(ab())return;
-  const known=await listen("Tell me what you know…");if(ab())return;
-  const shared=known&&known.trim().length>2&&!/^(no|not|nope|nah|nothing|none|dunno|don'?t|never|zero)\b/i.test(known.trim());
-  if(shared){const ack=await acknowledge(s,known);if(ab())return;await say(ack);if(ab())return;}
-  else{await say(pick(L_FRESH));if(ab())return;}
   if(!L){setCoach('Putting your lesson together…');L=await lessonP;setCoach('');}if(ab())return;
+  // teach a section, then immediately check it — questions sprinkled through the lesson, not bunched at the end
+  const pool=shuffle(s.quiz);let correct=0;
   revealSteps();await teachSay(L.steps);if(ab())return;
+  correct+=await askCheck(s,pickQFor('steps',pool));if(ab())return;
   revealFees();await teachSay(L.fees);if(ab())return;
+  correct+=await askCheck(s,pickQFor('fees',pool));if(ab())return;
   revealChannels();await teachSay(L.channels);if(ab())return;
+  correct+=await askCheck(s,pickQFor('channels',pool));if(ab())return;
   await say(L.tip);if(ab())return;
-  hideBoard();markPhaseDone('learn');setPhase('quiz');
-  // Skills test: 3 questions drawn at random from the pool, re-drawn each attempt.
-  // Must score at least 2/3 to pass; if not, we tell them and run a fresh test.
-  let passed=false,attempt=0;
-  while(!passed){
-    if(ab())return;attempt++;
-    await say(attempt===1?pick(L_TOQUIZ):pick(L_REDO));if(ab())return;
-    const qs=shuffle(s.quiz).slice(0,3);
-    let correct=0;
-    for(let i=0;i<qs.length;i++){if(ab())return;const q=qs[i];
-      await say("Question "+(i+1)+" of "+qs.length+": "+q.q);if(ab())return;
-      let ans=await listen('Answer the question…');if(ab())return;
-      let g=await gradeAnswer(s,q.q,q.a,ans);if(ab())return;
-      if(!g.correct){setCoach('↻ one more try');await say(pick(L_RETRY));if(ab())return;ans=await listen('Try once more…');if(ab())return;g=await gradeAnswer(s,q.q,q.a,ans);if(ab())return;}
-      if(g.correct)correct++;setCoach(g.correct?'✓ correct':'✗ noted');
-      await say(g.feedback);if(ab())return;setCoach('');}
-    if(correct>=2){passed=true;}
-    else{setCoach('Not passed — '+correct+'/3');await say(pick(L_FAILQUIZ).replace('{C}',correct));if(ab())return;setCoach('');}
+  // need at least 2 of 3 right; if short, sprinkle a couple more until it sticks (cap to avoid trapping)
+  let extra=0;
+  while(correct<2&&extra<4){
+    if(extra===0){await say(pick(L_MORECHECKS));if(ab())return;}
+    if(!pool.length)pool.push(...shuffle(s.quiz));
+    correct+=await askCheck(s,pool.shift());if(ab())return;extra++;
   }
-  P(s.id).quiz=true;save();updateHUD();
-  markPhaseDone('quiz');setPhase('sim');
-  await say(pick(L_SIMGOOD));if(ab())return;
+  hideBoard();P(s.id).quiz=correct>=2;save();updateHUD();
+  markPhaseDone('learn');setPhase('sim');
+  await say(correct>=2?pick(L_SIMGOOD):pick(L_SIMOK));if(ab())return;
   let total=0;
   for(let i=0;i<s.sims.length;i++){if(ab())return;const line=s.sims[i];
     await say(pick(L_ROLE).replace('{N}',(i+1)));if(ab())return;
