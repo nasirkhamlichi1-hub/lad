@@ -198,17 +198,66 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 .kcard .pr input{border-color:var(--violet)}
 .kclose{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--mut);cursor:pointer;font-size:17px;display:grid;place-items:center}
 .kstatus{font-size:11.5px;color:var(--green);margin-left:10px}
+/* ── Training Solar System front door (login) ── */
+.authgate{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:24px;
+  background:radial-gradient(130% 100% at 50% -10%,#101a40,#070b1e 55%,#03040b);overflow:hidden}
+.authgate.on{display:flex}
+.authgate::before{content:'';position:absolute;inset:-20%;background:
+  radial-gradient(2px 2px at 20% 30%,rgba(255,255,255,.5),transparent),
+  radial-gradient(2px 2px at 70% 60%,rgba(255,255,255,.35),transparent),
+  radial-gradient(1.5px 1.5px at 40% 80%,rgba(255,255,255,.4),transparent),
+  radial-gradient(1.5px 1.5px at 85% 20%,rgba(255,255,255,.3),transparent),
+  radial-gradient(2px 2px at 55% 15%,rgba(255,255,255,.35),transparent);background-size:cover;opacity:.6;animation:agdrift 60s linear infinite}
+@keyframes agdrift{from{transform:translateY(0)}to{transform:translateY(-40px)}}
+.ag-card{position:relative;width:min(430px,94vw);text-align:center}
+.ag-sun{width:74px;height:74px;border-radius:50%;margin:0 auto 18px;background:radial-gradient(circle at 34% 30%,#ffe9b0,#e0a23c);box-shadow:0 0 50px rgba(255,196,90,.6),0 0 120px rgba(255,160,60,.35)}
+.ag-k{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#ffcf7a;margin-bottom:8px}
+.ag-card h1{font-family:var(--serif);font-size:38px;margin:0 0 6px;color:#fff;line-height:1.05}
+.ag-card .ag-sub{color:var(--mut);font-size:13.5px;line-height:1.55;margin:0 auto 24px;max-width:340px}
+.ag-form{background:rgba(10,14,30,.72);border:1px solid var(--line);border-radius:16px;padding:20px;backdrop-filter:blur(12px);text-align:left;box-shadow:0 24px 70px rgba(0,0,0,.5)}
+.ag-form label{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--mut);margin:0 0 5px}
+.ag-form input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:12px 13px;font-size:14.5px;outline:none;font-family:var(--sans);margin-bottom:14px}
+.ag-form input:focus{border-color:var(--gold)}
+.ag-btn{width:100%;background:linear-gradient(135deg,#ffcf7a,#e0a23c);color:#2a1c04;border:none;border-radius:11px;padding:13px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+.ag-btn:hover{filter:brightness(1.06)}.ag-btn:disabled{opacity:.6;cursor:default}
+.ag-err{color:#f87171;font-size:12.5px;margin-top:10px;min-height:16px;text-align:center}
+.ag-foot{color:var(--mut);font-size:11px;margin-top:16px;line-height:1.5}
+.whoami{display:none;align-items:center;gap:9px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:7px 11px;backdrop-filter:blur(12px);font-size:12px}
+.whoami .who-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.whoami b{font-weight:600;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.whoami button{background:none;border:none;color:var(--mut);cursor:pointer;font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;padding:0 0 0 4px}
+.whoami button:hover{color:#fff}
 #tip{position:fixed;z-index:40;pointer-events:none;background:rgba(10,12,26,.95);border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:12px;display:none;max-width:230px}
 #tip .n{font-weight:700;margin-bottom:2px}#tip .m{color:var(--mut);font-size:11px}
 </style>
 </head>
 <body>
 <div id="loader"><div class="lspin"></div><p>Building the academy…</p></div>
+
+<div class="authgate" id="authgate">
+  <div class="ag-card">
+    <div class="ag-sun"></div>
+    <div class="ag-k">Government of Dubai · Legal Affairs Department</div>
+    <h1>Training Solar System</h1>
+    <p class="ag-sub">Sign in to begin — or pick up exactly where you left off. Your journey across the 11 services is saved to your account.</p>
+    <div class="ag-form">
+      <label for="agEmail">Your work email</label>
+      <input id="agEmail" type="email" placeholder="name@legalaffairs.gov.ae" autocomplete="username"/>
+      <label for="agPass">Password</label>
+      <input id="agPass" type="password" placeholder="Password" autocomplete="current-password"/>
+      <button class="ag-btn" id="agBtn">Begin training →</button>
+      <div class="ag-err" id="agErr"></div>
+    </div>
+    <div class="ag-foot">Trouble signing in? Contact your training administrator.</div>
+  </div>
+</div>
+
 <div id="scene"></div><div id="labels"></div><div id="vignette"></div>
 
 <div class="hud">
   <div class="brand"><div class="logo"></div><div><b>Service Ambassador Academy</b><span>Legal Affairs Department · Dubai</span></div></div>
   <div class="hud-sp"></div>
+  <div class="whoami" id="whoami"><span class="who-dot"></span><b id="whoEmail"></b><button id="whoOut" title="Sign out">Sign out</button></div>
   <div class="prog-pill"><div class="prog-bar"><i id="progFill"></i></div><b id="progN">0</b><small>/ 11 certified</small></div>
   <button class="cert-btn" id="certBtn" disabled>🏅 Certificate</button>
 </div>
@@ -429,7 +478,7 @@ window.ABOUT=ABOUT;
 const LS='academy_v2';
 let progress=load();
 function load(){try{const s=JSON.parse(localStorage.getItem(LS));if(s)return s;}catch(e){}return {};}
-function save(){try{localStorage.setItem(LS,JSON.stringify(progress));}catch(e){}}
+function save(){try{localStorage.setItem(LS,JSON.stringify(progress));}catch(e){}if(window.AUTH&&AUTH.hosted&&AUTH.token)queueSync();}
 function P(id){return progress[id]||(progress[id]={quiz:false,sim:false});}
 function certified(id){const p=P(id);return p.quiz&&p.sim;}
 function certCount(){return SERVICES.filter(s=>certified(s.id)).length;}
@@ -439,7 +488,8 @@ function shortName(s){return s.name.split(' (')[0].split(' — ')[0];}
 function dirhams(t){return String(t==null?'':t).replace(/AED\s*([\d.,]+)/gi,'$1 Dirhams').replace(/\bAED\b/gi,'Dirhams');}
 function key(){const f=document.getElementById('kAnthropic');return window.ORBIT_CONFIG.anthropicKey||(f?f.value.trim():'')||'';}
 
-function updateHUD(){const n=certCount();document.getElementById('progN').textContent=n;document.getElementById('progFill').style.width=Math.round(n/11*100)+'%';const cb=document.getElementById('certBtn');cb.disabled=n<11;cb.textContent=n<11?('🏅 Certificate ('+n+'/11)'):'🏅 Get certificate';renderSidebar();if(window.orbit3d)window.orbit3d.refresh();}
+function updateHUD(){const n=certCount();document.getElementById('progN').textContent=n;document.getElementById('progFill').style.width=Math.round(n/11*100)+'%';const cb=document.getElementById('certBtn');cb.disabled=n<11;cb.textContent=n<11?('🏅 Certificate ('+n+'/11)'):'🏅 Get certificate';renderSidebar();if(window.orbit3d)window.orbit3d.refresh();
+  if(n>=11&&window.AUTH&&window.AUTH.hosted&&window.AUTH.token&&!localStorage.getItem('academy_certdone')){try{localStorage.setItem('academy_certdone','1');}catch(_){}fetch('api/cert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:window.AUTH.token})}).catch(()=>{});}}
 function renderSidebar(){const el=document.getElementById('sbList');if(!el)return;
   el.innerHTML=SERVICES.map((s,i)=>{const cert=certified(s.id),p=P(s.id),prog=!cert&&(p.quiz||p.sim);
     const cls=cert?'done':(prog?'prog':'');const tick=cert?'✓':(prog?'◐':(i+1));
@@ -794,6 +844,54 @@ try{window.ORBIT_CONFIG.anthropicKey=localStorage.getItem('academy_anthropic')||
 window.AcademyData={SERVICES,certified,P,findS,esc,shortName};
 window.enterPlanet=enterPlanet;
 updateHUD();
+
+/* ════ multi-user login + central progress tracking ════
+   On Azure (with the /api backend) the app runs in "hosted" mode: trainees sign
+   in with their email + the shared password, and progress is saved centrally so
+   they can resume on any device and a trainer can track everyone (see admin.html).
+   On the GitHub Pages preview there is no /api, so it stays in local mode. */
+const AUTH={hosted:false,email:null,token:null,name:''};window.AUTH=AUTH;
+let _syncT=null;
+function queueSync(){clearTimeout(_syncT);_syncT=setTimeout(syncServer,900);}
+async function syncServer(){if(!AUTH.token)return;try{await fetch('api/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:AUTH.token,name:AUTH.name||localStorage.getItem('academy_name')||'',progress})});}catch(e){}}
+function setWhoami(){const w=document.getElementById('whoami');if(!w)return;if(AUTH.hosted&&AUTH.email){w.style.display='flex';document.getElementById('whoEmail').textContent=AUTH.email;}else{w.style.display='none';}}
+function showGate(show){document.getElementById('authgate').classList.toggle('on',show);}
+async function loadServerProgress(){
+  try{const r=await fetch('api/progress?token='+encodeURIComponent(AUTH.token),{cache:'no-store'});
+    if(r.status===401){doLogout();return;}
+    if(r.ok){const j=await r.json();progress=j.progress||progress;try{localStorage.setItem(LS,JSON.stringify(progress));}catch(_){}}
+  }catch(e){}
+  updateHUD();setWhoami();
+}
+async function doLogin(){
+  const email=(document.getElementById('agEmail').value||'').trim().toLowerCase();
+  const pass=document.getElementById('agPass').value||'';
+  const err=document.getElementById('agErr');const btn=document.getElementById('agBtn');
+  err.textContent='';btn.disabled=true;btn.textContent='Signing in…';
+  try{
+    const r=await fetch('api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){err.textContent=j.error||'Could not sign in.';return;}
+    AUTH.token=j.token;AUTH.email=j.email;AUTH.name=j.name||'';
+    try{localStorage.setItem('academy_token',j.token);localStorage.setItem('academy_email',j.email);}catch(_){}
+    progress=j.progress||{};try{localStorage.setItem(LS,JSON.stringify(progress));}catch(_){}
+    updateHUD();setWhoami();showGate(false);
+  }catch(e){err.textContent='Could not reach the server. Please try again.';}
+  finally{btn.disabled=false;btn.textContent='Begin training →';}
+}
+function doLogout(){AUTH.token=AUTH.email=null;AUTH.name='';try{localStorage.removeItem('academy_token');localStorage.removeItem('academy_email');}catch(_){}setWhoami();showGate(true);}
+async function initAuth(){
+  try{const r=await fetch('api/config',{cache:'no-store'});if(r.ok){const j=await r.json();AUTH.hosted=!!j.hosted;}}catch(e){}
+  if(!AUTH.hosted)return; // local mode (e.g. GitHub Pages) — unchanged
+  const t=localStorage.getItem('academy_token'),e=localStorage.getItem('academy_email');
+  if(t&&e){AUTH.token=t;AUTH.email=e;AUTH.name=localStorage.getItem('academy_name')||'';showGate(false);await loadServerProgress();}
+  else{showGate(true);}
+}
+document.getElementById('agBtn').addEventListener('click',doLogin);
+document.getElementById('agPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('agEmail').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('agPass').focus();});
+document.getElementById('whoOut').addEventListener('click',doLogout);
+initAuth();
 </script>
 
 <!-- ════════ 3D ENGINE ════════ -->

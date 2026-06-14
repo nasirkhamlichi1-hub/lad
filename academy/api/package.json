@@ -1,0 +1,9 @@
+{
+  "name": "academy-api",
+  "version": "1.0.0",
+  "description": "Service Ambassador Academy — progress tracking API (login, progress, admin)",
+  "main": "index.js",
+  "dependencies": {
+    "@azure/data-tables": "^13.2.2"
+  }
+}
