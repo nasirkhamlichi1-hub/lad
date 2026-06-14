@@ -23,6 +23,14 @@ never in the browser.
 - With the key set, answers come from Claude with full reasoning, and the
   dashboard still highlights any projects the answer names.
 
+**Bring your own key (no backend needed).** Click the ⚙ button in the analyst
+panel and paste an **Anthropic API key** — the app then calls Claude directly
+from your browser for full, real‑time analysis of any question. The key is kept
+in your browser's `localStorage` only (never uploaded or committed). This is ideal
+for a private review; for a shared/public deployment use the server `/api/analyst`
+route instead so the key stays server‑side. (A Claude key powers the *analyst*; it
+cannot produce *voice* — see below.)
+
 ## Natural voice (text‑to‑speech)
 For a fully conversational, human voice (instead of the robotic browser voice),
 the app calls **`/api/tts`** — a function that proxies to **Azure AI Speech**
