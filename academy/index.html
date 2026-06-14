@@ -40,8 +40,8 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 .help b{color:var(--ink)}
 @media(max-width:600px){.help{display:none}}
 /* ── Immersive stage ── */
-.stage{position:fixed;inset:0;z-index:28;display:none;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 0 36px;
-  background:radial-gradient(120% 90% at 50% 30%,rgba(4,6,16,.05),rgba(3,4,12,.62) 60%,rgba(2,3,9,.92));opacity:0;transition:opacity .6s}
+.stage{position:fixed;inset:0;z-index:28;display:none;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 0 30px;
+  background:radial-gradient(120% 95% at 50% 24%,rgba(8,10,24,.25),rgba(3,4,12,.8) 55%,rgba(1,2,7,.96));backdrop-filter:blur(3px) brightness(.68);opacity:0;transition:opacity .55s}
 .stage.on{display:flex;opacity:1}
 .st-top{position:absolute;top:18px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 20px}
 .phase-rail{display:flex;gap:8px;background:rgba(10,13,26,.6);border:1px solid var(--line);border-radius:30px;padding:6px;backdrop-filter:blur(12px)}
@@ -60,8 +60,9 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 @keyframes orbpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 @keyframes orbring{0%{opacity:.5;transform:scale(1)}100%{opacity:0;transform:scale(1.4)}}
 .orb.cust{background:radial-gradient(circle at 38% 32%,#bfe0ff,#5b8def 55%,#1e4fa8);box-shadow:0 0 60px rgba(91,141,239,.5),inset 0 0 30px rgba(255,255,255,.25)}
-.cap{max-width:720px;width:92%;text-align:center;font-size:19px;line-height:1.55;color:#fff;text-shadow:0 2px 16px rgba(0,0,0,.85);min-height:64px;margin-bottom:8px}
-.cap .role{display:block;font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--violet);margin-bottom:8px}
+.cap{max-width:660px;width:92%;text-align:center;font-size:17px;line-height:1.5;color:#fff;min-height:50px;max-height:30vh;overflow-y:auto;margin-bottom:12px;background:rgba(6,8,18,.55);border:1px solid var(--line);border-radius:16px;padding:14px 20px;backdrop-filter:blur(8px);transition:opacity .22s;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.cap::-webkit-scrollbar{width:6px}.cap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:6px}
+.cap .role{display:block;font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--violet);margin-bottom:7px}
 .cap.cust .role{color:var(--blue)}
 .coach{max-width:680px;width:92%;text-align:center;font-size:13.5px;color:var(--gold);min-height:20px;margin-bottom:14px;text-shadow:0 1px 8px rgba(0,0,0,.8)}
 .listening{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--green);margin-bottom:10px;opacity:0;transition:opacity .2s}
@@ -78,7 +79,39 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 .sbtn.go{background:var(--violet);border-color:var(--violet)}
 .sbtn.gold{background:var(--gold);border-color:var(--gold);color:#1a1407}
 .st-controls.hide{display:none}
-.peek{position:absolute;bottom:26px;left:20px;font-size:11.5px;color:var(--mut);max-width:230px;line-height:1.5}
+.peek{position:absolute;bottom:22px;left:20px;font-size:11.5px;color:var(--mut);max-width:230px;line-height:1.5;opacity:.7}
+.askbtn{position:absolute;bottom:116px;left:50%;transform:translateX(-50%);background:rgba(167,139,250,.2);border:1px solid var(--violet);color:#fff;border-radius:24px;padding:11px 22px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:var(--sans);display:none;align-items:center;gap:8px;backdrop-filter:blur(10px);box-shadow:0 8px 30px rgba(124,92,255,.3)}
+.askbtn.on{display:inline-flex}
+.askbtn:hover{background:rgba(167,139,250,.34)}
+.warp{position:fixed;inset:0;z-index:27;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 45%,rgba(167,139,250,.32),rgba(106,166,255,.12) 35%,transparent 65%)}
+.warp.go{animation:warpf 1s ease-out}
+@keyframes warpf{0%{opacity:0;transform:scale(1.7)}25%{opacity:1}100%{opacity:0;transform:scale(.55)}}
+/* lesson board */
+.board{position:absolute;top:104px;left:0;right:0;bottom:228px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;pointer-events:none;padding:0 24px}
+.bd-cover{display:flex;flex-direction:column;gap:11px;align-items:center;opacity:0;transition:opacity .5s}
+.bd-cover.on{opacity:1}
+.bd-cover .h{font-family:var(--mono);font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--violet)}
+.bd-cover .it{font-size:16px;color:#eaf0ff;opacity:0;transform:translateY(8px);transition:all .55s}
+.bd-cover.on .it{opacity:1;transform:none}
+.bd-proc{display:flex;align-items:flex-start;flex-wrap:wrap;justify-content:center;max-width:780px}
+.bd-step{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;width:155px;opacity:0;transform:translateY(12px) scale(.92);transition:all .5s cubic-bezier(.2,.7,.2,1)}
+.bd-step.on{opacity:1;transform:none}
+.bd-step::before{content:'';position:absolute;top:23px;left:-50%;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--green));opacity:0;transition:opacity .5s}
+.bd-step:first-child::before{display:none}.bd-step.on::before{opacity:.85}
+.bd-dot{width:48px;height:48px;border-radius:50%;background:rgba(52,211,153,.14);border:2px solid var(--green);color:var(--green);display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:17px;margin-bottom:11px;box-shadow:0 0 22px rgba(52,211,153,.35)}
+.bd-step .t{font-size:12.5px;color:#dfe6f5;line-height:1.4;max-width:145px}
+.bd-cards{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.bd-card{background:rgba(14,18,34,.78);border:1px solid var(--line);border-radius:14px;padding:14px 20px;backdrop-filter:blur(10px);opacity:0;transform:translateY(10px);transition:all .5s;text-align:center}
+.bd-card.on{opacity:1;transform:none}
+.bd-card .k{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.bd-card .v{font-size:20px;font-weight:700}.bd-card.fee .v{color:var(--gold)}.bd-card .s{font-size:11.5px;color:var(--mut);margin-top:4px}
+.bd-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.bd-chip{font-size:12.5px;color:#cfe3ff;background:rgba(106,166,255,.13);border:1px solid rgba(106,166,255,.4);border-radius:20px;padding:7px 14px;opacity:0;transform:scale(.9);transition:all .45s}
+.bd-chip.on{opacity:1;transform:none}.bd-chip.docs{color:var(--gold);background:rgba(255,212,121,.1);border-color:rgba(255,212,121,.35)}
+.bd-cust{display:flex;gap:14px;align-items:flex-start;background:#fff;color:#0a0e14;border-radius:16px;padding:18px 22px;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.5);opacity:0;transform:translateY(12px);transition:all .5s}
+.bd-cust.on{opacity:1;transform:none}
+.bd-cust-av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#6aa6ff,#a78bfa);flex-shrink:0;display:grid;place-items:center;color:#fff;font-weight:700;font-size:18px}
+.bd-cust-t{font-size:16px;line-height:1.5}.bd-cust-t small{display:block;color:#5a6878;font-size:12px;margin-top:5px}
 /* certificate */
 .cmodal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(4,6,14,.7);backdrop-filter:blur(5px)}
 .cmodal.on{display:flex}
@@ -120,14 +153,17 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 <button class="gearbtn" id="gearBtn" title="Connect Claude + ElevenLabs"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
 <div class="help"><b>Welcome, ambassador.</b> Each planet is one of the 11 services. <b>Click a planet to dive in</b> — your AI coach will teach you the service out loud, quiz you, then run three live customer role‑plays. Certify all 11 to earn your certificate. For the full voice experience, connect your keys with the ⚙.</div>
 
+<div class="warp" id="warp"></div>
 <div class="stage" id="stage">
   <div class="st-top"><div class="phase-rail"><div class="phase" data-ph="learn"><span class="d"></span>Learn</div><div class="phase" data-ph="quiz"><span class="d"></span>Skills test</div><div class="phase" data-ph="sim"><span class="d"></span>Simulation</div></div></div>
   <button class="st-exit" id="stExit">Exit to galaxy ✕</button>
   <div class="st-title" id="stTitle"></div>
+  <div class="board" id="board"></div>
   <div class="orb" id="orb"></div>
   <div class="cap" id="cap"><span class="role" id="capRole">Coach</span><span id="capText"></span></div>
   <div class="coach" id="coach"></div>
   <div class="listening" id="listening">● listening…</div>
+  <button class="askbtn" id="askBtn">✋ Pause &amp; ask a question</button>
   <div class="st-controls" id="stControls">
     <button class="mic" id="stMic" title="Speak"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg></button>
     <input class="st-input" id="stInput" placeholder="…or type your answer"/>
@@ -292,13 +328,20 @@ function facts(s){return JSON.stringify({service:s.name,for:s.who,channels:s.cha
 
 let curAudio=null;
 function stopAudio(){if(curAudio){try{curAudio.onended=null;curAudio.pause();}catch(e){}curAudio=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();}
+function stripMd(t){return (t||'').replace(/\*\*(.+?)\*\*/g,'$1').replace(/\*(.+?)\*/g,'$1').replace(/`+/g,'').replace(/[#>_]/g,'').replace(/\s+/g,' ').trim();}
 function speakAsync(text,onEnd){
-  stopAudio();
-  const safety=setTimeout(onEnd,Math.min(22000,1600+text.length*60));
-  const done=()=>{clearTimeout(safety);onEnd();};
+  stopAudio();text=stripMd(text);
+  let done=false;const finish=()=>{if(done)return;done=true;onEnd();};
+  let safety=setTimeout(finish,Math.max(4000,text.length*95));   // generous fallback only
   const ek=window.ORBIT_CONFIG.elevenKey;
-  if(ek){fetch('https://api.elevenlabs.io/v1/text-to-speech/'+window.ORBIT_CONFIG.elevenVoice+'?output_format=mp3_44100_128',{method:'POST',headers:{'xi-api-key':ek,'Content-Type':'application/json'},body:JSON.stringify({text,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.45,similarity_boost:0.8,style:0.4,use_speaker_boost:true}})}).then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(buf=>{curAudio=new Audio(URL.createObjectURL(new Blob([buf],{type:'audio/mpeg'})));curAudio.onended=done;curAudio.onerror=()=>browserSpeak(text,done);curAudio.play().catch(()=>browserSpeak(text,done));}).catch(()=>browserSpeak(text,done));return;}
-  browserSpeak(text,done);
+  if(ek){fetch('https://api.elevenlabs.io/v1/text-to-speech/'+window.ORBIT_CONFIG.elevenVoice+'?output_format=mp3_44100_128',{method:'POST',headers:{'xi-api-key':ek,'Content-Type':'application/json'},body:JSON.stringify({text,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.45,similarity_boost:0.8,style:0.4,use_speaker_boost:true}})}).then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(buf=>{
+    curAudio=new Audio(URL.createObjectURL(new Blob([buf],{type:'audio/mpeg'})));
+    curAudio.onloadedmetadata=()=>{if(isFinite(curAudio.duration)&&curAudio.duration>0){clearTimeout(safety);safety=setTimeout(finish,curAudio.duration*1000+2500);}};  // use the REAL audio length
+    curAudio.onended=()=>{clearTimeout(safety);finish();};
+    curAudio.onerror=()=>{clearTimeout(safety);browserSpeak(text,finish);};
+    curAudio.play().catch(()=>{clearTimeout(safety);browserSpeak(text,finish);});
+  }).catch(()=>{clearTimeout(safety);browserSpeak(text,finish);});return;}
+  browserSpeak(text,finish);
 }
 function browserSpeak(text,done){if(!window.speechSynthesis){done();return;}const u=new SpeechSynthesisUtterance(text);u.rate=1.02;u.lang='en-US';const vs=window.speechSynthesis.getVoices();const p=vs.find(v=>/Natural|Aria|Ava|Jenny|Google US English|Samantha/i.test(v.name)&&(v.lang||'').toLowerCase().startsWith('en'));if(p)u.voice=p;u.onend=done;u.onerror=done;window.speechSynthesis.speak(u);}
 if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){};window.speechSynthesis.getVoices();}
@@ -314,7 +357,7 @@ if(SR){recog=new SR();recog.lang='en-US';recog.interimResults=true;recog.continu
 const stage=document.getElementById('stage');
 function setOrb(mode){const o=document.getElementById('orb');o.classList.toggle('cust',mode==='cust');}
 function setSpeaking(b,cust){document.getElementById('orb').classList.toggle('speak',b);setOrb(cust?'cust':'coach');}
-function setCaption(text,cust){document.getElementById('capRole').textContent=cust?'Customer':'Coach';document.getElementById('cap').classList.toggle('cust',!!cust);document.getElementById('capText').textContent=text;}
+function setCaption(text,cust){text=stripMd(text);const cap=document.getElementById('cap');cap.style.opacity='0';setTimeout(()=>{document.getElementById('capRole').textContent=cust?'Customer':'Coach';cap.classList.toggle('cust',!!cust);document.getElementById('capText').textContent=text;cap.scrollTop=0;cap.style.opacity='1';},110);}
 function setCoach(text){document.getElementById('coach').textContent=text||'';}
 function setListening(b){document.getElementById('listening').classList.toggle('on',b);document.getElementById('stControls').classList.toggle('hide',false);}
 function showControls(show){document.getElementById('stControls').classList.toggle('hide',!show);}
@@ -341,15 +384,16 @@ document.getElementById('stInput').addEventListener('keydown',e=>{if(e.key==='En
 document.getElementById('stSkip').addEventListener('click',()=>{if(window._skip)window._skip();else if(window._skipL)window._skipL();});
 document.getElementById('stExit').addEventListener('click',exitStage);
 document.getElementById('orb').addEventListener('click',()=>{if(window._skip)window._skip();});
+document.getElementById('askBtn').addEventListener('click',()=>{if(window._ask)window._ask();});
 
 /* ════ Grading ════ */
 async function gradeAnswer(s,question,correct,answer){
-  if(key()){const sys="You are a warm, encouraging training coach for a Service Ambassador at the Government of Dubai Legal Affairs Department. Judge the trainee's spoken answer to a knowledge question, using ONLY these facts: "+facts(s)+". The question was: \""+question+"\". A model answer: \""+correct+"\". Reply STRICT JSON only: {\"correct\": <true|false>, \"feedback\": \"<one or two warm spoken sentences: confirm if right, or gently correct with the right answer, plus a quick memory tip>\"}.";
-    const t=await claudeText([{role:'user',content:'The trainee said: "'+answer+'"'}],sys);
+  if(key()){const sys="You are an honest but kind training coach for a Service Ambassador at the Government of Dubai Legal Affairs Department. Judge the trainee's answer STRICTLY. Mark correct=true ONLY if the answer genuinely states the key fact from the model answer. Empty, vague, off-topic, or wrong answers are correct=false — do not be lenient. Use ONLY these facts: "+facts(s)+". The question: \""+question+"\". Model answer: \""+correct+"\". Reply STRICT JSON only: {\"correct\": <true|false>, \"feedback\": \"<one or two spoken sentences: if right, confirm warmly; if wrong, clearly say it's not right and give the correct answer plus a quick memory tip>\"}.";
+    const t=await claudeText([{role:'user',content:'The trainee said: "'+(answer||'(no answer given)')+'"'}],sys);
     if(t){try{const m=t.match(/\{[\s\S]*\}/);const j=JSON.parse(m?m[0]:t);return {correct:!!j.correct,feedback:j.feedback||correct};}catch(e){}}}
   // offline
-  const a=(answer||'').toLowerCase();const kw=(findQ(s,question)||{}).kw||[];const hit=kw.filter(k=>a.includes(k.toLowerCase())).length;const ok=hit>=Math.max(1,Math.ceil(kw.length/2));
-  return {correct:ok,feedback:ok?('Exactly right. '+correct):("Not quite — the answer is: "+correct+" Keep that one in mind.")};
+  const a=(answer||'').toLowerCase().trim();const kw=(findQ(s,question)||{}).kw||[];const hit=kw.filter(k=>a.includes(k.toLowerCase())).length;const ok=a.length>2&&hit>=Math.max(1,Math.ceil(kw.length/2));
+  return {correct:ok,feedback:ok?("That's right — "+correct):("That's not quite right. The answer is: "+correct+" Lock that one in.")};
 }
 function findQ(s,question){return s.quiz.find(q=>q.q===question);}
 async function gradeSim(s,line,answer){
@@ -370,53 +414,114 @@ async function enterPlanet(id){
   document.getElementById('stTitle').textContent=shortName(s);
   document.getElementById('peek').textContent='Tip: speak naturally, or type. Say "repeat" if you miss something.';
   document.querySelectorAll('.phase').forEach(p=>p.classList.remove('done','on'));
+  const wp=document.getElementById('warp');if(wp){wp.classList.remove('go');void wp.offsetWidth;wp.classList.add('go');}
   stage.classList.add('on');
   if(window.orbit3d)window.orbit3d.dive(id);
   try{await runLesson(s);}catch(e){console.error(e);setCoach('(Something interrupted the lesson — you can exit and try again.)');}
 }
 function ab(){return !session||session.aborted;}
+/* ── lesson board (animated process visualisation) ── */
+function buildBoard(s){
+  const docs=s.docs.filter(d=>d&&d!=='None'&&d!=='Not applicable');
+  let h='<div class="bd-cover" id="bdCover"><div class="h">In this lesson</div>'
+    +["Who it's for and what it does","The "+s.steps.length+"-step journey","The fees and timelines","Which channel to use"].map(t=>'<div class="it">'+esc(t)+'</div>').join('')+'</div>';
+  h+='<div class="bd-proc" id="bdProc">'+s.steps.map((st,i)=>'<div class="bd-step" data-i="'+i+'"><span class="bd-dot">'+(i+1)+'</span><span class="t">'+esc(st)+'</span></div>').join('')+'</div>';
+  h+='<div class="bd-cards"><div class="bd-card fee" id="bdFee"><div class="k">Headline</div><div class="v">'+esc(s.fees[0].fee)+'</div><div class="s">'+esc(s.fees[0].n)+(s.fees[0].time&&s.fees[0].time!=='Instant'?' · '+esc(s.fees[0].time):'')+'</div></div></div>';
+  h+='<div class="bd-chips" id="bdChips">'+s.channels.map(c=>'<span class="bd-chip">'+esc(c)+'</span>').join('')+(docs.length?'<span class="bd-chip docs">📄 '+docs.length+' documents</span>':'')+'</div>';
+  document.getElementById('board').innerHTML=h;
+}
+function showCover(){const c=document.getElementById('bdCover');if(c){c.classList.add('on');c.querySelectorAll('.it').forEach((el,i)=>setTimeout(()=>el.style.transitionDelay=(i*0.12)+'s',0));}}
+function hideCover(){const c=document.getElementById('bdCover');if(c)c.style.display='none';}
+function revealSteps(){document.querySelectorAll('#bdProc .bd-step').forEach((el,i)=>setTimeout(()=>el.classList.add('on'),i*420));}
+function revealFees(){const f=document.getElementById('bdFee');if(f)f.classList.add('on');}
+function revealChannels(){document.querySelectorAll('#bdChips .bd-chip').forEach((el,i)=>setTimeout(()=>el.classList.add('on'),i*180));}
+function hideBoard(){document.getElementById('board').innerHTML='';}
+function showCustomerCard(line,label){document.getElementById('board').innerHTML='<div class="bd-cust on"><div class="bd-cust-av">'+esc((label||'C').replace(/^a |^an /i,'').charAt(0).toUpperCase())+'</div><div class="bd-cust-t">“'+esc(line)+'”<small>— '+esc(label||'a customer')+'</small></div></div>';}
+
+/* ── interruptible teaching: a clear "Pause & ask" button (reliable, no false cut-offs) ── */
+function showInterrupt(b){const a=document.getElementById('askBtn');if(a)a.classList.toggle('on',b);}
+function teachSay(text){
+  setCaption(text);setSpeaking(true);showControls(false);showInterrupt(true);
+  return new Promise(resolve=>{
+    let settled=false;
+    const finish=()=>{if(settled)return;settled=true;showInterrupt(false);window._skip=null;window._ask=null;setSpeaking(false);resolve();};
+    window._skip=()=>{stopAudio();finish();};
+    window._ask=async()=>{if(settled)return;settled=true;showInterrupt(false);window._skip=null;window._ask=null;stopAudio();setSpeaking(false);const u=await listen('Go ahead — ask your question…');if(u&&!ab())await handleInterjection(u);resolve();};
+    speakAsync(text,finish);
+  });
+}
+async function handleInterjection(u){
+  const s=session.s;setCoach('answering your question…');
+  const sys="You are a warm expert coach teaching a Service Ambassador about "+s.name+". The learner just interrupted you with a question or comment. Answer it warmly and briefly — 1 to 2 spoken sentences — using ONLY these facts: "+facts(s)+". No markdown.";
+  let a=await claudeText([{role:'user',content:u}],sys);
+  if(!a)a=guideOffline(s,u);
+  setCoach('');await say(a);
+}
+function guideOffline(s,q){const ql=(q||'').toLowerCase();
+  if(/document|need|bring|paper/.test(ql)){const d=s.docs.filter(x=>x&&x!=='None'&&x!=='Not applicable');return d.length?('They will need '+d.join(', ')+'.'):'No documents are required for this one.';}
+  if(/fee|cost|much|price|pay/.test(ql))return s.fees.map(f=>f.n+': '+f.fee).join('; ')+'.';
+  if(/how long|time|days|when/.test(ql))return s.fees.map(f=>f.n+' takes '+f.time).join('; ')+'.';
+  if(/channel|where|apply|portal/.test(ql))return 'It runs through '+s.channels.join(' or ')+'.';
+  if(/who|for whom/.test(ql))return 'This service is for '+s.who+'.';
+  return s.desc;
+}
+async function getLesson(s){
+  const sys="You are an expert, warm training coach. Produce a short spoken lesson on this ONE service as STRICT JSON only: {\"steps\":\"2-3 spoken sentences walking through the journey steps\",\"fees\":\"1-2 spoken sentences on the headline fee and timeline\",\"channels\":\"1-2 spoken sentences on the channel(s), any documents, and one memorable tip\",\"tip\":\"one short encouraging closing line\"}. Conversational, no markdown. Use ONLY these facts: "+facts(s);
+  const t=await claudeText([{role:'user',content:'Create the lesson for '+s.name}],sys);
+  if(t){try{const m=t.match(/\{[\s\S]*\}/);const j=JSON.parse(m?m[0]:t);if(j.steps&&j.fees&&j.channels)return {steps:j.steps,fees:j.fees,channels:j.channels,tip:j.tip||"You've got this."};}catch(e){}}
+  const f=s.fees[0],docs=s.docs.filter(d=>d&&d!=='None'&&d!=='Not applicable');
+  return {steps:"Here's the journey: "+s.steps.join('; then ')+".",
+    fees:"On cost and time — "+f.n+" is "+f.fee+(f.time&&f.time!=='Instant'?", taking about "+f.time:"")+"."+(s.note?" "+s.note:""),
+    channels:"They use "+s.channels.join(" or ")+"."+(docs.length?" They'll need "+docs.slice(0,4).join(', ')+".":"")+" Keep the channel and the headline fee on the tip of your tongue.",
+    tip:"That's the essence of "+shortName(s)+" — nicely done."};
+}
+async function acknowledge(s,known){
+  const sys="You are a warm expert coach. The learner just told you what they already know about "+s.name+". In ONE or TWO encouraging spoken sentences, acknowledge what they got right, gently note anything missing, and say you'll fill in the rest together. Use ONLY these facts: "+facts(s)+". No markdown.";
+  const a=await claudeText([{role:'user',content:'The learner said: "'+known+'"'}],sys);
+  return a||"Good — that's a solid start. Let me fill in the details so you've got the whole picture.";
+}
+
 async function runLesson(s){
-  setPhase('learn');setCoach('');
-  await say("Welcome. I'm your training coach — let me walk you through "+shortName(s)+".");if(ab())return;
-  await say(await teachNarration(s));if(ab())return;
-  await say("That's the essence of it. Now — let's test your skills. I'll ask you a few questions; just answer out loud, or type if you prefer.");if(ab())return;
-  markPhaseDone('learn');setPhase('quiz');
+  buildBoard(s);setPhase('learn');setCoach('');
+  showCover();
+  await say("Welcome — I'm your coach for "+shortName(s)+". Here's how this works: I'll give you the lay of the land, ask what you already know, we'll go through it together, then I'll test you with a quick quiz and three live customer role-plays.");if(ab())return;
+  await say("Before we dive in — what do you already know about "+shortName(s)+"? Tell me out loud, or just say 'not much' and we'll start fresh.");if(ab())return;
+  const known=await listen("Tell me what you know…");if(ab())return;
+  if(known){const ack=await acknowledge(s,known);if(ab())return;await say(ack);if(ab())return;}
+  await say("Perfect — let's go through it together. You can stop me and ask anything at any point; just start talking.");if(ab())return;
+  const L=await getLesson(s);if(ab())return;hideCover();
+  revealSteps();await teachSay(L.steps);if(ab())return;
+  revealFees();await teachSay(L.fees);if(ab())return;
+  revealChannels();await teachSay(L.channels);if(ab())return;
+  await say(L.tip);if(ab())return;
+  hideBoard();markPhaseDone('learn');setPhase('quiz');
+  await say("Now — let's test your skills. I'll ask three questions; answer out loud or type.");if(ab())return;
   let correct=0;
-  for(let i=0;i<s.quiz.length;i++){
-    if(ab())return;const q=s.quiz[i];
-    await say(q.q);if(ab())return;
-    const ans=await listen('Answer the question…');if(ab())return;
-    const g=await gradeAnswer(s,q.q,q.a,ans);if(ab())return;
-    if(g.correct)correct++;
-    setCoach(g.correct?'✓ correct':'↻ tip');
-    await say(g.feedback);if(ab())return;setCoach('');
-  }
+  for(let i=0;i<s.quiz.length;i++){if(ab())return;const q=s.quiz[i];
+    await say("Question "+(i+1)+" of "+s.quiz.length+": "+q.q);if(ab())return;
+    let ans=await listen('Answer the question…');if(ab())return;
+    let g=await gradeAnswer(s,q.q,q.a,ans);if(ab())return;
+    if(!g.correct){setCoach('↻ not quite — one more try');await say("Hmm, that's not quite right — have one more go.");if(ab())return;ans=await listen('Try once more…');if(ab())return;g=await gradeAnswer(s,q.q,q.a,ans);if(ab())return;}
+    if(g.correct)correct++;setCoach(g.correct?'✓ correct':'✗ noted');
+    await say(g.feedback);if(ab())return;setCoach('');}
   P(s.id).quiz=correct>=2;save();updateHUD();
   markPhaseDone('quiz');setPhase('sim');
-  await say(correct>=2?"Great — you clearly know the service. Now for the real thing: three live customer simulations. I'll play the customer; you respond exactly as you would at the desk.":"Good effort — let's reinforce it with practice. Three customer simulations now. I'll be the customer; you respond as a Service Ambassador.");if(ab())return;
+  await say(correct>=2?"Great — you clearly know the service. Now for the real thing: three live customer role-plays. I'll be the customer; you respond exactly as you would at the desk.":"Good effort — let's reinforce it with practice. Three customer role-plays now. I'll be the customer; you respond as a Service Ambassador.");if(ab())return;
   let total=0;
-  for(let i=0;i<s.sims.length;i++){
-    if(ab())return;const line=s.sims[i];
-    await say("Customer "+(i+1)+" of "+s.sims.length+":");if(ab())return;
+  for(let i=0;i<s.sims.length;i++){if(ab())return;const line=s.sims[i];
+    await say("Role-play "+(i+1)+" of "+s.sims.length+" — a customer walks up:");if(ab())return;
+    showCustomerCard(line,"a customer");
     await say(line,true);if(ab())return;
     const ans=await listen('Respond to the customer…');if(ab())return;
     const g=await gradeSim(s,line,ans);if(ab())return;
     total+=g.score;setCoach('Score: '+g.score+'/100');
-    await say(g.feedback);if(ab())return;setCoach('');
-  }
+    await say(g.feedback);if(ab())return;setCoach('');}
+  hideBoard();
   const avg=total/s.sims.length;P(s.id).sim=avg>=55;save();updateHUD();
   markPhaseDone('sim');
   const done=certified(s.id);
-  await say(done?"Outstanding work — you've certified "+shortName(s)+". Head back to the galaxy and choose your next planet whenever you're ready.":"Nicely done. You've made real progress on "+shortName(s)+" — revisit it any time to sharpen the tricky parts and lock in your certification.");
+  await say(done?"Outstanding work — you've certified "+shortName(s)+". Head back to the galaxy and choose your next planet whenever you're ready.":"Nicely done — real progress on "+shortName(s)+". Revisit it any time to sharpen the tricky parts and lock in your certification.");
   showControls(true);document.getElementById('stControls').innerHTML='<button class="sbtn gold" onclick="exitStage()">Back to the galaxy →</button>';
-}
-async function teachNarration(s){
-  const sys="You are a warm, energising training coach for new Service Ambassadors at the Government of Dubai Legal Affairs Department. In 4-6 flowing spoken sentences (no lists, no markdown), teach this ONE service so a beginner gets it: who it's for, what it does, the channel they use, the key steps, and the headline fee and timeline, plus one memorable tip. Be conversational and encouraging. Use ONLY these facts: "+facts(s);
-  const t=await claudeText([{role:'user',content:'Teach me '+s.name+'.'}],sys);
-  if(t)return t;
-  // offline scripted
-  const f=s.fees[0];
-  return `${shortName(s)} is for ${s.who.toLowerCase()}. ${s.desc} People use ${s.channels.join(' or ')}. The journey is simple: ${s.steps.join('; then ')}. The headline: ${f.n} is ${f.fee}${f.time&&f.time!=='Instant'?', taking about '+f.time:''}.${s.note?' Remember — '+s.note:''} Keep the channel and the fee on the tip of your tongue, and you'll handle this one with confidence.`;
 }
 function exitStage(){
   if(session)session.aborted=true;session=null;
@@ -509,7 +614,7 @@ updateHUD();
     refreshVisuals();
   }
   function refreshVisuals(){for(const id in reg){const r=reg[id];const cert=D.certified(id);const p=D.P(id);r.atm.material.color.set(cert?0xffd479:(p.quiz?r.s.color:0x55607a));r.el.innerHTML='<b>'+D.esc(D.shortName(r.s))+'</b><span'+(cert?' class="ok"':'')+'>'+(cert?'✓ certified':(p.quiz?'in progress':'not started'))+'</span>';}}
-  window.orbit3d={dive(id){diveId=id;focusId=id;controls.autoRotate=false;},surface(){diveId=null;focusId=null;controls.autoRotate=true;},focus(id){focusId=id;controls.autoRotate=false;},clearFocus(){focusId=null;controls.autoRotate=true;},refresh(){refreshVisuals();}};
+  window.orbit3d={dive(id){diveId=id;focusId=id;controls.autoRotate=false;labelRenderer.domElement.style.opacity='0.1';},surface(){diveId=null;focusId=null;controls.autoRotate=true;labelRenderer.domElement.style.opacity='1';},focus(id){focusId=id;controls.autoRotate=false;},clearFocus(){focusId=null;controls.autoRotate=true;},refresh(){refreshVisuals();}};
   const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();const tip=document.getElementById('tip');
   function pick(ev){mouse.x=(ev.clientX/W)*2-1;mouse.y=-(ev.clientY/H)*2+1;ray.setFromCamera(mouse,camera);const ms=[];for(const id in reg){ms.push(reg[id].planet);reg[id].moons.forEach(m=>ms.push(m.children[0]));}const hit=ray.intersectObjects(ms,false);return hit.length?hit[0].object:null;}
   renderer.domElement.addEventListener('pointermove',ev=>{if(diveId){tip.style.display='none';return;}const o=pick(ev);renderer.domElement.style.cursor=o?'pointer':'grab';if(o){const s=D.findS(o.userData.id);tip.style.display='block';tip.style.left=(ev.clientX+14)+'px';tip.style.top=(ev.clientY+14)+'px';tip.innerHTML='<div class="n">'+D.esc(s.name)+'</div><div class="m">'+(D.certified(s.id)?'Certified ✓ · click to revisit':'Click to dive in &amp; train')+'</div>';}else tip.style.display='none';});
@@ -517,7 +622,7 @@ updateHUD();
   let downXY=null;renderer.domElement.addEventListener('pointerdown',ev=>{downXY=[ev.clientX,ev.clientY];});
   renderer.domElement.addEventListener('pointerup',ev=>{if(!downXY)return;const moved=Math.hypot(ev.clientX-downXY[0],ev.clientY-downXY[1]);downXY=null;if(moved>6||diveId)return;const o=pick(ev);if(!o)return;window.enterPlanet(o.userData.id);});
   let focusId=null,diveId=null;const tmp=new THREE.Vector3(),des=new THREE.Vector3();
-  function applyFocus(){if(!focusId||!reg[focusId])return;reg[focusId].planet.getWorldPosition(tmp);const close=!!diveId;controls.target.lerp(tmp,close?0.1:0.07);const out=tmp.clone().normalize();des.copy(tmp).add(out.multiplyScalar(close?3.4:8)).add(new THREE.Vector3(0,close?1.2:3,0));camera.position.lerp(des,close?0.08:0.06);}
+  function applyFocus(){if(!focusId||!reg[focusId])return;reg[focusId].planet.getWorldPosition(tmp);const close=!!diveId;controls.target.lerp(tmp,close?0.12:0.07);const out=tmp.clone().normalize();des.copy(tmp).add(out.multiplyScalar(close?2.6:8)).add(new THREE.Vector3(0,close?0.8:3,0));camera.position.lerp(des,close?0.1:0.06);}
   const clock=new THREE.Clock();
   function animate(){requestAnimationFrame(animate);const dt=clock.getDelta(),t=clock.elapsedTime;sun.scale.setScalar(1+0.04*Math.sin(t*1.5));
     for(const id in reg){const r=reg[id];r.pivot.rotation.y+=r.spin*dt*0.12;r.planet.rotation.y+=dt*(diveId===id?0.05:0.08);r.moons.forEach(m=>{m.rotation.y+=m.userData.spin*dt;});if(D.certified(id))r.atm.material.opacity=0.3+0.12*Math.sin(t*2);}
