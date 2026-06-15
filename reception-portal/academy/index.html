@@ -600,28 +600,46 @@ async function claudeText(messages,system){
   for(const m of models){try{const r=await callClaude(messages,system,m);if(r.ok){const j=await r.json();window.ORBIT_CONFIG.anthropicModel=m;return (((j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n'))||'').trim();}if(r.status===401||r.status===403)break;}catch(e){break;}}return null;}
 function facts(s){return JSON.stringify({service:s.name,for:s.who,channels:s.channels,about:s.desc,steps:s.steps,fees:s.fees,note:s.note,documents:s.docs});}
 
-let curAudio=null,_audioEl=null;
-// One persistent <audio> element, reused for every line. Creating a fresh Audio()
-// per line gets re-blocked on iOS; reusing one element that was unlocked by a tap works.
-function getAudioEl(){if(!_audioEl){_audioEl=new Audio();_audioEl.setAttribute('playsinline','');_audioEl.preload='auto';}return _audioEl;}
-function stopAudio(){if(_audioEl){try{_audioEl.onended=null;_audioEl.onerror=null;_audioEl.onloadedmetadata=null;_audioEl.pause();}catch(e){}}curAudio=null;if(window.speechSynthesis)window.speechSynthesis.cancel();}
+let curAudio=null,_audioEl=null,_actx=null,_curSrc=null;
+// Web Audio context — the reliable way to play audio on mobile (iOS blocks <audio> autoplay).
+function getCtx(){if(_actx===null){try{_actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){_actx=false;}}return _actx||null;}
+function getAudioEl(){if(!_audioEl){_audioEl=new Audio();_audioEl.setAttribute('playsinline','');_audioEl.preload='auto';_audioEl.style.display='none';try{document.body.appendChild(_audioEl);}catch(e){}}return _audioEl;}
+function stopAudio(){if(_curSrc){try{_curSrc.onended=null;_curSrc.stop();}catch(e){}_curSrc=null;}if(_audioEl){try{_audioEl.onended=null;_audioEl.onerror=null;_audioEl.onloadedmetadata=null;_audioEl.pause();}catch(e){}}curAudio=null;if(window.speechSynthesis)window.speechSynthesis.cancel();}
 // Unlock audio on the first user gesture so the coach's voice plays on phones (autoplay is blocked until then).
 let _audioPrimed=false;const _silentClip='data:audio/wav;base64,UklGRvQHAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YdAHAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==';
 function primeAudio(){if(_audioPrimed)return;_audioPrimed=true;
+  try{const c=getCtx();if(c){if(c.state==='suspended')c.resume();const b=c.createBuffer(1,1,22050),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start(0);}}catch(e){}
   try{const a=getAudioEl();a.src=_silentClip;const p=a.play();if(p&&p.then)p.then(()=>{try{a.pause();a.currentTime=0;}catch(e){}}).catch(()=>{});}catch(e){}
-  try{if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(' ');u.volume=0;window.speechSynthesis.speak(u);window.speechSynthesis.cancel();}}catch(e){}}
+  try{if(window.speechSynthesis){window.speechSynthesis.resume();const u=new SpeechSynthesisUtterance(' ');u.volume=0;window.speechSynthesis.speak(u);}}catch(e){}}
 ['pointerdown','touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,primeAudio,true));
 function stripMd(t){return (t||'').replace(/\*\*(.+?)\*\*/g,'$1').replace(/\*(.+?)\*/g,'$1').replace(/`+/g,'').replace(/[#>_]/g,'').replace(/\s+/g,' ').trim();}
 function speakAsync(text,onEnd){
   stopAudio();text=stripMd(text).replace(/AED\s*([\d.,]+)/g,'$1 dirhams').replace(/\bAED\b/g,'dirhams');
   let done=false;const finish=()=>{if(done)return;done=true;onEnd();};
   let safety=setTimeout(finish,Math.max(4000,text.length*95));   // generous fallback only
-  const playBuf=(buf)=>{
+  const htmlPlay=(buf)=>{
     const url=URL.createObjectURL(new Blob([buf],{type:'audio/mpeg'}));const a=getAudioEl();curAudio=a;
-    a.onloadedmetadata=()=>{if(isFinite(a.duration)&&a.duration>0){clearTimeout(safety);safety=setTimeout(finish,a.duration*1000+2500);}};  // use the REAL audio length
+    a.onloadedmetadata=()=>{if(isFinite(a.duration)&&a.duration>0){clearTimeout(safety);safety=setTimeout(finish,a.duration*1000+2500);}};
     a.onended=()=>{clearTimeout(safety);finish();};
     a.onerror=()=>{clearTimeout(safety);browserSpeak(text,finish);};
     a.src=url;const p=a.play();if(p&&p.catch)p.catch(()=>{clearTimeout(safety);browserSpeak(text,finish);});
+  };
+  const playBuf=(buf)=>{
+    const c=getCtx();
+    if(c){try{if(c.state==='suspended')c.resume();}catch(e){}
+      let copy;try{copy=buf.slice(0);}catch(e){copy=buf;}
+      try{
+        c.decodeAudioData(copy,(audioBuf)=>{
+          try{ if(_curSrc){try{_curSrc.onended=null;_curSrc.stop();}catch(e){}}
+            const s=c.createBufferSource();s.buffer=audioBuf;s.connect(c.destination);_curSrc=s;curAudio=s;
+            clearTimeout(safety);safety=setTimeout(finish,audioBuf.duration*1000+2500);
+            s.onended=()=>{clearTimeout(safety);finish();};
+            if(c.state==='suspended')c.resume();
+            s.start(0);
+          }catch(e){htmlPlay(buf);}
+        },()=>htmlPlay(buf));
+      }catch(e){htmlPlay(buf);}
+    } else htmlPlay(buf);
   };
   const directEleven=()=>{const ek=window.ORBIT_CONFIG.elevenKey;
     if(ek){fetch('https://api.elevenlabs.io/v1/text-to-speech/'+window.ORBIT_CONFIG.elevenVoice+'?output_format=mp3_44100_128',{method:'POST',headers:{'xi-api-key':ek,'Content-Type':'application/json'},body:JSON.stringify({text,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.45,similarity_boost:0.8,style:0.4,use_speaker_boost:true}})}).then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(playBuf).catch(()=>{clearTimeout(safety);browserSpeak(text,finish);});}
