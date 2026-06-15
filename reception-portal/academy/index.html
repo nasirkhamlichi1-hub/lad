@@ -618,7 +618,11 @@ async function claudeText(messages,system){
 function facts(s){return JSON.stringify({service:s.name,for:s.who,channels:s.channels,about:s.desc,steps:s.steps,fees:s.fees,note:s.note,documents:s.docs});}
 
 let curAudio=null,_audioEl=null,_actx=null,_curSrc=null,_unmuteEl=null;
-// Web Audio context — the reliable way to play audio on mobile (iOS blocks <audio> autoplay).
+// iOS / mobile: prefer an unlocked HTML <audio> element (plays as media, ignores the ring/silent
+// switch — the reason other sites have sound) over Web Audio (which the silent switch mutes).
+const _isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const _mobAudio=_isiOS||(navigator.maxTouchPoints>1&&innerWidth<1024);
+// Web Audio context — used on desktop and as the mobile fallback.
 function getCtx(){if(_actx===null){try{_actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){_actx=false;}}return _actx||null;}
 function getAudioEl(){if(!_audioEl){_audioEl=new Audio();_audioEl.setAttribute('playsinline','');_audioEl.preload='auto';_audioEl.style.display='none';try{document.body.appendChild(_audioEl);}catch(e){}}return _audioEl;}
 function stopAudio(){if(_curSrc){try{_curSrc.onended=null;_curSrc.stop();}catch(e){}_curSrc=null;}if(_audioEl){try{_audioEl.onended=null;_audioEl.onerror=null;_audioEl.onloadedmetadata=null;_audioEl.pause();}catch(e){}}curAudio=null;if(window.speechSynthesis)window.speechSynthesis.cancel();}
@@ -634,35 +638,45 @@ function primeAudio(){if(_audioPrimed)return;_audioPrimed=true;adbg('prime: gest
   try{if(window.speechSynthesis){window.speechSynthesis.resume();const u=new SpeechSynthesisUtterance(' ');u.volume=0;window.speechSynthesis.speak(u);}}catch(e){}}
 ['pointerdown','touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,primeAudio,true));
 function stripMd(t){return (t||'').replace(/\*\*(.+?)\*\*/g,'$1').replace(/\*(.+?)\*/g,'$1').replace(/`+/g,'').replace(/[#>_]/g,'').replace(/\s+/g,' ').trim();}
-// On-screen audio diagnostic (enable by visiting the academy with ?adbg=1)
-function adbg(m){try{if(!/[?&]adbg/.test(location.search))return;let e=document.getElementById('adbg');if(!e){e=document.createElement('div');e.id='adbg';e.style.cssText='position:fixed;left:6px;bottom:6px;z-index:99999;font:11px/1.45 monospace;color:#7dffa0;background:rgba(0,0,0,.8);padding:5px 8px;border-radius:6px;max-width:92vw;white-space:pre-wrap;pointer-events:none';document.body.appendChild(e);}e._log=((e._log||'')+'\n'+m).split('\n').slice(-7).join('\n');e.textContent=e._log;}catch(_){}}
+// On-screen audio diagnostic (enable by visiting the academy with ?adbg=1; persists across navigation)
+try{if(/[?&]adbg/.test(location.search))localStorage.setItem('adbg','1');}catch(_){}
+function adbg(m){try{if(!/[?&]adbg/.test(location.search)&&localStorage.getItem('adbg')!=='1')return;let e=document.getElementById('adbg');if(!e){e=document.createElement('div');e.id='adbg';e.style.cssText='position:fixed;left:6px;bottom:6px;z-index:99999;font:11px/1.45 monospace;color:#7dffa0;background:rgba(0,0,0,.8);padding:5px 8px;border-radius:6px;max-width:92vw;white-space:pre-wrap;pointer-events:none';document.body.appendChild(e);}e._log=((e._log||'')+'\n'+m).split('\n').slice(-7).join('\n');e.textContent=e._log;}catch(_){}}
 function speakAsync(text,onEnd){
   stopAudio();text=stripMd(text).replace(/AED\s*([\d.,]+)/g,'$1 dirhams').replace(/\bAED\b/g,'dirhams');
   let done=false;const finish=()=>{if(done)return;done=true;onEnd();};
   let safety=setTimeout(finish,Math.max(4000,text.length*95));   // generous fallback only
-  const htmlPlay=(buf)=>{
-    const url=URL.createObjectURL(new Blob([buf],{type:'audio/mpeg'}));const a=getAudioEl();curAudio=a;
+  const webAudioPlay=(buf,onFail)=>{
+    const c=getCtx();
+    if(!c){adbg('no ctx');(onFail||(()=>browserSpeak(text,finish)))();return;}
+    try{if(c.state==='suspended')c.resume();}catch(e){}
+    let copy;try{copy=buf.slice(0);}catch(e){copy=buf;}
+    try{
+      c.decodeAudioData(copy,(audioBuf)=>{
+        try{ if(_curSrc){try{_curSrc.onended=null;_curSrc.stop();}catch(e){}}
+          const s=c.createBufferSource();s.buffer=audioBuf;s.connect(c.destination);_curSrc=s;curAudio=s;
+          clearTimeout(safety);safety=setTimeout(finish,audioBuf.duration*1000+2500);
+          s.onended=()=>{clearTimeout(safety);finish();};
+          if(c.state==='suspended')c.resume();
+          s.start(0);adbg('▶ webaudio start ('+audioBuf.duration.toFixed(1)+'s) ctx='+c.state);
+        }catch(e){adbg('webaudio play err: '+(e&&e.message));(onFail||(()=>browserSpeak(text,finish)))();}
+      },(err)=>{adbg('decode FAIL');(onFail||(()=>browserSpeak(text,finish)))();});
+    }catch(e){adbg('decode threw');(onFail||(()=>browserSpeak(text,finish)))();}
+  };
+  const htmlPlay=(buf,onFail)=>{
+    const fail=onFail||(()=>browserSpeak(text,finish));
+    const url=URL.createObjectURL(new Blob([buf],{type:'audio/mpeg'}));const a=getAudioEl();curAudio=a;a.volume=1;
     a.onloadedmetadata=()=>{if(isFinite(a.duration)&&a.duration>0){clearTimeout(safety);safety=setTimeout(finish,a.duration*1000+2500);}};
     a.onended=()=>{clearTimeout(safety);finish();};
-    a.onerror=()=>{clearTimeout(safety);browserSpeak(text,finish);};
-    a.src=url;const p=a.play();adbg('▶ html audio play');if(p&&p.catch)p.catch((e)=>{adbg('html play blocked: '+(e&&e.name)+' → speech');clearTimeout(safety);browserSpeak(text,finish);});
+    a.onerror=()=>{clearTimeout(safety);adbg('html error → fallback');fail();};
+    a.src=url;a.load();const p=a.play();adbg('▶ html audio play');if(p&&p.catch)p.catch((e)=>{adbg('html play blocked: '+(e&&e.name)+' → fallback');clearTimeout(safety);fail();});
   };
   const playBuf=(buf)=>{
-    const c=getCtx();adbg('audio '+(buf&&buf.byteLength)+'B, ctx='+(c?c.state:'none'));
-    if(c){try{if(c.state==='suspended')c.resume();}catch(e){}
-      let copy;try{copy=buf.slice(0);}catch(e){copy=buf;}
-      try{
-        c.decodeAudioData(copy,(audioBuf)=>{
-          try{ if(_curSrc){try{_curSrc.onended=null;_curSrc.stop();}catch(e){}}
-            const s=c.createBufferSource();s.buffer=audioBuf;s.connect(c.destination);_curSrc=s;curAudio=s;
-            clearTimeout(safety);safety=setTimeout(finish,audioBuf.duration*1000+2500);
-            s.onended=()=>{clearTimeout(safety);finish();};
-            if(c.state==='suspended')c.resume();
-            s.start(0);adbg('▶ webaudio start ('+audioBuf.duration.toFixed(1)+'s) ctx='+c.state);
-          }catch(e){adbg('webaudio play err: '+(e&&e.message));htmlPlay(buf);}
-        },(err)=>{adbg('decode FAIL → html');htmlPlay(buf);});
-      }catch(e){adbg('decode threw → html');htmlPlay(buf);}
-    } else {adbg('no ctx → html');htmlPlay(buf);}
+    const c=getCtx();adbg('audio '+(buf&&buf.byteLength)+'B, ctx='+(c?c.state:'none')+(_mobAudio?' [mob]':''));
+    // On mobile, play through the unlocked media element first (ignores the silent switch);
+    // if that fails, fall back to Web Audio, then browser speech.
+    if(_mobAudio){adbg('mobile → html first');htmlPlay(buf,()=>webAudioPlay(buf));return;}
+    // Desktop: Web Audio first, HTML element as fallback.
+    webAudioPlay(buf,()=>htmlPlay(buf));
   };
   const directEleven=()=>{const ek=window.ORBIT_CONFIG.elevenKey;
     if(ek){fetch('https://api.elevenlabs.io/v1/text-to-speech/'+window.ORBIT_CONFIG.elevenVoice+'?output_format=mp3_44100_128',{method:'POST',headers:{'xi-api-key':ek,'Content-Type':'application/json'},body:JSON.stringify({text,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.45,similarity_boost:0.8,style:0.4,use_speaker_boost:true}})}).then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(playBuf).catch(()=>{clearTimeout(safety);browserSpeak(text,finish);});}
