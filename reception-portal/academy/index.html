@@ -856,9 +856,13 @@ function renderCaptionWords(text){const el=document.getElementById('capText');el
 function runKaraoke(){
   stopKaraoke();const words=[...document.querySelectorAll('#capText .kw')];if(!words.length)return;
   if(_voiceMuted){words.forEach(w=>w.classList.add('spoken'));return;}
-  const t0=performance.now(),ct=document.getElementById('capText');let last=-1;
+  const ct=document.getElementById('capText'),t0=performance.now();
+  // character-weighted timeline: longer words are held proportionally longer, matching real speech far better than one-word-per-tick
+  const cum=[];let acc=0;for(let i=0;i<words.length;i++){acc+=words[i].textContent.length+1;cum[i]=acc;}const total=acc||1;
+  let last=-1;
   const tick=()=>{
-    if(_play&&_play.dur){const dur=_play.dur,pos=playPos(),upto=Math.min(words.length,Math.floor(Math.min(1,(pos+0.18)/dur)*words.length));
+    if(_play&&_play.dur){const dur=_play.dur,pos=playPos(),target=Math.min(1,(pos+0.06)/dur)*total;
+      let upto=0;while(upto<words.length&&cum[upto]<=target)upto++;
       if(upto!==last){for(let i=Math.max(0,last);i<upto;i++)if(words[i])words[i].classList.add('spoken');
         const w=words[Math.min(words.length-1,Math.max(0,upto-1))];if(w&&ct)ct.scrollTop=Math.max(0,w.offsetTop-ct.clientHeight*0.5);last=upto;}
       if(pos>=dur){_kRAF=0;words.forEach(w=>w.classList.add('spoken'));return;}}
@@ -968,6 +972,9 @@ let _fxRAF=0;
 const _STOP=new Set('the and for with from your you this that into are will their they them then once step also have has been must when where which what who whom whose about over under within without through after before each both either fees fee time card issued submitted application documents document required'.split(' '));
 function longWords(str,k){return (String(str||'').toLowerCase().match(/[a-z]{4,}/g)||[]).filter(w=>!_STOP.has(w)).sort((a,b)=>b.length-a.length).slice(0,k||2);}
 function textFrac(text,needles,fb){const t=(text||'').toLowerCase();let best=-1;(needles||[]).forEach(nd=>{const k=String(nd==null?'':nd).toLowerCase().trim();if(k.length<2)return;const i=t.indexOf(k);if(i>=0&&(best<0||i<best))best=i;});return best<0?fb:Math.max(.02,Math.min(.97,best/Math.max(t.length,40)));}
+const _WNUM=['one','two','three','four','five','six','seven','eight','nine'];
+// when does she announce step i? prefer the spoken cue ("step one"/"step 1"/"1.") then fall back to the step's own keywords
+function stepFrac(text,i,n,stepText){let fr=textFrac(text,['step '+(_WNUM[i]||''),'step '+(i+1),(i+1)+'.',(i+1)+')'],-1);if(fr<0)fr=textFrac(text,longWords(stepText,2),(i+0.5)/n);return fr;}
 function clearFX(){if(_fxRAF){cancelAnimationFrame(_fxRAF);_fxRAF=0;}_playSubs=[];const lp=document.getElementById('factPops');if(lp)lp.innerHTML='';}
 function popFact(inner,tone){const lp=document.getElementById('factPops');if(!lp)return;const c=document.createElement('div');c.className='factpop'+(tone?' '+tone:'');c.innerHTML=inner;lp.appendChild(c);requestAnimationFrame(()=>c.classList.add('in'));setTimeout(()=>{c.classList.remove('in');c.classList.add('out');},2800);setTimeout(()=>{if(c.parentNode)c.remove();},3300);}
 // schedule beats (each {frac:0..1 of the line, fn}) against the actual playback position
@@ -985,10 +992,10 @@ function scheduleBeats(text,beats){
 function sectionFX(kind,s,text){
   if(kind==='steps'){
     const sts=[...document.querySelectorAll('#stations .station')];const n=sts.length||1;let prev=0;
-    const beats=sts.map((el,i)=>{let fr=textFrac(text,longWords(s.steps[i],2),(i+0.5)/n);if(fr<prev+0.015)fr=Math.min(.97,prev+0.72/n);prev=fr;
+    const beats=sts.map((el,i)=>{let fr=stepFrac(text,i,n,s.steps[i]);if(fr<prev+0.015)fr=Math.min(.97,prev+0.72/n);prev=fr;
       return {frac:fr,fn:()=>{for(let j=0;j<i;j++)sts[j].classList.add('done','lit');el.classList.add('lit','arrive');setTimeout(()=>el.classList.remove('arrive'),750);
         movePulse(stationX(i,n),true);VOX.morphText(String(i+1));}};});
-    if(!sts.length){const st=s.steps||[],m=st.length||1;scheduleBeats(text,st.map((p,i)=>{let fr=textFrac(text,longWords(p,2),(i+0.5)/m);if(fr<prev+0.015)fr=Math.min(.97,prev+0.72/m);prev=fr;return{frac:fr,fn:()=>VOX.morphText(String(i+1))};}));return;}
+    if(!sts.length){const st=s.steps||[],m=st.length||1;scheduleBeats(text,st.map((p,i)=>{let fr=stepFrac(text,i,m,p);if(fr<prev+0.015)fr=Math.min(.97,prev+0.72/m);prev=fr;return{frac:fr,fn:()=>VOX.morphText(String(i+1))};}));return;}
     scheduleBeats(text,beats);
   }else if(kind==='fees'){
     const lines=[...document.querySelectorAll('#bdFee .bd-fline')];const fees=s.fees||[];const n=Math.max(fees.length,1);
