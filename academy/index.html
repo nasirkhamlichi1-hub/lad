@@ -100,6 +100,8 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 .stage{position:fixed;inset:0;z-index:28;display:none;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 0 30px;
   background:radial-gradient(120% 95% at 50% 24%,rgba(8,10,24,.25),rgba(3,4,12,.8) 55%,rgba(1,2,7,.96));backdrop-filter:blur(3px) brightness(.68);opacity:0;transition:opacity .55s}
 .stage.on{display:flex;opacity:1}
+#voxCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1.1s ease}
+.stage.on #voxCanvas{opacity:1}
 .st-top{position:absolute;top:18px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 20px}
 .phase-rail{display:flex;gap:8px;background:rgba(10,13,26,.6);border:1px solid var(--line);border-radius:30px;padding:6px;backdrop-filter:blur(12px)}
 .phase{font-size:12px;font-weight:600;color:var(--mut);padding:6px 14px;border-radius:24px;display:flex;align-items:center;gap:7px}
@@ -468,6 +470,7 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 
 <div class="warp" id="warp"></div>
 <div class="stage" id="stage">
+  <canvas id="voxCanvas"></canvas>
   <div class="st-top"><div class="phase-rail"><div class="phase" data-ph="learn"><span class="d"></span>Learn &amp; check</div><div class="phase" data-ph="sim"><span class="d"></span>Role-play</div></div></div>
   <button class="st-exit" id="stExit">Exit to galaxy ✕</button>
   <div class="st-title" id="stTitle"></div>
@@ -733,6 +736,14 @@ let _play=null;let _playSubs=[];
 function emitPlay(dur,el){_play={t0:performance.now(),dur:(isFinite(dur)&&dur>0?dur:0),el:el||null};const subs=_playSubs;_playSubs=[];subs.forEach(fn=>{try{fn(_play);}catch(e){}});}
 function onPlayStart(fn){if(_play&&_play.dur)fn(_play);else _playSubs.push(fn);}
 function playPos(){if(!_play)return 0;if(_play.el&&isFinite(_play.el.currentTime))return _play.el.currentTime;return (performance.now()-_play.t0)/1000;}
+// shared analyser tapped off the coach's voice — drives the reactive particle field
+let _analyser=null,_voxFreq=null;
+function getAnalyser(c){if(!c)return null;if(!_analyser){try{_analyser=c.createAnalyser();_analyser.fftSize=256;_analyser.smoothingTimeConstant=0.82;_analyser.connect(c.destination);_voxFreq=new Uint8Array(_analyser.frequencyBinCount);}catch(e){_analyser=null;}}return _analyser;}
+function voxLevel(){
+  if(_analyser&&_voxFreq){_analyser.getByteFrequencyData(_voxFreq);let s=0;for(let i=2;i<_voxFreq.length;i++)s+=_voxFreq[i];const v=(s/(_voxFreq.length-2))/118;if(v>0.012)return Math.min(1,v);}
+  // fallback when no analyser (html-only / muted): synthesise an envelope from the speaking state
+  return _voiceSpeaking?(0.42+0.22*Math.sin(performance.now()/130)+0.16*Math.sin(performance.now()/47)+0.08*Math.random()):0;
+}
 // Unlock audio on the first user gesture so the coach's voice plays on phones (autoplay is blocked until then).
 let _audioPrimed=false;const _silentClip='data:audio/wav;base64,UklGRvQHAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YdAHAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==';
 function primeAudio(){if(_audioPrimed)return;_audioPrimed=true;adbg('prime: gesture unlocked');
@@ -763,7 +774,7 @@ function speakAsync(text,onEnd){
     try{
       c.decodeAudioData(copy,(audioBuf)=>{
         try{ if(_curSrc){try{_curSrc.onended=null;_curSrc.stop();}catch(e){}}
-          const s=c.createBufferSource();s.buffer=audioBuf;s.connect(c.destination);_curSrc=s;curAudio=s;
+          const s=c.createBufferSource();s.buffer=audioBuf;s.connect(getAnalyser(c)||c.destination);_curSrc=s;curAudio=s;
           clearTimeout(safety);safety=setTimeout(finish,audioBuf.duration*1000+2500);
           s.onended=()=>{clearTimeout(safety);finish();};
           if(c.state==='suspended')c.resume();
@@ -833,6 +844,46 @@ function setSpeaking(b,cust){_voiceSpeaking=b;document.getElementById('orb').cla
 /* ── live lesson visuals: facts light up / pop exactly when the coach says them ──
    driven by the REAL audio clock (playPos/onPlayStart), with each fact mapped to where
    its words actually appear in the spoken script so the timing tracks her voice. */
+// ── reactive particle field: a crystallising voice constellation that responds to the coach ──
+const VOX=(function(){
+  let cv,ctx,raf=0,W=0,H=0,DPR=1,parts=[],edges=[],stars=[],cryst=0,rot=0,t=0,running=false;
+  function resize(){if(!cv||!ctx)return;DPR=Math.min(2,window.devicePixelRatio||1);W=cv.clientWidth||window.innerWidth;H=cv.clientHeight||window.innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+  function build(){
+    parts=[];edges=[];const rings=4,gap=1/rings,ringIdx=[];let idx=0;
+    for(let r=0;r<=rings;r++){const count=r===0?1:6*r,list=[];
+      for(let k=0;k<count;k++){const ang=(k/count)*Math.PI*2+(r%2?Math.PI/count:0);
+        parts.push({r:r,la:ang,lr:r*gap,dx:(Math.random()-.5)*0.9,dy:(Math.random()-.5)*0.9,vx:(Math.random()-.5)*0.0009,vy:(Math.random()-.5)*0.0009,px:0,py:0});
+        list.push(idx++);}
+      ringIdx.push(list);}
+    for(let r=1;r<=rings;r++){const list=ringIdx[r];for(let j=0;j<list.length;j++)edges.push([list[j],list[(j+1)%list.length]]);}
+    for(let r=1;r<=rings;r++){const cur=ringIdx[r],prev=ringIdx[r-1];cur.forEach(ci=>{const p=parts[ci];let best=prev[0],bd=1e9;prev.forEach(pi=>{const q=parts[pi];let d=Math.abs(((q.la-p.la+Math.PI*3)%(Math.PI*2))-Math.PI);if(d<bd){bd=d;best=pi;}});edges.push([ci,best]);});}
+    stars=[];for(let i=0;i<64;i++)stars.push({x:Math.random(),y:Math.random(),z:Math.random()*0.6+0.2,ph:Math.random()*6.28});
+  }
+  function frame(){
+    if(!running)return;t++;const lvl=voxLevel();
+    cryst+=((0.12+lvl*0.88)-cryst)*0.07;rot+=0.0009+lvl*0.0044;
+    ctx.clearRect(0,0,W,H);
+    const cx=W*0.5,cy=H*0.40,scale=Math.min(W,H)*0.25*(1+lvl*0.12);
+    ctx.globalCompositeOperation='lighter';
+    for(const s of stars){const x=((s.x+t*0.00002*s.z)%1)*W,y=s.y*H,tw=0.4+0.6*Math.abs(Math.sin(t*0.02*s.z+s.ph));ctx.fillStyle='rgba(150,170,255,'+(0.09*s.z*tw)+')';ctx.beginPath();ctx.arc(x,y,s.z*1.3,0,6.28);ctx.fill();}
+    for(const p of parts){p.dx+=p.vx;p.dy+=p.vy;if(p.dx>1||p.dx<-1)p.vx*=-1;if(p.dy>1||p.dy<-1)p.vy*=-1;
+      const a=p.la+rot,lx=Math.cos(a)*p.lr,ly=Math.sin(a)*p.lr,fx=lx*0.5+p.dx*0.55,fy=ly*0.5+p.dy*0.55;
+      p.px=cx+(fx+(lx-fx)*cryst)*scale;p.py=cy+(fy+(ly-fy)*cryst)*scale;}
+    const ea=cryst*(0.14+lvl*0.62);
+    if(ea>0.02){ctx.lineWidth=1;for(const e of edges){const a=parts[e[0]],b=parts[e[1]],g=ctx.createLinearGradient(a.px,a.py,b.px,b.py);g.addColorStop(0,'rgba(140,110,255,'+ea+')');g.addColorStop(1,'rgba(80,200,255,'+ea+')');ctx.strokeStyle=g;ctx.beginPath();ctx.moveTo(a.px,a.py);ctx.lineTo(b.px,b.py);ctx.stroke();}}
+    for(const p of parts){const rad=(1.6+lvl*2.6)*(p.r===0?1.7:1),bri=0.42+lvl*0.55,
+      grd=ctx.createRadialGradient(p.px,p.py,0,p.px,p.py,rad*3.6);
+      grd.addColorStop(0,'rgba(222,212,255,'+bri+')');grd.addColorStop(.4,'rgba(150,120,255,'+(bri*0.7)+')');grd.addColorStop(1,'rgba(120,90,255,0)');
+      ctx.fillStyle=grd;ctx.beginPath();ctx.arc(p.px,p.py,rad*3.6,0,6.28);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,'+Math.min(1,bri+0.22)+')';ctx.beginPath();ctx.arc(p.px,p.py,rad*0.7,0,6.28);ctx.fill();}
+    ctx.globalCompositeOperation='source-over';
+    raf=requestAnimationFrame(frame);
+  }
+  return {
+    start(){cv=document.getElementById('voxCanvas');if(!cv)return;ctx=cv.getContext('2d');resize();build();if(!running){running=true;raf=requestAnimationFrame(frame);}window.addEventListener('resize',resize);},
+    stop(){running=false;if(raf)cancelAnimationFrame(raf);raf=0;window.removeEventListener('resize',resize);try{if(ctx)ctx.clearRect(0,0,W,H);}catch(e){}}
+  };
+})();
 // scene icon set + avatar
 const IC={
  doc:'<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M9.5 12h6M9.5 15.2h6"/></svg>',
@@ -997,7 +1048,7 @@ async function enterPlanet(id){
   document.getElementById('peek').textContent='Tip: speak naturally, or type. Say "repeat" if you miss something.';
   document.querySelectorAll('.phase').forEach(p=>p.classList.remove('done','on'));
   const wp=document.getElementById('warp');if(wp){wp.classList.remove('go');void wp.offsetWidth;wp.classList.add('go');}
-  stage.classList.add('on');
+  stage.classList.add('on');VOX.start();
   if(window.orbit3d)window.orbit3d.dive(id);
   try{await runLesson(s);}catch(e){console.error(e);setCoach('(Something interrupted the lesson — you can exit and try again.)');}
 }
@@ -1049,7 +1100,7 @@ async function enterAbout(){
   document.getElementById('peek').textContent='Your induction — speak or type to ask anything about the Department.';
   const rail=document.querySelector('.phase-rail');if(rail)rail.style.display='none';
   const wp=document.getElementById('warp');if(wp){wp.classList.remove('go');void wp.offsetWidth;wp.classList.add('go');}
-  stage.classList.add('on');
+  stage.classList.add('on');VOX.start();
   try{await runAbout();}catch(e){console.error(e);setCoach('(Something interrupted — you can exit and try again.)');}
 }
 window.enterAbout=enterAbout;
@@ -1221,7 +1272,7 @@ function exitStage(){
   stopAudio();if(recog&&recognising){try{recog.stop();}catch(e){}}
   onUserFinal=null;window._submit=null;window._skip=null;window._skipL=null;
   const rail=document.querySelector('.phase-rail');if(rail)rail.style.display='';
-  stage.classList.remove('on');
+  stage.classList.remove('on');VOX.stop();
   document.getElementById('stControls').innerHTML='<button class="mic" id="stMic" title="Speak"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg></button><input class="st-input" id="stInput" placeholder="…or type your answer"/><button class="sbtn go" id="stSubmit">Send</button><button class="sbtn" id="stSkip">Skip</button>';
   document.getElementById('stMic').addEventListener('click',()=>{if(!recog){document.getElementById('stInput').focus();return;}if(recognising){recog.stop();return;}try{recog.start();recognising=true;document.getElementById('stMic').classList.add('live');}catch(e){}});
   document.getElementById('stSubmit').addEventListener('click',()=>{if(window._submit)window._submit();});
