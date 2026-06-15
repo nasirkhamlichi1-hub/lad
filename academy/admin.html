@@ -11,6 +11,8 @@
 body{margin:0;background:radial-gradient(120% 90% at 50% 0,#0c1430,#05060f 60%);color:var(--ink);font-family:'Inter',sans-serif;min-height:100vh}
 .wrap{max-width:1140px;margin:0 auto;padding:30px 22px 70px}
 header{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.hubBack{margin-left:auto;color:var(--mut);text-decoration:none;font-size:12.5px;border:1px solid var(--line);border-radius:9px;padding:8px 13px;white-space:nowrap}
+.hubBack:hover{color:#fff;background:rgba(255,255,255,.06)}
 .logo{width:38px;height:38px;border-radius:11px;background:radial-gradient(circle at 32% 30%,var(--gold),#b5781b 70%);box-shadow:0 0 22px rgba(255,196,90,.45)}
 h1{font-family:'Instrument Serif',serif;font-size:26px;margin:0;font-weight:400}
 header span{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--mut)}
@@ -63,7 +65,9 @@ tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,.03)
 </head>
 <body>
 <div class="wrap">
-  <header><div class="logo"></div><div><h1>Trainer Console</h1><span>Service Ambassador Academy · Legal Affairs Department</span></div></header>
+  <header><div class="logo"></div><div><h1>Trainer Console</h1><span>Service Ambassador Academy · Legal Affairs Department</span></div>
+    <a class="hubBack" href="https://www.legalaffairstraining.com/" onclick="try{window.top.location.href='https://www.legalaffairstraining.com/';return false;}catch(e){}">← Training hub</a>
+  </header>
   <div class="sub">Track progress, manage trainees and passwords, and issue certificates.</div>
 
   <div class="gate" id="gate">
