@@ -630,7 +630,8 @@ const _isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==
 const _mobAudio=_isiOS||(navigator.maxTouchPoints>1&&innerWidth<1024);
 // Web Audio context — used on desktop and as the mobile fallback.
 function getCtx(){if(_actx===null){try{_actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){_actx=false;}}return _actx||null;}
-function getAudioEl(){if(!_audioEl){_audioEl=new Audio();_audioEl.setAttribute('playsinline','');_audioEl.preload='auto';_audioEl.style.display='none';try{document.body.appendChild(_audioEl);}catch(e){}}return _audioEl;}
+function getAudioEl(){if(!_audioEl){_audioEl=new Audio();_audioEl.setAttribute('playsinline','');_audioEl.setAttribute('webkit-playsinline','');_audioEl.preload='auto';_audioEl.style.display='none';try{document.body.appendChild(_audioEl);}catch(e){}}return _audioEl;}
+function bufToB64(buf){let bin='';const b=new Uint8Array(buf),ch=0x8000;for(let i=0;i<b.length;i+=ch){bin+=String.fromCharCode.apply(null,b.subarray(i,i+ch));}return btoa(bin);}
 function stopAudio(){if(_curSrc){try{_curSrc.onended=null;_curSrc.stop();}catch(e){}_curSrc=null;}if(_audioEl){try{_audioEl.onended=null;_audioEl.onerror=null;_audioEl.onloadedmetadata=null;_audioEl.pause();}catch(e){}}curAudio=null;if(window.speechSynthesis)window.speechSynthesis.cancel();}
 // Unlock audio on the first user gesture so the coach's voice plays on phones (autoplay is blocked until then).
 let _audioPrimed=false;const _silentClip='data:audio/wav;base64,UklGRvQHAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YdAHAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==';
@@ -651,7 +652,7 @@ let _voiceMuted=false,_voiceSpeaking=false,_lastSpoken='';
 function speakAsync(text,onEnd){
   stopAudio();text=stripMd(text).replace(/AED\s*([\d.,]+)/g,'$1 dirhams').replace(/\bAED\b/g,'dirhams');
   _lastSpoken=text;
-  let done=false;const finish=()=>{if(done)return;done=true;onEnd();};
+  let done=false;const finish=()=>{if(done)return;done=true;_setVoiceState('idle');onEnd();};
   if(_voiceMuted){adbg('muted — skip');setTimeout(finish,Math.min(2600,Math.max(700,text.length*22)));return;}
   let safety=setTimeout(finish,Math.max(4000,text.length*95));   // generous fallback only
   const webAudioPlay=(buf,onFail)=>{
@@ -666,18 +667,21 @@ function speakAsync(text,onEnd){
           clearTimeout(safety);safety=setTimeout(finish,audioBuf.duration*1000+2500);
           s.onended=()=>{clearTimeout(safety);finish();};
           if(c.state==='suspended')c.resume();
-          s.start(0);adbg('▶ webaudio start ('+audioBuf.duration.toFixed(1)+'s) ctx='+c.state);
+          s.start(0);_setVoiceState('play');adbg('▶ webaudio start ('+audioBuf.duration.toFixed(1)+'s) ctx='+c.state);
         }catch(e){adbg('webaudio play err: '+(e&&e.message));(onFail||(()=>browserSpeak(text,finish)))();}
       },(err)=>{adbg('decode FAIL');(onFail||(()=>browserSpeak(text,finish)))();});
     }catch(e){adbg('decode threw');(onFail||(()=>browserSpeak(text,finish)))();}
   };
   const htmlPlay=(buf,onFail)=>{
     const fail=onFail||(()=>browserSpeak(text,finish));
-    const url=URL.createObjectURL(new Blob([buf],{type:'audio/mpeg'}));const a=getAudioEl();curAudio=a;a.volume=1;
+    const a=getAudioEl();curAudio=a;a.muted=false;a.volume=1;
     a.onloadedmetadata=()=>{if(isFinite(a.duration)&&a.duration>0){clearTimeout(safety);safety=setTimeout(finish,a.duration*1000+2500);}};
+    a.onplaying=()=>{_setVoiceState('play');adbg('html playing dur='+(isFinite(a.duration)?a.duration.toFixed(1):'?'));};
     a.onended=()=>{clearTimeout(safety);finish();};
     a.onerror=()=>{clearTimeout(safety);adbg('html error → fallback');fail();};
-    a.src=url;a.load();const p=a.play();adbg('▶ html audio play');if(p&&p.catch)p.catch((e)=>{adbg('html play blocked: '+(e&&e.name)+' → fallback');clearTimeout(safety);fail();});
+    // data: URI is more reliable than a blob URL on iOS WebKit
+    try{a.src='data:audio/mpeg;base64,'+bufToB64(buf);}catch(e){a.src=URL.createObjectURL(new Blob([buf],{type:'audio/mpeg'}));}
+    a.load();const p=a.play();adbg('▶ html audio play');if(p&&p.catch)p.catch((e)=>{_setVoiceState('blocked');adbg('html play blocked: '+(e&&e.name)+' → fallback');clearTimeout(safety);fail();});
   };
   const playBuf=(buf)=>{
     const c=getCtx();adbg('audio '+(buf&&buf.byteLength)+'B, ctx='+(c?c.state:'none')+(_mobAudio?' [mob]':''));
@@ -691,10 +695,10 @@ function speakAsync(text,onEnd){
     if(ek){fetch('https://api.elevenlabs.io/v1/text-to-speech/'+window.ORBIT_CONFIG.elevenVoice+'?output_format=mp3_44100_128',{method:'POST',headers:{'xi-api-key':ek,'Content-Type':'application/json'},body:JSON.stringify({text,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.45,similarity_boost:0.8,style:0.4,use_speaker_boost:true}})}).then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(playBuf).catch(()=>{clearTimeout(safety);browserSpeak(text,finish);});}
     else{clearTimeout(safety);browserSpeak(text,finish);}};
   // 1) hardwired backend voice (ElevenLabs via server) — no per-user keys
-  const tok=(window.AUTH&&window.AUTH.token)||'';adbg('tts request…');
+  const tok=(window.AUTH&&window.AUTH.token)||'';adbg('tts request…');_setVoiceState('load');
   fetch('api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,token:tok})}).then(r=>{adbg('tts HTTP '+r.status);return r.ok?r.json():Promise.reject(r.status);}).then(j=>{
     const bin=atob(j.audio||'');const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);playBuf(arr.buffer);
-  }).catch((st)=>{adbg('tts failed ('+st+') → fallback');directEleven();});  // 2) fallback: user key direct, else browser speech
+  }).catch((st)=>{adbg('tts failed ('+st+') → fallback');_setVoiceState('noserver');directEleven();});  // 2) fallback: user key direct, else browser speech
 }
 function browserSpeak(text,done){adbg('browser speech');
   // Guarantee the callback fires even if speechSynthesis never reports onend (common on iOS Chrome) —
@@ -727,7 +731,17 @@ function setOrb(mode){const o=document.getElementById('orb');o.classList.toggle(
 function setSpeaking(b,cust){_voiceSpeaking=b;document.getElementById('orb').classList.toggle('speak',b);setOrb(cust?'cust':'coach');}
 // Floating sound button: tap to replay the current line, or mute / unmute. Each tap is a real
 // user gesture, which iOS always allows for audio — so it doubles as a guaranteed sound unlock.
-function updateSoundBtn(){const ic=document.getElementById('soundIc'),lbl=document.getElementById('soundLbl'),b=document.getElementById('soundBtn');if(!b)return;b.classList.toggle('muted',_voiceMuted);ic.textContent=_voiceMuted?'🔇':'🔊';lbl.textContent=_voiceMuted?'Muted':'Voice';}
+function updateSoundBtn(){_setVoiceState('idle');}
+// Live status shown right on the Voice button — so the trainee (and we) can see exactly what the
+// audio is doing without any debug URL: Loading… / Playing / Tap to play / No voice.
+function _setVoiceState(s){const ic=document.getElementById('soundIc'),lbl=document.getElementById('soundLbl'),b=document.getElementById('soundBtn');if(!lbl)return;
+  if(_voiceMuted){b.classList.add('muted');ic.textContent='🔇';lbl.textContent='Muted';return;}
+  b.classList.remove('muted');
+  if(s==='load'){ic.textContent='⏳';lbl.textContent='Loading…';}
+  else if(s==='play'){ic.textContent='🔊';lbl.textContent='Playing';}
+  else if(s==='blocked'){ic.textContent='👆';lbl.textContent='Tap to play';}
+  else if(s==='noserver'){ic.textContent='🔈';lbl.textContent='No voice';}
+  else{ic.textContent='🔊';lbl.textContent='Voice';}}
 function replayVoice(){if(!_lastSpoken)return;_voiceSpeaking=true;speakAsync(_lastSpoken,()=>{_voiceSpeaking=false;});}
 (function(){const b=document.getElementById('soundBtn');if(!b)return;b.addEventListener('click',()=>{
   try{primeAudio();}catch(e){}
