@@ -42,6 +42,11 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 .gearbtn,.kpop{display:none!important}
 .gearbtn-x{position:fixed;top:62px;right:20px;z-index:20;width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--mut);cursor:pointer;display:grid;place-items:center;backdrop-filter:blur(12px)}
 .gearbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7}
+.soundbtn{position:fixed;right:16px;bottom:16px;z-index:62;display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:10px 14px;color:var(--ink);font-size:13px;font-weight:600;backdrop-filter:blur(12px);cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.4);transition:color .15s,border-color .15s}
+.soundbtn:hover{border-color:var(--accent)}
+.soundbtn .sb-ic{font-size:15px;line-height:1}
+.soundbtn.muted{color:var(--mut)}
+@media(max-width:680px){.soundbtn{right:14px;bottom:64px;padding:9px 12px;font-size:12px}}
 .help{position:fixed;left:20px;bottom:20px;z-index:18;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 15px;backdrop-filter:blur(12px);font-size:12px;max-width:240px;color:var(--mut);line-height:1.55}
 .help b{color:var(--ink)}
 @media(max-width:600px){.help{display:none}}
@@ -333,6 +338,7 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
   <div class="prog-pill"><div class="prog-bar"><i id="progFill"></i></div><b id="progN">0</b><small>/ 11 certified</small></div>
   <button class="cert-btn" id="certBtn" disabled>🏅 Certificate</button>
 </div>
+<button class="soundbtn" id="soundBtn" title="Tap to replay the voice, or mute / unmute"><span class="sb-ic" id="soundIc">🔊</span><span id="soundLbl">Voice</span></button>
 <button class="gearbtn" id="gearBtn" title="Connect Claude + ElevenLabs"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
 <div class="sidebar" id="sidebar">
   <div class="sb-about" id="aboutBtn" title="Learn about the Legal Affairs Department">
@@ -641,9 +647,12 @@ function stripMd(t){return (t||'').replace(/\*\*(.+?)\*\*/g,'$1').replace(/\*(.+
 // On-screen audio diagnostic (enable by visiting the academy with ?adbg=1; persists across navigation)
 try{if(/[?&]adbg/.test(location.search))localStorage.setItem('adbg','1');}catch(_){}
 function adbg(m){try{if(!/[?&]adbg/.test(location.search)&&localStorage.getItem('adbg')!=='1')return;let e=document.getElementById('adbg');if(!e){e=document.createElement('div');e.id='adbg';e.style.cssText='position:fixed;left:6px;bottom:6px;z-index:99999;font:11px/1.45 monospace;color:#7dffa0;background:rgba(0,0,0,.8);padding:5px 8px;border-radius:6px;max-width:92vw;white-space:pre-wrap;pointer-events:none';document.body.appendChild(e);}e._log=((e._log||'')+'\n'+m).split('\n').slice(-7).join('\n');e.textContent=e._log;}catch(_){}}
+let _voiceMuted=false,_voiceSpeaking=false,_lastSpoken='';
 function speakAsync(text,onEnd){
   stopAudio();text=stripMd(text).replace(/AED\s*([\d.,]+)/g,'$1 dirhams').replace(/\bAED\b/g,'dirhams');
+  _lastSpoken=text;
   let done=false;const finish=()=>{if(done)return;done=true;onEnd();};
+  if(_voiceMuted){adbg('muted — skip');setTimeout(finish,Math.min(2600,Math.max(700,text.length*22)));return;}
   let safety=setTimeout(finish,Math.max(4000,text.length*95));   // generous fallback only
   const webAudioPlay=(buf,onFail)=>{
     const c=getCtx();
@@ -687,7 +696,13 @@ function speakAsync(text,onEnd){
     const bin=atob(j.audio||'');const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);playBuf(arr.buffer);
   }).catch((st)=>{adbg('tts failed ('+st+') → fallback');directEleven();});  // 2) fallback: user key direct, else browser speech
 }
-function browserSpeak(text,done){adbg('browser speech');if(!window.speechSynthesis){done();return;}const u=new SpeechSynthesisUtterance(text);u.rate=1.02;u.lang='en-US';const vs=window.speechSynthesis.getVoices();const p=vs.find(v=>/Natural|Aria|Ava|Jenny|Google US English|Samantha/i.test(v.name)&&(v.lang||'').toLowerCase().startsWith('en'));if(p)u.voice=p;u.onend=done;u.onerror=done;window.speechSynthesis.speak(u);}
+function browserSpeak(text,done){adbg('browser speech');
+  // Guarantee the callback fires even if speechSynthesis never reports onend (common on iOS Chrome) —
+  // otherwise the lesson await never resolves, the session never clears, and clicks get blocked.
+  let fired=false;const fin=()=>{if(fired)return;fired=true;done();};
+  const guard=setTimeout(fin,Math.max(3500,text.length*70));
+  if(!window.speechSynthesis){clearTimeout(guard);fin();return;}
+  try{const u=new SpeechSynthesisUtterance(text);u.rate=1.02;u.lang='en-US';const vs=window.speechSynthesis.getVoices();const p=vs.find(v=>/Natural|Aria|Ava|Jenny|Google US English|Samantha/i.test(v.name)&&(v.lang||'').toLowerCase().startsWith('en'));if(p)u.voice=p;u.onend=()=>{clearTimeout(guard);fin();};u.onerror=()=>{clearTimeout(guard);fin();};window.speechSynthesis.speak(u);}catch(e){clearTimeout(guard);fin();}}
 if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){};window.speechSynthesis.getVoices();}
 // First-time spoken welcome shown in the galaxy
 function playWelcome(){
@@ -709,7 +724,17 @@ if(SR){recog=new SR();recog.lang='en-US';recog.interimResults=true;recog.continu
 /* ════ Stage UI ════ */
 const stage=document.getElementById('stage');
 function setOrb(mode){const o=document.getElementById('orb');o.classList.toggle('cust',mode==='cust');}
-function setSpeaking(b,cust){document.getElementById('orb').classList.toggle('speak',b);setOrb(cust?'cust':'coach');}
+function setSpeaking(b,cust){_voiceSpeaking=b;document.getElementById('orb').classList.toggle('speak',b);setOrb(cust?'cust':'coach');}
+// Floating sound button: tap to replay the current line, or mute / unmute. Each tap is a real
+// user gesture, which iOS always allows for audio — so it doubles as a guaranteed sound unlock.
+function updateSoundBtn(){const ic=document.getElementById('soundIc'),lbl=document.getElementById('soundLbl'),b=document.getElementById('soundBtn');if(!b)return;b.classList.toggle('muted',_voiceMuted);ic.textContent=_voiceMuted?'🔇':'🔊';lbl.textContent=_voiceMuted?'Muted':'Voice';}
+function replayVoice(){if(!_lastSpoken)return;_voiceSpeaking=true;speakAsync(_lastSpoken,()=>{_voiceSpeaking=false;});}
+(function(){const b=document.getElementById('soundBtn');if(!b)return;b.addEventListener('click',()=>{
+  try{primeAudio();}catch(e){}
+  if(_voiceMuted){_voiceMuted=false;updateSoundBtn();replayVoice();}          // unmute + replay
+  else if(_voiceSpeaking){_voiceMuted=true;stopAudio();updateSoundBtn();}      // mute mid-sentence
+  else{replayVoice();}                                                         // idle → replay
+});updateSoundBtn();})();
 function setCaption(text,cust){text=stripMd(text);const cap=document.getElementById('cap');cap.style.opacity='0';setTimeout(()=>{document.getElementById('capRole').textContent=cust?'Customer':'Coach';cap.classList.toggle('cust',!!cust);document.getElementById('capText').textContent=text;cap.scrollTop=0;cap.style.opacity='1';},110);}
 function setCoach(text){document.getElementById('coach').textContent=text||'';}
 function setListening(b){document.getElementById('listening').classList.toggle('on',b);document.getElementById('stControls').classList.toggle('hide',false);}
@@ -762,7 +787,10 @@ async function gradeSim(s,line,answer){
 /* ════ The Director ════ */
 let session=null;
 async function enterPlanet(id){
-  const s=findS(id);if(!s||session)return;
+  const s=findS(id);if(!s)return;
+  // Self-heal: if a previous lesson left a stale session but its UI is already closed, clear it
+  // so the trainee can enter again (otherwise every planet click would silently return).
+  if(session){if(stage.classList.contains('on'))return;session=null;if(window.orbit3d)window.orbit3d.surface();}
   session={s,aborted:false};
   document.getElementById('stTitle').textContent=shortName(s);
   document.getElementById('peek').textContent='Tip: speak naturally, or type. Say "repeat" if you miss something.';
@@ -814,7 +842,7 @@ async function runAbout(){
   showControls(true);document.getElementById('stControls').innerHTML='<button class="sbtn gold" onclick="exitStage()">Choose a service →</button>';
 }
 async function enterAbout(){
-  if(session)return;
+  if(session){if(stage.classList.contains('on'))return;session=null;if(window.orbit3d)window.orbit3d.surface();}
   session={about:true,aborted:false};
   document.getElementById('stTitle').textContent='About the Legal Affairs Department';
   document.getElementById('peek').textContent='Your induction — speak or type to ask anything about the Department.';
@@ -1178,7 +1206,7 @@ initAuth();
   renderer.domElement.addEventListener('pointermove',ev=>{if(diveId){tip.style.display='none';return;}const o=pick(ev);renderer.domElement.style.cursor=o?'pointer':'grab';if(o&&o.userData.type==='sun'){tip.style.display='block';tip.style.left=(ev.clientX+14)+'px';tip.style.top=(ev.clientY+14)+'px';tip.innerHTML='<div class="n">About the Department</div><div class="m">Click to learn who we are &amp; our Director General</div>';}else if(o){const s=D.findS(o.userData.id);tip.style.display='block';tip.style.left=(ev.clientX+14)+'px';tip.style.top=(ev.clientY+14)+'px';tip.innerHTML='<div class="n">'+D.esc(s.name)+'</div><div class="m">'+(D.certified(s.id)?'Certified ✓ · click to revisit':'Click to dive in &amp; train')+'</div>';}else tip.style.display='none';});
   renderer.domElement.addEventListener('mouseleave',()=>{tip.style.display='none';});
   let downXY=null;renderer.domElement.addEventListener('pointerdown',ev=>{downXY=[ev.clientX,ev.clientY];});
-  renderer.domElement.addEventListener('pointerup',ev=>{if(!downXY)return;const moved=Math.hypot(ev.clientX-downXY[0],ev.clientY-downXY[1]);downXY=null;if(moved>6||diveId)return;const o=pick(ev);if(!o)return;if(o.userData.type==='sun'){if(window.enterAbout)window.enterAbout();return;}window.enterPlanet(o.userData.id);});
+  renderer.domElement.addEventListener('pointerup',ev=>{if(!downXY)return;const moved=Math.hypot(ev.clientX-downXY[0],ev.clientY-downXY[1]);downXY=null;if(moved>6||(diveId&&stage.classList.contains('on')))return;const o=pick(ev);if(!o)return;if(o.userData.type==='sun'){if(window.enterAbout)window.enterAbout();return;}window.enterPlanet(o.userData.id);});
   let focusId=null,diveId=null;const tmp=new THREE.Vector3(),des=new THREE.Vector3();
   function applyFocus(){if(!focusId||!reg[focusId])return;reg[focusId].planet.getWorldPosition(tmp);const close=!!diveId;controls.target.lerp(tmp,close?0.12:0.07);const out=tmp.clone().normalize();des.copy(tmp).add(out.multiplyScalar(close?2.6:8)).add(new THREE.Vector3(0,close?0.8:3,0));camera.position.lerp(des,close?0.1:0.06);}
   // ── premium bloom (cinematic glow). Falls back to a plain render if the post-processing scripts didn't load. ──
