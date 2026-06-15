@@ -919,6 +919,14 @@ initAuth();
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/renderers/CSS2DRenderer.js"></script>
+<!-- premium post-processing: real bloom (loaded after the core; used with a safe fallback) -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/MaskPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script>
 (function(){
   const loaderEl=document.getElementById('loader');
@@ -977,8 +985,13 @@ initAuth();
       else{if(e<0.48)col=L3([18,46,104],[28,88,156],e/0.48);else if(e<0.52)col=[198,188,140];else if(e<0.7)col=L3([58,128,68],[92,150,82],(e-0.52)/0.18);else if(e<0.85)col=L3([112,94,68],[88,72,52],(e-0.7)/0.15);else col=[236,241,246];col=L3(col,b,0.12);}
       const i=(y*w+x)*4;d[i]=col[0];d[i+1]=col[1];d[i+2]=col[2];d[i+3]=255;}}
     c2.putImageData(img,0,0);const t=new THREE.CanvasTexture(cnv);t.encoding=THREE.sRGBEncoding;return t;}
-  const sun=new THREE.Mesh(new THREE.SphereGeometry(2.6,48,48),new THREE.MeshBasicMaterial({color:0xffe9b0}));sun.userData={type:'sun'};scene.add(sun);
-  sun.add(new THREE.Mesh(new THREE.SphereGeometry(3.9,32,32),new THREE.MeshBasicMaterial({color:0xffcf7a,transparent:true,opacity:0.32,side:THREE.BackSide,blending:THREE.AdditiveBlending,depthWrite:false})));
+  const sun=new THREE.Mesh(new THREE.SphereGeometry(2.6,64,64),new THREE.MeshBasicMaterial({color:0xfff3d2}));sun.userData={type:'sun'};scene.add(sun);
+  // layered corona — warm inner, ember outer
+  sun.add(new THREE.Mesh(new THREE.SphereGeometry(3.3,40,40),new THREE.MeshBasicMaterial({color:0xffcf7a,transparent:true,opacity:0.42,side:THREE.BackSide,blending:THREE.AdditiveBlending,depthWrite:false})));
+  sun.add(new THREE.Mesh(new THREE.SphereGeometry(5.0,40,40),new THREE.MeshBasicMaterial({color:0xff9a3a,transparent:true,opacity:0.16,side:THREE.BackSide,blending:THREE.AdditiveBlending,depthWrite:false})));
+  // soft camera-facing glow (gives the star its bloom-friendly halo)
+  const sunGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:radialTex([[0,'rgba(255,232,170,0.95)'],[0.22,'rgba(255,184,92,0.55)'],[0.55,'rgba(255,138,52,0.14)'],[1,'rgba(0,0,0,0)']]),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));
+  sunGlow.scale.set(17,17,1);sun.add(sunGlow);
   const sl=document.createElement('div');sl.className='lbl';sl.innerHTML='<b style="font-family:Instrument Serif,serif;font-size:14px">About the Department</b><span>click to learn about us</span>';const slo=new THREE.CSS2DObject(sl);slo.position.set(0,3.7,0);sun.add(slo);
   const reg={};const sys=new THREE.Group();scene.add(sys);
   const MC={step:0x9fb0cc,fees:0xffd479,channels:0x6aa6ff,docs:0x2dd4bf};
@@ -987,7 +1000,7 @@ initAuth();
     list.forEach((s,i)=>{const orbR=9+i*2.7;const pivot=new THREE.Group();sys.add(pivot);
       const ring=new THREE.Mesh(new THREE.RingGeometry(orbR-0.015,orbR+0.015,128),new THREE.MeshBasicMaterial({color:0x445072,transparent:true,opacity:0.22,side:THREE.DoubleSide}));ring.rotation.x=Math.PI/2;sys.add(ring);
       const pr=1.0;const planet=new THREE.Mesh(new THREE.SphereGeometry(pr,40,40),new THREE.MeshStandardMaterial({map:tex(s.type,s.color),roughness:0.95,metalness:0.05}));planet.userData={id:s.id};
-      const atm=new THREE.Mesh(new THREE.SphereGeometry(pr*1.14,28,28),new THREE.MeshBasicMaterial({color:new THREE.Color(s.color),transparent:true,opacity:0.22,side:THREE.BackSide,blending:THREE.AdditiveBlending}));planet.add(atm);
+      const atm=new THREE.Mesh(new THREE.SphereGeometry(pr*1.16,32,32),new THREE.MeshBasicMaterial({color:new THREE.Color(s.color),transparent:true,opacity:0.3,side:THREE.BackSide,blending:THREE.AdditiveBlending,depthWrite:false}));planet.add(atm);
       const el=document.createElement('div');el.className='lbl';const lo=new THREE.CSS2DObject(el);lo.position.set(0,pr+0.7,0);planet.add(lo);
       const pg=new THREE.Group();pg.add(planet);pg.position.set(orbR,0,0);pivot.add(pg);pivot.rotation.y=(i/n)*Math.PI*2;
       const moons=[];const facets=[];s.steps.forEach((st,j)=>facets.push('step'));facets.push('fees');facets.push('channels');if(s.docs.filter(x=>x&&x!=='None'&&x!=='Not applicable').length)facets.push('docs');
@@ -1005,11 +1018,21 @@ initAuth();
   renderer.domElement.addEventListener('pointerup',ev=>{if(!downXY)return;const moved=Math.hypot(ev.clientX-downXY[0],ev.clientY-downXY[1]);downXY=null;if(moved>6||diveId)return;const o=pick(ev);if(!o)return;if(o.userData.type==='sun'){if(window.enterAbout)window.enterAbout();return;}window.enterPlanet(o.userData.id);});
   let focusId=null,diveId=null;const tmp=new THREE.Vector3(),des=new THREE.Vector3();
   function applyFocus(){if(!focusId||!reg[focusId])return;reg[focusId].planet.getWorldPosition(tmp);const close=!!diveId;controls.target.lerp(tmp,close?0.12:0.07);const out=tmp.clone().normalize();des.copy(tmp).add(out.multiplyScalar(close?2.6:8)).add(new THREE.Vector3(0,close?0.8:3,0));camera.position.lerp(des,close?0.1:0.06);}
+  // ── premium bloom (cinematic glow). Falls back to a plain render if the post-processing scripts didn't load. ──
+  let composer=null;
+  try{
+    if(THREE.EffectComposer&&THREE.RenderPass&&THREE.UnrealBloomPass){
+      composer=new THREE.EffectComposer(renderer);
+      composer.addPass(new THREE.RenderPass(scene,camera));
+      const bloom=new THREE.UnrealBloomPass(new THREE.Vector2(W,H),0.85,0.62,0.78); // strength, radius, threshold (only bright things glow)
+      composer.addPass(bloom);
+    }
+  }catch(e){composer=null;}
   const clock=new THREE.Clock();
   function animate(){requestAnimationFrame(animate);const dt=clock.getDelta(),t=clock.elapsedTime;sun.scale.setScalar(1+0.04*Math.sin(t*1.5));grid.rotation.y+=dt*0.012;sky.rotation.y+=dt*0.0016;dust.rotation.y+=dt*0.008;disc.material.opacity=0.78+0.12*Math.sin(t*0.6);
     for(const id in reg){const r=reg[id];r.pivot.rotation.y+=r.spin*dt*0.12;r.planet.rotation.y+=dt*(diveId===id?0.05:0.08);r.moons.forEach(m=>{m.rotation.y+=m.userData.spin*dt;});if(D.certified(id))r.atm.material.opacity=0.3+0.12*Math.sin(t*2);}
-    applyFocus();controls.update();renderer.render(scene,camera);labelRenderer.render(scene,camera);}
-  addEventListener('resize',()=>{W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);labelRenderer.setSize(W,H);});
+    applyFocus();controls.update();if(composer)composer.render();else renderer.render(scene,camera);labelRenderer.render(scene,camera);}
+  addEventListener('resize',()=>{W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);if(composer)composer.setSize(W,H);labelRenderer.setSize(W,H);});
   build();animate();
   setTimeout(()=>{loaderEl.classList.add('gone');setTimeout(()=>loaderEl.remove(),700);},80);
   }
