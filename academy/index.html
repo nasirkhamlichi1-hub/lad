@@ -102,6 +102,10 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 .stage.on{display:flex;opacity:1}
 #voxCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1.1s ease}
 .stage.on #voxCanvas{opacity:1}
+/* cinematic mode — the morphing constellation is the stage; hide orb, coach label, equaliser & data board */
+.orb-dock,#capEq,#capRole,.board{display:none!important}
+.cap-wrap{justify-content:center;margin:0 0 4px}
+.cap{background:linear-gradient(180deg,rgba(4,6,16,0),rgba(4,6,16,.66) 42%);border:0!important;backdrop-filter:none;box-shadow:none;text-align:center;color:#eef2ff;text-shadow:0 2px 14px rgba(0,0,0,.75);padding:16px 20px 8px}
 .st-top{position:absolute;top:18px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 20px}
 .phase-rail{display:flex;gap:8px;background:rgba(10,13,26,.6);border:1px solid var(--line);border-radius:30px;padding:6px;backdrop-filter:blur(12px)}
 .phase{font-size:12px;font-weight:600;color:var(--mut);padding:6px 14px;border-radius:24px;display:flex;align-items:center;gap:7px}
@@ -846,44 +850,58 @@ function setSpeaking(b,cust){_voiceSpeaking=b;document.getElementById('orb').cla
    its words actually appear in the spoken script so the timing tracks her voice. */
 // ── reactive particle field: a crystallising voice constellation that responds to the coach ──
 const VOX=(function(){
-  let cv,ctx,raf=0,W=0,H=0,DPR=1,parts=[],edges=[],stars=[],cryst=0,rot=0,t=0,running=false;
+  let cv,ctx,raf=0,W=0,H=0,DPR=1,running=false,t=0,N=264;
+  let P=[],stars=[],forms={},curKey=null,lineOn=true,cryst=0,rot=0;
+  // single-path silhouettes (24×24) the constellation morphs into — sampled along their outline
+  const PATHS={
+    doc:'M7 3H14L18 7V21H7Z M14 3V7H18 M9.5 12H15.5 M9.5 15.2H15.5',
+    coin:'M4 12A8 8 0 1 0 20 12A8 8 0 1 0 4 12Z M8 12A4 4 0 1 0 16 12A4 4 0 1 0 8 12Z',
+    card:'M3 6H21V18H3Z M3 10H21 M6 14H11',
+    review:'M4.5 10A5.5 5.5 0 1 0 15.5 10A5.5 5.5 0 1 0 4.5 10Z M14.5 14L20 19.5',
+    gavel:'M3 21H12 M8 9.5L12.5 14L9.5 17L5 12.5Z M13 4.5L19.5 11 M10.5 7L17 13.5',
+    pin:'M5 9A7 7 0 1 1 19 9C19 14 12 22 12 22C12 22 5 14 5 9Z M9.5 9A2.5 2.5 0 1 0 14.5 9A2.5 2.5 0 1 0 9.5 9Z',
+    phone:'M8 2H16V22H8Z M11 19H13',
+    people:'M6 8A3 3 0 1 0 12 8A3 3 0 1 0 6 8Z M3.5 20A5.5 5.5 0 0 1 14.5 20 M17 9A2.4 2.4 0 1 0 17.01 9',
+    seal:'M12 3L14.4 5L17.8 5.2L18 8.6L20.7 11L18 13.4L17.8 16.8L14.4 17L12 19L9.6 17L6.2 16.8L6 13.4L3.3 11L6 8.6L6.2 5.2L9.6 5Z M9 11L11.2 13.2L15 9.4',
+    star:'M12 2L15 9L22 9L16.5 13.5L18.5 21L12 16.5L5.5 21L7.5 13.5L2 9L9 9Z',
+    scale:'M12 3V21 M6 21H18 M12 6L5 9 M12 6L19 9 M3 12A4 2.5 0 0 0 11 12 M13 12A4 2.5 0 0 0 21 12'
+  };
+  let measPath=null;
+  function meas(){if(!measPath){const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('width','0');svg.setAttribute('height','0');svg.style.cssText='position:absolute;left:-9999px;top:-9999px';measPath=document.createElementNS(ns,'path');svg.appendChild(measPath);document.body.appendChild(svg);}return measPath;}
+  function samplePath(d){const p=meas();p.setAttribute('d',d);let L=0;try{L=p.getTotalLength();}catch(e){}if(!L)return null;const pts=[];for(let i=0;i<N;i++){let q;try{q=p.getPointAtLength(L*i/N);}catch(e){q={x:12,y:12};}pts.push([(q.x-12)/12,(q.y-12)/12]);}return pts;}
+  function mandala(){const pts=[],rings=[[0.30,0.18],[0.58,0.30],[0.84,0.26],[1.0,0.26]];rings.forEach(rg=>{const n=Math.round(N*rg[1]);for(let k=0;k<n;k++){const a=(k/n)*Math.PI*2;pts.push([Math.cos(a)*rg[0],Math.sin(a)*rg[0]]);}});while(pts.length<N)pts.push([0,0]);return pts.slice(0,N);}
+  function nebula(){const pts=[];for(let i=0;i<N;i++){const a=Math.random()*6.28,r=Math.sqrt(Math.random());pts.push([Math.cos(a)*r,Math.sin(a)*r]);}return pts;}
+  function getForm(key){if(forms[key])return forms[key];let f=key==='mandala'?mandala():key==='nebula'?nebula():(PATHS[key]?samplePath(PATHS[key]):null);if(!f||!f.length)f=mandala();while(f.length<N)f.push(f[f.length%f.length]);forms[key]=f;return f;}
+  function morph(key){if(!P.length||key===curKey)return;const f=getForm(key);if(!f)return;curKey=key;lineOn=(key!=='nebula');for(let i=0;i<N;i++){const tp=f[i%f.length];P[i].tx=tp[0];P[i].ty=tp[1];}}
+  function init(){P=[];for(let i=0;i<N;i++){const a=Math.random()*6.28,r=Math.sqrt(Math.random());P.push({x:Math.cos(a)*r,y:Math.sin(a)*r,sx:0,sy:0,tx:0,ty:0,ph:Math.random()*6.28});}forms={};curKey=null;stars=[];for(let i=0;i<70;i++)stars.push({x:Math.random(),y:Math.random(),z:Math.random()*0.6+0.2,ph:Math.random()*6.28});}
   function resize(){if(!cv||!ctx)return;DPR=Math.min(2,window.devicePixelRatio||1);W=cv.clientWidth||window.innerWidth;H=cv.clientHeight||window.innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
-  function build(){
-    parts=[];edges=[];const rings=4,gap=1/rings,ringIdx=[];let idx=0;
-    for(let r=0;r<=rings;r++){const count=r===0?1:6*r,list=[];
-      for(let k=0;k<count;k++){const ang=(k/count)*Math.PI*2+(r%2?Math.PI/count:0);
-        parts.push({r:r,la:ang,lr:r*gap,dx:(Math.random()-.5)*0.9,dy:(Math.random()-.5)*0.9,vx:(Math.random()-.5)*0.0009,vy:(Math.random()-.5)*0.0009,px:0,py:0});
-        list.push(idx++);}
-      ringIdx.push(list);}
-    for(let r=1;r<=rings;r++){const list=ringIdx[r];for(let j=0;j<list.length;j++)edges.push([list[j],list[(j+1)%list.length]]);}
-    for(let r=1;r<=rings;r++){const cur=ringIdx[r],prev=ringIdx[r-1];cur.forEach(ci=>{const p=parts[ci];let best=prev[0],bd=1e9;prev.forEach(pi=>{const q=parts[pi];let d=Math.abs(((q.la-p.la+Math.PI*3)%(Math.PI*2))-Math.PI);if(d<bd){bd=d;best=pi;}});edges.push([ci,best]);});}
-    stars=[];for(let i=0;i<64;i++)stars.push({x:Math.random(),y:Math.random(),z:Math.random()*0.6+0.2,ph:Math.random()*6.28});
-  }
   function frame(){
-    if(!running)return;t++;const lvl=voxLevel();
-    cryst+=((0.12+lvl*0.88)-cryst)*0.07;rot+=0.0009+lvl*0.0044;
-    ctx.clearRect(0,0,W,H);
-    const cx=W*0.5,cy=H*0.40,scale=Math.min(W,H)*0.25*(1+lvl*0.12);
-    ctx.globalCompositeOperation='lighter';
-    for(const s of stars){const x=((s.x+t*0.00002*s.z)%1)*W,y=s.y*H,tw=0.4+0.6*Math.abs(Math.sin(t*0.02*s.z+s.ph));ctx.fillStyle='rgba(150,170,255,'+(0.09*s.z*tw)+')';ctx.beginPath();ctx.arc(x,y,s.z*1.3,0,6.28);ctx.fill();}
-    for(const p of parts){p.dx+=p.vx;p.dy+=p.vy;if(p.dx>1||p.dx<-1)p.vx*=-1;if(p.dy>1||p.dy<-1)p.vy*=-1;
-      const a=p.la+rot,lx=Math.cos(a)*p.lr,ly=Math.sin(a)*p.lr,fx=lx*0.5+p.dx*0.55,fy=ly*0.5+p.dy*0.55;
-      p.px=cx+(fx+(lx-fx)*cryst)*scale;p.py=cy+(fy+(ly-fy)*cryst)*scale;}
-    const ea=cryst*(0.14+lvl*0.62);
-    if(ea>0.02){ctx.lineWidth=1;for(const e of edges){const a=parts[e[0]],b=parts[e[1]],g=ctx.createLinearGradient(a.px,a.py,b.px,b.py);g.addColorStop(0,'rgba(140,110,255,'+ea+')');g.addColorStop(1,'rgba(80,200,255,'+ea+')');ctx.strokeStyle=g;ctx.beginPath();ctx.moveTo(a.px,a.py);ctx.lineTo(b.px,b.py);ctx.stroke();}}
-    for(const p of parts){const rad=(1.6+lvl*2.6)*(p.r===0?1.7:1),bri=0.42+lvl*0.55,
-      grd=ctx.createRadialGradient(p.px,p.py,0,p.px,p.py,rad*3.6);
-      grd.addColorStop(0,'rgba(222,212,255,'+bri+')');grd.addColorStop(.4,'rgba(150,120,255,'+(bri*0.7)+')');grd.addColorStop(1,'rgba(120,90,255,0)');
-      ctx.fillStyle=grd;ctx.beginPath();ctx.arc(p.px,p.py,rad*3.6,0,6.28);ctx.fill();
-      ctx.fillStyle='rgba(255,255,255,'+Math.min(1,bri+0.22)+')';ctx.beginPath();ctx.arc(p.px,p.py,rad*0.7,0,6.28);ctx.fill();}
+    if(!running)return;t++;const lvl=voxLevel();cryst+=((0.25+lvl*0.75)-cryst)*0.06;rot+=0.0007+lvl*0.0016;
+    const cx=W*0.5,cy=H*0.42,sc=Math.min(W,H)*0.30*(1+lvl*0.07),cr=Math.cos(rot),sr=Math.sin(rot);
+    ctx.clearRect(0,0,W,H);ctx.globalCompositeOperation='lighter';
+    for(const s of stars){const x=((s.x+t*0.00002*s.z)%1)*W,y=s.y*H,tw=0.4+0.6*Math.abs(Math.sin(t*0.02*s.z+s.ph));ctx.fillStyle='rgba(150,170,255,'+(0.08*s.z*tw)+')';ctx.beginPath();ctx.arc(x,y,s.z*1.3,0,6.28);ctx.fill();}
+    const jit=sc*0.011*(0.4+lvl*2.4),ease=0.085;
+    for(const p of P){p.x+=(p.tx-p.x)*ease;p.y+=(p.ty-p.y)*ease;const rx=p.x*cr-p.y*sr,ry=p.x*sr+p.y*cr,j=Math.sin(t*0.05+p.ph)*jit;p.sx=cx+rx*sc+Math.cos(p.ph)*j;p.sy=cy+ry*sc+Math.sin(p.ph*1.7)*j;}
+    if(lineOn){const la=(0.08+lvl*0.4)*cryst,lim=sc*0.34,lim2=lim*lim;ctx.lineWidth=1;ctx.strokeStyle='rgba(150,135,255,'+la+')';ctx.beginPath();for(let i=0;i<N-1;i++){const a=P[i],b=P[i+1],dx=a.sx-b.sx,dy=a.sy-b.sy;if(dx*dx+dy*dy<lim2){ctx.moveTo(a.sx,a.sy);ctx.lineTo(b.sx,b.sy);}}ctx.stroke();}
+    const rad=1.25+lvl*1.7,bri=0.5+lvl*0.5;
+    for(const p of P){ctx.fillStyle='rgba(185,165,255,'+(0.45*bri)+')';ctx.beginPath();ctx.arc(p.sx,p.sy,rad*2.3,0,6.28);ctx.fill();ctx.fillStyle='rgba(255,255,255,'+bri+')';ctx.beginPath();ctx.arc(p.sx,p.sy,rad*0.8,0,6.28);ctx.fill();}
     ctx.globalCompositeOperation='source-over';
     raf=requestAnimationFrame(frame);
   }
   return {
-    start(){cv=document.getElementById('voxCanvas');if(!cv)return;ctx=cv.getContext('2d');resize();build();if(!running){running=true;raf=requestAnimationFrame(frame);}window.addEventListener('resize',resize);},
-    stop(){running=false;if(raf)cancelAnimationFrame(raf);raf=0;window.removeEventListener('resize',resize);try{if(ctx)ctx.clearRect(0,0,W,H);}catch(e){}}
+    start(){cv=document.getElementById('voxCanvas');if(!cv)return;ctx=cv.getContext('2d');resize();init();morph('mandala');if(!running){running=true;raf=requestAnimationFrame(frame);}window.addEventListener('resize',resize);},
+    stop(){running=false;if(raf)cancelAnimationFrame(raf);raf=0;window.removeEventListener('resize',resize);try{if(ctx)ctx.clearRect(0,0,W,H);}catch(e){}},
+    morph:morph
   };
 })();
+function pathKeyFor(text,i,n){const t=(text||'').toLowerCase(),has=(...k)=>k.some(w=>t.includes(w));
+  if(has('pay','payment','dirham','fee','cost','cashier'))return 'coin';
+  if(has('review','assess','examin','verif','evaluat','inspect','process'))return 'review';
+  if(has('committee','hearing','panel','tribunal'))return 'people';
+  if(has('decision','approv','grant','reject','outcome','result','notif','hearing'))return 'gavel';
+  if(has('card','certificate','licen','permit','issued','issue','print','collect','receive'))return 'card';
+  if(has('document','attach','upload','form','submit','apply','application','register','request','lodge'))return 'doc';
+  if(i===n-1)return 'card';if(i===0)return 'doc';return 'star';}
 // scene icon set + avatar
 const IC={
  doc:'<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M9.5 12h6M9.5 15.2h6"/></svg>',
@@ -930,12 +948,14 @@ function sectionFX(kind,s,text){
     const sts=[...document.querySelectorAll('#stations .station')];const n=sts.length||1;let prev=0;
     const beats=sts.map((el,i)=>{let fr=textFrac(text,longWords(s.steps[i],2),(i+0.5)/n);if(fr<prev+0.015)fr=Math.min(.97,prev+0.72/n);prev=fr;
       return {frac:fr,fn:()=>{for(let j=0;j<i;j++)sts[j].classList.add('done','lit');el.classList.add('lit','arrive');setTimeout(()=>el.classList.remove('arrive'),750);
-        movePulse(stationX(i,n),true);}};});
+        movePulse(stationX(i,n),true);VOX.morph(pathKeyFor(s.steps[i],i,n));}};});
+    if(!sts.length){const st=s.steps||[],m=st.length||1;scheduleBeats(text,st.map((p,i)=>{let fr=textFrac(text,longWords(p,2),(i+0.5)/m);if(fr<prev+0.015)fr=Math.min(.97,prev+0.72/m);prev=fr;return{frac:fr,fn:()=>VOX.morph(pathKeyFor(p,i,m))};}));return;}
     scheduleBeats(text,beats);
   }else if(kind==='fees'){
     const lines=[...document.querySelectorAll('#bdFee .bd-fline')];const fees=s.fees||[];const n=Math.max(fees.length,1);
     const beats=fees.map((f,i)=>({frac:textFrac(text,[String(f.fee),...longWords(f.n,1)],(i+0.5)/n),fn:()=>{
       lines.forEach(x=>x.classList.remove('pop'));if(lines[i]){lines[i].classList.add('pop');countUp(lines[i].querySelector('.cnt'),f.fee);}
+      VOX.morph(Number(f.fee)>0?'coin':'seal');
       popFact('<b>'+esc(dirhams(f.fee))+'</b><span>'+esc(f.n)+(f.time&&f.time!=='Instant'?' · '+esc(f.time):'')+'</span>','gold');}}));
     scheduleBeats(text,beats);
   }else if(kind==='channels'){
@@ -944,20 +964,21 @@ function sectionFX(kind,s,text){
     const items=[];chans.forEach((c,i)=>items.push({t:'ch',label:c,el:chips[i],fb:(i+0.4)/(chans.length+docs.length||1)}));
     docs.forEach((d,i)=>items.push({t:'doc',label:d,el:docEls[i],fb:(chans.length+i+0.4)/(chans.length+docs.length||1)}));
     const beats=items.map(it=>({frac:textFrac(text,[it.label,...longWords(it.label,1)],it.fb),fn:()=>{if(it.el)it.el.classList.add('lit');
+      VOX.morph(it.t==='doc'?'doc':(/app|smart|online|website|portal|e-|digital/i.test(it.label)?'phone':'pin'));
       popFact((it.t==='doc'?'📄 ':'📍 ')+'<span style="font-size:13px;color:#eaf0ff">'+esc(it.label)+'</span>',it.t==='doc'?'teal':'blue');}}));
     scheduleBeats(text,beats);
   }
 }
 function aboutFX(kind,text){
   const A=ABOUT;
-  if(kind==='intro'){const facts=[[A.dg,'Director General','blue',[A.dg,...longWords(A.dg,1)]],['Legal Affairs Department','Government of Dubai','',['legal affairs','department','dubai']]];
-    scheduleBeats(text,facts.map((f,i)=>({frac:textFrac(text,f[3],(i+0.4)/facts.length),fn:()=>popFact('<b>'+esc(f[0])+'</b><span>'+esc(f[1])+'</span>',f[2])})));}
+  if(kind==='intro'){VOX.morph('seal');const facts=[[A.dg,'Director General','blue',[A.dg,...longWords(A.dg,1)]],['Legal Affairs Department','Government of Dubai','',['legal affairs','department','dubai']]];
+    scheduleBeats(text,facts.map((f,i)=>({frac:textFrac(text,f[3],(i+0.4)/facts.length),fn:()=>{VOX.morph(i===0?'people':'seal');popFact('<b>'+esc(f[0])+'</b><span>'+esc(f[1])+'</span>',f[2])}})));}
   else if(kind==='vm'){const e=document.getElementById('abVision'),m=document.getElementById('abMission');
-    const it=[[e,'Vision',['vision','envision','aspire','future']],[m,'Mission',['mission','exist','deliver','provide','role']]];
-    scheduleBeats(text,it.map((x,i)=>({frac:textFrac(text,x[2],(i+0.3)/2),fn:()=>{it.forEach(y=>y[0]&&y[0].classList.remove('pop'));if(x[0])x[0].classList.add('pop');popFact('✦ <span style="font-size:13px;color:#eaf0ff">'+esc(x[1])+'</span>','blue')}})));}
+    const it=[[e,'Vision','star',['vision','envision','aspire','future']],[m,'Mission','scale',['mission','exist','deliver','provide','role']]];
+    scheduleBeats(text,it.map((x,i)=>({frac:textFrac(text,x[3],(i+0.3)/2),fn:()=>{it.forEach(y=>y[0]&&y[0].classList.remove('pop'));if(x[0])x[0].classList.add('pop');VOX.morph(x[2]);popFact('✦ <span style="font-size:13px;color:#eaf0ff">'+esc(x[1])+'</span>','blue')}})));}
   else if(kind==='values'){const chips=[...document.querySelectorAll('#abValues .bd-chip')];const vs=A.values||[];const n=Math.max(vs.length,1);
-    scheduleBeats(text,vs.map((v,i)=>({frac:textFrac(text,[v,...longWords(v,1)],(i+0.4)/n),fn:()=>{if(chips[i])chips[i].classList.add('lit');popFact('✦ <span style="font-size:13px;color:#eaf0ff">'+esc(v)+'</span>','teal')}})));}
-  else if(kind==='role'){const rs=(A.role||[]).slice(0,4);const n=Math.max(rs.length,1);
+    scheduleBeats(text,vs.map((v,i)=>({frac:textFrac(text,[v,...longWords(v,1)],(i+0.4)/n),fn:()=>{if(chips[i])chips[i].classList.add('lit');VOX.morph('star');popFact('✦ <span style="font-size:13px;color:#eaf0ff">'+esc(v)+'</span>','teal')}})));}
+  else if(kind==='role'){VOX.morph('scale');const rs=(A.role||[]).slice(0,4);const n=Math.max(rs.length,1);
     scheduleBeats(text,rs.map((r,i)=>({frac:textFrac(text,longWords(r,2),(i+0.4)/n),fn:()=>popFact('<span style="font-size:12.5px;color:#eaf0ff">'+esc(String(r).replace(/\.$/,''))+'</span>','blue')})));}
 }
 // Floating sound button: tap to replay the current line, or mute / unmute. Each tap is a real
@@ -1249,12 +1270,12 @@ async function runLesson(s){
     correct+=await askCheck(s,pool.shift());if(ab())return;extra++;
   }
   hideBoard();P(s.id).quiz=correct>=2;save();updateHUD();flushSync();
-  markPhaseDone('learn');setPhase('sim');
+  markPhaseDone('learn');setPhase('sim');VOX.morph('mandala');
   await say(correct>=2?pick(L_SIMGOOD):pick(L_SIMOK));if(ab())return;
   let total=0;
   for(let i=0;i<s.sims.length;i++){if(ab())return;const line=s.sims[i];
     await say(pick(L_ROLE).replace('{N}',(i+1)));if(ab())return;
-    showCustomerCard(line,"a customer");
+    showCustomerCard(line,"a customer");VOX.morph('people');
     await say(line,true);if(ab())return;
     const ans=await listen('Respond to the customer…');if(ab())return;
     const g=await gradeSim(s,line,ans);if(ab())return;
