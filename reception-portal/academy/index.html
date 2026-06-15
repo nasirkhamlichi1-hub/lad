@@ -895,10 +895,20 @@ const VOX=(function(){
   function samplePath(d){const p=meas();p.setAttribute('d',d);let L=0;try{L=p.getTotalLength();}catch(e){}if(!L)return null;const pts=[];for(let i=0;i<N;i++){let q;try{q=p.getPointAtLength(L*i/N);}catch(e){q={x:12,y:12};}pts.push([(q.x-12)/12,(q.y-12)/12]);}return pts;}
   // rasterise text/numbers and scatter particles across the glyph
   function sampleText(str){const S=140,off=document.createElement('canvas');off.width=S;off.height=S;const o=off.getContext('2d');o.fillStyle='#fff';o.textAlign='center';o.textBaseline='middle';const fs=String(str).length>=3?78:108;o.font='900 '+fs+'px Inter,Arial,sans-serif';o.fillText(str,S/2,S/2+4);const d=o.getImageData(0,0,S,S).data,fill=[];for(let y=0;y<S;y+=2)for(let x=0;x<S;x+=2){if(d[(y*S+x)*4+3]>128)fill.push([x,y]);}const pts=[];if(!fill.length)return null;for(let i=0;i<N;i++){const f=fill[(Math.random()*fill.length)|0];pts.push([(f[0]-S/2)/(S/2)*0.92,(f[1]-S/2)/(S/2)*0.92]);}return pts;}
-  function getForm(key){if(forms[key])return forms[key];let f=key.indexOf('t:')===0?sampleText(key.slice(2)):(PATHS[key]?samplePath(PATHS[key]):null);if(!f||!f.length){f=[];for(let i=0;i<N;i++){const a=(i/N)*6.28;f.push([Math.cos(a)*0.7,Math.sin(a)*0.7]);}}while(f.length<N)f.push(f[f.length%f.length]);forms[key]=f;return f;}
+  // scatter particles to fill an arbitrary drawn silhouette
+  function sampleFilled(draw){const S=170,off=document.createElement('canvas');off.width=S;off.height=S;const o=off.getContext('2d');o.fillStyle='#fff';draw(o,S);const d=o.getImageData(0,0,S,S).data,fill=[];for(let y=0;y<S;y+=2)for(let x=0;x<S;x+=2){if(d[(y*S+x)*4+3]>128)fill.push([x,y]);}if(!fill.length)return null;const pts=[];for(let i=0;i<N;i++){const f=fill[(Math.random()*fill.length)|0];pts.push([(f[0]-S/2)/(S/2)*0.95,(f[1]-S/2)/(S/2)*0.95]);}return pts;}
+  // an Emirati figure — head under a ghutra headdress draping to the shoulders, over a long kandura robe
+  function drawPerson(o,S){const cx=S*0.5;o.fillStyle='#fff';
+    o.beginPath();o.moveTo(cx,S*0.09);
+    o.bezierCurveTo(cx-S*0.115,S*0.09,cx-S*0.165,S*0.25,cx-S*0.205,S*0.42);
+    o.lineTo(cx-S*0.205,S*0.47);o.lineTo(cx+S*0.205,S*0.47);o.lineTo(cx+S*0.205,S*0.42);
+    o.bezierCurveTo(cx+S*0.165,S*0.25,cx+S*0.115,S*0.09,cx,S*0.09);o.closePath();o.fill();
+    o.beginPath();o.moveTo(cx-S*0.14,S*0.45);o.lineTo(cx-S*0.225,S*0.90);
+    o.quadraticCurveTo(cx,S*0.955,cx+S*0.225,S*0.90);o.lineTo(cx+S*0.14,S*0.45);o.closePath();o.fill();}
+  function getForm(key){if(forms[key])return forms[key];let f=key.indexOf('t:')===0?sampleText(key.slice(2)):key==='person'?sampleFilled(drawPerson):(PATHS[key]?samplePath(PATHS[key]):null);if(!f||!f.length){f=[];for(let i=0;i<N;i++){const a=(i/N)*6.28;f.push([Math.cos(a)*0.7,Math.sin(a)*0.7]);}}while(f.length<N)f.push(f[f.length%f.length]);forms[key]=f;return f;}
   function morph(key){if(!P.length||key===curKey)return;
     if(key==='nebula'){flow=true;lineMode='flow';curKey=key;for(const p of P){p.r0=Math.cbrt(Math.random())*0.92+0.06;p.vx=(Math.random()-.5)*0.01;p.vy=(Math.random()-.5)*0.01;p.vz=(Math.random()-.5)*0.01;}return;}
-    const f=getForm(key);if(!f)return;flow=false;curKey=key;lineMode=(key.indexOf('t:')===0?'none':'outline');
+    const f=getForm(key);if(!f)return;flow=false;curKey=key;lineMode=(key.indexOf('t:')===0||key==='person'?'none':'outline');
     for(let i=0;i<N;i++){const tp=f[i%f.length];P[i].tx=tp[0];P[i].ty=tp[1];P[i].tz=(Math.random()-.5)*0.13;}}
   function morphText(str){morph('t:'+str);}
   function init(){P=[];for(let i=0;i<N;i++){const u=Math.random()*6.28,v=Math.acos(2*Math.random()-1),r=Math.cbrt(Math.random());
@@ -1322,7 +1332,7 @@ async function runLesson(s){
   let total=0;
   for(let i=0;i<s.sims.length;i++){if(ab())return;const line=s.sims[i];
     await say(pick(L_ROLE).replace('{N}',(i+1)));if(ab())return;
-    showCustomerCard(line,"a customer");VOX.morph('people');
+    showCustomerCard(line,"a customer");VOX.morph('person');
     await say(line,true);if(ab())return;
     const ans=await listen('Respond to the customer…');if(ab())return;
     const g=await gradeSim(s,line,ans);if(ab())return;
