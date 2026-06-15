@@ -162,6 +162,12 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 .bd-card::before{top:7px;left:7px;border-right:0;border-bottom:0}
 .bd-card::after{bottom:7px;right:7px;border-left:0;border-top:0}
 .bd-card .k{font-family:var(--mono);font-size:9px;letter-spacing:2.2px;text-transform:uppercase;color:#9ec6ff;margin-bottom:6px}
+.bd-card.fee,.bd-card.docs{text-align:left;min-width:190px;padding:13px 18px}
+.bd-fline{display:flex;gap:8px;align-items:baseline;margin-top:4px}
+.bd-fline b{color:var(--gold);font-size:13.5px;white-space:nowrap;text-shadow:0 0 14px rgba(255,212,121,.4)}
+.bd-fline span{color:#cdd6ea;font-size:11px;line-height:1.35}
+.bd-note{font-size:10.5px;color:#8df3da;margin-top:7px;line-height:1.45}
+.bd-dlist{margin-top:3px}.bd-dlist>div{font-size:11.5px;color:#dbe3f2;line-height:1.55}.bd-dlist>div::before{content:'• ';color:#2dd4bf}
 .bd-card .v{font-size:21px;font-weight:700;color:#eaf2ff;text-shadow:0 0 16px rgba(106,166,255,.4)}.bd-card .s{font-size:11.5px;color:var(--mut);margin-top:4px}
 .bd-card.fee{border-color:rgba(255,212,121,.42);box-shadow:0 0 30px rgba(255,212,121,.14),inset 0 0 24px rgba(255,212,121,.05)}
 .bd-card.fee::before,.bd-card.fee::after{border-color:var(--gold)}
@@ -537,7 +543,7 @@ document.getElementById('aClose').addEventListener('click',()=>document.getEleme
 document.getElementById('amodal').addEventListener('click',e=>{if(e.target.id==='amodal')e.currentTarget.classList.remove('on');});
 
 /* ════ Claude + voice helpers ════ */
-async function callClaude(messages,system,model){return fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'x-api-key':key(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},body:JSON.stringify({model:model||window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6',max_tokens:500,system,messages})});}
+async function callClaude(messages,system,model){return fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'x-api-key':key(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},body:JSON.stringify({model:model||window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6',max_tokens:900,system,messages})});}
 async function claudeText(messages,system){if(!key())return null;const models=[window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6','claude-sonnet-4-6','claude-opus-4-8','claude-haiku-4-5-20251001'].filter((m,i,a)=>a.indexOf(m)===i);
   for(const m of models){try{const r=await callClaude(messages,system,m);if(r.ok){const j=await r.json();window.ORBIT_CONFIG.anthropicModel=m;return (((j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n'))||'').trim();}if(r.status===401||r.status===403)break;}catch(e){break;}}return null;}
 function facts(s){return JSON.stringify({service:s.name,for:s.who,channels:s.channels,about:s.desc,steps:s.steps,fees:s.fees,note:s.note,documents:s.docs});}
@@ -693,8 +699,9 @@ function buildBoard(s){
   const fee=s.fees[0];
   let h='<div class="bd-sec"><div class="bd-hd">The customer journey</div>';
   h+='<div class="bd-proc" id="bdProc">'+s.steps.map((st,i)=>'<div class="bd-step" data-i="'+i+'"><span class="bd-node"><b>'+(i+1)+'</b></span><span class="t">'+esc(st)+'</span></div>').join('')+'</div></div>';
-  h+='<div class="bd-cards" id="bdCards"><div class="bd-card fee" id="bdFee"><div class="k">Fee &amp; time</div><div class="v">'+esc(dirhams(fee.fee))+'</div><div class="s">'+esc(fee.n)+(fee.time&&fee.time!=='Instant'?' · '+esc(fee.time):'')+'</div></div>';
-  if(docs.length)h+='<div class="bd-card docs" id="bdDocs"><div class="k">'+docs.length+' document'+(docs.length>1?'s':'')+'</div><div class="v">📄</div><div class="s">'+esc(docs.slice(0,3).join(' · '))+(docs.length>3?' …':'')+'</div></div>';
+  const feeList=s.fees.map(f=>'<div class="bd-fline"><b>'+esc(dirhams(f.fee))+'</b><span>'+esc(f.n)+(f.time&&f.time!=='Instant'?' · '+esc(f.time):'')+'</span></div>').join('');
+  h+='<div class="bd-cards" id="bdCards"><div class="bd-card fee" id="bdFee"><div class="k">Fees &amp; time</div>'+feeList+(s.note?'<div class="bd-note">'+esc(s.note)+'</div>':'')+'</div>';
+  if(docs.length)h+='<div class="bd-card docs" id="bdDocs"><div class="k">'+docs.length+' document'+(docs.length>1?'s':'')+'</div><div class="bd-dlist">'+docs.map(d=>'<div>'+esc(d)+'</div>').join('')+'</div></div>';
   h+='</div>';
   h+='<div class="bd-chips" id="bdChips">'+s.channels.map(c=>'<span class="bd-chip">'+esc(c)+'</span>').join('')+'</div>';
   document.getElementById('board').innerHTML=h;
@@ -736,14 +743,14 @@ function guideOffline(s,q){const ql=(q||'').toLowerCase();
   return s.desc;
 }
 async function getLesson(s){
-  const sys="You are an expert, engaging training coach with warmth and personality at the Government of Dubai Legal Affairs Department. You are training a SUPPORT-STAFF member (a Service Ambassador) so they can confidently GUIDE and TEACH members of the public through this service at the desk — they are NOT the applicant themselves, so never talk to them as if they are using the service; talk to them as the helper who will explain it to customers. Produce a short, lively spoken lesson on this ONE service as STRICT JSON only: {\"steps\":\"2-3 vivid spoken sentences explaining how the service works so the ambassador can walk a customer through it; open with a quick hook or why it matters to the public\",\"fees\":\"1-2 spoken sentences on the headline fee and timeline the ambassador should quote to customers; say 'dirhams', never 'AED'\",\"channels\":\"1-2 spoken sentences on where to send the customer (the channel/s), any documents to ask the customer to bring, and one genuinely useful insider tip for handling these customers\",\"tip\":\"one short, warm, motivating closing line\"}. Be conversational and interesting, never dry or list-like. No markdown. Use ONLY these facts: "+facts(s);
-  const t=await claudeText([{role:'user',content:'Create the lesson for '+s.name+'. Department context (weave in lightly where it adds meaning, do not recite): the Government of Dubai Legal Affairs Department\'s mission is '+ABOUT.mission+' Its people serve with the values of '+ABOUT.values.join(', ')+'.'}],sys);
+  const sys="You are an expert, engaging training coach with warmth and personality at the Government of Dubai Legal Affairs Department. You are training a SUPPORT-STAFF member (a Service Ambassador) so they can confidently GUIDE and TEACH members of the public through this service at the desk — they are NOT the applicant themselves, so never talk to them as if they are using the service; talk to them as the helper who will explain it to customers. COMPLETENESS OF INFORMATION IS THE PRIORITY: the ambassador must be able to answer ANY customer question, so the lesson must actually convey EVERY fact — every step, EVERY fee (each with its exact amount in dirhams and its timeline), EVERY required document, and EVERY channel. You may be concise and group things naturally (summarising is fine) — but never DROP a fact. Stay warm and natural, not a dry robotic list. Produce the lesson as STRICT JSON only: {\"steps\":\"spoken sentences walking through ALL the steps in order, completely; open with a quick why-it-matters hook\",\"fees\":\"spoken sentences covering EVERY fee in the data — for each: its name, the exact amount in dirhams, and how long it takes; then mention any note/discount. Say 'dirhams', never 'AED'\",\"channels\":\"spoken sentences naming ALL the channels and listing EVERY document the customer must bring, plus one genuinely useful insider tip\",\"tip\":\"one short, warm closing line\"}. No markdown. Use ONLY these facts: "+facts(s);
+  const t=await claudeText([{role:'user',content:'Create the complete lesson for '+s.name+', leaving out none of the fees, documents, channels or steps. Department context (weave in lightly, do not recite): the Legal Affairs Department\'s mission is '+ABOUT.mission+' Its people serve with the values of '+ABOUT.values.join(', ')+'.'}],sys);
   if(t){try{const m=t.match(/\{[\s\S]*\}/);const j=JSON.parse(m?m[0]:t);if(j.steps&&j.fees&&j.channels)return {steps:j.steps,fees:j.fees,channels:j.channels,tip:j.tip||"You've got this."};}catch(e){}}
-  const f=s.fees[0],docs=s.docs.filter(d=>d&&d!=='None'&&d!=='Not applicable');
-  return {steps:"Here's the journey: "+s.steps.join('; then ')+".",
-    fees:"On cost and time — "+f.n+" is "+f.fee+(f.time&&f.time!=='Instant'?", taking about "+f.time:"")+"."+(s.note?" "+s.note:""),
-    channels:"They use "+s.channels.join(" or ")+"."+(docs.length?" They'll need "+docs.slice(0,4).join(', ')+".":"")+" Keep the channel and the headline fee on the tip of your tongue.",
-    tip:"That's the essence of "+shortName(s)+" — nicely done."};
+  const docs=s.docs.filter(d=>d&&d!=='None'&&d!=='Not applicable');
+  return {steps:"Here's the full journey: "+s.steps.join('; then ')+".",
+    fees:"Every fee and timeline — "+s.fees.map(f=>f.n+" is "+dirhams(f.fee)+(f.time&&f.time!=='Instant'?", about "+f.time:"")).join("; ")+"."+(s.note?" "+s.note:""),
+    channels:"They apply through "+s.channels.join(" or ")+"."+(docs.length?" They'll need every one of these: "+docs.join(', ')+".":"")+" Keep all of this at your fingertips so you can answer any question.",
+    tip:"That's the complete picture of "+shortName(s)+" — nicely done."};
 }
 async function acknowledge(s,known){
   const sys="You are a warm expert coach training a Legal Affairs Department support-staff member so they can teach the public about "+s.name+". The learner just told you what they already know. In TWO encouraging spoken sentences, acknowledge what they got right, gently note anything missing, then flow naturally into the lesson — say you'll build on that so they can confidently guide customers, and invite them to pause you anytime to ask. It must feel like one smooth continuation, not an abrupt topic change. Use ONLY these facts: "+facts(s)+". No markdown.";
