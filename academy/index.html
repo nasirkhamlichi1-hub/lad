@@ -121,13 +121,13 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 @keyframes orbring{0%{opacity:.5;transform:scale(1)}100%{opacity:0;transform:scale(1.45)}}
 .orb.cust{background:radial-gradient(circle at 38% 32%,#bfe0ff,#5b8def 55%,#1e4fa8);box-shadow:0 0 20px rgba(91,141,239,.55),inset 0 0 16px rgba(255,255,255,.25)}
 /* live equalizer in the caption header — the coach visibly "talks" */
-.capeq{display:flex;gap:3px;justify-content:center;align-items:flex-end;height:0;opacity:0;overflow:hidden;transition:height .22s,opacity .22s,margin .22s;margin:0 auto}
-.cap.talk .capeq{height:15px;opacity:1;margin-bottom:7px}
-.capeq i{width:3px;height:5px;border-radius:2px;background:linear-gradient(180deg,#c4b5fd,#7c5cff);box-shadow:0 0 8px rgba(124,92,255,.6)}
-.cap.cust.talk .capeq i{background:linear-gradient(180deg,#bfe0ff,#5b8def);box-shadow:0 0 8px rgba(91,141,239,.6)}
-.cap.talk .capeq i{animation:eqbar .9s ease-in-out infinite}
-.capeq i:nth-child(2){animation-delay:.12s}.capeq i:nth-child(3){animation-delay:.26s}.capeq i:nth-child(4){animation-delay:.04s}.capeq i:nth-child(5){animation-delay:.31s}.capeq i:nth-child(6){animation-delay:.16s}.capeq i:nth-child(7){animation-delay:.22s}
-@keyframes eqbar{0%,100%{height:4px}50%{height:15px}}
+.capeq{display:flex;gap:4px;justify-content:center;align-items:center;height:0;opacity:0;overflow:hidden;transition:height .22s,opacity .22s,margin .22s;margin:0 auto}
+.cap.talk .capeq{height:24px;opacity:1;margin-bottom:9px}
+.capeq i{width:4px;height:6px;border-radius:3px;background:linear-gradient(180deg,#d6c9ff,#7c5cff);box-shadow:0 0 10px rgba(124,92,255,.75)}
+.cap.cust.talk .capeq i{background:linear-gradient(180deg,#cfe6ff,#5b8def);box-shadow:0 0 10px rgba(91,141,239,.75)}
+.cap.talk .capeq i{animation:eqbar .85s ease-in-out infinite}
+.capeq i:nth-child(2){animation-delay:.13s}.capeq i:nth-child(3){animation-delay:.27s}.capeq i:nth-child(4){animation-delay:.05s}.capeq i:nth-child(5){animation-delay:.33s}.capeq i:nth-child(6){animation-delay:.17s}.capeq i:nth-child(7){animation-delay:.23s}
+@keyframes eqbar{0%,100%{height:5px}50%{height:24px}}
 /* floating "key fact" cards that pop above the caption as she mentions them */
 .factpops{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);width:max-content;max-width:92%;display:flex;flex-direction:column-reverse;align-items:center;gap:7px;margin-bottom:14px;pointer-events:none;z-index:6}
 .factpop{display:inline-flex;align-items:baseline;gap:8px;background:rgba(10,14,30,.96);border:1px solid rgba(124,92,255,.5);border-radius:13px;padding:8px 15px;font-size:13px;color:#eaf0ff;box-shadow:0 12px 34px rgba(0,0,0,.55);opacity:0;transform:translateY(16px) scale(.9);transition:opacity .3s ease,transform .38s cubic-bezier(.2,1.3,.4,1);white-space:nowrap}
@@ -165,7 +165,22 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 .warp.go{animation:warpf 1s ease-out}
 @keyframes warpf{0%{opacity:0;transform:scale(1.7)}25%{opacity:1}100%{opacity:0;transform:scale(.55)}}
 /* lesson board */
-.board{position:absolute;top:84px;left:0;right:0;bottom:auto;max-height:38vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:11px;pointer-events:none;padding:0 24px;overflow:hidden}
+.board{position:absolute;top:78px;left:0;right:0;bottom:auto;max-height:48vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:14px;pointer-events:none;padding:0 24px;overflow:hidden}
+/* progress rail — shows which part of the service she is on (Journey → Fees → Channels) */
+.bd-rail{display:flex;gap:9px;align-items:center}
+.bd-railseg{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--mut);opacity:.45;transition:all .45s}
+.bd-railseg i{width:20px;height:20px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:10px;font-style:normal;transition:all .45s}
+.bd-railseg.active{opacity:1;color:#bcd6ff;text-shadow:0 0 12px rgba(106,166,255,.6)}
+.bd-railseg.active i{border-color:#6aa6ff;color:#eaf2ff;background:rgba(106,166,255,.22);box-shadow:0 0 16px rgba(106,166,255,.6)}
+.bd-railseg.done{opacity:.9;color:#7df0d0}
+.bd-railseg.done i{border-color:#2dd4bf;color:#091227;background:#2dd4bf;font-size:0}
+.bd-railseg.done i::after{content:'✓';font-size:11px;color:#091227}
+/* one section in focus at a time — panels cross-fade as she moves through the service */
+.bd-stack{position:relative;width:100%;max-width:880px;height:32vh}
+.bd-panel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:18px;opacity:0;transform:translateY(16px) scale(.97);transition:opacity .5s ease,transform .55s cubic-bezier(.2,.7,.2,1);pointer-events:none}
+.bd-panel.show{opacity:1;transform:none}
+.bd-panel[data-k="fees"] .bd-card.fee{min-width:280px;padding:18px 30px}
+.bd-panel[data-k="fees"] .bd-fline b{font-size:16px}.bd-panel[data-k="fees"] .bd-fline span{font-size:12.5px}
 /* holographic section header: centred mono label with flanking energy rules */
 .bd-sec{display:flex;flex-direction:column;align-items:center;gap:13px;width:100%}
 .bd-hd{font-family:var(--mono);font-size:10px;letter-spacing:3.4px;text-transform:uppercase;color:#9ec6ff;display:flex;align-items:center;gap:11px;text-shadow:0 0 14px rgba(106,166,255,.55)}
@@ -207,13 +222,20 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 .bd-chips{display:flex;gap:9px;flex-wrap:wrap;justify-content:center}
 .bd-chip{font-size:12.5px;color:#d4e6ff;background:rgba(106,166,255,.14);border:1px solid rgba(106,166,255,.45);border-radius:20px;padding:7px 15px;opacity:0;transform:scale(.85);transition:all .45s;box-shadow:0 0 18px rgba(106,166,255,.16);text-shadow:0 0 9px rgba(106,166,255,.4)}
 .bd-chip.on{opacity:1;transform:none}.bd-chip.docs{color:#8df3da;background:rgba(45,212,191,.12);border-color:rgba(45,212,191,.42);box-shadow:0 0 18px rgba(45,212,191,.18)}
-/* live highlight — the piece she is currently explaining lights up */
-.bd-step.active .bd-node{animation:nodeactive 1.1s ease-in-out infinite}
-@keyframes nodeactive{0%,100%{transform:scale(1)}50%{transform:scale(1.17)}}
-.bd-step.active .bd-node::before{filter:drop-shadow(0 0 18px rgba(45,212,191,1))}
-.bd-step.active .t{color:#fff;text-shadow:0 0 10px rgba(125,240,208,.65)}
-.bd-step.active::after{content:'';position:absolute;top:23px;left:50%;width:46px;height:46px;margin-left:-23px;border-radius:50%;animation:nodewave 1.1s ease-out infinite;pointer-events:none}
-@keyframes nodewave{0%{box-shadow:0 0 0 0 rgba(45,212,191,.5)}100%{box-shadow:0 0 0 17px rgba(45,212,191,0)}}
+/* live highlight — the step she is currently explaining lights up boldly; finished steps tick green */
+.bd-step.active{transform:scale(1.08)}
+.bd-step.active .bd-node{animation:nodeactive 1s ease-in-out infinite}
+@keyframes nodeactive{0%,100%{transform:scale(1)}50%{transform:scale(1.22)}}
+.bd-step.active .bd-node::before{filter:drop-shadow(0 0 22px rgba(45,212,191,1)) brightness(1.25)}
+.bd-step.active .bd-node b{color:#fff;text-shadow:0 0 16px rgba(125,240,208,1)}
+.bd-step.active .t{color:#fff;font-weight:600;text-shadow:0 0 12px rgba(125,240,208,.8)}
+.bd-step.active::after{content:'';position:absolute;top:23px;left:50%;width:46px;height:46px;margin-left:-23px;border-radius:50%;animation:nodewave 1s ease-out infinite;pointer-events:none}
+@keyframes nodewave{0%{box-shadow:0 0 0 0 rgba(45,212,191,.6)}100%{box-shadow:0 0 0 22px rgba(45,212,191,0)}}
+.bd-step.done .bd-node::after{background:#0c2a26}
+.bd-step.done .bd-node b{font-size:0}
+.bd-step.done .bd-node b::after{content:'✓';font-size:17px;color:#2dd4bf;text-shadow:0 0 12px rgba(45,212,191,.9)}
+.bd-step.done .t{color:#8aa0bd}
+.bd-step.done::before{opacity:1!important;background:#2dd4bf;animation:none}
 .bd-fline{transition:background .3s,box-shadow .3s,transform .3s;border-radius:8px;padding:3px 6px;margin:4px -6px 0}
 .bd-fline.pop{background:rgba(255,212,121,.16);box-shadow:0 0 20px rgba(255,212,121,.22);transform:scale(1.04)}
 .bd-fline.pop b{text-shadow:0 0 16px rgba(255,212,121,.85)}
@@ -319,9 +341,11 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
   .st-title{top:46px;font-size:17px;padding:0 12px}
   .board{top:78px;max-height:33vh;gap:9px;padding:0 12px}
   .bd-hd{font-size:9px;letter-spacing:1.8px}.bd-hd::before,.bd-hd::after{width:24px}
-  .bd-step{width:108px}.bd-node{width:38px;height:38px;margin-bottom:6px}.bd-node b{font-size:13px}.bd-step .t{font-size:10px;max-width:106px}
-  .bd-card.fee,.bd-card.docs{min-width:0;width:46%;padding:9px 12px}.bd-fline b{font-size:11.5px}.bd-fline span{font-size:9.5px}.bd-note{font-size:9.5px}.bd-dlist>div{font-size:10px}
+  .bd-step{width:104px}.bd-node{width:38px;height:38px;margin-bottom:6px}.bd-node b{font-size:13px}.bd-step .t{font-size:10px;max-width:104px}
+  .bd-card.fee,.bd-card.docs{min-width:0;padding:11px 14px}.bd-fline b{font-size:12.5px}.bd-fline span{font-size:10.5px}.bd-note{font-size:9.5px}.bd-dlist>div{font-size:11px}
   .bd-chip{font-size:11px;padding:5px 11px}
+  .bd-stack{height:30vh}.bd-railseg{font-size:8px;letter-spacing:1px;gap:5px}.bd-railseg i{width:17px;height:17px;font-size:9px}
+  .bd-panel{gap:13px}.bd-panel[data-k="fees"] .bd-card.fee{min-width:0;padding:13px 18px}
   .cap-wrap{width:96%;margin:24px 0 8px}.cap{font-size:13.5px;max-height:30vh;padding:22px 13px 12px;line-height:1.45}
   .orb-dock,.orb{width:42px;height:42px}.orb-dock{top:-21px}
   .coach{font-size:11.5px}
@@ -665,7 +689,12 @@ const _mobAudio=_isiOS||(navigator.maxTouchPoints>1&&innerWidth<1024);
 function getCtx(){if(_actx===null){try{_actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){_actx=false;}}return _actx||null;}
 function getAudioEl(){if(!_audioEl){_audioEl=new Audio();_audioEl.setAttribute('playsinline','');_audioEl.setAttribute('webkit-playsinline','');_audioEl.preload='auto';_audioEl.style.display='none';try{document.body.appendChild(_audioEl);}catch(e){}}return _audioEl;}
 function bufToB64(buf){let bin='';const b=new Uint8Array(buf),ch=0x8000;for(let i=0;i<b.length;i+=ch){bin+=String.fromCharCode.apply(null,b.subarray(i,i+ch));}return btoa(bin);}
-function stopAudio(){if(_curSrc){try{_curSrc.onended=null;_curSrc.stop();}catch(e){}_curSrc=null;}if(_audioEl){try{_audioEl.onended=null;_audioEl.onerror=null;_audioEl.onloadedmetadata=null;_audioEl.pause();}catch(e){}}curAudio=null;if(window.speechSynthesis)window.speechSynthesis.cancel();}
+function stopAudio(){if(_curSrc){try{_curSrc.onended=null;_curSrc.stop();}catch(e){}_curSrc=null;}if(_audioEl){try{_audioEl.onended=null;_audioEl.onerror=null;_audioEl.onloadedmetadata=null;_audioEl.pause();}catch(e){}}curAudio=null;_play=null;if(window.speechSynthesis)window.speechSynthesis.cancel();}
+// ── real playback clock: lets the lesson visuals sync to the coach's actual voice (real start + real duration) ──
+let _play=null;let _playSubs=[];
+function emitPlay(dur,el){_play={t0:performance.now(),dur:(isFinite(dur)&&dur>0?dur:0),el:el||null};const subs=_playSubs;_playSubs=[];subs.forEach(fn=>{try{fn(_play);}catch(e){}});}
+function onPlayStart(fn){if(_play&&_play.dur)fn(_play);else _playSubs.push(fn);}
+function playPos(){if(!_play)return 0;if(_play.el&&isFinite(_play.el.currentTime))return _play.el.currentTime;return (performance.now()-_play.t0)/1000;}
 // Unlock audio on the first user gesture so the coach's voice plays on phones (autoplay is blocked until then).
 let _audioPrimed=false;const _silentClip='data:audio/wav;base64,UklGRvQHAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YdAHAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==';
 function primeAudio(){if(_audioPrimed)return;_audioPrimed=true;adbg('prime: gesture unlocked');
@@ -685,7 +714,7 @@ let _voiceMuted=false,_voiceSpeaking=false,_lastSpoken='';
 function speakAsync(text,onEnd){
   stopAudio();text=stripMd(text).replace(/AED\s*([\d.,]+)/g,'$1 dirhams').replace(/\bAED\b/g,'dirhams');
   _lastSpoken=text;
-  let done=false;const finish=()=>{if(done)return;done=true;_setVoiceState('idle');onEnd();};
+  let done=false;const finish=()=>{if(done)return;done=true;_play=null;_setVoiceState('idle');onEnd();};
   if(_voiceMuted){adbg('muted — skip');setTimeout(finish,Math.min(2600,Math.max(700,text.length*22)));return;}
   let safety=setTimeout(finish,Math.max(4000,text.length*95));   // generous fallback only
   const webAudioPlay=(buf,onFail)=>{
@@ -700,7 +729,7 @@ function speakAsync(text,onEnd){
           clearTimeout(safety);safety=setTimeout(finish,audioBuf.duration*1000+2500);
           s.onended=()=>{clearTimeout(safety);finish();};
           if(c.state==='suspended')c.resume();
-          s.start(0);_setVoiceState('play');adbg('▶ webaudio start ('+audioBuf.duration.toFixed(1)+'s) ctx='+c.state);
+          s.start(0);emitPlay(audioBuf.duration,null);_setVoiceState('play');adbg('▶ webaudio start ('+audioBuf.duration.toFixed(1)+'s) ctx='+c.state);
         }catch(e){adbg('webaudio play err: '+(e&&e.message));(onFail||(()=>browserSpeak(text,finish)))();}
       },(err)=>{adbg('decode FAIL');(onFail||(()=>browserSpeak(text,finish)))();});
     }catch(e){adbg('decode threw');(onFail||(()=>browserSpeak(text,finish)))();}
@@ -709,7 +738,7 @@ function speakAsync(text,onEnd){
     const fail=onFail||(()=>browserSpeak(text,finish));
     const a=getAudioEl();curAudio=a;a.muted=false;a.volume=1;
     a.onloadedmetadata=()=>{if(isFinite(a.duration)&&a.duration>0){clearTimeout(safety);safety=setTimeout(finish,a.duration*1000+2500);}};
-    a.onplaying=()=>{_setVoiceState('play');adbg('html playing dur='+(isFinite(a.duration)?a.duration.toFixed(1):'?'));};
+    a.onplaying=()=>{emitPlay(a.duration,a);_setVoiceState('play');adbg('html playing dur='+(isFinite(a.duration)?a.duration.toFixed(1):'?'));};
     a.onended=()=>{clearTimeout(safety);finish();};
     a.onerror=()=>{clearTimeout(safety);adbg('html error → fallback');fail();};
     // data: URI is more reliable than a blob URL on iOS WebKit
@@ -737,9 +766,10 @@ function browserSpeak(text,done){adbg('browser speech');
   // Guarantee the callback fires even if speechSynthesis never reports onend (common on iOS Chrome) —
   // otherwise the lesson await never resolves, the session never clears, and clicks get blocked.
   let fired=false;const fin=()=>{if(fired)return;fired=true;done();};
+  const estDur=Math.max(3.2,((text||'').match(/\S+/g)||[]).length*0.36);
   const guard=setTimeout(fin,Math.max(3500,text.length*70));
-  if(!window.speechSynthesis){clearTimeout(guard);fin();return;}
-  try{const u=new SpeechSynthesisUtterance(text);u.rate=1.02;u.lang='en-US';const vs=window.speechSynthesis.getVoices();const p=vs.find(v=>/Natural|Aria|Ava|Jenny|Google US English|Samantha/i.test(v.name)&&(v.lang||'').toLowerCase().startsWith('en'));if(p)u.voice=p;u.onend=()=>{clearTimeout(guard);fin();};u.onerror=()=>{clearTimeout(guard);fin();};window.speechSynthesis.speak(u);}catch(e){clearTimeout(guard);fin();}}
+  if(!window.speechSynthesis){emitPlay(estDur,null);clearTimeout(guard);fin();return;}
+  try{const u=new SpeechSynthesisUtterance(text);u.rate=1.02;u.lang='en-US';const vs=window.speechSynthesis.getVoices();const p=vs.find(v=>/Natural|Aria|Ava|Jenny|Google US English|Samantha/i.test(v.name)&&(v.lang||'').toLowerCase().startsWith('en'));if(p)u.voice=p;u.onstart=()=>emitPlay(estDur,null);u.onend=()=>{clearTimeout(guard);fin();};u.onerror=()=>{clearTimeout(guard);fin();};window.speechSynthesis.speak(u);setTimeout(()=>{if(!_play)emitPlay(estDur,null);},350);}catch(e){clearTimeout(guard);fin();}}
 if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){};window.speechSynthesis.getVoices();}
 // First-time spoken welcome shown in the galaxy
 function playWelcome(){
@@ -762,42 +792,60 @@ if(SR){recog=new SR();recog.lang='en-US';recog.interimResults=true;recog.continu
 const stage=document.getElementById('stage');
 function setOrb(mode){const o=document.getElementById('orb');o.classList.toggle('cust',mode==='cust');}
 function setSpeaking(b,cust){_voiceSpeaking=b;document.getElementById('orb').classList.toggle('speak',b);const cap=document.getElementById('cap');if(cap)cap.classList.toggle('talk',b);setOrb(cust?'cust':'coach');}
-/* ── live lesson visuals: relevant facts light up / pop in time with the narration ── */
-let _fxTimers=[];
-function _fx(ms,fn){_fxTimers.push(setTimeout(fn,ms));}
-function clearFX(){_fxTimers.forEach(clearTimeout);_fxTimers=[];document.querySelectorAll('.bd-step.active,.bd-fline.pop,.bd-card.pop,.bd-chip.lit,.bd-dlist>div.lit').forEach(e=>e.classList.remove('active','pop','lit'));const lp=document.getElementById('factPops');if(lp)lp.innerHTML='';}
-function estSpeakMs(text){const w=((text||'').trim().match(/\S+/g)||[]).length;return Math.max(2600,w*355+900);}
-function popFact(inner,tone){const lp=document.getElementById('factPops');if(!lp)return;const c=document.createElement('div');c.className='factpop'+(tone?' '+tone:'');c.innerHTML=inner;lp.appendChild(c);requestAnimationFrame(()=>c.classList.add('in'));setTimeout(()=>{c.classList.remove('in');c.classList.add('out');},2700);setTimeout(()=>{if(c.parentNode)c.remove();},3200);}
+/* ── live lesson visuals: facts light up / pop exactly when the coach says them ──
+   driven by the REAL audio clock (playPos/onPlayStart), with each fact mapped to where
+   its words actually appear in the spoken script so the timing tracks her voice. */
+let _fxRAF=0;
+const _STOP=new Set('the and for with from your you this that into are will their they them then once step also have has been must when where which what who whom whose about over under within without through after before each both either fees fee time card issued submitted application documents document required'.split(' '));
+function longWords(str,k){return (String(str||'').toLowerCase().match(/[a-z]{4,}/g)||[]).filter(w=>!_STOP.has(w)).sort((a,b)=>b.length-a.length).slice(0,k||2);}
+function textFrac(text,needles,fb){const t=(text||'').toLowerCase();let best=-1;(needles||[]).forEach(nd=>{const k=String(nd==null?'':nd).toLowerCase().trim();if(k.length<2)return;const i=t.indexOf(k);if(i>=0&&(best<0||i<best))best=i;});return best<0?fb:Math.max(.02,Math.min(.97,best/Math.max(t.length,40)));}
+function clearFX(){if(_fxRAF){cancelAnimationFrame(_fxRAF);_fxRAF=0;}_playSubs=[];document.querySelectorAll('.bd-step.active,.bd-step.done,.bd-fline.pop,.bd-card.pop,.bd-chip.lit,.bd-dlist>div.lit').forEach(e=>e.classList.remove('active','done','pop','lit'));const lp=document.getElementById('factPops');if(lp)lp.innerHTML='';}
+function popFact(inner,tone){const lp=document.getElementById('factPops');if(!lp)return;const c=document.createElement('div');c.className='factpop'+(tone?' '+tone:'');c.innerHTML=inner;lp.appendChild(c);requestAnimationFrame(()=>c.classList.add('in'));setTimeout(()=>{c.classList.remove('in');c.classList.add('out');},2800);setTimeout(()=>{if(c.parentNode)c.remove();},3300);}
+// schedule beats (each {frac:0..1 of the line, fn}) against the actual playback position
+function scheduleBeats(text,beats){
+  clearFX();beats=beats.slice().sort((a,b)=>a.frac-b.frac);
+  onPlayStart(p=>{
+    const dur=p.dur||Math.max(3,((text||'').match(/\S+/g)||[]).length*0.36);
+    const fired=new Array(beats.length).fill(false);
+    const tick=()=>{const pos=playPos();
+      for(let i=0;i<beats.length;i++){if(!fired[i]&&pos>=beats[i].frac*dur){fired[i]=true;try{beats[i].fn();}catch(e){}}}
+      if(fired.every(Boolean)){_fxRAF=0;return;}_fxRAF=requestAnimationFrame(tick);};
+    if(_fxRAF)cancelAnimationFrame(_fxRAF);_fxRAF=requestAnimationFrame(tick);
+  });
+}
 function sectionFX(kind,s,text){
-  clearFX();const dur=estSpeakMs(text),lead=750,span=Math.max(dur-lead,1200);
   if(kind==='steps'){
-    const nodes=[...document.querySelectorAll('#bdProc .bd-step')];const n=nodes.length||1;
-    nodes.forEach((el,i)=>_fx(lead+i*span/n,()=>{nodes.forEach(x=>x.classList.remove('active'));el.classList.add('active');}));
-    _fx(dur,()=>nodes.forEach(x=>x.classList.remove('active')));
+    const nodes=[...document.querySelectorAll('#bdProc .bd-step')];const n=nodes.length||1;let prev=0;
+    const beats=nodes.map((el,i)=>{let fr=textFrac(text,longWords(s.steps[i],2),(i+0.55)/n);if(fr<prev+0.015)fr=Math.min(.97,prev+0.7/n);prev=fr;
+      return {frac:fr,fn:()=>{nodes.forEach(x=>x.classList.remove('active'));for(let j=0;j<i;j++)nodes[j].classList.add('done');el.classList.add('active');}};});
+    scheduleBeats(text,beats);
   }else if(kind==='fees'){
     const lines=[...document.querySelectorAll('#bdFee .bd-fline')];const fees=s.fees||[];const n=Math.max(fees.length,1);
-    fees.forEach((f,i)=>_fx(lead+i*span/n,()=>{
+    const beats=fees.map((f,i)=>({frac:textFrac(text,[String(f.fee),...longWords(f.n,1)],(i+0.5)/n),fn:()=>{
       lines.forEach(x=>x.classList.remove('pop'));if(lines[i])lines[i].classList.add('pop');
-      popFact('<b>'+esc(dirhams(f.fee))+'</b><span>'+esc(f.n)+(f.time&&f.time!=='Instant'?' · '+esc(f.time):'')+'</span>','gold');
-    }));
-    _fx(dur,()=>lines.forEach(x=>x.classList.remove('pop')));
+      popFact('<b>'+esc(dirhams(f.fee))+'</b><span>'+esc(f.n)+(f.time&&f.time!=='Instant'?' · '+esc(f.time):'')+'</span>','gold');}}));
+    scheduleBeats(text,beats);
   }else if(kind==='channels'){
     const chips=[...document.querySelectorAll('#bdChips .bd-chip')];const docEls=[...document.querySelectorAll('#bdDocs .bd-dlist>div')];
-    const items=[];(s.channels||[]).forEach((c,i)=>items.push({t:'ch',label:c,el:chips[i]}));
-    (s.docs||[]).filter(d=>d&&d!=='None'&&d!=='Not applicable').forEach((d,i)=>items.push({t:'doc',label:d,el:docEls[i]}));
-    const n=Math.max(items.length,1);
-    items.forEach((it,i)=>_fx(lead+i*span/n,()=>{if(it.el)it.el.classList.add('lit');popFact((it.t==='doc'?'📄 ':'📍 ')+'<span style="font-size:13px;color:#eaf0ff">'+esc(it.label)+'</span>',it.t==='doc'?'teal':'blue');}));
+    const chans=(s.channels||[]),docs=(s.docs||[]).filter(d=>d&&d!=='None'&&d!=='Not applicable');
+    const items=[];chans.forEach((c,i)=>items.push({t:'ch',label:c,el:chips[i],fb:(i+0.4)/(chans.length+docs.length||1)}));
+    docs.forEach((d,i)=>items.push({t:'doc',label:d,el:docEls[i],fb:(chans.length+i+0.4)/(chans.length+docs.length||1)}));
+    const beats=items.map(it=>({frac:textFrac(text,[it.label,...longWords(it.label,1)],it.fb),fn:()=>{if(it.el)it.el.classList.add('lit');
+      popFact((it.t==='doc'?'📄 ':'📍 ')+'<span style="font-size:13px;color:#eaf0ff">'+esc(it.label)+'</span>',it.t==='doc'?'teal':'blue');}}));
+    scheduleBeats(text,beats);
   }
-  return clearFX;
 }
 function aboutFX(kind,text){
-  clearFX();const A=ABOUT;const dur=estSpeakMs(text),lead=750,span=Math.max(dur-lead,1200);
-  const run=(arr,fn)=>{const n=Math.max(arr.length,1);arr.forEach((x,i)=>_fx(lead+i*span/n,()=>fn(x,i)));};
-  if(kind==='intro'){run([[A.dg,'Director General','blue'],['Legal Affairs Department','Government of Dubai','']],f=>popFact('<b>'+esc(f[0])+'</b><span>'+esc(f[1])+'</span>',f[2]));}
-  else if(kind==='vm'){const e=document.getElementById('abVision'),m=document.getElementById('abMission');run([[e,'Vision'],[m,'Mission']],it=>{if(it[0])it[0].classList.add('pop');popFact('✦ <span style="font-size:13px;color:#eaf0ff">'+esc(it[1])+'</span>','blue');});_fx(dur,()=>{if(e)e.classList.remove('pop');if(m)m.classList.remove('pop');});}
-  else if(kind==='values'){const chips=[...document.querySelectorAll('#abValues .bd-chip')];run(A.values||[],(v,i)=>{if(chips[i])chips[i].classList.add('lit');popFact('✦ <span style="font-size:13px;color:#eaf0ff">'+esc(v)+'</span>','teal');});}
-  else if(kind==='role'){run((A.role||[]).slice(0,4),r=>popFact('<span style="font-size:12.5px;color:#eaf0ff">'+esc(String(r).replace(/\.$/,''))+'</span>','blue'));}
-  return clearFX;
+  const A=ABOUT;
+  if(kind==='intro'){const facts=[[A.dg,'Director General','blue',[A.dg,...longWords(A.dg,1)]],['Legal Affairs Department','Government of Dubai','',['legal affairs','department','dubai']]];
+    scheduleBeats(text,facts.map((f,i)=>({frac:textFrac(text,f[3],(i+0.4)/facts.length),fn:()=>popFact('<b>'+esc(f[0])+'</b><span>'+esc(f[1])+'</span>',f[2])})));}
+  else if(kind==='vm'){const e=document.getElementById('abVision'),m=document.getElementById('abMission');
+    const it=[[e,'Vision',['vision','envision','aspire','future']],[m,'Mission',['mission','exist','deliver','provide','role']]];
+    scheduleBeats(text,it.map((x,i)=>({frac:textFrac(text,x[2],(i+0.3)/2),fn:()=>{it.forEach(y=>y[0]&&y[0].classList.remove('pop'));if(x[0])x[0].classList.add('pop');popFact('✦ <span style="font-size:13px;color:#eaf0ff">'+esc(x[1])+'</span>','blue')}})));}
+  else if(kind==='values'){const chips=[...document.querySelectorAll('#abValues .bd-chip')];const vs=A.values||[];const n=Math.max(vs.length,1);
+    scheduleBeats(text,vs.map((v,i)=>({frac:textFrac(text,[v,...longWords(v,1)],(i+0.4)/n),fn:()=>{if(chips[i])chips[i].classList.add('lit');popFact('✦ <span style="font-size:13px;color:#eaf0ff">'+esc(v)+'</span>','teal')}})));}
+  else if(kind==='role'){const rs=(A.role||[]).slice(0,4);const n=Math.max(rs.length,1);
+    scheduleBeats(text,rs.map((r,i)=>({frac:textFrac(text,longWords(r,2),(i+0.4)/n),fn:()=>popFact('<span style="font-size:12.5px;color:#eaf0ff">'+esc(String(r).replace(/\.$/,''))+'</span>','blue')})));}
 }
 // Floating sound button: tap to replay the current line, or mute / unmute. Each tap is a real
 // user gesture, which iOS always allows for audio — so it doubles as a guaranteed sound unlock.
@@ -946,21 +994,34 @@ window.enterAbout=enterAbout;
 /* ── lesson board (animated process visualisation) ── */
 function buildBoard(s){
   const docs=s.docs.filter(d=>d&&d!=='None'&&d!=='Not applicable');
-  const fee=s.fees[0];
-  let h='<div class="bd-sec"><div class="bd-hd">The customer journey</div>';
-  h+='<div class="bd-proc" id="bdProc">'+s.steps.map((st,i)=>'<div class="bd-step" data-i="'+i+'"><span class="bd-node"><b>'+(i+1)+'</b></span><span class="t">'+esc(st)+'</span></div>').join('')+'</div></div>';
   const feeList=s.fees.map(f=>'<div class="bd-fline"><b>'+esc(dirhams(f.fee))+'</b><span>'+esc(f.n)+(f.time&&f.time!=='Instant'?' · '+esc(f.time):'')+'</span></div>').join('');
-  h+='<div class="bd-cards" id="bdCards"><div class="bd-card fee" id="bdFee"><div class="k">Fees &amp; time</div>'+feeList+(s.note?'<div class="bd-note">'+esc(s.note)+'</div>':'')+'</div>';
-  if(docs.length)h+='<div class="bd-card docs" id="bdDocs"><div class="k">'+docs.length+' document'+(docs.length>1?'s':'')+'</div><div class="bd-dlist">'+docs.map(d=>'<div>'+esc(d)+'</div>').join('')+'</div></div>';
-  h+='</div>';
-  h+='<div class="bd-chips" id="bdChips">'+s.channels.map(c=>'<span class="bd-chip">'+esc(c)+'</span>').join('')+'</div>';
+  let h='<div class="bd-rail" id="bdRail">'
+    +'<span class="bd-railseg" data-k="journey"><i>1</i>Journey</span>'
+    +'<span class="bd-railseg" data-k="fees"><i>2</i>Fees</span>'
+    +'<span class="bd-railseg" data-k="channels"><i>3</i>'+(docs.length?'Channels':'Where')+'</span></div>';
+  h+='<div class="bd-stack" id="bdStack">';
+  // panel 1 — the customer journey
+  h+='<div class="bd-panel" data-k="journey"><div class="bd-hd">The customer journey</div>'
+    +'<div class="bd-proc" id="bdProc">'+s.steps.map((st,i)=>'<div class="bd-step" data-i="'+i+'"><span class="bd-node"><b>'+(i+1)+'</b></span><span class="t">'+esc(st)+'</span></div>').join('')+'</div></div>';
+  // panel 2 — fees & processing time
+  h+='<div class="bd-panel" data-k="fees"><div class="bd-hd">Fees &amp; processing time</div>'
+    +'<div class="bd-cards"><div class="bd-card fee" id="bdFee"><div class="k">What it costs</div>'+feeList+(s.note?'<div class="bd-note">'+esc(s.note)+'</div>':'')+'</div></div></div>';
+  // panel 3 — channels & required documents
+  h+='<div class="bd-panel" data-k="channels"><div class="bd-hd">'+(docs.length?'Channels &amp; required documents':'Where to apply')+'</div>'
+    +'<div class="bd-chips" id="bdChips">'+s.channels.map(c=>'<span class="bd-chip">'+esc(c)+'</span>').join('')+'</div>';
+  if(docs.length)h+='<div class="bd-cards"><div class="bd-card docs" id="bdDocs"><div class="k">'+docs.length+' document'+(docs.length>1?'s':'')+' needed</div><div class="bd-dlist">'+docs.map(d=>'<div>'+esc(d)+'</div>').join('')+'</div></div></div>';
+  h+='</div></div>';
   document.getElementById('board').innerHTML=h;
+  focusPanel('journey');
 }
+function focusPanel(k){const order=['journey','fees','channels'];const st=document.getElementById('bdStack');
+  if(st)st.querySelectorAll('.bd-panel').forEach(p=>p.classList.toggle('show',p.dataset.k===k));
+  document.querySelectorAll('#bdRail .bd-railseg').forEach(seg=>{const a=order.indexOf(seg.dataset.k),c=order.indexOf(k);seg.classList.toggle('active',a===c);seg.classList.toggle('done',a>=0&&a<c);});}
 function showCover(){const c=document.getElementById('bdCover');if(c){c.classList.add('on');c.querySelectorAll('.it').forEach((el,i)=>setTimeout(()=>el.style.transitionDelay=(i*0.12)+'s',0));}}
 function hideCover(){const c=document.getElementById('bdCover');if(c)c.style.display='none';}
-function revealSteps(){document.querySelectorAll('#bdProc .bd-step').forEach((el,i)=>setTimeout(()=>el.classList.add('on'),i*420));}
-function revealFees(){const f=document.getElementById('bdFee');if(f)f.classList.add('on');const d=document.getElementById('bdDocs');if(d)setTimeout(()=>d.classList.add('on'),200);}
-function revealChannels(){document.querySelectorAll('#bdChips .bd-chip').forEach((el,i)=>setTimeout(()=>el.classList.add('on'),i*180));}
+function revealSteps(){focusPanel('journey');document.querySelectorAll('#bdProc .bd-step').forEach((el,i)=>setTimeout(()=>el.classList.add('on'),i*380));}
+function revealFees(){focusPanel('fees');const f=document.getElementById('bdFee');if(f)f.classList.add('on');}
+function revealChannels(){focusPanel('channels');const d=document.getElementById('bdDocs');if(d)setTimeout(()=>d.classList.add('on'),260);document.querySelectorAll('#bdChips .bd-chip').forEach((el,i)=>setTimeout(()=>el.classList.add('on'),i*150));}
 function hideBoard(){document.getElementById('board').innerHTML='';}
 function showCustomerCard(line,label){document.getElementById('board').innerHTML='<div class="bd-cust on"><div class="bd-cust-av">'+esc((label||'C').replace(/^a |^an /i,'').charAt(0).toUpperCase())+'</div><div class="bd-cust-t">“'+esc(line)+'”<small>— '+esc(label||'a customer')+'</small></div></div>';}
 
