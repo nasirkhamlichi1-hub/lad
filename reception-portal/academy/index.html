@@ -757,9 +757,16 @@ function setPhase(ph){document.querySelectorAll('.phase').forEach(p=>{const k=p.
 function markPhaseDone(ph){const el=document.querySelector('.phase[data-ph="'+ph+'"]');if(el)el.classList.add('done');}
 
 /* ════ Awaitable say / listen ════ */
+// Every spoken line is interruptible: the trainee can pause and ask a question at any moment.
 function say(text,cust){
-  setCaption(text,cust);setSpeaking(true,cust);showControls(false);
-  return new Promise(res=>{let done=false;const finish=()=>{if(done)return;done=true;window._skip=null;setSpeaking(false,cust);res();};window._skip=()=>{stopAudio();finish();};speakAsync(text,finish);});
+  setCaption(text,cust);setSpeaking(true,cust);showControls(false);showInterrupt(true);
+  return new Promise(resolve=>{
+    let settled=false;
+    const finish=()=>{if(settled)return;settled=true;showInterrupt(false);window._skip=null;window._ask=null;setSpeaking(false,cust);resolve();};
+    window._skip=()=>{stopAudio();finish();};
+    window._ask=async()=>{if(settled)return;settled=true;showInterrupt(false);window._skip=null;window._ask=null;stopAudio();setSpeaking(false,cust);const u=await listen('Go ahead — ask your question…');if(u&&!ab())await handleInterjection(u);resolve();};
+    speakAsync(text,finish);
+  });
 }
 function listen(placeholder){
   const inp=document.getElementById('stInput');inp.value='';inp.placeholder=placeholder||'…or type your answer';
