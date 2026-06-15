@@ -1484,9 +1484,9 @@ reveal();
 /* ─────────── Launch ─────────── */
 function applyLaunchState(){ var n=document.getElementById('launchNote');
   if(CFG.courseLive===false && n) n.innerHTML='The course is being finalised — launching here soon.'; }
-// The Service Ambassador Academy ("Training Solar System"). Swap to
-// https://training.legalaffairstraining.com once the custom domain is mapped.
-var ACADEMY_URL='https://happy-ocean-025d8f603.7.azurestaticapps.net/';
+// The Service Ambassador Academy ("Training Solar System") — now served on this
+// same site at /academy (so login + tracking run on this app's working API).
+var ACADEMY_URL='/academy/';
 // The structured (Articulate) course — configured in window.SITE_CONFIG.
 var TRAINING_URL=((CFG.articulateUrl||CFG.doceboUrl||'')+'').trim();
 function launchSolarSystem(){ window.open(ACADEMY_URL,'_blank','noopener'); }
