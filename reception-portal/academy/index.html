@@ -599,25 +599,28 @@ async function claudeText(messages,system){
   for(const m of models){try{const r=await callClaude(messages,system,m);if(r.ok){const j=await r.json();window.ORBIT_CONFIG.anthropicModel=m;return (((j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n'))||'').trim();}if(r.status===401||r.status===403)break;}catch(e){break;}}return null;}
 function facts(s){return JSON.stringify({service:s.name,for:s.who,channels:s.channels,about:s.desc,steps:s.steps,fees:s.fees,note:s.note,documents:s.docs});}
 
-let curAudio=null;
-function stopAudio(){if(curAudio){try{curAudio.onended=null;curAudio.pause();}catch(e){}curAudio=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();}
+let curAudio=null,_audioEl=null;
+// One persistent <audio> element, reused for every line. Creating a fresh Audio()
+// per line gets re-blocked on iOS; reusing one element that was unlocked by a tap works.
+function getAudioEl(){if(!_audioEl){_audioEl=new Audio();_audioEl.setAttribute('playsinline','');_audioEl.preload='auto';}return _audioEl;}
+function stopAudio(){if(_audioEl){try{_audioEl.onended=null;_audioEl.onerror=null;_audioEl.onloadedmetadata=null;_audioEl.pause();}catch(e){}}curAudio=null;if(window.speechSynthesis)window.speechSynthesis.cancel();}
 // Unlock audio on the first user gesture so the coach's voice plays on phones (autoplay is blocked until then).
 let _audioPrimed=false;const _silentClip='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 function primeAudio(){if(_audioPrimed)return;_audioPrimed=true;
-  try{const a=new Audio(_silentClip);a.play().then(()=>{a.pause();}).catch(()=>{});}catch(e){}
+  try{const a=getAudioEl();a.src=_silentClip;const p=a.play();if(p&&p.then)p.then(()=>{try{a.pause();a.currentTime=0;}catch(e){}}).catch(()=>{});}catch(e){}
   try{if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(' ');u.volume=0;window.speechSynthesis.speak(u);window.speechSynthesis.cancel();}}catch(e){}}
-['pointerdown','touchend','keydown'].forEach(ev=>document.addEventListener(ev,primeAudio));
+['pointerdown','touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,primeAudio,true));
 function stripMd(t){return (t||'').replace(/\*\*(.+?)\*\*/g,'$1').replace(/\*(.+?)\*/g,'$1').replace(/`+/g,'').replace(/[#>_]/g,'').replace(/\s+/g,' ').trim();}
 function speakAsync(text,onEnd){
   stopAudio();text=stripMd(text).replace(/AED\s*([\d.,]+)/g,'$1 dirhams').replace(/\bAED\b/g,'dirhams');
   let done=false;const finish=()=>{if(done)return;done=true;onEnd();};
   let safety=setTimeout(finish,Math.max(4000,text.length*95));   // generous fallback only
   const playBuf=(buf)=>{
-    curAudio=new Audio(URL.createObjectURL(new Blob([buf],{type:'audio/mpeg'})));
-    curAudio.onloadedmetadata=()=>{if(isFinite(curAudio.duration)&&curAudio.duration>0){clearTimeout(safety);safety=setTimeout(finish,curAudio.duration*1000+2500);}};  // use the REAL audio length
-    curAudio.onended=()=>{clearTimeout(safety);finish();};
-    curAudio.onerror=()=>{clearTimeout(safety);browserSpeak(text,finish);};
-    curAudio.play().catch(()=>{clearTimeout(safety);browserSpeak(text,finish);});
+    const url=URL.createObjectURL(new Blob([buf],{type:'audio/mpeg'}));const a=getAudioEl();curAudio=a;
+    a.onloadedmetadata=()=>{if(isFinite(a.duration)&&a.duration>0){clearTimeout(safety);safety=setTimeout(finish,a.duration*1000+2500);}};  // use the REAL audio length
+    a.onended=()=>{clearTimeout(safety);finish();};
+    a.onerror=()=>{clearTimeout(safety);browserSpeak(text,finish);};
+    a.src=url;const p=a.play();if(p&&p.catch)p.catch(()=>{clearTimeout(safety);browserSpeak(text,finish);});
   };
   const directEleven=()=>{const ek=window.ORBIT_CONFIG.elevenKey;
     if(ek){fetch('https://api.elevenlabs.io/v1/text-to-speech/'+window.ORBIT_CONFIG.elevenVoice+'?output_format=mp3_44100_128',{method:'POST',headers:{'xi-api-key':ek,'Content-Type':'application/json'},body:JSON.stringify({text,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.45,similarity_boost:0.8,style:0.4,use_speaker_boost:true}})}).then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(playBuf).catch(()=>{clearTimeout(safety);browserSpeak(text,finish);});}
