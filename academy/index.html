@@ -175,67 +175,49 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 .bd-railseg.done{opacity:.9;color:#7df0d0}
 .bd-railseg.done i{border-color:#2dd4bf;color:#091227;background:#2dd4bf;font-size:0}
 .bd-railseg.done i::after{content:'✓';font-size:11px;color:#091227}
-/* ── animated journey scene: a customer avatar walks the service as the coach narrates ── */
-.scene{position:relative;width:100%;max-width:900px;height:32vh;min-height:190px;margin:0 auto;overflow:hidden}
-.scene-floor{position:absolute;left:5%;right:5%;bottom:33%;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(106,166,255,.22) 12%,rgba(106,166,255,.22) 88%,transparent)}
-.scene-fill{position:absolute;left:6%;bottom:33%;height:3px;width:0;border-radius:3px;background:linear-gradient(90deg,#2dd4bf,#3a9ff5);box-shadow:0 0 16px rgba(45,212,191,.85);transition:width .85s cubic-bezier(.35,.7,.2,1);transform:translateY(.5px)}
-.counter{position:absolute;left:88%;bottom:33%;transform:translate(-50%,8px);width:46px;height:46px;display:grid;place-items:center;color:#9ec6ff;opacity:.5;transition:opacity .5s,color .5s}
-.counter::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);width:54px;height:7px;border-radius:50%;background:radial-gradient(closest-side,rgba(106,166,255,.4),transparent)}
-.scene.ph-fees .counter,.scene.ph-channels .counter{opacity:1;color:#bcd6ff}
-.counter svg{width:26px;height:26px}
-/* journey stations */
+/* ── premium journey scene: a luminous pulse traces the service path as the coach narrates ── */
+.scene{position:relative;width:100%;max-width:920px;height:32vh;min-height:188px;margin:0 auto;overflow:hidden}
+.track{position:absolute;left:6%;right:6%;top:57%;height:1px;background:linear-gradient(90deg,transparent,rgba(150,180,230,.2) 8%,rgba(150,180,230,.2) 92%,transparent)}
+.track-fill{position:absolute;left:6%;top:57%;height:1px;width:0;background:linear-gradient(90deg,rgba(124,92,255,.55),#a78bfa);box-shadow:0 0 10px rgba(167,139,250,.9),0 0 24px rgba(124,92,255,.45);transition:width .9s cubic-bezier(.65,0,.35,1);z-index:3}
+.endcap{position:absolute;left:90%;top:57%;transform:translate(-50%,-50%);width:30px;height:30px;display:grid;place-items:center;color:rgba(190,205,230,.4);border:1px solid rgba(150,180,230,.22);border-radius:50%;background:rgba(8,11,24,.5);transition:all .5s}
+.endcap svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.scene.ph-fees .endcap,.scene.ph-channels .endcap{color:#cbb8ff;border-color:rgba(167,139,250,.55);box-shadow:0 0 16px rgba(124,92,255,.4)}
+/* stations — minimal hairline rings */
 .stations{position:absolute;inset:0}
-.station{position:absolute;bottom:33%;transform:translate(-50%,50%);display:flex;flex-direction:column;align-items:center;opacity:.32;transition:opacity .5s}
-.station.lit{opacity:1}
-.scene.ph-fees .station,.scene.ph-channels .station{opacity:.16}
-.st-pin{position:relative;width:42px;height:42px;display:grid;place-items:center;color:#7df0d0}
-.st-pin::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#2dd4bf,#3a9ff5);clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);filter:drop-shadow(0 0 8px rgba(45,212,191,.5));opacity:.55;transition:opacity .4s,filter .4s}
-.st-pin::after{content:'';position:absolute;inset:2.5px;background:#091227;clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%)}
-.station.lit .st-pin::before{opacity:1;filter:drop-shadow(0 0 16px rgba(45,212,191,.95))}
-.st-ic{position:relative;z-index:2}.st-ic svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.station.arrive .st-pin{animation:stpop .6s cubic-bezier(.2,1.5,.4,1)}
-@keyframes stpop{0%{transform:scale(1)}45%{transform:scale(1.22)}100%{transform:scale(1)}}
-.station.arrive::before{content:'';position:absolute;left:50%;top:21px;width:42px;height:42px;margin-left:-21px;border-radius:50%;animation:stwave .7s ease-out}
-@keyframes stwave{0%{box-shadow:0 0 0 0 rgba(45,212,191,.6)}100%{box-shadow:0 0 0 20px rgba(45,212,191,0)}}
-.st-no{font-family:var(--mono);font-size:10px;font-weight:700;color:#091227;background:#2dd4bf;border-radius:50%;width:16px;height:16px;display:grid;place-items:center;margin-top:-6px;position:relative;z-index:3;box-shadow:0 0 8px rgba(45,212,191,.6)}
-.station.done .st-no{font-size:0}.station.done .st-no::after{content:'✓';font-size:11px;color:#091227}
-.st-lbl{margin-top:9px;width:122px;text-align:center;font-size:11px;line-height:1.3;color:#fff;opacity:0;transition:opacity .4s}
+.station{position:absolute;top:57%;transform:translate(-50%,-50%);width:36px;height:36px}
+.st-ring{position:relative;width:36px;height:36px;border-radius:50%;border:1px solid rgba(150,180,230,.3);display:grid;place-items:center;color:rgba(190,205,230,.45);background:rgba(8,11,24,.9);transition:border-color .5s,color .5s,box-shadow .5s,background .5s;z-index:4}
+.st-ring svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round}
+.scene.ph-fees .station,.scene.ph-channels .station{opacity:.28;transition:opacity .5s}
+.station.lit .st-ring{border-color:rgba(167,139,250,.9);color:#fff;background:rgba(124,92,255,.16);box-shadow:0 0 0 1px rgba(167,139,250,.4),0 0 20px rgba(124,92,255,.5)}
+.station.done .st-ring{border-color:rgba(167,139,250,.45);color:#b9a6ff;background:rgba(124,92,255,.08);box-shadow:0 0 10px rgba(124,92,255,.2)}
+.station.arrive .st-ring{animation:ringpop .55s cubic-bezier(.2,1.5,.4,1)}
+@keyframes ringpop{0%{transform:scale(1)}45%{transform:scale(1.16)}100%{transform:scale(1)}}
+.station.arrive::after{content:'';position:absolute;top:50%;left:50%;width:36px;height:36px;transform:translate(-50%,-50%);border-radius:50%;border:1.5px solid #a78bfa;animation:ringwave .75s ease-out forwards;z-index:3}
+@keyframes ringwave{0%{transform:translate(-50%,-50%) scale(.8);opacity:.85}100%{transform:translate(-50%,-50%) scale(2);opacity:0}}
+.st-lbl{position:absolute;top:46px;left:50%;transform:translateX(-50%);width:128px;text-align:center;font-size:11px;line-height:1.35;letter-spacing:.2px;color:#eaf0ff;opacity:0;transition:opacity .4s}
 .station.lit:not(.done) .st-lbl{opacity:1}
-.station.done .st-pin::before{opacity:.85}
-/* avatar */
-.avatar{position:absolute;left:6%;bottom:33%;transform:translate(-50%,2px);width:34px;height:58px;z-index:6;transition:left .9s cubic-bezier(.45,0,.2,1)}
-.av-aura{position:absolute;left:50%;top:100%;transform:translateX(-50%);width:40px;height:8px;border-radius:50%;background:radial-gradient(closest-side,rgba(167,139,250,.55),transparent)}
-.avatar svg{width:34px;height:54px;overflow:visible}
-.avatar .fg-head{fill:#cfc2ff;stroke:none}
-.avatar .fg-body{fill:url(#avg);stroke:none}
-.avatar .leg{stroke:#7c5cff;stroke-width:3.4;stroke-linecap:round;transform-origin:top center}
-.avatar:not(.walking){animation:avbreathe 3s ease-in-out infinite}
-@keyframes avbreathe{0%,100%{transform:translate(-50%,2px)}50%{transform:translate(-50%,0)}}
-.avatar.walking{animation:avbob .42s ease-in-out infinite}
-@keyframes avbob{0%,100%{transform:translate(-50%,2px)}50%{transform:translate(-50%,-2.5px)}}
-.avatar.walking .l1{animation:legA .42s ease-in-out infinite}
-.avatar.walking .l2{animation:legB .42s ease-in-out infinite}
-@keyframes legA{0%,100%{transform:rotate(16deg)}50%{transform:rotate(-16deg)}}
-@keyframes legB{0%,100%{transform:rotate(-16deg)}50%{transform:rotate(16deg)}}
-/* phase cards floating above the action */
+/* the traveller — a luminous pulse with a comet trail */
+.pulse{position:absolute;left:6%;top:57%;width:12px;height:12px;border-radius:50%;transform:translate(-50%,-50%);z-index:9;background:radial-gradient(circle at 50% 50%,#fff,#d6c9ff 38%,#7c5cff 78%);box-shadow:0 0 10px #a78bfa,0 0 22px rgba(124,92,255,.8),0 0 40px rgba(124,92,255,.45);transition:left .9s cubic-bezier(.65,0,.35,1)}
+.pulse::before{content:'';position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(167,139,250,.45);animation:pulsehalo 1.9s ease-out infinite}
+@keyframes pulsehalo{0%{transform:scale(.6);opacity:.85}100%{transform:scale(1.8);opacity:0}}
+.pulse::after{content:'';position:absolute;right:50%;top:50%;height:2px;width:0;transform:translateY(-50%);background:linear-gradient(90deg,transparent,rgba(167,139,250,.9));border-radius:2px;transition:width .22s ease}
+.pulse.moving::after{width:38px}
+/* phase cards — glass telemetry panels */
 .scene-cards{position:absolute;top:0;left:50%;transform:translateX(-50%);width:94%;max-width:560px;height:0;pointer-events:none}
-.scard{position:absolute;top:2px;left:50%;transform:translate(-50%,-14px) scale(.95);opacity:0;transition:opacity .45s,transform .5s;background:linear-gradient(160deg,rgba(16,22,46,.95),rgba(8,11,26,.95));border:1px solid rgba(106,166,255,.34);border-radius:13px;padding:13px 20px;backdrop-filter:blur(12px);box-shadow:0 12px 34px rgba(0,0,0,.5);text-align:left;min-width:190px}
-.scard .k{font-family:var(--mono);font-size:9px;letter-spacing:2.2px;text-transform:uppercase;color:#9ec6ff;margin-bottom:6px}
-.scard.fee{border-color:rgba(255,212,121,.45);box-shadow:0 12px 34px rgba(0,0,0,.5),0 0 26px rgba(255,212,121,.12)}.scard.fee .k{color:#ffd97a}
+.scard{position:absolute;top:4px;left:50%;transform:translate(-50%,-14px) scale(.96);opacity:0;transition:opacity .45s,transform .55s cubic-bezier(.2,.7,.2,1);background:rgba(10,14,28,.72);border:1px solid rgba(150,180,230,.18);border-radius:15px;padding:15px 22px;backdrop-filter:blur(16px);box-shadow:0 16px 44px rgba(0,0,0,.5);text-align:left;min-width:200px}
+.scard .k{font-family:var(--mono);font-size:8.5px;letter-spacing:2.6px;text-transform:uppercase;color:rgba(190,205,230,.7);margin-bottom:9px}
+.scard.fee{border-color:rgba(255,212,121,.32)}.scard.fee .k{color:#ffd97a}
 .scene.ph-fees #bdFee{opacity:1;transform:translate(-50%,0) scale(1)}
-.scene-ch{position:absolute;top:2px;left:50%;transform:translate(-50%,-14px) scale(.95);opacity:0;transition:opacity .45s,transform .5s;display:flex;gap:12px;align-items:flex-start;justify-content:center;flex-wrap:wrap;width:100%}
+.scene-ch{position:absolute;top:4px;left:50%;transform:translate(-50%,-14px) scale(.96);opacity:0;transition:opacity .45s,transform .55s cubic-bezier(.2,.7,.2,1);display:flex;gap:14px;align-items:flex-start;justify-content:center;flex-wrap:wrap;width:100%}
 .scene.ph-channels .scene-ch{opacity:1;transform:translate(-50%,0) scale(1)}
 .scene-ch .scard{position:relative;top:0;left:0;transform:none;opacity:1}
-.scard.docs{border-color:rgba(45,212,191,.4)}.scard.docs .k{color:#7df0d0}
+.scard.docs{border-color:rgba(45,212,191,.32)}.scard.docs .k{color:#7df0d0}
 .scard .bd-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start}
-.scard .bd-chip{opacity:1;transform:none;font-size:12px;padding:6px 13px}
-.scard .bd-fline{margin-top:5px}.scard .bd-dlist>div{font-size:12px;color:#dbe3f2;line-height:1.55}.scard .bd-dlist>div::before{content:'• ';color:#2dd4bf}
-/* coins & papers spawned during fees / channels */
-.coin{position:absolute;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a8,#f0b429 65%,#b9831a);box-shadow:0 0 10px rgba(255,212,121,.7);z-index:7;animation:coindrop .9s cubic-bezier(.3,.6,.3,1) forwards}
-@keyframes coindrop{0%{opacity:0;transform:translateY(-26px) scale(.7)}30%{opacity:1}100%{opacity:0;transform:translateY(6px) scale(1)}}
-.paper{position:absolute;width:18px;height:22px;border-radius:2px;background:linear-gradient(160deg,#eaf2ff,#9ec6ff);box-shadow:0 4px 12px rgba(0,0,0,.4);z-index:7;animation:paperfly 1.3s ease-out forwards}
-.paper::after{content:'';position:absolute;left:3px;right:3px;top:4px;height:1px;box-shadow:0 3px 0 rgba(9,18,39,.4),0 6px 0 rgba(9,18,39,.4),0 9px 0 rgba(9,18,39,.4)}
-@keyframes paperfly{0%{opacity:0;transform:translateY(14px) rotate(-12deg) scale(.7)}25%{opacity:1}100%{opacity:0;transform:translateY(-46px) rotate(10deg) scale(1)}}
+.scard .bd-chip{opacity:1;transform:none;font-size:12px;padding:6px 13px;background:rgba(124,92,255,.1);border-color:rgba(167,139,250,.4);color:#dcd2ff;box-shadow:none;transition:all .4s}
+.scard .bd-chip.lit{background:rgba(124,92,255,.26);border-color:#a78bfa;box-shadow:0 0 18px rgba(124,92,255,.45);color:#fff}
+.scard .bd-fline{margin-top:6px}.scard .bd-fline b{font-size:15px;font-variant-numeric:tabular-nums}
+.scard .bd-dlist>div{font-size:12px;color:#dbe3f2;line-height:1.7;transition:color .35s}.scard .bd-dlist>div::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#2dd4bf;margin-right:8px;vertical-align:middle;opacity:.6}
+.scard .bd-dlist>div.lit{color:#fff}.scard .bd-dlist>div.lit::before{opacity:1;box-shadow:0 0 8px #2dd4bf}
 /* holographic section header: centred mono label with flanking energy rules */
 .bd-sec{display:flex;flex-direction:column;align-items:center;gap:13px;width:100%}
 .bd-hd{font-family:var(--mono);font-size:10px;letter-spacing:3.4px;text-transform:uppercase;color:#9ec6ff;display:flex;align-items:center;gap:11px;text-shadow:0 0 14px rgba(106,166,255,.55)}
@@ -400,8 +382,7 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
   .bd-card.fee,.bd-card.docs{min-width:0;padding:11px 14px}.bd-fline b{font-size:12.5px}.bd-fline span{font-size:10.5px}.bd-note{font-size:9.5px}.bd-dlist>div{font-size:11px}
   .bd-chip{font-size:11px;padding:5px 11px}
   .bd-railseg{font-size:8px;letter-spacing:1px;gap:5px}.bd-railseg i{width:17px;height:17px;font-size:9px}
-  .scene{height:30vh;min-height:170px}.st-pin{width:34px;height:34px}.st-ic svg{width:17px;height:17px}.st-lbl{width:82px;font-size:9.5px}.st-no{width:14px;height:14px;font-size:9px}
-  .avatar{width:28px;height:50px}.avatar svg{width:28px;height:46px}
+  .scene{height:30vh;min-height:170px}.station{width:30px;height:30px}.st-ring{width:30px;height:30px}.st-ring svg{width:15px;height:15px}.st-lbl{width:90px;font-size:9.5px;top:40px}.endcap{width:26px;height:26px}
   .scard{min-width:0;padding:11px 14px}.scene-ch{gap:8px}.scard .bd-chip{font-size:11px;padding:5px 10px}.scard .bd-dlist>div{font-size:11px}
   .cap-wrap{width:96%;margin:24px 0 8px}.cap{font-size:13.5px;max-height:30vh;padding:22px 13px 12px;line-height:1.45}
   .orb-dock,.orb{width:42px;height:42px}.orb-dock{top:-21px}
@@ -862,10 +843,6 @@ const IC={
  people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 20c0-3.3 2.5-5.6 5.5-5.6S14.5 16.7 14.5 20"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14.6c2.6.2 4.5 2.5 4.5 5.4"/></svg>',
  flag:'<svg viewBox="0 0 24 24"><path d="M6 3v18"/><path d="M6 4h11l-2.5 4L17 12H6"/></svg>'
 };
-const AVATAR='<svg viewBox="0 0 34 58"><defs><linearGradient id="avg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9b86ff"/><stop offset="1" stop-color="#6a4ef0"/></linearGradient></defs>'
- +'<line class="leg l1" x1="14" y1="40" x2="13" y2="55"/><line class="leg l2" x1="20" y1="40" x2="21" y2="55"/>'
- +'<rect class="fg-body" x="9" y="17" width="16" height="25" rx="6"/>'
- +'<circle class="fg-head" cx="17" cy="9" r="6.5"/></svg>';
 function iconFor(text,i,n){const t=(text||'').toLowerCase();const has=(...k)=>k.some(w=>t.includes(w));
  if(has('pay','payment','dirham',' fee','fees','cost','cashier'))return IC.coins;
  if(has('review','assess','examin','verif','evaluat','inspect','process'))return IC.review;
@@ -874,16 +851,16 @@ function iconFor(text,i,n){const t=(text||'').toLowerCase();const has=(...k)=>k.
  if(has('card','certificate','licen','permit','issued','issue','print','collect','receive'))return IC.card;
  if(has('document','attach','upload','form','submit','apply','application','register','request','lodge'))return IC.doc;
  if(i===n-1)return IC.card;if(i===0)return IC.doc;return IC.flag;}
-function stationX(i,n){if(n<=1)return 44;const a=12,b=76;return a+i*(b-a)/(n-1);}
-function moveAvatar(pct,walking){const a=document.getElementById('avatar');if(!a)return;a.style.left=pct+'%';if(walking)a.classList.add('walking');const f=document.getElementById('sceneFill');if(f)f.style.width=Math.max(0,pct-6)+'%';}
-function spawn(cls,x,n,spread){const sc=document.getElementById('scene');if(!sc)return;for(let i=0;i<(n||1);i++){const e=document.createElement('div');e.className=cls;e.style.left=(x+(Math.random()-.5)*(spread||10))+'%';e.style.bottom=(34+Math.random()*10)+'%';e.style.animationDelay=(i*0.12)+'s';sc.appendChild(e);setTimeout(()=>e.remove(),1600+i*120);}}
-function dropCoins(){spawn('coin',74,4,11);}
-function flutterPaper(){spawn('paper',70,1,8);}
+function stationX(i,n){if(n<=1)return 46;const a=13,b=80;return a+i*(b-a)/(n-1);}
+function movePulse(pct,moving){const p=document.getElementById('pulse');if(!p)return;if(moving){p.classList.add('moving');setTimeout(()=>p.classList.remove('moving'),900);}p.style.left=pct+'%';const f=document.getElementById('sceneFill');if(f)f.style.width=Math.max(0,pct-6)+'%';}
+// count a fee figure up from 0 — slick, tabular, premium
+function countUp(el,target){if(!el)return;const t=Number(target)||0;if(t<=0){el.textContent=dirhams(t);return;}const dur=620,t0=performance.now();
+  const step=()=>{const k=Math.min(1,(performance.now()-t0)/dur);const e=1-Math.pow(1-k,3);el.textContent=dirhams(Math.round(t*e));if(k<1)requestAnimationFrame(step);};requestAnimationFrame(step);}
 let _fxRAF=0;
 const _STOP=new Set('the and for with from your you this that into are will their they them then once step also have has been must when where which what who whom whose about over under within without through after before each both either fees fee time card issued submitted application documents document required'.split(' '));
 function longWords(str,k){return (String(str||'').toLowerCase().match(/[a-z]{4,}/g)||[]).filter(w=>!_STOP.has(w)).sort((a,b)=>b.length-a.length).slice(0,k||2);}
 function textFrac(text,needles,fb){const t=(text||'').toLowerCase();let best=-1;(needles||[]).forEach(nd=>{const k=String(nd==null?'':nd).toLowerCase().trim();if(k.length<2)return;const i=t.indexOf(k);if(i>=0&&(best<0||i<best))best=i;});return best<0?fb:Math.max(.02,Math.min(.97,best/Math.max(t.length,40)));}
-function clearFX(){if(_fxRAF){cancelAnimationFrame(_fxRAF);_fxRAF=0;}_playSubs=[];document.querySelectorAll('#scene .coin,#scene .paper').forEach(e=>e.remove());const lp=document.getElementById('factPops');if(lp)lp.innerHTML='';}
+function clearFX(){if(_fxRAF){cancelAnimationFrame(_fxRAF);_fxRAF=0;}_playSubs=[];const lp=document.getElementById('factPops');if(lp)lp.innerHTML='';}
 function popFact(inner,tone){const lp=document.getElementById('factPops');if(!lp)return;const c=document.createElement('div');c.className='factpop'+(tone?' '+tone:'');c.innerHTML=inner;lp.appendChild(c);requestAnimationFrame(()=>c.classList.add('in'));setTimeout(()=>{c.classList.remove('in');c.classList.add('out');},2800);setTimeout(()=>{if(c.parentNode)c.remove();},3300);}
 // schedule beats (each {frac:0..1 of the line, fn}) against the actual playback position
 function scheduleBeats(text,beats){
@@ -901,13 +878,13 @@ function sectionFX(kind,s,text){
   if(kind==='steps'){
     const sts=[...document.querySelectorAll('#stations .station')];const n=sts.length||1;let prev=0;
     const beats=sts.map((el,i)=>{let fr=textFrac(text,longWords(s.steps[i],2),(i+0.5)/n);if(fr<prev+0.015)fr=Math.min(.97,prev+0.72/n);prev=fr;
-      return {frac:fr,fn:()=>{for(let j=0;j<i;j++)sts[j].classList.add('done','lit');el.classList.add('lit','arrive');setTimeout(()=>el.classList.remove('arrive'),700);
-        moveAvatar(stationX(i,n),true);setTimeout(()=>{const a=document.getElementById('avatar');if(a)a.classList.remove('walking');},880);}};});
+      return {frac:fr,fn:()=>{for(let j=0;j<i;j++)sts[j].classList.add('done','lit');el.classList.add('lit','arrive');setTimeout(()=>el.classList.remove('arrive'),750);
+        movePulse(stationX(i,n),true);}};});
     scheduleBeats(text,beats);
   }else if(kind==='fees'){
     const lines=[...document.querySelectorAll('#bdFee .bd-fline')];const fees=s.fees||[];const n=Math.max(fees.length,1);
     const beats=fees.map((f,i)=>({frac:textFrac(text,[String(f.fee),...longWords(f.n,1)],(i+0.5)/n),fn:()=>{
-      lines.forEach(x=>x.classList.remove('pop'));if(lines[i])lines[i].classList.add('pop');dropCoins();
+      lines.forEach(x=>x.classList.remove('pop'));if(lines[i]){lines[i].classList.add('pop');countUp(lines[i].querySelector('.cnt'),f.fee);}
       popFact('<b>'+esc(dirhams(f.fee))+'</b><span>'+esc(f.n)+(f.time&&f.time!=='Instant'?' · '+esc(f.time):'')+'</span>','gold');}}));
     scheduleBeats(text,beats);
   }else if(kind==='channels'){
@@ -915,7 +892,7 @@ function sectionFX(kind,s,text){
     const chans=(s.channels||[]),docs=(s.docs||[]).filter(d=>d&&d!=='None'&&d!=='Not applicable');
     const items=[];chans.forEach((c,i)=>items.push({t:'ch',label:c,el:chips[i],fb:(i+0.4)/(chans.length+docs.length||1)}));
     docs.forEach((d,i)=>items.push({t:'doc',label:d,el:docEls[i],fb:(chans.length+i+0.4)/(chans.length+docs.length||1)}));
-    const beats=items.map(it=>({frac:textFrac(text,[it.label,...longWords(it.label,1)],it.fb),fn:()=>{if(it.el)it.el.classList.add('lit');if(it.t==='doc')flutterPaper();
+    const beats=items.map(it=>({frac:textFrac(text,[it.label,...longWords(it.label,1)],it.fb),fn:()=>{if(it.el)it.el.classList.add('lit');
       popFact((it.t==='doc'?'📄 ':'📍 ')+'<span style="font-size:13px;color:#eaf0ff">'+esc(it.label)+'</span>',it.t==='doc'?'teal':'blue');}}));
     scheduleBeats(text,beats);
   }
@@ -1080,16 +1057,16 @@ window.enterAbout=enterAbout;
 function buildBoard(s){
   const docs=s.docs.filter(d=>d&&d!=='None'&&d!=='Not applicable');
   const n=s.steps.length;
-  const feeList=s.fees.map(f=>'<div class="bd-fline"><b>'+esc(dirhams(f.fee))+'</b><span>'+esc(f.n)+(f.time&&f.time!=='Instant'?' · '+esc(f.time):'')+'</span></div>').join('');
-  const stationsH=s.steps.map((p,i)=>'<div class="station" data-i="'+i+'" style="left:'+stationX(i,n)+'%"><div class="st-pin"><span class="st-ic">'+iconFor(p,i,n)+'</span></div><span class="st-no">'+(i+1)+'</span><div class="st-lbl">'+esc(p)+'</div></div>').join('');
+  const feeList=s.fees.map(f=>'<div class="bd-fline"><b class="cnt">'+esc(dirhams(0))+'</b><span>'+esc(f.n)+(f.time&&f.time!=='Instant'?' · '+esc(f.time):'')+'</span></div>').join('');
+  const stationsH=s.steps.map((p,i)=>'<div class="station" data-i="'+i+'" style="left:'+stationX(i,n)+'%"><div class="st-ring">'+iconFor(p,i,n)+'</div><div class="st-lbl">'+esc(p)+'</div></div>').join('');
   const chips='<div class="bd-chips" id="bdChips">'+s.channels.map(c=>'<span class="bd-chip">'+esc(c)+'</span>').join('')+'</div>';
   let h='<div class="bd-rail" id="bdRail">'
     +'<span class="bd-railseg" data-k="journey"><i>1</i>Journey</span>'
     +'<span class="bd-railseg" data-k="fees"><i>2</i>Fees</span>'
     +'<span class="bd-railseg" data-k="channels"><i>3</i>'+(docs.length?'Channels':'Where')+'</span></div>';
   h+='<div class="scene ph-journey" id="scene">'
-    +'<div class="scene-floor"></div><div class="scene-fill" id="sceneFill"></div>'
-    +'<div class="counter">'+IC.card+'</div>'
+    +'<div class="track"></div><div class="track-fill" id="sceneFill"></div>'
+    +'<div class="endcap">'+IC.card+'</div>'
     +'<div class="stations" id="stations">'+stationsH+'</div>'
     +'<div class="scene-cards">'
       +'<div class="scard fee" id="bdFee"><div class="k">What it costs</div>'+feeList+(s.note?'<div class="bd-note">'+esc(s.note)+'</div>':'')+'</div>'
@@ -1097,7 +1074,7 @@ function buildBoard(s){
         +(docs.length?'<div class="scard docs" id="bdDocs"><div class="k">'+docs.length+' document'+(docs.length>1?'s':'')+' needed</div><div class="bd-dlist">'+docs.map(d=>'<div>'+esc(d)+'</div>').join('')+'</div></div>':'')
       +'</div>'
     +'</div>'
-    +'<div class="avatar" id="avatar"><div class="av-aura"></div>'+AVATAR+'</div>'
+    +'<div class="pulse" id="pulse"></div>'
     +'</div>';
   document.getElementById('board').innerHTML=h;
   focusPhase('journey');
@@ -1105,7 +1082,7 @@ function buildBoard(s){
 function focusPhase(k){const order=['journey','fees','channels'];const sc=document.getElementById('scene');if(!sc)return;
   sc.className='scene ph-'+k;
   document.querySelectorAll('#bdRail .bd-railseg').forEach(seg=>{const a=order.indexOf(seg.dataset.k),c=order.indexOf(k);seg.classList.toggle('active',a===c);seg.classList.toggle('done',a>=0&&a<c);});
-  if(k!=='journey'){moveAvatar(82,true);setTimeout(()=>{const a=document.getElementById('avatar');if(a)a.classList.remove('walking');},900);}}
+  if(k!=='journey')movePulse(90,true);}
 function showCover(){const c=document.getElementById('bdCover');if(c){c.classList.add('on');c.querySelectorAll('.it').forEach((el,i)=>setTimeout(()=>el.style.transitionDelay=(i*0.12)+'s',0));}}
 function hideCover(){const c=document.getElementById('bdCover');if(c)c.style.display='none';}
 function revealSteps(){focusPhase('journey');}
