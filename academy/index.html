@@ -747,8 +747,7 @@ function playPos(){if(!_play)return 0;if(_play.el&&isFinite(_play.el.currentTime
 let _analyser=null,_voxFreq=null;
 function getAnalyser(c){if(!c)return null;if(!_analyser){try{_analyser=c.createAnalyser();_analyser.fftSize=256;_analyser.smoothingTimeConstant=0.82;_analyser.connect(c.destination);_voxFreq=new Uint8Array(_analyser.frequencyBinCount);}catch(e){_analyser=null;}}return _analyser;}
 function voxLevel(){
-  if(_analyser&&_voxFreq){_analyser.getByteFrequencyData(_voxFreq);let s=0;for(let i=2;i<_voxFreq.length;i++)s+=_voxFreq[i];const v=(s/(_voxFreq.length-2))/118;if(v>0.012)return Math.min(1,v);}
-  // fallback when no analyser (html-only / muted): synthesise an envelope from the speaking state
+  // speaking-driven envelope (no audio-graph tap, so nothing can interfere with playback)
   return _voiceSpeaking?(0.42+0.22*Math.sin(performance.now()/130)+0.16*Math.sin(performance.now()/47)+0.08*Math.random()):0;
 }
 // Unlock audio on the first user gesture so the coach's voice plays on phones (autoplay is blocked until then).
@@ -781,7 +780,7 @@ function speakAsync(text,onEnd){
     try{
       c.decodeAudioData(copy,(audioBuf)=>{
         try{ if(_curSrc){try{_curSrc.onended=null;_curSrc.stop();}catch(e){}}
-          const s=c.createBufferSource();s.buffer=audioBuf;s.connect(getAnalyser(c)||c.destination);_curSrc=s;curAudio=s;
+          const s=c.createBufferSource();s.buffer=audioBuf;s.connect(c.destination);_curSrc=s;curAudio=s;
           clearTimeout(safety);safety=setTimeout(finish,audioBuf.duration*1000+2500);
           s.onended=()=>{clearTimeout(safety);finish();};
           if(c.state==='suspended')c.resume();
@@ -918,7 +917,7 @@ const VOX=(function(){
     if(flow){
       for(const p of P){p.vx+=(Math.random()-.5)*0.0011-p.x*0.0010;p.vy+=(Math.random()-.5)*0.0011-p.y*0.0010;p.vz+=(Math.random()-.5)*0.0011-p.z*0.0010;p.vx*=0.972;p.vy*=0.972;p.vz*=0.972;
         const r=Math.sqrt(p.x*p.x+p.y*p.y+p.z*p.z)||1,push=lvl*0.004;p.vx+=p.x/r*push;p.vy+=p.y/r*push;p.vz+=p.z/r*push;p.x+=p.vx;p.y+=p.vy;p.z+=p.vz;if(r>1.2){p.x*=0.97;p.y*=0.97;p.z*=0.97;}}
-    }else{const ease=0.085;for(const p of P){p.x+=(p.tx-p.x)*ease;p.y+=(p.ty-p.y)*ease;p.z+=(p.tz-p.z)*ease;}}
+    }else{const ease=0.19;for(const p of P){p.x+=(p.tx-p.x)*ease;p.y+=(p.ty-p.y)*ease;p.z+=(p.tz-p.z)*ease;}}
     // rotate (Y then X) and project with perspective
     for(const p of P){const jx=flow?0:Math.cos(p.ph)*jit,jy=flow?0:Math.sin(p.ph*1.7)*jit;
       const x1=p.x*cR+p.z*sR,z1=-p.x*sR+p.z*cR,y1=p.y*cT-z1*sT,z2=p.y*sT+z1*cT,persp=fov/(fov-z2);
@@ -983,7 +982,7 @@ function scheduleBeats(text,beats){
   onPlayStart(p=>{
     const dur=p.dur||Math.max(3,((text||'').match(/\S+/g)||[]).length*0.36);
     const fired=new Array(beats.length).fill(false);
-    const tick=()=>{const pos=playPos();
+    const tick=()=>{const pos=playPos()+0.22;
       for(let i=0;i<beats.length;i++){if(!fired[i]&&pos>=beats[i].frac*dur){fired[i]=true;try{beats[i].fn();}catch(e){}}}
       if(fired.every(Boolean)){_fxRAF=0;return;}_fxRAF=requestAnimationFrame(tick);};
     if(_fxRAF)cancelAnimationFrame(_fxRAF);_fxRAF=requestAnimationFrame(tick);
