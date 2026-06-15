@@ -12,6 +12,7 @@
 <script>
 window.SITE_CONFIG = {
   doceboUrl: 'https://creativewordtraining.docebosaas.com/learn',
+  articulateUrl: '',                           // the Articulate course link ("Begin training"); falls back to doceboUrl
   courseLive: true,                            // false => "coming soon"
   supportEmail: 'training@legal.dubai.gov.ae',
   lexEndpoint: '/api/lex'                       // AI assistant (Azure function)
@@ -124,6 +125,11 @@ body.unlocked #site{display:block}
 .btn-p svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2.4}
 .btn-s{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.22);font-family:var(--sans);font-size:15px;font-weight:600;padding:14px 26px;border-radius:11px;cursor:pointer;transition:background .15s;text-decoration:none}
 .btn-s:hover{background:rgba(255,255,255,.18)}
+.btn-p2{display:inline-flex;align-items:center;gap:9px;background:#fff;color:#1d2433;border:none;font-family:var(--sans);font-size:15px;font-weight:600;padding:14px 28px;border-radius:11px;cursor:pointer;transition:transform .1s,background .15s;box-shadow:0 6px 20px rgba(0,0,0,.18);text-decoration:none}
+.btn-p2:hover{transform:translateY(-2px);background:#eef1f6}
+.btn-p2 svg{width:17px;height:17px;stroke:#1d2433;fill:none;stroke-width:2.4}
+.hero-link{display:inline-block;margin:-26px 0 40px;color:rgba(255,255,255,.82);font-size:13.5px;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.32);padding-bottom:1px;transition:color .15s}
+.hero-link:hover{color:#fff}
 .hero-stats{display:flex;gap:32px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.14);padding-top:26px}
 .hstat-n{font-family:var(--serif);font-size:40px;color:var(--gold-l);line-height:1}
 .hstat-l{font-size:12px;color:rgba(255,255,255,.6);margin-top:4px;letter-spacing:.2px}
@@ -529,7 +535,6 @@ body.unlocked .lex-fab{display:inline-flex}
       <a class="nav-link" href="#scenarios">Practice</a>
       <a class="nav-link" href="#faq">FAQs</a>
       <a class="nav-link" onclick="launchAdmin()" style="cursor:pointer">🛡 Admin</a>
-      <a class="nav-cta" onclick="launchTraining()">Enter Solar System <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
     </div>
   </div></nav>
 
@@ -550,10 +555,10 @@ body.unlocked .lex-fab{display:inline-flex}
       <h1 class="hero-title">Know our services.<br><em>Serve with happiness.</em></h1>
       <p class="hero-desc">Welcome to your Service Ambassador hub — an interactive guide to greeting every visitor with confidence and guiding them to the right Legal Affairs Department service. Explore, test yourself, then begin your training.</p>
       <div class="hero-btns">
-        <a class="btn-p" onclick="launchTraining()">Enter the Training Solar System <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
-        <a class="btn-s" onclick="launchAdmin()" style="cursor:pointer">🛡 Admin portal</a>
-        <a class="btn-s" href="#finder">Try the service finder</a>
+        <a class="btn-p" onclick="launchSolarSystem()">Enter the Training Solar System <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="btn-p2" onclick="launchTraining()">Begin training <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
       </div>
+      <a class="hero-link" href="#finder">or use the service finder below ↓</a>
       <div class="hero-stats">
         <div><div class="hstat-n" data-count="11">0</div><div class="hstat-l">Main services</div></div>
         <div><div class="hstat-n" data-count="45">0</div><div class="hstat-l">Sub-services</div></div>
@@ -1479,8 +1484,10 @@ function applyLaunchState(){ var n=document.getElementById('launchNote');
 // The Service Ambassador Academy ("Training Solar System"). Swap to
 // https://training.legalaffairstraining.com once the custom domain is mapped.
 var ACADEMY_URL='https://happy-ocean-025d8f603.7.azurestaticapps.net/';
-var ACADEMY_ADMIN_URL=ACADEMY_URL+'admin.html';
-function launchTraining(){ window.open(ACADEMY_URL,'_blank','noopener'); }
+// The structured (Articulate) course — configured in window.SITE_CONFIG.
+var TRAINING_URL=((CFG.articulateUrl||CFG.doceboUrl||'')+'').trim();
+function launchSolarSystem(){ window.open(ACADEMY_URL,'_blank','noopener'); }
+function launchTraining(){ if(!TRAINING_URL){ showToast('The training course link isn’t set yet.'); return; } window.open(TRAINING_URL,'_blank','noopener'); }
 function launchAdmin(){ window.open('/admin','_blank','noopener'); }
 
 /* ─────────── Toast ─────────── */

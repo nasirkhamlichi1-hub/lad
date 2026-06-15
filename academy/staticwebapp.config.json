@@ -1,6 +1,6 @@
 {
   "platform": {
-    "apiRuntime": "node:18"
+    "apiRuntime": "node:20"
   },
   "navigationFallback": {
     "rewrite": "/index.html",
@@ -8,7 +8,7 @@
   },
   "globalHeaders": {
     "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "SAMEORIGIN",
+    "Content-Security-Policy": "frame-ancestors 'self' https://www.legalaffairstraining.com https://legalaffairstraining.com",
     "Referrer-Policy": "strict-origin-when-cross-origin"
   },
   "responseOverrides": {
