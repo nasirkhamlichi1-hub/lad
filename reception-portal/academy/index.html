@@ -932,7 +932,7 @@ async function runLesson(s){
     if(!pool.length)pool.push(...shuffle(s.quiz));
     correct+=await askCheck(s,pool.shift());if(ab())return;extra++;
   }
-  hideBoard();P(s.id).quiz=correct>=2;save();updateHUD();
+  hideBoard();P(s.id).quiz=correct>=2;save();updateHUD();flushSync();
   markPhaseDone('learn');setPhase('sim');
   await say(correct>=2?pick(L_SIMGOOD):pick(L_SIMOK));if(ab())return;
   let total=0;
@@ -945,7 +945,7 @@ async function runLesson(s){
     total+=g.score;setCoach('Score: '+g.score+'/100');
     await say(g.feedback);if(ab())return;setCoach('');}
   hideBoard();
-  const avg=total/s.sims.length;P(s.id).sim=avg>=55;save();updateHUD();
+  const avg=total/s.sims.length;P(s.id).sim=avg>=55;save();updateHUD();flushSync();
   markPhaseDone('sim');
   const done=certified(s.id);
   await say((done?pick(L_CERT):pick(L_NOTCERT)).replace('{S}',shortName(s)));
@@ -993,14 +993,19 @@ updateHUD();
    On the GitHub Pages preview there is no /api, so it stays in local mode. */
 const AUTH={hosted:false,email:null,token:null,name:''};window.AUTH=AUTH;
 let _syncT=null;
-function queueSync(){clearTimeout(_syncT);_syncT=setTimeout(syncServer,900);}
-async function syncServer(){if(!AUTH.token)return;try{await fetch('/api/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:AUTH.token,name:AUTH.name||localStorage.getItem('academy_name')||'',progress})});}catch(e){}}
+function queueSync(){clearTimeout(_syncT);_syncT=setTimeout(syncServer,800);}
+function flushSync(){clearTimeout(_syncT);syncServer();}
+async function syncServer(){if(!(window.AUTH&&AUTH.hosted&&AUTH.token))return;try{await fetch('/api/progress',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify({token:AUTH.token,name:AUTH.name||localStorage.getItem('academy_name')||'',progress})});}catch(e){}}
+// never lose a completion: take the union of local + server per service
+function mergeProgress(a,b){const out={},ids=new Set([...Object.keys(a||{}),...Object.keys(b||{})]);ids.forEach(id=>{const x=(a&&a[id])||{},y=(b&&b[id])||{};out[id]={quiz:!!(x.quiz||y.quiz),sim:!!(x.sim||y.sim)};});return out;}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)flushSync();});
+addEventListener('pagehide',flushSync);
 function setWhoami(){const w=document.getElementById('whoami');if(!w)return;if(AUTH.hosted&&AUTH.email){w.style.display='flex';document.getElementById('whoEmail').textContent=AUTH.email;}else{w.style.display='none';}}
 function showGate(show){document.getElementById('authgate').classList.toggle('on',show);}
 async function loadServerProgress(){
   try{const r=await fetch('/api/progress?token='+encodeURIComponent(AUTH.token),{cache:'no-store'});
     if(r.status===401){doLogout();return;}
-    if(r.ok){const j=await r.json();progress=j.progress||progress;try{localStorage.setItem(LS,JSON.stringify(progress));}catch(_){}}
+    if(r.ok){const j=await r.json();progress=mergeProgress(progress,j.progress||{});try{localStorage.setItem(LS,JSON.stringify(progress));}catch(_){}flushSync();}
   }catch(e){}
   updateHUD();setWhoami();
 }
@@ -1015,7 +1020,7 @@ async function doLogin(){
     if(!r.ok){err.textContent=j.error||'Could not sign in.';return;}
     AUTH.token=j.token;AUTH.email=j.email;AUTH.name=j.name||'';
     try{localStorage.setItem('academy_token',j.token);localStorage.setItem('academy_email',j.email);}catch(_){}
-    progress=j.progress||{};try{localStorage.setItem(LS,JSON.stringify(progress));}catch(_){}
+    progress=mergeProgress(progress,j.progress||{});try{localStorage.setItem(LS,JSON.stringify(progress));}catch(_){}flushSync();
     updateHUD();setWhoami();showGate(false);if(window.orbit3d&&window.orbit3d.intro)window.orbit3d.intro();
     try{const wk='academy_welcomed_'+(AUTH.email||'x');if(!localStorage.getItem(wk)){localStorage.setItem(wk,'1');setTimeout(()=>{if(typeof playWelcome==='function')playWelcome();},1000);}}catch(e){}
   }catch(e){err.textContent='Could not reach the server. Please try again.';}
