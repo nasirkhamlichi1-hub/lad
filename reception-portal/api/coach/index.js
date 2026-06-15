@@ -20,20 +20,27 @@ module.exports = async function (context, req) {
 
   const system = String(b.system || '').slice(0, 12000);
   const max_tokens = Math.min(1200, Math.max(64, parseInt(b.max_tokens, 10) || 900));
-  const model = /^claude-[a-z0-9.\-]+$/i.test(b.model || '') ? b.model : 'claude-sonnet-4-6';
+  // Try the requested model, then fall back to known-good models (opus is the one Maryam uses).
+  const wanted = /^claude-[a-z0-9.\-]+$/i.test(b.model || '') ? b.model : 'claude-sonnet-4-6';
+  const models = [wanted, 'claude-sonnet-4-6', 'claude-opus-4-8', 'claude-haiku-4-5-20251001'].filter((m, i, a) => a.indexOf(m) === i);
 
-  try {
-    const r = await fetch(ANTHROPIC_URL, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model, max_tokens, system, messages: clean })
-    });
-    if (!r.ok) { context.log.error('coach upstream', r.status, await r.text().catch(() => '')); return S.json(context, 502, { error: 'upstream' }); }
-    const data = await r.json();
-    const text = (data.content || []).filter(x => x.type === 'text').map(x => x.text).join('\n').trim();
-    return S.json(context, 200, { text });
-  } catch (e) {
-    context.log.error('coach error', e && e.message);
-    return S.json(context, 500, { error: 'server' });
+  let lastStatus = 0, lastDetail = '';
+  for (const model of models) {
+    try {
+      const r = await fetch(ANTHROPIC_URL, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model, max_tokens, system, messages: clean })
+      });
+      if (r.ok) {
+        const data = await r.json();
+        const text = (data.content || []).filter(x => x.type === 'text').map(x => x.text).join('\n').trim();
+        return S.json(context, 200, { text, model });
+      }
+      lastStatus = r.status; lastDetail = await r.text().catch(() => '');
+      if (r.status === 401 || r.status === 403) break; // bad key — no point retrying
+    } catch (e) { lastDetail = e && e.message; }
   }
+  context.log.error('coach upstream failed', lastStatus, lastDetail);
+  return S.json(context, 502, { error: 'upstream', status: lastStatus });
 };

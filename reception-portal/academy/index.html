@@ -37,7 +37,9 @@ html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(-
 .hud-admin:hover{color:#fff}
 .cert-btn{pointer-events:auto;background:rgba(255,212,121,.12);border:1px solid rgba(255,212,121,.4);color:var(--gold);border-radius:11px;padding:9px 15px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans)}
 .cert-btn[disabled]{opacity:.45;cursor:not-allowed}.cert-btn:not([disabled]):hover{background:rgba(255,212,121,.2)}
-.gearbtn{position:fixed;top:62px;right:20px;z-index:20;width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--mut);cursor:pointer;display:grid;place-items:center;backdrop-filter:blur(12px)}
+/* Keys are hardwired in the backend now — no user-facing settings/keys UI. */
+.gearbtn,.kpop{display:none!important}
+.gearbtn-x{position:fixed;top:62px;right:20px;z-index:20;width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--mut);cursor:pointer;display:grid;place-items:center;backdrop-filter:blur(12px)}
 .gearbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7}
 .help{position:fixed;left:20px;bottom:20px;z-index:18;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 15px;backdrop-filter:blur(12px);font-size:12px;max-width:240px;color:var(--mut);line-height:1.55}
 .help b{color:var(--ink)}
@@ -599,6 +601,12 @@ function facts(s){return JSON.stringify({service:s.name,for:s.who,channels:s.cha
 
 let curAudio=null;
 function stopAudio(){if(curAudio){try{curAudio.onended=null;curAudio.pause();}catch(e){}curAudio=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();}
+// Unlock audio on the first user gesture so the coach's voice plays on phones (autoplay is blocked until then).
+let _audioPrimed=false;const _silentClip='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+function primeAudio(){if(_audioPrimed)return;_audioPrimed=true;
+  try{const a=new Audio(_silentClip);a.play().then(()=>{a.pause();}).catch(()=>{});}catch(e){}
+  try{if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(' ');u.volume=0;window.speechSynthesis.speak(u);window.speechSynthesis.cancel();}}catch(e){}}
+['pointerdown','touchend','keydown'].forEach(ev=>document.addEventListener(ev,primeAudio));
 function stripMd(t){return (t||'').replace(/\*\*(.+?)\*\*/g,'$1').replace(/\*(.+?)\*/g,'$1').replace(/`+/g,'').replace(/[#>_]/g,'').replace(/\s+/g,' ').trim();}
 function speakAsync(text,onEnd){
   stopAudio();text=stripMd(text).replace(/AED\s*([\d.,]+)/g,'$1 dirhams').replace(/\bAED\b/g,'dirhams');
