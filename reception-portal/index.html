@@ -528,7 +528,8 @@ body.unlocked .lex-fab{display:inline-flex}
       <a class="nav-link" href="#quiz">Knowledge check</a>
       <a class="nav-link" href="#scenarios">Practice</a>
       <a class="nav-link" href="#faq">FAQs</a>
-      <a class="nav-cta" onclick="launchTraining()">Begin training <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      <a class="nav-link" onclick="launchAdmin()" style="cursor:pointer">🛡 Admin</a>
+      <a class="nav-cta" onclick="launchTraining()">Enter Solar System <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
     </div>
   </div></nav>
 
@@ -549,7 +550,8 @@ body.unlocked .lex-fab{display:inline-flex}
       <h1 class="hero-title">Know our services.<br><em>Serve with happiness.</em></h1>
       <p class="hero-desc">Welcome to your Service Ambassador hub — an interactive guide to greeting every visitor with confidence and guiding them to the right Legal Affairs Department service. Explore, test yourself, then begin your training.</p>
       <div class="hero-btns">
-        <a class="btn-p" onclick="launchTraining()">Begin training <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="btn-p" onclick="launchTraining()">Enter the Training Solar System <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="btn-s" onclick="launchAdmin()" style="cursor:pointer">🛡 Admin portal</a>
         <a class="btn-s" href="#finder">Try the service finder</a>
       </div>
       <div class="hero-stats">
@@ -1474,11 +1476,12 @@ reveal();
 /* ─────────── Launch ─────────── */
 function applyLaunchState(){ var n=document.getElementById('launchNote');
   if(CFG.courseLive===false && n) n.innerHTML='The course is being finalised — launching here soon.'; }
-function launchTraining(){
-  if(CFG.courseLive===false){ showToast('The training course is being finalised and will be available here shortly.'); return; }
-  var url=(CFG.doceboUrl||'').trim(); if(!url){ showToast('Training platform not configured yet.'); return; }
-  window.open(url,'_blank','noopener');
-}
+// The Service Ambassador Academy ("Training Solar System"). Swap to
+// https://training.legalaffairstraining.com once the custom domain is mapped.
+var ACADEMY_URL='https://happy-ocean-025d8f603.7.azurestaticapps.net/';
+var ACADEMY_ADMIN_URL=ACADEMY_URL+'admin.html';
+function launchTraining(){ window.open(ACADEMY_URL,'_blank','noopener'); }
+function launchAdmin(){ window.open(ACADEMY_ADMIN_URL,'_blank','noopener'); }
 
 /* ─────────── Toast ─────────── */
 function showToast(m){ var t=document.getElementById('toast'); document.getElementById('toastMsg').textContent=m;
