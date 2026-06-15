@@ -81,6 +81,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,.03)
         <input id="search" placeholder="Search name or email…"/>
         <button class="primary" id="addBtn">＋ Add trainees</button>
         <button id="pwBtn">Change shared password</button>
+        <button id="adminPwBtn">Change admin password</button>
         <button id="refresh">↻ Refresh</button>
         <button id="csv">⬇ Export CSV</button>
       </div>
@@ -176,6 +177,17 @@ async function doSharedPw(){
   try{await api('POST',{action:'setSharedPassword',password});closeModal();alert('Shared password updated.');}
   catch(e){$('merr').textContent=e.message;}
 }
+$('adminPwBtn').addEventListener('click',()=>{
+  modal('<h3>Change admin password</h3><p>The password for this Trainer Console. You\'ll use the new one next time you sign in.</p>'+
+    '<input id="newadminpw" type="text" placeholder="New admin password"/>'+
+    '<div class="err" id="merr"></div>'+
+    '<div class="mrow"><button class="ghost" onclick="closeModal()">Cancel</button><button onclick="doAdminPw()">Update admin password</button></div>');
+});
+async function doAdminPw(){
+  const password=$('newadminpw').value;
+  try{await api('POST',{action:'setAdminPassword',password});PASS=password;closeModal();alert('Admin password updated. Use it next time you sign in.');}
+  catch(e){$('merr').textContent=e.message;}
+}
 async function setPw(email){
   const password=prompt('Set a personal password for '+email+'\n(Leave blank and OK to clear it and use the shared password.)');
   if(password===null)return;
@@ -246,7 +258,7 @@ $('pass').addEventListener('keydown',e=>{if(e.key==='Enter'){PASS=$('pass').valu
 $('refresh').addEventListener('click',load);
 $('search').addEventListener('input',render);
 $('csv').addEventListener('click',csv);
-window.certify=certify;window.setPw=setPw;window.remove=remove;window.doAdd=doAdd;window.doSharedPw=doSharedPw;window.closeModal=closeModal;window.dlCertPNG=dlCertPNG;window.printCert=printCert;
+window.certify=certify;window.setPw=setPw;window.remove=remove;window.doAdd=doAdd;window.doSharedPw=doSharedPw;window.doAdminPw=doAdminPw;window.closeModal=closeModal;window.dlCertPNG=dlCertPNG;window.printCert=printCert;
 </script>
 </body>
 </html>
