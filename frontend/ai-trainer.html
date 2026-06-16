@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AI Trainer · CLPD — Government of Dubai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+:root{
+  --green:#006B3F; --green2:#008549; --green-d:#004d2e; --green-l:#00a85e;
+  --green-bg:#f0f9f4; --green-border:#b8d8c5;
+  --gold:#C9913A; --gold-bg:#fdf6e8; --gold-border:#e8c878;
+  --ink:#0a0e14; --ink2:#1a2330; --slate:#3a4554; --slate2:#5a6878; --slate3:#8a98aa;
+  --line:#e8ecf1; --line2:#d8dfe7; --paper:#f8fafb; --paper2:#f1f4f7; --white:#fff;
+  --red:#c0392b; --red-bg:#fdeae8; --red-border:#f0aaaa;
+  --amber:#92540a; --amber-bg:#fef3e2; --amber-border:#f0c878;
+  --blue:#1a4d80; --blue-bg:#eef4fb;
+  --serif:'Instrument Serif',Georgia,serif; --sans:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
+  --r-sm:8px; --r:12px; --r-lg:18px; --r-xl:24px;
+  --sh:0 2px 4px rgba(10,14,20,.06),0 8px 24px rgba(10,14,20,.06);
+  --sh-lg:0 8px 16px rgba(10,14,20,.1),0 32px 64px rgba(10,14,20,.1);
+}
+html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;letter-spacing:-.005em}
+body{min-height:100vh}
+a{color:var(--green2);text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+/* Header */
+.top{background:rgba(255,255,255,.85);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.top-in{display:flex;align-items:center;gap:14px;height:62px}
+.emblem{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:10px;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,107,63,.22);flex-shrink:0}
+.emblem svg{width:20px;height:24px}
+.brand-t{font-family:var(--serif);font-size:18px;line-height:1.05}
+.brand-s{font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:2px}
+.top-spacer{flex:1}
+.pill{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:5px 10px;border-radius:999px;border:1px solid}
+.pill-live{background:var(--green-bg);color:var(--green-d);border-color:var(--green-border)}
+.pill-demo{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border)}
+.ghost-link{font-size:12.5px;color:var(--slate2);font-weight:500}
+
+/* Hero / setup */
+.hero{padding:38px 0 10px}
+.eyebrow{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+h1{font-family:var(--serif);font-size:42px;font-weight:400;letter-spacing:-.02em;line-height:1.05}
+.lede{font-size:16px;color:var(--slate);max-width:620px;margin-top:14px;line-height:1.55}
+
+.grid{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start;padding:26px 0 60px}
+@media(max-width:880px){.grid{grid-template-columns:1fr}}
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh);overflow:hidden}
+.card-h{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+.card-h h3{font-size:13.5px;font-weight:650;letter-spacing:-.01em}
+.card-b{padding:18px}
+
+/* Lesson list */
+.lessons{display:flex;flex-direction:column;gap:10px}
+.lesson{border:1.5px solid var(--line2);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s;background:var(--white)}
+.lesson:hover{border-color:var(--green-border);background:var(--green-bg)}
+.lesson.sel{border-color:var(--green2);background:var(--green-bg);box-shadow:0 0 0 3px rgba(0,107,63,.08)}
+.lesson-t{font-size:14px;font-weight:650}
+.lesson-s{font-size:12.5px;color:var(--slate2);margin-top:4px;line-height:1.45}
+.lesson-m{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.tag{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.3px;padding:3px 7px;border-radius:6px;background:var(--paper2);color:var(--slate2);border:1px solid var(--line)}
+.empty{text-align:center;padding:30px 16px;color:var(--slate2)}
+.empty svg{width:34px;height:34px;color:var(--slate3);margin-bottom:10px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--sans);font-size:14px;font-weight:600;padding:12px 20px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;transition:all .15s;letter-spacing:-.01em}
+.btn-pri{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;box-shadow:0 2px 10px rgba(0,107,63,.25)}
+.btn-pri:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,107,63,.32)}
+.btn-pri:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-danger{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+.btn-ghost{background:var(--white);color:var(--slate);border-color:var(--line2)}
+.btn-block{width:100%}
+
+/* Consent */
+.consent{display:flex;gap:10px;align-items:flex-start;background:var(--blue-bg);border:1px solid #cfe0f0;border-radius:var(--r);padding:12px 13px;margin:16px 0;font-size:12.5px;color:var(--slate);line-height:1.5}
+.consent input{margin-top:2px;width:16px;height:16px;accent-color:var(--green2);flex-shrink:0}
+
+/* Stage */
+.stage-wrap{display:none}
+.stage{position:relative;background:#0a0e14;border-radius:var(--r-lg);overflow:hidden;aspect-ratio:16/9;box-shadow:var(--sh-lg);border:1px solid #000}
+.stage iframe,.stage video{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover}
+.stage video{transform:scaleX(-1)}
+.stage-overlay{position:absolute;inset:0;display:grid;place-items:center;color:#fff;text-align:center;background:radial-gradient(circle at 50% 40%,rgba(0,107,63,.25),rgba(10,14,20,.9))}
+.spinner{width:38px;height:38px;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.stage-bar{display:flex;align-items:center;gap:12px;margin-top:14px}
+.rec{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--slate2);font-weight:500}
+.rec .dot{width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 rgba(192,57,43,.6);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.5)}70%{box-shadow:0 0 0 8px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
+
+/* Perception panel */
+.perc-list{display:flex;flex-direction:column;gap:9px}
+.perc{display:flex;gap:11px;align-items:flex-start;padding:11px 12px;border-radius:var(--r);border:1px solid var(--line);background:var(--paper);transition:all .25s}
+.perc.hot{background:var(--green-bg);border-color:var(--green-border)}
+.perc-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;background:var(--white);border:1px solid var(--line);font-size:15px}
+.perc-tx{font-size:12.5px;color:var(--slate);line-height:1.45}
+.perc-tx b{color:var(--ink);font-weight:650}
+.coach{margin-top:14px;padding:13px 14px;border-radius:var(--r);background:linear-gradient(135deg,#0a0e14,#1a2330);color:#fff;font-size:13px;line-height:1.5;min-height:64px;display:flex;align-items:center;gap:10px}
+.coach .q{font-family:var(--serif);font-size:26px;color:var(--gold);line-height:0;margin-top:14px}
+.note{font-size:11px;color:var(--slate3);margin-top:12px;line-height:1.5}
+
+.hidden{display:none!important}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh-lg);z-index:50;opacity:0;transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <div class="emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="#fff" opacity=".95"/></svg></div>
+    <div>
+      <div class="brand-t">CLPD AI Trainer</div>
+      <div class="brand-s">Dubai Legal Affairs Department</div>
+    </div>
+    <div class="top-spacer"></div>
+    <span id="modePill" class="pill pill-demo">Checking…</span>
+    <a class="ghost-link" href="lawyer-portal-v2.html">← My CLPD</a>
+  </div>
+</header>
+
+<main>
+  <!-- SETUP -->
+  <section id="setup">
+    <div class="wrap hero">
+      <div class="eyebrow">One-to-one · No reading · No typing</div>
+      <h1>Sit down with an expert.</h1>
+      <p class="lede">A real-time conversation with a photoreal AI trainer. It speaks, listens, and
+        watches — if your attention drifts or you reach for your phone, it gently brings you back,
+        just like a trainer sitting across the table.</p>
+    </div>
+
+    <div class="wrap grid">
+      <div class="card">
+        <div class="card-h">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green2)" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          <h3>Choose today's lesson</h3>
+        </div>
+        <div class="card-b">
+          <div id="lessons" class="lessons"><div class="empty">Loading lessons…</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green2)" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          <h3>Start your session</h3>
+        </div>
+        <div class="card-b">
+          <p style="font-size:13px;color:var(--slate);line-height:1.55">Your trainer will use your
+            <b>camera and microphone</b> to talk with you and read the room — attention, mood, and
+            whether you're focused.</p>
+
+          <label class="consent">
+            <input type="checkbox" id="consent"/>
+            <span>I consent to my camera and microphone being used for this live training session.
+              Camera analysis happens in real time to keep me engaged; see the
+              <a href="privacy.html">privacy notice</a>.</span>
+          </label>
+
+          <button id="startBtn" class="btn btn-pri btn-block" disabled>Begin session</button>
+          <p class="note" id="setupNote">Select a lesson and tick consent to begin.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- IN SESSION -->
+  <section id="session" class="stage-wrap">
+    <div class="wrap" style="padding:26px 0 60px">
+      <div class="grid">
+        <div>
+          <div class="stage" id="stage">
+            <div class="stage-overlay" id="stageOverlay">
+              <div><div class="spinner"></div><div id="overlayMsg">Connecting you to your trainer…</div></div>
+            </div>
+          </div>
+          <div class="stage-bar">
+            <span class="rec"><span class="dot"></span> <span id="recLabel">Live session</span></span>
+            <div style="flex:1"></div>
+            <button id="endBtn" class="btn btn-danger">End session</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green2)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/></svg>
+            <h3>What your trainer sees</h3>
+          </div>
+          <div class="card-b">
+            <div class="perc-list">
+              <div class="perc" data-k="engaged"><div class="perc-ic">🎯</div><div class="perc-tx"><b>Attention</b><br><span class="v">Engaged</span></div></div>
+              <div class="perc" data-k="phone"><div class="perc-ic">📵</div><div class="perc-tx"><b>Phone</b><br><span class="v">Not in hand</span></div></div>
+              <div class="perc" data-k="mood"><div class="perc-ic">🙂</div><div class="perc-tx"><b>Mood</b><br><span class="v">Positive</span></div></div>
+              <div class="perc" data-k="presence"><div class="perc-ic">👤</div><div class="perc-tx"><b>Presence</b><br><span class="v">In frame</span></div></div>
+            </div>
+            <div class="coach"><span class="q">“</span><span id="coachLine">Your trainer reacts here in real time.</span></div>
+            <p class="note" id="percNote"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script src="runtime-config.js"></script>
+<script src="api-client.js"></script>
+<script>
+(function(){
+  'use strict';
+  var api = window.LAD;
+  var state = { lessons:[], selected:null, status:null, session:null, demoTimer:null, stream:null };
+
+  var el = function(id){ return document.getElementById(id); };
+  function toast(msg){ var t=el('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},2600); }
+
+  // ─── Boot ──────────────────────────────────────────────────────────
+  Promise.all([api.trainerStatus(), api.trainerLessons()]).then(function(r){
+    state.status = r[0]; state.lessons = r[1] || [];
+    renderMode(); renderLessons();
+  }).catch(function(e){ toast('Could not load the trainer: '+e.message); });
+
+  function renderMode(){
+    var p = el('modePill');
+    if (state.status && state.status.configured){
+      p.className='pill pill-live'; p.textContent='● Live avatar';
+    } else {
+      p.className='pill pill-demo'; p.textContent='Demo mode';
+    }
+  }
+
+  function renderLessons(){
+    var c = el('lessons');
+    if (!state.lessons.length){
+      c.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>'+
+        '<div style="font-weight:600;color:var(--slate)">No lessons uploaded yet</div>'+
+        '<div style="font-size:12.5px;margin-top:4px">An administrator uploads training content, then it appears here as a guided 1-2-1.</div></div>';
+      return;
+    }
+    c.innerHTML = '';
+    state.lessons.forEach(function(L){
+      var d = document.createElement('div');
+      d.className = 'lesson' + (state.selected && state.selected.id===L.id ? ' sel':'');
+      var meta = [];
+      if (L.duration_min) meta.push('<span class="tag">~'+L.duration_min+' min</span>');
+      if (L.cpd_points)  meta.push('<span class="tag">'+L.cpd_points+' CPD pt'+(L.cpd_points>1?'s':'')+'</span>');
+      if (L.language)    meta.push('<span class="tag">'+L.language+'</span>');
+      d.innerHTML = '<div class="lesson-t">'+esc(L.title)+'</div>'+
+        (L.summary?'<div class="lesson-s">'+esc(L.summary)+'</div>':'')+
+        '<div class="lesson-m">'+meta.join('')+'</div>';
+      d.onclick = function(){ state.selected = L; renderLessons(); refreshStart(); };
+      c.appendChild(d);
+    });
+  }
+
+  el('consent').addEventListener('change', refreshStart);
+  function refreshStart(){
+    var ok = state.selected && el('consent').checked;
+    el('startBtn').disabled = !ok;
+    el('setupNote').textContent = !state.selected ? 'Select a lesson and tick consent to begin.'
+      : (!el('consent').checked ? 'Tick the consent box to enable your camera.' : 'Ready when you are.');
+  }
+
+  // ─── Start ─────────────────────────────────────────────────────────
+  el('startBtn').addEventListener('click', function(){
+    el('startBtn').disabled = true; el('startBtn').textContent = 'Connecting…';
+    api.trainerStartSession(state.selected.id).then(function(s){
+      state.session = s;
+      el('setup').classList.add('hidden');
+      el('session').style.display='block';
+      el('recLabel').textContent = 'Live · ' + state.selected.title;
+      if (s.conversationUrl){ joinLive(s.conversationUrl); }
+      else { runDemo(); }
+    }).catch(function(e){
+      el('startBtn').disabled=false; el('startBtn').textContent='Begin session';
+      toast('Could not start: '+e.message);
+    });
+  });
+
+  // Real Tavus conversation — embed the room; Raven sees the attendee inside it.
+  function joinLive(url){
+    var f = document.createElement('iframe');
+    f.src = url;
+    f.allow = 'camera; microphone; autoplay; display-capture; fullscreen';
+    f.onload = function(){ var o=el('stageOverlay'); if(o) o.style.display='none'; };
+    el('stage').appendChild(f);
+    el('percNote').textContent = 'Perception is powered live by the Tavus Raven model inside the session.';
+    // The trainer reacts inside the video; the side panel reflects the live signal.
+    el('coachLine').textContent = 'Your trainer is watching and will respond as you do.';
+  }
+
+  // Demo mode — open the camera locally and simulate the coaching loop so the
+  // experience is fully demonstrable without a configured avatar.
+  function runDemo(){
+    el('overlayMsg').textContent = 'Starting your camera…';
+    el('recLabel').textContent = 'Demo · ' + state.selected.title;
+    navigator.mediaDevices.getUserMedia({ video:true, audio:false }).then(function(stream){
+      state.stream = stream;
+      var v = document.createElement('video'); v.autoplay=true; v.muted=true; v.playsInline=true; v.srcObject=stream;
+      el('stage').appendChild(v);
+      el('stageOverlay').style.display='none';
+      el('percNote').textContent = 'Simulated — this previews what the Raven perception model does live. Connect Tavus to make it real.';
+      startCoachLoop();
+    }).catch(function(){
+      el('overlayMsg').textContent = 'Camera unavailable — showing the coaching simulation only.';
+      el('percNote').textContent = 'Simulated coaching (camera was not granted).';
+      startCoachLoop();
+    });
+  }
+
+  var SCENES = [
+    { k:'engaged', v:'Engaged', mood:'🙂', line:'You look right with me — let\'s keep going.' },
+    { k:'phone', v:'Phone in hand', mood:'😐', line:'Let\'s stay with it — pop the phone down and we\'ll get through this together.', hot:true, perc:{phone:'In hand'} },
+    { k:'engaged', v:'Looking away', mood:'😕', line:'I notice you might be a little distracted — shall we take that part again?', hot:true, perc:{engaged:'Distracted'} },
+    { k:'mood', v:'Happy', mood:'😀', line:'Great — I can see that landed. Let\'s build on it.', hot:true, perc:{mood:'Happy'} },
+    { k:'engaged', v:'Engaged', mood:'🙂', line:'Good. Tell me how you\'d apply that with a client.' }
+  ];
+  function startCoachLoop(){
+    var i=0;
+    el('coachLine').textContent = 'Hello — I\'m your trainer. Whenever you\'re ready, let\'s begin.';
+    state.demoTimer = setInterval(function(){
+      var s = SCENES[i % SCENES.length]; i++;
+      el('coachLine').textContent = s.line;
+      // reset panel
+      setPerc('engaged','Engaged',false); setPerc('phone','Not in hand',false);
+      setPerc('mood','Positive',false); setPerc('presence','In frame',false);
+      if (s.perc){ Object.keys(s.perc).forEach(function(k){ setPerc(k, s.perc[k], true); }); }
+      else { setPerc(s.k, s.v, !!s.hot); }
+    }, 5200);
+  }
+  function setPerc(k, v, hot){
+    var node = document.querySelector('.perc[data-k="'+k+'"]'); if(!node) return;
+    node.querySelector('.v').textContent = v;
+    node.classList.toggle('hot', !!hot);
+  }
+
+  // ─── End ───────────────────────────────────────────────────────────
+  el('endBtn').addEventListener('click', function(){
+    if (state.demoTimer) clearInterval(state.demoTimer);
+    if (state.stream) state.stream.getTracks().forEach(function(t){t.stop();});
+    if (state.session) api.trainerEndSession(state.session.sessionId).catch(function(){});
+    toast('Session ended. Well done.');
+    setTimeout(function(){ window.location.reload(); }, 1200);
+  });
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+})();
+</script>
+</body>
+</html>

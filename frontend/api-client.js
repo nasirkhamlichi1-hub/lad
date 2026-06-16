@@ -169,6 +169,30 @@
     lexChat: (messages, system) => ENABLED ? call('POST', '/api/v1/lex/chat', { messages, system })
                                             : Promise.reject(new Error('offline')),
 
+    // ─── AI Trainer (Tavus realistic-avatar 1-2-1 sessions) ──────────
+    // In demo mode (no backend) we serve one clearly-labelled sample lesson
+    // from localStorage so the experience is previewable offline.
+    trainerStatus: () => ENABLED ? call('GET', '/api/v1/trainer/status')
+                                 : Promise.resolve({ configured: false, demo: true, voice: 'tavus-default', lessonCount: 1 }),
+    trainerLessons: () => ENABLED ? call('GET', '/api/v1/trainer/lessons')
+                                  : Promise.resolve(lsGet('lad_trainer_lessons', [{
+                                      id: 'demo-ethics',
+                                      title: 'Professional Ethics for Practising Lawyers',
+                                      summary: 'A short 1-2-1 on conflicts of interest and client confidentiality.',
+                                      objectives: ['Identify a conflict of interest', 'Apply the confidentiality rules'],
+                                      duration_min: 12, cpd_points: 1, language: 'English',
+                                      body: 'Demo lesson — connect a backend and upload your own content to replace this.',
+                                    }])),
+    trainerSaveLessons: (lessons) => ENABLED ? call('PUT', '/api/v1/trainer/lessons', lessons)
+                                             : Promise.resolve(lsSet('lad_trainer_lessons', Array.isArray(lessons) ? lessons : [lessons])),
+    trainerDeleteLesson: (id) => ENABLED ? call('DELETE', '/api/v1/trainer/lessons/' + encodeURIComponent(id))
+                                         : Promise.resolve({ ok: true }),
+    trainerStartSession: (lessonId) => ENABLED ? call('POST', '/api/v1/trainer/sessions', { lessonId })
+                                               : Promise.resolve({ demo: true, sessionId: 'demo', conversationUrl: null }),
+    trainerEndSession: (id) => ENABLED ? call('POST', '/api/v1/trainer/sessions/' + encodeURIComponent(id) + '/end')
+                                       : Promise.resolve({ ok: true }),
+    trainerMySessions: () => ENABLED ? call('GET', '/api/v1/trainer/sessions/mine') : Promise.resolve([]),
+
     // ─── Admin: user management ──────────────────────────────────────
     listUsers: (filters) => {
       if (!ENABLED) return Promise.resolve({ users: [], count: 0 });
