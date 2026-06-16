@@ -298,6 +298,63 @@ router.post('/lawyer/login', async (req, res) => {
   });
 });
 
+// ─── POST /auth/login ────────────────────────────────────────────────────
+// Unified email/username + password login. The caller does not need to know
+// the role in advance: we look the address up in `staff` first, then
+// `lawyers`, bcrypt-verify, and return the same `{token, role, name}` shape as
+// the role-specific routes. This is what the frontend `api.login()` calls.
+router.post('/login', async (req, res) => {
+  const body = req.body || {};
+  const email = body.username || body.email;
+  const password = body.password;
+  if (!email || !password) return res.status(400).json({ error: 'email and password required' });
+
+  // Try staff (LAD admins, firm COs) first, then lawyers.
+  const staff = db.prepare(`SELECT id, email, first_name, last_name, role, firm_id,
+                                   password_hash, status, must_change_password
+                            FROM staff WHERE LOWER(email) = LOWER(?)`).get(email);
+  if (staff && staff.status === 'active' && staff.password_hash &&
+      await bcrypt.compare(password, staff.password_hash)) {
+    const name = `${staff.first_name} ${staff.last_name}`.trim();
+    const token = jwtService.sign({
+      sub: staff.id, user_type: 'staff', role: staff.role, firm_id: staff.firm_id || null,
+      name, email: staff.email, ip: req.ip, user_agent: req.headers['user-agent'],
+    });
+    db.prepare(`INSERT INTO audit_log (actor_id, actor_type, action, details, ip)
+                VALUES (?, 'staff', 'login', ?, ?)`)
+      .run(staff.id, JSON.stringify({ method: 'password' }), req.ip || null);
+    return res.json({ token, role: staff.role, name,
+                      must_change_password: !!staff.must_change_password });
+  }
+
+  const lawyer = db.prepare(`SELECT id, email, first_name, last_name, firm_id,
+                                    password_hash, status, credit_balance, lifetime_points,
+                                    must_change_password
+                             FROM lawyers WHERE LOWER(email) = LOWER(?)`).get(email);
+  if (lawyer && lawyer.status === 'active' && lawyer.password_hash &&
+      await bcrypt.compare(password, lawyer.password_hash)) {
+    const name = `${lawyer.first_name} ${lawyer.last_name}`.trim();
+    const token = jwtService.sign({
+      sub: lawyer.id, user_type: 'lawyer', role: 'lawyer', firm_id: lawyer.firm_id || null,
+      name, email: lawyer.email, ip: req.ip, user_agent: req.headers['user-agent'],
+    });
+    db.prepare(`UPDATE lawyers SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?`).run(lawyer.id);
+    db.prepare(`INSERT INTO audit_log (actor_id, actor_type, action, details, ip)
+                VALUES (?, 'lawyer', 'login', ?, ?)`)
+      .run(lawyer.id, JSON.stringify({ method: 'password' }), req.ip || null);
+    return res.json({
+      token, role: 'lawyer', name,
+      profile: {
+        id: lawyer.id, firm_id: lawyer.firm_id,
+        credit_balance: lawyer.credit_balance, lifetime_points: lawyer.lifetime_points,
+      },
+      must_change_password: !!lawyer.must_change_password,
+    });
+  }
+
+  return res.status(401).json({ error: 'Invalid credentials' });
+});
+
 // ─── POST /auth/change-password ─────────────────────────────────────────
 // Used both for the first-login forced flow and for users rotating their
 // password voluntarily. Requires a valid JWT. Verifies the old password,

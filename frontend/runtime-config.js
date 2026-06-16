@@ -33,6 +33,15 @@
     window.LAD_API_BASE = 'https://lad-clpd-backend.onrender.com';
   }
 
+  // Local development: when the frontend is served from localhost/127.0.0.1,
+  // talk to the local backend (npm start, port 4000) instead of production, so
+  // a developer can test end-to-end against their own server + DB. The backend
+  // CORS allow-list includes http://localhost:8080, so serve the frontend there.
+  if (typeof location !== 'undefined' &&
+      (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    window.LAD_API_BASE = 'http://localhost:4000';
+  }
+
   // Detect environment for logging / debugging only
   window.LAD_ENV = (function () {
     const host = (typeof location !== 'undefined' && location.hostname) || '';

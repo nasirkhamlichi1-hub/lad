@@ -30,21 +30,44 @@ turns, reacts to camera perception (e.g. asks to put a phone away), tracks cover
 `[1]→[1,2]→[1,2,3]` and completes with a recap. Egress to `api.anthropic.com` is open.
 The model id `claude-sonnet-4-6` is the fix (the old default 404'd).
 
-**⛔ BLOCKED: Anam.** `api.anam.ai` is NOT in this environment's egress allowlist
-(`Host not in allowlist: api.anam.ai`), so Anam cannot be reached or verified yet.
+**✅ VERIFIED LIVE — ANAM (2026-06-16):** `api.anam.ai` is now allowlisted and reachable.
+With `ANAM_API_KEY` set, the server-side flow is confirmed against Anam's **real current API**:
+- `GET /v1/avatars` lists 10 stock avatars. Chosen **`ANAM_AVATAR_ID=6cc28442-cccd-42a8-b6e4-24b7210a09c5`**
+  (**Gabriel**, "table"/desk variant, on the newest `cara-4-latest` model — a professional fit
+  for a legal trainer). Alternatives include Mia (studio), Anne/Bella/Sophie/Julia (home/sofa),
+  Finn, Hunter, Kevin.
+- `POST /v1/auth/session-token` with `{personaConfig:{name, avatarId}}` → `{sessionToken}`.
+  `backend/src/services/anam.js` already matched this exactly — **no shape change needed**.
+- The front-end SDK calls were verified against the **published `@anam-ai/js-sdk@4.15.0`** type
+  defs: `createClient(sessionToken)`, `streamToVideoElement(id)`, `talk(content)`, `stopStreaming()`
+  all exist and are used correctly. `initAnam` was hardened: SDK import **pinned to `@4.15.0`**
+  and the dead `AnamClient`/`say()` fallbacks removed.
+- Leaving `llmId` unset on the persona = no Anam brain = client drives speech via `talk()` with
+  Claude's lines (our "bring-your-own-brain" model). Anam supplies the voice.
 
-### DO THIS FIRST in the fresh session (Anam verification)
-Prereqs the user must have done: added `api.anam.ai` to the network allowlist, set
-`ANAM_API_KEY` + `ANTHROPIC_API_KEY` as env vars, started THIS new session.
-1. Confirm reachability: `curl -s -o /dev/null -w "%{http_code}" https://api.anam.ai` (≠403).
-2. List avatars to choose `ANAM_AVATAR_ID` (try `GET /v1/avatars` or `/v1/personas` with
-   `Authorization: Bearer $ANAM_API_KEY`).
-3. Mint a session token (`POST /v1/auth/session-token`) and **fix
-   `backend/src/services/anam.js`** to match Anam's real request/response shape.
-4. Verify the front-end Anam SDK calls in `frontend/ai-trainer.html` (`initAnam`) against
-   current Anam docs (createClient / streamToVideoElement / talk).
-5. End-to-end: open `ai-trainer.html`, start a session, confirm photoreal face speaks the
-   Claude lines and perception still flows.
+**Still browser-only:** the actual photoreal WebRTC render + camera perception must be exercised
+in a real browser with a webcam — that's the manual end-to-end test (runbook below).
+
+**🩹 Fixes shipped this session:**
+- Added the unified **`POST /api/v1/auth/login`** route the frontend `api.login()` expects
+  (auto-detects staff vs lawyer). Previously only `/auth/lawyer/login` + `/auth/staff/login`
+  existed, so the login page 404'd — which blocked reaching the trainer at all.
+- `frontend/runtime-config.js` now points at `http://localhost:4000` when served from
+  localhost (was hardcoded to the prod Azure backend, so local testing hit prod).
+
+### Local real-time test (browser + webcam)
+```sh
+cd backend && npm i && npm run migrate && npm start          # terminal 1 (port 4000)
+node scripts/seed-trainer-aviation.js                         # seed 8 lessons (once)
+node scripts/create-account.js --role lawyer \
+  --email lawyer@demo.lad.dubai.gov.ae --password 'DemoLawyer!2026' \
+  --first Yousef --last 'Al Mansouri'                         # a lawyer to log in as
+cd ../frontend && python3 -m http.server 8080                 # terminal 2 (must be :8080 for CORS)
+```
+Then open `http://localhost:8080/clpd-portal.html`, log in (`lawyer@demo.lad.dubai.gov.ae` /
+`DemoLawyer!2026`), go to `http://localhost:8080/ai-trainer.html`, pick the Aviation course,
+allow the camera, and Start — the photoreal face should appear and speak the Claude lines.
+Requires `ANAM_API_KEY` + `ANTHROPIC_API_KEY` + `ANAM_AVATAR_ID` in `backend/.env`.
 
 **🔐 SECURITY:** the Claude and Anam API keys were pasted in chat — **rotate both** once
 verified, and keep them only as env vars (`.env` is gitignored).

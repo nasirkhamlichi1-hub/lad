@@ -284,11 +284,16 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
   // ─── Anam photoreal face (best-effort; isolated adapter) ──────────────
   async function initAnam(){
     var tok=await api.trainerAnamToken();
-    var mod=await import('https://unpkg.com/@anam-ai/js-sdk?module');
-    var client=(mod.createClient?mod.createClient(tok.sessionToken):new mod.AnamClient(tok.sessionToken));
-    await (client.streamToVideoElement?client.streamToVideoElement('anamVideo'):Promise.resolve());
+    // Pinned to a known-good SDK major so a future breaking release can't break
+    // the live trainer. createClient(sessionToken) is the current (v4) entry point;
+    // the persona (avatar + voice) is baked into the server-minted session token.
+    var mod=await import('https://unpkg.com/@anam-ai/js-sdk@4.15.0?module');
+    var client=mod.createClient(tok.sessionToken);
+    await client.streamToVideoElement('anamVideo');
     el('anamVideo').classList.remove('hidden');el('stylisedFace').classList.add('hidden');
-    S.anam={ speak:function(t){return client.talk?client.talk(t):(client.say?client.say(t):null);}, stop:function(){try{client.stopStreaming&&client.stopStreaming();}catch(e){}} };
+    // talk() makes the photoreal persona speak our Claude-authored line in its
+    // own voice (no Anam LLM — we are the brain). Returns once the command is sent.
+    S.anam={ speak:function(t){return client.talk(t);}, stop:function(){try{client.stopStreaming&&client.stopStreaming();}catch(e){}} };
   }
 
   // ─── Camera + in-browser perception (TensorFlow.js COCO-SSD) ─────────
