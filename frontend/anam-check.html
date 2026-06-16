@@ -98,8 +98,16 @@
       if (!tr.ok || !tj.sessionToken) throw new Error('token mint '+tr.status+': '+(tj.message||(tj.error&&(tj.error.message||tj.error))||'no sessionToken'));
       log('Token minted. createClient(token) + streaming…', 'ok');
       client = mod.createClient(tj.sessionToken);
+      // Surface the real connection lifecycle so a black screen / drop names its cause.
+      const on = (ev, cb) => { try { client.addListener(ev, cb); } catch(_){} };
+      on('CONNECTION_ESTABLISHED', () => log('• CONNECTION_ESTABLISHED', 'ok'));
+      on('SESSION_READY',         () => log('• SESSION_READY', 'ok'));
+      on('VIDEO_STREAM_STARTED',  () => log('• VIDEO_STREAM_STARTED (media arriving)', 'ok'));
+      on('VIDEO_PLAY_STARTED',    () => log('• VIDEO_PLAY_STARTED (rendering)', 'ok'));
+      on('SERVER_WARNING',        (m) => log('• SERVER_WARNING: ' + JSON.stringify(m), 'warn'));
+      on('CONNECTION_CLOSED',     (code, reason) => log('• CONNECTION_CLOSED: ' + code + (reason ? (' — ' + JSON.stringify(reason)) : ''), 'err'));
       await client.streamToVideoElement('face');
-      log('✅ Streaming. Gabriel should now be visible above.', 'ok');
+      log('streamToVideoElement resolved — waiting for VIDEO_PLAY_STARTED…', 'ok');
       $('sayBtn').disabled = $('line2').disabled = $('line3').disabled = false;
       $('camBtn').disabled = $('stopBtn').disabled = false;
     } catch (e) {

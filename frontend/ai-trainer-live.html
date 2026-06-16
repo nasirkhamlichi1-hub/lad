@@ -427,6 +427,19 @@ input.key:focus{outline:none;border-color:var(--green2)}
     return loadAnamSDK().then(function(mod){
       return mintAnamToken().then(function(tok){
       var client=mod.createClient(tok);
+      // If the photoreal stream closes/drops (black screen), don't leave the user
+      // with a silent black box — drop back to the animated face + browser voice
+      // and name the reason. WEBRTC_FAILURE/SIGNALLING=network, MIC=mic, SERVER=quota.
+      var on=function(ev,cb){try{client.addListener(ev,cb);}catch(_){}};
+      on('CONNECTION_CLOSED',function(code,reason){
+        if(window.console&&console.error)console.error('[Anam CONNECTION_CLOSED]',code,reason);
+        if(S.face==='anam'){
+          S.face='stylised';S.anam=null;showStylised();
+          el('enginePill').className='pill pill-demo';el('enginePill').textContent='Animated · Claude';
+          el('percNote').textContent='Photoreal stream closed ('+code+') — switched to the animated face + voice so the session continues.';
+        }
+      });
+      on('VIDEO_PLAY_STARTED',function(){ el('percNote').textContent='Photoreal face streaming live.'; });
       return client.streamToVideoElement('anamVideo').then(function(){
         var v=el('anamVideo');v.classList.remove('hidden');el('stylisedFace').classList.add('hidden');
         try{v.play&&v.play();}catch(e){}            // belt-and-braces against autoplay
