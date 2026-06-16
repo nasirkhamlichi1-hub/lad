@@ -10,34 +10,54 @@ working prototype already ships in this repo (see [What's already built](#whats-
 
 ---
 
-## ⏯️ RESUME HERE — current status (for a new session)
+## ⏯️ RESUME HERE — start of the fresh session
 
-**Decision made:** ONE model — a fully owned, vendor-decoupled trainer that replaces
-Tavus. Tavus has been removed from the codebase.
+**Branch:** `claude/vibrant-goodall-6odfk4` work is on `claude/vigilant-curie-lrtqi0`.
 
-**The single model:**
-- **Face** → **Anam** photoreal avatar (`ANAM_API_KEY` + `ANAM_AVATAR_ID`). Falls back
-  to a built-in animated avatar if unset.
-- **Brain** → **Claude** (`ANTHROPIC_API_KEY`) via `POST /api/v1/trainer/turn`, returning
-  `{say, covered[], complete}` for hard key-element tracking. Falls back to a scripted
-  brain if unset.
-- **Voice** → **ElevenLabs** (`ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID`). Falls back to
-  the browser voice.
-- **Eyes** → **MorphCast** emotion AI (`MORPHCAST_LICENSE_KEY`, in-browser) augmenting the
-  free TensorFlow.js model (phone + presence). All perception is in-browser.
+**The model (ONE, replaces Tavus — Tavus & ElevenLabs fully removed):**
+- **Face + Voice** → **Anam** photoreal avatar (`ANAM_API_KEY` + `ANAM_AVATAR_ID`; optional
+  `ANAM_VOICE_ID`). Anam speaks too — no separate TTS. Falls back to an animated face +
+  browser voice if unset.
+- **Brain** → **Claude** (`ANTHROPIC_API_KEY`, model `claude-sonnet-4-6`) via
+  `POST /api/v1/trainer/turn`, returning `{say, covered[], complete}` for hard
+  key-element tracking. Falls back to a scripted brain if unset.
+- **Eyes** → **MorphCast** (`MORPHCAST_LICENSE_KEY`, in-browser) augmenting the free
+  TensorFlow.js model (phone + presence). All perception is in-browser.
+- Trainer page: `frontend/ai-trainer.html`. Admin uploader: `lad-trainer-admin.html`.
 
-**The trainer page** is `frontend/ai-trainer.html` (admin uploader: `lad-trainer-admin.html`).
-It runs end-to-end with **zero keys** in a preview mode (animated face + scripted brain +
-browser voice + free perception), and each piece upgrades as you add its key.
+**✅ VERIFIED LIVE (2026-06-16):** the **Claude brain works end-to-end** — teaches in short
+turns, reacts to camera perception (e.g. asks to put a phone away), tracks coverage
+`[1]→[1,2]→[1,2,3]` and completes with a recap. Egress to `api.anthropic.com` is open.
+The model id `claude-sonnet-4-6` is the fix (the old default 404'd).
 
-**To make it the full "premium" experience, set on Render:** `ANAM_API_KEY`,
-`ANAM_AVATAR_ID`, `ANTHROPIC_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`,
-`MORPHCAST_LICENSE_KEY`. `/api/v1/trainer/status` reports which pieces are live
-(`premium: true` once Anam + Claude are configured).
+**⛔ BLOCKED: Anam.** `api.anam.ai` is NOT in this environment's egress allowlist
+(`Host not in allowlist: api.anam.ai`), so Anam cannot be reached or verified yet.
 
-**Verify before production:** the Anam SDK calls (`frontend/ai-trainer.html`) and the
-session-token flow (`backend/src/services/anam.js`) were written to Anam's documented API
-but not live-tested here — confirm against current Anam docs when you add the account.
+### DO THIS FIRST in the fresh session (Anam verification)
+Prereqs the user must have done: added `api.anam.ai` to the network allowlist, set
+`ANAM_API_KEY` + `ANTHROPIC_API_KEY` as env vars, started THIS new session.
+1. Confirm reachability: `curl -s -o /dev/null -w "%{http_code}" https://api.anam.ai` (≠403).
+2. List avatars to choose `ANAM_AVATAR_ID` (try `GET /v1/avatars` or `/v1/personas` with
+   `Authorization: Bearer $ANAM_API_KEY`).
+3. Mint a session token (`POST /v1/auth/session-token`) and **fix
+   `backend/src/services/anam.js`** to match Anam's real request/response shape.
+4. Verify the front-end Anam SDK calls in `frontend/ai-trainer.html` (`initAnam`) against
+   current Anam docs (createClient / streamToVideoElement / talk).
+5. End-to-end: open `ai-trainer.html`, start a session, confirm photoreal face speaks the
+   Claude lines and perception still flows.
+
+**🔐 SECURITY:** the Claude and Anam API keys were pasted in chat — **rotate both** once
+verified, and keep them only as env vars (`.env` is gitignored).
+
+**Run/seed locally:** `cd backend && npm i && npm run migrate && npm start`; seed courses
+with `node scripts/seed-trainer-aviation.js` (also `-civil-code`, `-mock`). Status:
+`GET /api/v1/trainer/status` → `premium:true` once Anam+Claude are set.
+
+**Deploy (Render):** `render.yaml` is ready — set `ANAM_API_KEY`, `ANAM_AVATAR_ID`,
+`ANTHROPIC_API_KEY`, `CORS_ORIGIN`, `PUBLIC_API_BASE`; migrations auto-run on boot.
+
+**Key files:** `backend/src/services/{anam,trainerBrain,trainerPrompt,trainerStore}.js`,
+`backend/src/routes/trainer.js`, `frontend/{ai-trainer.html,lad-trainer-admin.html,api-client.js}`.
 
 ---
 
