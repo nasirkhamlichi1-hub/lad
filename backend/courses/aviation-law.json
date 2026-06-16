@@ -1,0 +1,138 @@
+[
+  {
+    "id": "lsn_av_00_welcome",
+    "title": "Aviation Law — Welcome & How This Works",
+    "summary": "Orientation to the seminar on litigation and arbitration in aviation law, and how the session runs.",
+    "course_id": "aviation-law",
+    "language": "English",
+    "duration_min": 5,
+    "cpd_points": 0,
+    "active": true,
+    "objectives": [
+      "Understand the three parts of the programme: carrier liability, unfair competition, and arbitration/enforcement",
+      "Know that the session is informational CLPD and not legal advice",
+      "Understand the conversational format and the 80% pass mark on the final assessment"
+    ],
+    "body": "This is a continuing legal professional development (CLPD) seminar of the Dubai Government Legal Affairs Department on litigation and arbitration in aviation law, based on the programme by Dr Ashraf Amin Farag. It is written for practising lawyers.\n\nExplain the shape of the programme. It has three parts. First, the liability of the air carrier — under the international conventions (Warsaw 1929 and Montreal 1999) and then under UAE law. Second, the unfair-competition claim in air transport. Third, arbitration in international aviation disputes and the role of the national courts in supporting and supervising it, including enforcement of awards. There is also a worked case study and a short assessment.\n\nTell the lawyer how this works: it is a spoken one-to-one, not a lecture. You move through the key elements one at a time, checking understanding before moving on, and you keep their attention as you go. At the end there is an assessment of five questions; four correct out of five is a pass, and completion is recorded against their CLPD record.\n\nTeaching note: this is informational CLPD, not legal advice (per the LAD disclaimer). Present it as a structured practitioner summary, and tell the lawyer that the authoritative sources are the conventions and the cited UAE/Egyptian statutes themselves, which should be checked before being relied upon."
+  },
+  {
+    "id": "lsn_av_01_conventions",
+    "title": "Section 01 — Carrier Liability: Warsaw & Montreal Conventions",
+    "summary": "The international framework: reversed burden of proof under Warsaw 1929 and the three liability categories of Montreal 1999.",
+    "course_id": "aviation-law",
+    "language": "English",
+    "duration_min": 18,
+    "cpd_points": 1,
+    "active": true,
+    "objectives": [
+      "Explain how the Warsaw Convention 1929 reverses the burden of proof in favour of the passenger or shipper",
+      "Explain that the Montreal Convention 1999 introduced objective (risk-based) liability and how it mixes fault-based and objective liability",
+      "Distinguish the three Montreal categories: passenger death/injury & baggage; cargo; and delay",
+      "State the 113,000 SDR threshold for passenger death/injury and what changes above it",
+      "List the carrier's defences in each category"
+    ],
+    "body": "Teach the international framework before the UAE detail, because UAE law applies \"without prejudice to the international agreements to which the State is a party\".\n\nStart with the Warsaw Convention of 1929. Its key move is to reverse the burden of proof. The aviation consumer — passenger or shipper — does not have to prove the carrier's fault. To escape liability, the carrier must prove that it and its agents took all necessary measures to prevent the damage, or that it was impossible to do so, and that the injured party caused or contributed to the damage. Ask the lawyer why a reversed burden matters so much to how an aviation claim is run.\n\nNow the Montreal Convention of 1999, which established objective liability based on risk and the assumption of consequences. It is not purely objective — it mixes fault-based and objective liability across three categories. Walk through them one at a time.\n\nCategory one — death or injury to a passenger, and damaged baggage. Liability is objective up to 113,000 Special Drawing Rights (SDR) per passenger: the carrier cannot exclude or limit it within that ceiling. Above 113,000 SDR, liability becomes contractual and based on presumed fault — the carrier can deny only by proving the damage was not due to its (or its people's) negligence, error or omission, or was solely due to a third party.\n\nCategory two — cargo (goods). Here the Convention adopts strict liability based on risk. The carrier escapes only by proving a listed cause: a latent or inherent defect or the nature of the goods; poor packing by someone other than the carrier or its people; an act of war or armed conflict; or measures taken by public authorities controlling the entry and exit of goods.\n\nCategory three — delay. The Convention adopts contractual liability based on presumed fault. The carrier escapes by proving that it, its employees and its agents took all reasonable measures to avoid the damage, or that it was impossible to take them.\n\nSummarise the three situations in which a carrier may be liable under Montreal 1999: bodily injury to passengers; destruction, loss or damage to goods or baggage; and damage from delay. And the three routes to deny liability: the injured party was at fault; no fault and all reasonable measures were taken; or the act of a third party. Check the lawyer can match each category to its liability basis (objective vs presumed fault) before moving on."
+  },
+  {
+    "id": "lsn_av_02_uae_liability",
+    "title": "Section 02 — Carrier Liability under UAE Law",
+    "summary": "Chapter V of the Commercial Transactions Law (Law 18/1993, amended by Decree-Law 14/2020): scope, compensation limits, notice deadlines, jurisdiction and limitation.",
+    "course_id": "aviation-law",
+    "language": "English",
+    "duration_min": 18,
+    "cpd_points": 1,
+    "active": true,
+    "objectives": [
+      "Identify the UAE source: Chapter V of Federal Law No. 18 of 1993, as amended by Decree-Law No. 14 of 2020",
+      "State when the carrier is liable (death/injury, lost or damaged baggage/cargo, and delay) and the small-items exception",
+      "Apply the compensation limits: not less than the Sharia diyah for death/injury; 150 AED/kg for baggage/goods; 3,000 AED for small items; and the declared-value exception",
+      "Apply the notice deadlines (7 days baggage, 14 days goods, 21 days delay) and the 2-year limitation period",
+      "Explain when the carrier loses the limitation of liability (intent or recklessness with knowledge) and the rules on jurisdiction and successive carriers"
+    ],
+    "body": "Now the onshore UAE regime. The legislator devoted Chapter V of the Federal Commercial Transactions Law No. 18 of 1993, as amended by Decree-Law No. 14 of 2020, to air transportation. It applies \"without prejudice to international agreements to which the State is a party\". Air transportation means carrying passengers, baggage and cargo by aircraft for a fee.\n\nWhen is the carrier liable? For death or injury to a passenger occurring during air transportation or while boarding or disembarking; for the destruction, loss or damage of registered baggage and cargo where the incident occurred during air transportation (the period the items are under the carrier's supervision in flight or at an airport — not land/sea legs outside the airport); and for damage from delay in the arrival of a passenger, checked baggage or goods. Note the exception: the carrier is not liable for small personal items kept under the passenger's own supervision unless the passenger proves the carrier failed to take necessary measures.\n\nCompensation limits — teach these precisely. For death or injury, compensation may not be less than the prescribed Sharia blood money (diyah), and the parties may agree a higher amount. For baggage and goods, compensation may not exceed 150 dirhams per kilogram, unless a higher amount is agreed or unless the consignor declared a special higher value (and paid any extra fee) on handover — in which case the carrier pays up to the declared value, unless it proves that value exceeds the real value. For small items kept with the passenger, compensation may not exceed 3,000 dirhams per passenger.\n\nCritically, the carrier cannot rely on the limitation of liability if the damage resulted from its (or its employees') act or omission done with intent to cause damage, or recklessly and with knowledge that damage would probably result. For employees, it must also be shown the act occurred while performing their duties. The air waybill must state that carriage is under the liability provisions (Article 359); any clause exempting the carrier or cutting liability below Article 359 is null and void — except for loss from the inherent nature of, or an inherent defect in, the item.\n\nProcedure and time limits. If goods or baggage are taken without reservation, that is treated as acceptance in good condition, and the burden shifts to the consignor to prove otherwise. Damage must be notified within at least 7 days for baggage and 14 days for goods from receipt; for delay, a claim within a maximum of 21 days from handover. No liability suit lies unless that prior notice was given — unless the claimant proves the carrier acted fraudulently to conceal the damage or avoid the deadlines.\n\nFinally, defences, forum and limitation. The carrier is exempt if the loss was caused by the injured party, and the court may reduce liability where the injured party contributed (contributory fault). The plaintiff may sue in the court of the carrier's residence, its main place of business, the establishment that signed the contract on its behalf, or the Court of First Instance; any clause changing this before the damage occurs is void. With successive carriers, each is responsible for its part, but a carrier that contracted for the whole journey is liable for every part even if it did not perform it. And the liability claim will not be heard after two years from the aircraft's arrival, its scheduled arrival, or the stoppage of the carriage. Check the lawyer can recall the three notice deadlines and the two-year bar."
+  },
+  {
+    "id": "lsn_av_03_unfair_competition",
+    "title": "Section 03 — Unfair Competition in Air Transport",
+    "summary": "Scope, the three conditions, the methods (distortion, confusion, disruption), who may sue and be sued, and the penalties.",
+    "course_id": "aviation-law",
+    "language": "English",
+    "duration_min": 15,
+    "cpd_points": 1,
+    "active": true,
+    "objectives": [
+      "Explain the scope of the unfair-competition claim: a special claim giving civil and criminal protection, nationally and internationally",
+      "Apply the three conditions: an act of unfair competition, damage, and a causal link",
+      "Distinguish the unlawful methods: distortion (denigration), confusion/ambiguity, and disruption",
+      "Identify who may sue (the competing carrier; exceptionally associations, unions, chambers; the Public Prosecution) and who may be sued (jointly and severally)",
+      "List the penalties: stopping the acts, compensation, publication of the judgment, and custodial sentences"
+    ],
+    "body": "Move to the unfair-competition claim in air transport. Frame it correctly: it is not an ordinary tort claim — it is a special claim protecting a particular right, giving both civil and criminal protection, and it reaches beyond national borders, which fits an industry whose activities cross frontiers.\n\nTeach the three conditions in order. One — an act of unfair competition, which itself needs two elements: a competitive situation, and the use of unfair, unlawful methods within it. Two — damage resulting from that unlawful conduct. Three — a causal link between the unlawful conduct and the damage, with the burden of proving causation on the claimant.\n\nThen the unlawful methods. Distortion (denigration): conduct aimed at undermining a rival airline or its services — and note the sharp point that this is tortious even if the facts stated are true, because liability rests on the act of denigration itself. Confusion or ambiguity: instead of repelling customers, this attracts them, by mimicking a rival's image or services so customers confuse the two. Disruption: sowing chaos, for example luring away a competitor's staff or spreading false rumours about its service quality.\n\nWho are the parties? The plaintiff is normally a competing airline that is a direct victim; exceptionally, consumer-protection associations, unions, and chambers of commerce and industry may sue, and the Public Prosecution may act in some cases, such as prohibited symbols. The defendant may be any natural or legal person, public or private, including accomplices, all jointly and severally liable.\n\nFinally the penalties: an order to stop the unlawful acts; a judgment for compensation; publication of the judgment in the newspapers at the offender's expense; and, in appropriate cases, custodial sentences such as imprisonment. Ask the lawyer to give an example of each of the three methods before you close."
+  },
+  {
+    "id": "lsn_av_04_arbitration",
+    "title": "Section 04 — Arbitration in International Aviation Disputes",
+    "summary": "The restricted choice of seat under the conventions, the arbitral procedure, and how the applicable law and arbitrable subject-matter are determined.",
+    "course_id": "aviation-law",
+    "language": "English",
+    "duration_min": 16,
+    "cpd_points": 1,
+    "active": true,
+    "objectives": [
+      "Explain how international conventions restrict the parties' freedom to choose the place (seat) of aviation arbitration, and why the seat matters",
+      "Outline the arbitral procedure: agreement to arbitrate, the request, constituting the tribunal, the hearings, and the language",
+      "Explain how the applicable law is determined and the arbitral tribunal's role in finding it",
+      "Identify the disputes typically arbitrated: compensation for unfair competition, and restoring economic balance in the carriage contract"
+    ],
+    "body": "Turn to arbitration of international aviation disputes. Begin with a feature that surprises people: the parties' freedom to choose the seat is restricted. ICAO has harmonised air-transport rules, and the Montreal Convention 1999 sets out a closed list of options for where proceedings may be brought; deviation from those options is null and void. This mandatory local jurisdiction carries over into arbitration, and because the seat governs so much of the process, it matters a great deal. Teach this in two steps: first, the seat is fixed by reference to the international agreements; second, the seat then shapes the whole arbitration.\n\nWalk through the procedure as five steps: the parties' freedom to decide whether to arbitrate at all; the claimant's submission of the arbitration request; the appointment of the arbitrator or constitution of the tribunal; the conduct of the hearings (the \"session system\"); and the language of the arbitration.\n\nThen the applicable law. Under Montreal 1999 the legal framework for aviation arbitration has a specificity that sets it apart from ordinary litigation. It falls to the arbitral tribunal to determine the law applicable to the dispute and the nature of the matters that may be arbitrated. The tribunal both searches for the law applicable to the subject of the claim and interprets the jurisprudence on applying the Convention's rules to the dispute.\n\nFinally, the arbitrable subject-matter. Compensation for unfair competition is a central subject for aviation arbitration, and a key role of the arbitrator is to restore the economic balance between the parties to the carriage contract. Check the lawyer can explain why the choice of seat is not freely negotiable, and can list at least three of the five procedural steps, before moving on."
+  },
+  {
+    "id": "lsn_av_05_courts_enforcement",
+    "title": "Section 05 — National Courts & Enforcement of Awards",
+    "summary": "The supporting and supervisory role of the national judiciary, UAE enforcement under Article 235, and the Egyptian/New York Convention position.",
+    "course_id": "aviation-law",
+    "language": "English",
+    "duration_min": 14,
+    "cpd_points": 1,
+    "active": true,
+    "objectives": [
+      "Distinguish the supporting role of the national courts (constituting the tribunal, interim measures, evidence) from their supervisory role (recognition, enforcement and challenge)",
+      "Apply the UAE enforcement route under Article 235 of Law 11/1992 (as amended): petition to the enforcement judge, order within 5 working days, challengeable by appeal",
+      "List the conditions for enforcing a foreign judgment/award under UAE law",
+      "Explain the Egyptian-law position and the role of the New York Convention 1958 on recognition and enforcement of foreign arbitral awards"
+    ],
+    "body": "Close the arbitration part with the courts. The national judiciary plays two roles. A supporting role during the arbitration: helping constitute the tribunal, ordering precautionary and temporary measures, and assisting with evidence. And a supervisory role over the award: at the recognition and enforcement stage, and at the stage of any challenge to the award's validity.\n\nTake UAE enforcement first. Article 235 of the Federal Civil Procedure Law No. 11 of 1992 — as amended (Cabinet Decision 57 of 2018, Federal Decree-Law 15 of 2021, Cabinet Decision 75 of 2021) — allows foreign judgments and orders to be enforced on the same conditions that country would apply to UAE judgments. Enforcement is sought by petition to the enforcement judge, who issues the order within a maximum of five working days, and the order may be challenged by appeal.\n\nTeach the conditions for an enforcement order: the UAE courts do not have exclusive jurisdiction over the dispute and the foreign court did have jurisdiction under its own rules; the judgment was issued by a competent court and is duly authenticated; the parties were summoned and properly represented; the judgment is final (res judicata) under its own law; and it does not conflict with a prior UAE ruling and contains nothing contrary to public order or morality.\n\nThen the Egyptian-law comparison. For a foreign arbitral award made outside Egypt, the principle of territorial jurisdiction applies: Egyptian courts lack jurisdiction to set it aside, even if Egyptian law governed it — and if asked to do so, the court must, on its own initiative, decline jurisdiction without referral. Article 5 of the New York Convention 1958 on the Recognition and Enforcement of Foreign Arbitral Awards requires a foreign award to be recognised and enforced unless it has been set aside or suspended where it was made, and enforcement may be refused only on the Convention's listed grounds. By contrast, an award made in Egypt — even under foreign procedural rules or a foreign institution — is set aside under Egyptian arbitration law, again following territorial jurisdiction.\n\nCheck the lawyer can separate the supporting from the supervisory role, and can state the headline UAE rule: petition the enforcement judge, order within five working days, appealable."
+  },
+  {
+    "id": "lsn_av_06_casestudy",
+    "title": "Section 06 — Worked Case Study: The Damaged Cargo Consignment",
+    "summary": "A single cross-border fact pattern that runs from liability and quantum through notice and limitation into arbitration and enforcement.",
+    "course_id": "aviation-law",
+    "language": "English",
+    "duration_min": 18,
+    "cpd_points": 1,
+    "active": true,
+    "objectives": [
+      "Apply the liability framework to a cargo-damage fact pattern and identify the basis of liability",
+      "Calculate the compensation ceiling and apply the declared-value exception",
+      "Apply the notice deadlines and the two-year limitation to the facts",
+      "Advise on the arbitration seat, the applicable law, and enforcement of the resulting award"
+    ],
+    "body": "This is a worked case study that ties the whole programme together. Run it as a guided problem: give the facts, then take the lawyer through it step by step, asking them to apply each rule before you confirm it. Keep your turns short and make them do the reasoning.\n\nThe facts. A Dubai-based trading company ships a 400 kg consignment of sensitive electronics by air from Dubai to a buyer abroad, under a single air waybill. No special value was declared on handover. On arrival the cargo is found water-damaged. The consignee signs for the shipment at the airport without writing any reservation, and only notifies the carrier of the damage 12 days later. The contract contains an arbitration clause.\n\nStep one — basis of liability. Ask the lawyer: on what basis is the carrier liable for damaged cargo? Confirm: under the conventions cargo attracts strict liability (risk-based), and under UAE law the carrier is liable for damage to cargo during air transportation; the carrier would have to prove a listed escape, such as inherent defect, poor packing by another, war, or public-authority measures. Here nothing suggests such a cause.\n\nStep two — the signature without reservation. Ask what the consignee's clean signature does. Confirm: taking delivery without reservation is treated as acceptance in good condition, so the burden shifts to the consignee to prove the damage occurred during carriage. This is a factual hurdle, not a bar.\n\nStep three — notice. Was the 12-day notice in time? Confirm: for goods, notice must be given within at least 14 days of receipt, so 12 days is in time. (Remind them: 7 days for baggage, 14 for goods, 21 for delay.) Had it been late, no liability suit would lie unless fraud or concealment by the carrier were proved.\n\nStep four — quantum. Ask them to calculate the ceiling. Confirm: with no declared value, compensation is capped at 150 dirhams per kilogram. For 400 kg that is 400 × 150 = 60,000 dirhams. Make the point: had the shipper declared a higher value and paid the extra fee, the cap would rise to the declared value — a cheap, decisive step the shipper skipped. Note too that the cap falls away entirely if the damage was caused by the carrier's intent or recklessness with knowledge.\n\nStep five — limitation. Remind them the claim will not be heard after two years from arrival (or scheduled arrival, or stoppage). The clock is running from arrival.\n\nStep six — into arbitration. Given the arbitration clause, ask: can the parties freely pick the seat? Confirm: no — the conventions restrict the choice of seat to a closed list of options, and deviation is null and void; the tribunal will then determine the applicable law. Compensation of this kind, and restoring the economic balance of the carriage contract, are classic arbitrable subjects.\n\nStep seven — enforcement. The shipper wins an award abroad and wants to enforce in the UAE. Walk them through Article 235: petition the enforcement judge, who issues an order within five working days (appealable), provided the conditions are met — no exclusive UAE jurisdiction, the foreign tribunal had jurisdiction, due process and representation, finality, and no conflict with UAE public order. Mention the New York Convention 1958 as the recognition-and-enforcement backbone for foreign awards.\n\nClose by asking the lawyer to summarise, in two or three sentences, the advice they would give the shipper at the outset to protect its position — expect: declare the cargo value and pay the fee, note any reservation on delivery, give written notice within 14 days, diary the two-year limitation, and check the seat the convention dictates."
+  },
+  {
+    "id": "lsn_av_07_assessment",
+    "title": "Section 07 — Final Assessment",
+    "summary": "Five scored, application-style questions with feedback. Pass mark 80% (four of five).",
+    "course_id": "aviation-law",
+    "language": "English",
+    "duration_min": 10,
+    "cpd_points": 1,
+    "active": true,
+    "objectives": [
+      "Apply the framework across carrier liability, UAE limits, unfair competition, arbitration and enforcement",
+      "Achieve the 80% pass mark (four correct out of five)"
+    ],
+    "body": "Run this as a spoken assessment. Ask the five questions one at a time, let the lawyer reason out loud, then confirm the correct answer and give the short explanation. Track the score; four or more correct out of five is a pass. Keep it encouraging.\n\nQuestion 1 — passenger injury (apply it). A passenger is injured during boarding and claims damages assessed at 90,000 SDR under Montreal 1999. Can the carrier defend on the basis it took all reasonable care? Correct answer: no — below 113,000 SDR liability is objective, so the carrier cannot exclude or limit it; only above 113,000 SDR does it become presumed-fault with defences available. Explanation: the threshold switches the basis of liability.\n\nQuestion 2 — cargo quantum (calculate). A 200 kg cargo is destroyed in carriage; no value was declared. What is the compensation ceiling under UAE law? Correct answer: 200 × 150 = 30,000 dirhams, unless a higher value was declared and the extra fee paid (or the loss flowed from the carrier's intent/recklessness, which breaks the cap). Explanation: 150 AED/kg is the default, lifted only by declaration.\n\nQuestion 3 — notice (spot the trap). Goods arrive damaged and the consignee, having signed without reservation, complains 18 days after receipt. What is the consequence? Correct answer: the claim is jeopardised — notice for goods must be given within at least 14 days, and 18 is late, so no liability suit lies unless fraud or concealment by the carrier is proved; the clean signature also shifts the burden of proof. Explanation: deadlines are 7/14/21 days for baggage/goods/delay.\n\nQuestion 4 — unfair competition (characterise). A rival airline publishes truthful but damaging statements designed to undermine a competitor's reputation. Is this actionable as unfair competition? Correct answer: yes — denigration/distortion is tortious even if the facts are true, because liability rests on the act of denigration itself. Explanation: truth is not a defence to this method.\n\nQuestion 5 — enforcement (procedure). A foreign arbitral award is to be enforced in the UAE. What is the route and timeframe? Correct answer: a petition to the enforcement judge under Article 235, who issues the order within a maximum of five working days (challengeable by appeal), provided the conditions are met; the New York Convention 1958 underpins recognition of foreign awards. Explanation: petition, five working days, appealable.\n\nAfter the fifth question, give the score, confirm pass or fail against the 80% mark, and briefly recap the two or three points the lawyer should revisit."
+  }
+]

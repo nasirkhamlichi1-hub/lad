@@ -169,6 +169,54 @@
     lexChat: (messages, system) => ENABLED ? call('POST', '/api/v1/lex/chat', { messages, system })
                                             : Promise.reject(new Error('offline')),
 
+    // ─── AI Trainer (Anam face + voice + Claude brain + perception) ──
+    // In demo mode (no backend) we serve one clearly-labelled sample lesson
+    // from localStorage so the experience is previewable offline.
+    trainerStatus: () => ENABLED ? call('GET', '/api/v1/trainer/status')
+                                 : Promise.resolve({ premium: false, lessonCount: 1, engines: { anam: false, brain: false, morphcast: false } }),
+    trainerLessons: () => ENABLED ? call('GET', '/api/v1/trainer/lessons')
+                                  : Promise.resolve(lsGet('lad_trainer_lessons', [{
+                                      id: 'demo-ethics',
+                                      title: 'Professional Ethics for Practising Lawyers',
+                                      summary: 'A short 1-2-1 on conflicts of interest and client confidentiality.',
+                                      objectives: ['Identify a conflict of interest', 'Apply the confidentiality rules'],
+                                      duration_min: 12, cpd_points: 1, language: 'English',
+                                      body: 'Demo lesson — connect a backend and upload your own content to replace this.',
+                                    }])),
+    // Admin: list every lesson incl. inactive (active-only for non-admins/demo).
+    trainerAllLessons: () => ENABLED ? call('GET', '/api/v1/trainer/lessons?all=1')
+                                     : api.trainerLessons(),
+    trainerSaveLessons: (lessons) => ENABLED ? call('PUT', '/api/v1/trainer/lessons', lessons)
+                                             : Promise.resolve(lsSet('lad_trainer_lessons', Array.isArray(lessons) ? lessons : [lessons])),
+    trainerDeleteLesson: (id) => ENABLED ? call('DELETE', '/api/v1/trainer/lessons/' + encodeURIComponent(id))
+                                         : Promise.resolve({ ok: true }),
+    trainerStartSession: (lessonId) => ENABLED ? call('POST', '/api/v1/trainer/sessions', { lessonId })
+                                               : Promise.resolve({ demo: true, sessionId: 'demo', conversationUrl: null, resumed: false }),
+    // Scalable browser engine: start a session, drive turns, mint an Anam token.
+    trainerStartBrowserSession: (lessonId) => ENABLED ? call('POST', '/api/v1/trainer/sessions', { lessonId, engine: 'browser' })
+                                                      : Promise.resolve({ engine: 'browser', sessionId: 'demo', face: 'stylised', brain: 'fallback', lesson: null, resumed: false }),
+    trainerTurn: (sessionId, history, perception) => ENABLED ? call('POST', '/api/v1/trainer/turn', { sessionId, history, perception })
+                                                            : Promise.resolve({ say: 'Connect a backend to run the live trainer.', complete: false, coverage: { done: 0, total: 0 }, brain: 'offline' }),
+    trainerAnamToken: () => ENABLED ? call('POST', '/api/v1/trainer/anam/session-token') : Promise.reject(new Error('offline')),
+    // Pause keeps progress so the lesson can be resumed later; end completes it.
+    trainerPauseSession: (id, info) => ENABLED ? call('POST', '/api/v1/trainer/sessions/' + encodeURIComponent(id) + '/pause', info || {})
+                                               : Promise.resolve({ ok: true, status: 'paused' }),
+    trainerEndSession: (id, info) => ENABLED ? call('POST', '/api/v1/trainer/sessions/' + encodeURIComponent(id) + '/end', info || {})
+                                             : Promise.resolve({ ok: true, status: 'ended' }),
+    trainerMySessions: () => ENABLED ? call('GET', '/api/v1/trainer/sessions/mine') : Promise.resolve([]),
+    // Learning progress (per lawyer + lesson) — powers resume + "my learning".
+    trainerMyProgress: () => ENABLED ? call('GET', '/api/v1/trainer/progress/mine') : Promise.resolve([]),
+    trainerLessonProgress: (lessonId) => ENABLED ? call('GET', '/api/v1/trainer/progress/' + encodeURIComponent(lessonId))
+                                                 : Promise.resolve({ exists: false, resumable: false }),
+    // Admin: who's studying a lesson, and the per-lesson rollup.
+    trainerLessonLearners: (id) => ENABLED ? call('GET', '/api/v1/trainer/lessons/' + encodeURIComponent(id) + '/learners')
+                                           : Promise.resolve({ lesson: null, learners: [] }),
+    trainerOverview: () => ENABLED ? call('GET', '/api/v1/trainer/overview') : Promise.resolve({ lessons: [] }),
+    // Admin: ready-made courses shipped with the backend (one-click load).
+    trainerBundledCourses: () => ENABLED ? call('GET', '/api/v1/trainer/bundled-courses') : Promise.resolve([]),
+    trainerImportBundled: (file) => ENABLED ? call('POST', '/api/v1/trainer/bundled-courses/' + encodeURIComponent(file) + '/import')
+                                            : Promise.resolve({ imported: 0 }),
+
     // ─── Admin: user management ──────────────────────────────────────
     listUsers: (filters) => {
       if (!ENABLED) return Promise.resolve({ users: [], count: 0 });
