@@ -75,7 +75,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
 .selfcam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
 /* Karaoke caption — compact 2-3 line teleprompter at the bottom */
 .cap{position:absolute;left:0;right:0;bottom:0;padding:46px 20px 18px;background:linear-gradient(to top,rgba(0,0,0,.86),rgba(0,0,0,.55) 55%,transparent);color:#fff;z-index:3;display:flex;justify-content:center}
-.cap-inner{max-width:760px;width:100%;text-align:center;font-size:19px;font-weight:600;line-height:1.4;letter-spacing:.1px;min-height:2.8em;max-height:4.2em;overflow:hidden;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.cap-inner{max-width:680px;width:100%;text-align:center;font-size:17px;font-weight:600;line-height:1.38;letter-spacing:.1px;min-height:2em;max-height:2.9em;overflow:hidden;text-shadow:0 1px 4px rgba(0,0,0,.7)}
 .cap-inner .you{color:var(--gold);font-weight:700}
 .cap-inner .seg-prev{opacity:.45}
 .cap-inner .seg-cur{opacity:1}
@@ -391,11 +391,14 @@ Your job is not to finish the material — it is to produce a competent learner.
   // ─── Claude brain — direct browser call ──────────────────────────────
   // Brain runs server-side (/api/trainer-turn) so the Anthropic key stays off the
   // browser. Sends the lesson (approved materials) + history + camera perception.
+  // The full programme welcome only belongs in the first/welcome section; later
+  // sections skip it (the learner already heard it).
+  function isOpeningLesson(l){ return /welcome|orientation|how this works/i.test((l&&l.title)||'')||/_00_|welcome/i.test((l&&l.id)||''); }
   function claudeTurn(lesson,history,perception){
     return fetch('/api/trainer-turn',{
       method:'POST',
       headers:{'content-type':'application/json'},
-      body:JSON.stringify({lesson:lesson,history:history,perception:perception})
+      body:JSON.stringify({lesson:lesson,history:history,perception:perception,opening:isOpeningLesson(lesson)})
     }).then(function(r){return r.json();}).then(function(d){
       if(d&&typeof d.say==='string')return {say:d.say,covered:d.covered||[],complete:!!d.complete};
       throw new Error((d&&d.error)||'no turn');
@@ -652,15 +655,14 @@ Your job is not to finish the material — it is to produce a competent learner.
     if(capTimer){clearTimeout(capTimer);capTimer=null;}
     var parts=String(text).replace(/\s+/g,' ').trim().match(/[^.!?;:]+[.!?;:]*\s*/g)||[text];
     var segs=[],cur='';
-    parts.forEach(function(p){p=p.trim();if(!p)return;if((cur+' '+p).trim().length>120){if(cur)segs.push(cur.trim());cur=p;}else{cur=(cur?cur+' ':'')+p;}});
+    parts.forEach(function(p){p=p.trim();if(!p)return;if((cur+' '+p).trim().length>85){if(cur)segs.push(cur.trim());cur=p;}else{cur=(cur?cur+' ':'')+p;}});
     if(cur)segs.push(cur.trim());
     if(!segs.length)segs=[String(text)];
     var totalLen=segs.reduce(function(a,s){return a+s.length;},0)||1,i=0;
     (function step(){
       if(S.ended)return;
-      var prev=i>0?('<span class="seg-prev">'+esc(segs[i-1])+'</span> '):'';
-      el('caption').innerHTML=prev+'<span class="seg-cur">'+esc(segs[i])+'</span>';
-      var dur=Math.max(1100,Math.round(totalMs*(segs[i].length/totalLen)));i++;
+      el('caption').innerHTML='<span class="seg-cur">'+esc(segs[i])+'</span>';  // one phrase at a time
+      var dur=Math.max(1000,Math.round(totalMs*(segs[i].length/totalLen)));i++;
       if(i<segs.length)capTimer=setTimeout(step,dur);
     })();
   }
