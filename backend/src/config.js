@@ -66,21 +66,16 @@ module.exports = {
     model:  process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
   },
 
-  elevenlabs: {
-    apiKey:  process.env.ELEVENLABS_API_KEY || '',
-    voiceId: process.env.ELEVENLABS_VOICE_ID || '',
-    model:   process.env.ELEVENLABS_MODEL || 'eleven_turbo_v2_5',
-  },
-
-  // ─── Anam (photoreal avatar) ─────────────────────────────────────────
-  // Anam renders the photoreal face; Claude (anthropic above) is the brain,
-  // ElevenLabs is the voice, and the browser does perception. Keys stay
-  // server-side; the browser only ever sees a short-lived session token. If
-  // ANAM_API_KEY is unset, the trainer falls back to an animated avatar.
+  // ─── Anam (photoreal avatar — face + voice) ──────────────────────────
+  // Anam renders the photoreal face AND speaks; Claude (anthropic above) is the
+  // brain and the browser does perception. Keys stay server-side; the browser
+  // only ever sees a short-lived session token. If ANAM_API_KEY is unset, the
+  // trainer falls back to an animated avatar with the browser voice.
   anam: {
     apiKey:   process.env.ANAM_API_KEY || '',
     baseUrl:  process.env.ANAM_BASE_URL || 'https://api.anam.ai',
-    avatarId: process.env.ANAM_AVATAR_ID || '',           // a photoreal persona/avatar id
+    avatarId: process.env.ANAM_AVATAR_ID || '',           // a photoreal avatar id
+    voiceId:  process.env.ANAM_VOICE_ID || '',            // optional specific Anam voice
     name:     process.env.ANAM_AVATAR_NAME || 'CLPD Trainer',
   },
 

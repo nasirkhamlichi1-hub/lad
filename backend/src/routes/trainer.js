@@ -1,7 +1,7 @@
 'use strict';
 
 // AI Trainer — realistic-avatar 1-2-1 CLPD sessions.
-// One model: photoreal Anam face + Claude brain + ElevenLabs voice + perception.
+// One model: photoreal Anam face (with Anam's own voice) + Claude brain + perception.
 //
 //   GET  /api/v1/trainer/status               public — which pieces are configured
 //   GET  /api/v1/trainer/lessons              public — uploaded lessons (active)
@@ -37,12 +37,11 @@ const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth')
 const ADMIN_ROLES = ['lad_admin', 'lad_super_admin'];
 
 // ─── Status ──────────────────────────────────────────────────────────
-// One trainer: photoreal Anam face + Claude brain + ElevenLabs voice +
+// One trainer: photoreal Anam face (Anam's own voice) + Claude brain +
 // MorphCast/in-browser perception. Each piece activates when its key is set;
 // otherwise it degrades (animated face / scripted brain / browser voice / free
 // perception) so the trainer always runs.
 router.get('/status', (_req, res) => {
-  const elevenlabs = !!(config.elevenlabs.apiKey && config.elevenlabs.voiceId);
   const anamOn = anam.isConfigured();
   const brainOn = trainerBrain.isConfigured();
   res.json({
@@ -50,9 +49,8 @@ router.get('/status', (_req, res) => {
     premium: anamOn && brainOn,
     lessonCount: trainerStore.listLessons().length,
     engines: {
-      anam: anamOn,                         // photoreal face
+      anam: anamOn,                         // photoreal face + voice
       brain: brainOn,                       // Claude brain (else scripted fallback)
-      elevenlabs,                           // ElevenLabs voice (else browser voice)
       morphcast: !!config.morphcast.licenseKey, // richer in-browser perception
     },
     // Client-side MorphCast licence key (safe to expose; used by browser SDK).
@@ -172,9 +170,9 @@ router.post('/sessions', requireAuth, async (req, res, next) => {
       ? { context: progress.resume_context, percent: progress.percent_complete }
       : null;
 
-    // The trainer is browser-driven: photoreal Anam face + Claude brain +
-    // ElevenLabs voice + perception. The frontend drives the dialogue via
-    // POST /turn and renders the avatar itself; no server-side video call.
+    // The trainer is browser-driven: photoreal Anam face (Anam voice) + Claude
+    // brain + perception. The frontend drives the dialogue via POST /turn and
+    // renders the avatar itself; no server-side video call.
     const session = trainerStore.createSession({
       lessonId: lesson ? lesson.id : null, lawyerId, status: 'active', engine: 'browser',
       progressId: progress ? progress.id : null,

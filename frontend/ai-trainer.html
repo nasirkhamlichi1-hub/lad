@@ -226,7 +226,7 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
   }
 
   if(DEMO){
-    S.status={premium:false,engines:{anam:false,brain:false,elevenlabs:false,morphcast:false}};
+    S.status={premium:false,engines:{anam:false,brain:false,morphcast:false}};
     S.lessons=DEMO_LESSONS;renderEngine();renderLessons();
   } else {
     Promise.all([api.trainerStatus(),api.trainerLessons()]).then(function(r){
@@ -241,9 +241,8 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
     if(realFace&&realBrain){p.className='pill pill-live';p.textContent='● Photoreal · Claude';}
     else{p.className='pill pill-demo';p.textContent='Preview mode';}
     var msgs=[];
-    msgs.push(realFace?'Photoreal face (Anam) is configured.':'Anam not set — using a built-in animated face.');
+    msgs.push(realFace?'Photoreal face + voice (Anam) is configured.':'Anam not set — using a built-in animated face and browser voice.');
     msgs.push(realBrain?'Claude is the brain.':'No Claude key — using the built-in scripted brain.');
-    msgs.push(eng.elevenlabs?'ElevenLabs voice ready.':'Using your browser voice.');
     msgs.push(eng.morphcast?'MorphCast emotion AI for perception.':'Free in-browser perception.');
     el('engineNote').innerHTML='<span>'+msgs.map(esc).join(' ')+'</span>';
   }
@@ -403,11 +402,10 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
     nextTurn();
   }
 
-  // ─── Speak (Anam talk, else browser TTS + animated mouth) ─────────────
+  // ─── Speak: Anam renders its own voice; otherwise the browser voice ───
   function speak(text,done){
     el('caption').innerHTML='<b>Trainer:</b> '+esc(text);
     if(S.anam&&S.face==='anam'){ try{ var p=S.anam.speak(text); setFaceSpeaking(true); if(p&&p.then){p.then(function(){setFaceSpeaking(false);done&&done();});} else {setTimeout(function(){setFaceSpeaking(false);done&&done();}, estMs(text));} return; }catch(e){} }
-    // Browser TTS fallback
     if(window.speechSynthesis){
       var u=new SpeechSynthesisUtterance(text);u.rate=1;u.pitch=1;
       u.onstart=function(){setFaceSpeaking(true);};

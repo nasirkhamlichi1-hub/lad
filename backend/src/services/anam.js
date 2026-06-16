@@ -31,15 +31,13 @@ async function createSessionToken({ name } = {}) {
   }
 
   // Persona config: a custom persona whose speech we drive ourselves (Claude is
-  // the brain). avatarId selects the photoreal face; voice can be ElevenLabs.
+  // the brain). avatarId selects the photoreal face; Anam provides the voice.
   const personaConfig = {
     name: name || AN.name,
     avatarId: AN.avatarId,
     // brain/LLM is supplied by us via the SDK's talk() calls, so no llmId here.
   };
-  if (config.elevenlabs.apiKey && config.elevenlabs.voiceId) {
-    personaConfig.voiceId = config.elevenlabs.voiceId; // ElevenLabs voice
-  }
+  if (AN.voiceId) personaConfig.voiceId = AN.voiceId; // optional specific Anam voice
 
   const r = await axios.post(
     `${AN.baseUrl}/v1/auth/session-token`,

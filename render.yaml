@@ -59,23 +59,16 @@ services:
       - key: ANTHROPIC_MODEL
         value: claude-sonnet-4-20250514
 
-      # ─── AI Trainer (Anam face + Claude brain + ElevenLabs voice) ──────
-      # ElevenLabs voice layer (optional — falls back to the browser voice)
-      - key: ELEVENLABS_API_KEY
-        sync: false
-      - key: ELEVENLABS_VOICE_ID
-        sync: false
-      - key: ELEVENLABS_MODEL
-        value: eleven_turbo_v2_5
-
-      # ─── Scalable "browser" engine: Anam face + Claude brain + ElevenLabs ──
-      # Cheap-to-scale alternative to Tavus. Set ANAM_API_KEY + ANAM_AVATAR_ID
-      # for the photoreal face; set ANTHROPIC_API_KEY (above) for the Claude
-      # brain. If unset, the engine still runs (stylised face / scripted brain).
+      # ─── AI Trainer (Anam photoreal face + voice, Claude brain) ───────
+      # Set ANAM_API_KEY + ANAM_AVATAR_ID for the photoreal face+voice, and
+      # ANTHROPIC_API_KEY (above) for the Claude brain. If unset, the trainer
+      # still runs (animated face / scripted brain / browser voice).
       - key: ANAM_API_KEY
         sync: false
       - key: ANAM_AVATAR_ID
-        sync: false      # a photoreal avatar/persona id from your Anam account
+        sync: false      # a photoreal avatar id from your Anam account
+      - key: ANAM_VOICE_ID
+        sync: false      # optional: a specific Anam voice
       - key: ANAM_AVATAR_NAME
         value: CLPD Trainer
       - key: TRAINER_BRAIN_MODEL
