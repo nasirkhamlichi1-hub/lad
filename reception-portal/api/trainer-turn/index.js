@@ -112,7 +112,7 @@ function systemFor(lesson, opening) {
     buildLessonContext(lesson), '',
     'OUTPUT FORMAT — respond with ONLY a JSON object, no other text, exactly:',
     '{"say": "<the spoken turn you deliver to the learner now>", "covered": [<1-based numbers of objectives the learner has DEMONSTRATED understanding of so far>], "complete": <true|false>, "slide": {"title": "<short heading for the on-screen slide>", "bullets": ["<2-4 very short supporting points, a few words each>"]}}',
-    'There are ' + total + ' objectives. "say" is spoken aloud by a photoreal avatar: teach ONE concept then STOP and ask a question, OR evaluate the learner\'s answer then advance. Spoken style only — no lists, no markdown, no headings. Keep it tight so the learner speaks ~60% of the time.',
+    'There are ' + total + ' objectives. "say" is spoken aloud by a photoreal avatar: teach ONE concept then STOP and ask a question, OR evaluate the learner\'s answer then advance. Spoken style only — no lists, no markdown, no headings. Be SHARP and BRIEF: "say" must be AT MOST 2-3 short sentences (roughly 40-70 words) and end by handing back to the learner. Never lecture; the learner should speak ~60% of the time.',
     'The "slide" is a visual aid shown beside the avatar — make it match the concept you are teaching THIS turn: a concise title and 2-4 short bullet points drawn ONLY from the approved materials (keywords/figures, not full sentences). When you are asking a question or there is nothing to show, you may reuse the current concept\'s slide.',
     'Add an objective to "covered" only once the learner has DEMONSTRATED understanding of it — never merely because you explained it.',
     'Set "complete" true ONLY after every objective is covered AND you have run the five-question assessment and delivered the performance summary in "say".'].join('\n');
@@ -155,9 +155,11 @@ module.exports = async function (context, req) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return S.json(context, 200, Object.assign(fallbackTurn(lesson, history), { engine: 'fallback' }));
 
-  const wanted = process.env.TRAINER_MODEL || 'claude-sonnet-4-6';
-  const models = [wanted, 'claude-sonnet-4-6', 'claude-opus-4-8', 'claude-haiku-4-5-20251001'].filter((m, i, a) => a.indexOf(m) === i);
-  const body = { max_tokens: 1000, system: systemFor(lesson, opening), messages: toMessages(history, perception, opening) };
+  // Default to the fast Haiku model for snappy, low-latency turns; fall back to
+  // Sonnet/Opus if it's unavailable. Override with the TRAINER_MODEL app setting.
+  const wanted = process.env.TRAINER_MODEL || 'claude-haiku-4-5-20251001';
+  const models = [wanted, 'claude-haiku-4-5-20251001', 'claude-sonnet-4-6', 'claude-opus-4-8'].filter((m, i, a) => a.indexOf(m) === i);
+  const body = { max_tokens: 600, system: systemFor(lesson, opening), messages: toMessages(history, perception, opening) };
 
   let lastStatus = 0;
   for (const model of models) {

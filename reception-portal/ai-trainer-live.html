@@ -400,7 +400,7 @@ Your job is not to finish the material — it is to produce a competent learner.
       headers:{'content-type':'application/json'},
       body:JSON.stringify({lesson:lesson,history:history,perception:perception,opening:isOpeningLesson(lesson)})
     }).then(function(r){return r.json();}).then(function(d){
-      if(d&&typeof d.say==='string')return {say:d.say,covered:d.covered||[],complete:!!d.complete};
+      if(d&&typeof d.say==='string')return {say:d.say,covered:d.covered||[],complete:!!d.complete,slide:d.slide||null};
       throw new Error((d&&d.error)||'no turn');
     }).catch(function(e){toast('Trainer brain: '+(e.message||e)+' — using fallback');return fallbackTurn(lesson,history,perception);});
   }
