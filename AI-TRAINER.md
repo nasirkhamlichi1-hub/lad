@@ -21,7 +21,7 @@ conversation (persona + lesson context + Raven perception) all succeeded.
 
 **Provisioned resources (baked into `render.yaml` + `backend/.env.example`):**
 - `TAVUS_REPLICA_ID=r38e4c3bc562` — *Samantha - Office V2* (phoenix-3)
-- `TAVUS_PERSONA_ID=p5b827e83144` — *"LAD CLPD Expert Trainer"* (raven-1 perception,
+- `TAVUS_PERSONA_ID=pc49eb4ad278` — *"LAD CLPD Expert Trainer"* (raven-1 perception,
   full distracted/phone/mood/leave-frame coaching behaviour)
 - Voice = **Tavus default** for now. ElevenLabs not yet set — to switch, set
   `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` and re-run the persona script.
@@ -29,7 +29,7 @@ conversation (persona + lesson context + Raven perception) all succeeded.
 **To begin testing right now:** ensure `TAVUS_API_KEY` is set in the environment
 (it is), then either:
 ```
-cd backend && TAVUS_REPLICA_ID=r38e4c3bc562 TAVUS_PERSONA_ID=p5b827e83144 npm start
+cd backend && TAVUS_REPLICA_ID=r38e4c3bc562 TAVUS_PERSONA_ID=pc49eb4ad278 npm start
 ```
 and open `frontend/ai-trainer.html` (or `frontend/trainer-test.html` → Live tab),
 **or** for a one-shot live URL: `node scripts/tavus-test.js`.

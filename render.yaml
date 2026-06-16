@@ -68,7 +68,7 @@ services:
       - key: TAVUS_REPLICA_ID
         value: r38e4c3bc562        # Samantha - Office V2 (phoenix-3)
       - key: TAVUS_PERSONA_ID
-        value: p5b827e83144        # LAD CLPD Expert Trainer persona
+        value: pc49eb4ad278        # LAD CLPD Expert Trainer persona
       - key: TAVUS_PERCEPTION_MODEL
         value: raven-1
       - key: TAVUS_MAX_CALL_DURATION_S
