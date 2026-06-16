@@ -15,29 +15,32 @@ working prototype already ships in this repo (see [What's already built](#whats-
 **Decision made:** vendor = **Tavus** (CVI + Raven-1 perception), voice = ElevenLabs.
 The full prototype is built and pushed on branch `claude/vigilant-curie-lrtqi0`.
 
-**What works now:** backend `/api/v1/trainer/*`, the attendee page
-`frontend/ai-trainer.html`, and the zero-setup tester `frontend/trainer-test.html`
-(camera + simulated coaching, plus a Live-avatar tab).
+**✅ LIVE TAVUS IS WORKING (2026-06-16).** Egress to `tavusapi.com` is open and the
+API key authenticates. The smoke test, the persona, and a full end-to-end
+conversation (persona + lesson context + Raven perception) all succeeded.
 
-**Where we got stuck:** testing the *live* Tavus avatar. The previous session's
-container could not reach `tavusapi.com` — its egress allowlist is fixed at
-session start. The user has (a) added `tavusapi.com` to the environment's
-**Custom** network allowlist and (b) set `TAVUS_API_KEY` as an environment
-variable. **A new session is required for the new egress policy to take effect.**
+**Provisioned resources (baked into `render.yaml` + `backend/.env.example`):**
+- `TAVUS_REPLICA_ID=r38e4c3bc562` — *Samantha - Office V2* (phoenix-3)
+- `TAVUS_PERSONA_ID=p5b827e83144` — *"LAD CLPD Expert Trainer"* (raven-1 perception,
+  full distracted/phone/mood/leave-frame coaching behaviour)
+- Voice = **Tavus default** for now. ElevenLabs not yet set — to switch, set
+  `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` and re-run the persona script.
 
-**Next step in this fresh session:**
+**To begin testing right now:** ensure `TAVUS_API_KEY` is set in the environment
+(it is), then either:
 ```
-cd backend && npm install && node scripts/tavus-test.js
+cd backend && TAVUS_REPLICA_ID=r38e4c3bc562 TAVUS_PERSONA_ID=p5b827e83144 npm start
 ```
-This lists the account's replicas, creates a live conversation, and prints a
-**🔗 join URL** — open it in a browser to see the avatar. If it still prints
-"Blocked: add tavusapi.com…", the allowlist hasn't applied — re-check
-Network access = Custom with `tavusapi.com` listed, and start another new session.
+and open `frontend/ai-trainer.html` (or `frontend/trainer-test.html` → Live tab),
+**or** for a one-shot live URL: `node scripts/tavus-test.js`.
 
-Then, to wire the full persona (ElevenLabs voice + distracted/phone/mood
-behaviour): set `TAVUS_REPLICA_ID` (from the test output), run
-`node scripts/create-trainer-persona.js`, put the printed id in
-`TAVUS_PERSONA_ID`. Security: rotate the API key after testing (it was shared in chat).
+For deployment, the IDs are already in `render.yaml`; just set `TAVUS_API_KEY`
+(and optionally the ElevenLabs vars) in the Render dashboard.
+
+**Remaining / optional next steps:**
+- Wire ElevenLabs voice (set the two vars, re-run `node scripts/create-trainer-persona.js`,
+  update `TAVUS_PERSONA_ID`).
+- **Security: rotate the Tavus API key after testing** — it was shared in chat.
 
 ---
 
