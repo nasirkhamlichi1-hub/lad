@@ -10,7 +10,10 @@ module.exports = async function (context, req) {
   const key = process.env.ELEVEN_API_KEY || '';
   if (!key) return S.json(context, 500, { error: 'Voice service is not configured.' });
 
-  const voice = process.env.ELEVEN_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL';
+  const lang = (b.lang === 'ar') ? 'ar' : 'en';
+  const voice = (lang === 'ar' && process.env.ELEVEN_VOICE_ID_AR) ? process.env.ELEVEN_VOICE_ID_AR
+              : (process.env.ELEVEN_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL');
+  const model = (lang === 'ar') ? (process.env.ELEVEN_MODEL_AR || 'eleven_multilingual_v2') : 'eleven_turbo_v2_5';
   const url = 'https://api.elevenlabs.io/v1/text-to-speech/' + voice + '?output_format=mp3_44100_128';
 
   try {
@@ -19,7 +22,7 @@ module.exports = async function (context, req) {
       headers: { 'xi-api-key': key, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text,
-        model_id: 'eleven_turbo_v2_5',
+        model_id: model,
         voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.4, use_speaker_boost: true }
       })
     });

@@ -6,7 +6,7 @@
 <title>Service Ambassador Academy — Orbit</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <script>
-window.ORBIT_CONFIG={ anthropicModel:'claude-sonnet-4-6', anthropicKey:'', elevenKey:'', elevenVoice:'EXAVITQu4vr4xnSDxMaL' };
+window.ORBIT_CONFIG={ anthropicModel:'claude-sonnet-4-6', anthropicKey:'', elevenKey:'', elevenVoice:'EXAVITQu4vr4xnSDxMaL', elevenVoiceAr:'' };
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
@@ -716,7 +716,7 @@ document.getElementById('amodal').addEventListener('click',e=>{if(e.target.id===
 
 /* ════ Claude + voice helpers ════ */
 async function callClaude(messages,system,model){return fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'x-api-key':key(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},body:JSON.stringify({model:model||window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6',max_tokens:900,system,messages})});}
-async function claudeText(messages,system){
+async function claudeText(messages,system){system=(system||'')+langDirective();
   // 1) hardwired backend coach — works for every signed-in trainee with nothing to configure
   try{
     const tok=(window.AUTH&&window.AUTH.token)||'';
@@ -767,7 +767,7 @@ try{if(/[?&]adbg/.test(location.search))localStorage.setItem('adbg','1');}catch(
 function adbg(m){try{if(!/[?&]adbg/.test(location.search)&&localStorage.getItem('adbg')!=='1')return;let e=document.getElementById('adbg');if(!e){e=document.createElement('div');e.id='adbg';e.style.cssText='position:fixed;left:6px;bottom:6px;z-index:99999;font:11px/1.45 monospace;color:#7dffa0;background:rgba(0,0,0,.8);padding:5px 8px;border-radius:6px;max-width:92vw;white-space:pre-wrap;pointer-events:none';document.body.appendChild(e);}e._log=((e._log||'')+'\n'+m).split('\n').slice(-7).join('\n');e.textContent=e._log;}catch(_){}}
 let _voiceMuted=false,_voiceSpeaking=false,_lastSpoken='';
 function speakAsync(text,onEnd){
-  stopAudio();text=stripMd(text).replace(/AED\s*([\d.,]+)/g,'$1 dirhams').replace(/\bAED\b/g,'dirhams');
+  stopAudio();text=stripMd(text).replace(/AED\s*([\d.,]+)/g,isAr()?'$1 درهم':'$1 dirhams').replace(/\bAED\b/g,isAr()?'درهم':'dirhams');
   _lastSpoken=text;
   let done=false;const finish=()=>{if(done)return;done=true;_play=null;_setVoiceState('idle');onEnd();};
   if(_voiceMuted){adbg('muted — skip');setTimeout(finish,Math.min(2600,Math.max(700,text.length*22)));return;}
@@ -809,11 +809,11 @@ function speakAsync(text,onEnd){
     webAudioPlay(buf,()=>htmlPlay(buf));
   };
   const directEleven=()=>{const ek=window.ORBIT_CONFIG.elevenKey;
-    if(ek){fetch('https://api.elevenlabs.io/v1/text-to-speech/'+window.ORBIT_CONFIG.elevenVoice+'?output_format=mp3_44100_128',{method:'POST',headers:{'xi-api-key':ek,'Content-Type':'application/json'},body:JSON.stringify({text,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.45,similarity_boost:0.8,style:0.4,use_speaker_boost:true}})}).then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(playBuf).catch(()=>{clearTimeout(safety);browserSpeak(text,finish);});}
+    if(ek){fetch('https://api.elevenlabs.io/v1/text-to-speech/'+(isAr()?(window.ORBIT_CONFIG.elevenVoiceAr||window.ORBIT_CONFIG.elevenVoice):window.ORBIT_CONFIG.elevenVoice)+'?output_format=mp3_44100_128',{method:'POST',headers:{'xi-api-key':ek,'Content-Type':'application/json'},body:JSON.stringify({text,model_id:isAr()?'eleven_multilingual_v2':'eleven_turbo_v2_5',voice_settings:{stability:0.45,similarity_boost:0.8,style:0.4,use_speaker_boost:true}})}).then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(playBuf).catch(()=>{clearTimeout(safety);browserSpeak(text,finish);});}
     else{clearTimeout(safety);browserSpeak(text,finish);}};
   // 1) hardwired backend voice (ElevenLabs via server) — no per-user keys
   const tok=(window.AUTH&&window.AUTH.token)||'';adbg('tts request…');_setVoiceState('load');
-  fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,token:tok})}).then(r=>{adbg('tts HTTP '+r.status);return r.ok?r.json():Promise.reject(r.status);}).then(j=>{
+  fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,token:tok,lang:LANG})}).then(r=>{adbg('tts HTTP '+r.status);return r.ok?r.json():Promise.reject(r.status);}).then(j=>{
     const bin=atob(j.audio||'');const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);playBuf(arr.buffer);
   }).catch((st)=>{adbg('tts failed ('+st+') → fallback');_setVoiceState('noserver');directEleven();});  // 2) fallback: user key direct, else browser speech
 }
@@ -824,11 +824,11 @@ function browserSpeak(text,done){adbg('browser speech');
   const estDur=Math.max(3.2,((text||'').match(/\S+/g)||[]).length*0.36);
   const guard=setTimeout(fin,Math.max(3500,text.length*70));
   if(!window.speechSynthesis){emitPlay(estDur,null);clearTimeout(guard);fin();return;}
-  try{const u=new SpeechSynthesisUtterance(text);u.rate=1.02;u.lang='en-US';const vs=window.speechSynthesis.getVoices();const p=vs.find(v=>/Natural|Aria|Ava|Jenny|Google US English|Samantha/i.test(v.name)&&(v.lang||'').toLowerCase().startsWith('en'));if(p)u.voice=p;u.onstart=()=>emitPlay(estDur,null);u.onend=()=>{clearTimeout(guard);fin();};u.onerror=()=>{clearTimeout(guard);fin();};window.speechSynthesis.speak(u);setTimeout(()=>{if(!_play)emitPlay(estDur,null);},350);}catch(e){clearTimeout(guard);fin();}}
+  try{const u=new SpeechSynthesisUtterance(text);u.rate=1.02;u.lang=isAr()?'ar-AE':'en-US';const vs=window.speechSynthesis.getVoices();const p=vs.find(v=>isAr()?(v.lang||'').toLowerCase().startsWith('ar'):(/Natural|Aria|Ava|Jenny|Google US English|Samantha/i.test(v.name)&&(v.lang||'').toLowerCase().startsWith('en')));if(p)u.voice=p;u.onstart=()=>emitPlay(estDur,null);u.onend=()=>{clearTimeout(guard);fin();};u.onerror=()=>{clearTimeout(guard);fin();};window.speechSynthesis.speak(u);setTimeout(()=>{if(!_play)emitPlay(estDur,null);},350);}catch(e){clearTimeout(guard);fin();}}
 if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){};window.speechSynthesis.getVoices();}
 // First-time spoken welcome shown in the galaxy
 function playWelcome(){
-  const txt="Welcome to the Service Ambassador Academy. Each planet you can see is one of the eleven Legal Affairs Department services. To complete the course and earn your certificate, you'll need to visit every planet and pass its training. A great place to begin is the Sun at the centre — tap it to learn about the Department itself. Whenever you're ready, choose a planet and dive in.";
+  const txt=T("Welcome to the Service Ambassador Academy. Each planet you can see is one of the eleven Legal Affairs Department services. To complete the course and earn your certificate, you'll need to visit every planet and pass its training. A great place to begin is the Sun at the centre — tap it to learn about the Department itself. Whenever you're ready, choose a planet and dive in.","مرحباً فيك في أكاديمية سفراء الخدمة. كل كوكب تشوفه هو وحدة من إحدى عشرة خدمة لدائرة الشؤون القانونية. عشان تكمّل الدورة وتاخذ شهادتك، لازم تزور كل كوكب وتنجح في تدريبه. أحلى بداية هي الشمس في النص — اضغط عليها تعرف عن الدائرة. ووقت ما تجهز، اختر كوكب وابدأ.");
   const bar=document.getElementById('welcomeBar');if(!bar)return;
   document.getElementById('welcomeText').textContent=txt;bar.classList.add('on');
   let hidden=false;const hide=()=>{if(hidden)return;hidden=true;try{stopAudio();}catch(e){}bar.classList.remove('on');};
@@ -1004,14 +1004,14 @@ function sectionFX(kind,s,text){
     const sts=[...document.querySelectorAll('#stations .station')];const n=sts.length||1;let prev=0;
     const beats=sts.map((el,i)=>{let fr=stepFrac(text,i,n,s.steps[i]);if(fr<prev+0.015)fr=Math.min(.97,prev+0.72/n);prev=fr;
       return {frac:fr,fn:()=>{for(let j=0;j<i;j++)sts[j].classList.add('done','lit');el.classList.add('lit','arrive');setTimeout(()=>el.classList.remove('arrive'),750);
-        movePulse(stationX(i,n),true);VOX.morphText(String(i+1));}};});
-    if(!sts.length){const st=s.steps||[],m=st.length||1;scheduleBeats(text,st.map((p,i)=>{let fr=stepFrac(text,i,m,p);if(fr<prev+0.015)fr=Math.min(.97,prev+0.72/m);prev=fr;return{frac:fr,fn:()=>VOX.morphText(String(i+1))};}));return;}
+        movePulse(stationX(i,n),true);VOX.morphText(numStr(i+1));}};});
+    if(!sts.length){const st=s.steps||[],m=st.length||1;scheduleBeats(text,st.map((p,i)=>{let fr=stepFrac(text,i,m,p);if(fr<prev+0.015)fr=Math.min(.97,prev+0.72/m);prev=fr;return{frac:fr,fn:()=>VOX.morphText(numStr(i+1))};}));return;}
     scheduleBeats(text,beats);
   }else if(kind==='fees'){
     const lines=[...document.querySelectorAll('#bdFee .bd-fline')];const fees=s.fees||[];const n=Math.max(fees.length,1);
     const beats=fees.map((f,i)=>({frac:textFrac(text,[String(f.fee),...longWords(f.n,1)],(i+0.5)/n),fn:()=>{
       lines.forEach(x=>x.classList.remove('pop'));if(lines[i]){lines[i].classList.add('pop');countUp(lines[i].querySelector('.cnt'),f.fee);}
-      if(Number(f.fee)>0)VOX.morphText(String(f.fee));else VOX.morph('seal');
+      if(Number(f.fee)>0)VOX.morphText(numStr(f.fee));else VOX.morph('seal');
       popFact('<b>'+esc(dirhams(f.fee))+'</b><span>'+esc(f.n)+(f.time&&f.time!=='Instant'?' · '+esc(f.time):'')+'</span>','gold');}}));
     scheduleBeats(text,beats);
   }else if(kind==='channels'){
@@ -1057,7 +1057,7 @@ function replayVoice(){if(!_lastSpoken)return;_voiceSpeaking=true;speakAsync(_la
   else if(_voiceSpeaking){_voiceMuted=true;stopAudio();updateSoundBtn();}      // mute mid-sentence
   else{replayVoice();}                                                         // idle → replay
 });updateSoundBtn();})();
-function setCaption(text,cust){text=stripMd(text);const cap=document.getElementById('cap');cap.style.opacity='0';stopKaraoke();setTimeout(()=>{document.getElementById('capRole').textContent=cust?'Customer':'Coach';cap.classList.toggle('cust',!!cust);renderCaptionWords(text);cap.scrollTop=0;cap.style.opacity='1';runKaraoke();},55);}
+function setCaption(text,cust){text=stripMd(text);const cap=document.getElementById('cap');cap.style.opacity='0';stopKaraoke();setTimeout(()=>{document.getElementById('capRole').textContent=cust?'Customer':'Coach';cap.classList.toggle('cust',!!cust);renderCaptionWords(text);document.getElementById('capText').dir=isAr()?'rtl':'ltr';cap.scrollTop=0;cap.style.opacity='1';runKaraoke();},55);}
 function setCoach(text){document.getElementById('coach').textContent=text||'';}
 function setListening(b){document.getElementById('listening').classList.toggle('on',b);document.getElementById('stControls').classList.toggle('hide',false);}
 function showControls(show){document.getElementById('stControls').classList.toggle('hide',!show);}
@@ -1072,20 +1072,20 @@ function say(text,cust){
     let settled=false;
     const finish=()=>{if(settled)return;settled=true;showInterrupt(false);window._skip=null;window._ask=null;setSpeaking(false,cust);resolve();};
     window._skip=()=>{stopAudio();finish();};
-    window._ask=async()=>{if(settled)return;settled=true;showInterrupt(false);window._skip=null;window._ask=null;stopAudio();setSpeaking(false,cust);const u=await listen('Go ahead — ask your question…');if(u&&!ab())await handleInterjection(u);resolve();};
+    window._ask=async()=>{if(settled)return;settled=true;showInterrupt(false);window._skip=null;window._ask=null;stopAudio();setSpeaking(false,cust);const u=await listen(T('Go ahead — ask your question…','تفضل — اسأل سؤالك…'));if(u&&!ab())await handleInterjection(u);resolve();};
     speakAsync(text,finish);
   });
 }
 function listen(placeholder){
-  const inp=document.getElementById('stInput');inp.value='';inp.placeholder=placeholder||'…or type your answer';
+  const inp=document.getElementById('stInput');inp.value='';inp.placeholder=placeholder||T('…or type your answer','…أو اكتب جوابك');
   setListening(true);showControls(true);
   return new Promise(res=>{
     let done=false;const finish=v=>{if(done)return;done=true;setListening(false);onUserFinal=null;window._submit=null;window._skipL=null;if(recog&&recognising){try{recog.stop();}catch(e){}}res((v||'').trim());};
     onUserFinal=finish;window._submit=()=>finish(inp.value);window._skipL=()=>finish('');
-    if(recog){try{recog.start();recognising=true;document.getElementById('stMic').classList.add('live');}catch(e){}}
+    if(recog){try{recog.lang=isAr()?'ar-AE':'en-US';recog.start();recognising=true;document.getElementById('stMic').classList.add('live');}catch(e){}}
   });
 }
-document.getElementById('stMic').addEventListener('click',()=>{if(!recog){document.getElementById('stInput').focus();return;}if(recognising){recog.stop();return;}try{recog.start();recognising=true;document.getElementById('stMic').classList.add('live');}catch(e){}});
+document.getElementById('stMic').addEventListener('click',()=>{if(!recog){document.getElementById('stInput').focus();return;}if(recognising){recog.stop();return;}try{recog.lang=isAr()?'ar-AE':'en-US';recog.start();recognising=true;document.getElementById('stMic').classList.add('live');}catch(e){}});
 document.getElementById('stSubmit').addEventListener('click',()=>{if(window._submit)window._submit();});
 document.getElementById('stInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&window._submit)window._submit();});
 document.getElementById('stSkip').addEventListener('click',()=>{if(window._skip)window._skip();else if(window._skipL)window._skipL();});
@@ -1100,7 +1100,7 @@ async function gradeAnswer(s,question,correct,answer){
     if(t){try{const m=t.match(/\{[\s\S]*\}/);const j=JSON.parse(m?m[0]:t);return {correct:!!j.correct,feedback:j.feedback||correct};}catch(e){}}}
   // offline
   const a=(answer||'').toLowerCase().trim();const kw=(findQ(s,question)||{}).kw||[];const hit=kw.filter(k=>a.includes(k.toLowerCase())).length;const ok=a.length>2&&hit>=Math.max(1,Math.ceil(kw.length/2));
-  return {correct:ok,feedback:ok?(pick(L_CORRECT)+' '+correct):pick(L_WRONG).replace('{A}',correct)};
+  return {correct:ok,feedback:ok?(pick(LL('CORRECT'))+' '+correct):pick(LL('WRONG')).replace('{A}',correct)};
 }
 function findQ(s,question){return s.quiz.find(q=>q.q===question);}
 async function gradeSim(s,line,answer){
@@ -1228,13 +1228,13 @@ function teachSay(text,fxStart){
     let settled=false;
     const finish=()=>{if(settled)return;settled=true;clearFX();showInterrupt(false);window._skip=null;window._ask=null;setSpeaking(false);resolve();};
     window._skip=()=>{stopAudio();finish();};
-    window._ask=async()=>{if(settled)return;settled=true;clearFX();showInterrupt(false);window._skip=null;window._ask=null;stopAudio();setSpeaking(false);const u=await listen('Go ahead — ask your question…');if(u&&!ab())await handleInterjection(u);resolve();};
+    window._ask=async()=>{if(settled)return;settled=true;clearFX();showInterrupt(false);window._skip=null;window._ask=null;stopAudio();setSpeaking(false);const u=await listen(T('Go ahead — ask your question…','تفضل — اسأل سؤالك…'));if(u&&!ab())await handleInterjection(u);resolve();};
     speakAsync(text,finish);
   });
 }
 async function handleInterjection(u){
-  if(session&&session.about){setCoach('answering your question…');const sys="You are a warm induction coach for the Government of Dubai Legal Affairs Department. A new Service Ambassador just asked you a question during their induction. Answer warmly and briefly — 1 to 2 spoken sentences — using ONLY these facts: "+JSON.stringify(ABOUT)+". Say 'dirhams', never 'AED'. No markdown.";let a=await claudeText([{role:'user',content:u}],sys)||ABOUT.who;setCoach('');await say(a);return;}
-  const s=session.s;setCoach('answering your question…');
+  if(session&&session.about){setCoach(T('answering your question…','نجاوب على سؤالك…'));const sys="You are a warm induction coach for the Government of Dubai Legal Affairs Department. A new Service Ambassador just asked you a question during their induction. Answer warmly and briefly — 1 to 2 spoken sentences — using ONLY these facts: "+JSON.stringify(ABOUT)+". Say 'dirhams', never 'AED'. No markdown.";let a=await claudeText([{role:'user',content:u}],sys)||ABOUT.who;setCoach('');await say(a);return;}
+  const s=session.s;setCoach(T('answering your question…','نجاوب على سؤالك…'));
   const sys="You are a warm expert coach training a Legal Affairs Department support-staff member (a Service Ambassador) so they can teach the public about "+s.name+". They are the helper, not the applicant. The learner just interrupted you with a question or comment. Answer it warmly and briefly — 1 to 2 spoken sentences — using ONLY these facts: "+facts(s)+". No markdown.";
   let a=await claudeText([{role:'user',content:u}],sys);
   if(!a)a=guideOffline(s,u);
@@ -1283,6 +1283,49 @@ const L_FAILQUIZ=["That's {C} out of 3 — you need at least 2 to pass, so we ha
 const L_REDO=["Fresh set of questions — here we go.","New questions this time. Take your time.","Round two, different questions. You've got this.","Let's try again with a different mix."];
 const L_CERT=["Outstanding — you've certified {S}. Head back and pick your next planet whenever you're ready.","Brilliant work — {S} is certified. Choose your next planet when you like.","That's a certification on {S}. Back to the galaxy when you're ready for the next."];
 const L_NOTCERT=["Good progress on {S} — revisit it any time to sharpen up and certify.","Solid effort on {S}. Come back to tighten the tricky bits and lock in the certificate.","Nice work on {S} — another pass and you'll have it certified."];
+/* ════ Bilingual: English / Emirati Arabic (اللهجة الإماراتية) ════ */
+let LANG='en';try{LANG=localStorage.getItem('academy_lang')||'en';}catch(e){}
+function isAr(){return LANG==='ar';}
+function T(en,ar){return isAr()?ar:en;}
+function numStr(n){return isAr()?String(n).replace(/[0-9]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[+d];}):String(n);}
+function langDirective(){return isAr()?' \n\nLANGUAGE: Write ALL spoken text — every JSON string value and your entire reply — in warm, natural EMIRATI / GULF dialect Arabic (اللهجة الإماراتية الدارجة), the way a friendly Emirati coach actually talks; not Modern Standard Arabic and not stiff/formal. Keep JSON keys and the official English service and field names in English. Write currency as «درهم».':'';}
+async function tr(text){if(!isAr()||!text)return text;try{var a=await claudeText([{role:'user',content:'Translate into warm, natural spoken Emirati Gulf Arabic. Output ONLY the translation, nothing else:\n'+text}],'You are an expert translator into Emirati Gulf Arabic dialect. Output only the translation.');return (a&&a.trim())||text;}catch(e){return text;}}
+const L_GREET_AR=["هلا والله! أنا مدربك في خدمة {S}. بشرحها لك على ثلاث أجزاء قصيرة، وبعد كل جزء بسألك سؤال بسيط عشان ترسخ المعلومة، وبعدها ثلاث تمارين مع عملاء. وقّفني أي وقت تبي تسأل."];
+const L_CHECK_AR=["سؤال سريع —","خل نثبّتها —","وحدة لك —","عندي لك سؤال —","عشان تتمكّن —","سؤال خفيف —"];
+const L_MORECHECKS_AR=["قرّبنا — خل نثبّتها بكم سؤال قصير قبل التمارين.","قريب! كم سؤال ثاني عشان نتأكد إنها راسخة، وبعدها نبدأ.","خل نقوّيها بكم سؤال قبل ما تواجه عملاء حقيقيين."];
+const L_SIMGOOD_AR=["واضح إنك متمكّن — الحين الجد. ثلاث عملاء، أنا أمثّلهم وانت ترد مثل ما بترد عالمكتب.","شغل قوي. خل نخلّيها واقع: ثلاث عملاء. أنا العميل وانت السفير."];
+const L_SIMOK_AR=["مجهود طيب — التكرار بيثبّتها. ثلاث تمارين الحين، أنا العميل.","ولا يهمك — التكرار يساعد. ثلاث عملاء جايين؛ رد مثل السفير."];
+const L_ROLE_AR=["يا عميل جاي.","التالي — واحد يقرب لمكتبك.","عميل يقرب.","زين، العميل رقم {N}.","طيب، هذا واحد ثاني."];
+const L_CORRECT_AR=["بالضبط.","صح تماماً.","هذي هي.","جبتها.","ممتاز.","عين الصواب."];
+const L_WRONG_AR=["مو بالضبط — {A}","قريب، بس {A}","مو هالمرة — {A}","مم، مو بالضبط. {A}"];
+const L_RETRY_AR=["جرّب مرة ثانية.","عطها محاولة ثانية.","حاول مرة ثانية وفكّر فيها.","محاولة أخيرة — تقدر."];
+const L_FAILQUIZ_AR=["جبت {C} من ٣ — تحتاج ٢ على الأقل عشان تنجح، فما عدّيناها بعد. ولا يهمك، خل نعيدها بأسئلة جديدة.","مو كافية هالمرة — {C} من ٣، وتحتاج ٢. بنعيد بأسئلة مختلفة؛ بتجيبها.","جبت {C} من ٣، ناقصك وحدة. خل نعيد بمجموعة أسئلة جديدة."];
+const L_REDO_AR=["أسئلة جديدة — يلا.","أسئلة جديدة هالمرة، خذ وقتك.","الجولة الثانية بأسئلة مختلفة. تقدر."];
+const L_CERT_AR=["ممتاز — حصّلت شهادة {S}. ارجع واختر الكوكب التالي وقت ما تجهز.","شغل رائع — {S} صارت معتمدة. اختر كوكبك التالي وقت ما تبي."];
+const L_NOTCERT_AR=["تقدّم زين في {S} — ارجع لها أي وقت تقوّي نفسك وتعتمد.","مجهود طيب في {S}. ارجع تضبط النقاط الصعبة وتحصّل الشهادة."];
+const _LMAP={GREET:[L_GREET,L_GREET_AR],CHECK:[L_CHECK,L_CHECK_AR],MORECHECKS:[L_MORECHECKS,L_MORECHECKS_AR],SIMGOOD:[L_SIMGOOD,L_SIMGOOD_AR],SIMOK:[L_SIMOK,L_SIMOK_AR],ROLE:[L_ROLE,L_ROLE_AR],CORRECT:[L_CORRECT,L_CORRECT_AR],WRONG:[L_WRONG,L_WRONG_AR],RETRY:[L_RETRY,L_RETRY_AR],FAILQUIZ:[L_FAILQUIZ,L_FAILQUIZ_AR],REDO:[L_REDO,L_REDO_AR],CERT:[L_CERT,L_CERT_AR],NOTCERT:[L_NOTCERT,L_NOTCERT_AR]};
+function LL(n){var e=_LMAP[n];return e?(isAr()?e[1]:e[0]):[''];}
+function setLang(l){LANG=(l==='ar')?'ar':'en';try{localStorage.setItem('academy_lang',LANG);}catch(e){}applyLang();}
+function applyLang(){try{
+  var ar=isAr();document.documentElement.lang=ar?'ar':'en';if(document.body)document.body.classList.toggle('ar',ar);
+  var lbl=document.getElementById('langLbl');if(lbl)lbl.textContent=ar?'English':'العربية';
+  var byId=function(id,t){var e=document.getElementById(id);if(e)e.textContent=t;};
+  byId('stExit',ar?'✕ رجوع للمجرة':'Exit to galaxy ✕');byId('stSubmit',ar?'إرسال':'Send');byId('stSkip',ar?'تخطّي':'Skip');
+  var ab=document.getElementById('askBtn');if(ab)ab.textContent=ar?'✋ وقّفني واسأل':'✋ Pause & ask a question';
+  var inp=document.getElementById('stInput');if(inp)inp.placeholder=ar?'…أو اكتب جوابك':'…or type your answer';
+  var ph=function(k,t){var e=document.querySelector('.phase[data-ph="'+k+'"]');if(e)e.innerHTML='<span class="d"></span>'+t;};
+  ph('learn',ar?'تعلّم وتحقّق':'Learn &amp; check');ph('sim',ar?'محاكاة':'Role-play');
+}catch(e){}}
+(function(){try{
+  var st=document.createElement('style');
+  st.textContent='.langbtn{position:fixed;top:12px;left:12px;z-index:45;background:rgba(10,13,26,.62);border:1px solid rgba(255,255,255,.16);color:#e7edf8;border-radius:20px;padding:7px 14px;font-size:12.5px;font-weight:700;cursor:pointer;backdrop-filter:blur(12px);font-family:var(--sans,system-ui,sans-serif)}.langbtn:active{transform:scale(.96)}body.ar #cap{direction:rtl}body.ar #capText{direction:rtl}';
+  document.head.appendChild(st);
+  var b=document.createElement('button');b.className='langbtn';b.id='langBtn';b.type='button';b.innerHTML='<span id="langLbl"></span>';
+  b.addEventListener('click',function(){setLang(isAr()?'en':'ar');});
+  if(document.body)document.body.appendChild(b);
+}catch(e){}})();
+try{applyLang();}catch(e){}
+
 // pull a question from the remaining pool that best fits the section just taught
 function pickQFor(cat,pool){
   if(!pool||!pool.length)return null;
@@ -1298,18 +1341,19 @@ function pickQFor(cat,pool){
 async function askCheck(s,q){
   if(!q)return 0;
   VOX.morph('nebula');
-  await say(pick(L_CHECK)+' '+q.q);if(ab())return 0;
-  let ans=await listen('Answer the question…');if(ab())return 0;
+  const _qq=await tr(q.q);if(ab())return 0;
+  await say(pick(LL('CHECK'))+' '+_qq);if(ab())return 0;
+  let ans=await listen(T('Answer the question…','جاوب على السؤال…'));if(ab())return 0;
   let g=await gradeAnswer(s,q.q,q.a,ans);if(ab())return 0;
-  if(!g.correct){setCoach('↻ one more try');await say(pick(L_RETRY));if(ab())return 0;ans=await listen('Try once more…');if(ab())return 0;g=await gradeAnswer(s,q.q,q.a,ans);if(ab())return 0;}
-  setCoach(g.correct?'✓ correct':'✗ noted');await say(g.feedback);setCoach('');
+  if(!g.correct){setCoach(T('↻ one more try','↻ حاول مرة ثانية'));await say(pick(LL('RETRY')));if(ab())return 0;ans=await listen(T('Try once more…','حاول مرة ثانية…'));if(ab())return 0;g=await gradeAnswer(s,q.q,q.a,ans);if(ab())return 0;}
+  setCoach(g.correct?T('✓ correct','✓ صح'):T('✗ noted','✗ مسجل'));await say(g.feedback);setCoach('');
   return g.correct?1:0;
 }
 async function runLesson(s){
   buildBoard(s);setPhase('learn');setCoach('');
   let L=null;const lessonP=getLesson(s).then(v=>{L=v;return v;});  // prefetch during the greeting so there's no dead pause
-  await say(pick(L_GREET).replace('{S}',shortName(s)));if(ab())return;
-  if(!L){setCoach('Putting your lesson together…');L=await lessonP;setCoach('');}if(ab())return;
+  await say(pick(LL('GREET')).replace('{S}',shortName(s)));if(ab())return;
+  if(!L){setCoach(T('Putting your lesson together…','نجهز درسك…'));L=await lessonP;setCoach('');}if(ab())return;
   // teach a section, then immediately check it — questions sprinkled through the lesson, not bunched at the end
   const pool=shuffle(s.quiz);let correct=0;
   revealSteps();await teachSay(L.steps,()=>sectionFX('steps',s,L.steps));if(ab())return;
@@ -1322,27 +1366,27 @@ async function runLesson(s){
   // need at least 2 of 3 right; if short, sprinkle a couple more until it sticks (cap to avoid trapping)
   let extra=0;
   while(correct<2&&extra<4){
-    if(extra===0){await say(pick(L_MORECHECKS));if(ab())return;}
+    if(extra===0){await say(pick(LL('MORECHECKS')));if(ab())return;}
     if(!pool.length)pool.push(...shuffle(s.quiz));
     correct+=await askCheck(s,pool.shift());if(ab())return;extra++;
   }
   hideBoard();P(s.id).quiz=correct>=2;save();updateHUD();flushSync();
   markPhaseDone('learn');setPhase('sim');VOX.morph('nebula');
-  await say(correct>=2?pick(L_SIMGOOD):pick(L_SIMOK));if(ab())return;
+  await say(correct>=2?pick(LL('SIMGOOD')):pick(LL('SIMOK')));if(ab())return;
   let total=0;
   for(let i=0;i<s.sims.length;i++){if(ab())return;const line=s.sims[i];
-    await say(pick(L_ROLE).replace('{N}',(i+1)));if(ab())return;
-    showCustomerCard(line,"a customer");VOX.morph('person');
-    await say(line,true);if(ab())return;
-    const ans=await listen('Respond to the customer…');if(ab())return;
+    await say(pick(LL('ROLE')).replace('{N}',(i+1)));if(ab())return;
+    const _cl=await tr(line);if(ab())return;showCustomerCard(_cl,"a customer");VOX.morph('person');
+    await say(_cl,true);if(ab())return;
+    const ans=await listen(T('Respond to the customer…','رد على العميل…'));if(ab())return;
     const g=await gradeSim(s,line,ans);if(ab())return;
-    total+=g.score;setCoach('Score: '+g.score+'/100');
+    total+=g.score;setCoach(T('Score: ','النتيجة: ')+g.score+'/100');
     await say(g.feedback);if(ab())return;setCoach('');}
   hideBoard();
   const avg=total/s.sims.length;P(s.id).sim=avg>=55;save();updateHUD();flushSync();
   markPhaseDone('sim');
   const done=certified(s.id);
-  await say((done?pick(L_CERT):pick(L_NOTCERT)).replace('{S}',shortName(s)));
+  await say((done?pick(LL('CERT')):pick(LL('NOTCERT'))).replace('{S}',shortName(s)));
   showControls(true);document.getElementById('stControls').innerHTML='<button class="sbtn gold" onclick="exitStage()">Back to the galaxy →</button>';
 }
 function exitStage(){
@@ -1351,8 +1395,8 @@ function exitStage(){
   onUserFinal=null;window._submit=null;window._skip=null;window._skipL=null;
   const rail=document.querySelector('.phase-rail');if(rail)rail.style.display='';
   stage.classList.remove('on');VOX.stop();
-  document.getElementById('stControls').innerHTML='<button class="mic" id="stMic" title="Speak"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg></button><input class="st-input" id="stInput" placeholder="…or type your answer"/><button class="sbtn go" id="stSubmit">Send</button><button class="sbtn" id="stSkip">Skip</button>';
-  document.getElementById('stMic').addEventListener('click',()=>{if(!recog){document.getElementById('stInput').focus();return;}if(recognising){recog.stop();return;}try{recog.start();recognising=true;document.getElementById('stMic').classList.add('live');}catch(e){}});
+  document.getElementById('stControls').innerHTML='<button class="mic" id="stMic" title="Speak"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg></button><input class="st-input" id="stInput" placeholder="…or type your answer"/><button class="sbtn go" id="stSubmit">Send</button><button class="sbtn" id="stSkip">Skip</button>';applyLang();
+  document.getElementById('stMic').addEventListener('click',()=>{if(!recog){document.getElementById('stInput').focus();return;}if(recognising){recog.stop();return;}try{recog.lang=isAr()?'ar-AE':'en-US';recog.start();recognising=true;document.getElementById('stMic').classList.add('live');}catch(e){}});
   document.getElementById('stSubmit').addEventListener('click',()=>{if(window._submit)window._submit();});
   document.getElementById('stInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&window._submit)window._submit();});
   document.getElementById('stSkip').addEventListener('click',()=>{if(window._skip)window._skip();else if(window._skipL)window._skipL();});

@@ -12,12 +12,15 @@ module.exports = async function (context, req) {
   const text = String(b.text || '').slice(0, 1500);
   if (!text.trim()) return S.json(context, 400, { error: 'no text' });
 
-  const voice = process.env.ELEVENLABS_VOICE || 'EXAVITQu4vr4xnSDxMaL';
+  const lang = (b.lang === 'ar') ? 'ar' : 'en';
+  const voice = (lang === 'ar' && process.env.ELEVENLABS_VOICE_AR) ? process.env.ELEVENLABS_VOICE_AR
+              : (process.env.ELEVENLABS_VOICE || 'EXAVITQu4vr4xnSDxMaL');
+  const model = (lang === 'ar') ? (process.env.ELEVENLABS_MODEL_AR || 'eleven_multilingual_v2') : 'eleven_turbo_v2_5';
   try {
     const r = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voice, {
       method: 'POST',
       headers: { 'xi-api-key': key, 'content-type': 'application/json', 'accept': 'audio/mpeg' },
-      body: JSON.stringify({ text, model_id: 'eleven_turbo_v2_5', voice_settings: { stability: 0.4, similarity_boost: 0.7 } })
+      body: JSON.stringify({ text, model_id: model, voice_settings: { stability: 0.4, similarity_boost: 0.7 } })
     });
     if (!r.ok) { context.log.error('tts upstream', r.status); return S.json(context, 502, { error: 'tts upstream' }); }
     const buf = Buffer.from(await r.arrayBuffer());
