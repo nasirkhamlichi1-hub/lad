@@ -155,15 +155,14 @@ h1{font-family:var(--serif);font-size:42px;font-weight:400;letter-spacing:-.02em
             <b>camera and microphone</b> to talk with you and read the room — attention, mood, and
             whether you're focused.</p>
 
-          <label class="consent">
-            <input type="checkbox" id="consent"/>
-            <span>I consent to my camera and microphone being used for this live training session.
-              Camera analysis happens in real time to keep me engaged; see the
-              <a href="privacy.html">privacy notice</a>.</span>
-          </label>
+          <div class="consent">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <span>Your camera and microphone are used live so the trainer can talk with you and
+              keep you engaged. Camera analysis is part of the training session.</span>
+          </div>
 
           <button id="startBtn" class="btn btn-pri btn-block" disabled>Begin session</button>
-          <p class="note" id="setupNote">Select a lesson and tick consent to begin.</p>
+          <p class="note" id="setupNote">Select a lesson to begin.</p>
         </div>
       </div>
     </div>
@@ -259,12 +258,9 @@ h1{font-family:var(--serif);font-size:42px;font-weight:400;letter-spacing:-.02em
     });
   }
 
-  el('consent').addEventListener('change', refreshStart);
   function refreshStart(){
-    var ok = state.selected && el('consent').checked;
-    el('startBtn').disabled = !ok;
-    el('setupNote').textContent = !state.selected ? 'Select a lesson and tick consent to begin.'
-      : (!el('consent').checked ? 'Tick the consent box to enable your camera.' : 'Ready when you are.');
+    el('startBtn').disabled = !state.selected;
+    el('setupNote').textContent = state.selected ? 'Ready when you are.' : 'Select a lesson to begin.';
   }
 
   // ─── Start ─────────────────────────────────────────────────────────
