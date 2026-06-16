@@ -201,9 +201,38 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
   function toast(m){var t=el('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2600);}
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 
-  Promise.all([api.trainerStatus(),api.trainerLessons()]).then(function(r){
-    S.status=r[0];S.lessons=r[1]||[];S.morphcastKey=(r[0]&&r[0].morphcastKey)||'';renderEngine();renderLessons();
-  }).catch(function(e){toast('Could not load: '+e.message);});
+  // DEMO mode = no backend configured, or ?demo=1 forced. Everything runs in the
+  // browser (scripted brain, animated avatar, browser voice, free perception),
+  // so the page is a complete working model with zero infrastructure or keys.
+  var DEMO = !api.enabled || /[?&]demo=1/.test(location.search);
+  var DEMO_LESSONS=[
+    {id:'demo-goodfaith',title:'Mock Session — Good Faith in Negotiations',summary:'A short demo so you can try the trainer end-to-end.',duration_min:5,cpd_points:1,
+     objectives:['Explain what the duty to negotiate in good faith means','State what an injured party can recover (reliance loss, not lost profit)','Apply the duty to a short scenario']},
+    {id:'demo-aviation',title:'Mock Session — Air Carrier Liability',summary:'A quick taster from the aviation course.',duration_min:5,cpd_points:1,
+     objectives:['Explain the Montreal Convention 113,000 SDR threshold','State the UAE baggage compensation cap (150 AED/kg)','Recall the two-year limitation period']}
+  ];
+
+  // Self-contained scripted brain for DEMO (mirrors the backend fallback).
+  function localBrain(lesson,history,perception){
+    var objs=(lesson&&lesson.objectives)||[];var total=objs.length;
+    var lawyerTurns=history.filter(function(h){return h.role==='lawyer';}).length;
+    var note=perception&&(perception.phone||perception.attention==='distracted'||perception.attention==='away');
+    var nudge=note?'I want to make sure this lands — let’s keep our focus here for a moment. ':'';
+    if(!total)return{say:'Tell me what you’d like to focus on today.',complete:false,coverage:{done:0,total:0}};
+    if(lawyerTurns===0)return{say:nudge+'Welcome — let’s begin. '+objs[0]+'. In your own words, what does that mean to you?',complete:false,coverage:{done:0,total:total}};
+    var idx=lawyerTurns;var done=Math.min(idx,total);
+    if(idx>=total)return{say:nudge+'Good — that covers everything we set out to. Well done; you can apply these now.',complete:true,coverage:{done:total,total:total}};
+    return{say:nudge+'Good. Next: '+objs[idx]+'. How would you apply that with a client?',complete:false,coverage:{done:done,total:total}};
+  }
+
+  if(DEMO){
+    S.status={engines:{tavus:false,browser:true,anam:false,brain:false,elevenlabs:false,morphcast:false}};
+    S.lessons=DEMO_LESSONS;renderEngine();renderLessons();
+  } else {
+    Promise.all([api.trainerStatus(),api.trainerLessons()]).then(function(r){
+      S.status=r[0];S.lessons=r[1]||[];S.morphcastKey=(r[0]&&r[0].morphcastKey)||'';renderEngine();renderLessons();
+    }).catch(function(e){toast('Could not load: '+e.message);});
+  }
 
   function renderEngine(){
     var eng=(S.status&&S.status.engines)||{};
@@ -237,16 +266,19 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
   // ─── Start ───────────────────────────────────────────────────────────
   el('startBtn').addEventListener('click', function(){
     el('startBtn').disabled=true;el('startBtn').textContent='Connecting…';
-    api.trainerStartBrowserSession(S.selected.id).then(function(s){
-      S.session=s;S.face=s.face||'stylised';S.brain=s.brain||'fallback';S.startedAt=Date.now();S.history=[];
-      el('setup').classList.add('hidden');el('session').style.display='block';
-      el('recLabel').textContent=(s.resumed?'Resumed · ':'Live · ')+S.selected.title;
-      el('brainLabel').textContent=(S.brain==='claude'?'Claude':'Scripted')+' · '+(S.face==='anam'?'Anam':'Animated');
-      startCamera();
-      if(S.face==='anam'){initAnam().catch(function(){S.face='stylised';showStylised();});} else {showStylised();}
-      nextTurn(); // first turn (greeting + first element)
-    }).catch(function(e){el('startBtn').disabled=false;el('startBtn').textContent='Begin session';toast('Could not start: '+e.message);});
+    if(DEMO){ proceedStart({sessionId:'demo',face:'stylised',brain:'fallback',resumed:false}); return; }
+    api.trainerStartBrowserSession(S.selected.id).then(proceedStart)
+      .catch(function(e){el('startBtn').disabled=false;el('startBtn').textContent='Begin session';toast('Could not start: '+e.message);});
   });
+  function proceedStart(s){
+    S.session=s;S.face=s.face||'stylised';S.brain=s.brain||'fallback';S.startedAt=Date.now();S.history=[];
+    el('setup').classList.add('hidden');el('session').style.display='block';
+    el('recLabel').textContent=(s.resumed?'Resumed · ':'Live · ')+S.selected.title;
+    el('brainLabel').textContent=(S.brain==='claude'?'Claude':'Scripted')+' · '+(S.face==='anam'?'Anam':'Animated');
+    startCamera();
+    if(S.face==='anam'){initAnam().catch(function(){S.face='stylised';showStylised();});} else {showStylised();}
+    nextTurn(); // first turn (greeting + first element)
+  }
 
   function showStylised(){el('anamVideo').classList.add('hidden');el('stylisedFace').classList.remove('hidden');}
 
@@ -351,7 +383,8 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
   // ─── The turn loop ───────────────────────────────────────────────────
   function nextTurn(){
     if(S.busy||S.ended)return;S.busy=true;stopListening();
-    api.trainerTurn(S.session.sessionId,S.history,S.perception).then(function(r){
+    var p=DEMO?Promise.resolve(localBrain(S.selected,S.history,S.perception)):api.trainerTurn(S.session.sessionId,S.history,S.perception);
+    p.then(function(r){
       S.busy=false;
       S.history.push({role:'trainer',text:r.say});
       updateProgress(r.coverage);
@@ -414,9 +447,12 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
 
   // ─── Pause / Finish ──────────────────────────────────────────────────
   function teardown(){S.ended=true;stopListening();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);try{if(S.morphcast&&S.morphcast.stop)S.morphcast.stop();}catch(e){}if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
-  el('pauseBtn').onclick=function(){teardown();var sec=Math.round((Date.now()-S.startedAt)/1000);api.trainerPauseSession(S.session.sessionId,{seconds:sec}).catch(function(){}).then(function(){toast('Paused — resume anytime.');setTimeout(function(){location.reload();},1200);});};
+  el('pauseBtn').onclick=function(){teardown();var sec=Math.round((Date.now()-S.startedAt)/1000);
+    if(DEMO){toast('Paused (demo).');setTimeout(function(){location.reload();},1000);return;}
+    api.trainerPauseSession(S.session.sessionId,{seconds:sec}).catch(function(){}).then(function(){toast('Paused — resume anytime.');setTimeout(function(){location.reload();},1200);});};
   el('endBtn').onclick=function(){finish(false);};
-  function finish(auto){ if(S.ended&&!auto){} teardown(); var sec=Math.round((Date.now()-S.startedAt)/1000);
+  function finish(auto){ teardown(); var sec=Math.round((Date.now()-S.startedAt)/1000);
+    if(DEMO){toast('Session complete (demo). Well done.');setTimeout(function(){location.reload();},1500);return;}
     api.trainerEndSession(S.session.sessionId,{seconds:sec}).then(function(r){var p=r&&r.cpdAwarded;toast(p?('Completed — '+p+' CPD point'+(p>1?'s':'')+'. Well done.'):'Session complete. Well done.');setTimeout(function(){location.reload();},1600);}).catch(function(){toast('Session ended.');setTimeout(function(){location.reload();},1400);}); }
 })();
 </script>
