@@ -442,7 +442,20 @@ input.key:focus{outline:none;border-color:var(--green2)}
       on('VIDEO_PLAY_STARTED',function(){ el('percNote').textContent='Photoreal face streaming live.'; });
       return client.streamToVideoElement('anamVideo').then(function(){
         var v=el('anamVideo');v.classList.remove('hidden');el('stylisedFace').classList.add('hidden');
-        try{v.play&&v.play();}catch(e){}            // belt-and-braces against autoplay
+        // Start muted so the face always renders (muted autoplay is always allowed),
+        // then immediately try to unmute for the Anam voice. If the browser blocks
+        // audio autoplay, show a one-tap "enable sound" prompt in the caption.
+        v.muted=true; try{v.play&&v.play();}catch(e){}
+        (function enableAudio(){
+          v.muted=false;
+          var p=v.play&&v.play();
+          if(p&&p.catch){ p.catch(function(){
+            v.muted=true; try{v.play&&v.play();}catch(_){}
+            el('caption').innerHTML='<b>🔊 Tap anywhere to enable the trainer’s voice.</b>';
+            var unmute=function(){ v.muted=false; v.play&&v.play(); document.removeEventListener('click',unmute); };
+            document.addEventListener('click',unmute,{once:true});
+          }); }
+        })();
         S.face='anam';
         el('enginePill').className='pill pill-live';el('enginePill').textContent='● Photoreal · Claude';
         S.anam={speak:function(t){return client.talk(t);},stop:function(){try{client.stopStreaming&&client.stopStreaming();}catch(e){}}};
