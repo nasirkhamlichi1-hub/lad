@@ -26,6 +26,13 @@
   // Demo/empty: ''  (use localStorage fallback)
   // ─── END EDIT ──────────────────────────────────────────────────────
 
+  // Netlify PR deploy previews (deploy-preview-N--<site>.netlify.app) point at
+  // the Render staging backend, so a feature branch's API + DB can be tested
+  // end-to-end without touching production. Never affects the live site.
+  if (typeof location !== 'undefined' && /^deploy-preview-\d+--/.test(location.hostname)) {
+    window.LAD_API_BASE = 'https://lad-clpd-backend.onrender.com';
+  }
+
   // Detect environment for logging / debugging only
   window.LAD_ENV = (function () {
     const host = (typeof location !== 'undefined' && location.hostname) || '';
