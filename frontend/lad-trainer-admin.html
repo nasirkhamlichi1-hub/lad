@@ -146,7 +146,9 @@ tr:hover td{background:var(--paper)}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green2)" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
         <h3>Lessons</h3>
         <div class="top-spacer"></div>
+        <button id="importBtn" class="btn btn-ghost btn-sm" title="Upload a course JSON file to create the lessons">↑ Import JSON</button>
         <button id="newBtn" class="btn btn-ghost btn-sm">+ New</button>
+        <input type="file" id="importFile" accept=".json,application/json" style="display:none"/>
       </div>
       <div class="card-b">
         <div id="lessons" class="lessons"><div class="empty">Loading…</div></div>
@@ -329,6 +331,29 @@ tr:hover td{background:var(--paper)}
 
   el('newBtn').onclick=clearEditor;
   el('resetBtn').onclick=clearEditor;
+
+  // ─── Import a course JSON file (one lesson object, or an array) ───────
+  el('importBtn').onclick=function(){ el('importFile').click(); };
+  el('importFile').addEventListener('change', function(ev){
+    var file=ev.target.files && ev.target.files[0];
+    if(!file) return;
+    var reader=new FileReader();
+    reader.onload=function(){
+      var parsed;
+      try { parsed=JSON.parse(reader.result); }
+      catch(e){ toast('That file is not valid JSON.'); el('importFile').value=''; return; }
+      var lessons=Array.isArray(parsed)?parsed:[parsed];
+      var bad=lessons.find(function(L){ return !L || !String(L.title||'').trim() || !String(L.body||'').trim(); });
+      if(bad){ toast('Each lesson needs at least a title and body.'); el('importFile').value=''; return; }
+      if(!confirm('Import '+lessons.length+' lesson'+(lessons.length>1?'s':'')+' from "'+file.name+'"? Existing lessons with the same id are updated.')){ el('importFile').value=''; return; }
+      api.trainerSaveLessons(lessons).then(function(){
+        toast('Imported '+lessons.length+' lesson'+(lessons.length>1?'s':'')+'.');
+        el('importFile').value='';
+        loadLessons();
+      }).catch(function(e){ el('importFile').value=''; handleAuth(e); toast('Import failed: '+(e.message||e)); });
+    };
+    reader.readAsText(file);
+  });
 
   el('editor').addEventListener('submit', function(ev){
     ev.preventDefault();
