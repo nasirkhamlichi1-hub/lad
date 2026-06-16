@@ -79,15 +79,15 @@ function deleteLesson(id) {
 
 // ─── Sessions (one per live conversation) ────────────────────────────
 
-function createSession({ conversationId, conversationUrl, lessonId, lawyerId, status, progressId, resumedFromId }) {
+function createSession({ conversationId, conversationUrl, lessonId, lawyerId, status, progressId, resumedFromId, engine }) {
   const id = genId('st');
   db.prepare(`
     INSERT INTO trainer_sessions
-      (id, conversation_id, conversation_url, lesson_id, lawyer_id, status, events, progress_id, resumed_from_id)
-    VALUES (?, ?, ?, ?, ?, ?, '[]', ?, ?)
+      (id, conversation_id, conversation_url, lesson_id, lawyer_id, status, events, progress_id, resumed_from_id, engine)
+    VALUES (?, ?, ?, ?, ?, ?, '[]', ?, ?, ?)
   `).run(
     id, conversationId || null, conversationUrl || null, lessonId || null, lawyerId || null,
-    status || 'active', progressId || null, resumedFromId || null
+    status || 'active', progressId || null, resumedFromId || null, engine || 'tavus'
   );
   return getSession(id);
 }

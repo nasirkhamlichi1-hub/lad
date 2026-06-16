@@ -88,6 +88,25 @@ module.exports = {
     model:   process.env.ELEVENLABS_MODEL || 'eleven_turbo_v2_5',
   },
 
+  // ─── Anam (photoreal avatar, scalable "browser" engine) ──────────────
+  // The cheap-to-scale alternative to Tavus: Anam renders the photoreal face,
+  // Claude (anthropic above) is the brain, ElevenLabs is the voice, and the
+  // browser does perception. Keys stay server-side; the browser only ever sees
+  // a short-lived session token. If ANAM_API_KEY is unset, the browser engine
+  // falls back to a stylised avatar so it still runs.
+  anam: {
+    apiKey:   process.env.ANAM_API_KEY || '',
+    baseUrl:  process.env.ANAM_BASE_URL || 'https://api.anam.ai',
+    avatarId: process.env.ANAM_AVATAR_ID || '',           // a photoreal persona/avatar id
+    name:     process.env.ANAM_AVATAR_NAME || 'CLPD Trainer',
+  },
+
+  // Claude as the trainer brain (scalable engine). Reuses anthropic.apiKey.
+  trainerBrain: {
+    model:     process.env.TRAINER_BRAIN_MODEL || process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+    maxTokens: parseInt(process.env.TRAINER_BRAIN_MAX_TOKENS || '500', 10),
+  },
+
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10),
   rateLimitMax:      parseInt(process.env.RATE_LIMIT_MAX || '120', 10),
 };

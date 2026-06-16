@@ -26,6 +26,8 @@ const path = require('path');
 const router = express.Router();
 
 const tavus = require('../services/tavus');
+const trainerBrain = require('../services/trainerBrain');
+const anam = require('../services/anam');
 const trainerStore = require('../services/trainerStore');
 const store = require('../services/store');
 const config = require('../config');
@@ -36,13 +38,22 @@ const ADMIN_ROLES = ['lad_admin', 'lad_super_admin'];
 
 // ─── Status ──────────────────────────────────────────────────────────
 router.get('/status', (_req, res) => {
+  const elevenlabs = !!(config.elevenlabs.apiKey && config.elevenlabs.voiceId);
   res.json({
     configured: tavus.isConfigured(),
     demo: !tavus.isConfigured(),
-    voice: config.elevenlabs.apiKey && config.elevenlabs.voiceId ? 'elevenlabs' : 'tavus-default',
+    voice: elevenlabs ? 'elevenlabs' : 'tavus-default',
     perceptionModel: config.tavus.perceptionModel,
     personaConfigured: !!config.tavus.personaId,
     lessonCount: trainerStore.listLessons().length,
+    // Engines available to the frontend:
+    engines: {
+      tavus: tavus.isConfigured(),          // premium photoreal bundled avatar
+      browser: true,                        // scalable engine always available
+      anam: anam.isConfigured(),            // photoreal face for the browser engine
+      brain: trainerBrain.isConfigured(),   // Claude brain (else deterministic fallback)
+      elevenlabs,                           // ElevenLabs voice
+    },
   });
 });
 
@@ -158,6 +169,28 @@ router.post('/sessions', requireAuth, async (req, res, next) => {
       ? { context: progress.resume_context, percent: progress.percent_complete }
       : null;
 
+    // Scalable BROWSER engine — Anam face + Claude brain + ElevenLabs voice +
+    // in-browser perception. No Tavus call; the frontend drives the dialogue
+    // via POST /turn and renders the avatar itself.
+    if ((req.body && req.body.engine) === 'browser') {
+      const session = trainerStore.createSession({
+        lessonId: lesson ? lesson.id : null, lawyerId, status: 'active', engine: 'browser',
+        progressId: progress ? progress.id : null,
+        resumedFromId: resuming ? progress.last_session_id : null,
+      });
+      if (progress) trainerStore.touchProgressOnStart(progress.id, session.id);
+      log.info('trainer_session_started', { sessionId: session.id, engine: 'browser', lessonId: lesson ? lesson.id : null, resumed: resuming });
+      return res.json({
+        engine: 'browser',
+        sessionId: session.id,
+        lesson,
+        resumed: resuming,
+        face: anam.isConfigured() ? 'anam' : 'stylised',
+        brain: trainerBrain.isConfigured() ? 'claude' : 'fallback',
+        progress: progress ? trainerStore.getProgressById(progress.id) : null,
+      });
+    }
+
     // Demo mode — no Tavus configured. Still tracks progress so the simulated
     // experience behaves like the real one.
     if (!tavus.isConfigured()) {
@@ -267,6 +300,63 @@ router.post('/sessions/:id/end', requireAuth, (req, res, next) => closeSession(r
 
 router.get('/sessions/mine', requireAuth, (req, res) => {
   res.json(trainerStore.listSessionsForLawyer(userId(req)));
+});
+
+// ─── Browser engine: conversational turns (Claude brain) ─────────────
+// The frontend sends the running history + current camera perception; we return
+// the trainer's next short turn plus coverage of the key elements. Coverage is
+// persisted to the progress record so the % is a real measure, not a guess.
+router.post('/turn', requireAuth, async (req, res, next) => {
+  try {
+    const { sessionId, history, perception } = req.body || {};
+    const session = sessionId ? trainerStore.getSession(sessionId) : null;
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+    if (session.lawyer_id && session.lawyer_id !== userId(req) && !isAdmin(req)) {
+      return res.status(403).json({ error: 'Not your session' });
+    }
+
+    const lesson = session.lesson_id ? trainerStore.getLesson(session.lesson_id) : null;
+    let resume = null;
+    if (session.progress_id) {
+      const p = trainerStore.getProgressById(session.progress_id);
+      if (p && session.resumed_from_id && p.resume_context) {
+        resume = { context: p.resume_context, percent: p.percent_complete };
+      }
+    }
+
+    const turn = await trainerBrain.nextTurn({ lesson, history, perception, resume });
+
+    // Persist coverage → progress (hard key-element tracking).
+    const total = (lesson && Array.isArray(lesson.objectives)) ? lesson.objectives.length : 0;
+    let coverage = { done: 0, total };
+    if (session.progress_id && total) {
+      const objectivesDone = (turn.covered || []).map(n => lesson.objectives[n - 1]).filter(Boolean);
+      const percent = turn.complete ? 100 : Math.round((objectivesDone.length / total) * 100);
+      trainerStore.updateProgressLearning(session.progress_id, { objectivesDone, percent });
+      coverage = { done: objectivesDone.length, total };
+    }
+
+    res.json({
+      say: turn.say,
+      complete: !!turn.complete,
+      coverage,
+      brain: turn.engine || 'claude',
+    });
+  } catch (e) { next(e); }
+});
+
+// Mint a short-lived Anam session token for the browser SDK (key stays server-side).
+router.post('/anam/session-token', requireAuth, async (req, res, next) => {
+  try {
+    if (!anam.isConfigured()) {
+      return res.status(503).json({ error: 'Anam not configured', face: 'stylised' });
+    }
+    let lawyer = null;
+    try { lawyer = store.getLawyerById(userId(req)); } catch { /* optional */ }
+    const name = lawyer ? [lawyer.first_name, lawyer.last_name].filter(Boolean).join(' ') : undefined;
+    const token = await anam.createSessionToken({ name });
+    res.json(token);
+  } catch (e) { next(e); }
 });
 
 // ─── Progress (learning records) ─────────────────────────────────────

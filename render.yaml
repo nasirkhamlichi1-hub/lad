@@ -83,6 +83,19 @@ services:
       - key: ELEVENLABS_MODEL
         value: eleven_turbo_v2_5
 
+      # ─── Scalable "browser" engine: Anam face + Claude brain + ElevenLabs ──
+      # Cheap-to-scale alternative to Tavus. Set ANAM_API_KEY + ANAM_AVATAR_ID
+      # for the photoreal face; set ANTHROPIC_API_KEY (above) for the Claude
+      # brain. If unset, the engine still runs (stylised face / scripted brain).
+      - key: ANAM_API_KEY
+        sync: false
+      - key: ANAM_AVATAR_ID
+        sync: false      # a photoreal avatar/persona id from your Anam account
+      - key: ANAM_AVATAR_NAME
+        value: CLPD Trainer
+      - key: TRAINER_BRAIN_MODEL
+        value: claude-sonnet-4-20250514
+
       - key: RATE_LIMIT_WINDOW_MS
         value: "60000"
       - key: RATE_LIMIT_MAX
