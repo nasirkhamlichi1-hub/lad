@@ -131,18 +131,10 @@ input.key:focus{outline:none;border-color:var(--green2)}
         <div class="card-h"><h3>Start your session</h3></div>
         <div class="card-b">
           <p style="font-size:13px;color:var(--slate);line-height:1.55">Uses your <b>camera and microphone</b>.
-            Keys stay in <b>this browser only</b> (localStorage) — never uploaded to us.</p>
-          <label class="fld" for="anamKey">Anam API key</label>
-          <input id="anamKey" class="key" type="password" placeholder="ANAM_API_KEY" autocomplete="off"/>
-          <label class="fld" for="claudeKey">Anthropic (Claude) API key</label>
-          <input id="claudeKey" class="key" type="password" placeholder="sk-ant-…" autocomplete="off"/>
-          <label class="fld" for="avatarId">Anam Persona ID</label>
-          <input id="avatarId" class="key" type="text" value="519f0797-bdc5-47da-a752-f2a5c1fc150f"/>
+            The photoreal face and the AI brain are configured <b>securely on the server</b> — nothing to enter.</p>
           <div class="banner" id="engineNote" style="margin-top:14px"></div>
           <button id="startBtn" class="btn btn-pri btn-block" disabled>Begin session</button>
-          <p class="note" id="setupNote">Enter both keys and select a lesson to begin.</p>
-          <p class="note">Security: these keys were shared in chat — rotate them after testing. This page is a
-            browser-only test build (Anam's <code>unsafe_createClientWithApiKey</code> + direct Claude call).</p>
+          <p class="note" id="setupNote">Select a lesson to begin.</p>
         </div>
       </div>
     </div>
@@ -352,36 +344,28 @@ Your job is not to finish the material — it is to produce a competent learner.
   }
 
   // ─── Claude brain — direct browser call ──────────────────────────────
+  // Brain runs server-side (/api/trainer-turn) so the Anthropic key stays off the
+  // browser. Sends the lesson (approved materials) + history + camera perception.
   function claudeTurn(lesson,history,perception){
-    var total=(lesson.objectives||[]).length;
-    var body={model:CLAUDE_MODEL,max_tokens:1000,system:systemFor(lesson),messages:toMessages(history,perception)};
-    return fetch('https://api.anthropic.com/v1/messages',{
+    return fetch('/api/trainer-turn',{
       method:'POST',
-      headers:{'x-api-key':S.claudeKey,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify(body)
-    }).then(function(r){return r.json();}).then(function(data){
-      if(data&&data.content&&data.content[0]&&data.content[0].text){return parseReply(data.content[0].text,total);}
-      throw new Error((data&&data.error&&data.error.message)||'Claude returned no text');
-    }).catch(function(e){toast('Claude: '+(e.message||e)+' — using fallback');return fallbackTurn(lesson,history,perception);});
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({lesson:lesson,history:history,perception:perception})
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d&&typeof d.say==='string')return {say:d.say,covered:d.covered||[],complete:!!d.complete};
+      throw new Error((d&&d.error)||'no turn');
+    }).catch(function(e){toast('Trainer brain: '+(e.message||e)+' — using fallback');return fallbackTurn(lesson,history,perception);});
   }
 
-  // ─── Setup gate ──────────────────────────────────────────────────────
-  try{
-    el('anamKey').value=localStorage.getItem('anam_key')||'';
-    el('claudeKey').value=localStorage.getItem('claude_key')||'';
-    var savedAv=localStorage.getItem('anam_persona');if(savedAv)el('avatarId').value=savedAv;
-  }catch(e){}
+  // ─── Setup gate (keys live server-side; just pick a lesson) ───────────
   function refreshStart(){
-    var ok=el('anamKey').value.trim()&&el('claudeKey').value.trim()&&S.selected;
+    var ok=!!S.selected;
     el('startBtn').disabled=!ok;
-    el('setupNote').textContent=ok?'Ready when you are.':'Enter both keys and select a lesson to begin.';
-    var both=el('anamKey').value.trim()&&el('claudeKey').value.trim();
-    el('enginePill').className='pill '+(both?'pill-live':'pill-demo');
-    el('enginePill').textContent=both?'● Photoreal · Claude':'Setup';
-    el('engineNote').innerHTML='<span>'+(both?'Anam photoreal face + Claude brain are ready (browser-only, no backend).':'Paste your Anam and Claude keys above.')+'</span>';
+    el('setupNote').textContent=ok?'Ready when you are.':'Select a lesson to begin.';
+    el('enginePill').className='pill pill-live';
+    el('enginePill').textContent='● Photoreal · Claude';
+    el('engineNote').innerHTML='<span>Photoreal face + AI brain are configured on the server — allow camera &amp; mic and begin.</span>';
   }
-  el('anamKey').addEventListener('input',refreshStart);
-  el('claudeKey').addEventListener('input',refreshStart);
 
   function renderLessons(){
     var c=el('lessons');c.innerHTML='';
@@ -419,8 +403,6 @@ Your job is not to finish the material — it is to produce a competent learner.
 
   // ─── Start ───────────────────────────────────────────────────────────
   el('startBtn').addEventListener('click',function(){
-    S.anamKey=el('anamKey').value.trim();S.claudeKey=el('claudeKey').value.trim();S.personaId=el('avatarId').value.trim();
-    try{localStorage.setItem('anam_key',S.anamKey);localStorage.setItem('claude_key',S.claudeKey);localStorage.setItem('anam_persona',S.personaId);}catch(e){}
     el('startBtn').disabled=true;el('startBtn').textContent='Connecting…';
     S.startedAt=Date.now();S.history=[];
     el('setup').classList.add('hidden');el('session').style.display='block';
@@ -461,15 +443,14 @@ Your job is not to finish the material — it is to produce a competent learner.
   // {sessionToken}); this is the flow that returns 200 from /engine/session.
   // The SDK's unsafe_createClientWithApiKey path sends a request Anam rejects (400),
   // so we mint here and hand the token to createClient(token) instead.
+  // The Anam session token is minted server-side (/api/anam-token) so the API key
+  // never reaches the browser. The short-lived token is safe to use client-side.
   function mintAnamToken(){
-    return fetch('https://api.anam.ai/v1/auth/session-token',{
-      method:'POST',
-      headers:{'Authorization':'Bearer '+S.anamKey,'Content-Type':'application/json'},
-      body:JSON.stringify({personaConfig:{personaId:S.personaId}})
-    }).then(function(r){return r.json().then(function(j){return {status:r.status,j:j};});})
+    return fetch('/api/anam-token',{method:'POST',headers:{'content-type':'application/json'},body:'{}'})
+      .then(function(r){return r.json().then(function(j){return {status:r.status,j:j};});})
       .then(function(o){
         if(o.status>=300||!o.j||!o.j.sessionToken){
-          throw new Error('token mint '+o.status+': '+((o.j&&(o.j.message||(o.j.error&&(o.j.error.message||o.j.error))))||'no sessionToken'));
+          throw new Error('token '+o.status+': '+((o.j&&o.j.error)||'no sessionToken'));
         }
         return o.j.sessionToken;
       });
