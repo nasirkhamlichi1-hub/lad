@@ -63,7 +63,7 @@ module.exports = {
 
   anthropic: {
     apiKey: process.env.ANTHROPIC_API_KEY || '',
-    model:  process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+    model:  process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
   },
 
   // ─── Anam (photoreal avatar — face + voice) ──────────────────────────
@@ -89,7 +89,7 @@ module.exports = {
 
   // Claude as the trainer brain (scalable engine). Reuses anthropic.apiKey.
   trainerBrain: {
-    model:     process.env.TRAINER_BRAIN_MODEL || process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+    model:     process.env.TRAINER_BRAIN_MODEL || process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
     maxTokens: parseInt(process.env.TRAINER_BRAIN_MAX_TOKENS || '500', 10),
   },
 

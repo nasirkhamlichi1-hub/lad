@@ -57,7 +57,7 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: ANTHROPIC_MODEL
-        value: claude-sonnet-4-20250514
+        value: claude-sonnet-4-6
 
       # ─── AI Trainer (Anam photoreal face + voice, Claude brain) ───────
       # Set ANAM_API_KEY + ANAM_AVATAR_ID for the photoreal face+voice, and
@@ -72,7 +72,7 @@ services:
       - key: ANAM_AVATAR_NAME
         value: CLPD Trainer
       - key: TRAINER_BRAIN_MODEL
-        value: claude-sonnet-4-20250514
+        value: claude-sonnet-4-6
       # MorphCast Emotion AI — optional richer in-browser perception (client-side
       # licence key, relayed to the frontend). Free model used if unset.
       - key: MORPHCAST_LICENSE_KEY
