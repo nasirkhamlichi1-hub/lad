@@ -147,14 +147,32 @@ function buildLessonContext(lesson) {
 }
 
 // Start a live 1-2-1 conversation for a given lesson + attendee.
-async function createConversation({ lesson, lawyer }) {
+// `resume` (optional) = { context, percent } carried over from a paused
+// session so the trainer continues where the lawyer left off.
+async function createConversation({ lesson, lawyer, resume }) {
   const greetingName = (lawyer && (lawyer.name || lawyer.full_name)) ? `, ${String(lawyer.name || lawyer.full_name).split(' ')[0]}` : '';
+  const resuming = !!(resume && resume.context);
+
+  const conversationalContext = resuming
+    ? [
+        buildLessonContext(lesson),
+        '',
+        '--- RESUMING A PREVIOUS SESSION ---',
+        `The lawyer has already covered part of this lesson (about ${Math.round(resume.percent || 0)}% done).`,
+        'Here is what happened last time so you can continue naturally without repeating yourself:',
+        resume.context,
+        'Greet them back warmly, recap in one short sentence, then continue from where you left off.',
+      ].join('\n')
+    : buildLessonContext(lesson);
+
   const body = {
     replica_id: T.replicaId,
     persona_id: T.personaId || undefined,
-    conversation_name: `CLPD: ${lesson ? lesson.title : 'Session'}`.slice(0, 250),
-    conversational_context: buildLessonContext(lesson),
-    custom_greeting: lesson
+    conversation_name: `CLPD: ${lesson ? lesson.title : 'Session'}${resuming ? ' (resumed)' : ''}`.slice(0, 250),
+    conversational_context: conversationalContext,
+    custom_greeting: resuming
+      ? `Welcome back${greetingName}. Last time we made a start on "${lesson ? lesson.title : 'your session'}" — let's pick up where we left off. Ready to continue?`
+      : lesson
       ? `Hello${greetingName}, I'm your CLPD trainer. Today we'll work through "${lesson.title}" together. Whenever you're ready, just say hello and we'll begin.`
       : `Hello${greetingName}, I'm your CLPD trainer. What would you like to work on today?`,
     callback_url: config.publicApiBase ? `${config.publicApiBase}/api/v1/trainer/callback` : undefined,

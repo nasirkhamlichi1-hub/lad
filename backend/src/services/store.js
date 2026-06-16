@@ -179,6 +179,21 @@ function linkLawyerToUaePass({ lawyerId, uaepass_uuid, unified_id, ip }) {
 
 // ─── Firms ───────────────────────────────────────────────────────────
 
+// Award CPD points to a lawyer (e.g. on completing an AI Trainer lesson).
+// Increments the lifetime total and records an audit-log entry. Idempotency
+// (awarding once) is the caller's responsibility.
+function awardCpdPoints({ lawyerId, points, source = 'ai_trainer', refId = null, ip = null }) {
+  if (!lawyerId || !points) return false;
+  db.prepare('UPDATE lawyers SET lifetime_points = lifetime_points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+    .run(points | 0, lawyerId);
+  try {
+    db.prepare(`INSERT INTO audit_log (actor_id, actor_type, action, target_type, target_id, details, ip)
+      VALUES (?, 'lawyer', 'cpd_award', 'lawyer', ?, ?, ?)`)
+      .run(lawyerId, lawyerId, JSON.stringify({ points: points | 0, source, refId }), ip);
+  } catch { /* audit is best-effort */ }
+  return true;
+}
+
 function getFirmById(id) {
   return db.prepare('SELECT * FROM firms WHERE id = ?').get(id);
 }
@@ -284,7 +299,7 @@ module.exports = {
   getContent, saveContent, getFAQ, saveFAQ,
   // lawyers
   getLawyerById, getLawyerByUaePassUuid, getLawyerByEmiratesId, getLawyerByEmail,
-  getLawyersByFirm, linkLawyerToUaePass,
+  getLawyersByFirm, linkLawyerToUaePass, awardCpdPoints,
   // firms
   getFirmById, getAllFirms,
   // bookings

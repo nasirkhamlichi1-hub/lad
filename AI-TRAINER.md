@@ -40,7 +40,46 @@ For deployment, the IDs are already in `render.yaml`; just set `TAVUS_API_KEY`
 **Remaining / optional next steps:**
 - Wire ElevenLabs voice (set the two vars, re-run `node scripts/create-trainer-persona.js`,
   update `TAVUS_PERSONA_ID`).
+- Make Claude the conversational LLM (Tavus bring-your-own-LLM) for tighter control.
+- Build the frontend "My learning / Resume" UI on top of the new progress API.
 - **Security: rotate the Tavus API key after testing** — it was shared in chat.
+
+---
+
+## ⏳ Learning & progress backend (multi-user, resumable)
+
+Migration `005-trainer-progress.sql` adds a `trainer_progress` table — **one row
+per (lawyer, lesson)** — that aggregates every session into one durable learning
+record. Many lawyers studying the same lesson simply get one row each, which is
+how we track multiple users against the same material.
+
+**What it tracks:** `status` (in_progress / completed), `percent_complete`, cumulative
+`total_seconds`, `session_count`, `resume_context` (the recap fed into the next
+conversation), `cpd_points_awarded`, and timestamps.
+
+**Resume:** `POST /sessions/:id/pause` ends the live Tavus room (freeing the
+concurrency slot) but keeps progress open and stores a resume recap built from
+the transcript + objectives. Starting the lesson again (`POST /sessions`) detects
+the in-progress record and creates a **fresh** conversation seeded with that recap
+and a "welcome back" greeting, so the trainer continues instead of starting over.
+
+**Completion:** `POST /sessions/:id/end` marks the lesson complete and awards its
+CPD points to the lawyer's `lifetime_points` exactly once (`store.awardCpdPoints`,
+audit-logged).
+
+**API surface:**
+| Method | Path | Who | Purpose |
+|---|---|---|---|
+| POST | `/trainer/sessions` | lawyer | start **or** resume (auto-detected) |
+| POST | `/trainer/sessions/:id/pause` | lawyer | stop midway, keep progress |
+| POST | `/trainer/sessions/:id/end` | lawyer | finish → complete + award CPD |
+| GET | `/trainer/progress/mine` | lawyer | my learning across all lessons |
+| GET | `/trainer/progress/:lessonId` | lawyer | one lesson (resume button + preview) |
+| GET | `/trainer/lessons/:id/learners` | admin | everyone studying a lesson |
+| GET | `/trainer/overview` | admin | per-lesson learner/completion rollup |
+
+The resume recap is a heuristic (transcript tail + objectives) today — a clean
+seam (`trainerStore.buildResumeContext`) to swap in a Claude-generated summary later.
 
 ---
 
