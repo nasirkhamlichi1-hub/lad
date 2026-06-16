@@ -571,11 +571,18 @@ Your job is not to finish the material — it is to produce a competent learner.
     S.detLoop=setInterval(function(){
       if(!S.detector||video.readyState<2)return;
       S.detector.detect(video).then(function(preds){
-        var person=preds.find(function(p){return p.class==='person'&&p.score>0.5;});
-        var phone=preds.find(function(p){return p.class==='cell phone'&&p.score>0.45;});
-        S.perception.phone=!!phone;S.perception.present=!!person;
-        if(!person){S.perception.attention='away';}
-        else{var cx=person.bbox[0]+person.bbox[2]/2;var vw=video.videoWidth||640;var centred=cx>vw*0.25&&cx<vw*0.75;var big=person.bbox[3]>(video.videoHeight||480)*0.45;S.perception.attention=(centred&&big)?'engaged':'distracted';}
+        var person=preds.find(function(p){return p.class==='person'&&p.score>0.45;});
+        var phone=preds.find(function(p){return p.class==='cell phone'&&p.score>0.5;});
+        // Smooth over the last few frames so a single missed detection doesn't
+        // wrongly flag you as away/distracted (the detector flickers frame-to-frame).
+        if(!S.det)S.det={p:[],ph:[]};
+        S.det.p.push(!!person);if(S.det.p.length>4)S.det.p.shift();
+        S.det.ph.push(!!phone);if(S.det.ph.length>4)S.det.ph.shift();
+        var last3=S.det.p.slice(-3);
+        S.perception.present=last3.some(Boolean);                 // present if seen in any of the last 3 frames
+        var away=last3.length>=3&&last3.every(function(x){return !x;}); // away only if absent 3 frames in a row (~4.5s)
+        S.perception.phone=S.det.ph.slice(-3).filter(Boolean).length>=2; // phone only if held across 2+ of last 3 frames
+        S.perception.attention=away?'away':'engaged';             // present = engaged (no strict 'centred' rule)
         paintPerception();
         trackEngagement();
         maybeChallenge();
@@ -599,10 +606,10 @@ Your job is not to finish the material — it is to produce a competent learner.
   // interrupt and challenge them (the brain is told to stop teaching and refocus them).
   function maybeChallenge(){
     if(S.ended||S.busy||S.faceSpeaking)return;
-    var dis=S.perception.phone||S.perception.attention==='away'||S.perception.attention==='distracted'||S.perception.present===false;
+    var dis=S.perception.phone||S.perception.attention==='away';   // only clear disengagement
     S.disStreak=dis?(S.disStreak+1):0;
     var now=Date.now();
-    if(S.disStreak>=3&&(now-S.lastChallenge)>16000){
+    if(S.disStreak>=4&&(now-S.lastChallenge)>25000){              // ~6s sustained, 25s cooldown
       S.lastChallenge=now;S.disStreak=0;S.perception.challenge=true;nextTurn();
     }
   }
