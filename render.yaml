@@ -95,6 +95,10 @@ services:
         value: CLPD Trainer
       - key: TRAINER_BRAIN_MODEL
         value: claude-sonnet-4-20250514
+      # MorphCast Emotion AI — optional richer in-browser perception (client-side
+      # licence key, relayed to the frontend). Free model used if unset.
+      - key: MORPHCAST_LICENSE_KEY
+        sync: false
 
       - key: RATE_LIMIT_WINDOW_MS
         value: "60000"

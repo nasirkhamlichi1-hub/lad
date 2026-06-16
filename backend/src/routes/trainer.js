@@ -53,7 +53,10 @@ router.get('/status', (_req, res) => {
       anam: anam.isConfigured(),            // photoreal face for the browser engine
       brain: trainerBrain.isConfigured(),   // Claude brain (else deterministic fallback)
       elevenlabs,                           // ElevenLabs voice
+      morphcast: !!config.morphcast.licenseKey, // richer in-browser perception
     },
+    // Client-side MorphCast licence key (safe to expose; used by browser SDK).
+    morphcastKey: config.morphcast.licenseKey || null,
   });
 });
 

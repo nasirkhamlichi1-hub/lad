@@ -101,6 +101,14 @@ module.exports = {
     name:     process.env.ANAM_AVATAR_NAME || 'CLPD Trainer',
   },
 
+  // MorphCast Emotion AI — optional in-browser perception ("eyes") provider.
+  // The licence key is a CLIENT-side key (used by the browser SDK), so it is
+  // surfaced to the frontend via /trainer/status. If unset, the browser engine
+  // uses the free TensorFlow.js model. No frames ever leave the device.
+  morphcast: {
+    licenseKey: process.env.MORPHCAST_LICENSE_KEY || '',
+  },
+
   // Claude as the trainer brain (scalable engine). Reuses anthropic.apiKey.
   trainerBrain: {
     model:     process.env.TRAINER_BRAIN_MODEL || process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',

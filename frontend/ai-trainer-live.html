@@ -171,6 +171,7 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
         <div class="card-b">
           <div class="perc-list">
             <div class="perc" data-k="attention"><div class="perc-ic">🎯</div><div class="perc-tx"><b>Attention</b><br><span class="v">—</span></div></div>
+            <div class="perc" data-k="mood"><div class="perc-ic">🙂</div><div class="perc-tx"><b>Mood</b><br><span class="v">—</span></div></div>
             <div class="perc" data-k="phone"><div class="perc-ic">📵</div><div class="perc-tx"><b>Phone</b><br><span class="v">—</span></div></div>
             <div class="perc" data-k="presence"><div class="perc-ic">👤</div><div class="perc-tx"><b>Presence</b><br><span class="v">—</span></div></div>
           </div>
@@ -193,13 +194,15 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
   'use strict';
   var api=window.LAD;
   var S={lessons:[],selected:null,status:null,session:null,history:[],perception:{attention:'engaged',phone:false,present:true},
-         face:'stylised',brain:'fallback',anam:null,stream:null,reco:null,listening:false,startedAt:0,busy:false,ended:false,detector:null,detLoop:null};
+         face:'stylised',brain:'fallback',anam:null,stream:null,reco:null,listening:false,startedAt:0,busy:false,ended:false,detector:null,detLoop:null,
+         morphcastKey:'',morphcast:null,usingMorphcast:false};
+  S.perception.mood='neutral';
   var el=function(id){return document.getElementById(id);};
   function toast(m){var t=el('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2600);}
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 
   Promise.all([api.trainerStatus(),api.trainerLessons()]).then(function(r){
-    S.status=r[0];S.lessons=r[1]||[];renderEngine();renderLessons();
+    S.status=r[0];S.lessons=r[1]||[];S.morphcastKey=(r[0]&&r[0].morphcastKey)||'';renderEngine();renderLessons();
   }).catch(function(e){toast('Could not load: '+e.message);});
 
   function renderEngine(){
@@ -212,6 +215,7 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
     msgs.push(realFace?'Photoreal face (Anam) is configured.':'Anam not set — using a built-in animated face.');
     msgs.push(realBrain?'Claude is the brain.':'No Claude key — using the built-in scripted brain.');
     msgs.push(eng.elevenlabs?'ElevenLabs voice ready.':'Using your browser voice.');
+    msgs.push(eng.morphcast?'MorphCast emotion AI for perception.':'Free in-browser perception.');
     el('engineNote').innerHTML='<span>'+msgs.map(esc).join(' ')+'</span>';
   }
 
@@ -263,8 +267,44 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
       var sc=document.createElement('div');sc.className='selfcam';
       var v=document.createElement('video');v.autoplay=true;v.muted=true;v.playsInline=true;v.srcObject=stream;
       sc.appendChild(v);el('stage').appendChild(sc);S.selfVideo=v;
-      loadPerception(v);
+      loadPerception(v);                       // free model: phone + presence + attention proxy
+      if(S.morphcastKey){initMorphCast(v);}    // richer attention + mood (overrides when available)
     }).catch(function(){el('percNote').textContent='Camera not granted — perception is off, but the lesson still runs.';});
+  }
+
+  // MorphCast Emotion AI — in-browser attention + emotion. Augments the free
+  // model (which keeps phone detection). Isolated + guarded so any failure
+  // silently falls back. Frames never leave the device.
+  function initMorphCast(video){
+    var s1=document.createElement('script');s1.src='https://sdk.morphcast.com/mphtools/v1.1/mphtools.js';s1.setAttribute('data-config','compANE');
+    s1.onload=function(){
+      var s2=document.createElement('script');s2.src='https://ai-sdk.morphcast.com/v1.16/ai-sdk.js';
+      s2.onload=function(){
+        try{
+          var CY=window.CY;
+          var loader=CY.loader().licenseKey(S.morphcastKey)
+            .addModule(CY.modules().FACE_DETECTOR.name,{maxInputFrameSize:320})
+            .addModule(CY.modules().FACE_ATTENTION.name,{})
+            .addModule(CY.modules().FACE_EMOTION.name,{});
+          if(loader.source){try{loader.source(video);}catch(e){}}
+          loader.load().then(function(api){
+            S.morphcast=api; if(api&&api.start)api.start();
+            S.usingMorphcast=true; el('percNote').textContent='MorphCast emotion AI is reading attention and mood locally — nothing is uploaded.';
+          }).catch(function(){/* keep free model */});
+          window.addEventListener('CY_FACE_DETECTOR_RESULT',function(ev){ if(ev.detail) S.perception.present=(ev.detail.totalFaces||0)>0; paintPerception(); });
+          window.addEventListener('CY_FACE_ATTENTION_RESULT',function(ev){
+            var a=ev.detail&&ev.detail.attention; if(a==null)return;
+            S.perception.attention = a>0.55?'engaged': a>0.3?'distracted':'away'; paintPerception();
+          });
+          window.addEventListener('CY_FACE_EMOTION_RESULT',function(ev){
+            var out=ev.detail&&(ev.detail.output||ev.detail); var dom=out&&(out.dominantEmotion||out.dominant||(out.emotion&&Object.keys(out.emotion).sort(function(a,b){return out.emotion[b]-out.emotion[a];})[0]));
+            if(!dom)return; dom=String(dom).toLowerCase();
+            S.perception.mood = dom.indexOf('happy')>=0?'happy': (dom.indexOf('neutral')>=0?'neutral':'confused');
+            paintPerception();
+          });
+        }catch(e){/* free model remains */}
+      };s2.onerror=function(){};document.head.appendChild(s2);
+    };s1.onerror=function(){};document.head.appendChild(s1);
   }
 
   function loadPerception(video){
@@ -288,11 +328,12 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
       S.detector.detect(video).then(function(preds){
         var person=preds.find(function(p){return p.class==='person'&&p.score>0.5;});
         var phone=preds.find(function(p){return p.class==='cell phone'&&p.score>0.45;});
-        S.perception.present=!!person;
-        S.perception.phone=!!phone;
-        // crude attention proxy: a large, centred person box = engaged
-        if(!person){S.perception.attention='away';}
-        else{var cx=person.bbox[0]+person.bbox[2]/2;var vw=video.videoWidth||640;var centred=cx>vw*0.25&&cx<vw*0.75;var big=person.bbox[3]>(video.videoHeight||480)*0.45;S.perception.attention=(centred&&big)?'engaged':'distracted';}
+        S.perception.phone=!!phone;   // phone is always from the free model (MorphCast is face-only)
+        if(!S.usingMorphcast){        // MorphCast owns attention + presence when active
+          S.perception.present=!!person;
+          if(!person){S.perception.attention='away';}
+          else{var cx=person.bbox[0]+person.bbox[2]/2;var vw=video.videoWidth||640;var centred=cx>vw*0.25&&cx<vw*0.75;var big=person.bbox[3]>(video.videoHeight||480)*0.45;S.perception.attention=(centred&&big)?'engaged':'distracted';}
+        }
         paintPerception();
       }).catch(function(){});
     },1500);
@@ -300,6 +341,8 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
 
   function paintPerception(){
     setPerc('attention',S.perception.attention==='engaged'?'Engaged':S.perception.attention==='away'?'Away':'Distracted',S.perception.attention!=='engaged',S.perception.attention==='engaged');
+    var mood=S.perception.mood||'neutral';
+    setPerc('mood',mood.charAt(0).toUpperCase()+mood.slice(1),mood==='confused',mood==='happy');
     setPerc('phone',S.perception.phone?'In hand':'Not in hand',S.perception.phone,false);
     setPerc('presence',S.perception.present?'In frame':'Out of frame',!S.perception.present,S.perception.present);
   }
@@ -370,7 +413,7 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
   }
 
   // ─── Pause / Finish ──────────────────────────────────────────────────
-  function teardown(){S.ended=true;stopListening();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
+  function teardown(){S.ended=true;stopListening();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);try{if(S.morphcast&&S.morphcast.stop)S.morphcast.stop();}catch(e){}if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
   el('pauseBtn').onclick=function(){teardown();var sec=Math.round((Date.now()-S.startedAt)/1000);api.trainerPauseSession(S.session.sessionId,{seconds:sec}).catch(function(){}).then(function(){toast('Paused — resume anytime.');setTimeout(function(){location.reload();},1200);});};
   el('endBtn').onclick=function(){finish(false);};
   function finish(auto){ if(S.ended&&!auto){} teardown(); var sec=Math.round((Date.now()-S.startedAt)/1000);
