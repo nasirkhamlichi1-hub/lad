@@ -88,9 +88,16 @@
       let mod;
       try { mod = await import('https://cdn.jsdelivr.net/npm/@anam-ai/js-sdk@4.15.0/+esm'); }
       catch(e1){ log('jsDelivr failed ('+e1.message+'), trying unpkg…','warn'); mod = await import('https://unpkg.com/@anam-ai/js-sdk@4.15.0/dist/module/index.js'); }
-      log('SDK loaded. Creating client (unsafe_createClientWithApiKey)…', 'ok');
-      client = mod.unsafe_createClientWithApiKey(apiKey, { name: 'CLPD Trainer', avatarId });
-      log('Client created. Requesting stream → minting session token + WebRTC…');
+      log('SDK loaded. Minting session token (/v1/auth/session-token)…', 'ok');
+      const tr = await fetch('https://api.anam.ai/v1/auth/session-token', {
+        method:'POST',
+        headers:{ 'Authorization':'Bearer '+apiKey, 'Content-Type':'application/json' },
+        body: JSON.stringify({ personaConfig:{ name:'CLPD Trainer', avatarId } })
+      });
+      const tj = await tr.json();
+      if (!tr.ok || !tj.sessionToken) throw new Error('token mint '+tr.status+': '+(tj.message||(tj.error&&(tj.error.message||tj.error))||'no sessionToken'));
+      log('Token minted. createClient(token) + streaming…', 'ok');
+      client = mod.createClient(tj.sessionToken);
       await client.streamToVideoElement('face');
       log('✅ Streaming. Gabriel should now be visible above.', 'ok');
       $('sayBtn').disabled = $('line2').disabled = $('line3').disabled = false;
