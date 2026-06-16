@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="robots" content="noindex, nofollow"/>
 <title>Anam face — smoke test · CLPD AI Trainer</title>
+<script type="importmap">
+{ "imports": { "buffer": "https://cdn.jsdelivr.net/npm/buffer@6.0.3/+esm" } }
+</script>
 <style>
   :root{--green:#006B3F;--green2:#00824c;--line:#e2e8f0;--slate:#475569;--bg:#f8fafc}
   *{box-sizing:border-box}
@@ -81,8 +84,10 @@
     if (!apiKey) { log('No API key entered.', 'err'); return; }
     $('connect').disabled = true;
     try {
-      log('Importing Anam SDK (@anam-ai/js-sdk@4.15.0)…');
-      const mod = await import('https://unpkg.com/@anam-ai/js-sdk@4.15.0?module');
+      log('Importing Anam SDK (jsDelivr /+esm)…');
+      let mod;
+      try { mod = await import('https://cdn.jsdelivr.net/npm/@anam-ai/js-sdk@4.15.0/+esm'); }
+      catch(e1){ log('jsDelivr failed ('+e1.message+'), trying unpkg…','warn'); mod = await import('https://unpkg.com/@anam-ai/js-sdk@4.15.0/dist/module/index.js'); }
       log('SDK loaded. Creating client (unsafe_createClientWithApiKey)…', 'ok');
       client = mod.unsafe_createClientWithApiKey(apiKey, { name: 'CLPD Trainer', avatarId });
       log('Client created. Requesting stream → minting session token + WebRTC…');

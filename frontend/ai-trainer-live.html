@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="robots" content="noindex, nofollow"/>
 <title>AI Trainer — Live (no backend) · CLPD</title>
+<!-- Resolve the Anam SDK's one bare dependency ("buffer") for browsers that
+     fall back to the unpkg module build. The jsDelivr /+esm build inlines it. -->
+<script type="importmap">
+{ "imports": { "buffer": "https://cdn.jsdelivr.net/npm/buffer@6.0.3/+esm" } }
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -370,17 +375,47 @@ input.key:focus{outline:none;border-color:var(--green2)}
     el('recLabel').textContent='Live · '+S.selected.title;
     el('brainLabel').textContent='Claude · Anam';
     startCamera();
-    initAnam().catch(function(e){toast('Anam: '+(e.message||e)+' — using animated face');S.face='stylised';showStylised();}).then(function(){nextTurn();});
+    initAnam().catch(function(e){
+      var msg=(e&&(e.message||e.toString()))||'unknown error';
+      if(window.console&&console.error)console.error('[Anam initAnam failed]',e);
+      S.face='stylised';showStylised();
+      el('enginePill').className='pill pill-demo';el('enginePill').textContent='Animated · Claude';
+      el('percNote').textContent='Photoreal face unavailable ('+msg+') — using the animated face + browser voice. Brain is still Claude.';
+      toast('Anam face failed: '+msg);
+    }).then(function(){nextTurn();});
   });
   function showStylised(){el('anamVideo').classList.add('hidden');el('stylisedFace').classList.remove('hidden');}
 
   // ─── Anam photoreal face — client-side (unsafe_createClientWithApiKey) ─
+  // The SDK has one bare dep ("buffer"). The jsDelivr /+esm build inlines it and
+  // is self-contained; the unpkg dist build is a fallback (buffer via importmap).
+  function loadAnamSDK(){
+    var sources=[
+      'https://cdn.jsdelivr.net/npm/@anam-ai/js-sdk@4.15.0/+esm',
+      'https://unpkg.com/@anam-ai/js-sdk@4.15.0/dist/module/index.js'
+    ];
+    var i=0;
+    function tryNext(lastErr){
+      if(i>=sources.length)return Promise.reject(lastErr||new Error('Anam SDK failed to load'));
+      var url=sources[i++];
+      return import(url).then(function(m){
+        if(m&&(m.unsafe_createClientWithApiKey||m.createClient))return m;
+        return tryNext(new Error('SDK at '+url+' missing exports'));
+      },function(e){return tryNext(e);});
+    }
+    return tryNext();
+  }
   function initAnam(){
-    return import('https://unpkg.com/@anam-ai/js-sdk@4.15.0?module').then(function(mod){
+    el('caption').innerHTML='<b>Trainer:</b> connecting the photoreal face…';
+    return loadAnamSDK().then(function(mod){
+      // persona = {name, avatarId} only — adding a voiceId is rejected (avatar
+      // carries its own voice). This is the shape verified against the live API.
       var client=mod.unsafe_createClientWithApiKey(S.anamKey,{name:'CLPD Trainer',avatarId:S.avatarId});
       return client.streamToVideoElement('anamVideo').then(function(){
-        el('anamVideo').classList.remove('hidden');el('stylisedFace').classList.add('hidden');
+        var v=el('anamVideo');v.classList.remove('hidden');el('stylisedFace').classList.add('hidden');
+        try{v.play&&v.play();}catch(e){}            // belt-and-braces against autoplay
         S.face='anam';
+        el('enginePill').className='pill pill-live';el('enginePill').textContent='● Photoreal · Claude';
         S.anam={speak:function(t){return client.talk(t);},stop:function(){try{client.stopStreaming&&client.stopStreaming();}catch(e){}}};
       });
     });
