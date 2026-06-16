@@ -181,7 +181,8 @@ h1{font-family:var(--serif);font-size:42px;font-weight:400;letter-spacing:-.02em
           <div class="stage-bar">
             <span class="rec"><span class="dot"></span> <span id="recLabel">Live session</span></span>
             <div style="flex:1"></div>
-            <button id="endBtn" class="btn btn-danger">End session</button>
+            <button id="pauseBtn" class="btn btn-ghost">Pause &amp; resume later</button>
+            <button id="endBtn" class="btn btn-danger">Finish &amp; complete</button>
           </div>
         </div>
 
@@ -214,14 +215,15 @@ h1{font-family:var(--serif);font-size:42px;font-weight:400;letter-spacing:-.02em
 (function(){
   'use strict';
   var api = window.LAD;
-  var state = { lessons:[], selected:null, status:null, session:null, demoTimer:null, stream:null };
+  var state = { lessons:[], selected:null, status:null, session:null, demoTimer:null, stream:null, progress:{}, startedAt:0 };
 
   var el = function(id){ return document.getElementById(id); };
   function toast(msg){ var t=el('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},2600); }
 
   // ─── Boot ──────────────────────────────────────────────────────────
-  Promise.all([api.trainerStatus(), api.trainerLessons()]).then(function(r){
+  Promise.all([api.trainerStatus(), api.trainerLessons(), api.trainerMyProgress().catch(function(){return [];})]).then(function(r){
     state.status = r[0]; state.lessons = r[1] || [];
+    (r[2] || []).forEach(function(p){ state.progress[p.lesson_id] = p; });
     renderMode(); renderLessons();
   }).catch(function(e){ toast('Could not load the trainer: '+e.message); });
 
@@ -246,13 +248,18 @@ h1{font-family:var(--serif);font-size:42px;font-weight:400;letter-spacing:-.02em
     state.lessons.forEach(function(L){
       var d = document.createElement('div');
       d.className = 'lesson' + (state.selected && state.selected.id===L.id ? ' sel':'');
+      var p = state.progress[L.id];
       var meta = [];
+      if (p && p.status==='completed') meta.push('<span class="tag" style="background:var(--green-bg);color:var(--green-d);border-color:var(--green-border)">✓ Completed</span>');
+      else if (p && p.status==='in_progress') meta.push('<span class="tag" style="background:var(--blue-bg);color:var(--blue);border-color:#cfe0f0">↺ Resume · '+(p.percent_complete||0)+'%</span>');
       if (L.duration_min) meta.push('<span class="tag">~'+L.duration_min+' min</span>');
       if (L.cpd_points)  meta.push('<span class="tag">'+L.cpd_points+' CPD pt'+(L.cpd_points>1?'s':'')+'</span>');
       if (L.language)    meta.push('<span class="tag">'+L.language+'</span>');
+      var bar = (p && p.status==='in_progress' && p.percent_complete) ?
+        '<div class="prog" style="height:6px;background:var(--paper2);border-radius:999px;overflow:hidden;margin-top:9px"><i style="display:block;height:100%;width:'+p.percent_complete+'%;background:linear-gradient(90deg,var(--green2),var(--green-l))"></i></div>' : '';
       d.innerHTML = '<div class="lesson-t">'+esc(L.title)+'</div>'+
         (L.summary?'<div class="lesson-s">'+esc(L.summary)+'</div>':'')+
-        '<div class="lesson-m">'+meta.join('')+'</div>';
+        '<div class="lesson-m">'+meta.join('')+'</div>'+bar;
       d.onclick = function(){ state.selected = L; renderLessons(); refreshStart(); };
       c.appendChild(d);
     });
@@ -260,7 +267,13 @@ h1{font-family:var(--serif);font-size:42px;font-weight:400;letter-spacing:-.02em
 
   function refreshStart(){
     el('startBtn').disabled = !state.selected;
-    el('setupNote').textContent = state.selected ? 'Ready when you are.' : 'Select a lesson to begin.';
+    var p = state.selected && state.progress[state.selected.id];
+    var resumable = p && p.status==='in_progress';
+    el('startBtn').textContent = resumable ? 'Resume session' : 'Begin session';
+    if (!state.selected) el('setupNote').textContent = 'Select a lesson to begin.';
+    else if (resumable) el('setupNote').textContent = 'You\'re '+(p.percent_complete||0)+'% through — we\'ll pick up where you left off.';
+    else if (p && p.status==='completed') el('setupNote').textContent = 'You\'ve completed this — start again for a refresher.';
+    else el('setupNote').textContent = 'Ready when you are.';
   }
 
   // ─── Start ─────────────────────────────────────────────────────────
@@ -268,16 +281,20 @@ h1{font-family:var(--serif);font-size:42px;font-weight:400;letter-spacing:-.02em
     el('startBtn').disabled = true; el('startBtn').textContent = 'Connecting…';
     api.trainerStartSession(state.selected.id).then(function(s){
       state.session = s;
+      state.startedAt = Date.now();
       el('setup').classList.add('hidden');
       el('session').style.display='block';
-      el('recLabel').textContent = 'Live · ' + state.selected.title;
+      el('recLabel').textContent = (s.resumed ? 'Resumed · ' : 'Live · ') + state.selected.title;
+      if (s.resumed) el('overlayMsg').textContent = 'Welcome back — reconnecting you to your trainer…';
       if (s.conversationUrl){ joinLive(s.conversationUrl); }
-      else { runDemo(); }
+      else { runDemo(s.resumed); }
     }).catch(function(e){
-      el('startBtn').disabled=false; el('startBtn').textContent='Begin session';
+      refreshStart();
       toast('Could not start: '+e.message);
     });
   });
+
+  function elapsedSeconds(){ return state.startedAt ? Math.max(0, Math.round((Date.now()-state.startedAt)/1000)) : 0; }
 
   // Real Tavus conversation — embed the room; Raven sees the attendee inside it.
   function joinLive(url){
@@ -293,9 +310,10 @@ h1{font-family:var(--serif);font-size:42px;font-weight:400;letter-spacing:-.02em
 
   // Demo mode — open the camera locally and simulate the coaching loop so the
   // experience is fully demonstrable without a configured avatar.
-  function runDemo(){
+  function runDemo(resumed){
     el('overlayMsg').textContent = 'Starting your camera…';
-    el('recLabel').textContent = 'Demo · ' + state.selected.title;
+    el('recLabel').textContent = (resumed?'Demo · Resumed · ':'Demo · ') + state.selected.title;
+    state.resumedDemo = !!resumed;
     navigator.mediaDevices.getUserMedia({ video:true, audio:false }).then(function(stream){
       state.stream = stream;
       var v = document.createElement('video'); v.autoplay=true; v.muted=true; v.playsInline=true; v.srcObject=stream;
@@ -319,7 +337,9 @@ h1{font-family:var(--serif);font-size:42px;font-weight:400;letter-spacing:-.02em
   ];
   function startCoachLoop(){
     var i=0;
-    el('coachLine').textContent = 'Hello — I\'m your trainer. Whenever you\'re ready, let\'s begin.';
+    el('coachLine').textContent = state.resumedDemo
+      ? 'Welcome back — let\'s pick up right where we left off.'
+      : 'Hello — I\'m your trainer. Whenever you\'re ready, let\'s begin.';
     state.demoTimer = setInterval(function(){
       var s = SCENES[i % SCENES.length]; i++;
       el('coachLine').textContent = s.line;
@@ -336,13 +356,32 @@ h1{font-family:var(--serif);font-size:42px;font-weight:400;letter-spacing:-.02em
     node.classList.toggle('hot', !!hot);
   }
 
-  // ─── End ───────────────────────────────────────────────────────────
-  el('endBtn').addEventListener('click', function(){
+  // ─── Pause / End ───────────────────────────────────────────────────
+  function teardown(){
     if (state.demoTimer) clearInterval(state.demoTimer);
     if (state.stream) state.stream.getTracks().forEach(function(t){t.stop();});
-    if (state.session) api.trainerEndSession(state.session.sessionId).catch(function(){});
-    toast('Session ended. Well done.');
-    setTimeout(function(){ window.location.reload(); }, 1200);
+  }
+
+  el('pauseBtn').addEventListener('click', function(){
+    el('pauseBtn').disabled=true; el('endBtn').disabled=true;
+    teardown();
+    var info = { seconds: elapsedSeconds() };
+    var done = function(){ toast('Paused — you can resume this lesson anytime.'); setTimeout(function(){ window.location.reload(); }, 1300); };
+    if (state.session && state.session.sessionId) api.trainerPauseSession(state.session.sessionId, info).then(done).catch(done);
+    else done();
+  });
+
+  el('endBtn').addEventListener('click', function(){
+    el('pauseBtn').disabled=true; el('endBtn').disabled=true;
+    teardown();
+    var info = { seconds: elapsedSeconds() };
+    var done = function(res){
+      var pts = res && res.cpdAwarded;
+      toast(pts ? ('Completed — '+pts+' CPD point'+(pts>1?'s':'')+' awarded. Well done.') : 'Session complete. Well done.');
+      setTimeout(function(){ window.location.reload(); }, 1500);
+    };
+    if (state.session && state.session.sessionId) api.trainerEndSession(state.session.sessionId, info).then(done).catch(function(){done();});
+    else done();
   });
 
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }

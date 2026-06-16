@@ -183,15 +183,29 @@
                                       duration_min: 12, cpd_points: 1, language: 'English',
                                       body: 'Demo lesson — connect a backend and upload your own content to replace this.',
                                     }])),
+    // Admin: list every lesson incl. inactive (active-only for non-admins/demo).
+    trainerAllLessons: () => ENABLED ? call('GET', '/api/v1/trainer/lessons?all=1')
+                                     : api.trainerLessons(),
     trainerSaveLessons: (lessons) => ENABLED ? call('PUT', '/api/v1/trainer/lessons', lessons)
                                              : Promise.resolve(lsSet('lad_trainer_lessons', Array.isArray(lessons) ? lessons : [lessons])),
     trainerDeleteLesson: (id) => ENABLED ? call('DELETE', '/api/v1/trainer/lessons/' + encodeURIComponent(id))
                                          : Promise.resolve({ ok: true }),
     trainerStartSession: (lessonId) => ENABLED ? call('POST', '/api/v1/trainer/sessions', { lessonId })
-                                               : Promise.resolve({ demo: true, sessionId: 'demo', conversationUrl: null }),
-    trainerEndSession: (id) => ENABLED ? call('POST', '/api/v1/trainer/sessions/' + encodeURIComponent(id) + '/end')
-                                       : Promise.resolve({ ok: true }),
+                                               : Promise.resolve({ demo: true, sessionId: 'demo', conversationUrl: null, resumed: false }),
+    // Pause keeps progress so the lesson can be resumed later; end completes it.
+    trainerPauseSession: (id, info) => ENABLED ? call('POST', '/api/v1/trainer/sessions/' + encodeURIComponent(id) + '/pause', info || {})
+                                               : Promise.resolve({ ok: true, status: 'paused' }),
+    trainerEndSession: (id, info) => ENABLED ? call('POST', '/api/v1/trainer/sessions/' + encodeURIComponent(id) + '/end', info || {})
+                                             : Promise.resolve({ ok: true, status: 'ended' }),
     trainerMySessions: () => ENABLED ? call('GET', '/api/v1/trainer/sessions/mine') : Promise.resolve([]),
+    // Learning progress (per lawyer + lesson) — powers resume + "my learning".
+    trainerMyProgress: () => ENABLED ? call('GET', '/api/v1/trainer/progress/mine') : Promise.resolve([]),
+    trainerLessonProgress: (lessonId) => ENABLED ? call('GET', '/api/v1/trainer/progress/' + encodeURIComponent(lessonId))
+                                                 : Promise.resolve({ exists: false, resumable: false }),
+    // Admin: who's studying a lesson, and the per-lesson rollup.
+    trainerLessonLearners: (id) => ENABLED ? call('GET', '/api/v1/trainer/lessons/' + encodeURIComponent(id) + '/learners')
+                                           : Promise.resolve({ lesson: null, learners: [] }),
+    trainerOverview: () => ENABLED ? call('GET', '/api/v1/trainer/overview') : Promise.resolve({ lessons: [] }),
 
     // ─── Admin: user management ──────────────────────────────────────
     listUsers: (filters) => {

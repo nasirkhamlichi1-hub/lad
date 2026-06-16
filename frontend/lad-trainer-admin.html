@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AI Trainer — Course Materials · CLPD Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{
+  --green:#006B3F; --green2:#008549; --green-d:#004d2e; --green-l:#00a85e;
+  --green-bg:#f0f9f4; --green-border:#b8d8c5;
+  --gold:#C9913A; --gold-bg:#fdf6e8; --gold-border:#e8c878;
+  --ink:#0a0e14; --ink2:#1a2330; --slate:#3a4554; --slate2:#5a6878; --slate3:#8a98aa;
+  --line:#e8ecf1; --line2:#d8dfe7; --paper:#f8fafb; --paper2:#f1f4f7; --white:#fff;
+  --red:#c0392b; --red-bg:#fdeae8; --red-border:#f0aaaa;
+  --amber:#92540a; --amber-bg:#fef3e2; --amber-border:#f0c878;
+  --blue:#1a4d80; --blue-bg:#eef4fb;
+  --serif:'Instrument Serif',Georgia,serif; --sans:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
+  --r-sm:8px; --r:12px; --r-lg:18px;
+  --sh:0 2px 4px rgba(10,14,20,.06),0 8px 24px rgba(10,14,20,.06);
+  --sh-lg:0 8px 16px rgba(10,14,20,.1),0 32px 64px rgba(10,14,20,.1);
+}
+html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;letter-spacing:-.005em}
+a{color:var(--green2);text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+.top{background:rgba(255,255,255,.85);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.top-in{display:flex;align-items:center;gap:14px;height:62px}
+.emblem{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:10px;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,107,63,.22);flex-shrink:0}
+.emblem svg{width:20px;height:24px}
+.brand-t{font-family:var(--serif);font-size:18px;line-height:1.05}
+.brand-s{font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:2px}
+.top-spacer{flex:1}
+.pill{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:5px 10px;border-radius:999px;border:1px solid}
+.pill-live{background:var(--green-bg);color:var(--green-d);border-color:var(--green-border)}
+.pill-demo{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border)}
+.ghost-link{font-size:12.5px;color:var(--slate2);font-weight:500}
+
+.hero{padding:30px 0 6px}
+.eyebrow{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+h1{font-family:var(--serif);font-size:36px;font-weight:400;letter-spacing:-.02em;line-height:1.05}
+.lede{font-size:15px;color:var(--slate);max-width:680px;margin-top:12px;line-height:1.55}
+
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin:22px 0 0}
+.tab{font-size:13px;font-weight:600;color:var(--slate2);padding:11px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:var(--green-d);border-bottom-color:var(--green2)}
+
+.grid{display:grid;grid-template-columns:380px 1fr;gap:22px;align-items:start;padding:24px 0 60px}
+@media(max-width:920px){.grid{grid-template-columns:1fr}}
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh);overflow:hidden}
+.card-h{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+.card-h h3{font-size:13.5px;font-weight:650;letter-spacing:-.01em}
+.card-h .top-spacer{flex:1}
+.card-b{padding:18px}
+
+.lessons{display:flex;flex-direction:column;gap:9px;max-height:64vh;overflow:auto}
+.lesson{border:1.5px solid var(--line2);border-radius:var(--r);padding:13px;cursor:pointer;transition:all .15s;background:var(--white)}
+.lesson:hover{border-color:var(--green-border);background:var(--green-bg)}
+.lesson.sel{border-color:var(--green2);background:var(--green-bg);box-shadow:0 0 0 3px rgba(0,107,63,.08)}
+.lesson-t{font-size:14px;font-weight:650;display:flex;align-items:center;gap:7px}
+.lesson-s{font-size:12px;color:var(--slate2);margin-top:4px;line-height:1.4}
+.lesson-m{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.tag{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.3px;padding:3px 7px;border-radius:6px;background:var(--paper2);color:var(--slate2);border:1px solid var(--line)}
+.tag-off{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border)}
+.empty{text-align:center;padding:30px 16px;color:var(--slate2)}
+
+label{display:block;font-size:11.5px;font-weight:650;color:var(--slate);margin:0 0 5px;letter-spacing:.01em}
+.hint{font-weight:400;color:var(--slate3);font-size:11px}
+input[type=text],input[type=number],textarea,select{width:100%;font-family:var(--sans);font-size:13.5px;color:var(--ink);background:var(--white);border:1.5px solid var(--line2);border-radius:var(--r-sm);padding:10px 12px;transition:border .15s}
+textarea{resize:vertical;line-height:1.5}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--green2);box-shadow:0 0 0 3px rgba(0,107,63,.08)}
+.field{margin-bottom:14px}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.check{display:flex;gap:9px;align-items:center;font-size:13px;color:var(--slate);font-weight:500}
+.check input{width:16px;height:16px;accent-color:var(--green2)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:13.5px;font-weight:600;padding:11px 18px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;transition:all .15s}
+.btn-pri{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;box-shadow:0 2px 10px rgba(0,107,63,.22)}
+.btn-pri:hover{transform:translateY(-1px)}
+.btn-pri:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-danger{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+.btn-ghost{background:var(--white);color:var(--slate);border-color:var(--line2)}
+.btn-sm{padding:8px 13px;font-size:12.5px}
+.bar{display:flex;gap:10px;align-items:center;margin-top:4px}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--slate3);font-weight:700;padding:9px 10px;border-bottom:1px solid var(--line)}
+td{padding:11px 10px;border-bottom:1px solid var(--line);color:var(--slate)}
+td b{color:var(--ink);font-weight:600}
+tr:hover td{background:var(--paper)}
+.badge{font-family:var(--mono);font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:999px;border:1px solid}
+.b-done{background:var(--green-bg);color:var(--green-d);border-color:var(--green-border)}
+.b-prog{background:var(--blue-bg);color:var(--blue);border-color:#cfe0f0}
+.prog{height:7px;background:var(--paper2);border-radius:999px;overflow:hidden;min-width:90px}
+.prog > i{display:block;height:100%;background:linear-gradient(90deg,var(--green2),var(--green-l))}
+
+.notice{background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber);border-radius:var(--r);padding:13px 15px;font-size:13px;line-height:1.5;margin:16px 0}
+.note{font-size:11px;color:var(--slate3);margin-top:10px;line-height:1.5}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh-lg);z-index:50;opacity:0;transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+.stat-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.stat{flex:1;min-width:130px;background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.stat .n{font-family:var(--serif);font-size:30px;line-height:1;color:var(--green-d)}
+.stat .l{font-size:11px;color:var(--slate2);margin-top:6px;font-weight:500}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <div class="emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="#fff" opacity=".95"/></svg></div>
+    <div>
+      <div class="brand-t">AI Trainer — Admin</div>
+      <div class="brand-s">Dubai Legal Affairs Department</div>
+    </div>
+    <div class="top-spacer"></div>
+    <span id="modePill" class="pill pill-demo">Checking…</span>
+    <a class="ghost-link" href="lad-admin.html">← Admin home</a>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div class="eyebrow">Course materials · Learner tracking</div>
+    <h1>Run the trainer on your content.</h1>
+    <p class="lede">Upload the material for each course and the AI trainer teaches it as a live
+      1-2-1 — short conversational turns, covering every key element, keeping the lawyer engaged.
+      The <b>trainer's skills are fixed</b>; only the material below changes per course.</p>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="materials">Course materials</div>
+      <div class="tab" data-tab="learners">Learners &amp; progress</div>
+    </div>
+  </div>
+
+  <div id="authNotice" class="wrap hidden"></div>
+
+  <!-- TAB: MATERIALS -->
+  <section id="tab-materials" class="wrap grid">
+    <div class="card">
+      <div class="card-h">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green2)" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+        <h3>Lessons</h3>
+        <div class="top-spacer"></div>
+        <button id="newBtn" class="btn btn-ghost btn-sm">+ New</button>
+      </div>
+      <div class="card-b">
+        <div id="lessons" class="lessons"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green2)" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+        <h3 id="editorTitle">New lesson</h3>
+      </div>
+      <div class="card-b">
+        <form id="editor">
+          <input type="hidden" id="f-id"/>
+          <div class="field">
+            <label for="f-title">Title <span class="hint">— the course/lesson name the lawyer sees</span></label>
+            <input type="text" id="f-title" placeholder="e.g. Anti-Money-Laundering Obligations for Dubai Law Firms" required/>
+          </div>
+          <div class="field">
+            <label for="f-summary">Summary <span class="hint">— one line, shown on the lesson card</span></label>
+            <input type="text" id="f-summary" placeholder="A short 1-2-1 on AML duties under UAE law."/>
+          </div>
+          <div class="field">
+            <label for="f-objectives">Key elements <span class="hint">— one per line. The trainer MUST cover every one before finishing.</span></label>
+            <textarea id="f-objectives" rows="4" placeholder="Spot red-flag transactions&#10;Apply customer due diligence (CDD)&#10;File suspicious activity reports via goAML"></textarea>
+          </div>
+          <div class="field">
+            <label for="f-body">Lesson material <span class="hint">— the source the trainer teaches from (it teaches in its own words, never reads it out)</span></label>
+            <textarea id="f-body" rows="9" placeholder="Paste the full training material here. The richer and clearer this is, the better the trainer teaches it." required></textarea>
+          </div>
+          <div class="field row">
+            <div>
+              <label for="f-language">Language</label>
+              <select id="f-language"><option>English</option><option>Arabic</option></select>
+            </div>
+            <div>
+              <label for="f-duration">Duration (min)</label>
+              <input type="number" id="f-duration" min="1" max="180" value="15"/>
+            </div>
+            <div>
+              <label for="f-cpd">CPD points</label>
+              <input type="number" id="f-cpd" min="0" max="50" value="1"/>
+            </div>
+          </div>
+          <div class="field">
+            <label class="check"><input type="checkbox" id="f-active" checked/> Active — available to lawyers now</label>
+          </div>
+          <div class="bar">
+            <button type="submit" class="btn btn-pri" id="saveBtn">Save lesson</button>
+            <button type="button" class="btn btn-ghost" id="resetBtn">Clear</button>
+            <div class="top-spacer" style="flex:1"></div>
+            <button type="button" class="btn btn-danger btn-sm hidden" id="deleteBtn">Delete</button>
+          </div>
+          <p class="note">Saved lessons appear immediately in the lawyer's AI Trainer. Changes to material take
+            effect on the next session; the trainer's teaching skills come from the fixed Tavus persona.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB: LEARNERS -->
+  <section id="tab-learners" class="wrap hidden" style="padding-bottom:60px">
+    <div class="stat-row" id="statRow"></div>
+    <div class="card">
+      <div class="card-h">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green2)" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        <h3>Per-course completion</h3>
+      </div>
+      <div class="card-b" style="padding:0">
+        <table>
+          <thead><tr><th>Lesson</th><th>Learners</th><th>In progress</th><th>Completed</th><th>Avg progress</th><th>Sessions</th><th></th></tr></thead>
+          <tbody id="overviewBody"><tr><td colspan="7" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card hidden" id="rosterCard" style="margin-top:22px">
+      <div class="card-h">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green2)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/></svg>
+        <h3 id="rosterTitle">Learners</h3>
+      </div>
+      <div class="card-b" style="padding:0">
+        <table>
+          <thead><tr><th>Lawyer</th><th>Status</th><th>Progress</th><th>Sessions</th><th>Time</th><th>CPD</th><th>Last active</th></tr></thead>
+          <tbody id="rosterBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script src="runtime-config.js"></script>
+<script src="api-client.js"></script>
+<script>
+(function(){
+  'use strict';
+  var api = window.LAD;
+  var state = { lessons:[], selected:null, status:null };
+  var el = function(id){ return document.getElementById(id); };
+  function toast(msg){ var t=el('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},2800); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function fmtTime(secs){ secs=secs||0; if(secs<60) return secs+'s'; var m=Math.round(secs/60); return m+' min'; }
+  function fmtDate(s){ if(!s) return '—'; var d=new Date(s.replace(' ','T')+'Z'); return isNaN(d)?'—':d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); }
+
+  // ─── Boot ──────────────────────────────────────────────────────────
+  api.trainerStatus().then(function(s){ state.status=s; renderMode(); }).catch(function(){});
+  loadLessons();
+
+  function renderMode(){
+    var p=el('modePill');
+    if(state.status && state.status.configured){ p.className='pill pill-live'; p.textContent='● Live avatar'; }
+    else { p.className='pill pill-demo'; p.textContent='Demo mode'; }
+  }
+
+  function loadLessons(){
+    api.trainerAllLessons().then(function(rows){
+      state.lessons = rows || [];
+      renderLessons();
+    }).catch(function(e){ handleAuth(e); });
+  }
+
+  function handleAuth(e){
+    var n=el('authNotice');
+    if(e && (e.status===401 || e.status===403)){
+      n.classList.remove('hidden');
+      n.innerHTML='<div class="notice">You need to be signed in as an LAD administrator to manage course materials. '+
+        '<a href="lad-admin.html">Sign in</a>, then return to this page.</div>';
+    } else if(e){ toast('Error: '+(e.message||e)); }
+  }
+
+  function renderLessons(){
+    var c=el('lessons');
+    if(!state.lessons.length){ c.innerHTML='<div class="empty">No lessons yet. Click <b>+ New</b> to add your first course material.</div>'; return; }
+    c.innerHTML='';
+    state.lessons.forEach(function(L){
+      var d=document.createElement('div');
+      d.className='lesson'+(state.selected && state.selected.id===L.id?' sel':'');
+      var meta=[];
+      if(!L.active) meta.push('<span class="tag tag-off">Inactive</span>');
+      var nObj=(L.objectives||[]).length; if(nObj) meta.push('<span class="tag">'+nObj+' key element'+(nObj>1?'s':'')+'</span>');
+      if(L.duration_min) meta.push('<span class="tag">~'+L.duration_min+' min</span>');
+      if(L.cpd_points) meta.push('<span class="tag">'+L.cpd_points+' CPD</span>');
+      d.innerHTML='<div class="lesson-t">'+esc(L.title)+'</div>'+
+        (L.summary?'<div class="lesson-s">'+esc(L.summary)+'</div>':'')+
+        '<div class="lesson-m">'+meta.join('')+'</div>';
+      d.onclick=function(){ editLesson(L); };
+      c.appendChild(d);
+    });
+  }
+
+  // ─── Editor ────────────────────────────────────────────────────────
+  function editLesson(L){
+    state.selected=L;
+    el('editorTitle').textContent='Edit lesson';
+    el('f-id').value=L.id||'';
+    el('f-title').value=L.title||'';
+    el('f-summary').value=L.summary||'';
+    el('f-objectives').value=(L.objectives||[]).join('\n');
+    el('f-body').value=L.body||'';
+    el('f-language').value=L.language||'English';
+    el('f-duration').value=L.duration_min||15;
+    el('f-cpd').value=L.cpd_points!=null?L.cpd_points:1;
+    el('f-active').checked=L.active!==false;
+    el('deleteBtn').classList.remove('hidden');
+    renderLessons();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function clearEditor(){
+    state.selected=null;
+    el('editorTitle').textContent='New lesson';
+    el('editor').reset();
+    el('f-id').value='';
+    el('f-duration').value=15; el('f-cpd').value=1; el('f-active').checked=true;
+    el('deleteBtn').classList.add('hidden');
+    renderLessons();
+  }
+
+  el('newBtn').onclick=clearEditor;
+  el('resetBtn').onclick=clearEditor;
+
+  el('editor').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var objectives=el('f-objectives').value.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+    var lesson={
+      title: el('f-title').value.trim(),
+      summary: el('f-summary').value.trim(),
+      body: el('f-body').value.trim(),
+      objectives: objectives,
+      language: el('f-language').value,
+      duration_min: parseInt(el('f-duration').value,10)||15,
+      cpd_points: parseInt(el('f-cpd').value,10)||0,
+      active: el('f-active').checked,
+    };
+    if(el('f-id').value) lesson.id=el('f-id').value;
+    if(!lesson.title || !lesson.body){ toast('Title and lesson material are required.'); return; }
+    var b=el('saveBtn'); b.disabled=true; b.textContent='Saving…';
+    api.trainerSaveLessons(lesson).then(function(saved){
+      toast('Lesson saved.');
+      b.disabled=false; b.textContent='Save lesson';
+      loadLessons();
+      if(saved && saved.id){ el('f-id').value=saved.id; el('deleteBtn').classList.remove('hidden'); el('editorTitle').textContent='Edit lesson'; }
+    }).catch(function(e){ b.disabled=false; b.textContent='Save lesson'; handleAuth(e); toast('Could not save: '+(e.message||e)); });
+  });
+
+  el('deleteBtn').onclick=function(){
+    var id=el('f-id').value; if(!id) return;
+    if(!confirm('Delete this lesson? Lawyers will no longer see it. Existing progress records are kept.')) return;
+    api.trainerDeleteLesson(id).then(function(){ toast('Lesson deleted.'); clearEditor(); loadLessons(); })
+      .catch(function(e){ handleAuth(e); toast('Could not delete: '+(e.message||e)); });
+  };
+
+  // ─── Tabs ──────────────────────────────────────────────────────────
+  document.querySelectorAll('.tab').forEach(function(t){
+    t.onclick=function(){
+      document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
+      t.classList.add('active');
+      var which=t.getAttribute('data-tab');
+      el('tab-materials').classList.toggle('hidden', which!=='materials');
+      el('tab-learners').classList.toggle('hidden', which!=='learners');
+      if(which==='learners') loadOverview();
+    };
+  });
+
+  // ─── Learners & progress ───────────────────────────────────────────
+  function loadOverview(){
+    api.trainerOverview().then(function(r){
+      var lessons=r.lessons||[];
+      var totLearners=0, totCompleted=0, totSessions=0;
+      lessons.forEach(function(L){ totLearners+=(L.learners||0); totCompleted+=(L.completed||0); totSessions+=(L.total_sessions||0); });
+      el('statRow').innerHTML=
+        stat(lessons.length,'Courses') + stat(totLearners,'Enrolled learners') +
+        stat(totCompleted,'Completions') + stat(totSessions,'Sessions run');
+      var b=el('overviewBody');
+      if(!lessons.length){ b.innerHTML='<tr><td colspan="7" class="empty">No learner activity yet.</td></tr>'; return; }
+      b.innerHTML='';
+      lessons.forEach(function(L){
+        var tr=document.createElement('tr');
+        tr.innerHTML='<td><b>'+esc(L.title)+'</b></td>'+
+          '<td>'+(L.learners||0)+'</td>'+
+          '<td>'+(L.in_progress||0)+'</td>'+
+          '<td>'+(L.completed||0)+'</td>'+
+          '<td><div class="prog"><i style="width:'+(L.avg_percent||0)+'%"></i></div></td>'+
+          '<td>'+(L.total_sessions||0)+'</td>'+
+          '<td><button class="btn btn-ghost btn-sm">View</button></td>';
+        tr.querySelector('button').onclick=function(){ loadRoster(L.lesson_id, L.title); };
+        b.appendChild(tr);
+      });
+    }).catch(function(e){ handleAuth(e); });
+  }
+
+  function stat(n,l){ return '<div class="stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
+
+  function loadRoster(lessonId, title){
+    api.trainerLessonLearners(lessonId).then(function(r){
+      el('rosterCard').classList.remove('hidden');
+      el('rosterTitle').textContent='Learners — '+title;
+      var b=el('rosterBody'); var rows=r.learners||[];
+      if(!rows.length){ b.innerHTML='<tr><td colspan="7" class="empty">No one has started this lesson yet.</td></tr>'; }
+      else {
+        b.innerHTML='';
+        rows.forEach(function(p){
+          var done=p.status==='completed';
+          var tr=document.createElement('tr');
+          tr.innerHTML='<td><b>'+esc(p.lawyer_name||p.lawyer_id)+'</b><br><span style="font-size:11px;color:var(--slate3)">'+esc(p.lawyer_email||'')+'</span></td>'+
+            '<td><span class="badge '+(done?'b-done':'b-prog')+'">'+(done?'Completed':'In progress')+'</span></td>'+
+            '<td><div class="prog"><i style="width:'+(p.percent_complete||0)+'%"></i></div></td>'+
+            '<td>'+(p.session_count||0)+'</td>'+
+            '<td>'+fmtTime(p.total_seconds)+'</td>'+
+            '<td>'+(p.cpd_points_awarded||0)+'</td>'+
+            '<td>'+fmtDate(p.last_active_at)+'</td>';
+          b.appendChild(tr);
+        });
+      }
+      el('rosterCard').scrollIntoView({behavior:'smooth'});
+    }).catch(function(e){ handleAuth(e); });
+  }
+})();
+</script>
+</body>
+</html>
