@@ -85,15 +85,22 @@ input.key:focus{outline:none;border-color:var(--green2)}
   background:radial-gradient(130% 90% at 0% 0%,rgba(0,168,94,.40),transparent 58%),linear-gradient(158deg,#04231a 0%,#063a25 52%,#03281c 100%);
   box-shadow:0 14px 38px rgba(2,20,12,.45),inset 0 0 0 1px rgba(255,255,255,.06)}
 .slide:before{content:"";position:absolute;inset:0;pointer-events:none;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.045) 0 1px,transparent 1px 15px)}
-.slide:after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,var(--gold),#f3d99a 60%,var(--gold))}
+.slide:after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,var(--slacc,var(--gold)),#f3d99a 60%,var(--slacc,var(--gold)))}
+.slide{--slacc:var(--gold)}
+.slide[data-type=scenario]{--slacc:#5ab0ff}
+.slide[data-type=quiz]{--slacc:#ffcf5a}
+.slide[data-type=definition]{--slacc:#6fe0a4}
+.slide[data-type=keyterm]{--slacc:#ffd98a}
+.slide[data-type=comparison]{--slacc:#b69cff}
+.slide[data-type=recap]{--slacc:#8ee6c0}
 .slide.enter{animation:slidecard .5s cubic-bezier(.2,.7,.2,1)}
 @keyframes slidecard{from{opacity:0;transform:scale(.985) translateY(10px)}to{opacity:1;transform:none}}
-.slide-kicker{position:relative;font-family:monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:700;display:flex;align-items:center;gap:9px}
+.slide-kicker{position:relative;font-family:monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--slacc,var(--gold));font-weight:700;display:flex;align-items:center;gap:9px}
 .slide-kicker:before{content:"";width:18px;height:2px;background:var(--gold)}
 .slide-title{position:relative;font-family:var(--serif);font-size:25px;line-height:1.15;margin:11px 0 16px;text-shadow:0 1px 6px rgba(0,0,0,.25)}
 .slide-bullets{position:relative;list-style:none;display:flex;flex-direction:column;gap:11px;margin:0;padding:0}
 .slide-bullets li{position:relative;padding-left:21px;font-size:13.5px;line-height:1.45;color:#e9fff4;opacity:0;transform:translateY(6px);animation:slidein .5s forwards}
-.slide-bullets li:before{content:"";position:absolute;left:0;top:6px;width:8px;height:8px;border-radius:2px;background:var(--gold);box-shadow:0 0 10px rgba(201,145,58,.65)}
+.slide-bullets li:before{content:"";position:absolute;left:0;top:6px;width:8px;height:8px;border-radius:2px;background:var(--slacc,var(--gold));box-shadow:0 0 10px rgba(255,255,255,.25)}
 @keyframes slidein{to{opacity:1;transform:none}}
 .slide-foot{position:absolute;left:20px;right:20px;bottom:14px;display:flex;justify-content:space-between;align-items:center;font-family:monospace;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.5)}
 .face{width:62%;max-width:340px;filter:drop-shadow(0 12px 30px rgba(0,0,0,.4))}
@@ -423,11 +430,28 @@ Your job is not to finish the material — it is to produce a competent learner.
   // The full programme welcome only belongs in the first/welcome section; later
   // sections skip it (the learner already heard it).
   function isOpeningLesson(l){ return /welcome|orientation|how this works/i.test((l&&l.title)||'')||/_00_|welcome/i.test((l&&l.id)||''); }
+  // Build a personalisation profile from the learner's saved progress so the coach
+  // can greet them by name, connect to prior sessions, and target weak areas.
+  function buildLearner(lesson){
+    var p=AUTH.progress||{},keys=Object.keys(p);
+    var courseId=lesson.courseId||'general';
+    var here=p[courseId+'::'+lesson.id];
+    var completedInCourse=keys.filter(function(k){return p[k]&&p[k].courseId===courseId&&p[k].completed&&p[k].lessonId!==lesson.id;}).map(function(k){return p[k].title;}).filter(Boolean);
+    var weak=keys.filter(function(k){return p[k]&&(p[k].bestEngagement||0)<50||(p[k]&&p[k].pass===false);}).map(function(k){return p[k].title;}).filter(Boolean).slice(0,3);
+    return {
+      name:AUTH.name||'',
+      returning:keys.length>0,
+      retakingThisLesson:!!here,
+      priorEngagement:here?(here.bestEngagement||0):0,
+      completedInCourse:completedInCourse,
+      weakAreas:weak.join('; ')
+    };
+  }
   function claudeTurn(lesson,history,perception){
     return fetch('/api/trainer-turn',{
       method:'POST',
       headers:{'content-type':'application/json'},
-      body:JSON.stringify({token:AUTH.token,lesson:lesson,history:history,perception:perception,opening:isOpeningLesson(lesson)})
+      body:JSON.stringify({token:AUTH.token,lesson:lesson,history:history,perception:perception,opening:isOpeningLesson(lesson),learner:buildLearner(lesson)})
     }).then(function(r){return r.json();}).then(function(d){
       if(d&&typeof d.say==='string')return {say:d.say,covered:d.covered||[],complete:!!d.complete,slide:d.slide||null};
       throw new Error((d&&d.error)||'no turn');
@@ -704,15 +728,18 @@ Your job is not to finish the material — it is to produce a competent learner.
   function setPerc(k,v,hot,good){var n=document.querySelector('.perc[data-k="'+k+'"]');if(!n)return;n.querySelector('.v').textContent=v;n.classList.toggle('hot',!!hot);n.classList.toggle('good',!!good);}
 
   // ─── Slide panel (brain-generated, synced to the concept being taught) ─
+  var SLIDE_LABELS={concept:'● Key concept',definition:'§ Definition',scenario:'⚖ Scenario',keyterm:'🔑 Key term',comparison:'⇄ Comparison',recap:'↻ Recap',quiz:'? Check'};
   function renderSlide(slide){
     if(!slide||!slide.title)return;
     S.slideN=(S.slideN||0)+1;
-    var course=(S.selected&&S.selected.title)?S.selected.title.split('—')[0].trim():'Legal training';
-    el('slideKicker').textContent=course;
+    var type=slide.type||'concept';
+    el('slide').setAttribute('data-type',type);
+    el('slideKicker').textContent=SLIDE_LABELS[type]||'On screen';
     el('slideTitle').textContent=slide.title;
     var ul=el('slideBullets');ul.innerHTML='';
     (slide.bullets||[]).forEach(function(b,i){var li=document.createElement('li');li.textContent=b;li.style.animationDelay=(0.05+i*0.09)+'s';ul.appendChild(li);});
-    var sn=el('slideNo');if(sn)sn.textContent='Slide '+S.slideN;
+    var course=(S.selected&&S.selected.title)?S.selected.title.split('—')[0].trim():'CLPD';
+    var sn=el('slideNo');if(sn)sn.textContent=course+' · '+S.slideN;
     var s=el('slide');s.classList.remove('enter');void s.offsetWidth;s.classList.add('enter');  // re-trigger entrance
   }
 
