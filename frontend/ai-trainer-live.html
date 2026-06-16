@@ -48,7 +48,7 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
 .card-h{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
 .card-h h3{font-size:13.5px;font-weight:650}
 .card-b{padding:18px}
-.lessons{display:flex;flex-direction:column;gap:10px}
+.lessons{display:flex;flex-direction:column;gap:10px;max-height:62vh;overflow:auto}
 .lesson{border:1.5px solid var(--line2);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s}
 .lesson:hover{border-color:var(--green-border);background:var(--green-bg)}
 .lesson.sel{border-color:var(--green2);background:var(--green-bg);box-shadow:0 0 0 3px rgba(0,107,63,.08)}
@@ -363,7 +363,27 @@ input.key:focus{outline:none;border-color:var(--green2)}
       c.appendChild(d);
     });
   }
-  renderLessons();refreshStart();
+  // Load the full courses shipped in the repo (frontend/courses/*.json). Falls
+  // back to the built-in lessons above if the files can't be fetched.
+  function loadCourses(){
+    var files=['courses/aviation-law.json','courses/civil-code-2025.json'];
+    return Promise.all(files.map(function(f){
+      return fetch(f).then(function(r){return r.ok?r.json():[];}).catch(function(){return [];});
+    })).then(function(arrs){
+      var out=[];
+      arrs.forEach(function(c){
+        var L=Array.isArray(c)?c:(c.lessons||[]);
+        L.forEach(function(x){
+          if(!x||!x.title)return;
+          out.push({id:x.id,title:x.title,summary:x.summary,duration_min:x.duration_min,
+                    cpd_points:x.cpd_points,objectives:x.objectives||[],body:x.body||''});
+        });
+      });
+      return out;
+    });
+  }
+  loadCourses().then(function(list){ if(list&&list.length){ LESSONS=list; } renderLessons(); }).catch(function(){ renderLessons(); });
+  refreshStart();
 
   // ─── Start ───────────────────────────────────────────────────────────
   el('startBtn').addEventListener('click',function(){
