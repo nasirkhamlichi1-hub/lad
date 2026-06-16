@@ -192,6 +192,12 @@
                                          : Promise.resolve({ ok: true }),
     trainerStartSession: (lessonId) => ENABLED ? call('POST', '/api/v1/trainer/sessions', { lessonId })
                                                : Promise.resolve({ demo: true, sessionId: 'demo', conversationUrl: null, resumed: false }),
+    // Scalable browser engine: start a session, drive turns, mint an Anam token.
+    trainerStartBrowserSession: (lessonId) => ENABLED ? call('POST', '/api/v1/trainer/sessions', { lessonId, engine: 'browser' })
+                                                      : Promise.resolve({ engine: 'browser', sessionId: 'demo', face: 'stylised', brain: 'fallback', lesson: null, resumed: false }),
+    trainerTurn: (sessionId, history, perception) => ENABLED ? call('POST', '/api/v1/trainer/turn', { sessionId, history, perception })
+                                                            : Promise.resolve({ say: 'Connect a backend to run the live trainer.', complete: false, coverage: { done: 0, total: 0 }, brain: 'offline' }),
+    trainerAnamToken: () => ENABLED ? call('POST', '/api/v1/trainer/anam/session-token') : Promise.reject(new Error('offline')),
     // Pause keeps progress so the lesson can be resumed later; end completes it.
     trainerPauseSession: (id, info) => ENABLED ? call('POST', '/api/v1/trainer/sessions/' + encodeURIComponent(id) + '/pause', info || {})
                                                : Promise.resolve({ ok: true, status: 'paused' }),
