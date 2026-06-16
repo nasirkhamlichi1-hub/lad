@@ -4,6 +4,9 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>AI Trainer (Scalable) · CLPD — Government of Dubai</title>
+<script type="importmap">
+{ "imports": { "buffer": "https://cdn.jsdelivr.net/npm/buffer@6.0.3/+esm" } }
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -284,10 +287,12 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
   // ─── Anam photoreal face (best-effort; isolated adapter) ──────────────
   async function initAnam(){
     var tok=await api.trainerAnamToken();
-    // Pinned to a known-good SDK major so a future breaking release can't break
-    // the live trainer. createClient(sessionToken) is the current (v4) entry point;
-    // the persona (avatar + voice) is baked into the server-minted session token.
-    var mod=await import('https://unpkg.com/@anam-ai/js-sdk@4.15.0?module');
+    // Load the SDK from jsDelivr /+esm (self-contained — it inlines the SDK's one
+    // bare dep "buffer", which the bare unpkg ?module build fails to resolve in the
+    // browser). Fall back to the unpkg dist build (buffer via the page importmap).
+    var mod;
+    try{ mod=await import('https://cdn.jsdelivr.net/npm/@anam-ai/js-sdk@4.15.0/+esm'); }
+    catch(e){ mod=await import('https://unpkg.com/@anam-ai/js-sdk@4.15.0/dist/module/index.js'); }
     var client=mod.createClient(tok.sessionToken);
     await client.streamToVideoElement('anamVideo');
     el('anamVideo').classList.remove('hidden');el('stylisedFace').classList.add('hidden');
