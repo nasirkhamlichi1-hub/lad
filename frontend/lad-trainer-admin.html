@@ -208,7 +208,7 @@ tr:hover td{background:var(--paper)}
             <button type="button" class="btn btn-danger btn-sm hidden" id="deleteBtn">Delete</button>
           </div>
           <p class="note">Saved lessons appear immediately in the lawyer's AI Trainer. Changes to material take
-            effect on the next session; the trainer's teaching skills come from the fixed Tavus persona.</p>
+            effect on the next session; the trainer's teaching skills come from the fixed teaching charter.</p>
         </form>
       </div>
     </div>
@@ -266,8 +266,8 @@ tr:hover td{background:var(--paper)}
 
   function renderMode(){
     var p=el('modePill');
-    if(state.status && state.status.configured){ p.className='pill pill-live'; p.textContent='● Live avatar'; }
-    else { p.className='pill pill-demo'; p.textContent='Demo mode'; }
+    if(state.status && state.status.premium){ p.className='pill pill-live'; p.textContent='● Photoreal · Claude'; }
+    else { p.className='pill pill-demo'; p.textContent='Preview mode'; }
   }
 
   function loadLessons(){

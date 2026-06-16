@@ -12,37 +12,32 @@ working prototype already ships in this repo (see [What's already built](#whats-
 
 ## ⏯️ RESUME HERE — current status (for a new session)
 
-**Decision made:** vendor = **Tavus** (CVI + Raven-1 perception), voice = ElevenLabs.
-The full prototype is built and pushed on branch `claude/vigilant-curie-lrtqi0`.
+**Decision made:** ONE model — a fully owned, vendor-decoupled trainer that replaces
+Tavus. Tavus has been removed from the codebase.
 
-**✅ LIVE TAVUS IS WORKING (2026-06-16).** Egress to `tavusapi.com` is open and the
-API key authenticates. The smoke test, the persona, and a full end-to-end
-conversation (persona + lesson context + Raven perception) all succeeded.
+**The single model:**
+- **Face** → **Anam** photoreal avatar (`ANAM_API_KEY` + `ANAM_AVATAR_ID`). Falls back
+  to a built-in animated avatar if unset.
+- **Brain** → **Claude** (`ANTHROPIC_API_KEY`) via `POST /api/v1/trainer/turn`, returning
+  `{say, covered[], complete}` for hard key-element tracking. Falls back to a scripted
+  brain if unset.
+- **Voice** → **ElevenLabs** (`ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID`). Falls back to
+  the browser voice.
+- **Eyes** → **MorphCast** emotion AI (`MORPHCAST_LICENSE_KEY`, in-browser) augmenting the
+  free TensorFlow.js model (phone + presence). All perception is in-browser.
 
-**Provisioned resources (baked into `render.yaml` + `backend/.env.example`):**
-- `TAVUS_REPLICA_ID=r38e4c3bc562` — *Samantha - Office V2* (phoenix-3)
-- `TAVUS_PERSONA_ID=pc49eb4ad278` — *"LAD CLPD Expert Trainer"* (raven-1 perception,
-  full distracted/phone/mood/leave-frame coaching behaviour)
-- Voice = **Tavus default** for now. ElevenLabs not yet set — to switch, set
-  `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` and re-run the persona script.
+**The trainer page** is `frontend/ai-trainer.html` (admin uploader: `lad-trainer-admin.html`).
+It runs end-to-end with **zero keys** in a preview mode (animated face + scripted brain +
+browser voice + free perception), and each piece upgrades as you add its key.
 
-**To begin testing right now:** ensure `TAVUS_API_KEY` is set in the environment
-(it is), then either:
-```
-cd backend && TAVUS_REPLICA_ID=r38e4c3bc562 TAVUS_PERSONA_ID=pc49eb4ad278 npm start
-```
-and open `frontend/ai-trainer.html` (or `frontend/trainer-test.html` → Live tab),
-**or** for a one-shot live URL: `node scripts/tavus-test.js`.
+**To make it the full "premium" experience, set on Render:** `ANAM_API_KEY`,
+`ANAM_AVATAR_ID`, `ANTHROPIC_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`,
+`MORPHCAST_LICENSE_KEY`. `/api/v1/trainer/status` reports which pieces are live
+(`premium: true` once Anam + Claude are configured).
 
-For deployment, the IDs are already in `render.yaml`; just set `TAVUS_API_KEY`
-(and optionally the ElevenLabs vars) in the Render dashboard.
-
-**Remaining / optional next steps:**
-- Wire ElevenLabs voice (set the two vars, re-run `node scripts/create-trainer-persona.js`,
-  update `TAVUS_PERSONA_ID`).
-- Make Claude the conversational LLM (Tavus bring-your-own-LLM) for tighter control.
-- Build the frontend "My learning / Resume" UI on top of the new progress API.
-- **Security: rotate the Tavus API key after testing** — it was shared in chat.
+**Verify before production:** the Anam SDK calls (`frontend/ai-trainer.html`) and the
+session-token flow (`backend/src/services/anam.js`) were written to Anam's documented API
+but not live-tested here — confirm against current Anam docs when you add the account.
 
 ---
 

@@ -1,12 +1,9 @@
 'use strict';
 
-// The trainer's brain-agnostic teaching charter and lesson framing.
+// The trainer's teaching charter and lesson framing.
 // ---------------------------------------------------------------------
-// This is the SINGLE source of truth for HOW the AI expert teaches and how it
-// reacts to what the camera sees. It is shared by BOTH engines:
-//   • the Tavus persona  (services/tavus.js)  — premium photoreal avatar
-//   • the Claude brain   (services/trainerBrain.js) — scalable browser trainer
-// so the teaching behaviour is identical whichever engine runs the session.
+// The SINGLE source of truth for HOW the AI expert teaches and how it reacts to
+// what the camera sees. Used by the Claude brain (services/trainerBrain.js).
 // Only the lesson material (lesson body + objectives) changes per course.
 
 const SYSTEM_PROMPT = [

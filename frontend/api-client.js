@@ -169,11 +169,11 @@
     lexChat: (messages, system) => ENABLED ? call('POST', '/api/v1/lex/chat', { messages, system })
                                             : Promise.reject(new Error('offline')),
 
-    // ─── AI Trainer (Tavus realistic-avatar 1-2-1 sessions) ──────────
+    // ─── AI Trainer (Anam face + Claude brain + ElevenLabs voice) ────
     // In demo mode (no backend) we serve one clearly-labelled sample lesson
     // from localStorage so the experience is previewable offline.
     trainerStatus: () => ENABLED ? call('GET', '/api/v1/trainer/status')
-                                 : Promise.resolve({ configured: false, demo: true, voice: 'tavus-default', lessonCount: 1 }),
+                                 : Promise.resolve({ premium: false, lessonCount: 1, engines: { anam: false, brain: false, elevenlabs: false, morphcast: false } }),
     trainerLessons: () => ENABLED ? call('GET', '/api/v1/trainer/lessons')
                                   : Promise.resolve(lsGet('lad_trainer_lessons', [{
                                       id: 'demo-ethics',

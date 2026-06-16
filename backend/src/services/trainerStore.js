@@ -87,7 +87,7 @@ function createSession({ conversationId, conversationUrl, lessonId, lawyerId, st
     VALUES (?, ?, ?, ?, ?, ?, '[]', ?, ?, ?)
   `).run(
     id, conversationId || null, conversationUrl || null, lessonId || null, lawyerId || null,
-    status || 'active', progressId || null, resumedFromId || null, engine || 'tavus'
+    status || 'active', progressId || null, resumedFromId || null, engine || 'browser'
   );
   return getSession(id);
 }
@@ -122,9 +122,8 @@ function endSession(id, { engagement, transcript, status = 'ended', seconds } = 
   return getSession(id);
 }
 
-// Enrich a session with end-of-call data from the Tavus webhook WITHOUT
-// changing its status (a paused session stays paused even though Tavus fires
-// its shutdown event when we close the live room).
+// Enrich a session with end-of-call engagement/transcript WITHOUT changing its
+// status (a paused session stays paused).
 function recordSessionAnalysis(id, { engagement, transcript } = {}) {
   db.prepare(`
     UPDATE trainer_sessions
@@ -139,7 +138,7 @@ function recordSessionAnalysis(id, { engagement, transcript } = {}) {
   return getSession(id);
 }
 
-// Append a perception/transcript event delivered by the Tavus callback.
+// Append a perception/transcript event to a session (by conversation id).
 function appendEvent(conversationId, event) {
   const session = getSessionByConversationId(conversationId);
   if (!session) return null;

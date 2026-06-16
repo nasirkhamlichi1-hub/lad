@@ -1,12 +1,15 @@
 'use strict';
 
-// AI Trainer — realistic-avatar 1-2-1 CLPD sessions powered by Tavus CVI.
+// AI Trainer — realistic-avatar 1-2-1 CLPD sessions.
+// One model: photoreal Anam face + Claude brain + ElevenLabs voice + perception.
 //
-//   GET  /api/v1/trainer/status               public — is the trainer live or demo?
+//   GET  /api/v1/trainer/status               public — which pieces are configured
 //   GET  /api/v1/trainer/lessons              public — uploaded lessons (active)
 //   PUT  /api/v1/trainer/lessons              admin  — upload/replace lessons
 //   DELETE /api/v1/trainer/lessons/:id        admin  — remove a lesson
 //   POST /api/v1/trainer/sessions             auth   — start OR resume a session
+//   POST /api/v1/trainer/turn                 auth   — next trainer turn (Claude brain)
+//   POST /api/v1/trainer/anam/session-token   auth   — mint Anam token for the browser SDK
 //   POST /api/v1/trainer/sessions/:id/pause   auth   — stop midway, keep progress
 //   POST /api/v1/trainer/sessions/:id/end     auth   — finish (completes + awards CPD)
 //   GET  /api/v1/trainer/sessions/mine        auth   — my session/attempt history
@@ -14,18 +17,15 @@
 //   GET  /api/v1/trainer/progress/:lessonId   auth   — my progress for one lesson (+resume)
 //   GET  /api/v1/trainer/lessons/:id/learners admin  — everyone studying a lesson
 //   GET  /api/v1/trainer/overview             admin  — per-lesson learner stats
-//   POST /api/v1/trainer/callback             public — Tavus webhook (perception/transcript)
 //
-// All Tavus/ElevenLabs keys live server-side. When Tavus is not configured the
-// session endpoint returns { demo: true } so the frontend can run a clearly
-// labelled simulated experience instead of failing.
+// All provider keys live server-side (the browser only gets a short-lived Anam
+// token + the public MorphCast key). Each piece degrades gracefully if unset.
 
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const router = express.Router();
 
-const tavus = require('../services/tavus');
 const trainerBrain = require('../services/trainerBrain');
 const anam = require('../services/anam');
 const trainerStore = require('../services/trainerStore');
@@ -37,22 +37,22 @@ const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth')
 const ADMIN_ROLES = ['lad_admin', 'lad_super_admin'];
 
 // ─── Status ──────────────────────────────────────────────────────────
+// One trainer: photoreal Anam face + Claude brain + ElevenLabs voice +
+// MorphCast/in-browser perception. Each piece activates when its key is set;
+// otherwise it degrades (animated face / scripted brain / browser voice / free
+// perception) so the trainer always runs.
 router.get('/status', (_req, res) => {
   const elevenlabs = !!(config.elevenlabs.apiKey && config.elevenlabs.voiceId);
+  const anamOn = anam.isConfigured();
+  const brainOn = trainerBrain.isConfigured();
   res.json({
-    configured: tavus.isConfigured(),
-    demo: !tavus.isConfigured(),
-    voice: elevenlabs ? 'elevenlabs' : 'tavus-default',
-    perceptionModel: config.tavus.perceptionModel,
-    personaConfigured: !!config.tavus.personaId,
+    // "premium" = the full photoreal + Claude experience is configured.
+    premium: anamOn && brainOn,
     lessonCount: trainerStore.listLessons().length,
-    // Engines available to the frontend:
     engines: {
-      tavus: tavus.isConfigured(),          // premium photoreal bundled avatar
-      browser: true,                        // scalable engine always available
-      anam: anam.isConfigured(),            // photoreal face for the browser engine
-      brain: trainerBrain.isConfigured(),   // Claude brain (else deterministic fallback)
-      elevenlabs,                           // ElevenLabs voice
+      anam: anamOn,                         // photoreal face
+      brain: brainOn,                       // Claude brain (else scripted fallback)
+      elevenlabs,                           // ElevenLabs voice (else browser voice)
       morphcast: !!config.morphcast.licenseKey, // richer in-browser perception
     },
     // Client-side MorphCast licence key (safe to expose; used by browser SDK).
@@ -172,66 +172,24 @@ router.post('/sessions', requireAuth, async (req, res, next) => {
       ? { context: progress.resume_context, percent: progress.percent_complete }
       : null;
 
-    // Scalable BROWSER engine — Anam face + Claude brain + ElevenLabs voice +
-    // in-browser perception. No Tavus call; the frontend drives the dialogue
-    // via POST /turn and renders the avatar itself.
-    if ((req.body && req.body.engine) === 'browser') {
-      const session = trainerStore.createSession({
-        lessonId: lesson ? lesson.id : null, lawyerId, status: 'active', engine: 'browser',
-        progressId: progress ? progress.id : null,
-        resumedFromId: resuming ? progress.last_session_id : null,
-      });
-      if (progress) trainerStore.touchProgressOnStart(progress.id, session.id);
-      log.info('trainer_session_started', { sessionId: session.id, engine: 'browser', lessonId: lesson ? lesson.id : null, resumed: resuming });
-      return res.json({
-        engine: 'browser',
-        sessionId: session.id,
-        lesson,
-        resumed: resuming,
-        face: anam.isConfigured() ? 'anam' : 'stylised',
-        brain: trainerBrain.isConfigured() ? 'claude' : 'fallback',
-        progress: progress ? trainerStore.getProgressById(progress.id) : null,
-      });
-    }
-
-    // Demo mode — no Tavus configured. Still tracks progress so the simulated
-    // experience behaves like the real one.
-    if (!tavus.isConfigured()) {
-      const session = trainerStore.createSession({
-        lessonId: lesson ? lesson.id : null, lawyerId, status: 'active',
-        progressId: progress ? progress.id : null,
-        resumedFromId: resuming ? progress.last_session_id : null,
-      });
-      if (progress) trainerStore.touchProgressOnStart(progress.id, session.id);
-      return res.json({
-        demo: true, sessionId: session.id, conversationUrl: null, lesson,
-        resumed: resuming, progress: progress ? trainerStore.getProgressById(progress.id) : null,
-      });
-    }
-
-    const conv = await tavus.createConversation({ lesson, lawyer, resume });
+    // The trainer is browser-driven: photoreal Anam face + Claude brain +
+    // ElevenLabs voice + perception. The frontend drives the dialogue via
+    // POST /turn and renders the avatar itself; no server-side video call.
     const session = trainerStore.createSession({
-      conversationId: conv.conversation_id,
-      conversationUrl: conv.conversation_url,
-      lessonId: lesson ? lesson.id : null,
-      lawyerId,
-      status: 'active',
+      lessonId: lesson ? lesson.id : null, lawyerId, status: 'active', engine: 'browser',
       progressId: progress ? progress.id : null,
       resumedFromId: resuming ? progress.last_session_id : null,
     });
     if (progress) trainerStore.touchProgressOnStart(progress.id, session.id);
 
-    log.info('trainer_session_started', {
-      sessionId: session.id, conversationId: conv.conversation_id,
-      lessonId: lesson ? lesson.id : null, resumed: resuming,
-    });
+    log.info('trainer_session_started', { sessionId: session.id, lessonId: lesson ? lesson.id : null, resumed: resuming });
     res.json({
-      demo: false,
+      engine: 'browser',
       sessionId: session.id,
-      conversationId: conv.conversation_id,
-      conversationUrl: conv.conversation_url,
       lesson,
       resumed: resuming,
+      face: anam.isConfigured() ? 'anam' : 'stylised',
+      brain: trainerBrain.isConfigured() ? 'claude' : 'fallback',
       progress: progress ? trainerStore.getProgressById(progress.id) : null,
     });
   } catch (e) { next(e); }
@@ -244,12 +202,6 @@ async function closeSession(req, res, next, mode) {
     if (!session) return res.status(404).json({ error: 'Session not found' });
     if (session.lawyer_id && session.lawyer_id !== userId(req) && !isAdmin(req)) {
       return res.status(403).json({ error: 'Not your session' });
-    }
-
-    // Always close the live Tavus room — this frees the concurrency slot.
-    if (session.conversation_id) {
-      try { await tavus.endConversation(session.conversation_id); }
-      catch (e) { log.warn('trainer_close_failed', { error: e.message }); }
     }
 
     const body = req.body || {};
@@ -394,47 +346,6 @@ router.get('/lessons/:id/learners', requireRole(...ADMIN_ROLES), (req, res) => {
 // Per-lesson rollup: how many learners, how many completed, average %.
 router.get('/overview', requireRole(...ADMIN_ROLES), (_req, res) => {
   res.json({ lessons: trainerStore.lessonLearnerStats() });
-});
-
-// ─── Tavus webhook ───────────────────────────────────────────────────
-// Tavus posts conversation lifecycle + perception + transcript events here.
-// We record them against the session; end-of-call analysis becomes the
-// engagement summary. Public endpoint — validate by conversation_id existing.
-router.post('/callback', (req, res) => {
-  const evt = req.body || {};
-  const conversationId = evt.conversation_id || (evt.properties && evt.properties.conversation_id);
-  if (!conversationId) return res.status(200).json({ ok: true, ignored: true });
-
-  const type = evt.event_type || evt.message_type || 'event';
-  trainerStore.appendEvent(conversationId, { type, data: evt });
-
-  // End-of-call: persist the perception analysis + transcript WITHOUT changing
-  // the session's status (a paused session must stay paused even though Tavus
-  // fires its shutdown event when we close the room). Also refresh the resume
-  // recap for any not-yet-completed lesson so a later resume is richer.
-  if (/shutdown|ended|analysis|perception_analysis/i.test(type)) {
-    const session = trainerStore.getSessionByConversationId(conversationId);
-    if (session) {
-      const transcript = evt.transcript || null;
-      const engagement = evt.perception_analysis || evt.analysis || evt.shutdown_summary || null;
-      trainerStore.recordSessionAnalysis(session.id, { engagement, transcript });
-
-      if (session.progress_id) {
-        const progress = trainerStore.getProgressById(session.progress_id);
-        if (progress && progress.status !== 'completed' && transcript) {
-          const lesson = trainerStore.getLesson(session.lesson_id);
-          trainerStore.updateProgressLearning(progress.id, {
-            resumeContext: trainerStore.buildResumeContext(lesson, {
-              transcript,
-              percent: progress.percent_complete,
-              elapsedSeconds: progress.total_seconds,
-            }),
-          });
-        }
-      }
-    }
-  }
-  res.status(200).json({ ok: true });
 });
 
 module.exports = router;

@@ -59,23 +59,8 @@ services:
       - key: ANTHROPIC_MODEL
         value: claude-sonnet-4-20250514
 
-      # ─── AI Trainer (Tavus CVI + Raven perception, ElevenLabs voice) ───
-      # Set TAVUS_API_KEY in the dashboard. REPLICA + PERSONA below are the
-      # provisioned "LAD CLPD Expert Trainer" (Samantha - Office V2, raven-1).
-      # Without TAVUS_API_KEY the trainer runs in demo/simulated mode.
-      - key: TAVUS_API_KEY
-        sync: false
-      - key: TAVUS_REPLICA_ID
-        value: r38e4c3bc562        # Samantha - Office V2 (phoenix-3)
-      - key: TAVUS_PERSONA_ID
-        value: pc49eb4ad278        # LAD CLPD Expert Trainer persona
-      - key: TAVUS_PERCEPTION_MODEL
-        value: raven-1
-      - key: TAVUS_MAX_CALL_DURATION_S
-        value: "1800"
-      - key: TAVUS_ENABLE_RECORDING
-        value: "false"
-      # ElevenLabs voice layer (optional — falls back to Tavus default voice)
+      # ─── AI Trainer (Anam face + Claude brain + ElevenLabs voice) ──────
+      # ElevenLabs voice layer (optional — falls back to the browser voice)
       - key: ELEVENLABS_API_KEY
         sync: false
       - key: ELEVENLABS_VOICE_ID

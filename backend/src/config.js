@@ -66,34 +66,17 @@ module.exports = {
     model:  process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
   },
 
-  // ─── AI Trainer (Tavus Conversational Video Interface) ───────────────
-  // The realistic avatar trainer. Tavus drives the photoreal face + the
-  // Raven perception model (sees the attendee's camera). ElevenLabs is the
-  // voice. All keys stay server-side — the frontend never sees them.
-  // If TAVUS_API_KEY + TAVUS_REPLICA_ID are unset, /trainer/* runs in demo
-  // mode (no live conversation; the frontend shows a simulated experience).
-  tavus: {
-    apiKey:           process.env.TAVUS_API_KEY || '',
-    baseUrl:          process.env.TAVUS_BASE_URL || 'https://tavusapi.com',
-    replicaId:        process.env.TAVUS_REPLICA_ID || '',
-    personaId:        process.env.TAVUS_PERSONA_ID || '',
-    perceptionModel:  process.env.TAVUS_PERCEPTION_MODEL || 'raven-1',
-    maxCallDurationS: parseInt(process.env.TAVUS_MAX_CALL_DURATION_S || '1800', 10),
-    enableRecording:  (process.env.TAVUS_ENABLE_RECORDING || 'false') === 'true',
-  },
-
   elevenlabs: {
     apiKey:  process.env.ELEVENLABS_API_KEY || '',
     voiceId: process.env.ELEVENLABS_VOICE_ID || '',
     model:   process.env.ELEVENLABS_MODEL || 'eleven_turbo_v2_5',
   },
 
-  // ─── Anam (photoreal avatar, scalable "browser" engine) ──────────────
-  // The cheap-to-scale alternative to Tavus: Anam renders the photoreal face,
-  // Claude (anthropic above) is the brain, ElevenLabs is the voice, and the
-  // browser does perception. Keys stay server-side; the browser only ever sees
-  // a short-lived session token. If ANAM_API_KEY is unset, the browser engine
-  // falls back to a stylised avatar so it still runs.
+  // ─── Anam (photoreal avatar) ─────────────────────────────────────────
+  // Anam renders the photoreal face; Claude (anthropic above) is the brain,
+  // ElevenLabs is the voice, and the browser does perception. Keys stay
+  // server-side; the browser only ever sees a short-lived session token. If
+  // ANAM_API_KEY is unset, the trainer falls back to an animated avatar.
   anam: {
     apiKey:   process.env.ANAM_API_KEY || '',
     baseUrl:  process.env.ANAM_BASE_URL || 'https://api.anam.ai',
