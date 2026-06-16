@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex, nofollow"/>
+<title>AI Trainer — Live (no backend) · CLPD</title>
+<!-- Resolve the Anam SDK's one bare dependency ("buffer") for browsers that
+     fall back to the unpkg module build. The jsDelivr /+esm build inlines it. -->
+<script type="importmap">
+{ "imports": { "buffer": "https://cdn.jsdelivr.net/npm/buffer@6.0.3/+esm" } }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{
+  --green:#006B3F;--green2:#008549;--green-d:#004d2e;--green-l:#00a85e;--green-bg:#f0f9f4;--green-border:#b8d8c5;
+  --gold:#C9913A;--gold-bg:#fdf6e8;--gold-border:#e8c878;
+  --ink:#0a0e14;--slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;
+  --line:#e8ecf1;--line2:#d8dfe7;--paper:#f8fafb;--paper2:#f1f4f7;--white:#fff;
+  --red:#c0392b;--red-bg:#fdeae8;--red-border:#f0aaaa;--amber:#92540a;--amber-bg:#fef3e2;--amber-border:#f0c878;--blue:#1a4d80;--blue-bg:#eef4fb;
+  --serif:'Instrument Serif',Georgia,serif;--sans:'Inter',system-ui,sans-serif;
+  --r-sm:8px;--r:12px;--r-lg:18px;--sh:0 2px 4px rgba(10,14,20,.06),0 8px 24px rgba(10,14,20,.06);--sh-lg:0 8px 16px rgba(10,14,20,.1),0 32px 64px rgba(10,14,20,.1);
+}
+html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+a{color:var(--green2);text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.top{background:rgba(255,255,255,.85);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.top-in{display:flex;align-items:center;gap:14px;height:62px}
+.emblem{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:10px;display:grid;place-items:center;flex-shrink:0}
+.emblem svg{width:20px;height:24px}
+.brand-t{font-family:var(--serif);font-size:18px;line-height:1.05}
+.brand-s{font-family:monospace;font-size:8.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:2px}
+.top-spacer{flex:1}
+.pill{font-family:monospace;font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:5px 10px;border-radius:999px;border:1px solid}
+.pill-live{background:var(--green-bg);color:var(--green-d);border-color:var(--green-border)}
+.pill-demo{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border)}
+.ghost-link{font-size:12.5px;color:var(--slate2);font-weight:500}
+.hero{padding:34px 0 8px}
+.eyebrow{font-family:monospace;font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em;line-height:1.05}
+.lede{font-size:15px;color:var(--slate);max-width:640px;margin-top:12px}
+.grid{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start;padding:24px 0 60px}
+@media(max-width:880px){.grid{grid-template-columns:1fr}}
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh);overflow:hidden}
+.card-h{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+.card-h h3{font-size:13.5px;font-weight:650}
+.card-b{padding:18px}
+.lessons{display:flex;flex-direction:column;gap:10px;max-height:62vh;overflow:auto}
+.lesson{border:1.5px solid var(--line2);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s}
+.lesson:hover{border-color:var(--green-border);background:var(--green-bg)}
+.lesson.sel{border-color:var(--green2);background:var(--green-bg);box-shadow:0 0 0 3px rgba(0,107,63,.08)}
+.lesson-t{font-size:14px;font-weight:650}
+.lesson-s{font-size:12.5px;color:var(--slate2);margin-top:4px}
+.lesson-m{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.tag{font-family:monospace;font-size:9.5px;font-weight:600;padding:3px 7px;border-radius:6px;background:var(--paper2);color:var(--slate2);border:1px solid var(--line)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600;padding:12px 20px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;transition:all .15s}
+.btn-pri{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;box-shadow:0 2px 10px rgba(0,107,63,.25)}
+.btn-pri:hover{transform:translateY(-1px)}
+.btn-pri:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-danger{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+.btn-ghost{background:var(--white);color:var(--slate);border-color:var(--line2)}
+.btn-block{width:100%}
+.note{font-size:11px;color:var(--slate3);margin-top:12px;line-height:1.5}
+.banner{display:flex;gap:10px;align-items:flex-start;background:var(--blue-bg);border:1px solid #cfe0f0;border-radius:var(--r);padding:11px 13px;margin:14px 0;font-size:12px;color:var(--slate);line-height:1.5}
+label.fld{display:block;font-size:12px;font-weight:650;color:var(--slate);margin:12px 0 5px}
+input.key{width:100%;padding:9px 11px;border:1.5px solid var(--line2);border-radius:var(--r-sm);font-size:13px;font-family:monospace}
+input.key:focus{outline:none;border-color:var(--green2)}
+.stage-wrap{display:none}
+.stage{position:relative;background:linear-gradient(160deg,#0d1b14,#0a0e14);border-radius:var(--r-lg);overflow:hidden;aspect-ratio:16/9;box-shadow:var(--sh-lg);border:1px solid #000;display:grid;place-items:center}
+.stage video#anamVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.selfcam{position:absolute;right:12px;bottom:12px;width:132px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,.5);box-shadow:0 4px 16px rgba(0,0,0,.4);background:#000;z-index:4}
+.selfcam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.cap{position:absolute;left:0;right:0;bottom:0;padding:30px 18px 16px;background:linear-gradient(to top,rgba(0,0,0,.78),transparent);color:#fff;font-size:16px;line-height:1.45;z-index:3;min-height:60px}
+.cap b{color:var(--gold)}
+.face{width:62%;max-width:340px;filter:drop-shadow(0 12px 30px rgba(0,0,0,.4))}
+.face .mouth{transform-origin:center;transform-box:fill-box;transition:transform .08s}
+.face.speaking .mouth{animation:talk .26s infinite alternate}
+@keyframes talk{from{transform:scaleY(.35)}to{transform:scaleY(1.15)}}
+.face .lid{transform-origin:center;transform-box:fill-box;animation:blink 5s infinite}
+@keyframes blink{0%,96%,100%{transform:scaleY(0)}98%{transform:scaleY(1)}}
+.stage-bar{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
+.rec{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--slate2);font-weight:500}
+.rec .dot{width:9px;height:9px;border-radius:50%;background:var(--red);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.5)}70%{box-shadow:0 0 0 8px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
+.miclbl{font-size:12px;color:var(--slate2)}
+.replybox{display:flex;gap:8px;margin-top:10px}
+.replybox input{flex:1;font-family:var(--sans);font-size:14px;border:1.5px solid var(--line2);border-radius:var(--r-sm);padding:10px 12px}
+.replybox input:focus{outline:none;border-color:var(--green2)}
+.perc-list{display:flex;flex-direction:column;gap:9px}
+.perc{display:flex;gap:11px;align-items:flex-start;padding:11px 12px;border-radius:var(--r);border:1px solid var(--line);background:var(--paper);transition:all .25s}
+.perc.hot{background:var(--amber-bg);border-color:var(--amber-border)}
+.perc.good{background:var(--green-bg);border-color:var(--green-border)}
+.perc-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;background:var(--white);border:1px solid var(--line);font-size:15px}
+.perc-tx{font-size:12.5px;color:var(--slate)}.perc-tx b{color:var(--ink);font-weight:650}
+.prog{height:8px;background:var(--paper2);border-radius:999px;overflow:hidden;margin-top:4px}
+.prog>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green2),var(--green-l));transition:width .4s}
+.kpi{display:flex;justify-content:space-between;font-size:12px;color:var(--slate2);margin-top:14px}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh-lg);z-index:50;opacity:0;transition:opacity .2s}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <div class="emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="#fff" opacity=".95"/></svg></div>
+    <div><div class="brand-t">CLPD AI Trainer · Live</div><div class="brand-s">Dubai Legal Affairs Department</div></div>
+    <div class="top-spacer"></div>
+    <span id="enginePill" class="pill pill-demo">Setup</span>
+    <a class="ghost-link" href="/">← Home</a>
+  </div>
+</header>
+
+<main>
+  <section id="setup">
+    <div class="wrap hero">
+      <div class="eyebrow">Photoreal face (Anam) · Claude brain · Your voice · Free perception</div>
+      <h1>Live 1-2-1 — no backend required.</h1>
+      <p class="lede">This self-contained build runs the real trainer entirely in your browser: the photoreal face
+        streams from Anam, the brain is Claude, and your camera is read locally. Paste your two keys once to begin.</p>
+    </div>
+    <div class="wrap grid">
+      <div class="card">
+        <div class="card-h"><h3>Choose today's lesson</h3></div>
+        <div class="card-b"><div id="lessons" class="lessons"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Start your session</h3></div>
+        <div class="card-b">
+          <p style="font-size:13px;color:var(--slate);line-height:1.55">Uses your <b>camera and microphone</b>.
+            Keys stay in <b>this browser only</b> (localStorage) — never uploaded to us.</p>
+          <label class="fld" for="anamKey">Anam API key</label>
+          <input id="anamKey" class="key" type="password" placeholder="ANAM_API_KEY" autocomplete="off"/>
+          <label class="fld" for="claudeKey">Anthropic (Claude) API key</label>
+          <input id="claudeKey" class="key" type="password" placeholder="sk-ant-…" autocomplete="off"/>
+          <label class="fld" for="avatarId">Anam Persona ID</label>
+          <input id="avatarId" class="key" type="text" value="519f0797-bdc5-47da-a752-f2a5c1fc150f"/>
+          <div class="banner" id="engineNote" style="margin-top:14px"></div>
+          <button id="startBtn" class="btn btn-pri btn-block" disabled>Begin session</button>
+          <p class="note" id="setupNote">Enter both keys and select a lesson to begin.</p>
+          <p class="note">Security: these keys were shared in chat — rotate them after testing. This page is a
+            browser-only test build (Anam's <code>unsafe_createClientWithApiKey</code> + direct Claude call).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="session" class="stage-wrap">
+    <div class="wrap" style="padding:26px 0 60px"><div class="grid">
+      <div>
+        <div class="stage" id="stage">
+          <video id="anamVideo" autoplay playsinline class="hidden"></video>
+          <svg id="stylisedFace" class="face" viewBox="0 0 220 240">
+            <ellipse cx="110" cy="120" rx="86" ry="104" fill="#f1c9a5"/>
+            <path d="M24 110a86 104 0 0 1 172 0v6a86 104 0 0 1-172 0z" fill="#e9b892"/>
+            <path d="M40 70c10-34 130-34 140 0 6 20 0 30-6 26-14-44-114-44-128 0-6 4-12-6-6-26z" fill="#3a2c22"/>
+            <ellipse cx="78" cy="112" rx="12" ry="13" fill="#fff"/><ellipse cx="142" cy="112" rx="12" ry="13" fill="#fff"/>
+            <circle cx="78" cy="114" r="6" fill="#2a1c12"/><circle cx="142" cy="114" r="6" fill="#2a1c12"/>
+            <ellipse class="lid" cx="78" cy="112" rx="13" ry="13" fill="#f1c9a5"/><ellipse class="lid" cx="142" cy="112" rx="13" ry="13" fill="#f1c9a5"/>
+            <path d="M64 92c8-6 20-6 28 0M128 92c8-6 20-6 28 0" stroke="#3a2c22" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <path d="M104 122l-6 26h18l-6-26z" fill="#e0a87f"/>
+            <ellipse class="mouth" cx="110" cy="170" rx="26" ry="13" fill="#7a2f2f"/>
+          </svg>
+          <div class="cap" id="caption">Connecting you to your trainer…</div>
+        </div>
+        <div class="stage-bar">
+          <span class="rec"><span class="dot"></span> <span id="recLabel">Live session</span></span>
+          <span class="miclbl" id="micLabel"></span>
+          <div style="flex:1"></div>
+          <button id="micBtn" class="btn btn-ghost">🎤 Speak</button>
+          <button id="endBtn" class="btn btn-danger">Finish</button>
+        </div>
+        <div class="replybox">
+          <input id="replyInput" type="text" placeholder="…or type your answer and press Enter"/>
+          <button id="sendBtn" class="btn btn-ghost">Send</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>What your trainer sees</h3></div>
+        <div class="card-b">
+          <div class="perc-list">
+            <div class="perc" data-k="attention"><div class="perc-ic">🎯</div><div class="perc-tx"><b>Attention</b><br><span class="v">—</span></div></div>
+            <div class="perc" data-k="mood"><div class="perc-ic">🙂</div><div class="perc-tx"><b>Mood</b><br><span class="v">—</span></div></div>
+            <div class="perc" data-k="phone"><div class="perc-ic">📵</div><div class="perc-tx"><b>Phone</b><br><span class="v">—</span></div></div>
+            <div class="perc" data-k="presence"><div class="perc-ic">👤</div><div class="perc-tx"><b>Presence</b><br><span class="v">—</span></div></div>
+          </div>
+          <div style="margin-top:16px;font-size:12px;font-weight:650;color:var(--slate)">Lesson progress</div>
+          <div class="prog"><i id="progBar"></i></div>
+          <div class="kpi"><span id="covLabel">0 of 0 key elements</span><span id="brainLabel"></span></div>
+          <p class="note" id="percNote"></p>
+        </div>
+      </div>
+    </div></div>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  var el=function(id){return document.getElementById(id);};
+  function toast(m){var t=el('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2600);}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+  var CLAUDE_MODEL='claude-sonnet-4-6';
+  var S={selected:null,session:null,history:[],perception:{attention:'engaged',phone:false,present:true,mood:'neutral'},
+         anam:null,stream:null,reco:null,listening:false,startedAt:0,busy:false,ended:false,detector:null,detLoop:null,selfVideo:null};
+
+  // ─── Built-in lessons (no backend / DB needed) ───────────────────────
+  var LESSONS=[
+    {id:'av-welcome',title:'Aviation Law — Welcome & How This Works',duration_min:5,cpd_points:1,
+     summary:'Orientation to the aviation-law programme and how the 1-2-1 runs.',
+     objectives:[
+       'Understand the three parts of the programme: carrier liability, unfair competition, and arbitration/enforcement',
+       'Know that the session is informational CLPD and not legal advice',
+       'Understand the conversational format and the 80% pass mark on the final assessment'],
+     body:'This is a CLPD seminar of the Dubai Government Legal Affairs Department on litigation and arbitration in aviation law. It has three parts: first, the liability of the air carrier under the international conventions (Warsaw 1929 and Montreal 1999) and then under UAE law; second, the unfair-competition claim in air transport; third, arbitration in international aviation disputes and the role of the national courts, including enforcement of awards. There is a worked case study and a short assessment. This is informational CLPD, not legal advice; the authoritative sources are the conventions and the cited statutes themselves.'},
+    {id:'av-carrier',title:'Carrier Liability — Warsaw & Montreal Conventions',duration_min:12,cpd_points:1,
+     summary:'The core international-law thresholds for air-carrier liability.',
+     objectives:[
+       'Explain the Montreal Convention strict-liability tier up to 128,821 SDR for passenger injury/death',
+       'State the two-year limitation period for bringing a claim',
+       'Explain how the Warsaw and Montreal regimes differ on the carrier’s defences'],
+     body:'Under the Montreal Convention 1999, an air carrier is strictly liable for proven damages up to 128,821 SDR per passenger for death or bodily injury, and can only avoid liability above that tier by proving it was not negligent. Warsaw 1929 used lower caps and allowed the carrier an "all necessary measures" defence. Both regimes impose a two-year limitation period from arrival (or the date the aircraft ought to have arrived). Baggage and cargo have their own per-kilogram limits. Teach these one at a time and check the lawyer can apply them.'},
+    {id:'goodfaith',title:'Mock — Good Faith in Negotiations',duration_min:5,cpd_points:1,
+     summary:'A short, self-contained taster to try the trainer end-to-end.',
+     objectives:[
+       'Explain what the duty to negotiate in good faith means',
+       'State what an injured party can recover (reliance loss, not lost profit)',
+       'Apply the duty to a short scenario'],
+     body:'Under UAE civil-law principles, parties negotiating a contract must act in good faith. Breaking off negotiations arbitrarily, or negotiating without serious intent, can give rise to liability. The injured party generally recovers its reliance loss (wasted expenditure incurred in reliance on the negotiation) rather than the profit it would have made had the contract been concluded. Teach the concept, then test with a short scenario about a party who walks away at the last minute.'}
+  ];
+
+  // ─── Teaching charter (mirrors the verified backend prompt) ──────────
+  var SYSTEM_PROMPT = `MASTER SYSTEM PROMPT: AI LEGAL TRAINING FACULTY ENGINE
+
+IDENTITY
+You are Legal Faculty AI, an advanced professional legal education trainer for the Dubai Legal Affairs Department. You replicate an elite legal instructor delivering accredited professional training to lawyers. You are NOT a question-answering assistant. You are a structured learning facilitator whose purpose is to move a learner from Exposure → Understanding → Application → Competence. Your success is measured by whether the learner can demonstrate understanding, not by how much information you provide.
+
+CORE OPERATING PRINCIPLE
+Always follow this teaching loop: Teach → Question → Evaluate → Correct → Reinforce → Advance. Never skip the cycle. Never simply provide information — every concept must be converted into learner engagement.
+
+SOURCE GOVERNANCE (ABSOLUTE)
+Your knowledge is restricted to the approved training materials provided in this session (below). They are your only authority — treat them as the official course handbook. Do NOT use general AI knowledge, external legal knowledge, supplement missing information, infer legal rules, or provide explanations not supported by the materials. If information is absent, say: "The approved training materials do not cover this point. I cannot provide additional information beyond the course content." Never guess, fabricate, or cite outside sources.
+
+SESSION CONTROLLER (~90 minutes)
+Internally track elapsed time, completed/remaining topics, learner performance and pace. Do not spend excessive time on one topic. Opening (~5 min): welcome to the Legal Affairs Training, explain the session format and learning objectives, and establish the learner's baseline — ask "What is your current experience with this topic?" before teaching.
+
+TEACHING BLOCKS
+Phase 1 — Concept Introduction: explain ONE concept only (never several together), then STOP and ask a question.
+Phase 2 — Understanding Check (mandatory): ask recall / explanation / application questions, e.g. "Can you explain this principle in your own words?", "What is the purpose of this requirement?", "What risk does this address?" Do not continue until the learner responds.
+Phase 3 — Response Analysis: Correct → "Correct. The key point is…" then deepen. Partially correct → "You have identified part of the issue. The missing element is…" then explain. Incorrect → "Let's revisit this point." explain simply and ask again.
+Phase 4 — Practical Application: connect theory to practice — "Imagine you are advising a client. What would you do?", "What would be the consequence of failing to follow this?"
+
+CONVERSATION CONTROL
+Anti-monologue: never produce long uninterrupted explanations. Aim 200–300 words then a question; never exceed ~500 words without interaction. Target talk split — Trainer 40% / Learner 60%. The learner should speak regularly.
+
+QUESTION ENGINE
+Every question tests one of: Knowledge ("What is the definition of…"), Understanding ("Why does this matter?"), Application ("How would this work in practice?"), Analysis ("What issue would arise?"), Evaluation ("What approach would you recommend?").
+
+SOCRATIC MODE
+Use guided questioning frequently. Do not immediately reveal answers — ask what the learner thinks and why, identify their reasoning, correct, then explain. Prefer "What do you think the correct approach is, and why?" over "The answer is X."
+
+DIFFICULTY CALIBRATION
+Maintain a learner profile (knowledge level, mistakes, confidence, recurring gaps). Beginner: simpler language, more examples. Intermediate: scenarios, comparisons. Advanced: judgement questions, professional dilemmas.
+
+TRAINER BEHAVIOUR
+You are authoritative, precise, patient, demanding, practical — and professional in language. You are not casual, not overly conversational, not a generic tutor, not a chatbot.
+
+OUT-OF-COURSE QUESTIONS
+If asked about something, first check the materials. If covered, answer. If not: "That topic is outside today's approved training content. The relevant focus of this session is…" then return to curriculum.
+
+REPETITION ENGINE
+If the learner repeatedly fails, do not simply repeat — change method: simplify, give an example, ask a guided question, reassess.
+
+END-OF-TRAINING PROTOCOL
+The final part of the session must include: Consolidation — "What are the three main principles you are taking away?"; Application — "How will you apply this in practice?"; Assessment — five final questions covering definitions, principles, application, risks, judgement; then a performance summary with strengths, improvement areas, and recommended next steps.
+
+FINAL GOVERNING RULE
+Your job is not to finish the material — it is to produce a competent learner. A session where the learner talks, answers, applies and understands is a success. A session where you deliver a lecture is a failure.`;
+
+  function buildLessonContext(lesson){
+    var objectives=(lesson.objectives||[]).length
+      ? ['KEY ELEMENTS — take the lawyer through every one, in order, teaching each conversationally and',
+         'confirming understanding before moving on. Do not end until all are covered and understood:']
+         .concat(lesson.objectives.map(function(o,i){return '  '+(i+1)+'. '+o;})).join('\n')
+      : 'Identify the main points from the material below and take the lawyer through each one.';
+    return ['Today\'s lesson: "'+lesson.title+'".',
+      lesson.summary?('Summary: '+lesson.summary):'',
+      objectives,
+      'Lesson material — teach ONLY from this, in your own words, never read it out in bulk:',
+      lesson.body].filter(Boolean).join('\n\n');
+  }
+  function systemFor(lesson){
+    var total=(lesson.objectives||[]).length;
+    return [SYSTEM_PROMPT,'',
+      '────────────  APPROVED TRAINING MATERIALS FOR THIS SESSION  ────────────',
+      'These materials are the ONLY authority for this session. Teach strictly from them.',
+      buildLessonContext(lesson),
+      '',
+      'CAMERA AWARENESS: real-time observations about the learner (attention, mood, phone, presence) may be appended to messages in [brackets]. React briefly like a trainer in the room — bring them back if distracted, ask them to put a phone away, acknowledge engagement — then continue the teaching loop. Never narrate their face constantly.',
+      '',
+      'OUTPUT FORMAT — respond with ONLY a JSON object, no other text, exactly this shape:',
+      '{"say": "<the spoken turn you deliver to the learner right now>", "covered": [<1-based numbers of the learning objectives the learner has DEMONSTRATED understanding of so far>], "complete": <true|false>}',
+      'There are '+total+' learning objectives (the key elements listed above). "say" is spoken aloud by a photoreal avatar: follow the teaching loop — teach ONE concept then STOP and ask a question, OR evaluate the learner\'s answer then advance. Spoken style only: no lists, no markdown, no headings, no bullet points. Keep turns tight (aim 200–300 words max) so the learner speaks ~60% of the time.',
+      'Add an objective to "covered" only once the learner has DEMONSTRATED understanding of it (answered or applied it correctly) — never merely because you explained it.',
+      'Set "complete" to true ONLY after every objective is covered AND you have run the end-of-session assessment (five questions) and delivered the performance summary in "say".'].join('\n');
+  }
+  function perceptionNote(p){
+    if(!p)return '';
+    var bits=[];
+    if(p.phone)bits.push('they are holding or looking at a phone');
+    if(p.attention==='distracted')bits.push('they look distracted');
+    else if(p.attention==='away')bits.push('they have looked away from the screen');
+    if(p.present===false)bits.push('they have left the camera frame');
+    if(p.mood==='confused')bits.push('they look confused');
+    else if(p.mood==='happy')bits.push('they look happy and engaged');
+    if(!bits.length)return '';
+    return '[What you can see on camera right now: '+bits.join('; ')+'.]';
+  }
+  function toMessages(history,perception){
+    var msgs=(history||[]).map(function(h){return {role:(h.role==='trainer'||h.role==='assistant')?'assistant':'user',content:String(h.text||h.content||'')};}).filter(function(m){return m.content;});
+    var note=perceptionNote(perception);
+    if(!msgs.length){msgs.push({role:'user',content:['[The session is starting. Greet the lawyer briefly and begin teaching the first key element.]',note].filter(Boolean).join(' ')});return msgs;}
+    if(msgs[msgs.length-1].role==='assistant'){msgs.push({role:'user',content:note||'[continue]'});}
+    else if(note){msgs[msgs.length-1].content+='\n'+note;}
+    return msgs;
+  }
+  function parseReply(text,total){
+    var obj=null;
+    if(text){var m=text.match(/\{[\s\S]*\}/);if(m){try{obj=JSON.parse(m[0]);}catch(e){}}}
+    if(!obj||typeof obj.say!=='string')return {say:(text||'').trim()||'Let\'s continue.',covered:[],complete:false};
+    var covered=Array.isArray(obj.covered)?obj.covered.map(function(n){return parseInt(n,10);}).filter(function(n){return n>=1&&n<=total;}):[];
+    return {say:String(obj.say).trim(),covered:covered.filter(function(v,i,a){return a.indexOf(v)===i;}),complete:obj.complete===true};
+  }
+
+  // Deterministic fallback if the Claude call fails — keeps the session alive.
+  function fallbackTurn(lesson,history,perception){
+    var objs=lesson.objectives||[];var total=objs.length;
+    var lawyerTurns=history.filter(function(h){return h.role==='lawyer';}).length;
+    var note=perception&&(perception.phone||perception.attention==='distracted'||perception.attention==='away');
+    var nudge=note?'I want to make sure this lands — let\'s keep our focus here for a moment. ':'';
+    if(!total)return {say:'Tell me what you\'d like to focus on today.',covered:[],complete:false};
+    if(lawyerTurns===0)return {say:nudge+'Welcome — let\'s begin. '+objs[0]+'. In your own words, what do you understand by that?',covered:[],complete:false};
+    var idx=lawyerTurns;var covered=[];for(var i=0;i<Math.min(idx,total);i++)covered.push(i+1);
+    if(idx>=total)return {say:nudge+'Good — that covers everything we set out to. Well done; you can apply these now.',covered:covered,complete:true};
+    return {say:nudge+'Good. Next: '+objs[idx]+'. How would you apply that?',covered:covered,complete:false};
+  }
+
+  // ─── Claude brain — direct browser call ──────────────────────────────
+  function claudeTurn(lesson,history,perception){
+    var total=(lesson.objectives||[]).length;
+    var body={model:CLAUDE_MODEL,max_tokens:1000,system:systemFor(lesson),messages:toMessages(history,perception)};
+    return fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'x-api-key':S.claudeKey,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify(body)
+    }).then(function(r){return r.json();}).then(function(data){
+      if(data&&data.content&&data.content[0]&&data.content[0].text){return parseReply(data.content[0].text,total);}
+      throw new Error((data&&data.error&&data.error.message)||'Claude returned no text');
+    }).catch(function(e){toast('Claude: '+(e.message||e)+' — using fallback');return fallbackTurn(lesson,history,perception);});
+  }
+
+  // ─── Setup gate ──────────────────────────────────────────────────────
+  try{
+    el('anamKey').value=localStorage.getItem('anam_key')||'';
+    el('claudeKey').value=localStorage.getItem('claude_key')||'';
+    var savedAv=localStorage.getItem('anam_persona');if(savedAv)el('avatarId').value=savedAv;
+  }catch(e){}
+  function refreshStart(){
+    var ok=el('anamKey').value.trim()&&el('claudeKey').value.trim()&&S.selected;
+    el('startBtn').disabled=!ok;
+    el('setupNote').textContent=ok?'Ready when you are.':'Enter both keys and select a lesson to begin.';
+    var both=el('anamKey').value.trim()&&el('claudeKey').value.trim();
+    el('enginePill').className='pill '+(both?'pill-live':'pill-demo');
+    el('enginePill').textContent=both?'● Photoreal · Claude':'Setup';
+    el('engineNote').innerHTML='<span>'+(both?'Anam photoreal face + Claude brain are ready (browser-only, no backend).':'Paste your Anam and Claude keys above.')+'</span>';
+  }
+  el('anamKey').addEventListener('input',refreshStart);
+  el('claudeKey').addEventListener('input',refreshStart);
+
+  function renderLessons(){
+    var c=el('lessons');c.innerHTML='';
+    LESSONS.forEach(function(L){
+      var d=document.createElement('div');d.className='lesson'+(S.selected&&S.selected.id===L.id?' sel':'');
+      var meta=[];if(L.duration_min)meta.push('<span class="tag">~'+L.duration_min+' min</span>');
+      if(L.cpd_points)meta.push('<span class="tag">'+L.cpd_points+' CPD</span>');
+      if((L.objectives||[]).length)meta.push('<span class="tag">'+L.objectives.length+' key elements</span>');
+      d.innerHTML='<div class="lesson-t">'+esc(L.title)+'</div>'+(L.summary?'<div class="lesson-s">'+esc(L.summary)+'</div>':'')+'<div class="lesson-m">'+meta.join('')+'</div>';
+      d.onclick=function(){S.selected=L;renderLessons();refreshStart();};
+      c.appendChild(d);
+    });
+  }
+  // Load the full courses shipped in the repo (frontend/courses/*.json). Falls
+  // back to the built-in lessons above if the files can't be fetched.
+  function loadCourses(){
+    var files=['courses/aviation-law.json','courses/civil-code-2025.json'];
+    return Promise.all(files.map(function(f){
+      return fetch(f).then(function(r){return r.ok?r.json():[];}).catch(function(){return [];});
+    })).then(function(arrs){
+      var out=[];
+      arrs.forEach(function(c){
+        var L=Array.isArray(c)?c:(c.lessons||[]);
+        L.forEach(function(x){
+          if(!x||!x.title)return;
+          out.push({id:x.id,title:x.title,summary:x.summary,duration_min:x.duration_min,
+                    cpd_points:x.cpd_points,objectives:x.objectives||[],body:x.body||''});
+        });
+      });
+      return out;
+    });
+  }
+  loadCourses().then(function(list){ if(list&&list.length){ LESSONS=list; } renderLessons(); }).catch(function(){ renderLessons(); });
+  refreshStart();
+
+  // ─── Start ───────────────────────────────────────────────────────────
+  el('startBtn').addEventListener('click',function(){
+    S.anamKey=el('anamKey').value.trim();S.claudeKey=el('claudeKey').value.trim();S.personaId=el('avatarId').value.trim();
+    try{localStorage.setItem('anam_key',S.anamKey);localStorage.setItem('claude_key',S.claudeKey);localStorage.setItem('anam_persona',S.personaId);}catch(e){}
+    el('startBtn').disabled=true;el('startBtn').textContent='Connecting…';
+    S.startedAt=Date.now();S.history=[];
+    el('setup').classList.add('hidden');el('session').style.display='block';
+    el('recLabel').textContent='Live · '+S.selected.title;
+    el('brainLabel').textContent='Claude · Anam';
+    startCamera();
+    initAnam().catch(function(e){
+      var msg=(e&&(e.message||e.toString()))||'unknown error';
+      if(window.console&&console.error)console.error('[Anam initAnam failed]',e);
+      S.face='stylised';showStylised();
+      el('enginePill').className='pill pill-demo';el('enginePill').textContent='Animated · Claude';
+      el('percNote').textContent='Photoreal face unavailable ('+msg+') — using the animated face + browser voice. Brain is still Claude.';
+      toast('Anam face failed: '+msg);
+    }).then(function(){nextTurn();});
+  });
+  function showStylised(){el('anamVideo').classList.add('hidden');el('stylisedFace').classList.remove('hidden');}
+
+  // ─── Anam photoreal face — client-side (unsafe_createClientWithApiKey) ─
+  // The SDK has one bare dep ("buffer"). The jsDelivr /+esm build inlines it and
+  // is self-contained; the unpkg dist build is a fallback (buffer via importmap).
+  function loadAnamSDK(){
+    var sources=[
+      'https://cdn.jsdelivr.net/npm/@anam-ai/js-sdk@4.15.0/+esm',
+      'https://unpkg.com/@anam-ai/js-sdk@4.15.0/dist/module/index.js'
+    ];
+    var i=0;
+    function tryNext(lastErr){
+      if(i>=sources.length)return Promise.reject(lastErr||new Error('Anam SDK failed to load'));
+      var url=sources[i++];
+      return import(url).then(function(m){
+        if(m&&(m.unsafe_createClientWithApiKey||m.createClient))return m;
+        return tryNext(new Error('SDK at '+url+' missing exports'));
+      },function(e){return tryNext(e);});
+    }
+    return tryNext();
+  }
+  // Mint an Anam session token the proven way (POST /v1/auth/session-token →
+  // {sessionToken}); this is the flow that returns 200 from /engine/session.
+  // The SDK's unsafe_createClientWithApiKey path sends a request Anam rejects (400),
+  // so we mint here and hand the token to createClient(token) instead.
+  function mintAnamToken(){
+    return fetch('https://api.anam.ai/v1/auth/session-token',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+S.anamKey,'Content-Type':'application/json'},
+      body:JSON.stringify({personaConfig:{personaId:S.personaId}})
+    }).then(function(r){return r.json().then(function(j){return {status:r.status,j:j};});})
+      .then(function(o){
+        if(o.status>=300||!o.j||!o.j.sessionToken){
+          throw new Error('token mint '+o.status+': '+((o.j&&(o.j.message||(o.j.error&&(o.j.error.message||o.j.error))))||'no sessionToken'));
+        }
+        return o.j.sessionToken;
+      });
+  }
+  function initAnam(){
+    el('caption').innerHTML='<b>Trainer:</b> connecting the photoreal face…';
+    return loadAnamSDK().then(function(mod){
+      return mintAnamToken().then(function(tok){
+      var client=mod.createClient(tok);
+      // If the photoreal stream closes/drops (black screen), don't leave the user
+      // with a silent black box — drop back to the animated face + browser voice
+      // and name the reason. WEBRTC_FAILURE/SIGNALLING=network, MIC=mic, SERVER=quota.
+      var on=function(ev,cb){try{client.addListener(ev,cb);}catch(_){}};
+      on('CONNECTION_CLOSED',function(code,reason){
+        if(window.console&&console.error)console.error('[Anam CONNECTION_CLOSED]',code,reason);
+        if(S.face==='anam'){
+          S.face='stylised';S.anam=null;showStylised();
+          el('enginePill').className='pill pill-demo';el('enginePill').textContent='Animated · Claude';
+          el('percNote').textContent='Photoreal stream closed ('+code+') — switched to the animated face + voice so the session continues.';
+        }
+      });
+      on('VIDEO_PLAY_STARTED',function(){ el('percNote').textContent='Photoreal face streaming live.'; });
+      return client.streamToVideoElement('anamVideo').then(function(){
+        var v=el('anamVideo');v.classList.remove('hidden');el('stylisedFace').classList.add('hidden');
+        // Start muted so the face always renders (muted autoplay is always allowed),
+        // then immediately try to unmute for the Anam voice. If the browser blocks
+        // audio autoplay, show a one-tap "enable sound" prompt in the caption.
+        v.muted=true; try{v.play&&v.play();}catch(e){}
+        (function enableAudio(){
+          v.muted=false;
+          var p=v.play&&v.play();
+          if(p&&p.catch){ p.catch(function(){
+            v.muted=true; try{v.play&&v.play();}catch(_){}
+            el('caption').innerHTML='<b>🔊 Tap anywhere to enable the trainer’s voice.</b>';
+            var unmute=function(){ v.muted=false; v.play&&v.play(); document.removeEventListener('click',unmute); };
+            document.addEventListener('click',unmute,{once:true});
+          }); }
+        })();
+        S.face='anam';
+        el('enginePill').className='pill pill-live';el('enginePill').textContent='● Photoreal · Claude';
+        S.anam={speak:function(t){return client.talk(t);},stop:function(){try{client.stopStreaming&&client.stopStreaming();}catch(e){}}};
+      });
+      });
+    });
+  }
+
+  // ─── Camera + in-browser perception (TensorFlow.js COCO-SSD) ─────────
+  function startCamera(){
+    navigator.mediaDevices.getUserMedia({video:true,audio:false}).then(function(stream){
+      S.stream=stream;
+      var sc=document.createElement('div');sc.className='selfcam';
+      var v=document.createElement('video');v.autoplay=true;v.muted=true;v.playsInline=true;v.srcObject=stream;
+      sc.appendChild(v);el('stage').appendChild(sc);S.selfVideo=v;
+      loadPerception(v);
+    }).catch(function(){el('percNote').textContent='Camera not granted — perception is off, but the lesson still runs.';});
+  }
+  function loadPerception(video){
+    el('percNote').textContent='Loading the in-browser perception model…';
+    var s1=document.createElement('script');s1.src='https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js';
+    s1.onload=function(){
+      var s2=document.createElement('script');s2.src='https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js';
+      s2.onload=function(){window.cocoSsd.load().then(function(model){S.detector=model;el('percNote').textContent='Perception is running locally — nothing is uploaded.';runDetect(video);}).catch(function(){el('percNote').textContent='Perception model unavailable; the lesson still runs.';});};
+      s2.onerror=function(){el('percNote').textContent='Perception model unavailable; the lesson still runs.';};
+      document.head.appendChild(s2);
+    };s1.onerror=function(){el('percNote').textContent='Perception unavailable; the lesson still runs.';};
+    document.head.appendChild(s1);
+  }
+  function runDetect(video){
+    if(S.ended)return;
+    S.detLoop=setInterval(function(){
+      if(!S.detector||video.readyState<2)return;
+      S.detector.detect(video).then(function(preds){
+        var person=preds.find(function(p){return p.class==='person'&&p.score>0.5;});
+        var phone=preds.find(function(p){return p.class==='cell phone'&&p.score>0.45;});
+        S.perception.phone=!!phone;S.perception.present=!!person;
+        if(!person){S.perception.attention='away';}
+        else{var cx=person.bbox[0]+person.bbox[2]/2;var vw=video.videoWidth||640;var centred=cx>vw*0.25&&cx<vw*0.75;var big=person.bbox[3]>(video.videoHeight||480)*0.45;S.perception.attention=(centred&&big)?'engaged':'distracted';}
+        paintPerception();
+      }).catch(function(){});
+    },1500);
+  }
+  function paintPerception(){
+    setPerc('attention',S.perception.attention==='engaged'?'Engaged':S.perception.attention==='away'?'Away':'Distracted',S.perception.attention!=='engaged',S.perception.attention==='engaged');
+    var mood=S.perception.mood||'neutral';
+    setPerc('mood',mood.charAt(0).toUpperCase()+mood.slice(1),mood==='confused',mood==='happy');
+    setPerc('phone',S.perception.phone?'In hand':'Not in hand',S.perception.phone,false);
+    setPerc('presence',S.perception.present?'In frame':'Out of frame',!S.perception.present,S.perception.present);
+  }
+  function setPerc(k,v,hot,good){var n=document.querySelector('.perc[data-k="'+k+'"]');if(!n)return;n.querySelector('.v').textContent=v;n.classList.toggle('hot',!!hot);n.classList.toggle('good',!!good);}
+
+  // ─── Turn loop ───────────────────────────────────────────────────────
+  function nextTurn(){
+    if(S.busy||S.ended)return;S.busy=true;stopListening();
+    el('micLabel').textContent='Trainer is thinking…';
+    claudeTurn(S.selected,S.history,S.perception).then(function(r){
+      S.busy=false;
+      S.history.push({role:'trainer',text:r.say});
+      updateProgress({done:(r.covered||[]).length,total:(S.selected.objectives||[]).length});
+      speak(r.say,function(){ if(r.complete){finish();} else {startListening();} });
+    }).catch(function(e){S.busy=false;toast('Trainer error: '+(e.message||e));startListening();});
+  }
+  function submitReply(text){
+    text=(text||'').trim();if(!text||S.busy||S.ended)return;
+    el('replyInput').value='';
+    S.history.push({role:'lawyer',text:text});
+    el('caption').innerHTML='<b>You:</b> '+esc(text);
+    nextTurn();
+  }
+
+  // ─── Speak (Anam voice, else browser voice) ──────────────────────────
+  function speak(text,done){
+    el('caption').innerHTML='<b>Trainer:</b> '+esc(text);
+    if(S.anam&&S.face==='anam'){
+      try{ S.anam.speak(text); setFaceSpeaking(true); setTimeout(function(){setFaceSpeaking(false);done&&done();},estMs(text)); return; }catch(e){}
+    }
+    if(window.speechSynthesis){
+      var u=new SpeechSynthesisUtterance(text);u.rate=1;u.pitch=1;
+      u.onstart=function(){setFaceSpeaking(true);};
+      u.onend=function(){setFaceSpeaking(false);done&&done();};
+      window.speechSynthesis.cancel();window.speechSynthesis.speak(u);
+    } else { setFaceSpeaking(true);setTimeout(function(){setFaceSpeaking(false);done&&done();},estMs(text)); }
+  }
+  function estMs(t){return Math.min(16000,Math.max(2600,t.length*60));}
+  function setFaceSpeaking(on){el('stylisedFace').classList.toggle('speaking',!!on);el('micLabel').textContent=on?'Trainer is speaking…':'';}
+
+  // ─── Listen ──────────────────────────────────────────────────────────
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  function startListening(){
+    if(S.ended)return;
+    if(!SR){el('micLabel').textContent='Type your answer below ↓';return;}
+    try{
+      S.reco=new SR();S.reco.lang='en-US';S.reco.interimResults=false;S.reco.maxAlternatives=1;
+      S.reco.onstart=function(){S.listening=true;el('micBtn').textContent='● Listening';el('micLabel').textContent='Listening — speak now';};
+      S.reco.onresult=function(ev){var t=ev.results[0][0].transcript;submitReply(t);};
+      S.reco.onerror=function(){el('micLabel').textContent='Didn\'t catch that — tap Speak or type below';};
+      S.reco.onend=function(){S.listening=false;el('micBtn').textContent='🎤 Speak';};
+      S.reco.start();
+    }catch(e){el('micLabel').textContent='Type your answer below ↓';}
+  }
+  function stopListening(){if(S.reco){try{S.reco.stop();}catch(e){}}S.listening=false;}
+  el('micBtn').onclick=function(){ if(S.listening){stopListening();} else {startListening();} };
+  el('sendBtn').onclick=function(){submitReply(el('replyInput').value);};
+  el('replyInput').addEventListener('keydown',function(e){if(e.key==='Enter')submitReply(el('replyInput').value);});
+
+  function updateProgress(cov){
+    cov=cov||{done:0,total:0};
+    var pct=cov.total?Math.round(cov.done/cov.total*100):0;
+    el('progBar').style.width=pct+'%';
+    el('covLabel').textContent=cov.done+' of '+cov.total+' key elements';
+  }
+
+  function teardown(){S.ended=true;stopListening();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
+  el('endBtn').onclick=function(){finish();};
+  function finish(){ teardown(); toast('Session complete. Well done.'); setTimeout(function(){location.reload();},1600); }
+})();
+</script>
+</body>
+</html>
