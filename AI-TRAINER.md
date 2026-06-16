@@ -10,6 +10,37 @@ working prototype already ships in this repo (see [What's already built](#whats-
 
 ---
 
+## ⏯️ RESUME HERE — current status (for a new session)
+
+**Decision made:** vendor = **Tavus** (CVI + Raven-1 perception), voice = ElevenLabs.
+The full prototype is built and pushed on branch `claude/vigilant-curie-lrtqi0`.
+
+**What works now:** backend `/api/v1/trainer/*`, the attendee page
+`frontend/ai-trainer.html`, and the zero-setup tester `frontend/trainer-test.html`
+(camera + simulated coaching, plus a Live-avatar tab).
+
+**Where we got stuck:** testing the *live* Tavus avatar. The previous session's
+container could not reach `tavusapi.com` — its egress allowlist is fixed at
+session start. The user has (a) added `tavusapi.com` to the environment's
+**Custom** network allowlist and (b) set `TAVUS_API_KEY` as an environment
+variable. **A new session is required for the new egress policy to take effect.**
+
+**Next step in this fresh session:**
+```
+cd backend && npm install && node scripts/tavus-test.js
+```
+This lists the account's replicas, creates a live conversation, and prints a
+**🔗 join URL** — open it in a browser to see the avatar. If it still prints
+"Blocked: add tavusapi.com…", the allowlist hasn't applied — re-check
+Network access = Custom with `tavusapi.com` listed, and start another new session.
+
+Then, to wire the full persona (ElevenLabs voice + distracted/phone/mood
+behaviour): set `TAVUS_REPLICA_ID` (from the test output), run
+`node scripts/create-trainer-persona.js`, put the printed id in
+`TAVUS_PERSONA_ID`. Security: rotate the API key after testing (it was shared in chat).
+
+---
+
 ## 1. Vendor research — who builds the realistic avatar
 
 The market splits into two groups: vendors that render a beautiful talking
