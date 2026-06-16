@@ -190,7 +190,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
           <span class="rec"><span class="dot"></span> <span id="recLabel">Live session</span></span>
           <span class="miclbl" id="micLabel"></span>
           <div style="flex:1"></div>
-          <button id="micBtn" class="btn btn-ghost">🎤 Speak</button>
+          <button id="micBtn" class="btn btn-ghost">🎙 Mute</button>
           <button id="endBtn" class="btn btn-danger">Finish</button>
         </div>
         <div class="replybox">
@@ -540,6 +540,22 @@ Your job is not to finish the material — it is to produce a competent learner.
         S.face='anam';
         el('enginePill').className='pill pill-live';el('enginePill').textContent='● Photoreal · Claude';
         S.anam={speak:function(t){return client.talk(t);},stop:function(){try{client.stopStreaming&&client.stopStreaming();}catch(e){}}};
+        S.anamClient=client;
+        // Use Anam's server-side speech-to-text (far better than the browser's) —
+        // its transcript of the learner arrives as role:'user' messages.
+        S.anamStt=true;S.lastAnamUid=null;
+        var on2=function(ev,cb){try{client.addListener(ev,cb);}catch(_){}};
+        on2('MESSAGE_HISTORY_UPDATED',function(messages){
+          if(!messages||!messages.length)return;
+          for(var i=messages.length-1;i>=0;i--){
+            if(messages[i].role==='user'){
+              var m=messages[i],t=(m.content||'').trim();
+              if(m.id!==S.lastAnamUid&&t){ S.lastAnamUid=m.id; if(!S.busy&&!S.faceSpeaking&&!S.ended)submitReply(t); }
+              break;
+            }
+          }
+        });
+        el('micLabel').textContent='Listening…';
       });
       });
     });
@@ -693,11 +709,13 @@ Your job is not to finish the material — it is to produce a competent learner.
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   function micUI(){
     var b=el('micBtn');if(!b)return;
-    if(!SR){b.style.display='none';el('micLabel').textContent='Speech not supported — type your answers';return;}
+    if(!SR&&!S.anamStt){b.style.display='none';el('micLabel').textContent='Speech not supported — type your answers';return;}
+    b.style.display='';
     if(S.muted){b.textContent='🔇 Muted';b.classList.add('btn-danger');b.classList.remove('btn-ghost');el('micLabel').textContent='Microphone muted';}
     else{b.textContent='🎙 Mute';b.classList.add('btn-ghost');b.classList.remove('btn-danger');}
   }
   function startListening(){
+    if(S.anamStt)return;  // Anam server-side STT is handling transcription
     if(S.ended||S.muted||!SR||S.busy||S.listening)return;
     try{
       S.reco=new SR();S.reco.lang='en-US';S.reco.interimResults=false;S.reco.continuous=true;S.reco.maxAlternatives=1;
@@ -710,7 +728,12 @@ Your job is not to finish the material — it is to produce a competent learner.
   }
   function pauseListening(){S.listening=false;if(S.reco){try{S.reco.onend=null;S.reco.stop();}catch(e){}}}
   function resumeListening(){ if(!S.muted)startListening(); micUI(); }
-  el('micBtn').onclick=function(){ S.muted=!S.muted; if(S.muted){pauseListening();} else {resumeListening();} micUI(); };
+  el('micBtn').onclick=function(){
+    S.muted=!S.muted;
+    if(S.anamStt&&S.anamClient){ try{ S.muted?S.anamClient.muteInputAudio():S.anamClient.unmuteInputAudio(); }catch(e){} }
+    else { if(S.muted){pauseListening();} else {resumeListening();} }
+    micUI();
+  };
   el('sendBtn').onclick=function(){submitReply(el('replyInput').value);};
   el('replyInput').addEventListener('keydown',function(e){if(e.key==='Enter')submitReply(el('replyInput').value);});
   micUI();
