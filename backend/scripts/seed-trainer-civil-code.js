@@ -1,0 +1,247 @@
+'use strict';
+
+// ─────────────────────────────────────────────────────────────────────────
+// Seed: "UAE Civil Code Reform — Federal Decree-Law No. 25 of 2025"
+// ─────────────────────────────────────────────────────────────────────────
+// Loads a full ~90-minute CLPD programme into the AI Trainer as a set of
+// linked lessons (course_id = 'civil-code-2025'). Each lesson becomes one
+// conversational 1-2-1 section the avatar teaches; the objectives are the
+// key elements the trainer must take the lawyer through.
+//
+//   node scripts/seed-trainer-civil-code.js
+//
+// Idempotent: lessons have stable ids, so re-running updates them in place.
+//
+// ⚠️  ACCURACY: This content is authored to the course brief. Article numbers
+// (e.g. 121, 122, 246, 249, 273), the 1 June 2026 commencement, and all case
+// references MUST be checked against the official Federal Gazette text before
+// use in live CLPD. No specific case citations are fabricated here — Section 06
+// teaches the doctrinal lines and leaves verified citations to be inserted by
+// the firm's knowledge team.
+
+require('dotenv').config();
+const trainerStore = require('../src/services/trainerStore');
+
+const COURSE = 'civil-code-2025';
+
+const DISCLAIMER =
+  'Teaching note: present this as a structured practitioner summary. Always tell the lawyer that ' +
+  'the authoritative source is the official Arabic text in the Federal Gazette, and that exact ' +
+  'article numbers and any case citations should be confirmed before being relied upon in practice.';
+
+const LESSONS = [
+  // ── 0. Welcome ────────────────────────────────────────────────────────
+  {
+    id: 'lsn_cc_00_welcome',
+    title: 'UAE Civil Code Reform 2025 — Welcome & How This Works',
+    summary: 'Orientation to the programme: structure, audience, outcomes, and how the assessment works.',
+    duration_min: 5,
+    cpd_points: 0,
+    objectives: [
+      'Understand the programme structure and the eight sections that follow',
+      'Know the audience, total duration, and the learning outcomes',
+      'Understand the 80% pass mark on the Final Assessment and how completion is recorded',
+    ],
+    body: [
+      'This is a continuing legal professional development (CLPD) programme on the reform of the UAE Civil Transactions Law by Federal Decree-Law No. 25 of 2025, which takes effect on 1 June 2026. It is written for practising lawyers advising on onshore UAE matters.',
+      'The programme runs across eight short, conversational sections: an overview and scope; good faith and disclosure; capacity, minors and consumer protection; property and Musataha; remedies, liability and limitation; a case-law library; practice implications; and a final assessment of five questions with an 80% pass mark.',
+      'Teach the learner how this works: it is a spoken one-to-one, not a lecture. You will move through the key elements one at a time, checking understanding before moving on. At the end of the programme there is a short assessment; four correct answers out of five is a pass, and completion is recorded against their CLPD record.',
+      'By the end, the lawyer should be able to explain the Code\'s scope and timing, apply the new pre-contractual duties, advise on capacity and latent-defect changes, recognise the Musataha validity requirement, analyse the new approach to liquidated damages and contributory fault, anticipate where case outcomes will differ, and translate all of it into drafting and a readiness checklist for 1 June 2026.',
+      DISCLAIMER,
+    ].join('\n\n'),
+  },
+
+  // ── 1. Overview & Scope ───────────────────────────────────────────────
+  {
+    id: 'lsn_cc_01_overview',
+    title: 'Section 01 — Overview & Scope',
+    summary: 'What the Code is, what it replaces, when it applies, and how onshore differs from DIFC/ADGM.',
+    duration_min: 12,
+    cpd_points: 1,
+    objectives: [
+      'Explain what Federal Decree-Law No. 25 of 2025 is and that it replaces the 1985 Civil Transactions Law',
+      'Explain commencement on 1 June 2026 and the transitional effect for contracts straddling that date',
+      'Distinguish onshore (mainland) application from the DIFC and ADGM common-law systems',
+      'Identify what stays outside the Code: personal status, family, and inheritance matters',
+    ],
+    body: [
+      'Set the frame before any detail with three orientation points.',
+      'First, this is codification, not revolution. Federal Decree-Law No. 25 of 2025 modernises and replaces the Civil Transactions Law of 1985. Much of the familiar architecture survives; the reform sharpens duties that courts already recognised and turns judicial instinct into written rules. Reassure the lawyer that their existing knowledge is not wasted — it is being upgraded.',
+      'Second, timing and transition matter. The Code commences on 1 June 2026. Contracts negotiated, signed, or performed across that date can sit under different rules at different moments, so the lawyer must ask, for any matter, which law governs which act. Diligence checklists, limitation calculations, and clause drafting all need a "before and after 1 June 2026" lens.',
+      'Third, the Code governs the onshore mainland. The DIFC and ADGM are common-law financial free zones with their own civil and commercial laws and their own courts; this reform does not change them. A transaction\'s governing law and forum therefore decide whether the new Code applies at all — a point that becomes a drafting tool later in the programme.',
+      'Finally, clarify the carve-out. The Civil Transactions Law deals with civil and commercial dealings — obligations, contracts, property, and the like. Personal status, family, and inheritance matters are governed by separate legislation and remain outside this Code. Make sure the learner does not over-read the reform into family or succession work.',
+      'Check understanding by asking the lawyer to explain, in their own words, why a contract signed in May 2026 but performed in July 2026 needs careful thought, and whether a DIFC-governed contract is affected.',
+    ].join('\n\n'),
+  },
+
+  // ── 2. Good Faith & Disclosure ────────────────────────────────────────
+  {
+    id: 'lsn_cc_02_good_faith',
+    title: 'Section 02 — Good Faith & Disclosure',
+    summary: 'The new free-standing duty to negotiate in good faith (Art 121) and the non-waivable duty to disclose (Art 122).',
+    duration_min: 18,
+    cpd_points: 1,
+    objectives: [
+      'Contrast the old position (good faith mainly in performance under Art 246) with the new free-standing pre-contractual duty',
+      'Apply the duty to negotiate in good faith under Article 121',
+      'Apply the non-waivable duty to disclose decisive information under Article 122',
+      'Identify the remedy for breach: the negative interest (reliance loss), not lost profits',
+      'Translate the duties into drafting: letters of intent and a documented disclosure process',
+    ],
+    body: [
+      'This is the reform\'s centre of gravity — teach it slowly and check often.',
+      'Start with the old position. Under the 1985 framework, good faith lived mainly in Article 246: a duty to perform the contract in good faith once it existed. There was no general, free-standing duty governing how parties behaved before the contract was made. Pre-contractual misbehaviour was reached only indirectly, through abuse of rights or tort.',
+      'Now walk the learner through four steps. Step one — the duty. Article 121 creates a free-standing duty to negotiate in good faith. Breaking off advanced negotiations without justification, or negotiating with no real intention to contract, can now be a breach in itself. Step two — the measure of recovery. The remedy is the negative interest, also called reliance loss: the wasted costs the injured party incurred in reliance on the negotiations — due diligence, advisers, travel — rather than the profit they expected from the deal that never closed. Make this distinction stick; it is a favourite exam and advice point. Step three — the disclosure obligation. Article 122 imposes a duty to disclose decisive information — facts that would determine whether the other party contracts, or on what terms — and, critically, this duty is non-waivable, so an entire-agreement or no-reliance clause cannot simply contract it away. Step four — the drafting response, which the programme develops in Section 07: use letters of intent that define what good-faith negotiation means for the deal, and treat disclosure as a documented process rather than an afterthought.',
+      'Then run the scenario — The Abandoned Joint Venture. Two parties negotiate a joint venture for months. One side incurs significant cost on diligence and advisers in reliance on assurances, then the other walks away abruptly and without justification, having arguably withheld a decisive fact. Ask the learner to compare outcomes: under the 1985 framework, recovery was uncertain and depended on shoe-horning the facts into abuse of rights; under the new Code, Articles 121 and 122 give a direct route, with reliance loss as the measure. Have them articulate what the innocent party can and cannot recover.',
+      'Confirm the lawyer can state the remedy correctly (reliance loss, not lost profit) and can explain why a no-reliance clause does not defeat the Article 122 duty before moving on.',
+    ].join('\n\n'),
+  },
+
+  // ── 3. Capacity, Minors & Consumer Protection ─────────────────────────
+  {
+    id: 'lsn_cc_03_capacity',
+    title: 'Section 03 — Capacity, Minors & Consumer Protection',
+    summary: 'Age of majority 21→18, voidable mixed-benefit transactions for discerning minors, and a one-year latent-defect window.',
+    duration_min: 14,
+    cpd_points: 1,
+    objectives: [
+      'Apply the reduced age of legal majority, lowered from 21 to 18',
+      'Explain that a discerning minor\'s mixed-benefit transactions are now voidable rather than suspended',
+      'Apply the extended hidden-defect discovery window, doubled from six months to one year',
+      'Identify the operational impact on onboarding, KYC, lending, tenancy, and the sale of goods',
+    ],
+    body: [
+      'Deliver three changes, one at a time, and tie each to day-to-day practice.',
+      'Change one — the age of majority falls from 21 to 18. A person of 18 now has full legal capacity to contract. Spell out the practical reach: onboarding and KYC thresholds, the age at which someone can take a loan, sign a tenancy, or give a binding consent all shift. Firms and clients with systems built around 21 need to re-check them.',
+      'Change two — the treatment of a discerning minor\'s mixed-benefit transactions. Previously such transactions were treated as suspended, sitting in limbo pending ratification. The Code reframes them as voidable: they are valid unless and until set aside. This is a meaningful shift in default position and in who bears the risk while status is unresolved. Help the learner feel the difference between "nothing happens until someone approves" and "it is effective unless someone undoes it".',
+      'Change three — the hidden-defect discovery window doubles from six months to one year. A buyer now has longer to discover and act on a latent defect. This reshapes risk allocation in the sale of goods and in asset sales, and it lengthens the tail of potential claims that sellers and their insurers carry.',
+      'Bring it home with operational impact: revise consumer and tenancy templates, adjust lending and onboarding age logic, and revisit warranty and limitation language in sale contracts to reflect the longer defect window. Ask the learner to name one process in their own practice that each of the three changes would touch.',
+    ].join('\n\n'),
+  },
+
+  // ── 4. Property & Musataha ────────────────────────────────────────────
+  {
+    id: 'lsn_cc_04_musataha',
+    title: 'Section 04 — Property & Musataha',
+    summary: 'Registration of a Musataha right is now a condition of validity — unregistered means void, not merely unenforceable.',
+    duration_min: 12,
+    cpd_points: 1,
+    objectives: [
+      'Explain that registration of a Musataha right is now a condition of its validity',
+      'Distinguish "void" from "merely unenforceable against third parties"',
+      'Apply the change to real-estate and development diligence',
+    ],
+    body: [
+      'Focus on a single, high-consequence change and make it land.',
+      'A Musataha is the long-term right to build on and use another\'s land. Under the new Code, registration of a Musataha right is a condition of its validity. The legal effect of failing to register is not a technical weakness — it is fatal. An unregistered Musataha is void, not merely unenforceable against third parties.',
+      'Draw the distinction carefully, because it changes diligence. "Unenforceable against third parties" would mean the right exists between the original parties but cannot be asserted against, say, a later purchaser. "Void" means the right never validly came into being at all. So an unregistered Musataha may mean the asset a party thinks it holds does not legally exist.',
+      'Run the scenario — The Unregistered Build-to-Suit. A developer holds what it believes is a Musataha right and has built on the land, and a buyer or financier is relying on that right as the core asset. If the right was never registered, the diligence conclusion flips: this is no longer a question of priority or enforceability but of existence. Have the learner explain what the acquirer or lender should now demand — registration evidence as a condition precedent — and what they should conclude if it cannot be produced.',
+      'Confirm the lawyer can articulate, in one sentence, why "void" rather than "unenforceable" transforms the diligence question before moving on.',
+    ].join('\n\n'),
+  },
+
+  // ── 5. Remedies, Liability & Limitation ───────────────────────────────
+  {
+    id: 'lsn_cc_05_remedies',
+    title: 'Section 05 — Remedies, Liability & Limitation',
+    summary: 'Tighter control of liquidated damages, codified contributory fault, hardship/force majeure (Arts 249, 273), and clearer limitation triggers.',
+    duration_min: 18,
+    cpd_points: 1,
+    objectives: [
+      'Explain the reinforced judicial control of liquidated damages — reduced readily for disproportion or part-performance, increased only for fraud or gross fault',
+      'Apply the newly codified rule of contributory fault',
+      'Use the hardship and force-majeure tools associated with Articles 249 and 273',
+      'Identify the clarified limitation triggers and why they matter to strategy',
+    ],
+    body: [
+      'Cover four tools in turn; this section reshapes both advice and litigation strategy.',
+      'Tool one — liquidated damages. The Code reinforces the court\'s control over agreed-damages clauses. A clause can be reduced readily where the stipulated sum is disproportionate to the actual loss, or where the contract has been partly performed. It can be increased only in narrow circumstances — fraud or gross fault. The lesson for drafters and litigators is that a large round-number penalty is no guarantee; the figure must be defensible against actual loss.',
+      'Tool two — contributory fault, now codified. Where the creditor\'s own conduct contributed to the loss, the debtor\'s liability is reduced proportionately. This converts what was often a discretionary, instinctive adjustment by the court into a structured entitlement that a defendant can plead and build evidence around.',
+      'Tool three — hardship and force majeure. The Code carries forward and clarifies the tools associated with Article 249 (hardship / exceptional unforeseen circumstances, allowing the court to bring an excessively onerous obligation back to a reasonable level) and Article 273 (force majeure, where performance becomes impossible). Help the learner distinguish them: hardship makes performance ruinous but possible; force majeure makes it impossible.',
+      'Tool four — limitation. The Code clarifies the triggers for time-bars — when a limitation period starts to run and on what event. Clearer triggers mean limitation must be diaried with precision and pleaded earlier; it becomes a sharper strategic weapon and a sharper risk.',
+      'Run the scenario — The Delayed Hotel Fit-Out. A contractor is late, a liquidated-damages clause bites, but the employer\'s own late approvals contributed to the delay. Ask the learner to walk through it under the new Code: the LD clause may be reduced for disproportion or part-performance, and contributory fault gives a structured reduction for the employer\'s share of the delay — a shift from discretionary penalty-tinkering to a defined entitlement. Have them identify what evidence each party should marshal.',
+    ].join('\n\n'),
+  },
+
+  // ── 6. Case Law Library ───────────────────────────────────────────────
+  {
+    id: 'lsn_cc_06_caselaw',
+    title: 'Section 06 — Case Law Library',
+    summary: 'Two doctrinal lines — liquidated damages/contributory fault, and good faith/abuse of rights — and where outcomes will now differ.',
+    duration_min: 30,
+    cpd_points: 1,
+    objectives: [
+      'Trace the liquidated-damages and contributory-fault line of UAE authority and how the Code now structures it',
+      'Trace the good-faith and abuse-of-rights line from Article 246 to the new Articles 121 and 122',
+      'Predict where established outcomes are likely to differ under the new Code',
+    ],
+    body: [
+      'This is a reference and reasoning section. Teach the two doctrinal lines and the through-line that connects them; do not recite case numbers — tell the learner that the firm\'s verified citation table accompanies this section and that any specific decision must be checked before it is relied upon.',
+      'Line one — liquidated damages and contributory fault. UAE courts, including at Cassation level, have long been willing to look behind an agreed-damages figure and adjust it to reflect actual loss, and to take account of a claimant\'s own contribution to the harm. The pattern in the reported decisions is judicial instinct: a sense that a penalty should track real loss and that a party should not recover in full for damage it helped cause. The new Code does not invent this; it converts that instinct into enforceable structure — express grounds to reduce a clause for disproportion or part-performance, a narrow path to increase only for fraud or gross fault, and a codified proportional reduction for contributory fault. Walk the learner through one worked study tracing that evolution and ask them to predict how a past adjustment-of-penalty decision would now be reasoned more predictably.',
+      'Line two — good faith and abuse of rights. Trace the movement from Article 246, where good faith governed performance, and the abuse-of-rights doctrine that courts stretched to reach bad behaviour around the edges of a contract, to the new free-standing pre-contractual duties in Articles 121 and 122. The reported decisions show courts reaching for fairness in negotiation and disclosure without a clean statutory hook; the Code now supplies that hook. Walk through a second worked study and ask the learner where a case once argued as abuse of rights would now be argued directly as breach of the duty to negotiate in good faith or to disclose.',
+      'Tie the section together with its unifying theme: the new Code converts judicial instinct into enforceable structure. Outcomes that previously turned on the temperament of the tribunal become more predictable, which changes how both sides assess risk and settle. Check that the learner can name, for each line, one situation where the result is likely to be the same but the reasoning cleaner, and one where the result itself may change.',
+    ].join('\n\n'),
+  },
+
+  // ── 7. Practice Implications ──────────────────────────────────────────
+  {
+    id: 'lsn_cc_07_practice',
+    title: 'Section 07 — Practice Implications',
+    summary: 'Turning the reforms into a drafting workflow, plus a readiness checklist for 1 June 2026.',
+    duration_min: 16,
+    cpd_points: 1,
+    objectives: [
+      'Implement negotiation protocols and letters of intent that address the good-faith duty',
+      'Treat disclosure as a documented process to meet the non-waivable Article 122 duty',
+      'Calibrate liquidated-damages and limitation-of-liability clauses to survive judicial control',
+      'Address governing-law and forum drafting (onshore vs DIFC/ADGM)',
+      'Complete a readiness checklist for the period before 1 June 2026',
+    ],
+    body: [
+      'Turn everything into a drafting workflow, delivered as four moves, then close with a checklist.',
+      'Move one — negotiation protocols and letters of intent. Because Article 121 makes good-faith negotiation a duty, define expectations in writing early: what the parties may and may not do during negotiations, when costs lie where they fall, and what justifies walking away. A well-drafted letter of intent now manages real legal risk, not just commercial expectation.',
+      'Move two — disclosure as a documented process. The Article 122 duty is non-waivable, so a no-reliance clause will not save a party who stayed silent on a decisive fact. Build a disclosure record: what was asked, what was provided, and when. The aim is to be able to show the court a documented process, not to contract the duty away.',
+      'Move three — calibrate liquidated-damages and limitation-of-liability clauses. Given reinforced judicial control, anchor agreed sums to a genuine pre-estimate of loss and keep the reasoning on file, so the figure is defensible against disproportion and part-performance arguments. Review caps and exclusions for the same reason.',
+      'Move four — governing law and forum. Because the Code governs onshore but not the DIFC or ADGM, the choice of law and forum decides which regime applies. Make that choice deliberately and draft it cleanly; it is now a substantive risk-allocation decision.',
+      'Close with the readiness checklist for 1 June 2026: re-paper templates for the new pre-contractual duties; update onboarding, KYC, lending and tenancy logic for age 18; extend latent-defect and warranty handling to the one-year window; add Musataha registration as a condition precedent in real-estate diligence; recalibrate LD and limitation-of-liability clauses; and map every live contract that straddles 1 June 2026 for transitional risk. Ask the learner which checklist item is most urgent for their own practice and why.',
+    ].join('\n\n'),
+  },
+
+  // ── 8. Final Assessment ───────────────────────────────────────────────
+  {
+    id: 'lsn_cc_08_assessment',
+    title: 'Section 08 — Final Assessment',
+    summary: 'Five scored questions with feedback. Pass mark 80% (four of five).',
+    duration_min: 10,
+    cpd_points: 1,
+    objectives: [
+      'Apply the reforms across scope, good faith, capacity, Musataha, and remedies',
+      'Achieve the 80% pass mark (four correct out of five)',
+    ],
+    body: [
+      'Run this as a spoken assessment. Ask the five questions one at a time, let the lawyer answer in their own words, then confirm the correct answer and give the short explanation. Track the score; four or more correct out of five is a pass. Keep it encouraging.',
+      'Question 1 — Scope and timing. When does Federal Decree-Law No. 25 of 2025 take effect, and to what does it apply? Correct answer: 1 June 2026, to onshore (mainland) UAE — not the DIFC or ADGM, which keep their own systems. Explanation: governing law and forum decide whether the Code applies at all.',
+      'Question 2 — Good faith. A party breaks off advanced negotiations without justification after the other side has spent heavily on diligence. What can the injured party typically recover under the new Code? Correct answer: the negative interest, i.e. reliance loss / wasted costs — not the lost profit it expected from the deal. Explanation: Article 121 grounds the claim; the measure is reliance, not expectation.',
+      'Question 3 — Latent defects. How long is the hidden-defect discovery window under the new Code? Correct answer: one year, doubled from the previous six months. Explanation: this lengthens the tail of potential claims in sale of goods and asset sales.',
+      'Question 4 — Musataha. What is the status of an unregistered Musataha right under the new Code? Correct answer: void — registration is now a condition of validity, so the right never validly came into being (it is not merely unenforceable against third parties). Explanation: diligence becomes a question of existence, not priority.',
+      'Question 5 — Remedies. If the creditor\'s own fault contributed to the loss, what will the court now do? Correct answer: reduce the debtor\'s liability proportionately under the codified contributory-fault rule. Explanation: a discretionary adjustment becomes a structured entitlement that can be pleaded and evidenced.',
+      'After the fifth question, give the score, confirm pass or fail against the 80% mark, and briefly recap the two or three points the lawyer should revisit.',
+    ].join('\n\n'),
+  },
+];
+
+function main() {
+  console.log(`[seed] loading ${LESSONS.length} lessons for course "${COURSE}"…`);
+  let ok = 0;
+  for (const L of LESSONS) {
+    const saved = trainerStore.upsertLesson({ ...L, course_id: COURSE, language: 'English', active: true }, 'seed-script');
+    console.log(`  ✓ ${saved.id}  ${saved.title}  (${saved.duration_min} min, ${saved.cpd_points} CPD, ${saved.objectives.length} key elements)`);
+    ok++;
+  }
+  const totalMin = LESSONS.reduce((s, L) => s + (L.duration_min || 0), 0);
+  const totalCpd = LESSONS.reduce((s, L) => s + (L.cpd_points || 0), 0);
+  console.log(`\n[seed] done — ${ok} lessons, ~${totalMin} min total, ${totalCpd} CPD points.`);
+  console.log('[seed] They now appear in the AI Trainer (admin: lad-trainer-admin.html; lawyer: ai-trainer.html).');
+}
+
+main();
