@@ -146,6 +146,7 @@ function fallbackTurn(lesson, history) {
 
 module.exports = async function (context, req) {
   const b = req.body || {};
+  if (!S.verify(b.token || '')) return S.json(context, 401, { error: 'Please sign in again.' });
   const lesson = b.lesson || {};
   const history = Array.isArray(b.history) ? b.history : [];
   const perception = b.perception || {};

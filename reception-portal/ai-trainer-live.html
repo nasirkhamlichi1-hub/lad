@@ -137,13 +137,41 @@ input.key:focus{outline:none;border-color:var(--green2)}
     <div class="emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="#fff" opacity=".95"/></svg></div>
     <div><div class="brand-t">CLPD AI Trainer · Live</div><div class="brand-s">Dubai Legal Affairs Department</div></div>
     <div class="top-spacer"></div>
+    <span id="whoami" class="ghost-link" style="display:none"></span>
+    <a href="#" id="logoutBtn" class="ghost-link" style="display:none">Log out</a>
     <span id="enginePill" class="pill pill-demo">Setup</span>
     <a class="ghost-link" href="/">← Home</a>
   </div>
 </header>
 
 <main>
-  <section id="setup">
+  <section id="login" style="display:none">
+    <div class="wrap" style="max-width:440px;padding:46px 24px 60px">
+      <div class="eyebrow" style="text-align:center">Dubai Legal Affairs · CLPD</div>
+      <h1 style="text-align:center;font-size:30px">AI Legal Trainer</h1>
+      <p class="lede" style="text-align:center;margin:10px auto 0">Sign in to begin. Your progress, engagement score and CPD are saved to your record.</p>
+      <div class="card" style="margin-top:22px">
+        <div class="card-b">
+          <div id="authErr" class="banner" style="display:none;background:var(--red-bg);border-color:var(--red-border);color:var(--red)"></div>
+          <div id="regName" style="display:none">
+            <label class="fld" for="auName">Full name</label>
+            <input id="auName" class="key" type="text" placeholder="Your name" style="font-family:var(--sans)"/>
+          </div>
+          <label class="fld" for="auEmail">Email</label>
+          <input id="auEmail" class="key" type="email" autocomplete="username" placeholder="you@firm.ae" style="font-family:var(--sans)"/>
+          <label class="fld" for="auPass">Password</label>
+          <input id="auPass" class="key" type="password" autocomplete="current-password" placeholder="Password (min 8 characters)" style="font-family:var(--sans)"/>
+          <div id="regCode" style="display:none">
+            <label class="fld" for="auCode">Enrolment code <span style="color:var(--slate3);font-weight:400">— if your administrator gave you one</span></label>
+            <input id="auCode" class="key" type="text" placeholder="Enrolment code" style="font-family:var(--sans)"/>
+          </div>
+          <button id="authBtn" class="btn btn-pri btn-block" style="margin-top:16px">Sign in</button>
+          <p class="note" style="text-align:center"><span id="authToggleText">New here?</span> <a href="#" id="authToggle" style="font-weight:650">Create an account</a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="setup" style="display:none">
     <div class="wrap hero">
       <div class="eyebrow">Photoreal face (Anam) · Claude brain · Your voice · Free perception</div>
       <h1>Live 1-2-1 — no backend required.</h1>
@@ -245,7 +273,8 @@ input.key:focus{outline:none;border-color:var(--green2)}
   var CLAUDE_MODEL='claude-sonnet-4-6';
   var S={selected:null,session:null,history:[],perception:{attention:'engaged',phone:false,present:true,mood:'neutral'},
          anam:null,stream:null,reco:null,listening:false,muted:false,startedAt:0,busy:false,ended:false,detector:null,detLoop:null,selfVideo:null,
-         faceSpeaking:false,disStreak:0,lastChallenge:0,eng:{samples:0,engaged:0,phone:0,away:0,distracted:0}};
+         faceSpeaking:false,disStreak:0,lastChallenge:0,lastCovered:0,eng:{samples:0,engaged:0,phone:0,away:0,distracted:0}};
+  var AUTH={token:null,name:'',email:'',progress:{},mode:'login'};
 
   // ─── Built-in lessons (no backend / DB needed) ───────────────────────
   var LESSONS=[
@@ -398,7 +427,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     return fetch('/api/trainer-turn',{
       method:'POST',
       headers:{'content-type':'application/json'},
-      body:JSON.stringify({lesson:lesson,history:history,perception:perception,opening:isOpeningLesson(lesson)})
+      body:JSON.stringify({token:AUTH.token,lesson:lesson,history:history,perception:perception,opening:isOpeningLesson(lesson)})
     }).then(function(r){return r.json();}).then(function(d){
       if(d&&typeof d.say==='string')return {say:d.say,covered:d.covered||[],complete:!!d.complete,slide:d.slide||null};
       throw new Error((d&&d.error)||'no turn');
@@ -422,6 +451,8 @@ Your job is not to finish the material — it is to produce a competent learner.
       var meta=[];if(L.duration_min)meta.push('<span class="tag">~'+L.duration_min+' min</span>');
       if(L.cpd_points)meta.push('<span class="tag">'+L.cpd_points+' CPD</span>');
       if((L.objectives||[]).length)meta.push('<span class="tag">'+L.objectives.length+' key elements</span>');
+      var pr=AUTH.progress&&AUTH.progress[(L.courseId||'general')+'::'+L.id];
+      if(pr)meta.unshift('<span class="tag" style="background:var(--green-bg);color:var(--green-d);border-color:var(--green-border)">✓ '+(pr.pass?'Passed':'Completed')+' · '+(pr.bestEngagement||0)+'% eng</span>');
       d.innerHTML='<div class="lesson-t">'+esc(L.title)+'</div>'+(L.summary?'<div class="lesson-s">'+esc(L.summary)+'</div>':'')+'<div class="lesson-m">'+meta.join('')+'</div>';
       d.onclick=function(){S.selected=L;renderLessons();refreshStart();};
       c.appendChild(d);
@@ -430,16 +461,16 @@ Your job is not to finish the material — it is to produce a competent learner.
   // Load the full courses shipped in the repo (frontend/courses/*.json). Falls
   // back to the built-in lessons above if the files can't be fetched.
   function loadCourses(){
-    var files=['courses/aviation-law.json','courses/civil-code-2025.json'];
-    return Promise.all(files.map(function(f){
-      return fetch(f).then(function(r){return r.ok?r.json():[];}).catch(function(){return [];});
-    })).then(function(arrs){
+    var files=[{f:'courses/aviation-law.json',c:'aviation-law'},{f:'courses/civil-code-2025.json',c:'civil-code-2025'}];
+    return Promise.all(files.map(function(o){
+      return fetch(o.f).then(function(r){return r.ok?r.json():[];}).catch(function(){return [];}).then(function(data){return {courseId:o.c,data:data};});
+    })).then(function(results){
       var out=[];
-      arrs.forEach(function(c){
-        var L=Array.isArray(c)?c:(c.lessons||[]);
+      results.forEach(function(res){
+        var L=Array.isArray(res.data)?res.data:(res.data.lessons||[]);
         L.forEach(function(x){
           if(!x||!x.title)return;
-          out.push({id:x.id,title:x.title,summary:x.summary,duration_min:x.duration_min,
+          out.push({id:x.id,courseId:x.course_id||res.courseId,title:x.title,summary:x.summary,duration_min:x.duration_min,
                     cpd_points:x.cpd_points,objectives:x.objectives||[],body:x.body||''});
         });
       });
@@ -448,6 +479,56 @@ Your job is not to finish the material — it is to produce a competent learner.
   }
   loadCourses().then(function(list){ if(list&&list.length){ LESSONS=list; } renderLessons(); }).catch(function(){ renderLessons(); });
   refreshStart();
+  bootAuth();
+
+  // ─── Login / register + per-user progress ────────────────────────────
+  function setAuthErr(m){var e=el('authErr');if(!e)return;if(m){e.textContent=m;e.style.display='';}else{e.style.display='none';}}
+  function showLogin(){el('login').style.display='';el('setup').style.display='none';el('session').style.display='none';el('whoami').style.display='none';el('logoutBtn').style.display='none';el('enginePill').style.display='none';}
+  function showSetup(){el('login').style.display='none';el('setup').style.display='';el('enginePill').style.display='';}
+  function authMode(m){AUTH.mode=m;var reg=(m==='register');
+    el('regName').style.display=reg?'':'none';el('regCode').style.display=reg?'':'none';
+    el('authBtn').textContent=reg?'Create account':'Sign in';
+    el('authToggleText').textContent=reg?'Already have an account?':'New here?';
+    el('authToggle').textContent=reg?'Sign in':'Create an account';
+    setAuthErr('');
+  }
+  function onSignedIn(){ el('whoami').textContent='👤 '+(AUTH.name||AUTH.email); el('whoami').style.display=''; el('logoutBtn').style.display=''; showSetup(); loadProgress(); }
+  function loadProgress(){
+    if(!AUTH.token)return;
+    fetch('/api/trainer-progress?token='+encodeURIComponent(AUTH.token)).then(function(r){return r.ok?r.json():null;})
+      .then(function(j){ if(j&&j.progress){AUTH.progress=j.progress;renderLessons();} }).catch(function(){});
+  }
+  function doAuth(){
+    var email=(el('auEmail').value||'').trim().toLowerCase(),pass=el('auPass').value||'';
+    if(!email||!pass){setAuthErr('Enter your email and password.');return;}
+    el('authBtn').disabled=true;setAuthErr('');
+    var reg=(AUTH.mode==='register');
+    var url=reg?'/api/register':'/api/login';
+    var body=reg?{name:(el('auName').value||'').trim(),email:email,password:pass,code:(el('auCode').value||'').trim()}:{email:email,password:pass};
+    fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+      .then(function(o){ el('authBtn').disabled=false;
+        if(!o.ok||!o.j.token){setAuthErr((o.j&&o.j.error)||'Could not sign in.');return;}
+        AUTH.token=o.j.token;AUTH.name=o.j.name||email;AUTH.email=email;
+        try{localStorage.setItem('tr_token',AUTH.token);localStorage.setItem('tr_name',AUTH.name);localStorage.setItem('tr_email',email);}catch(e){}
+        onSignedIn();
+      }).catch(function(){el('authBtn').disabled=false;setAuthErr('Network error — please try again.');});
+  }
+  function logout(){try{localStorage.removeItem('tr_token');}catch(e){}AUTH.token=null;AUTH.progress={};renderLessons();showLogin();authMode('login');}
+  function bootAuth(){
+    el('authBtn').onclick=doAuth;
+    el('authToggle').onclick=function(e){e.preventDefault();authMode(AUTH.mode==='login'?'register':'login');};
+    el('logoutBtn').onclick=function(e){e.preventDefault();logout();};
+    el('auPass').addEventListener('keydown',function(e){if(e.key==='Enter')doAuth();});
+    var t=null;try{t=localStorage.getItem('tr_token');}catch(e){}
+    if(t){
+      AUTH.token=t;try{AUTH.name=localStorage.getItem('tr_name')||'';AUTH.email=localStorage.getItem('tr_email')||'';}catch(e){}
+      fetch('/api/trainer-progress?token='+encodeURIComponent(t)).then(function(r){
+        if(r.ok){r.json().then(function(j){if(j&&j.progress)AUTH.progress=j.progress;onSignedIn();});}
+        else{logout();}
+      }).catch(function(){onSignedIn();});
+    } else { showLogin();authMode('login'); }
+  }
 
   // ─── Start ───────────────────────────────────────────────────────────
   el('startBtn').addEventListener('click',function(){
@@ -494,7 +575,7 @@ Your job is not to finish the material — it is to produce a competent learner.
   // The Anam session token is minted server-side (/api/anam-token) so the API key
   // never reaches the browser. The short-lived token is safe to use client-side.
   function mintAnamToken(){
-    return fetch('/api/anam-token',{method:'POST',headers:{'content-type':'application/json'},body:'{}'})
+    return fetch('/api/anam-token',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token:AUTH.token})})
       .then(function(r){return r.json().then(function(j){return {status:r.status,j:j};});})
       .then(function(o){
         if(o.status>=300||!o.j||!o.j.sessionToken){
@@ -716,7 +797,7 @@ Your job is not to finish the material — it is to produce a competent learner.
   micUI();
 
   function updateProgress(cov){
-    cov=cov||{done:0,total:0};
+    cov=cov||{done:0,total:0};S.lastCovered=cov.done||0;
     var pct=cov.total?Math.round(cov.done/cov.total*100):0;
     el('progBar').style.width=pct+'%';
     el('covLabel').textContent=cov.done+' of '+cov.total+' key elements';
@@ -727,10 +808,21 @@ Your job is not to finish the material — it is to produce a competent learner.
   function finish(){
     teardown();
     var score=engagementScore(),pass=score>=50;
+    // Save this session to the learner's record (engagement, coverage, CPD).
+    if(AUTH.token&&S.selected){
+      var total=(S.selected.objectives||[]).length;
+      fetch('/api/trainer-progress',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({
+        token:AUTH.token,name:AUTH.name,result:{
+          courseId:S.selected.courseId||'general',lessonId:S.selected.id,lessonTitle:S.selected.title,
+          engagementScore:score,pass:pass,covered:S.lastCovered||0,total:total,
+          durationSec:Math.round((Date.now()-S.startedAt)/1000),completed:true,cpd:S.selected.cpd_points||1
+        }
+      })}).then(function(r){return r.ok?r.json():null;}).then(function(j){if(j&&j.progress)AUTH.progress=j.progress;}).catch(function(){});
+    }
     el('resScore').textContent=score+'%';
     var v=el('resVerdict');v.textContent=pass?'Pass':'Fail';v.className='verdict '+(pass?'pass':'fail');
     el('resMsg').innerHTML=pass
-      ? 'You stayed engaged for <b>'+score+'%</b> of the session — above the 50% pass mark. Well done.'
+      ? 'You stayed engaged for <b>'+score+'%</b> of the session — above the 50% pass mark. Saved to your training record.'
       : 'Your engagement was <b>'+score+'%</b>, below the 50% pass mark. Time on your phone or away from the screen counts against you — please retake the session and stay focused throughout.';
     el('resultOverlay').classList.add('show');
   }

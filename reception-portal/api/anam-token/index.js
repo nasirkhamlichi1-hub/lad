@@ -7,6 +7,7 @@ const S = require('../_shared');
 const DEFAULT_PERSONA = '519f0797-bdc5-47da-a752-f2a5c1fc150f';
 
 module.exports = async function (context, req) {
+  if (!S.verify((req.body && req.body.token) || '')) return S.json(context, 401, { error: 'Please sign in to start the trainer.' });
   const apiKey = process.env.ANAM_API_KEY;
   if (!apiKey) return S.json(context, 503, { error: 'AI trainer face not configured (ANAM_API_KEY missing).' });
 
