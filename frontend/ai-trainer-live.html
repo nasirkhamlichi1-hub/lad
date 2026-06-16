@@ -136,8 +136,8 @@ input.key:focus{outline:none;border-color:var(--green2)}
           <input id="anamKey" class="key" type="password" placeholder="ANAM_API_KEY" autocomplete="off"/>
           <label class="fld" for="claudeKey">Anthropic (Claude) API key</label>
           <input id="claudeKey" class="key" type="password" placeholder="sk-ant-…" autocomplete="off"/>
-          <label class="fld" for="avatarId">Avatar ID</label>
-          <input id="avatarId" class="key" type="text" value="6cc28442-cccd-42a8-b6e4-24b7210a09c5"/>
+          <label class="fld" for="avatarId">Anam Persona ID</label>
+          <input id="avatarId" class="key" type="text" value="519f0797-bdc5-47da-a752-f2a5c1fc150f"/>
           <div class="banner" id="engineNote" style="margin-top:14px"></div>
           <button id="startBtn" class="btn btn-pri btn-block" disabled>Begin session</button>
           <p class="note" id="setupNote">Enter both keys and select a lesson to begin.</p>
@@ -337,7 +337,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
   try{
     el('anamKey').value=localStorage.getItem('anam_key')||'';
     el('claudeKey').value=localStorage.getItem('claude_key')||'';
-    var savedAv=localStorage.getItem('anam_avatar');if(savedAv)el('avatarId').value=savedAv;
+    var savedAv=localStorage.getItem('anam_persona');if(savedAv)el('avatarId').value=savedAv;
   }catch(e){}
   function refreshStart(){
     var ok=el('anamKey').value.trim()&&el('claudeKey').value.trim()&&S.selected;
@@ -367,8 +367,8 @@ input.key:focus{outline:none;border-color:var(--green2)}
 
   // ─── Start ───────────────────────────────────────────────────────────
   el('startBtn').addEventListener('click',function(){
-    S.anamKey=el('anamKey').value.trim();S.claudeKey=el('claudeKey').value.trim();S.avatarId=el('avatarId').value.trim();
-    try{localStorage.setItem('anam_key',S.anamKey);localStorage.setItem('claude_key',S.claudeKey);localStorage.setItem('anam_avatar',S.avatarId);}catch(e){}
+    S.anamKey=el('anamKey').value.trim();S.claudeKey=el('claudeKey').value.trim();S.personaId=el('avatarId').value.trim();
+    try{localStorage.setItem('anam_key',S.anamKey);localStorage.setItem('claude_key',S.claudeKey);localStorage.setItem('anam_persona',S.personaId);}catch(e){}
     el('startBtn').disabled=true;el('startBtn').textContent='Connecting…';
     S.startedAt=Date.now();S.history=[];
     el('setup').classList.add('hidden');el('session').style.display='block';
@@ -413,7 +413,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
     return fetch('https://api.anam.ai/v1/auth/session-token',{
       method:'POST',
       headers:{'Authorization':'Bearer '+S.anamKey,'Content-Type':'application/json'},
-      body:JSON.stringify({personaConfig:{name:'CLPD Trainer',avatarId:S.avatarId}})
+      body:JSON.stringify({personaConfig:{personaId:S.personaId}})
     }).then(function(r){return r.json().then(function(j){return {status:r.status,j:j};});})
       .then(function(o){
         if(o.status>=300||!o.j||!o.j.sessionToken){

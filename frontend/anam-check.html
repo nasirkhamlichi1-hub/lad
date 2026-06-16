@@ -42,8 +42,8 @@
   <div class="card">
     <label for="key">Anam API key</label>
     <input id="key" type="password" placeholder="paste your ANAM_API_KEY (e.g. N2Iz…)" autocomplete="off"/>
-    <label for="avatar" style="margin-top:10px">Avatar ID</label>
-    <input id="avatar" type="text" value="6cc28442-cccd-42a8-b6e4-24b7210a09c5"/>
+    <label for="avatar" style="margin-top:10px">Anam Persona ID</label>
+    <input id="avatar" type="text" value="519f0797-bdc5-47da-a752-f2a5c1fc150f"/>
     <div class="row">
       <button id="connect">▶ Connect &amp; stream Gabriel</button>
       <button id="camBtn" class="ghost" disabled>＋ Show my camera</button>
@@ -80,7 +80,7 @@
 
   $('connect').addEventListener('click', async () => {
     const apiKey = $('key').value.trim();
-    const avatarId = $('avatar').value.trim();
+    const personaId = $('avatar').value.trim();
     if (!apiKey) { log('No API key entered.', 'err'); return; }
     $('connect').disabled = true;
     try {
@@ -92,7 +92,7 @@
       const tr = await fetch('https://api.anam.ai/v1/auth/session-token', {
         method:'POST',
         headers:{ 'Authorization':'Bearer '+apiKey, 'Content-Type':'application/json' },
-        body: JSON.stringify({ personaConfig:{ name:'CLPD Trainer', avatarId } })
+        body: JSON.stringify({ personaConfig:{ personaId } })
       });
       const tj = await tr.json();
       if (!tr.ok || !tj.sessionToken) throw new Error('token mint '+tr.status+': '+(tj.message||(tj.error&&(tj.error.message||tj.error))||'no sessionToken'));
