@@ -79,15 +79,23 @@ input.key:focus{outline:none;border-color:var(--green2)}
 .cap-inner .you{color:var(--gold);font-weight:700}
 .cap-inner .seg-prev{opacity:.45}
 .cap-inner .seg-cur{opacity:1}
-/* Slide panel */
-.slide-card{margin-bottom:18px;overflow:hidden}
-.slide{background:linear-gradient(160deg,#063,#0a5c3a);color:#fff;padding:18px 18px 20px;min-height:200px;display:flex;flex-direction:column}
-.slide-kicker{font-family:monospace;font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:#bfe9cf;font-weight:700}
-.slide-title{font-family:var(--serif);font-size:24px;line-height:1.12;margin:8px 0 12px}
-.slide-bullets{list-style:none;display:flex;flex-direction:column;gap:9px;margin:0;padding:0}
-.slide-bullets li{position:relative;padding-left:18px;font-size:14px;line-height:1.4;color:#eafff2}
-.slide-bullets li:before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;border-radius:2px;background:var(--gold)}
-.slide-empty{opacity:.7;font-size:13px;margin-top:auto}
+/* Slide panel — premium branded slide */
+.slide-card{margin-bottom:18px;overflow:visible;border:0;background:transparent;box-shadow:none}
+.slide{position:relative;overflow:hidden;color:#fff;padding:22px 20px 50px;min-height:300px;display:flex;flex-direction:column;border-radius:16px;
+  background:radial-gradient(130% 90% at 0% 0%,rgba(0,168,94,.40),transparent 58%),linear-gradient(158deg,#04231a 0%,#063a25 52%,#03281c 100%);
+  box-shadow:0 14px 38px rgba(2,20,12,.45),inset 0 0 0 1px rgba(255,255,255,.06)}
+.slide:before{content:"";position:absolute;inset:0;pointer-events:none;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.045) 0 1px,transparent 1px 15px)}
+.slide:after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,var(--gold),#f3d99a 60%,var(--gold))}
+.slide.enter{animation:slidecard .5s cubic-bezier(.2,.7,.2,1)}
+@keyframes slidecard{from{opacity:0;transform:scale(.985) translateY(10px)}to{opacity:1;transform:none}}
+.slide-kicker{position:relative;font-family:monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:700;display:flex;align-items:center;gap:9px}
+.slide-kicker:before{content:"";width:18px;height:2px;background:var(--gold)}
+.slide-title{position:relative;font-family:var(--serif);font-size:25px;line-height:1.15;margin:11px 0 16px;text-shadow:0 1px 6px rgba(0,0,0,.25)}
+.slide-bullets{position:relative;list-style:none;display:flex;flex-direction:column;gap:11px;margin:0;padding:0}
+.slide-bullets li{position:relative;padding-left:21px;font-size:13.5px;line-height:1.45;color:#e9fff4;opacity:0;transform:translateY(6px);animation:slidein .5s forwards}
+.slide-bullets li:before{content:"";position:absolute;left:0;top:6px;width:8px;height:8px;border-radius:2px;background:var(--gold);box-shadow:0 0 10px rgba(201,145,58,.65)}
+@keyframes slidein{to{opacity:1;transform:none}}
+.slide-foot{position:absolute;left:20px;right:20px;bottom:14px;display:flex;justify-content:space-between;align-items:center;font-family:monospace;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.5)}
 .face{width:62%;max-width:340px;filter:drop-shadow(0 12px 30px rgba(0,0,0,.4))}
 .face .mouth{transform-origin:center;transform-box:fill-box;transition:transform .08s}
 .face.speaking .mouth{animation:talk .26s infinite alternate}
@@ -195,6 +203,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
           <div class="slide-kicker" id="slideKicker">On screen</div>
           <div class="slide-title" id="slideTitle">Your session will appear here</div>
           <ul class="slide-bullets" id="slideBullets"></ul>
+          <div class="slide-foot"><span>Dubai Legal Affairs · CLPD</span><span id="slideNo"></span></div>
         </div>
       </div>
       <div class="card">
@@ -606,10 +615,14 @@ Your job is not to finish the material — it is to produce a competent learner.
   // ─── Slide panel (brain-generated, synced to the concept being taught) ─
   function renderSlide(slide){
     if(!slide||!slide.title)return;
-    el('slideKicker').textContent='On screen';
+    S.slideN=(S.slideN||0)+1;
+    var course=(S.selected&&S.selected.title)?S.selected.title.split('—')[0].trim():'Legal training';
+    el('slideKicker').textContent=course;
     el('slideTitle').textContent=slide.title;
     var ul=el('slideBullets');ul.innerHTML='';
-    (slide.bullets||[]).forEach(function(b){var li=document.createElement('li');li.textContent=b;ul.appendChild(li);});
+    (slide.bullets||[]).forEach(function(b,i){var li=document.createElement('li');li.textContent=b;li.style.animationDelay=(0.05+i*0.09)+'s';ul.appendChild(li);});
+    var sn=el('slideNo');if(sn)sn.textContent='Slide '+S.slideN;
+    var s=el('slide');s.classList.remove('enter');void s.offsetWidth;s.classList.add('enter');  // re-trigger entrance
   }
 
   // ─── Turn loop ───────────────────────────────────────────────────────
