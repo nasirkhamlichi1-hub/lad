@@ -206,6 +206,10 @@
     trainerLessonLearners: (id) => ENABLED ? call('GET', '/api/v1/trainer/lessons/' + encodeURIComponent(id) + '/learners')
                                            : Promise.resolve({ lesson: null, learners: [] }),
     trainerOverview: () => ENABLED ? call('GET', '/api/v1/trainer/overview') : Promise.resolve({ lessons: [] }),
+    // Admin: ready-made courses shipped with the backend (one-click load).
+    trainerBundledCourses: () => ENABLED ? call('GET', '/api/v1/trainer/bundled-courses') : Promise.resolve([]),
+    trainerImportBundled: (file) => ENABLED ? call('POST', '/api/v1/trainer/bundled-courses/' + encodeURIComponent(file) + '/import')
+                                            : Promise.resolve({ imported: 0 }),
 
     // ─── Admin: user management ──────────────────────────────────────
     listUsers: (filters) => {

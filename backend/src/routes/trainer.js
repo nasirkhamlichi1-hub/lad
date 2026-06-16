@@ -21,6 +21,8 @@
 // labelled simulated experience instead of failing.
 
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const router = express.Router();
 
 const tavus = require('../services/tavus');
@@ -73,6 +75,49 @@ router.put('/lessons', requireRole(...ADMIN_ROLES), (req, res) => {
 router.delete('/lessons/:id', requireRole(...ADMIN_ROLES), (req, res) => {
   trainerStore.deleteLesson(req.params.id);
   res.json({ ok: true });
+});
+
+// ─── Bundled courses (ready-made course files shipped in /courses) ────
+// Lets an admin load a pre-authored course in one click instead of uploading
+// a file. Each file in backend/courses/*.json is an array of lesson objects.
+const COURSES_DIR = path.join(__dirname, '..', '..', 'courses');
+
+function readCourseFile(file) {
+  const safe = path.basename(file);                       // no directory traversal
+  if (!safe.endsWith('.json')) return null;
+  const full = path.join(COURSES_DIR, safe);
+  if (!fs.existsSync(full)) return null;
+  const parsed = JSON.parse(fs.readFileSync(full, 'utf8'));
+  return { file: safe, lessons: Array.isArray(parsed) ? parsed : [parsed] };
+}
+
+router.get('/bundled-courses', requireRole(...ADMIN_ROLES), (_req, res) => {
+  if (!fs.existsSync(COURSES_DIR)) return res.json([]);
+  const out = fs.readdirSync(COURSES_DIR).filter(f => f.endsWith('.json')).map(f => {
+    try {
+      const { lessons } = readCourseFile(f);
+      const titled = lessons.find(l => /welcome/i.test(l.id || '')) || lessons[0] || {};
+      return {
+        file: f,
+        course_id: (lessons[0] || {}).course_id || null,
+        title: (titled.title || f).replace(/\s*[—-]\s*Welcome.*$/i, '').trim(),
+        lessons: lessons.length,
+        totalMin: lessons.reduce((s, l) => s + (l.duration_min || 0), 0),
+        totalCpd: lessons.reduce((s, l) => s + (l.cpd_points || 0), 0),
+      };
+    } catch { return { file: f, error: 'unreadable' }; }
+  });
+  res.json(out);
+});
+
+router.post('/bundled-courses/:file/import', requireRole(...ADMIN_ROLES), (req, res) => {
+  let course;
+  try { course = readCourseFile(req.params.file); }
+  catch (e) { return res.status(400).json({ error: 'Course file is not valid JSON' }); }
+  if (!course) return res.status(404).json({ error: 'Bundled course not found' });
+  const saved = course.lessons.map(L => trainerStore.upsertLesson(L, req.user.sub || req.user.id));
+  log.info('trainer_bundled_imported', { file: course.file, count: saved.length });
+  res.json({ imported: saved.length, lessons: saved });
 });
 
 // ─── Sessions ────────────────────────────────────────────────────────

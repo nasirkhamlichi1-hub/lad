@@ -146,11 +146,16 @@ tr:hover td{background:var(--paper)}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green2)" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
         <h3>Lessons</h3>
         <div class="top-spacer"></div>
+        <button id="bundledBtn" class="btn btn-ghost btn-sm" title="Load a ready-made course in one click">↓ Bundled</button>
         <button id="importBtn" class="btn btn-ghost btn-sm" title="Upload a course JSON file to create the lessons">↑ Import JSON</button>
         <button id="newBtn" class="btn btn-ghost btn-sm">+ New</button>
         <input type="file" id="importFile" accept=".json,application/json" style="display:none"/>
       </div>
       <div class="card-b">
+        <div id="bundledPanel" class="hidden" style="border:1px solid var(--line2);border-radius:var(--r);padding:12px;margin-bottom:12px;background:var(--paper)">
+          <div style="font-size:12px;font-weight:650;color:var(--slate);margin-bottom:8px">Ready-made courses</div>
+          <div id="bundledList"></div>
+        </div>
         <div id="lessons" class="lessons"><div class="empty">Loading…</div></div>
       </div>
     </div>
@@ -331,6 +336,37 @@ tr:hover td{background:var(--paper)}
 
   el('newBtn').onclick=clearEditor;
   el('resetBtn').onclick=clearEditor;
+
+  // ─── Load a ready-made (bundled) course in one click ─────────────────
+  el('bundledBtn').onclick=function(){
+    var panel=el('bundledPanel');
+    if(!panel.classList.contains('hidden')){ panel.classList.add('hidden'); return; }
+    el('bundledList').innerHTML='<div style="font-size:12.5px;color:var(--slate2)">Loading…</div>';
+    panel.classList.remove('hidden');
+    api.trainerBundledCourses().then(function(rows){
+      if(!rows.length){ el('bundledList').innerHTML='<div style="font-size:12.5px;color:var(--slate2)">No bundled courses are shipped with this backend.</div>'; return; }
+      el('bundledList').innerHTML='';
+      rows.forEach(function(c){
+        var row=document.createElement('div');
+        row.className='lesson';
+        row.style.cursor='default';
+        row.innerHTML='<div style="display:flex;align-items:center;gap:10px">'+
+          '<div style="flex:1"><div class="lesson-t">'+esc(c.title||c.file)+'</div>'+
+          '<div class="lesson-m"><span class="tag">'+(c.lessons||0)+' lessons</span><span class="tag">~'+(c.totalMin||0)+' min</span><span class="tag">'+(c.totalCpd||0)+' CPD</span></div></div>'+
+          '<button class="btn btn-pri btn-sm">Load</button></div>';
+        row.querySelector('button').onclick=function(){
+          if(!confirm('Load "'+(c.title||c.file)+'" ('+(c.lessons||0)+' lessons)? Lessons with the same id are updated.')) return;
+          var b=row.querySelector('button'); b.disabled=true; b.textContent='Loading…';
+          api.trainerImportBundled(c.file).then(function(r){
+            toast('Loaded '+(r.imported||0)+' lessons.');
+            panel.classList.add('hidden');
+            loadLessons();
+          }).catch(function(e){ b.disabled=false; b.textContent='Load'; handleAuth(e); toast('Load failed: '+(e.message||e)); });
+        };
+        el('bundledList').appendChild(row);
+      });
+    }).catch(function(e){ el('bundledList').innerHTML='<div style="font-size:12.5px;color:var(--red)">Could not load.</div>'; handleAuth(e); });
+  };
 
   // ─── Import a course JSON file (one lesson object, or an array) ───────
   el('importBtn').onclick=function(){ el('importFile').click(); };
