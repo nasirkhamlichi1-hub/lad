@@ -73,8 +73,21 @@ input.key:focus{outline:none;border-color:var(--green2)}
 .stage video#anamVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .selfcam{position:absolute;right:12px;bottom:12px;width:132px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,.5);box-shadow:0 4px 16px rgba(0,0,0,.4);background:#000;z-index:4}
 .selfcam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
-.cap{position:absolute;left:0;right:0;bottom:0;padding:30px 18px 16px;background:linear-gradient(to top,rgba(0,0,0,.78),transparent);color:#fff;font-size:16px;line-height:1.45;z-index:3;min-height:60px}
-.cap b{color:var(--gold)}
+/* Karaoke caption — compact 2-3 line teleprompter at the bottom */
+.cap{position:absolute;left:0;right:0;bottom:0;padding:46px 20px 18px;background:linear-gradient(to top,rgba(0,0,0,.86),rgba(0,0,0,.55) 55%,transparent);color:#fff;z-index:3;display:flex;justify-content:center}
+.cap-inner{max-width:760px;width:100%;text-align:center;font-size:19px;font-weight:600;line-height:1.4;letter-spacing:.1px;min-height:2.8em;max-height:4.2em;overflow:hidden;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.cap-inner .you{color:var(--gold);font-weight:700}
+.cap-inner .seg-prev{opacity:.45}
+.cap-inner .seg-cur{opacity:1}
+/* Slide panel */
+.slide-card{margin-bottom:18px;overflow:hidden}
+.slide{background:linear-gradient(160deg,#063,#0a5c3a);color:#fff;padding:18px 18px 20px;min-height:200px;display:flex;flex-direction:column}
+.slide-kicker{font-family:monospace;font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:#bfe9cf;font-weight:700}
+.slide-title{font-family:var(--serif);font-size:24px;line-height:1.12;margin:8px 0 12px}
+.slide-bullets{list-style:none;display:flex;flex-direction:column;gap:9px;margin:0;padding:0}
+.slide-bullets li{position:relative;padding-left:18px;font-size:14px;line-height:1.4;color:#eafff2}
+.slide-bullets li:before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;border-radius:2px;background:var(--gold)}
+.slide-empty{opacity:.7;font-size:13px;margin-top:auto}
 .face{width:62%;max-width:340px;filter:drop-shadow(0 12px 30px rgba(0,0,0,.4))}
 .face .mouth{transform-origin:center;transform-box:fill-box;transition:transform .08s}
 .face.speaking .mouth{animation:talk .26s infinite alternate}
@@ -100,6 +113,13 @@ input.key:focus{outline:none;border-color:var(--green2)}
 .kpi{display:flex;justify-content:space-between;font-size:12px;color:var(--slate2);margin-top:14px}
 .hidden{display:none!important}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh-lg);z-index:50;opacity:0;transition:opacity .2s}
+.overlay{position:fixed;inset:0;background:rgba(8,16,12,.84);display:none;place-items:center;z-index:60;padding:20px}
+.overlay.show{display:grid}
+.result{background:#fff;border-radius:18px;max-width:460px;width:100%;padding:30px;text-align:center;box-shadow:var(--sh-lg)}
+.result .score{font-family:var(--serif);font-size:64px;line-height:1;margin:6px 0}
+.result .verdict{font-weight:800;letter-spacing:.6px;text-transform:uppercase;font-size:13px;padding:6px 16px;border-radius:999px;display:inline-block}
+.result .pass{background:var(--green-bg);color:var(--green-d)}
+.result .fail{background:var(--red-bg);color:var(--red)}
 .toast.show{opacity:1}
 </style>
 </head>
@@ -156,7 +176,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
             <path d="M104 122l-6 26h18l-6-26z" fill="#e0a87f"/>
             <ellipse class="mouth" cx="110" cy="170" rx="26" ry="13" fill="#7a2f2f"/>
           </svg>
-          <div class="cap" id="caption">Connecting you to your trainer…</div>
+          <div class="cap"><div class="cap-inner" id="caption">Connecting you to your trainer…</div></div>
         </div>
         <div class="stage-bar">
           <span class="rec"><span class="dot"></span> <span id="recLabel">Live session</span></span>
@@ -168,6 +188,13 @@ input.key:focus{outline:none;border-color:var(--green2)}
         <div class="replybox">
           <input id="replyInput" type="text" placeholder="…or type your answer and press Enter"/>
           <button id="sendBtn" class="btn btn-ghost">Send</button>
+        </div>
+      </div>
+      <div class="card slide-card">
+        <div class="slide" id="slide">
+          <div class="slide-kicker" id="slideKicker">On screen</div>
+          <div class="slide-title" id="slideTitle">Your session will appear here</div>
+          <ul class="slide-bullets" id="slideBullets"></ul>
         </div>
       </div>
       <div class="card">
@@ -182,7 +209,8 @@ input.key:focus{outline:none;border-color:var(--green2)}
           <div style="margin-top:16px;font-size:12px;font-weight:650;color:var(--slate)">Lesson progress</div>
           <div class="prog"><i id="progBar"></i></div>
           <div class="kpi"><span id="covLabel">0 of 0 key elements</span><span id="brainLabel"></span></div>
-          <p class="note" id="percNote"></p>
+          <div class="kpi" style="margin-top:10px;align-items:center"><span style="font-weight:650;color:var(--slate)">Engagement (scored)</span><span id="engScore" style="font-weight:800;font-size:15px;color:var(--green2)">100%</span></div>
+          <p class="note" id="percNote">You're being scored on attention — stay focused and in frame. Below 50% is a fail.</p>
         </div>
       </div>
     </div></div>
@@ -190,6 +218,13 @@ input.key:focus{outline:none;border-color:var(--green2)}
 </main>
 
 <div id="toast" class="toast"></div>
+<div class="overlay" id="resultOverlay"><div class="result">
+  <div style="font-family:monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold)">Engagement result</div>
+  <div class="score" id="resScore">—</div>
+  <div id="resVerdict" class="verdict">—</div>
+  <p id="resMsg" style="font-size:14px;color:var(--slate);margin:16px 0 20px;line-height:1.5"></p>
+  <button class="btn btn-pri btn-block" onclick="location.reload()">Done</button>
+</div></div>
 
 <script>
 (function(){
@@ -200,7 +235,8 @@ input.key:focus{outline:none;border-color:var(--green2)}
 
   var CLAUDE_MODEL='claude-sonnet-4-6';
   var S={selected:null,session:null,history:[],perception:{attention:'engaged',phone:false,present:true,mood:'neutral'},
-         anam:null,stream:null,reco:null,listening:false,startedAt:0,busy:false,ended:false,detector:null,detLoop:null,selfVideo:null};
+         anam:null,stream:null,reco:null,listening:false,muted:false,startedAt:0,busy:false,ended:false,detector:null,detLoop:null,selfVideo:null,
+         faceSpeaking:false,disStreak:0,lastChallenge:0,eng:{samples:0,engaged:0,phone:0,away:0,distracted:0}};
 
   // ─── Built-in lessons (no backend / DB needed) ───────────────────────
   var LESSONS=[
@@ -529,8 +565,34 @@ Your job is not to finish the material — it is to produce a competent learner.
         if(!person){S.perception.attention='away';}
         else{var cx=person.bbox[0]+person.bbox[2]/2;var vw=video.videoWidth||640;var centred=cx>vw*0.25&&cx<vw*0.75;var big=person.bbox[3]>(video.videoHeight||480)*0.45;S.perception.attention=(centred&&big)?'engaged':'distracted';}
         paintPerception();
+        trackEngagement();
+        maybeChallenge();
       }).catch(function(){});
     },1500);
+  }
+  // Engagement is scored like part of the test: each ~1.5s sample counts as
+  // engaged only if attentive, in-frame, and not on a phone.
+  function trackEngagement(){
+    if(!S.startedAt||S.ended)return;
+    var e=S.eng;e.samples++;
+    if(S.perception.attention==='engaged'&&!S.perception.phone&&S.perception.present!==false)e.engaged++;
+    if(S.perception.phone)e.phone++;
+    if(S.perception.present===false)e.away++;
+    if(S.perception.attention==='distracted')e.distracted++;
+    var score=engagementScore();
+    var n=el('engScore');if(n){n.textContent=score+'%';n.style.color=score>=50?'var(--green2)':'var(--red)';}
+  }
+  function engagementScore(){var e=S.eng;return e.samples?Math.round(e.engaged/e.samples*100):100;}
+  // If the learner is disengaged for several samples while the trainer is idle,
+  // interrupt and challenge them (the brain is told to stop teaching and refocus them).
+  function maybeChallenge(){
+    if(S.ended||S.busy||S.faceSpeaking)return;
+    var dis=S.perception.phone||S.perception.attention==='away'||S.perception.attention==='distracted'||S.perception.present===false;
+    S.disStreak=dis?(S.disStreak+1):0;
+    var now=Date.now();
+    if(S.disStreak>=3&&(now-S.lastChallenge)>16000){
+      S.lastChallenge=now;S.disStreak=0;S.perception.challenge=true;nextTurn();
+    }
   }
   function paintPerception(){
     setPerc('attention',S.perception.attention==='engaged'?'Engaged':S.perception.attention==='away'?'Away':'Distracted',S.perception.attention!=='engaged',S.perception.attention==='engaged');
@@ -541,59 +603,95 @@ Your job is not to finish the material — it is to produce a competent learner.
   }
   function setPerc(k,v,hot,good){var n=document.querySelector('.perc[data-k="'+k+'"]');if(!n)return;n.querySelector('.v').textContent=v;n.classList.toggle('hot',!!hot);n.classList.toggle('good',!!good);}
 
+  // ─── Slide panel (brain-generated, synced to the concept being taught) ─
+  function renderSlide(slide){
+    if(!slide||!slide.title)return;
+    el('slideKicker').textContent='On screen';
+    el('slideTitle').textContent=slide.title;
+    var ul=el('slideBullets');ul.innerHTML='';
+    (slide.bullets||[]).forEach(function(b){var li=document.createElement('li');li.textContent=b;ul.appendChild(li);});
+  }
+
   // ─── Turn loop ───────────────────────────────────────────────────────
   function nextTurn(){
-    if(S.busy||S.ended)return;S.busy=true;stopListening();
+    if(S.busy||S.ended)return;S.busy=true;pauseListening();
     el('micLabel').textContent='Trainer is thinking…';
     claudeTurn(S.selected,S.history,S.perception).then(function(r){
-      S.busy=false;
+      S.busy=false;S.perception.challenge=false;
       S.history.push({role:'trainer',text:r.say});
       updateProgress({done:(r.covered||[]).length,total:(S.selected.objectives||[]).length});
-      speak(r.say,function(){ if(r.complete){finish();} else {startListening();} });
-    }).catch(function(e){S.busy=false;toast('Trainer error: '+(e.message||e));startListening();});
+      if(r.slide)renderSlide(r.slide);
+      speak(r.say,function(){ if(r.complete){finish();} else {resumeListening();} });
+    }).catch(function(e){S.busy=false;toast('Trainer error: '+(e.message||e));resumeListening();});
   }
   function submitReply(text){
     text=(text||'').trim();if(!text||S.busy||S.ended)return;
     el('replyInput').value='';
     S.history.push({role:'lawyer',text:text});
-    el('caption').innerHTML='<b>You:</b> '+esc(text);
+    showCaption('<span class="you">You:</span> '+esc(text));
     nextTurn();
   }
 
-  // ─── Speak (Anam voice, else browser voice) ──────────────────────────
+  // ─── Speak + karaoke captions (2-3 lines, bottom, paced to speech) ─────
+  var capTimer=null;
+  function showCaption(html){ if(capTimer){clearTimeout(capTimer);capTimer=null;} el('caption').innerHTML=html; }
+  function karaoke(text,totalMs){
+    if(capTimer){clearTimeout(capTimer);capTimer=null;}
+    var parts=String(text).replace(/\s+/g,' ').trim().match(/[^.!?;:]+[.!?;:]*\s*/g)||[text];
+    var segs=[],cur='';
+    parts.forEach(function(p){p=p.trim();if(!p)return;if((cur+' '+p).trim().length>120){if(cur)segs.push(cur.trim());cur=p;}else{cur=(cur?cur+' ':'')+p;}});
+    if(cur)segs.push(cur.trim());
+    if(!segs.length)segs=[String(text)];
+    var totalLen=segs.reduce(function(a,s){return a+s.length;},0)||1,i=0;
+    (function step(){
+      if(S.ended)return;
+      var prev=i>0?('<span class="seg-prev">'+esc(segs[i-1])+'</span> '):'';
+      el('caption').innerHTML=prev+'<span class="seg-cur">'+esc(segs[i])+'</span>';
+      var dur=Math.max(1100,Math.round(totalMs*(segs[i].length/totalLen)));i++;
+      if(i<segs.length)capTimer=setTimeout(step,dur);
+    })();
+  }
   function speak(text,done){
-    el('caption').innerHTML='<b>Trainer:</b> '+esc(text);
+    var ms=estMs(text);
+    karaoke(text,ms);
     if(S.anam&&S.face==='anam'){
-      try{ S.anam.speak(text); setFaceSpeaking(true); setTimeout(function(){setFaceSpeaking(false);done&&done();},estMs(text)); return; }catch(e){}
+      try{ S.anam.speak(text); setFaceSpeaking(true); setTimeout(function(){setFaceSpeaking(false);done&&done();},ms); return; }catch(e){}
     }
     if(window.speechSynthesis){
       var u=new SpeechSynthesisUtterance(text);u.rate=1;u.pitch=1;
       u.onstart=function(){setFaceSpeaking(true);};
       u.onend=function(){setFaceSpeaking(false);done&&done();};
       window.speechSynthesis.cancel();window.speechSynthesis.speak(u);
-    } else { setFaceSpeaking(true);setTimeout(function(){setFaceSpeaking(false);done&&done();},estMs(text)); }
+    } else { setFaceSpeaking(true);setTimeout(function(){setFaceSpeaking(false);done&&done();},ms); }
   }
-  function estMs(t){return Math.min(16000,Math.max(2600,t.length*60));}
-  function setFaceSpeaking(on){el('stylisedFace').classList.toggle('speaking',!!on);el('micLabel').textContent=on?'Trainer is speaking…':'';}
+  function estMs(t){return Math.min(22000,Math.max(2600,t.length*55));}
+  function setFaceSpeaking(on){S.faceSpeaking=!!on;el('stylisedFace').classList.toggle('speaking',!!on);el('micLabel').textContent=on?'Trainer is speaking…':(S.muted?'Microphone muted':'Listening…');}
 
-  // ─── Listen ──────────────────────────────────────────────────────────
+  // ─── Listen continuously; Mute button stops it ───────────────────────
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  function startListening(){
-    if(S.ended)return;
-    if(!SR){el('micLabel').textContent='Type your answer below ↓';return;}
-    try{
-      S.reco=new SR();S.reco.lang='en-US';S.reco.interimResults=false;S.reco.maxAlternatives=1;
-      S.reco.onstart=function(){S.listening=true;el('micBtn').textContent='● Listening';el('micLabel').textContent='Listening — speak now';};
-      S.reco.onresult=function(ev){var t=ev.results[0][0].transcript;submitReply(t);};
-      S.reco.onerror=function(){el('micLabel').textContent='Didn\'t catch that — tap Speak or type below';};
-      S.reco.onend=function(){S.listening=false;el('micBtn').textContent='🎤 Speak';};
-      S.reco.start();
-    }catch(e){el('micLabel').textContent='Type your answer below ↓';}
+  function micUI(){
+    var b=el('micBtn');if(!b)return;
+    if(!SR){b.style.display='none';el('micLabel').textContent='Speech not supported — type your answers';return;}
+    if(S.muted){b.textContent='🔇 Muted';b.classList.add('btn-danger');b.classList.remove('btn-ghost');el('micLabel').textContent='Microphone muted';}
+    else{b.textContent='🎙 Mute';b.classList.add('btn-ghost');b.classList.remove('btn-danger');}
   }
-  function stopListening(){if(S.reco){try{S.reco.stop();}catch(e){}}S.listening=false;}
-  el('micBtn').onclick=function(){ if(S.listening){stopListening();} else {startListening();} };
+  function startListening(){
+    if(S.ended||S.muted||!SR||S.busy||S.listening)return;
+    try{
+      S.reco=new SR();S.reco.lang='en-US';S.reco.interimResults=false;S.reco.continuous=true;S.reco.maxAlternatives=1;
+      S.reco.onstart=function(){S.listening=true;if(!S.busy&&!S.muted)el('micLabel').textContent='Listening…';};
+      S.reco.onresult=function(ev){var t='';for(var k=ev.resultIndex;k<ev.results.length;k++){if(ev.results[k].isFinal)t+=ev.results[k][0].transcript;}t=t.trim();if(t&&!S.busy&&!S.muted)submitReply(t);};
+      S.reco.onerror=function(){};
+      S.reco.onend=function(){S.listening=false;if(!S.ended&&!S.muted&&!S.busy)setTimeout(startListening,350);};
+      S.reco.start();
+    }catch(e){}
+  }
+  function pauseListening(){S.listening=false;if(S.reco){try{S.reco.onend=null;S.reco.stop();}catch(e){}}}
+  function resumeListening(){ if(!S.muted)startListening(); micUI(); }
+  el('micBtn').onclick=function(){ S.muted=!S.muted; if(S.muted){pauseListening();} else {resumeListening();} micUI(); };
   el('sendBtn').onclick=function(){submitReply(el('replyInput').value);};
   el('replyInput').addEventListener('keydown',function(e){if(e.key==='Enter')submitReply(el('replyInput').value);});
+  micUI();
 
   function updateProgress(cov){
     cov=cov||{done:0,total:0};
@@ -602,9 +700,18 @@ Your job is not to finish the material — it is to produce a competent learner.
     el('covLabel').textContent=cov.done+' of '+cov.total+' key elements';
   }
 
-  function teardown(){S.ended=true;stopListening();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
+  function teardown(){S.ended=true;pauseListening();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
   el('endBtn').onclick=function(){finish();};
-  function finish(){ teardown(); toast('Session complete. Well done.'); setTimeout(function(){location.reload();},1600); }
+  function finish(){
+    teardown();
+    var score=engagementScore(),pass=score>=50;
+    el('resScore').textContent=score+'%';
+    var v=el('resVerdict');v.textContent=pass?'Pass':'Fail';v.className='verdict '+(pass?'pass':'fail');
+    el('resMsg').innerHTML=pass
+      ? 'You stayed engaged for <b>'+score+'%</b> of the session — above the 50% pass mark. Well done.'
+      : 'Your engagement was <b>'+score+'%</b>, below the 50% pass mark. Time on your phone or away from the screen counts against you — please retake the session and stay focused throughout.';
+    el('resultOverlay').classList.add('show');
+  }
 })();
 </script>
 </body>

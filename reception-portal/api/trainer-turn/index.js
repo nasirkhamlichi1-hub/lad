@@ -76,8 +76,11 @@ function perceptionNote(p) {
   if (p.present === false) bits.push('they have left the camera frame');
   if (p.mood === 'confused') bits.push('they look confused');
   else if (p.mood === 'happy') bits.push('they look happy and engaged');
-  if (!bits.length) return '';
-  return '[What you can see on camera right now: ' + bits.join('; ') + '.]';
+  let note = bits.length ? ('[What you can see on camera right now: ' + bits.join('; ') + '.]') : '';
+  if (p.challenge) {
+    note += (note ? ' ' : '') + '[The learner has been disengaged for a while and has NOT responded. STOP teaching new material. Firmly but warmly call it out, remind them their engagement is scored as part of this assessment, and ask one direct question to bring them back before you continue.]';
+  }
+  return note;
 }
 
 function toMessages(history, perception) {
@@ -101,29 +104,37 @@ function systemFor(lesson) {
     '────────  APPROVED TRAINING MATERIALS FOR THIS SESSION  ────────',
     buildLessonContext(lesson), '',
     'OUTPUT FORMAT — respond with ONLY a JSON object, no other text, exactly:',
-    '{"say": "<the spoken turn you deliver to the learner now>", "covered": [<1-based numbers of objectives the learner has DEMONSTRATED understanding of so far>], "complete": <true|false>}',
+    '{"say": "<the spoken turn you deliver to the learner now>", "covered": [<1-based numbers of objectives the learner has DEMONSTRATED understanding of so far>], "complete": <true|false>, "slide": {"title": "<short heading for the on-screen slide>", "bullets": ["<2-4 very short supporting points, a few words each>"]}}',
     'There are ' + total + ' objectives. "say" is spoken aloud by a photoreal avatar: teach ONE concept then STOP and ask a question, OR evaluate the learner\'s answer then advance. Spoken style only — no lists, no markdown, no headings. Keep it tight so the learner speaks ~60% of the time.',
+    'The "slide" is a visual aid shown beside the avatar — make it match the concept you are teaching THIS turn: a concise title and 2-4 short bullet points drawn ONLY from the approved materials (keywords/figures, not full sentences). When you are asking a question or there is nothing to show, you may reuse the current concept\'s slide.',
     'Add an objective to "covered" only once the learner has DEMONSTRATED understanding of it — never merely because you explained it.',
     'Set "complete" true ONLY after every objective is covered AND you have run the five-question assessment and delivered the performance summary in "say".'].join('\n');
+}
+
+function cleanSlide(s) {
+  if (!s || typeof s.title !== 'string') return null;
+  const bullets = Array.isArray(s.bullets) ? s.bullets.filter(x => typeof x === 'string' && x.trim()).map(x => x.trim().slice(0, 90)).slice(0, 4) : [];
+  return { title: s.title.trim().slice(0, 90), bullets };
 }
 
 function parseReply(text, total) {
   let obj = null;
   if (text) { const m = text.match(/\{[\s\S]*\}/); if (m) { try { obj = JSON.parse(m[0]); } catch (e) {} } }
-  if (!obj || typeof obj.say !== 'string') return { say: (text || '').trim() || 'Let\'s continue.', covered: [], complete: false };
+  if (!obj || typeof obj.say !== 'string') return { say: (text || '').trim() || 'Let\'s continue.', covered: [], complete: false, slide: null };
   const covered = Array.isArray(obj.covered)
     ? obj.covered.map(n => parseInt(n, 10)).filter(n => n >= 1 && n <= total).filter((v, i, a) => a.indexOf(v) === i) : [];
-  return { say: String(obj.say).trim(), covered, complete: obj.complete === true };
+  return { say: String(obj.say).trim(), covered, complete: obj.complete === true, slide: cleanSlide(obj.slide) };
 }
 
 function fallbackTurn(lesson, history) {
   const objs = lesson.objectives || []; const total = objs.length;
   const learnerTurns = (history || []).filter(h => h.role === 'lawyer' || h.role === 'user').length;
-  if (!total) return { say: 'Welcome. Tell me what you\'d like to focus on today.', covered: [], complete: false };
-  if (learnerTurns === 0) return { say: 'Welcome to your Legal Affairs training session. Before we begin — what is your current experience with this topic?', covered: [], complete: false };
+  const titleSlide = { title: lesson.title || 'Today\'s session', bullets: objs.slice(0, 4) };
+  if (!total) return { say: 'Welcome. Tell me what you\'d like to focus on today.', covered: [], complete: false, slide: titleSlide };
+  if (learnerTurns === 0) return { say: 'Welcome to your Legal Affairs training session. Before we begin — what is your current experience with this topic?', covered: [], complete: false, slide: titleSlide };
   const idx = learnerTurns - 1; const covered = []; for (let i = 0; i < Math.min(idx, total); i++) covered.push(i + 1);
-  if (idx >= total) return { say: 'Good — that covers everything we set out to. Well done; you can apply these now.', covered, complete: true };
-  return { say: 'Good. Next: ' + objs[idx] + '. In your own words, what do you understand by that?', covered, complete: false };
+  if (idx >= total) return { say: 'Good — that covers everything we set out to. Well done; you can apply these now.', covered, complete: true, slide: { title: 'Recap', bullets: objs.slice(0, 4) } };
+  return { say: 'Good. Next: ' + objs[idx] + '. In your own words, what do you understand by that?', covered, complete: false, slide: { title: 'Objective ' + (idx + 1), bullets: [objs[idx]] } };
 }
 
 module.exports = async function (context, req) {
