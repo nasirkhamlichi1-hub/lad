@@ -405,18 +405,35 @@ input.key:focus{outline:none;border-color:var(--green2)}
     }
     return tryNext();
   }
+  // Mint an Anam session token the proven way (POST /v1/auth/session-token →
+  // {sessionToken}); this is the flow that returns 200 from /engine/session.
+  // The SDK's unsafe_createClientWithApiKey path sends a request Anam rejects (400),
+  // so we mint here and hand the token to createClient(token) instead.
+  function mintAnamToken(){
+    return fetch('https://api.anam.ai/v1/auth/session-token',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+S.anamKey,'Content-Type':'application/json'},
+      body:JSON.stringify({personaConfig:{name:'CLPD Trainer',avatarId:S.avatarId}})
+    }).then(function(r){return r.json().then(function(j){return {status:r.status,j:j};});})
+      .then(function(o){
+        if(o.status>=300||!o.j||!o.j.sessionToken){
+          throw new Error('token mint '+o.status+': '+((o.j&&(o.j.message||(o.j.error&&(o.j.error.message||o.j.error))))||'no sessionToken'));
+        }
+        return o.j.sessionToken;
+      });
+  }
   function initAnam(){
     el('caption').innerHTML='<b>Trainer:</b> connecting the photoreal face…';
     return loadAnamSDK().then(function(mod){
-      // persona = {name, avatarId} only — adding a voiceId is rejected (avatar
-      // carries its own voice). This is the shape verified against the live API.
-      var client=mod.unsafe_createClientWithApiKey(S.anamKey,{name:'CLPD Trainer',avatarId:S.avatarId});
+      return mintAnamToken().then(function(tok){
+      var client=mod.createClient(tok);
       return client.streamToVideoElement('anamVideo').then(function(){
         var v=el('anamVideo');v.classList.remove('hidden');el('stylisedFace').classList.add('hidden');
         try{v.play&&v.play();}catch(e){}            // belt-and-braces against autoplay
         S.face='anam';
         el('enginePill').className='pill pill-live';el('enginePill').textContent='● Photoreal · Claude';
         S.anam={speak:function(t){return client.talk(t);},stop:function(){try{client.stopStreaming&&client.stopStreaming();}catch(e){}}};
+      });
       });
     });
   }
