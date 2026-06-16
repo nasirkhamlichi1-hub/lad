@@ -74,7 +74,9 @@ module.exports = {
   anam: {
     apiKey:   process.env.ANAM_API_KEY || '',
     baseUrl:  process.env.ANAM_BASE_URL || 'https://api.anam.ai',
-    avatarId: process.env.ANAM_AVATAR_ID || '',           // a photoreal avatar id
+    // Defaults to "Gabriel" (a stock Anam avatar, cara-4-latest) so a deploy
+    // only needs ANAM_API_KEY set; override ANAM_AVATAR_ID to pick another.
+    avatarId: process.env.ANAM_AVATAR_ID || '6cc28442-cccd-42a8-b6e4-24b7210a09c5',
     voiceId:  process.env.ANAM_VOICE_ID || '',            // optional specific Anam voice
     name:     process.env.ANAM_AVATAR_NAME || 'CLPD Trainer',
   },
