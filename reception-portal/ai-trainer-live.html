@@ -228,7 +228,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
           <span class="rec"><span class="dot"></span> <span id="recLabel">Live session</span></span>
           <span class="miclbl" id="micLabel"></span>
           <div style="flex:1"></div>
-          <button id="micBtn" class="btn btn-ghost">🎤 Speak</button>
+          <button id="micBtn" class="btn btn-ghost">🎤 Talk</button>
           <button id="endBtn" class="btn btn-danger">Finish</button>
         </div>
         <div class="replybox">
@@ -807,7 +807,7 @@ Your job is not to finish the material — it is to produce a competent learner.
 
   // ─── Push-to-talk: the mic only opens while you choose to answer, so you and
   // the trainer never talk over each other. Pressing "answer" also stops her.
-  function promptAnswer(){ el('micBtn').disabled=false; if(!S.talking)el('micLabel').textContent='Press “Answer” when you’re ready to speak'; micUI(); }
+  function promptAnswer(){ el('micBtn').disabled=false; if(!S.talking)el('micLabel').textContent='Press “Talk” when you’re ready to speak'; micUI(); }
   function interruptTrainer(){
     if(S.speakTimer){clearTimeout(S.speakTimer);S.speakTimer=null;}
     if(capTimer){clearTimeout(capTimer);capTimer=null;}
@@ -873,15 +873,15 @@ Your job is not to finish the material — it is to produce a competent learner.
     } else { setFaceSpeaking(true);setTimeout(function(){setFaceSpeaking(false);done&&done();},ms); }
   }
   function estMs(t){return Math.min(34000,Math.max(2600,t.length*58));}
-  function setFaceSpeaking(on){S.faceSpeaking=!!on;el('stylisedFace').classList.toggle('speaking',!!on);el('micLabel').textContent=on?'Trainer is speaking — press “Answer” to jump in':(S.talking?'Listening — speak now':'Press “Answer” to speak');}
+  function setFaceSpeaking(on){S.faceSpeaking=!!on;el('stylisedFace').classList.toggle('speaking',!!on);el('micLabel').textContent=on?'Trainer is speaking — press “Talk” to jump in':(S.talking?'Listening — speak now':'Press “Talk” to speak');}
 
   // ─── Push-to-talk: the mic opens only while you answer ───────────────
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   function micUI(){
     var b=el('micBtn');if(!b)return;
     if(!SR&&!S.anamStt){b.style.display='none';el('micLabel').textContent='Speech not supported — type your answers';return;}
-    if(S.talking){b.textContent='■ Send answer';b.classList.add('btn-danger');b.classList.remove('btn-ghost');}
-    else{b.textContent='🎤 Answer';b.classList.add('btn-ghost');b.classList.remove('btn-danger');}
+    if(S.talking){b.textContent='■ Send';b.classList.add('btn-danger');b.classList.remove('btn-ghost');}
+    else{b.textContent='🎤 Talk';b.classList.add('btn-ghost');b.classList.remove('btn-danger');}
   }
   // Language is tuned for a clear English accent. Override with ?lang=en-AU etc.
   var STT_LANG=(function(){try{var m=location.search.match(/[?&]lang=([\w-]+)/);return m?m[1]:'en-GB';}catch(e){return 'en-GB';}})();

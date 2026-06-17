@@ -203,7 +203,14 @@ module.exports = async function (context, req) {
   // stays low. Set TRAINER_MODEL=claude-haiku-4-5-20251001 for maximum speed.
   const wanted = process.env.TRAINER_MODEL || 'claude-sonnet-4-6';
   const models = [wanted, 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001', 'claude-opus-4-8'].filter((m, i, a) => a.indexOf(m) === i);
-  const body = { max_tokens: 600, system: systemFor(lesson, opening, learner, mode), messages: toMessages(history, perception, opening, mode) };
+  // Prompt-cache the (large, unchanging) system prompt + lesson materials so every
+  // turn after the first in a session has a much faster time-to-first-word.
+  const systemText = systemFor(lesson, opening, learner, mode);
+  const body = {
+    max_tokens: 500,
+    system: [{ type: 'text', text: systemText, cache_control: { type: 'ephemeral' } }],
+    messages: toMessages(history, perception, opening, mode)
+  };
 
   let lastStatus = 0;
   for (const model of models) {
