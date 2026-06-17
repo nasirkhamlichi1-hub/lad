@@ -63,6 +63,15 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
 .btn-danger{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
 .btn-ghost{background:var(--white);color:var(--slate);border-color:var(--line2)}
 .btn-block{width:100%}
+/* Big, obvious primary action — pressing it talks to the trainer. */
+.btn-talk{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;font-size:17px;font-weight:700;padding:15px 34px;border-radius:999px;box-shadow:0 6px 22px rgba(0,107,63,.35);letter-spacing:.2px}
+.btn-talk:hover{transform:translateY(-1px)}
+.btn-talk:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-talk.live{background:linear-gradient(135deg,#c0392b,#9b2418);box-shadow:0 6px 22px rgba(192,57,43,.4);animation:talkPulse 1.4s ease-in-out infinite}
+@keyframes talkPulse{0%,100%{box-shadow:0 6px 22px rgba(192,57,43,.4)}50%{box-shadow:0 6px 30px rgba(192,57,43,.75)}}
+/* End session — deliberately small, muted and kept far from Talk so they can't be confused. */
+.btn-end{background:transparent;color:var(--slate2);border:1px solid var(--line2);font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:8px}
+.btn-end:hover{color:var(--red);border-color:var(--red-border);background:var(--red-bg)}
 .note{font-size:11px;color:var(--slate3);margin-top:12px;line-height:1.5}
 .banner{display:flex;gap:10px;align-items:flex-start;background:var(--blue-bg);border:1px solid #cfe0f0;border-radius:var(--r);padding:11px 13px;margin:14px 0;font-size:12px;color:var(--slate);line-height:1.5}
 label.fld{display:block;font-size:12px;font-weight:650;color:var(--slate);margin:12px 0 5px}
@@ -71,7 +80,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
 .stage-wrap{display:none}
 .stage{position:relative;background:linear-gradient(160deg,#0d1b14,#0a0e14);border-radius:var(--r-lg);overflow:hidden;aspect-ratio:16/9;box-shadow:var(--sh-lg);border:1px solid #000;display:grid;place-items:center}
 .stage video#anamVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.selfcam{position:absolute;right:12px;bottom:12px;width:132px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,.5);box-shadow:0 4px 16px rgba(0,0,0,.4);background:#000;z-index:4}
+.selfcam{position:absolute;right:12px;top:12px;width:120px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,.5);box-shadow:0 4px 16px rgba(0,0,0,.4);background:#000;z-index:4}
 .selfcam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
 /* Karaoke caption — compact 2-3 line teleprompter at the bottom */
 .cap{position:absolute;left:0;right:0;bottom:0;padding:46px 20px 18px;background:linear-gradient(to top,rgba(0,0,0,.86),rgba(0,0,0,.55) 55%,transparent);color:#fff;z-index:3;display:flex;justify-content:center}
@@ -225,11 +234,11 @@ input.key:focus{outline:none;border-color:var(--green2)}
           <button id="unmuteBtn" class="unmute" style="display:none">🔊 Tap to enable the trainer's voice</button>
         </div>
         <div class="stage-bar">
+          <button id="endBtn" class="btn btn-end" title="End this session">⏹ End session</button>
           <span class="rec"><span class="dot"></span> <span id="recLabel">Live session</span></span>
           <span class="miclbl" id="micLabel"></span>
           <div style="flex:1"></div>
-          <button id="micBtn" class="btn btn-ghost">🎤 Talk</button>
-          <button id="endBtn" class="btn btn-danger">Finish</button>
+          <button id="micBtn" class="btn btn-talk">🎤 Talk</button>
         </div>
         <div class="replybox">
           <input id="replyInput" type="text" placeholder="…or type your answer and press Enter"/>
@@ -880,8 +889,8 @@ Your job is not to finish the material — it is to produce a competent learner.
   function micUI(){
     var b=el('micBtn');if(!b)return;
     if(!SR&&!S.anamStt){b.style.display='none';el('micLabel').textContent='Speech not supported — type your answers';return;}
-    if(S.talking){b.textContent='■ Send';b.classList.add('btn-danger');b.classList.remove('btn-ghost');}
-    else{b.textContent='🎤 Talk';b.classList.add('btn-ghost');b.classList.remove('btn-danger');}
+    if(S.talking){b.textContent='■ Send';b.classList.add('live');}
+    else{b.textContent='🎤 Talk';b.classList.remove('live');}
   }
   // Language is tuned for a clear English accent. Override with ?lang=en-AU etc.
   var STT_LANG=(function(){try{var m=location.search.match(/[?&]lang=([\w-]+)/);return m?m[1]:'en-GB';}catch(e){return 'en-GB';}})();
