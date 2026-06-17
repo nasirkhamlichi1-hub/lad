@@ -93,12 +93,24 @@ function perceptionNote(p) {
   return note;
 }
 
-function toMessages(history, perception, opening, mode) {
+function pacingNote(elapsedMin, targetMin) {
+  elapsedMin = parseInt(elapsedMin, 10) || 0;
+  targetMin = parseInt(targetMin, 10) || 75;
+  if (elapsedMin <= 0) return '';
+  const remaining = targetMin - elapsedMin;
+  let guide;
+  if (remaining <= 5) guide = 'Time is nearly up — begin wrapping up: cover any remaining must-know point quickly, run a short applied check, and move toward closing.';
+  else if (remaining <= 0) guide = 'You are over the target session length — close out now: a brief final check and forward-looking feedback.';
+  else guide = 'Pace so the remaining objectives and a short applied assessment fit the remaining time; do not dwell on any single point.';
+  return '[Session pacing: about ' + elapsedMin + ' of ~' + targetMin + ' minutes used' + (remaining > 0 ? ' (~' + remaining + ' left)' : '') + '. ' + guide + ']';
+}
+
+function toMessages(history, perception, opening, mode, pacing) {
   const msgs = (history || []).map(h => ({
     role: (h.role === 'trainer' || h.role === 'assistant') ? 'assistant' : 'user',
     content: String(h.text || h.content || '')
   })).filter(m => m.content);
-  const note = perceptionNote(perception);
+  const note = [perceptionNote(perception), pacing || ''].filter(Boolean).join(' ');
   if (!msgs.length) {
     const start = mode === 'simulation'
       ? '[Begin the case simulation. Greet the learner by name if known, set the scene briefly and vividly, then pose the FIRST decision and stop.]'
@@ -143,7 +155,7 @@ function systemFor(lesson, opening, learner, mode) {
   const sim = mode === 'simulation' || lesson.mode === 'simulation';
   const openingRule = sim ? '' : (opening
     ? 'SESSION OPENING: this is the FIRST section of the programme. Welcome them warmly in one or two sentences and state what they will be able to do by the end — then IMMEDIATELY start teaching the first objective with real substance. Do NOT ask them what they would like to cover and do NOT run a long baseline interview before teaching.'
-    : 'SESSION OPENING: this is a LATER section. The learner has ALREADY heard the programme welcome and given their baseline earlier — do NOT welcome them to the programme again, do NOT re-explain the format or the 90-minute/assessment structure, and do NOT ask about their overall experience again. Begin with a brief one-sentence bridge into this specific section, then teach its first objective.');
+    : 'SESSION OPENING: this is a LATER section. The learner has ALREADY heard the programme welcome and given their baseline earlier — do NOT welcome them to the programme again, do NOT re-explain the format or the 75-minute/assessment structure, and do NOT ask about their overall experience again. Begin with a brief one-sentence bridge into this specific section, then teach its first objective.');
   return [SYSTEM_PROMPT, '',
     sim ? SIMULATION_DIRECTIVE : openingRule, '',
     learnerProfile(learner), learnerProfile(learner) ? '' : null,
@@ -206,10 +218,11 @@ module.exports = async function (context, req) {
   // Prompt-cache the (large, unchanging) system prompt + lesson materials so every
   // turn after the first in a session has a much faster time-to-first-word.
   const systemText = systemFor(lesson, opening, learner, mode);
+  const pacing = pacingNote(b.elapsedMin, b.targetMin);
   const body = {
     max_tokens: 500,
     system: [{ type: 'text', text: systemText, cache_control: { type: 'ephemeral' } }],
-    messages: toMessages(history, perception, opening, mode)
+    messages: toMessages(history, perception, opening, mode, pacing)
   };
 
   let lastStatus = 0;

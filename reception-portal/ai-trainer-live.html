@@ -120,6 +120,22 @@ input.key:focus{outline:none;border-color:var(--green2)}
 @keyframes talk{from{transform:scaleY(.35)}to{transform:scaleY(1.15)}}
 .face .lid{transform-origin:center;transform-box:fill-box;animation:blink 5s infinite}
 @keyframes blink{0%,96%,100%{transform:scaleY(0)}98%{transform:scaleY(1)}}
+/* Session timeline — how far along the session the learner is, in steps + time */
+.timeline{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;margin-bottom:14px}
+.tl-row{display:flex;align-items:center;gap:12px}
+.tl-row+.tl-row{margin-top:9px}
+.tl-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--slate3);width:120px;flex:none}
+.tl-steps{display:flex;align-items:center;gap:6px;flex:1;flex-wrap:wrap}
+.tl-step{flex:1;min-width:14px;height:8px;border-radius:99px;background:var(--paper2);position:relative;transition:background .3s}
+.tl-step.done{background:var(--green2)}
+.tl-step.cur{background:var(--gold);box-shadow:0 0 0 3px rgba(201,145,58,.25)}
+.tl-count{font-size:12.5px;font-weight:700;color:var(--slate);width:54px;text-align:right;flex:none}
+.tl-time-track{flex:1;height:8px;border-radius:99px;background:var(--paper2);overflow:hidden}
+.tl-time-track>i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--green2));transition:width .5s}
+.tl-time-track.over>i{background:var(--red)}
+.tl-clock{font-size:12.5px;font-weight:700;color:var(--slate);width:90px;text-align:right;flex:none}
+.tl-clock.over{color:var(--red)}
+@media(max-width:620px){.tl-label{width:64px}.tl-clock{width:74px}}
 .stage-bar{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
 .rec{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--slate2);font-weight:500}
 .rec .dot{width:9px;height:9px;border-radius:50%;background:var(--red);animation:pulse 1.8s infinite}
@@ -215,7 +231,20 @@ input.key:focus{outline:none;border-color:var(--green2)}
   </section>
 
   <section id="session" class="stage-wrap">
-    <div class="wrap" style="padding:26px 0 60px"><div class="grid">
+    <div class="wrap" style="padding:26px 0 60px">
+      <div class="timeline" id="timeline" style="display:none">
+        <div class="tl-row">
+          <span class="tl-label">Session progress</span>
+          <div class="tl-steps" id="tlSteps"></div>
+          <span class="tl-count" id="tlCount">0/0</span>
+        </div>
+        <div class="tl-row">
+          <span class="tl-label">Time</span>
+          <div class="tl-time-track" id="tlTimeTrack"><i id="tlTimeFill"></i></div>
+          <span class="tl-clock" id="tlClock">0 / 75 min</span>
+        </div>
+      </div>
+      <div class="grid">
       <div>
         <div class="stage" id="stage">
           <video id="anamVideo" autoplay playsinline class="hidden"></video>
@@ -332,7 +361,7 @@ Always follow this teaching loop: Teach → Question → Evaluate → Correct �
 SOURCE GOVERNANCE (ABSOLUTE)
 Your knowledge is restricted to the approved training materials provided in this session (below). They are your only authority — treat them as the official course handbook. Do NOT use general AI knowledge, external legal knowledge, supplement missing information, infer legal rules, or provide explanations not supported by the materials. If information is absent, say: "The approved training materials do not cover this point. I cannot provide additional information beyond the course content." Never guess, fabricate, or cite outside sources.
 
-SESSION CONTROLLER (~90 minutes)
+SESSION CONTROLLER (~75 minutes)
 Internally track elapsed time, completed/remaining topics, learner performance and pace. Do not spend excessive time on one topic. Opening (~5 min): welcome to the Legal Affairs Training, explain the session format and learning objectives, and establish the learner's baseline — ask "What is your current experience with this topic?" before teaching.
 
 TEACHING BLOCKS
@@ -463,7 +492,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     return fetch('/api/trainer-turn',{
       method:'POST',
       headers:{'content-type':'application/json'},
-      body:JSON.stringify({token:AUTH.token,lesson:lesson,history:history,perception:perception,opening:isOpeningLesson(lesson),learner:buildLearner(lesson),mode:lesson.mode||'lesson'})
+      body:JSON.stringify({token:AUTH.token,lesson:lesson,history:history,perception:perception,opening:isOpeningLesson(lesson),learner:buildLearner(lesson),mode:lesson.mode||'lesson',elapsedMin:S.startedAt?Math.round((Date.now()-S.startedAt)/60000):0,targetMin:75})
     }).then(function(r){return r.json();}).then(function(d){
       if(d&&typeof d.say==='string')return {say:d.say,covered:d.covered||[],complete:!!d.complete,slide:d.slide||null};
       throw new Error((d&&d.error)||'no turn');
@@ -586,6 +615,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     el('setup').classList.add('hidden');el('session').style.display='block';
     el('recLabel').textContent='Live · '+S.selected.title;
     el('brainLabel').textContent='Claude · Anam';
+    startTimeline();
     startCamera();
     initAnam().catch(function(e){
       var msg=(e&&(e.message||e.toString()))||'unknown error';
@@ -942,14 +972,43 @@ Your job is not to finish the material — it is to produce a competent learner.
   el('replyInput').addEventListener('keydown',function(e){if(e.key==='Enter')submitReply(el('replyInput').value);});
   micUI();
 
+  // ─── Session timeline: how far along the session the learner is ───────
+  var TARGET_MIN=75;  // approximate total session length
+  function startTimeline(){
+    var total=(S.selected&&S.selected.objectives||[]).length||1;
+    var steps='';for(var i=0;i<total;i++)steps+='<span class="tl-step" data-i="'+i+'"></span>';
+    el('tlSteps').innerHTML=steps;
+    el('tlCount').textContent='0/'+total;
+    el('timeline').style.display='';
+    tickTime();
+    if(S.tlTimer)clearInterval(S.tlTimer);
+    S.tlTimer=setInterval(tickTime,5000);
+  }
+  function tickTime(){
+    if(!S.startedAt)return;
+    var mins=Math.floor((Date.now()-S.startedAt)/60000);
+    var pct=Math.min(mins/TARGET_MIN,1)*100, over=mins>TARGET_MIN;
+    el('tlTimeFill').style.width=pct+'%';
+    el('tlClock').textContent=mins+' / '+TARGET_MIN+' min';
+    el('tlTimeTrack').classList.toggle('over',over);
+    el('tlClock').classList.toggle('over',over);
+  }
   function updateProgress(cov){
     cov=cov||{done:0,total:0};S.lastCovered=cov.done||0;
     var pct=cov.total?Math.round(cov.done/cov.total*100):0;
     el('progBar').style.width=pct+'%';
     el('covLabel').textContent=cov.done+' of '+cov.total+' key elements';
+    // Reflect progress on the session timeline (done / current / upcoming steps).
+    var steps=el('tlSteps')?el('tlSteps').querySelectorAll('.tl-step'):[];
+    if(steps.length!==cov.total&&cov.total)startTimeline(),steps=el('tlSteps').querySelectorAll('.tl-step');
+    Array.prototype.forEach.call(steps,function(s,i){
+      s.classList.toggle('done',i<cov.done);
+      s.classList.toggle('cur',i===cov.done);
+    });
+    if(el('tlCount'))el('tlCount').textContent=cov.done+'/'+(cov.total||steps.length||0);
   }
 
-  function teardown(){S.ended=true;pauseListening();stopReco();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
+  function teardown(){S.ended=true;pauseListening();stopReco();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);if(S.tlTimer)clearInterval(S.tlTimer);if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
   el('endBtn').onclick=function(){finish();};
   function finish(){
     teardown();
