@@ -69,6 +69,12 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
 .btn-talk:active{transform:translateY(0)}
 .btn-talk:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
 .btn-talk.live{background:linear-gradient(180deg,#e84135,#c0231a);box-shadow:0 1px 1px rgba(0,0,0,.05),0 8px 22px rgba(192,35,26,.28)}
+.talk-row{display:flex;gap:10px}
+.talk-row .btn-talk{flex:1.6}
+.btn-send{flex:1;background:#fff;color:var(--green-d,#004d2e);border:1.5px solid var(--green-border,#b8d8c5);font-size:16px;font-weight:600;padding:16px 20px;border-radius:14px;transition:background .15s,border-color .15s,transform .12s}
+.btn-send:hover{background:var(--green-bg,#eaf6ef);transform:translateY(-1px)}
+.btn-send:active{transform:translateY(0)}
+.btn-send:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .btn-soft{background:#f3f5f7;color:var(--slate);border:1px solid var(--line2);font-size:13.5px;font-weight:600;padding:11px 18px;border-radius:11px;box-shadow:0 1px 1px rgba(0,0,0,.02);transition:background .15s,border-color .15s,color .15s}
 .btn-soft:hover{background:#e9edf1}
 .btn-soft.danger{color:var(--red)}
@@ -81,7 +87,7 @@ input.key{width:100%;padding:9px 11px;border:1.5px solid var(--line2);border-rad
 input.key:focus{outline:none;border-color:var(--green2)}
 .stage-wrap{display:none}
 .stage{position:relative;background:linear-gradient(160deg,#0d1b14,#0a0e14);border-radius:var(--r-lg);overflow:hidden;aspect-ratio:16/9;box-shadow:var(--sh-lg);border:1px solid #000;display:grid;place-items:center}
-.stage video#anamVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.stage video#anamVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform:scale(1.2)}
 .selfcam{position:absolute;right:12px;top:12px;width:120px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,.5);box-shadow:0 4px 16px rgba(0,0,0,.4);background:#000;z-index:4}
 .selfcam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
 /* Karaoke caption — compact 2-3 line teleprompter at the bottom */
@@ -122,12 +128,12 @@ input.key:focus{outline:none;border-color:var(--green2)}
 .slide-bullets li:before{content:"";position:absolute;left:0;top:6px;width:8px;height:8px;border-radius:2px;background:var(--slacc,var(--gold));box-shadow:0 0 10px rgba(255,255,255,.25)}
 @keyframes slidein{to{opacity:1;transform:none}}
 .slide-foot{position:absolute;left:20px;right:20px;bottom:14px;display:flex;justify-content:space-between;align-items:center;font-family:monospace;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.5)}
-.face{width:62%;max-width:340px;filter:drop-shadow(0 12px 30px rgba(0,0,0,.4))}
-.face .mouth{transform-origin:center;transform-box:fill-box;transition:transform .08s}
-.face.speaking .mouth{animation:talk .26s infinite alternate}
-@keyframes talk{from{transform:scaleY(.35)}to{transform:scaleY(1.15)}}
-.face .lid{transform-origin:center;transform-box:fill-box;animation:blink 5s infinite}
-@keyframes blink{0%,96%,100%{transform:scaleY(0)}98%{transform:scaleY(1)}}
+/* Blank branded panel shown while connecting or if the photoreal stream is
+   unavailable — no cartoon face, just a clean dark screen. */
+.face-blank{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:none}
+.fb-emblem{width:46px;height:56px;color:rgba(255,255,255,.14)}
+.fb-emblem svg{width:100%;height:100%}
+.fb-word{font-family:var(--serif,Georgia,serif);font-size:17px;letter-spacing:1px;color:rgba(255,255,255,.18)}
 /* Session timeline — how far along the session the learner is, in steps + time */
 .timeline{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:8px 14px}
 .tl-row{display:flex;align-items:center;gap:12px}
@@ -262,17 +268,10 @@ input.key:focus{outline:none;border-color:var(--green2)}
       <div class="col-main">
         <div class="stage" id="stage">
           <video id="anamVideo" autoplay playsinline class="hidden"></video>
-          <svg id="stylisedFace" class="face" viewBox="0 0 220 240">
-            <ellipse cx="110" cy="120" rx="86" ry="104" fill="#f1c9a5"/>
-            <path d="M24 110a86 104 0 0 1 172 0v6a86 104 0 0 1-172 0z" fill="#e9b892"/>
-            <path d="M40 70c10-34 130-34 140 0 6 20 0 30-6 26-14-44-114-44-128 0-6 4-12-6-6-26z" fill="#3a2c22"/>
-            <ellipse cx="78" cy="112" rx="12" ry="13" fill="#fff"/><ellipse cx="142" cy="112" rx="12" ry="13" fill="#fff"/>
-            <circle cx="78" cy="114" r="6" fill="#2a1c12"/><circle cx="142" cy="114" r="6" fill="#2a1c12"/>
-            <ellipse class="lid" cx="78" cy="112" rx="13" ry="13" fill="#f1c9a5"/><ellipse class="lid" cx="142" cy="112" rx="13" ry="13" fill="#f1c9a5"/>
-            <path d="M64 92c8-6 20-6 28 0M128 92c8-6 20-6 28 0" stroke="#3a2c22" stroke-width="4" fill="none" stroke-linecap="round"/>
-            <path d="M104 122l-6 26h18l-6-26z" fill="#e0a87f"/>
-            <ellipse class="mouth" cx="110" cy="170" rx="26" ry="13" fill="#7a2f2f"/>
-          </svg>
+          <div id="stylisedFace" class="face-blank">
+            <div class="fb-emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="currentColor"/></svg></div>
+            <div class="fb-word">CLPD · Legal Faculty AI</div>
+          </div>
           <div class="cap"><div class="cap-inner" id="caption">Connecting you to your trainer…</div></div>
           <button id="unmuteBtn" class="unmute" style="display:none">Tap to enable sound</button>
           <div id="pauseOverlay" class="pause-ov" style="display:none">
@@ -285,8 +284,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
         </div>
         <div class="statusline"><span class="livedot"></span> <span id="recLabel">Live session</span></div>
         <div class="replybox">
-          <input id="replyInput" type="text" placeholder="Type your answer and press Enter"/>
-          <button id="sendBtn" class="btn btn-soft">Send</button>
+          <input id="replyInput" type="text" placeholder="…or type your answer and press Enter"/>
         </div>
         <div class="actions">
           <button id="saveBtn" class="btn btn-soft" title="Save your place and continue later">Save &amp; exit</button>
@@ -302,7 +300,10 @@ input.key:focus{outline:none;border-color:var(--green2)}
             <div class="slide-foot"><span>Dubai Legal Affairs · CLPD</span><span id="slideNo"></span></div>
           </div>
         </div>
-        <button id="micBtn" class="btn btn-talk">Talk</button>
+        <div class="talk-row">
+          <button id="micBtn" class="btn btn-talk">Talk</button>
+          <button id="sendBtn" class="btn btn-send">Send</button>
+        </div>
         <div class="talk-hint" id="micLabel">Press Talk to speak</div>
       </div>
       </div>
@@ -1012,9 +1013,9 @@ Your job is not to finish the material — it is to produce a competent learner.
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   function micUI(){
     var b=el('micBtn');if(!b)return;
-    if(!SR&&!S.anamStt){b.style.display='none';el('micLabel').textContent='Speech not supported — type your answers';return;}
-    if(S.talking){b.textContent='Send';b.classList.add('live');}
-    else{b.textContent='Talk';b.classList.remove('live');}
+    if(!SR&&!S.anamStt){b.style.display='none';return;}
+    b.textContent=S.talking?'Listening…':'Talk';
+    b.classList.toggle('live',!!S.talking);
   }
   // Language is tuned for a clear English accent. Override with ?lang=en-AU etc.
   var STT_LANG=(function(){try{var m=location.search.match(/[?&]lang=([\w-]+)/);return m?m[1]:'en-GB';}catch(e){return 'en-GB';}})();
@@ -1054,7 +1055,13 @@ Your job is not to finish the material — it is to produce a competent learner.
   function startListening(){if(S.ended||S.muted)return;S.accept=true;sttBuf='';if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}if(!S.anamStt){if(!SR)return;ensureReco();}if(!S.busy)el('micLabel').textContent='Listening…';}
   function pauseListening(){S.accept=false;if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}sttBuf='';}  // keep engine warm, just stop accepting
   function resumeListening(){ if(!S.muted)startListening(); micUI(); }
-  el('micBtn').onclick=function(){ toggleTalk(); };
+  // Talk = open / close the mic (no submit). Send = submit what you said or typed.
+  el('micBtn').onclick=function(){ if(S.talking)endTalk(true); else beginTalk(); };
+  function doSend(){
+    var typed=(el('replyInput').value||'').trim();
+    if(typed){ if(S.talking)endTalk(true); el('replyInput').value=''; submitReply(typed); return; }
+    if(S.talking){ endTalk(false); return; }   // submit the spoken answer
+  }
   // Click the avatar to pause / resume (step away without ending the session).
   el('stage').addEventListener('click',function(){
     if(S.ended)return;
@@ -1069,7 +1076,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     if(S.ended||S.busy)return;
     e.preventDefault();toggleTalk();
   });
-  el('sendBtn').onclick=function(){submitReply(el('replyInput').value);};
+  el('sendBtn').onclick=function(){ doSend(); };
   el('replyInput').addEventListener('keydown',function(e){if(e.key==='Enter')submitReply(el('replyInput').value);});
   micUI();
 
