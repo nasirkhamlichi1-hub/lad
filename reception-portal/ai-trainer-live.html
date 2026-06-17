@@ -224,7 +224,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
     <span id="whoami" class="ghost-link" style="display:none"></span>
     <a href="#" id="logoutBtn" class="ghost-link" style="display:none">Log out</a>
     <span id="enginePill" class="pill pill-demo">Setup</span>
-    <a class="ghost-link" href="/">← Home</a>
+    <a class="ghost-link" href="/portal">← Platform</a>
   </div>
 </header>
 
@@ -382,7 +382,10 @@ input.key:focus{outline:none;border-color:var(--green2)}
   var S={selected:null,session:null,history:[],perception:{attention:'engaged',phone:false,present:true,mood:'neutral'},
          anam:null,stream:null,reco:null,listening:false,muted:false,startedAt:0,busy:false,ended:false,detector:null,detLoop:null,selfVideo:null,
          faceSpeaking:false,disStreak:0,lastChallenge:0,lastCovered:0,eng:{samples:0,engaged:0,phone:0,away:0,distracted:0}};
-  var AUTH={token:null,name:'',email:'',progress:{},mode:'login'};
+  var AUTH={token:null,name:'',email:'',progress:{},mode:'login',role:'lawyer',courses:[]};
+  // Courses that require an admin assignment (courseId -> assignment id).
+  var GATED={'aviation-law':'aviation'};
+  function courseAccessible(L){ if(!L)return true; var req=GATED[L.courseId]; if(!req)return true; return AUTH.role==='admin'||(AUTH.courses||[]).indexOf(req)>=0; }
 
   // ─── Built-in lessons (no backend / DB needed) ───────────────────────
   var LESSONS=[
@@ -577,6 +580,7 @@ Your job is not to finish the material — it is to produce a competent learner.
   function renderLessons(){
     var c=el('lessons');c.innerHTML='';
     LESSONS.forEach(function(L){
+      if(!courseAccessible(L))return;   // hide courses not assigned to this learner
       var d=document.createElement('div');d.className='lesson'+(S.selected&&S.selected.id===L.id?' sel':'');
       var meta=[];if(L.duration_min)meta.push('<span class="tag">~'+L.duration_min+' min</span>');
       if((L.objectives||[]).length)meta.push('<span class="tag">'+L.objectives.length+(L.mode==='simulation'?' decisions':' key elements')+'</span>');
@@ -661,7 +665,7 @@ Your job is not to finish the material — it is to produce a competent learner.
       .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
       .then(function(o){ el('authBtn').disabled=false;
         if(!o.ok||!o.j.token){setAuthErr((o.j&&o.j.error)||'Could not sign in.');return;}
-        AUTH.token=o.j.token;AUTH.name=o.j.name||email;AUTH.email=email;
+        AUTH.token=o.j.token;AUTH.name=o.j.name||email;AUTH.email=email;AUTH.role=o.j.role||'lawyer';AUTH.courses=o.j.courses||[];
         try{localStorage.setItem('tr_token',AUTH.token);localStorage.setItem('tr_name',AUTH.name);localStorage.setItem('tr_email',email);}catch(e){}
         onSignedIn();
       }).catch(function(){el('authBtn').disabled=false;setAuthErr('Network error — please try again.');});
@@ -675,8 +679,9 @@ Your job is not to finish the material — it is to produce a competent learner.
     var t=null;try{t=localStorage.getItem('tr_token');}catch(e){}
     if(t){
       AUTH.token=t;try{AUTH.name=localStorage.getItem('tr_name')||'';AUTH.email=localStorage.getItem('tr_email')||'';}catch(e){}
-      fetch('/api/trainer-progress?token='+encodeURIComponent(t)).then(function(r){
-        if(r.ok){r.json().then(function(j){if(j&&j.progress)AUTH.progress=j.progress;onSignedIn();});}
+      // Resume: /api/me validates the token and returns role + assigned courses.
+      fetch('/api/me?token='+encodeURIComponent(t)).then(function(r){
+        if(r.ok){r.json().then(function(j){ if(j&&j.email){AUTH.email=j.email;AUTH.name=j.name||AUTH.name;AUTH.role=j.role||'lawyer';AUTH.courses=j.courses||[];onSignedIn();} else {logout();} });}
         else{logout();}
       }).catch(function(){onSignedIn();});
     } else { showLogin();authMode('login'); }
@@ -685,6 +690,7 @@ Your job is not to finish the material — it is to produce a competent learner.
   // ─── Start ───────────────────────────────────────────────────────────
   function resumeFor(L){ var r=L&&AUTH.progress&&AUTH.progress[((L.courseId||'general')+'::'+L.id)]; return (r&&r.resume&&r.resume.history&&r.resume.history.length)?r.resume:null; }
   function startSession(){
+    if(!courseAccessible(S.selected)){ toast('This course hasn’t been assigned to you yet — ask your administrator.'); el('startBtn').disabled=false;el('startBtn').textContent='Begin session'; return; }
     el('startBtn').disabled=true;el('startBtn').textContent='Connecting…';
     S.ended=false;S.finished=false;S.busy=false;S.talking=false;S.paused=false;
     var saved=resumeFor(S.selected);

@@ -1,5 +1,6 @@
 {
   "routes": [
+    { "route": "/", "rewrite": "/portal.html" },
     { "route": "/aviation", "rewrite": "/aviation.html" },
     { "route": "/portal", "rewrite": "/portal.html" }
   ],
