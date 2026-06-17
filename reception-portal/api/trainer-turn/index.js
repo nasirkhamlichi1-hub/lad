@@ -167,7 +167,7 @@ function systemFor(lesson, opening, learner, mode) {
     'The "slide" supports THIS turn (dual coding): pick the "type" that fits — definition (a key rule), scenario (a client situation you are posing), keyterm (one term + meaning), comparison (two things contrasted), recap (consolidation), quiz (a question on screen), or concept (default). Title + 2-4 very short points drawn ONLY from the approved materials (keywords/figures, not sentences).',
     'Add an objective to "covered" only once the learner has DEMONSTRATED understanding of it (explained or applied it) — never merely because you explained it.',
     'FINISH THE WHOLE SECTION BEFORE COMPLETING. There are ' + total + ' objectives and you MUST take the learner through EVERY one (so "covered" reaches all ' + total + ') before the section can end. Keep "complete": false for the entire session while ANY objective is not yet covered — never mark complete early, never skip objectives, and never stop in the middle. Only after all ' + total + ' objectives are covered, run a brief applied assessment, then a short consolidation.',
-    'SECTION HANDOFF: the turn on which you set "complete": true MUST, in "say", clearly tell the learner they have now COMPLETED this section, congratulate them specifically, give brief forward-looking feedback, and tell them they can move on to the next section/part. Set "complete": true ONLY on that closing turn.'].filter(x => x !== null).join('\n');
+    'SECTION HANDOFF: the turn on which you set "complete": true MUST, in "say", clearly tell the learner they have now COMPLETED this section, congratulate them specifically, give brief forward-looking feedback, and tell them they can move on to the next section/part. This closing turn must be a STATEMENT — do NOT ask a question on it and do NOT end with a question mark (the learner is not expected to answer after it). If you still want to ask an assessment question, keep "complete": false and wait for their answer first. Set "complete": true ONLY on that final wrap-up turn.'].filter(x => x !== null).join('\n');
 }
 
 const SLIDE_TYPES = ['concept', 'definition', 'scenario', 'keyterm', 'comparison', 'recap', 'quiz'];
@@ -184,10 +184,13 @@ function parseReply(text, total) {
   if (!obj || typeof obj.say !== 'string') return { say: (text || '').trim() || 'Let\'s continue.', covered: [], complete: false, slide: null };
   const covered = Array.isArray(obj.covered)
     ? obj.covered.map(n => parseInt(n, 10)).filter(n => n >= 1 && n <= total).filter((v, i, a) => a.indexOf(v) === i) : [];
-  // Safety net: never let the section be marked complete until EVERY objective
-  // is covered, even if the model says so early.
-  const complete = obj.complete === true && (total === 0 || covered.length >= total);
-  return { say: String(obj.say).trim(), covered, complete, slide: cleanSlide(obj.slide) };
+  const say = String(obj.say).trim();
+  // Safety net: never end the section until EVERY objective is covered, and never
+  // end on a turn that is still asking the learner a question (the certificate
+  // would cut them off mid-answer). The closing turn must be a wrap-up statement.
+  let complete = obj.complete === true && (total === 0 || covered.length >= total);
+  if (complete && /\?\s*["'’)\]]*$/.test(say)) complete = false;
+  return { say, covered, complete, slide: cleanSlide(obj.slide) };
 }
 
 function fallbackTurn(lesson, history) {
