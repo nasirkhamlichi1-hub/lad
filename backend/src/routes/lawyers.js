@@ -38,6 +38,41 @@ function fullAttendance(lawyer) {
   return bookings.concat(cpdAttendance(lawyer));
 }
 
+// Flatten a lawyer DB record into the view-model the portals read
+// (flat fields + bookings), with friendly names the UI expects.
+function lawyerView(p, bookings) {
+  const first = p.first_name || '';
+  const last = p.last_name || '';
+  const name = (first + ' ' + last).trim() || p.id;
+  const status = (p.status || 'active').toLowerCase();
+  return {
+    id: p.id,
+    firstName: first,
+    lastName: last,
+    fullName: name,
+    name,
+    email: p.email || '',
+    phone: p.phone || '',
+    points: Number(p.lifetime_points) || 0,
+    lifetime_points: Number(p.lifetime_points) || 0,
+    credits: Number(p.credit_balance) || 0,
+    credit_balance: Number(p.credit_balance) || 0,
+    practicing: status !== 'inactive' && status !== 'resigned' && status !== 'non-practising',
+    status,
+    role: p.role || '',
+    job_title: p.role || '',
+    firmId: p.firm_id || '',
+    firmName: p.firm_name || '',
+    firm_name: p.firm_name || '',
+    specialisms: p.practice_areas || '',
+    practice_areas: p.practice_areas || '',
+    barNo: p.unified_id || '',
+    complianceYear: new Date().getUTCFullYear(),
+    bookings: bookings || [],
+    profile: p, // raw record for any consumer that wants column names
+  };
+}
+
 // GET /api/v1/lawyers/me — current lawyer's full profile
 router.get('/me', requireAuth, (req, res) => {
   if (req.user.user_type !== 'lawyer') {
@@ -45,8 +80,7 @@ router.get('/me', requireAuth, (req, res) => {
   }
   const profile = store.getLawyerById(req.user.sub);
   if (!profile) return res.status(404).json({ error: 'Lawyer record not found' });
-  const bookings = fullAttendance(profile);
-  res.json({ profile, bookings });
+  res.json(lawyerView(profile, fullAttendance(profile)));
 });
 
 // GET /api/v1/lawyers/:id — staff lookup (LAD admin or own firm CO)
@@ -62,8 +96,7 @@ router.get('/:id', requireAuth, (req, res) => {
     (u.user_type === 'lawyer' && u.sub === lawyer.id);
   if (!allowed) return res.status(403).json({ error: 'Forbidden' });
 
-  const bookings = fullAttendance(lawyer);
-  res.json({ profile: lawyer, bookings });
+  res.json(lawyerView(lawyer, fullAttendance(lawyer)));
 });
 
 module.exports = router;
