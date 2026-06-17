@@ -18,13 +18,14 @@
 const axios = require('axios');
 const config = require('../config');
 const log = require('../logger');
+const aimodel = require('./aimodel');
 const { SYSTEM_PROMPT, buildLessonContext } = require('./trainerPrompt');
 
 const A = config.anthropic;
 const B = config.trainerBrain;
 
 function isConfigured() {
-  return !!A.apiKey;
+  return aimodel.configured() || !!A.apiKey;
 }
 
 // Render the current camera perception as a short note for the model.
@@ -137,11 +138,26 @@ async function nextTurn({ lesson, history, perception, resume }) {
     return { ...fallbackTurn({ lesson, history, perception }), engine: 'fallback' };
   }
 
+  const system = systemFor(lesson, resume);
+  const messages = toMessages(history, perception);
+
+  // ─── Preferred: AiModel ───────────────────────────────────────────
+  if (aimodel.configured()) {
+    try {
+      const text = await aimodel.chat({ system, messages, maxTokens: B.maxTokens, temperature: 0.5 });
+      return { ...parseReply(text, total), engine: 'aimodel' };
+    } catch (e) {
+      log.error('trainer_brain_aimodel_failed', { error: e.message, detail: e.detail });
+      if (!A.apiKey) return { ...fallbackTurn({ lesson, history, perception }), engine: 'fallback', degraded: true };
+      // else fall through to Claude
+    }
+  }
+
   const body = {
     model: B.model,
     max_tokens: B.maxTokens,
-    system: systemFor(lesson, resume),
-    messages: toMessages(history, perception),
+    system,
+    messages,
   };
 
   const r = await axios.post(`${A.baseUrl || 'https://api.anthropic.com'}/v1/messages`, body, {
