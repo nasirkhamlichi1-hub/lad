@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>CLPD Platform — Legal Affairs Department, Government of Dubai</title>
+<meta name="description" content="The unified Continuing Legal Professional Development platform for the Dubai Legal Affairs Department — lawyers, LAD staff, oversight & accreditation, and administration."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{
+  --green:#006B3F;--green2:#008549;--green-d:#004d2e;--green-l:#00a85e;--green-bg:#eaf6ef;--green-border:#bfe0cd;
+  --gold:#C9913A;--gold2:#dba84e;--gold-l:#f0cc88;--gold-bg:#fdf6e8;
+  --sky:#0e6ba8;--sky2:#1488cc;--sky-bg:#eaf4fb;
+  --purple:#6b4ea8;--purple-bg:#f1ecf9;
+  --ink:#0a0e14;--navy:#1c1f2e;--navy2:#12141e;
+  --slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;--line:#e8ecf1;--line2:#d8dfe7;--amber:#92540a;
+  --paper:#f8fafb;--paper2:#f1f4f7;--white:#fff;--red:#c0392b;--red-bg:#fdeae8;--red-border:#f3c9c2;
+  --serif:'Instrument Serif',Georgia,serif;--sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:12px;--r-lg:18px;--r-xl:24px;
+  --sh:0 2px 4px rgba(10,14,20,.06),0 8px 24px rgba(10,14,20,.06);
+  --sh-md:0 4px 8px rgba(10,14,20,.08),0 16px 40px rgba(10,14,20,.08);
+}
+html{scroll-behavior:smooth}
+html,body{color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;background:var(--paper)}
+a{color:var(--green2);text-decoration:none}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+.muted{color:var(--slate3)}
+
+/* Header */
+.top{background:rgba(255,255,255,.86);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.top-in{display:flex;align-items:center;gap:13px;height:64px;max-width:1200px;margin:0 auto;padding:0 24px}
+.emblem{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:10px;display:grid;place-items:center;flex-shrink:0}
+.emblem svg{width:20px;height:24px}
+.brand-t{font-family:var(--serif);font-size:18px;line-height:1.05}
+.brand-s{font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:2px}
+.spacer{flex:1}
+.whoami{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--slate)}
+.role-badge{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:4px 9px;border-radius:999px;background:var(--green-bg);color:var(--green-d);border:1px solid var(--green-border)}
+.ghost-link{font-size:12.5px;color:var(--slate2);font-weight:500;cursor:pointer}.ghost-link:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600;padding:12px 20px;border-radius:12px;border:1px solid transparent;cursor:pointer;transition:transform .12s,box-shadow .12s,background .15s}
+.btn-pri{background:linear-gradient(135deg,var(--green2),var(--green));color:#fff;box-shadow:0 6px 18px rgba(0,107,63,.25)}
+.btn-pri:hover{transform:translateY(-1px);color:#fff}
+.btn-pri:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-block{width:100%}
+.btn-soft{background:#f3f5f7;color:var(--slate);border:1px solid var(--line2);font-weight:600}
+.btn-soft:hover{background:#e9edf1}
+
+/* Login */
+#login{max-width:420px;margin:7vh auto;padding:0 24px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:20px;box-shadow:0 1px 2px rgba(10,14,20,.04),0 12px 32px rgba(10,14,20,.07)}
+.card-b{padding:24px}
+.eyebrow{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);text-align:center;margin-bottom:12px}
+#login h1{font-family:var(--serif);font-size:clamp(28px,5vw,36px);font-weight:400;text-align:center;line-height:1.05}
+#login .lede{color:var(--slate2);text-align:center;margin:10px auto 22px;max-width:34ch;line-height:1.55}
+label{display:block;font-size:12px;font-weight:650;color:var(--slate);margin:12px 0 5px}
+input{width:100%;padding:11px 13px;border:1.5px solid var(--line2);border-radius:10px;font-size:14px;font-family:var(--sans)}
+input:focus{outline:none;border-color:var(--green2)}
+.err{color:var(--red);font-size:13px;margin-top:10px;display:none}
+.note{font-size:12.5px;color:var(--slate2);text-align:center;margin-top:14px}
+
+/* Home */
+#home{display:none;padding-bottom:70px}
+.hero{background:linear-gradient(160deg,#0d1f17,#0a0e14 64%);color:#fff;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(800px 320px at 82% -20%,rgba(0,168,94,.22),transparent 70%)}
+.hero-in{position:relative;max-width:1200px;margin:0 auto;padding:38px 24px 32px}
+.hero .eyebrow{text-align:left;color:var(--gold-l)}
+.hero h1{font-family:var(--serif);font-size:clamp(28px,4.5vw,40px);font-weight:400;line-height:1.05}
+.hero p{color:rgba(255,255,255,.74);margin-top:8px;font-size:15px}
+.section{padding:34px 0 0}
+.sec-h{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.sec-h h2{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.sec-h .line{flex:1;height:1px;background:var(--line)}
+.sec-h .pill{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 9px;border-radius:999px;background:var(--paper2);color:var(--slate2);border:1px solid var(--line)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.tile{display:flex;flex-direction:column;gap:10px;background:var(--white);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--sh);cursor:pointer;transition:transform .14s,box-shadow .14s,border-color .14s;position:relative;overflow:hidden;text-align:left}
+.tile:hover{transform:translateY(-3px);box-shadow:var(--sh-md);border-color:var(--line2)}
+.tile .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:21px;background:var(--green-bg);color:var(--green-d)}
+.tile.sky .ic{background:var(--sky-bg);color:var(--sky)}.tile.gold .ic{background:var(--gold-bg);color:var(--amber)}.tile.purple .ic{background:var(--purple-bg);color:var(--purple)}.tile.slate .ic{background:var(--paper2);color:var(--slate)}
+.tile-t{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.tile-d{font-size:12.5px;color:var(--slate2);line-height:1.5}
+.tile-go{font-size:12px;font-weight:650;color:var(--green2);margin-top:auto;display:flex;align-items:center;gap:5px}
+.tile.sky .tile-go{color:var(--sky)}.tile.gold .tile-go{color:var(--amber)}.tile.purple .tile-go{color:var(--purple)}
+.ext{font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 6px;border-radius:5px;background:var(--paper2);color:var(--slate3);border:1px solid var(--line)}
+.locked{opacity:.6}.locked:hover{transform:none}
+
+/* Admin console */
+#adminPanel{display:none;margin-top:14px;background:var(--white);border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh);overflow:hidden}
+.ap-h{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.ap-h h3{font-size:15px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--slate3);padding:10px 14px;border-bottom:1px solid var(--line);font-weight:700}
+td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+select,.chk{font-family:var(--sans)}
+select{padding:7px 9px;border:1.5px solid var(--line2);border-radius:8px;font-size:12.5px;background:#fff}
+.courses-cell{display:flex;flex-wrap:wrap;gap:6px}
+.cchip{font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:999px;border:1.5px solid var(--line2);cursor:pointer;color:var(--slate2);background:#fff}
+.cchip.on{background:var(--sky-bg);border-color:#bcdcf0;color:var(--sky)}
+.ap-add{padding:14px 20px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;background:var(--paper)}
+.ap-add input{max-width:240px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:11px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:100}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:560px){.whoami .em{display:none}.ap-table-wrap{overflow:auto}}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="top-in">
+  <div class="emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="#fff" opacity=".95"/></svg></div>
+  <div><div class="brand-t">CLPD Platform</div><div class="brand-s">Dubai Legal Affairs Department</div></div>
+  <div class="spacer"></div>
+  <div class="whoami" id="whoami" style="display:none">
+    <span class="em" id="whoName"></span><span class="role-badge" id="whoRole"></span>
+    <a class="ghost-link" id="signOut">Sign out</a>
+  </div>
+</div></header>
+
+<!-- ── Sign in ── -->
+<section id="login">
+  <div class="eyebrow">Continuing Legal Professional Development</div>
+  <h1>The Legal Affairs Platform</h1>
+  <p class="lede">One home for lawyers, LAD staff, oversight & accreditation, and programme administration.</p>
+  <div class="card"><div class="card-b">
+    <div id="authErr" class="err"></div>
+    <div id="nameRow" style="display:none"><label for="auName">Full name</label><input id="auName" type="text" placeholder="Your name"/></div>
+    <label for="auEmail">Email</label>
+    <input id="auEmail" type="email" autocomplete="username" placeholder="you@firm.ae"/>
+    <label for="auPass">Password</label>
+    <input id="auPass" type="password" autocomplete="current-password" placeholder="Password"/>
+    <button id="authBtn" class="btn btn-pri btn-block" style="margin-top:16px">Sign in</button>
+    <p class="note"><span id="authToggleText">New here?</span> <a href="#" id="authToggle" style="font-weight:650">Create an account</a></p>
+  </div></div>
+</section>
+
+<!-- ── Home ── -->
+<main id="home">
+  <div class="hero"><div class="hero-in">
+    <div class="eyebrow">Welcome back</div>
+    <h1 id="welcomeName">—</h1>
+    <p id="welcomeSub">Your workspace</p>
+  </div></div>
+  <div class="wrap" id="workspaces"></div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var el=function(i){return document.getElementById(i);};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function toast(m){var t=el('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},2600);}
+
+  // The existing CLPD platform (lawyer / firm / oversight / admin portals) lives on
+  // its own deployment for now; edit CLPD_BASE to point at its canonical URL.
+  var CLPD_BASE='https://icy-mud-07d00dc03.7.azurestaticapps.net/';
+  // Courses an admin can assign (extend as paid courses are added).
+  var ASSIGNABLE=[{id:'aviation',name:'Aviation Law'}];
+
+  var AUTH={token:null,email:'',name:'',role:'lawyer',courses:[],mode:'login'};
+
+  // ── Role-based workspaces (logical order) ─────────────────────────────
+  function tilesFor(role){
+    var av=hasCourse('aviation');
+    var L={ // reusable tiles
+      trainer:{ic:'🎓',cls:'',t:'AI Trainer',d:'A live, photoreal 1-to-1 trainer that teaches you the material and tracks your CPD.',href:'/ai-trainer-live.html',go:'Start training'},
+      hub:{ic:'🛎️',cls:'gold',t:'Service Ambassador Hub',d:'The front-desk knowledge hub: guide visitors, services, charter and practice.',href:'/',go:'Open hub'},
+      academy:{ic:'📚',cls:'',t:'Staff Academy',d:'Structured staff learning modules with quizzes and certificates.',href:'/academy/',go:'Open academy'},
+      aviation:{ic:'✈️',cls:'sky',t:'Aviation Law',d:'Legislation, Q&A with Maryam, and the interactive aviation training.',href:'/aviation',go:'Open course',locked:!av,badge:av?'Assigned':'Not assigned'},
+      cl_dash:{ic:'📈',cls:'',t:'My CLPD dashboard',d:'Your compliance progress toward the 16-point CLPD cycle.',href:CLPD_BASE+'lawyer-portal-v2.html',go:'Open',ext:true},
+      cl_courses:{ic:'🗂️',cls:'gold',t:'Browse & book courses',d:'The accredited CLPD course catalogue and your bookings.',href:CLPD_BASE+'lawyer-portal-v2.html',go:'Browse',ext:true},
+      cl_skills:{ic:'🧭',cls:'purple',t:'My skills',d:'Your personal skill graph from completed courses.',href:CLPD_BASE+'lawyer-skills.html',go:'View skills',ext:true},
+      ov_intel:{ic:'🛰️',cls:'purple',t:'Intelligence dashboard',d:'City-wide view of the profession — firms, lawyers and cohorts.',href:CLPD_BASE+'lad-intelligence-v4.html',go:'Open dashboard',ext:true},
+      ov_accred:{ic:'✅',cls:'',t:'Accreditation review',d:'Review and sign off provider and course accreditation (A1/A2).',href:CLPD_BASE+'lad-accreditation-review.html',go:'Review',ext:true},
+      ov_heat:{ic:'🔥',cls:'gold',t:'Capability heatmap',d:'Profession-wide capability by domain and topic.',href:CLPD_BASE+'lad-capability-heatmap.html',go:'Open heatmap',ext:true},
+      ad_users:{ic:'👥',cls:'',t:'Manage users & roles',d:'Add people, set their role, and assign courses like Aviation.',action:'admin',go:'Open console'},
+      ad_analytics:{ic:'📊',cls:'sky',t:'Training analytics',d:'Live sessions, engagement and completion across all learners.',href:'/lad-trainer-dashboard.html',go:'Open dashboard'},
+      ad_builder:{ic:'🛠️',cls:'gold',t:'Course builder',d:'Auto-build a training course from an uploaded deck or document.',href:'/lad-trainer-builder.html',go:'Open builder'},
+      ad_ops:{ic:'⚙️',cls:'purple',t:'LAD Admin operations',d:'Bookings, purchases, schedules, website CMS and support.',href:CLPD_BASE+'lad-admin.html',go:'Open',ext:true}
+    };
+    var groups=[];
+    if(role==='lawyer'){
+      groups.push({label:'Your CLPD',pill:'Lawyer',tiles:[L.cl_dash,L.trainer,L.cl_courses,L.cl_skills]});
+    } else if(role==='staff'){
+      groups.push({label:'Your training',pill:'LAD Staff',tiles:[L.trainer,L.hub,L.academy]});
+    } else if(role==='oversight'){
+      groups.push({label:'Oversight & accreditation',pill:'LAD Oversight',tiles:[L.ov_intel,L.ov_accred,L.ov_heat]});
+    } else if(role==='admin'){
+      groups.push({label:'Administration',pill:'Admin',tiles:[L.ad_users,L.ad_analytics,L.ad_builder,L.ad_ops]});
+      groups.push({label:'Lawyer · CLPD',pill:'',tiles:[L.cl_dash,L.cl_courses,L.cl_skills]});
+      groups.push({label:'LAD Staff training',pill:'',tiles:[L.trainer,L.hub,L.academy]});
+      groups.push({label:'LAD Oversight & accreditation',pill:'',tiles:[L.ov_intel,L.ov_accred,L.ov_heat]});
+    }
+    // Assigned courses available to everyone who has them.
+    if(av || role==='admin') groups.push({label:'Courses',pill:'Assigned',tiles:[L.aviation]});
+    return groups;
+  }
+  function hasCourse(id){ return AUTH.role==='admin' || (AUTH.courses||[]).indexOf(id)>=0; }
+
+  function renderHome(){
+    el('login').style.display='none';el('home').style.display='block';
+    el('whoami').style.display='flex';
+    el('whoName').textContent=AUTH.name||AUTH.email;
+    el('whoRole').textContent=roleLabel(AUTH.role);
+    el('welcomeName').textContent='Welcome, '+(String(AUTH.name||AUTH.email).split(' ')[0]||'there')+'.';
+    el('welcomeSub').textContent=subFor(AUTH.role);
+    var html='';
+    tilesFor(AUTH.role).forEach(function(g){
+      html+='<div class="section"><div class="sec-h"><h2>'+esc(g.label)+'</h2>'+(g.pill?'<span class="pill">'+esc(g.pill)+'</span>':'')+'<span class="line"></span></div><div class="tiles">';
+      g.tiles.forEach(function(t){ html+=tileHtml(t); });
+      html+='</div></div>';
+    });
+    if(AUTH.role==='admin') html+='<div class="section" id="adminSection"><div class="sec-h"><h2>User & course administration</h2><span class="line"></span></div><div id="adminMount"></div></div>';
+    el('workspaces').innerHTML=html;
+    bindTiles();
+    if(AUTH.role==='admin') mountAdmin();
+  }
+  function tileHtml(t){
+    var cls='tile '+(t.cls||'')+(t.locked?' locked':'');
+    var badge=t.badge?'<span class="ext" style="margin-left:auto">'+esc(t.badge)+'</span>':(t.ext?'<span class="ext" style="margin-left:auto">External</span>':'');
+    return '<a class="'+cls+'" data-href="'+(t.href?esc(t.href):'')+'" data-action="'+(t.action||'')+'" data-ext="'+(t.ext?1:'')+'">'+
+      '<div class="ic">'+t.ic+'</div>'+
+      '<div class="tile-t">'+esc(t.t)+badge+'</div>'+
+      '<div class="tile-d">'+esc(t.d)+'</div>'+
+      '<div class="tile-go">'+esc(t.go||'Open')+' →</div></a>';
+  }
+  function bindTiles(){
+    Array.prototype.forEach.call(document.querySelectorAll('.tile'),function(a){
+      a.onclick=function(e){
+        e.preventDefault();
+        if(a.classList.contains('locked')){ toast('This course hasn’t been assigned to you yet.'); return; }
+        var act=a.getAttribute('data-action'), href=a.getAttribute('data-href');
+        if(act==='admin'){ el('adminSection') && el('adminSection').scrollIntoView({behavior:'smooth'}); return; }
+        if(!href) return;
+        if(a.getAttribute('data-ext')) window.open(href,'_blank'); else location.href=href;
+      };
+    });
+  }
+  function roleLabel(r){return {lawyer:'Lawyer · CLPD',staff:'LAD Staff',oversight:'LAD Oversight',admin:'Administrator'}[r]||r;}
+  function subFor(r){return {lawyer:'Track your CPD, train, and manage your accreditation.',staff:'Your LAD staff training and the service hub.',oversight:'The profession at a glance — oversight and accreditation.',admin:'Run the programme: people, courses and analytics.'}[r]||'Your workspace';}
+
+  // ── Admin console ─────────────────────────────────────────────────────
+  function mountAdmin(){
+    el('adminMount').innerHTML='<div id="adminPanel" style="display:block">'+
+      '<div class="ap-h"><h3>People</h3><span class="muted" id="adminCount" style="font-size:12px"></span></div>'+
+      '<div class="ap-table-wrap"><table id="userTable"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Courses</th><th>Status</th></tr></thead><tbody><tr><td colspan="5" class="muted" style="padding:18px">Loading…</td></tr></tbody></table></div>'+
+      '<div class="ap-add"><div><label>Enrol / update by email</label><input id="apEmail" type="email" placeholder="person@firm.ae"/></div>'+
+      '<select id="apRole"><option value="lawyer">Lawyer · CLPD</option><option value="staff">LAD Staff</option><option value="oversight">LAD Oversight</option><option value="admin">Admin</option></select>'+
+      '<button class="btn btn-soft" id="apAdd">Add / update</button></div></div>';
+    el('apAdd').onclick=function(){
+      var email=(el('apEmail').value||'').trim().toLowerCase(), role=el('apRole').value;
+      if(!email){toast('Enter an email.');return;}
+      saveUser({email:email,role:role,active:true},function(){ el('apEmail').value=''; loadUsers(); toast('Saved '+email); });
+    };
+    loadUsers();
+  }
+  function authQ(){ return 'token='+encodeURIComponent(AUTH.token); }
+  function loadUsers(){
+    fetch('/api/user-admin?'+authQ()).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      if(!j){return;}
+      var tb=el('userTable').querySelector('tbody');
+      el('adminCount').textContent=(j.users||[]).length+' people';
+      tb.innerHTML=(j.users||[]).map(function(u){return userRow(u);}).join('')||'<tr><td colspan="5" class="muted" style="padding:18px">No one enrolled yet.</td></tr>';
+      bindRows();
+    }).catch(function(){});
+  }
+  function userRow(u){
+    var roleSel='<select data-email="'+esc(u.email)+'" class="roleSel"'+(u.isSuper?' disabled':'')+'>'+
+      ['lawyer','staff','oversight','admin'].map(function(r){return '<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+roleLabel(r)+'</option>';}).join('')+'</select>';
+    var courses=ASSIGNABLE.map(function(c){var on=(u.courses||[]).indexOf(c.id)>=0;return '<span class="cchip'+(on?' on':'')+'" data-email="'+esc(u.email)+'" data-course="'+c.id+'">'+esc(c.name)+'</span>';}).join('');
+    var status=u.isSuper?'<span class="role-badge">Super</span>':(u.active?'<span class="muted">Active</span>':'<span style="color:var(--red)">Disabled</span>');
+    return '<tr><td><b>'+esc(u.name||'—')+'</b></td><td class="muted">'+esc(u.email)+'</td><td>'+roleSel+'</td><td><div class="courses-cell">'+courses+'</div></td><td>'+status+'</td></tr>';
+  }
+  function bindRows(){
+    Array.prototype.forEach.call(document.querySelectorAll('.roleSel'),function(s){
+      s.onchange=function(){ saveUser({email:s.getAttribute('data-email'),role:s.value},function(){toast('Role updated');}); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.cchip'),function(ch){
+      ch.onclick=function(){
+        var email=ch.getAttribute('data-email'),course=ch.getAttribute('data-course');
+        var row=ch.closest('tr');var on=[];Array.prototype.forEach.call(row.querySelectorAll('.cchip'),function(c){
+          var willOn=(c===ch)?!c.classList.contains('on'):c.classList.contains('on'); if(willOn)on.push(c.getAttribute('data-course'));});
+        ch.classList.toggle('on');
+        saveUser({email:email,courses:on},function(){toast(ch.classList.contains('on')?'Assigned':'Unassigned');});
+      };
+    });
+  }
+  function saveUser(patch,done){
+    patch.token=AUTH.token;
+    fetch('/api/user-admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(patch)})
+      .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+      .then(function(o){ if(o.ok){done&&done(o.j);} else {toast((o.j&&o.j.error)||'Could not save.');} })
+      .catch(function(){toast('Network error.');});
+  }
+
+  // ── Auth ──────────────────────────────────────────────────────────────
+  function setErr(m){var e=el('authErr');if(m){e.textContent=m;e.style.display='block';}else e.style.display='none';}
+  function authMode(m){AUTH.mode=m;var reg=m==='register';
+    el('nameRow').style.display=reg?'':'none';
+    el('authBtn').textContent=reg?'Create account':'Sign in';
+    el('authToggleText').textContent=reg?'Already have an account?':'New here?';
+    el('authToggle').textContent=reg?'Sign in':'Create an account';
+    setErr('');
+  }
+  el('authToggle').onclick=function(e){e.preventDefault();authMode(AUTH.mode==='login'?'register':'login');};
+  el('authBtn').onclick=doAuth;
+  el('auPass').addEventListener('keydown',function(e){if(e.key==='Enter')doAuth();});
+  el('signOut').onclick=function(){try{localStorage.removeItem('tr_token');}catch(e){}AUTH.token=null;location.reload();};
+
+  function applyAuth(j){
+    AUTH.token=j.token;AUTH.email=j.email;AUTH.name=j.name||j.email;AUTH.role=j.role||(j.super?'admin':'lawyer');AUTH.courses=j.courses||[];
+    try{localStorage.setItem('tr_token',AUTH.token);localStorage.setItem('tr_name',AUTH.name);localStorage.setItem('tr_email',AUTH.email);}catch(e){}
+    renderHome();
+  }
+  function doAuth(){
+    var email=(el('auEmail').value||'').trim().toLowerCase(),pass=el('auPass').value||'';
+    if(!email||!pass){setErr('Enter your email and password.');return;}
+    el('authBtn').disabled=true;setErr('');
+    var reg=AUTH.mode==='register';
+    var url=reg?'/api/register':'/api/login';
+    var body=reg?{name:(el('auName').value||'').trim(),email:email,password:pass}:{email:email,password:pass};
+    fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+      .then(function(o){ el('authBtn').disabled=false;
+        if(!o.ok||!o.j.token){setErr((o.j&&o.j.error)||'Could not sign in.');return;}
+        applyAuth(o.j);
+      }).catch(function(){el('authBtn').disabled=false;setErr('Network error — please try again.');});
+  }
+
+  // Resume an existing session (shared token with the AI trainer).
+  (function boot(){
+    var t=null;try{t=localStorage.getItem('tr_token');}catch(e){}
+    if(!t){authMode('login');return;}
+    AUTH.token=t;
+    fetch('/api/me?token='+encodeURIComponent(t)).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      if(j&&j.email){ AUTH.email=j.email;AUTH.name=j.name||j.email;AUTH.role=j.role||'lawyer';AUTH.courses=j.courses||[];renderHome(); }
+      else { try{localStorage.removeItem('tr_token');}catch(e){} authMode('login'); }
+    }).catch(function(){authMode('login');});
+  })();
+})();
+</script>
+</body>
+</html>

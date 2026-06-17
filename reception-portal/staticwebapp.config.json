@@ -1,6 +1,7 @@
 {
   "routes": [
-    { "route": "/aviation", "rewrite": "/aviation.html" }
+    { "route": "/aviation", "rewrite": "/aviation.html" },
+    { "route": "/portal", "rewrite": "/portal.html" }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",

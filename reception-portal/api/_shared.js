@@ -77,6 +77,21 @@ function superAdmins() {
   return new Set(built.concat(env).map(e => e.toLowerCase()));
 }
 function isSuper(email) { return !!email && superAdmins().has(String(email).toLowerCase()); }
+
+// ── Unified-portal roles & per-user course assignments ──────────────────
+// Roles: lawyer (CLPD), staff (LAD staff training), oversight (LAD oversight &
+// accreditation), admin (programme admin). Super-admins are always 'admin'.
+const ROLES = ['lawyer', 'staff', 'oversight', 'admin'];
+function userRole(email, user) {
+  if (isSuper(email)) return 'admin';
+  const r = user && user.role;
+  return ROLES.indexOf(r) >= 0 ? r : 'lawyer';
+}
+function userCourses(user) {
+  try { const a = JSON.parse((user && user.courses) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+}
+// Admin = explicit admin role OR super-admin.
+function isAdmin(email, user) { return isSuper(email) || (user && user.role === 'admin'); }
 function isSuperReq(req) {
   const t = (req.headers && (req.headers['x-trainer-token'] || req.headers['X-Trainer-Token'])) ||
             (req.query && req.query.token) || (req.body && req.body.token) || '';
@@ -86,5 +101,6 @@ function isSuperReq(req) {
 module.exports = {
   crypto, client, ensureTable, json, sign, verify, hashPw, checkPw,
   getUser, getConfig, envAllowed, certifiedCount, adminOk, isSuper, isSuperReq, superAdmins,
+  userRole, userCourses, isAdmin, ROLES,
   TABLE, P_PROGRESS, P_USERS, P_CONFIG
 };

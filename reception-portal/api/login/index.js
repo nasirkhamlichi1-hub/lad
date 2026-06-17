@@ -13,7 +13,7 @@ module.exports = async function (context, req) {
   if (S.isSuper(email) && (!user || !user.pass)) {
     if (password.length < 6) return S.json(context, 400, { error: 'Choose a password of at least 6 characters.' });
     try { await c.upsertEntity({ partitionKey: S.P_USERS, rowKey: email, email, name: (user && user.name) || '', pass: S.hashPw(password), active: true, isSuper: true, createdAt: new Date().toISOString() }, 'Merge'); } catch (e) { context.log.error('super bootstrap', e && e.message); }
-    return S.json(context, 200, { ok: true, token: S.sign(email), email, name: (user && user.name) || '', progress: {}, super: true });
+    return S.json(context, 200, { ok: true, token: S.sign(email), email, name: (user && user.name) || '', progress: {}, super: true, role: 'admin', courses: [] });
   }
   const enrolled = (user && user.active !== false) || S.envAllowed(email) || S.isSuper(email);
   if (!enrolled) return S.json(context, 403, { error: 'This email is not enrolled. Ask your training administrator to add you.' });
@@ -23,5 +23,5 @@ module.exports = async function (context, req) {
   if (!good) return S.json(context, 401, { error: 'That password is not correct.' });
   let progress = {}, name = (user && user.name) || '';
   try { const e = await c.getEntity(S.P_PROGRESS, email); progress = JSON.parse(e.progress || '{}'); if (e.name) name = e.name; } catch (_) {}
-  return S.json(context, 200, { ok: true, token: S.sign(email), email, name, progress, super: S.isSuper(email) });
+  return S.json(context, 200, { ok: true, token: S.sign(email), email, name, progress, super: S.isSuper(email), role: S.userRole(email, user), courses: S.userCourses(user) });
 };
