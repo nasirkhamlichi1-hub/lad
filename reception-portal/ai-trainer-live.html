@@ -38,20 +38,23 @@ a{color:var(--green2);text-decoration:none}
 .pill-live{background:var(--green-bg);color:var(--green-d);border-color:var(--green-border)}
 .pill-demo{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border)}
 .ghost-link{font-size:12.5px;color:var(--slate2);font-weight:500}
-.hero{padding:34px 0 8px}
-.eyebrow{font-family:monospace;font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
-h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em;line-height:1.05}
-.lede{font-size:15px;color:var(--slate);max-width:640px;margin-top:12px}
+.hero{padding:clamp(24px,5vw,48px) 0 10px;text-align:center}
+#setup,#login{background:radial-gradient(1100px 380px at 50% -140px,rgba(0,107,63,.06),transparent 70%)}
+.eyebrow{font-family:monospace;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+h1{font-family:var(--serif);font-size:clamp(31px,5.4vw,46px);font-weight:400;letter-spacing:-.015em;line-height:1.04}
+.lede{font-size:clamp(14px,2.1vw,16.5px);color:var(--slate2);max-width:600px;margin:14px auto 0;line-height:1.55}
 .grid{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start;padding:24px 0 60px}
-@media(max-width:880px){.grid{grid-template-columns:1fr}}
-.card{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh);overflow:hidden}
-.card-h{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
-.card-h h3{font-size:13.5px;font-weight:650}
-.card-b{padding:18px}
+@media(max-width:880px){.grid{grid-template-columns:1fr;gap:14px}}
+@media(max-width:560px){.wrap{padding:0 16px}.hero{padding:18px 0 6px}.card-b{padding:16px}.lessons{max-height:none}}
+.card{background:var(--white);border:1px solid var(--line);border-radius:20px;box-shadow:0 1px 2px rgba(10,14,20,.04),0 12px 32px rgba(10,14,20,.07);overflow:hidden}
+.card-h{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+.card-h h3{font-size:13px;font-weight:700;letter-spacing:-.01em}
+.card-b{padding:20px}
+#startBtn{padding:16px;font-size:15px;font-weight:600;border-radius:14px;margin-top:6px}
 .lessons{display:flex;flex-direction:column;gap:10px;max-height:62vh;overflow:auto}
-.lesson{border:1.5px solid var(--line2);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s}
-.lesson:hover{border-color:var(--green-border);background:var(--green-bg)}
-.lesson.sel{border-color:var(--green2);background:var(--green-bg);box-shadow:0 0 0 3px rgba(0,107,63,.08)}
+.lesson{border:1px solid var(--line2);border-radius:14px;padding:15px 16px;cursor:pointer;background:#fff;transition:transform .15s ease,box-shadow .15s ease,border-color .15s,background .15s}
+.lesson:hover{border-color:var(--green-border);background:var(--green-bg);transform:translateY(-1px);box-shadow:0 6px 18px rgba(10,14,20,.07)}
+.lesson.sel{border-color:var(--green2);background:linear-gradient(180deg,var(--green-bg),#fff);box-shadow:0 0 0 3px rgba(0,107,63,.1),0 10px 24px rgba(0,107,63,.08)}
 .lesson-t{font-size:14px;font-weight:650}
 .lesson-s{font-size:12.5px;color:var(--slate2);margin-top:4px}
 .lesson-m{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
@@ -253,10 +256,9 @@ input.key:focus{outline:none;border-color:var(--green2)}
   </section>
   <section id="setup" style="display:none">
     <div class="wrap hero">
-      <div class="eyebrow">Photoreal face (Anam) · Claude brain · Your voice · Free perception</div>
-      <h1>Live 1-2-1 — no backend required.</h1>
-      <p class="lede">This self-contained build runs the real trainer entirely in your browser: the photoreal face
-        streams from Anam, the brain is Claude, and your camera is read locally. Paste your two keys once to begin.</p>
+      <div class="eyebrow">Continuing Legal Professional Development</div>
+      <h1>Your live AI legal trainer.</h1>
+      <p class="lede">A personal, interactive training session that guides you through the material, checks your understanding, and tracks your progress and CPD.</p>
     </div>
     <div class="wrap grid">
       <div class="card">
@@ -266,8 +268,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
       <div class="card">
         <div class="card-h"><h3>Start your session</h3></div>
         <div class="card-b">
-          <p style="font-size:13px;color:var(--slate);line-height:1.55">Uses your <b>camera and microphone</b>.
-            The photoreal face and the AI brain are configured <b>securely on the server</b> — nothing to enter.</p>
+          <p style="font-size:13px;color:var(--slate);line-height:1.55">Uses your <b>camera and microphone</b> so your trainer can guide you and your engagement is scored. Find a quiet spot and allow access when prompted.</p>
           <div class="banner" id="engineNote" style="margin-top:14px"></div>
           <button id="startBtn" class="btn btn-pri btn-block" disabled>Begin session</button>
           <p class="note" id="setupNote">Select a lesson to begin.</p>
@@ -568,8 +569,8 @@ Your job is not to finish the material — it is to produce a competent learner.
     el('startBtn').disabled=!ok;
     el('setupNote').textContent=ok?'Ready when you are.':'Select a lesson to begin.';
     el('enginePill').className='pill pill-live';
-    el('enginePill').textContent='● Photoreal · Claude';
-    el('engineNote').innerHTML='<span>Photoreal face + AI brain are configured on the server — allow camera &amp; mic and begin.</span>';
+    el('enginePill').textContent='● Ready';
+    el('engineNote').innerHTML='<span>Allow camera &amp; microphone access when prompted, then begin.</span>';
   }
 
   function renderLessons(){
@@ -682,7 +683,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     else { S.startedAt=Date.now();S.history=[];S.resuming=false;S.lastCovered=0; }
     el('setup').classList.add('hidden');el('session').style.display='block';
     el('recLabel').textContent='Live · '+S.selected.title;
-    el('brainLabel').textContent='Claude · Anam';
+    el('brainLabel').textContent='';
     startTimeline();
     if(S.resuming)updateProgress({done:S.lastCovered||0,total:(S.selected.objectives||[]).length||0});
     startCamera();
@@ -690,7 +691,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     // before dropping to the animated face.
     function connectFace(attempt){
       return initAnam().catch(function(e){
-        if(attempt<2){ el('caption').innerHTML='<b>Trainer:</b> reconnecting the photoreal face…'; return new Promise(function(res){setTimeout(res,1300);}).then(function(){return connectFace(attempt+1);}); }
+        if(attempt<2){ el('caption').innerHTML='Reconnecting your trainer…'; return new Promise(function(res){setTimeout(res,1300);}).then(function(){return connectFace(attempt+1);}); }
         throw e;
       });
     }
@@ -698,8 +699,8 @@ Your job is not to finish the material — it is to produce a competent learner.
       var msg=(e&&(e.message||e.toString()))||'unknown error';
       if(window.console&&console.error)console.error('[Anam initAnam failed]',e);
       S.face='stylised';showStylised();
-      el('enginePill').className='pill pill-demo';el('enginePill').textContent='Animated · Claude';
-      el('percNote').textContent='Photoreal face unavailable ('+msg+') — using the animated face + browser voice. Brain is still Claude.';
+      el('enginePill').className='pill pill-live';el('enginePill').textContent='● Live';
+      el('percNote').textContent='Your trainer\u2019s video is reconnecting — the session continues.';
       toast('Anam face failed: '+msg);
     }).then(function(){nextTurn();});
   });
@@ -741,7 +742,7 @@ Your job is not to finish the material — it is to produce a competent learner.
       });
   }
   function initAnam(){
-    el('caption').innerHTML='<b>Trainer:</b> connecting the photoreal face…';
+    el('caption').innerHTML='Connecting your trainer…';
     return loadAnamSDK().then(function(mod){
       return mintAnamToken().then(function(tok){
       var client=mod.createClient(tok);
@@ -753,11 +754,11 @@ Your job is not to finish the material — it is to produce a competent learner.
         if(window.console&&console.error)console.error('[Anam CONNECTION_CLOSED]',code,reason);
         if(S.face==='anam'){
           S.face='stylised';S.anam=null;showStylised();
-          el('enginePill').className='pill pill-demo';el('enginePill').textContent='Animated · Claude';
-          el('percNote').textContent='Photoreal stream closed ('+code+') — switched to the animated face + voice so the session continues.';
+          el('enginePill').className='pill pill-live';el('enginePill').textContent='● Live';
+          el('percNote').textContent='Reconnecting your trainer\u2019s video — the session continues.';
         }
       });
-      on('VIDEO_PLAY_STARTED',function(){ el('percNote').textContent='Photoreal face streaming live.'; });
+      on('VIDEO_PLAY_STARTED',function(){ el('percNote').textContent='Your trainer is live.'; });
       return client.streamToVideoElement('anamVideo').then(function(){
         var v=el('anamVideo');v.classList.remove('hidden');el('stylisedFace').classList.add('hidden');
         // Start muted so the face always renders (muted autoplay is always allowed),
@@ -776,7 +777,7 @@ Your job is not to finish the material — it is to produce a competent learner.
           if(p&&p.catch){ p.catch(function(){ v.muted=true; try{v.play&&v.play();}catch(_){} el('unmuteBtn').style.display=''; }); }
         })();
         S.face='anam';
-        el('enginePill').className='pill pill-live';el('enginePill').textContent='● Photoreal · Claude';
+        el('enginePill').className='pill pill-live';el('enginePill').textContent='● Live';
         S.anam={speak:function(t){return client.talk(t);},
           stop:function(){try{client.stopStreaming&&client.stopStreaming();}catch(e){}},
           interrupt:function(){try{(client.interruptPersona||client.stopTalk||client.interrupt||function(){}).call(client);}catch(e){}},
