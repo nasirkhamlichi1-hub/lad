@@ -1,17 +1,18 @@
 // Mint a short-lived Anam session token server-side, so the ANAM_API_KEY never
 // reaches the browser. The browser SDK uses the returned sessionToken to stream
-// the photoreal avatar. Persona defaults to the saved "Liv" persona; override
-// with the ANAM_PERSONA_ID app setting.
+// the photoreal avatar. The persona is pinned to the published "Julia" persona
+// below — its avatar/voice/LLM are configured (and must keep LLM = Disable) in
+// the Anam lab. (Pinned rather than env-overridable so the app always uses it.)
 const S = require('../_shared');
 
-const DEFAULT_PERSONA = '519f0797-bdc5-47da-a752-f2a5c1fc150f';
+const PERSONA = '519f0797-bdc5-47da-a752-f2a5c1fc150f';
 
 module.exports = async function (context, req) {
   if (!S.verify((req.body && req.body.token) || '')) return S.json(context, 401, { error: 'Please sign in to start the trainer.' });
   const apiKey = process.env.ANAM_API_KEY;
   if (!apiKey) return S.json(context, 503, { error: 'AI trainer face not configured (ANAM_API_KEY missing).' });
 
-  const personaId = (req.body && req.body.personaId) || process.env.ANAM_PERSONA_ID || DEFAULT_PERSONA;
+  const personaId = (req.body && req.body.personaId) || PERSONA;
 
   try {
     const r = await fetch('https://api.anam.ai/v1/auth/session-token', {
