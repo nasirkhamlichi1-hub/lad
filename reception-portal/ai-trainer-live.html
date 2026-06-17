@@ -517,7 +517,19 @@ Your job is not to finish the material — it is to produce a competent learner.
     el('authToggle').textContent=reg?'Sign in':'Create an account';
     setAuthErr('');
   }
-  function onSignedIn(){ el('whoami').textContent='👤 '+(AUTH.name||AUTH.email); el('whoami').style.display=''; el('logoutBtn').style.display=''; showSetup(); loadProgress(); }
+  function onSignedIn(){ el('whoami').textContent='👤 '+(AUTH.name||AUTH.email); el('whoami').style.display=''; el('logoutBtn').style.display=''; showSetup(); loadProgress(); loadAiCourses(); }
+  // Merge AI-built courses (admin-created from uploaded decks) into the lesson list.
+  function loadAiCourses(){
+    if(!AUTH.token)return;
+    fetch('/api/trainer-courses?token='+encodeURIComponent(AUTH.token)).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      if(!j||!j.courses||!j.courses.length)return;
+      j.courses.forEach(function(co){(co.lessons||[]).forEach(function(x){
+        if(!x||!x.title)return; if(LESSONS.some(function(L){return L.id===x.id;}))return;
+        LESSONS.push({id:x.id,courseId:x.course_id||co.courseId,mode:x.mode||'lesson',title:x.title,summary:x.summary,duration_min:x.duration_min,cpd_points:x.cpd_points,objectives:x.objectives||[],body:x.body||''});
+      });});
+      renderLessons();
+    }).catch(function(){});
+  }
   function loadProgress(){
     if(!AUTH.token)return;
     fetch('/api/trainer-progress?token='+encodeURIComponent(AUTH.token)).then(function(r){return r.ok?r.json():null;})
