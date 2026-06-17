@@ -166,7 +166,7 @@ function systemFor(lesson, opening, learner, mode) {
     'OUTPUT FORMAT — respond with ONLY a JSON object, no other text, exactly:',
     '{"say": "<the spoken turn you deliver to the learner now>", "covered": [<1-based numbers of objectives the learner has DEMONSTRATED understanding of so far>], "complete": <true|false>, "slide": {"type": "<concept|definition|scenario|keyterm|comparison|recap|quiz>", "title": "<short heading>", "bullets": ["<2-4 very short supporting points>"]}}',
     'There are ' + total + ' objectives. "say" is spoken aloud by a photoreal avatar: run the TEACHING LOOP — actually TEACH one idea (state the rule, why it matters, and a concrete example from the materials) THEN ask one question that checks what you just taught; OR diagnose the learner\'s answer then advance. When introducing any new point you MUST teach it before asking anything — never quiz them on material you have not yet taught, and never ask "what would you like to cover". Spoken style only — no lists, no markdown, no headings. "say" should be 3 to 5 sentences (roughly 55-95 words): enough to genuinely teach a point with an example, then hand back with a question. Substantive, but never a long monologue.',
-    'The "slide" supports THIS turn (dual coding): pick the "type" that fits — definition (a key rule), scenario (a client situation you are posing), keyterm (one term + meaning), comparison (two things contrasted), recap (consolidation), quiz (a question on screen), or concept (default). Title + 2-4 very short points drawn ONLY from the approved materials (keywords/figures, not sentences).',
+    'The "slide" supports THIS turn (dual coding): pick the "type" that fits — definition (a key rule), scenario (a client situation you are posing), keyterm (one term + meaning), comparison (two things contrasted), recap (consolidation), quiz (a question on screen), or concept (default). Title + 2-4 very short points drawn ONLY from the approved materials (keywords/figures, not sentences). SPEED: only include the "slide" field when the on-screen visual should actually CHANGE (a new concept, term, scenario or recap). If it would just repeat the current slide, OMIT the "slide" field entirely — this makes your reply faster and the previous slide stays up.',
     'Add an objective to "covered" only once the learner has DEMONSTRATED understanding of it (explained or applied it) — never merely because you explained it.',
     'FINISH THE WHOLE SECTION BEFORE COMPLETING. There are ' + total + ' objectives and you MUST take the learner through EVERY one (so "covered" reaches all ' + total + ') before the section can end. Keep "complete": false for the entire session while ANY objective is not yet covered — never mark complete early, never skip objectives, and never stop in the middle. Only after all ' + total + ' objectives are covered, run a brief applied assessment, then a short consolidation.',
     'SECTION HANDOFF: the turn on which you set "complete": true MUST, in "say", briefly tell the learner they have completed this section, congratulate them in ONE sentence, and then tell them to press the "Save & exit" button to move on to the next chapter. Keep this closing SHORT — two or three sentences, no long recap, no re-listing the material. This closing turn must be a STATEMENT — do NOT ask a question on it and do NOT end with a question mark. If you still want to ask an assessment question, keep "complete": false and wait for their answer first. Set "complete": true ONLY on that final wrap-up turn.'].filter(x => x !== null).join('\n');
@@ -190,7 +190,7 @@ function parseReply(text, total) {
   // End the section reliably (so it never loops after the summary), but never on a
   // turn that is still asking a question (the certificate would cut the answer off).
   const endsQ = /\?\s*["'’)\]]*$/.test(say);
-  const saysDone = /(completed (this|the) section|finished (this|the) section|that (wraps up|concludes) (this|the) section|move on to (the )?next (section|part|chapter)|on to the next (section|part|chapter)|ready to move (on )?to (the )?next (section|part|chapter))/i.test(say);
+  const saysDone = /(save\s*(?:and|&)?\s*exit|completed (?:this|the) section|finished (?:this|the) section|that (?:wraps up|concludes) (?:this|the) section|move (?:on )?to (?:the )?next (?:section|part|chapter)|on to the next (?:section|part|chapter)|ready to move (?:on )?to (?:the )?next (?:section|part|chapter))/i.test(say);
   let complete = false;
   if (!endsQ) {
     if (obj.complete === true) complete = true;                         // the model says it's done
@@ -234,7 +234,7 @@ module.exports = async function (context, req) {
   const systemText = systemFor(lesson, opening, learner, mode);
   const pacing = pacingNote(b.elapsedMin, b.targetMin);
   const body = {
-    max_tokens: 500,
+    max_tokens: 380,
     system: [{ type: 'text', text: systemText, cache_control: { type: 'ephemeral' } }],
     messages: toMessages(history, perception, opening, mode, pacing)
   };

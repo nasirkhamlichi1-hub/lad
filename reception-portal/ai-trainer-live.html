@@ -943,13 +943,14 @@ Your job is not to finish the material — it is to produce a competent learner.
       S.history.push({role:'trainer',text:r.say});
       updateProgress({done:(r.covered||[]).length,total:(S.selected.objectives||[]).length});
       if(r.slide)renderSlide(r.slide);
-      // On completion, guarantee she tells the learner how to continue, even if the
-      // model forgot to include it.
+      // She's closing if the brain flagged it OR her words clearly hand off; once she
+      // does, end the session after she finishes (don't let her keep talking).
+      var closing=r.complete || /sav(?:e|ing)[\s\S]{0,10}exit|completed (?:this|the) section|move (?:on )?to (?:the )?next (?:section|chapter|part)/i.test(r.say);
       var sayText=r.say;
-      if(r.complete && !/sav(?:e|ing)[\s\S]{0,10}exit/i.test(sayText)){
+      if(closing && !/sav(?:e|ing)[\s\S]{0,10}exit/i.test(sayText)){
         sayText=sayText.replace(/\s*$/,'')+' Press the Save and exit button now to move on to your next chapter.';
       }
-      var doSpeak=function(){ speak(sayText,function(){ if(r.complete){completeSection();} else {promptAnswer();} }); };
+      var doSpeak=function(){ speak(sayText,function(){ if(closing){completeSection();} else {promptAnswer();} }); };
       if(S.paused){ S.pendingSpeak=doSpeak; }   // hold her reply until the learner resumes
       else doSpeak();
     }).catch(function(e){S.busy=false;toast('Trainer error: '+(e.message||e));promptAnswer();});
