@@ -79,6 +79,8 @@ input.key:focus{outline:none;border-color:var(--green2)}
 .cap-inner .you{color:var(--gold);font-weight:700}
 .cap-inner .seg-prev{opacity:.45}
 .cap-inner .seg-cur{opacity:1}
+.unmute{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;border:0;border-radius:99px;padding:14px 24px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.45);animation:unmutePulse 1.8s ease-in-out infinite}
+@keyframes unmutePulse{0%,100%{box-shadow:0 8px 30px rgba(0,0,0,.45)}50%{box-shadow:0 8px 40px rgba(0,133,73,.7)}}
 /* Slide panel — premium branded slide */
 .slide-card{margin-bottom:18px;overflow:visible;border:0;background:transparent;box-shadow:none}
 .slide{position:relative;overflow:hidden;color:#fff;padding:22px 20px 50px;min-height:300px;display:flex;flex-direction:column;border-radius:16px;
@@ -220,6 +222,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
             <ellipse class="mouth" cx="110" cy="170" rx="26" ry="13" fill="#7a2f2f"/>
           </svg>
           <div class="cap"><div class="cap-inner" id="caption">Connecting you to your trainer…</div></div>
+          <button id="unmuteBtn" class="unmute" style="display:none">🔊 Tap to enable the trainer's voice</button>
         </div>
         <div class="stage-bar">
           <span class="rec"><span class="dot"></span> <span id="recLabel">Live session</span></span>
@@ -645,15 +648,16 @@ Your job is not to finish the material — it is to produce a competent learner.
         // then immediately try to unmute for the Anam voice. If the browser blocks
         // audio autoplay, show a one-tap "enable sound" prompt in the caption.
         v.muted=true; try{v.play&&v.play();}catch(e){}
+        // Try to unmute for the Anam voice. If the browser blocks audio autoplay,
+        // show a persistent on-screen button (the caption gets overwritten by her
+        // speech, so we cannot rely on it) AND unmute on the next click anywhere.
+        function soundOn(){ v.muted=false; v.volume=1; try{var pp=v.play();if(pp&&pp.catch)pp.catch(function(){});}catch(e){} el('unmuteBtn').style.display='none'; }
+        el('unmuteBtn').onclick=function(e){ e.stopPropagation(); soundOn(); };
+        document.addEventListener('click',function(){ if(v.muted)soundOn(); });
         (function enableAudio(){
-          v.muted=false;
+          v.muted=false;v.volume=1;
           var p=v.play&&v.play();
-          if(p&&p.catch){ p.catch(function(){
-            v.muted=true; try{v.play&&v.play();}catch(_){}
-            el('caption').innerHTML='<b>🔊 Tap anywhere to enable the trainer’s voice.</b>';
-            var unmute=function(){ v.muted=false; v.play&&v.play(); document.removeEventListener('click',unmute); };
-            document.addEventListener('click',unmute,{once:true});
-          }); }
+          if(p&&p.catch){ p.catch(function(){ v.muted=true; try{v.play&&v.play();}catch(_){} el('unmuteBtn').style.display=''; }); }
         })();
         S.face='anam';
         el('enginePill').className='pill pill-live';el('enginePill').textContent='● Photoreal · Claude';
@@ -818,18 +822,40 @@ Your job is not to finish the material — it is to produce a competent learner.
     if(S.muted){b.textContent='🔇 Muted';b.classList.add('btn-danger');b.classList.remove('btn-ghost');el('micLabel').textContent='Microphone muted';}
     else{b.textContent='🎙 Mute';b.classList.add('btn-ghost');b.classList.remove('btn-danger');}
   }
+  // Language is tuned for a clear English accent. Override with ?lang=en-AU etc.
+  var STT_LANG=(function(){try{var m=location.search.match(/[?&]lang=([\w-]+)/);return m?m[1]:'en-GB';}catch(e){return 'en-GB';}})();
+  var sttBuf='',sttTimer=null;
+  function flushSpeech(){
+    if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}
+    var t=sttBuf.replace(/\s+/g,' ').trim();sttBuf='';
+    if(t&&!S.busy&&!S.muted&&!S.ended)submitReply(t);
+  }
   function startListening(){
     if(S.ended||S.muted||!SR||S.busy||S.listening)return;
     try{
-      S.reco=new SR();S.reco.lang='en-US';S.reco.interimResults=false;S.reco.continuous=true;S.reco.maxAlternatives=1;
+      sttBuf='';
+      S.reco=new SR();S.reco.lang=STT_LANG;S.reco.interimResults=true;S.reco.continuous=true;S.reco.maxAlternatives=3;
       S.reco.onstart=function(){S.listening=true;if(!S.busy&&!S.muted)el('micLabel').textContent='Listening…';};
-      S.reco.onresult=function(ev){var t='';for(var k=ev.resultIndex;k<ev.results.length;k++){if(ev.results[k].isFinal)t+=ev.results[k][0].transcript;}t=t.trim();if(t&&!S.busy&&!S.muted)submitReply(t);};
+      S.reco.onresult=function(ev){
+        var fin='',interim='';
+        for(var k=ev.resultIndex;k<ev.results.length;k++){
+          var r=ev.results[k];
+          if(r.isFinal)fin+=r[0].transcript+' '; else interim+=r[0].transcript+' ';
+        }
+        if(fin)sttBuf+=fin;
+        // Show what we're hearing live, so it's obvious she's catching your words.
+        var live=(sttBuf+' '+interim).replace(/\s+/g,' ').trim();
+        if(live&&!S.busy)showCaption('<span class="you">You:</span> '+esc(live));
+        // Submit only after a short pause — captures the whole sentence, not a fragment.
+        if(sttTimer)clearTimeout(sttTimer);
+        if(sttBuf.trim())sttTimer=setTimeout(flushSpeech,1100);
+      };
       S.reco.onerror=function(){};
-      S.reco.onend=function(){S.listening=false;if(!S.ended&&!S.muted&&!S.busy)setTimeout(startListening,350);};
+      S.reco.onend=function(){S.listening=false;if(sttBuf.trim()){flushSpeech();return;}if(!S.ended&&!S.muted&&!S.busy)setTimeout(startListening,350);};
       S.reco.start();
     }catch(e){}
   }
-  function pauseListening(){S.listening=false;if(S.reco){try{S.reco.onend=null;S.reco.stop();}catch(e){}}}
+  function pauseListening(){S.listening=false;if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}sttBuf='';if(S.reco){try{S.reco.onend=null;S.reco.stop();}catch(e){}}}
   function resumeListening(){ if(!S.muted)startListening(); micUI(); }
   el('micBtn').onclick=function(){ S.muted=!S.muted; if(S.muted){pauseListening();} else {resumeListening();} micUI(); };
   el('sendBtn').onclick=function(){submitReply(el('replyInput').value);};

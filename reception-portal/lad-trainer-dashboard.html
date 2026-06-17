@@ -76,27 +76,29 @@ td{padding:9px 10px;border-bottom:1px solid var(--line)}
 (function(){
   var el=function(i){return document.getElementById(i);};
   var PASS='';
+  function trToken(){try{return localStorage.getItem('tr_token')||'';}catch(e){return '';}}
+  function authQ(){ if(PASS)return 'pass='+encodeURIComponent(PASS); var t=trToken(); return t?('token='+encodeURIComponent(t)):''; }
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function pct(n){return Math.round(n||0);}
   function barColor(p){return p>=70?'var(--green2)':p>=50?'var(--gold)':'var(--red)';}
 
-  el('enterBtn').onclick=load;
-  el('pw').addEventListener('keydown',function(e){if(e.key==='Enter')load();});
-  el('refreshBtn').onclick=load;
+  el('enterBtn').onclick=function(){load(true);};
+  el('pw').addEventListener('keydown',function(e){if(e.key==='Enter')load(true);});
+  el('refreshBtn').onclick=function(){load(false);};
 
-  function load(){
-    var pw=PASS||el('pw').value;
-    if(!pw){el('gateErr').textContent='Enter the admin password.';el('gateErr').style.display='block';return;}
+  function load(fromGate){
+    if(fromGate){var pw=el('pw').value;if(!pw){el('gateErr').textContent='Enter the admin password.';el('gateErr').style.display='block';return;}PASS=pw;}
+    var q=authQ();
+    if(!q){return;}  // no creds yet — wait for the password gate
     el('enterBtn').disabled=true;el('gateErr').style.display='none';
-    fetch('/api/trainer-admin?pass='+encodeURIComponent(pw)).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+    fetch('/api/trainer-admin?'+q).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
       .then(function(o){
         el('enterBtn').disabled=false;
-        if(!o.ok){el('gateErr').textContent=(o.j&&o.j.error)||'Access denied.';el('gateErr').style.display='block';return;}
-        PASS=pw;
-        try{localStorage.setItem('tr_admin_pw',pw);}catch(e){}
+        if(!o.ok){ if(fromGate){el('gateErr').textContent=(o.j&&o.j.error)||'Access denied.';el('gateErr').style.display='block';} return; }
+        if(PASS){try{localStorage.setItem('tr_admin_pw',PASS);}catch(e){}}
         el('gate').style.display='none';el('dash').style.display='';el('refreshBtn').style.display='';
         render(o.j.learners||[]);
-      }).catch(function(){el('enterBtn').disabled=false;el('gateErr').textContent='Network error.';el('gateErr').style.display='block';});
+      }).catch(function(){el('enterBtn').disabled=false;if(fromGate){el('gateErr').textContent='Network error.';el('gateErr').style.display='block';}});
   }
 
   function render(learners){
@@ -143,8 +145,10 @@ td{padding:9px 10px;border-bottom:1px solid var(--line)}
     }).join('')||'<tr><td colspan="6" class="muted">No learners yet.</td></tr>';
   }
 
-  // auto-restore admin password
-  try{var saved=localStorage.getItem('tr_admin_pw');if(saved){PASS=saved;el('pw').value=saved;load();}}catch(e){}
+  // Boot: try the super-admin's trainer token (or a saved admin password) first;
+  // if neither works, the password gate stays for ADMIN_PASSWORD users.
+  try{var saved=localStorage.getItem('tr_admin_pw');if(saved){PASS=saved;el('pw').value=saved;}}catch(e){}
+  load(false);
 })();
 </script>
 </body>

@@ -95,17 +95,21 @@ h1{font-family:var(--serif);font-size:30px;font-weight:400;margin:24px 0 4px}.su
 (function(){
   var el=function(i){return document.getElementById(i);};
   var PASS='';
+  function tok(){try{return localStorage.getItem('tr_token')||'';}catch(e){return '';}}
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function slug(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,50);}
 
   el('enterBtn').onclick=enter;
   el('pw').addEventListener('keydown',function(e){if(e.key==='Enter')enter();});
   function enter(){
-    var pw=el('pw').value;if(!pw){return;}
-    PASS=pw;try{localStorage.setItem('tr_admin_pw',pw);}catch(e){}
+    var pw=el('pw').value;
+    if(!pw && !tok()){return;}
+    if(pw){PASS=pw;try{localStorage.setItem('tr_admin_pw',pw);}catch(e){}}
     el('gate').style.display='none';el('app').style.display='';loadExisting();
   }
   try{var s=localStorage.getItem('tr_admin_pw');if(s){el('pw').value=s;}}catch(e){}
+  // A signed-in super-admin gets straight in via their trainer token.
+  if(tok()){el('gate').style.display='none';el('app').style.display='';loadExisting();}
 
   el('title').addEventListener('input',function(){ if(!el('cid').dataset.touched) el('cid').value=slug(el('title').value); });
   el('cid').addEventListener('input',function(){ el('cid').dataset.touched='1'; });
@@ -141,7 +145,7 @@ h1{font-family:var(--serif);font-size:30px;font-weight:400;margin:24px 0 4px}.su
     if(!title){el('genErr').textContent='Enter a course title.';el('genErr').style.display='block';return;}
     if(src.length<200){el('genErr').textContent='Add more source material (a few paragraphs minimum).';el('genErr').style.display='block';return;}
     var btn=el('genBtn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Designing course…';
-    fetch('/api/course-build',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({adminPass:PASS,title:title,courseId:cid,sourceText:src})})
+    fetch('/api/course-build',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({adminPass:PASS,token:tok(),title:title,courseId:cid,sourceText:src})})
       .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
       .then(function(o){
         btn.disabled=false;btn.innerHTML='✨ Generate course';
@@ -163,7 +167,7 @@ h1{font-family:var(--serif);font-size:30px;font-weight:400;margin:24px 0 4px}.su
 
   el('refreshBtn').onclick=loadExisting;
   function loadExisting(){
-    fetch('/api/trainer-courses?pass='+encodeURIComponent(PASS)).then(function(r){return r.ok?r.json():null;}).then(function(j){
+    fetch('/api/trainer-courses?pass='+encodeURIComponent(PASS)+'&token='+encodeURIComponent(tok())).then(function(r){return r.ok?r.json():null;}).then(function(j){
       var courses=(j&&j.courses)||[];
       el('existing').innerHTML=courses.length?courses.map(function(c){
         return '<div class="row"><div><b>'+esc(c.title||c.courseId)+'</b> <span class="tag">'+(c.lessons||[]).length+' lessons</span><div class="hint">'+esc(c.courseId)+'</div></div>'+
@@ -171,7 +175,7 @@ h1{font-family:var(--serif);font-size:30px;font-weight:400;margin:24px 0 4px}.su
       }).join(''):'<p class="hint" style="margin-top:10px">No AI-built courses yet.</p>';
       Array.prototype.forEach.call(el('existing').querySelectorAll('[data-del]'),function(b){
         b.onclick=function(){ if(!confirm('Delete this course?'))return;
-          fetch('/api/trainer-courses',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({adminPass:PASS,delete:b.getAttribute('data-del')})}).then(loadExisting);
+          fetch('/api/trainer-courses',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({adminPass:PASS,token:tok(),delete:b.getAttribute('data-del')})}).then(loadExisting);
         };
       });
     }).catch(function(){});

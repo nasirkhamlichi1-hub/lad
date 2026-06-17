@@ -65,11 +65,26 @@ function certifiedCount(progress) {
 function adminOk(req) {
   const ADMIN = process.env.ADMIN_PASSWORD || '';
   const pass = req.headers['x-admin-pass'] || (req.query && req.query.pass) || (req.body && req.body.adminPass) || '';
-  return ADMIN && pass === ADMIN;
+  return (ADMIN && pass === ADMIN) || isSuperReq(req);
+}
+
+// Super-admins: full access to everything (trainer + admin dashboard + course
+// builder) via their own signed-in session token. Configurable via the
+// SUPER_ADMINS app setting (comma-separated); a built-in default is included.
+function superAdmins() {
+  const built = ['nasir.khamlichi@legal.dubai.gov.ae'];
+  const env = String(process.env.SUPER_ADMINS || '').toLowerCase().split(/[\s,;]+/).filter(Boolean);
+  return new Set(built.concat(env).map(e => e.toLowerCase()));
+}
+function isSuper(email) { return !!email && superAdmins().has(String(email).toLowerCase()); }
+function isSuperReq(req) {
+  const t = (req.headers && (req.headers['x-trainer-token'] || req.headers['X-Trainer-Token'])) ||
+            (req.query && req.query.token) || (req.body && req.body.token) || '';
+  return isSuper(verify(t));
 }
 
 module.exports = {
   crypto, client, ensureTable, json, sign, verify, hashPw, checkPw,
-  getUser, getConfig, envAllowed, certifiedCount, adminOk,
+  getUser, getConfig, envAllowed, certifiedCount, adminOk, isSuper, isSuperReq, superAdmins,
   TABLE, P_PROGRESS, P_USERS, P_CONFIG
 };
