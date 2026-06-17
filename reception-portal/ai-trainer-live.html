@@ -803,7 +803,6 @@ Your job is not to finish the material — it is to produce a competent learner.
           showCaption('<span class="you">You:</span> '+esc(text));
           scheduleAutoSend();                   // submit shortly after they stop speaking
         });
-        if(S.anam&&S.anam.mute)S.anam.mute(true); // start with Anam's mic closed (push-to-talk)
       });
       });
     });
@@ -942,16 +941,17 @@ Your job is not to finish the material — it is to produce a competent learner.
     interruptTrainer();                       // stop her so you're not talking over each other
     S.talking=true;S.muted=false;S.accept=true;clearAutoSend();
     S.anamLiveText='';S.lastAnamSubmitted='';sttBuf='';
-    if(S.anam&&S.anam.mute)S.anam.mute(false); // open Anam's mic
-    if(!S.anamStt&&SR)ensureReco();            // browser fallback
-    el('micLabel').textContent='Listening — speak now, then press “Send”';
+    // Anam's mic stays live the whole session (reliable on Chrome AND Safari);
+    // we simply start accepting what it hears now. Only fall back to the browser
+    // engine when there's no Anam stream at all.
+    if(!S.anam&&SR)ensureReco();
+    el('micLabel').textContent='Listening — speak now';
     micUI();
   }
   function endTalk(silent){
     if(!S.talking)return;
     S.talking=false;S.accept=false;clearAutoSend();
-    if(S.anam&&S.anam.mute)S.anam.mute(true);  // close Anam's mic so it can't hear her
-    var text=((S.anamStt?S.anamLiveText:sttBuf)||'').replace(/\s+/g,' ').trim();
+    var text=((S.anam?S.anamLiveText:sttBuf)||'').replace(/\s+/g,' ').trim();
     S.anamLiveText='';sttBuf='';
     micUI();
     if(!silent&&text&&text!==S.lastAnamSubmitted){ S.lastAnamSubmitted=text; submitReply(text); }
@@ -1080,7 +1080,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     var typed=(el('replyInput').value||'').trim();
     if(typed){ if(S.talking)endTalk(true); el('replyInput').value=''; submitReply(typed); return; }
     if(S.talking){
-      var spoken=((S.anamStt?S.anamLiveText:sttBuf)||'').replace(/\s+/g,' ').trim();
+      var spoken=((S.anam?S.anamLiveText:sttBuf)||'').replace(/\s+/g,' ').trim();
       if(spoken){ endTalk(false); }                       // submit what was heard
       else { el('micLabel').textContent='Didn’t catch that — keep talking, or type your answer'; }
       return;
