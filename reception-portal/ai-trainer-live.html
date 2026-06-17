@@ -63,17 +63,17 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
 .btn-danger{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
 .btn-ghost{background:var(--white);color:var(--slate);border-color:var(--line2)}
 .btn-block{width:100%}
-/* Big, obvious primary action — pressing it talks to the trainer. */
-.btn-talk{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;font-size:17px;font-weight:700;padding:15px 34px;border-radius:999px;box-shadow:0 6px 22px rgba(0,107,63,.35);letter-spacing:.2px}
-.btn-talk:hover{transform:translateY(-1px)}
-.btn-talk:disabled{opacity:.45;cursor:not-allowed;transform:none}
-.btn-talk.live{background:linear-gradient(135deg,#c0392b,#9b2418);box-shadow:0 6px 22px rgba(192,57,43,.4);animation:talkPulse 1.4s ease-in-out infinite}
-@keyframes talkPulse{0%,100%{box-shadow:0 6px 22px rgba(192,57,43,.4)}50%{box-shadow:0 6px 30px rgba(192,57,43,.75)}}
-/* End session — deliberately small, muted and kept far from Talk so they can't be confused. */
-.btn-end{background:transparent;color:var(--slate2);border:1px solid var(--line2);font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:8px}
-.btn-end:hover{color:var(--red);border-color:var(--red-border);background:var(--red-bg)}
-.btn-save{background:var(--green-bg,#eaf6ef);color:var(--green-d,#004d2e);border:1px solid var(--green-border,#b8d8c5);font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:8px}
-.btn-save:hover{background:var(--green2);color:#fff;border-color:var(--green2)}
+/* Premium, Apple-style action buttons */
+.btn-talk{width:100%;background:linear-gradient(180deg,#0a9159,#067544);color:#fff;font-size:16px;font-weight:600;padding:16px 28px;border-radius:14px;letter-spacing:.2px;border:0;box-shadow:0 1px 1px rgba(0,0,0,.05),0 8px 22px rgba(6,117,68,.26);transition:transform .12s ease,box-shadow .12s ease,background .2s ease}
+.btn-talk:hover{transform:translateY(-1px);box-shadow:0 1px 1px rgba(0,0,0,.05),0 12px 28px rgba(6,117,68,.32)}
+.btn-talk:active{transform:translateY(0)}
+.btn-talk:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-talk.live{background:linear-gradient(180deg,#e84135,#c0231a);box-shadow:0 1px 1px rgba(0,0,0,.05),0 8px 22px rgba(192,35,26,.28)}
+.btn-soft{background:#f3f5f7;color:var(--slate);border:1px solid var(--line2);font-size:13.5px;font-weight:600;padding:11px 18px;border-radius:11px;box-shadow:0 1px 1px rgba(0,0,0,.02);transition:background .15s,border-color .15s,color .15s}
+.btn-soft:hover{background:#e9edf1}
+.btn-soft.danger{color:var(--red)}
+.btn-soft.danger:hover{background:var(--red-bg);border-color:var(--red-border)}
+.actions .btn-soft{flex:1}
 .note{font-size:11px;color:var(--slate3);margin-top:12px;line-height:1.5}
 .banner{display:flex;gap:10px;align-items:flex-start;background:var(--blue-bg);border:1px solid #cfe0f0;border-radius:var(--r);padding:11px 13px;margin:14px 0;font-size:12px;color:var(--slate);line-height:1.5}
 label.fld{display:block;font-size:12px;font-weight:650;color:var(--slate);margin:12px 0 5px}
@@ -90,8 +90,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
 .cap-inner .you{color:var(--gold);font-weight:700}
 .cap-inner .seg-prev{opacity:.45}
 .cap-inner .seg-cur{opacity:1}
-.unmute{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;border:0;border-radius:99px;padding:14px 24px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.45);animation:unmutePulse 1.8s ease-in-out infinite}
-@keyframes unmutePulse{0%,100%{box-shadow:0 8px 30px rgba(0,0,0,.45)}50%{box-shadow:0 8px 40px rgba(0,133,73,.7)}}
+.unmute{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;background:rgba(18,20,24,.74);backdrop-filter:saturate(160%) blur(12px);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:13px 22px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;box-shadow:0 12px 34px rgba(0,0,0,.4)}
 /* Slide panel — premium branded slide */
 .slide-card{margin-bottom:18px;overflow:visible;border:0;background:transparent;box-shadow:none}
 .slide{position:relative;overflow:hidden;color:#fff;padding:22px 20px 50px;min-height:300px;display:flex;flex-direction:column;border-radius:16px;
@@ -138,18 +137,23 @@ input.key:focus{outline:none;border-color:var(--green2)}
 .tl-clock{font-size:12.5px;font-weight:700;color:var(--slate);width:90px;text-align:right;flex:none}
 .tl-clock.over{color:var(--red)}
 @media(max-width:620px){.tl-label{width:64px}.tl-clock{width:74px}}
-/* ── Single-viewport session layout (no scrolling): fill the screen below the header ── */
-#session .wrap{display:flex;flex-direction:column;height:calc(100dvh - 64px);padding:8px 0 10px!important;gap:8px;min-height:0}
-#session .grid{flex:1;min-height:0;grid-template-columns:1fr 360px;gap:16px;padding:0;align-items:stretch}
-.col-main{display:flex;flex-direction:column;min-height:0;gap:8px}
-.col-side{display:flex;flex-direction:column;min-height:0;gap:12px;overflow:auto}
+/* ── Single-viewport session layout: video + controls left, slide + Talk right ── */
+.session-main{display:flex;flex-direction:column;height:calc(100dvh - 64px);padding:10px 0 12px;gap:10px;min-height:0}
+#session .grid{flex:1;min-height:0;grid-template-columns:1fr 380px;gap:18px;padding:0;align-items:stretch}
+.col-main{display:flex;flex-direction:column;min-height:0;gap:10px}
+.col-side{display:flex;flex-direction:column;min-height:0;gap:12px}
 #session .stage{flex:1;min-height:0;aspect-ratio:auto}            /* fill leftover vertical space */
 #session .slide-card{margin-bottom:0;flex:1;min-height:0;display:flex}
-#session .slide{flex:1;min-height:0}
-#session .stage-bar{margin-top:0}
-#session .replybox{margin-top:0}
-@media(max-width:880px){#session .wrap{height:auto;padding-bottom:40px!important}#session .grid{grid-template-columns:1fr}#session .stage{aspect-ratio:16/9}}
-.stage-bar{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
+#session .slide{flex:1;min-height:0;padding:26px 26px 54px}
+.statusline{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--slate2);font-weight:600}
+.livedot{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 rgba(192,57,43,.5);animation:pulse 2s infinite}
+.actions{display:flex;gap:10px}
+.talk-hint{text-align:center;font-size:12.5px;color:var(--slate2);font-weight:500;min-height:1.2em}
+.perc-dock{padding:22px 0 60px}
+.perc-dock .muted-h{font-size:11.5px;color:var(--slate3);font-weight:500;margin-left:auto}
+.perc-dock .perc-list{flex-direction:row;flex-wrap:wrap}
+.perc-dock .perc{flex:1;min-width:150px}
+@media(max-width:880px){.session-main{height:auto;padding-bottom:30px}#session .grid{grid-template-columns:1fr}#session .stage{aspect-ratio:16/9}}
 .rec{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--slate2);font-weight:500}
 .rec .dot{width:9px;height:9px;border-radius:50%;background:var(--red);animation:pulse 1.8s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.5)}70%{box-shadow:0 0 0 8px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
@@ -244,7 +248,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
   </section>
 
   <section id="session" class="stage-wrap">
-    <div class="wrap" style="padding:26px 0 60px">
+    <div class="wrap session-main">
       <div class="timeline" id="timeline" style="display:none">
         <div class="tl-row">
           <span class="tl-label" id="tlSecLabel">Session</span>
@@ -278,38 +282,41 @@ input.key:focus{outline:none;border-color:var(--green2)}
             <ellipse class="mouth" cx="110" cy="170" rx="26" ry="13" fill="#7a2f2f"/>
           </svg>
           <div class="cap"><div class="cap-inner" id="caption">Connecting you to your trainer…</div></div>
-          <button id="unmuteBtn" class="unmute" style="display:none">🔊 Tap to enable the trainer's voice</button>
+          <button id="unmuteBtn" class="unmute" style="display:none">Tap to enable sound</button>
         </div>
-        <div class="stage-bar">
-          <button id="endBtn" class="btn btn-end" title="End and score this session">⏹ End session</button>
-          <button id="saveBtn" class="btn btn-save" title="Save your place and continue later">💾 Save &amp; exit</button>
-          <span class="rec"><span class="dot"></span> <span id="recLabel">Live session</span></span>
-          <span class="miclbl" id="micLabel"></span>
-          <div style="flex:1"></div>
-          <button id="micBtn" class="btn btn-talk">🎤 Talk</button>
-        </div>
+        <div class="statusline"><span class="livedot"></span> <span id="recLabel">Live session</span></div>
         <div class="replybox">
-          <input id="replyInput" type="text" placeholder="…or type your answer and press Enter"/>
-          <button id="sendBtn" class="btn btn-ghost">Send</button>
+          <input id="replyInput" type="text" placeholder="Type your answer and press Enter"/>
+          <button id="sendBtn" class="btn btn-soft">Send</button>
+        </div>
+        <div class="actions">
+          <button id="saveBtn" class="btn btn-soft" title="Save your place and continue later">Save &amp; exit</button>
+          <button id="endBtn" class="btn btn-soft danger" title="End and score this session">End session</button>
         </div>
       </div>
       <div class="col-side">
-      <div class="card slide-card">
-        <div class="slide" id="slide">
-          <div class="slide-kicker" id="slideKicker">On screen</div>
-          <div class="slide-title" id="slideTitle">Your session will appear here</div>
-          <ul class="slide-bullets" id="slideBullets"></ul>
-          <div class="slide-foot"><span>Dubai Legal Affairs · CLPD</span><span id="slideNo"></span></div>
+        <div class="card slide-card">
+          <div class="slide" id="slide">
+            <div class="slide-kicker" id="slideKicker">On screen</div>
+            <div class="slide-title" id="slideTitle">Your session will appear here</div>
+            <ul class="slide-bullets" id="slideBullets"></ul>
+            <div class="slide-foot"><span>Dubai Legal Affairs · CLPD</span><span id="slideNo"></span></div>
+          </div>
         </div>
+        <button id="micBtn" class="btn btn-talk">Talk</button>
+        <div class="talk-hint" id="micLabel">Press Talk to speak</div>
       </div>
+      </div>
+    </div>
+    <div class="wrap perc-dock">
       <div class="card">
-        <div class="card-h"><h3>What your trainer sees</h3></div>
+        <div class="card-h"><h3>Engagement &amp; what your trainer sees</h3><span class="muted-h">Monitored during the session — you don't need to watch this</span></div>
         <div class="card-b">
           <div class="perc-list">
-            <div class="perc" data-k="attention"><div class="perc-ic">🎯</div><div class="perc-tx"><b>Attention</b><br><span class="v">—</span></div></div>
-            <div class="perc" data-k="mood"><div class="perc-ic">🙂</div><div class="perc-tx"><b>Mood</b><br><span class="v">—</span></div></div>
-            <div class="perc" data-k="phone"><div class="perc-ic">📵</div><div class="perc-tx"><b>Phone</b><br><span class="v">—</span></div></div>
-            <div class="perc" data-k="presence"><div class="perc-ic">👤</div><div class="perc-tx"><b>Presence</b><br><span class="v">—</span></div></div>
+            <div class="perc" data-k="attention"><div class="perc-tx"><b>Attention</b><br><span class="v">—</span></div></div>
+            <div class="perc" data-k="mood"><div class="perc-tx"><b>Mood</b><br><span class="v">—</span></div></div>
+            <div class="perc" data-k="phone"><div class="perc-tx"><b>Phone</b><br><span class="v">—</span></div></div>
+            <div class="perc" data-k="presence"><div class="perc-tx"><b>Presence</b><br><span class="v">—</span></div></div>
           </div>
           <div style="margin-top:16px;font-size:12px;font-weight:650;color:var(--slate)">Lesson progress</div>
           <div class="prog"><i id="progBar"></i></div>
@@ -318,8 +325,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
           <p class="note" id="percNote">You're being scored on attention — stay focused and in frame. Below 50% is a fail.</p>
         </div>
       </div>
-      </div>
-    </div></div>
+    </div>
   </section>
 </main>
 
@@ -946,8 +952,8 @@ Your job is not to finish the material — it is to produce a competent learner.
   function micUI(){
     var b=el('micBtn');if(!b)return;
     if(!SR&&!S.anamStt){b.style.display='none';el('micLabel').textContent='Speech not supported — type your answers';return;}
-    if(S.talking){b.textContent='■ Send';b.classList.add('live');}
-    else{b.textContent='🎤 Talk';b.classList.remove('live');}
+    if(S.talking){b.textContent='Send';b.classList.add('live');}
+    else{b.textContent='Talk';b.classList.remove('live');}
   }
   // Language is tuned for a clear English accent. Override with ?lang=en-AU etc.
   var STT_LANG=(function(){try{var m=location.search.match(/[?&]lang=([\w-]+)/);return m?m[1]:'en-GB';}catch(e){return 'en-GB';}})();
