@@ -86,9 +86,9 @@ function perceptionNote(p) {
   if (p.present === false) bits.push('they have left the camera frame');
   if (p.mood === 'confused') bits.push('they look confused');
   else if (p.mood === 'happy') bits.push('they look happy and engaged');
-  let note = bits.length ? ('[What you can see on camera right now: ' + bits.join('; ') + '.]') : '';
+  let note = bits.length ? ('[Subtle cue you may have noticed: ' + bits.join('; ') + '. Camera reads can be wrong, so do not assume — never accuse the learner of leaving or not paying attention.]') : '';
   if (p.challenge) {
-    note += (note ? ' ' : '') + '[The learner has been disengaged for a while and has NOT responded. STOP teaching new material. Firmly but warmly call it out, remind them their engagement is scored as part of this assessment, and ask one direct question to bring them back before you continue.]';
+    note += (note ? ' ' : '') + '[The learner has gone quiet for a little while. Gently and warmly check they are still with you — e.g. "Still with me? Let me put this another way…" — and re-engage with one light question. Do NOT scold them, do NOT accuse them of stepping away or being distracted, and do NOT mention engagement scoring. Stay encouraging.]';
   }
   return note;
 }

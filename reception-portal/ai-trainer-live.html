@@ -874,14 +874,19 @@ Your job is not to finish the material — it is to produce a competent learner.
     var n=el('engScore');if(n){n.textContent=score+'%';n.style.color=score>=50?'var(--green2)':'var(--red)';}
   }
   function engagementScore(){var e=S.eng;return e.samples?Math.round(e.engaged/e.samples*100):100;}
-  // If the learner is disengaged for several samples while the trainer is idle,
-  // interrupt and challenge them (the brain is told to stop teaching and refocus them).
+  // Only nudge the learner if they are CLEARLY and persistently disengaged — and
+  // never near the end of a section. Tuned to avoid false "you stepped away".
   function maybeChallenge(){
     if(S.ended||S.busy||S.faceSpeaking||S.paused)return;
-    var dis=S.perception.phone||S.perception.attention==='away';   // only clear disengagement
+    // Don't interrupt the wrap-up: stand down once we're on the last objective.
+    var total=(S.selected&&S.selected.objectives||[]).length;
+    if(total&&(S.lastCovered||0)>=total-1)return;
+    // Phone in hand is a reliable signal; "away" from a single camera is noisy,
+    // so require a much longer absence before reacting.
+    var dis=S.perception.phone||S.perception.attention==='away';
     S.disStreak=dis?(S.disStreak+1):0;
     var now=Date.now();
-    if(S.disStreak>=4&&(now-S.lastChallenge)>25000){              // ~6s sustained, 25s cooldown
+    if(S.disStreak>=10&&(now-S.lastChallenge)>90000){            // ~15s+ sustained, 90s cooldown
       S.lastChallenge=now;S.disStreak=0;S.perception.challenge=true;nextTurn();
     }
   }
