@@ -1,4 +1,8 @@
 {
+  "routes": [
+    { "route": "/aviation", "rewrite": "/aviation/index.html" },
+    { "route": "/aviation/", "rewrite": "/aviation/index.html" }
+  ],
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": ["/img/*.{jpg,png,svg,ico}", "/*.{css,js}"]
