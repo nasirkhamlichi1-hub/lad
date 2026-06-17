@@ -14,6 +14,7 @@ on:
 permissions:
   contents: read
   packages: write   # required to push to GHCR
+  id-token: write   # required for Azure OIDC (federated) login
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/lad-clpd-backend
@@ -99,29 +100,48 @@ jobs:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
-      PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+      # OIDC (federated) login — no stored credentials. Set these as repo
+      # secrets/variables to enable auto-deploy; the job skips cleanly if absent.
+      AZURE_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_WEBAPP_NAME:     ${{ vars.AZURE_WEBAPP_NAME || 'clpd-lad-api-0878' }}
+      AZURE_RESOURCE_GROUP:  ${{ vars.AZURE_RESOURCE_GROUP }}
     steps:
       - name: Check deploy config
         id: cfg
         run: |
-          if [ -z "$PUBLISH_PROFILE" ]; then
+          if [ -z "$AZURE_CLIENT_ID" ] || [ -z "$AZURE_TENANT_ID" ] || [ -z "$AZURE_SUBSCRIPTION_ID" ]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Auto-deploy skipped — add the AZURE_WEBAPP_PUBLISH_PROFILE secret (and optionally the AZURE_WEBAPP_NAME variable) to deploy the new image automatically."
+            echo "::notice::Auto-deploy skipped — set AZURE_CLIENT_ID, AZURE_TENANT_ID and AZURE_SUBSCRIPTION_ID (OIDC) to enable container deploys."
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Deploy container image to the Web App
+      - name: Azure login (OIDC — no stored secret)
         if: steps.cfg.outputs.ready == 'true'
-        uses: azure/webapps-deploy@v3
+        uses: azure/login@v2
         with:
-          app-name: ${{ vars.AZURE_WEBAPP_NAME || 'clpd-lad-api-0878' }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          images: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy summary
+      - name: Set container image + restart (ARM, no basic auth needed)
         if: steps.cfg.outputs.ready == 'true'
-        run: |
-          echo "Deployed ${{ env.IMAGE_NAME }}:${{ github.sha }}"
-          echo "to Azure Web App: ${{ vars.AZURE_WEBAPP_NAME || 'clpd-lad-api-0878' }}"
-          echo "Health: https://${{ vars.AZURE_WEBAPP_NAME || 'clpd-lad-api-0878' }}.azurewebsites.net/api/v1/health"
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            set -euo pipefail
+            APP="$AZURE_WEBAPP_NAME"
+            RG="$AZURE_RESOURCE_GROUP"
+            if [ -z "$RG" ]; then
+              RG=$(az webapp list --query "[?name=='$APP'].resourceGroup | [0]" -o tsv)
+            fi
+            if [ -z "$RG" ]; then echo "::error::Could not resolve the resource group for $APP — set the AZURE_RESOURCE_GROUP repo variable."; exit 1; fi
+            echo "Deploying ${IMAGE_NAME}:${GITHUB_SHA} to $APP (resource group: $RG)"
+            az webapp config container set \
+              --name "$APP" --resource-group "$RG" \
+              --container-image-name "${IMAGE_NAME}:${GITHUB_SHA}"
+            az webapp restart --name "$APP" --resource-group "$RG"
+            echo "Deployed. Health: https://$APP.azurewebsites.net/api/v1/health"
