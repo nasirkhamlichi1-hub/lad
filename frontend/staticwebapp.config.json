@@ -15,8 +15,12 @@
     { "route": "/change-password", "rewrite": "/change-password.html" },
     { "route": "/firm-capabilities", "rewrite": "/firm-capabilities.html" },
     { "route": "/provider", "rewrite": "/provider-portal.html" },
+    { "route": "/oversight", "rewrite": "/lad-intelligence-v4.html" },
+    { "route": "/support", "rewrite": "/help.html" },
     { "route": "/ladstaff", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/staff", "statusCode": 302 },
     { "route": "/ladstaff/*", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/staff", "statusCode": 302 },
+    { "route": "/ladtrain", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/staff", "statusCode": 302 },
+    { "route": "/ladtrain/*", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/staff", "statusCode": 302 },
     { "route": "/ai-trainer-live.html", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/ai-trainer-live.html", "statusCode": 302 },
     { "route": "/ai-trainer", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/ai-trainer-live.html", "statusCode": 302 }
   ],

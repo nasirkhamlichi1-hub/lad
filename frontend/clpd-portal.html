@@ -2238,24 +2238,24 @@ const STAFF_HUB_URL = '/ladstaff';
 // · LAD Admin (full oversight) · LAD Staff Training (staff hub + AI trainer).
 function dashboardFor(role) {
   switch ((role || '').toLowerCase()) {
-    case 'lawyer':                    return 'lawyer-portal-v2.html';
+    case 'lawyer':                    return '/lawyer';
     case 'firm_compliance_officer':
-    case 'firm':                      return 'firm-compliance-portal.html';
+    case 'firm':                      return '/firm';
     case 'lad_intelligence':
     case 'lad_oversight':
-    case 'lad_staff':                 return 'lad-intelligence-v4.html';   // LAD Admin — full oversight
+    case 'lad_staff':                 return '/oversight';                 // LAD Admin — full oversight
     case 'clpd_admin':
     case 'lad_operations':
     case 'lad_admin':
     case 'super_admin':
     case 'lad_super_admin':
-    case 'dg':                        return 'lad-admin.html';             // CLPD Admin — admin team / operations
+    case 'dg':                        return '/admin';                     // CLPD Admin — admin team / operations
     case 'provider':
-    case 'provider_admin':            return 'provider-portal.html';
+    case 'provider_admin':            return '/provider';
     case 'lad_staff_training':
     case 'staff_training':
-    case 'trainee':                   return STAFF_HUB_URL;                // LAD Staff Training — staff hub + AI trainer
-    default:                          return 'lawyer-portal-v2.html';
+    case 'trainee':                   return '/ladtrain';                  // LAD Staff Training — courses (aviation, reception) + AI trainer
+    default:                          return '/lawyer';
   }
 }
 
