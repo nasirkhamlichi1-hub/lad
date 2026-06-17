@@ -2273,20 +2273,6 @@ function dashboardFor(role) {
   } catch (_) { /* ignore */ }
 })();
 
-// /login (or #login) opens the sign-in dialog on load for anyone not yet
-// signed in — gives a clean www.legalaffairstraining.com/login entry point.
-(function openLoginIfRequested() {
-  try {
-    var path = (location.pathname || '').replace(/\/+$/, '').toLowerCase();
-    var wantsLogin = path.endsWith('/login') || (location.hash || '').toLowerCase().indexOf('login') >= 0;
-    if (wantsLogin && !localStorage.getItem('lad_token')) {
-      var go = function () { try { openAuth('login'); } catch (_) {} };
-      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
-      else go();
-    }
-  } catch (_) { /* ignore */ }
-})();
-
 async function doLogin() {
   const userEl = document.getElementById('credUsername');
   const passEl = document.getElementById('credPass');
