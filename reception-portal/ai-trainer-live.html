@@ -661,7 +661,37 @@ Your job is not to finish the material — it is to produce a competent learner.
         })();
         S.face='anam';
         el('enginePill').className='pill pill-live';el('enginePill').textContent='● Photoreal · Claude';
-        S.anam={speak:function(t){return client.talk(t);},stop:function(){try{client.stopStreaming&&client.stopStreaming();}catch(e){}}};
+        S.anam={speak:function(t){return client.talk(t);},
+          stop:function(){try{client.stopStreaming&&client.stopStreaming();}catch(e){}},
+          mute:function(m){try{ if(m){ (client.muteInputAudio||client.muteInput||function(){}).call(client); } else { (client.unmuteInputAudio||client.unmuteInput||function(){}).call(client); } }catch(e){}}};
+
+        // ── High-accuracy speech-to-text via Anam's own pipeline ──────────
+        // Anam transcribes the learner's microphone far more reliably than the
+        // browser engine, and it never mistakes the trainer's own voice for the
+        // learner's. We listen for the learner's transcript and feed it to the
+        // Claude brain. The browser recognizer stays as an automatic fallback:
+        // it only takes over input once Anam proves it is producing transcripts.
+        var MHU=(mod.AnamEvent&&mod.AnamEvent.MESSAGE_HISTORY_UPDATED)||'MESSAGE_HISTORY_UPDATED';
+        var anamSubT=null;
+        on(MHU,function(messages){
+          if(!messages||!messages.length)return;
+          var um=null;
+          for(var i=messages.length-1;i>=0;i--){ var r=messages[i].role; if(r==='user'){ um=messages[i]; break; } }
+          if(!um)return;
+          var text=String(um.content||'').trim();
+          if(!text)return;
+          // Anam STT is alive — make it authoritative and retire the browser engine.
+          if(!S.anamStt){ S.anamStt=true; stopReco(); el('percNote').textContent='High-accuracy voice recognition active.'; }
+          S.anamLiveText=text;
+          if(!S.busy&&!S.faceSpeaking) showCaption('<span class="you">You:</span> '+esc(text));
+          // Submit once the transcript stops growing (end of the learner's turn).
+          if(anamSubT)clearTimeout(anamSubT);
+          anamSubT=setTimeout(function(){
+            if(S.busy||S.muted||S.ended||S.faceSpeaking)return;
+            var t=(S.anamLiveText||'').trim();
+            if(t&&t!==S.lastAnamSubmitted){ S.lastAnamSubmitted=t; submitReply(t); }
+          },900);
+        });
       });
       });
     });
@@ -859,10 +889,10 @@ Your job is not to finish the material — it is to produce a competent learner.
     }catch(e){S.reco=null;}
   }
   function stopReco(){if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}sttBuf='';S.listening=false;if(S.reco){try{S.reco.onend=null;S.reco.stop();}catch(e){}S.reco=null;}}
-  function startListening(){if(S.ended||S.muted||!SR)return;S.accept=true;sttBuf='';if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}ensureReco();if(!S.busy)el('micLabel').textContent='Listening…';}
+  function startListening(){if(S.ended||S.muted)return;S.accept=true;sttBuf='';if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}if(!S.anamStt){if(!SR)return;ensureReco();}if(!S.busy)el('micLabel').textContent='Listening…';}
   function pauseListening(){S.accept=false;if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}sttBuf='';}  // keep engine warm, just stop accepting
   function resumeListening(){ if(!S.muted)startListening(); micUI(); }
-  el('micBtn').onclick=function(){ S.muted=!S.muted; if(S.muted){pauseListening();stopReco();} else {resumeListening();} micUI(); };
+  el('micBtn').onclick=function(){ S.muted=!S.muted; if(S.anam&&S.anam.mute)S.anam.mute(S.muted); if(S.muted){pauseListening();stopReco();} else {resumeListening();} micUI(); };
   el('sendBtn').onclick=function(){submitReply(el('replyInput').value);};
   el('replyInput').addEventListener('keydown',function(e){if(e.key==='Enter')submitReply(el('replyInput').value);});
   micUI();
