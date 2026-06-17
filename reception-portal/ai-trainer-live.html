@@ -234,14 +234,19 @@ input.key:focus{outline:none;border-color:var(--green2)}
     <div class="wrap" style="padding:26px 0 60px">
       <div class="timeline" id="timeline" style="display:none">
         <div class="tl-row">
-          <span class="tl-label">Session progress</span>
+          <span class="tl-label" id="tlSecLabel">Session</span>
+          <div class="tl-steps" id="tlSections"></div>
+          <span class="tl-count" id="tlSecCount">0/0</span>
+        </div>
+        <div class="tl-row">
+          <span class="tl-label">This section</span>
           <div class="tl-steps" id="tlSteps"></div>
           <span class="tl-count" id="tlCount">0/0</span>
         </div>
         <div class="tl-row">
           <span class="tl-label">Time</span>
           <div class="tl-time-track" id="tlTimeTrack"><i id="tlTimeFill"></i></div>
-          <span class="tl-clock" id="tlClock">0 / 75 min</span>
+          <span class="tl-clock" id="tlClock">0 / 0 min</span>
         </div>
       </div>
       <div class="grid">
@@ -492,7 +497,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     return fetch('/api/trainer-turn',{
       method:'POST',
       headers:{'content-type':'application/json'},
-      body:JSON.stringify({token:AUTH.token,lesson:lesson,history:history,perception:perception,opening:isOpeningLesson(lesson),learner:buildLearner(lesson),mode:lesson.mode||'lesson',elapsedMin:S.startedAt?Math.round((Date.now()-S.startedAt)/60000):0,targetMin:75})
+      body:JSON.stringify({token:AUTH.token,lesson:lesson,history:history,perception:perception,opening:isOpeningLesson(lesson),learner:buildLearner(lesson),mode:lesson.mode||'lesson',elapsedMin:S.startedAt?Math.round((Date.now()-S.startedAt)/60000):0,targetMin:(S.secTarget||(S.selected&&S.selected.duration_min)||10)})
     }).then(function(r){return r.json();}).then(function(d){
       if(d&&typeof d.say==='string')return {say:d.say,covered:d.covered||[],complete:!!d.complete,slide:d.slide||null};
       throw new Error((d&&d.error)||'no turn');
@@ -973,42 +978,79 @@ Your job is not to finish the material — it is to produce a competent learner.
   micUI();
 
   // ─── Session timeline: how far along the session the learner is ───────
-  var TARGET_MIN=75;  // approximate total session length
+  // The full programme is ~75 min of ordered sections; the learner runs one
+  // section at a time. We show their overall position (Section X of N) plus
+  // progress and time within the current section.
+  function courseSections(){
+    var cid=(S.selected&&S.selected.courseId)||'';
+    var secs=LESSONS.filter(function(L){return (L.courseId||'')===cid;});
+    return secs.length?secs:[S.selected];
+  }
   function startTimeline(){
+    var secs=courseSections(),curIdx=0;
+    for(var k=0;k<secs.length;k++){if(secs[k]&&S.selected&&secs[k].id===S.selected.id){curIdx=k;break;}}
+    S.secIndex=curIdx;S.secTotal=secs.length;
+    S.secTarget=(S.selected&&S.selected.duration_min)||10;
+    // Overall session row — each course section is a step.
+    var sh='';secs.forEach(function(L,i){
+      var pr=L&&AUTH.progress&&AUTH.progress[((L.courseId||'general')+'::'+L.id)];
+      var cls='tl-step'+(pr?' done':'')+(i===curIdx?' cur':'');
+      sh+='<span class="'+cls+'" title="'+esc((L&&L.title)||'')+'"></span>';
+    });
+    el('tlSections').innerHTML=sh;
+    el('tlSecCount').textContent=(curIdx+1)+'/'+secs.length;
+    el('tlSecLabel').textContent='Session';
+    // Within-section row.
     var total=(S.selected&&S.selected.objectives||[]).length||1;
-    var steps='';for(var i=0;i<total;i++)steps+='<span class="tl-step" data-i="'+i+'"></span>';
+    var steps='';for(var i=0;i<total;i++)steps+='<span class="tl-step"></span>';
     el('tlSteps').innerHTML=steps;
     el('tlCount').textContent='0/'+total;
     el('timeline').style.display='';
     tickTime();
     if(S.tlTimer)clearInterval(S.tlTimer);
-    S.tlTimer=setInterval(tickTime,5000);
+    S.tlTimer=setInterval(function(){tickTime();sendHeartbeat();},5000);
+    sendHeartbeat();
   }
   function tickTime(){
     if(!S.startedAt)return;
-    var mins=Math.floor((Date.now()-S.startedAt)/60000);
-    var pct=Math.min(mins/TARGET_MIN,1)*100, over=mins>TARGET_MIN;
+    var sec=Math.floor((Date.now()-S.startedAt)/1000),mins=Math.floor(sec/60),tgt=S.secTarget||10;
+    var pct=Math.min(sec/(tgt*60),1)*100, over=mins>tgt;
     el('tlTimeFill').style.width=pct+'%';
-    el('tlClock').textContent=mins+' / '+TARGET_MIN+' min';
+    el('tlClock').textContent=mins+' / '+tgt+' min';
     el('tlTimeTrack').classList.toggle('over',over);
     el('tlClock').classList.toggle('over',over);
+  }
+  function sendHeartbeat(extra){
+    if(!AUTH.token||!S.selected||S.ended)return;
+    var live={courseId:S.selected.courseId||'',sectionId:S.selected.id,sectionTitle:S.selected.title,
+      sectionIndex:(S.secIndex||0)+1,sectionTotal:S.secTotal||1,
+      objDone:S.lastCovered||0,objTotal:(S.selected.objectives||[]).length||0,
+      elapsedSec:S.startedAt?Math.round((Date.now()-S.startedAt)/1000):0,targetMin:S.secTarget||10,
+      engagement:Math.round(engagementScore()),mode:S.selected.mode||'lesson'};
+    if(extra)for(var k in extra)live[k]=extra[k];
+    try{fetch('/api/trainer-live',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},
+      body:JSON.stringify({token:AUTH.token,name:AUTH.name,live:live})});}catch(e){}
   }
   function updateProgress(cov){
     cov=cov||{done:0,total:0};S.lastCovered=cov.done||0;
     var pct=cov.total?Math.round(cov.done/cov.total*100):0;
     el('progBar').style.width=pct+'%';
     el('covLabel').textContent=cov.done+' of '+cov.total+' key elements';
-    // Reflect progress on the session timeline (done / current / upcoming steps).
+    // Reflect progress on the within-section timeline (done / current / upcoming).
     var steps=el('tlSteps')?el('tlSteps').querySelectorAll('.tl-step'):[];
-    if(steps.length!==cov.total&&cov.total)startTimeline(),steps=el('tlSteps').querySelectorAll('.tl-step');
+    if(steps.length!==cov.total&&cov.total){startTimeline();steps=el('tlSteps').querySelectorAll('.tl-step');}
     Array.prototype.forEach.call(steps,function(s,i){
       s.classList.toggle('done',i<cov.done);
       s.classList.toggle('cur',i===cov.done);
     });
     if(el('tlCount'))el('tlCount').textContent=cov.done+'/'+(cov.total||steps.length||0);
+    sendHeartbeat();
   }
 
-  function teardown(){S.ended=true;pauseListening();stopReco();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);if(S.tlTimer)clearInterval(S.tlTimer);if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
+  function teardown(){S.ended=true;pauseListening();stopReco();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);if(S.tlTimer)clearInterval(S.tlTimer);
+    // Drop this attendee off the admin's live list.
+    if(AUTH.token)try{fetch('/api/trainer-live',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({token:AUTH.token,live:{ended:true}})});}catch(e){}
+    if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
   el('endBtn').onclick=function(){finish();};
   function finish(){
     teardown();

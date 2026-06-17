@@ -67,6 +67,7 @@ td{padding:9px 10px;border-bottom:1px solid var(--line)}
 <main id="dash" class="wrap" style="display:none;padding-bottom:60px">
   <h1>Learning analytics</h1>
   <div class="sub" id="dashSub">—</div>
+  <div class="sec" id="liveSec"><h2>Live now <span class="muted" id="liveCount" style="font-weight:400"></span></h2><div id="liveList"><div class="muted">Checking for active sessions…</div></div></div>
   <div class="kpis" id="kpis"></div>
   <div class="sec"><h2>Topics that need attention <span class="muted" style="font-weight:400">— lowest engagement / pass rate first</span></h2><div id="topics"></div></div>
   <div class="sec"><h2>Learners</h2><div style="overflow:auto"><table id="learners"><thead><tr><th>Name</th><th>Email</th><th>Lessons done</th><th>Avg engagement</th><th>CPD</th><th>Last active</th></tr></thead><tbody></tbody></table></div></div>
@@ -98,7 +99,31 @@ td{padding:9px 10px;border-bottom:1px solid var(--line)}
         if(PASS){try{localStorage.setItem('tr_admin_pw',PASS);}catch(e){}}
         el('gate').style.display='none';el('dash').style.display='';el('refreshBtn').style.display='';
         render(o.j.learners||[]);
+        startLivePoll();
       }).catch(function(){el('enterBtn').disabled=false;if(fromGate){el('gateErr').textContent='Network error.';el('gateErr').style.display='block';}});
+  }
+
+  // ── Live now: poll for attendees currently in a session ──────────────
+  var livePoll=null;
+  function startLivePoll(){ loadLive(); if(livePoll)clearInterval(livePoll); livePoll=setInterval(loadLive,10000); }
+  function loadLive(){
+    var q=authQ(); if(!q)return;
+    fetch('/api/trainer-live?'+q).then(function(r){return r.ok?r.json():null;}).then(function(j){ if(j)renderLive(j.live||[]); }).catch(function(){});
+  }
+  function fmtT(s){s=s||0;var m=Math.floor(s/60),ss=s%60;return m+':'+(ss<10?'0':'')+ss;}
+  function renderLive(live){
+    el('liveCount').textContent=live.length?('· '+live.length+' in session'):'';
+    if(!live.length){el('liveList').innerHTML='<div class="muted">No active sessions right now.</div>';return;}
+    el('liveList').innerHTML=live.map(function(L){
+      var op=L.objTotal?Math.round(L.objDone/L.objTotal*100):0;
+      var eng=(L.engagement==null)?'—':(L.engagement+'%');
+      var over=L.targetMin&&(L.elapsedSec>L.targetMin*60);
+      return '<div class="row"><div><div class="row-t">'+esc(L.name||L.email)+' <span class="tag">'+esc(L.mode==='simulation'?'sim':'live')+'</span></div>'+
+        '<div class="row-s">'+esc(L.sectionTitle||'')+' · Section '+L.sectionIndex+'/'+L.sectionTotal+
+        ' · <span style="'+(over?'color:var(--red);font-weight:700':'')+'">'+fmtT(L.elapsedSec)+' / '+L.targetMin+'m</span> · '+eng+' engagement</div></div>'+
+        '<div class="bar"><i style="width:'+op+'%;background:'+barColor(op)+'"></i></div>'+
+        '<div class="pillv" style="color:'+barColor(op)+'">'+L.objDone+'/'+L.objTotal+'</div></div>';
+    }).join('');
   }
 
   function render(learners){
