@@ -20,9 +20,9 @@
   'use strict';
 
   // ─── EDIT THIS ─────────────────────────────────────────────────────
-  // Production (Azure West Europe — Node 22 LTS App Service):
-  window.LAD_API_BASE = 'https://clpd-lad-api-0878.azurewebsites.net';
-  // Staging:    'https://lad-clpd-backend.onrender.com'
+  // Production backend (Render, Frankfurt — Docker, persistent disk):
+  window.LAD_API_BASE = 'https://lad-clpd-backend.onrender.com';
+  // Previous (Azure App Service): 'https://clpd-lad-api-0878.azurewebsites.net'
   // Demo/empty: ''  (use localStorage fallback)
   // ─── END EDIT ──────────────────────────────────────────────────────
 
