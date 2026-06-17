@@ -265,7 +265,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
         <div class="card-h"><h3>Choose today's lesson</h3></div>
         <div class="card-b"><div id="lessons" class="lessons"></div></div>
       </div>
-      <div class="card">
+      <div class="card" id="startCard">
         <div class="card-h"><h3>Start your session</h3></div>
         <div class="card-b">
           <p style="font-size:13px;color:var(--slate);line-height:1.55">Uses your <b>camera and microphone</b> so your trainer can guide you and your engagement is scored. Find a quiet spot and allow access when prompted.</p>
@@ -589,7 +589,11 @@ Your job is not to finish the material — it is to produce a competent learner.
       if(pct===100)meta.unshift('<span class="tag" style="background:var(--green-bg);color:var(--green-d);border-color:var(--green-border)">✓ 100% complete</span>');
       else if(pct!=null)meta.unshift('<span class="tag" style="background:#fef3e2;color:#92540a;border-color:#f0d9b0">'+pct+'% complete · resume</span>');
       d.innerHTML='<div class="lesson-t">'+esc(L.title)+'</div>'+(L.summary?'<div class="lesson-s">'+esc(L.summary)+'</div>':'')+'<div class="lesson-m">'+meta.join('')+'</div>';
-      d.onclick=function(){S.selected=L;renderLessons();refreshStart();};
+      d.onclick=function(){
+        S.selected=L;renderLessons();refreshStart();
+        // On phones the Start card sits below the list — bring it into view at once.
+        if(window.innerWidth<=880){var sc=el('startCard');if(sc&&sc.scrollIntoView)try{sc.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){sc.scrollIntoView();}}
+      };
       c.appendChild(d);
     });
   }
