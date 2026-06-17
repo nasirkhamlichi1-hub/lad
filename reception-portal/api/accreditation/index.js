@@ -3,8 +3,10 @@
 // approved the course appears in the public accredited-course catalogue.
 // Stored in Azure Table Storage, partition 'accred', rowKey = application id.
 const S = require('../_shared');
+const aimodel = require('../_aimodel');
 const P = 'accred';
 function newId() { return 'ac' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function genCode() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let x = ''; for (let i = 0; i < 5; i++) x += a[Math.floor(Math.random() * a.length)]; return 'CLPD-' + x; }
 function s(v, n) { return String(v == null ? '' : v).slice(0, n); }
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
@@ -25,11 +27,25 @@ function view(e) {
     contactEmail: e.contactEmail, phone: e.phone, website: e.website, about: e.about,
     courseTitle: e.courseTitle, format: e.format, durationHours: e.durationHours, cpdPoints: e.cpdPoints,
     areas: e.areas, summary: e.summary, outcomes: e.outcomes, status: e.status, reviewReason: e.reviewReason,
-    reviewedBy: e.reviewedBy, decidedAt: e.decidedAt, createdAt: e.createdAt };
+    reviewedBy: e.reviewedBy, decidedAt: e.decidedAt, createdAt: e.createdAt, courseCode: e.courseCode || null, aiScore: e.aiScore || null };
 }
 function pubCourse(e) {
   return { id: e.rowKey, title: e.courseTitle, provider: e.orgName, format: e.format,
-    durationHours: e.durationHours, cpdPoints: e.cpdPoints, areas: e.areas, summary: e.summary, accreditedAt: e.decidedAt };
+    durationHours: e.durationHours, cpdPoints: e.cpdPoints, areas: e.areas, summary: e.summary, accreditedAt: e.decidedAt, courseCode: e.courseCode || null };
+}
+
+// AiModel assessment of an application — suggests points/score for the reviewer.
+async function aiAssess(e) {
+  if (!aimodel.configured()) return null;
+  const sys = 'You are an accreditation assessor for the Dubai Legal Affairs Department CLPD programme. You assess a course-accreditation application and reply with ONLY a JSON object: {"recommendedPoints": <integer 0-8>, "score": <integer 0-100 overall quality/eligibility>, "verdict": "approve" | "revise" | "reject", "rationale": "<2-3 plain sentences>", "flags": ["<short concern>", ...]}. Judge relevance to legal practice, rigour, clear learning outcomes, and whether the CPD points requested fit the duration (about one point per contact hour). Be fair, specific and concise.';
+  const usr = 'Application to assess:\n' + JSON.stringify({
+    organisation: e.orgName, applicantType: e.orgType, course: e.courseTitle, format: e.format,
+    durationHours: e.durationHours, pointsRequested: e.cpdPoints, areas: e.areas, summary: e.summary, outcomes: e.outcomes
+  });
+  const out = await aimodel.callAiModel({ system: sys, messages: [{ role: 'user', content: usr }], maxTokens: 450, temperature: 0.2 });
+  if (!out) return null;
+  try { const mm = out.match(/\{[\s\S]*\}/); if (mm) return JSON.parse(mm[0]); } catch (_) {}
+  return { rationale: out };
 }
 
 module.exports = async function (context, req) {
@@ -64,7 +80,18 @@ module.exports = async function (context, req) {
     return S.json(context, 200, { applications: out });
   }
 
-  // POST — decide (reviewer) or apply (anyone).
+  // POST — AI assessment, decide (reviewer) or apply (anyone).
+  if (b.action === 'ai-review') {
+    const rv = await reviewer(c, req);
+    if (!rv) return S.json(context, 401, { error: 'Reviewer access required.' });
+    const id = String(b.id || ''); if (!id) return S.json(context, 400, { error: 'id required' });
+    let e; try { e = await c.getEntity(P, id); } catch (_) { return S.json(context, 404, { error: 'Application not found.' }); }
+    const sug = await aiAssess(e);
+    if (!sug) return S.json(context, 200, { available: false, message: 'AI model is not configured.' });
+    // Cache a short score summary on the record for the queue view.
+    try { e.aiScore = s((sug.score != null ? sug.score + '/100 · ' : '') + (sug.recommendedPoints != null ? sug.recommendedPoints + ' pts · ' : '') + (sug.verdict || ''), 60); await c.upsertEntity(e, 'Merge'); } catch (_) {}
+    return S.json(context, 200, { available: true, suggestion: sug });
+  }
   if (b.action === 'decide') {
     const rv = await reviewer(c, req);
     if (!rv) return S.json(context, 401, { error: 'Reviewer access required.' });
@@ -74,8 +101,9 @@ module.exports = async function (context, req) {
     if (!dec) return S.json(context, 400, { error: 'decision must be approved or rejected' });
     if (dec === 'rejected' && !String(b.reason || '').trim()) return S.json(context, 400, { error: 'A reason is required to reject.' });
     e.status = dec; e.reviewReason = s(b.reason, 1000); e.reviewedBy = rv.email; e.decidedAt = new Date().toISOString();
+    if (dec === 'approved' && !e.courseCode) e.courseCode = genCode();   // issue the course code on approval
     try { await c.upsertEntity(e, 'Merge'); } catch (err) { context.log.error('decide', err && err.message); return S.json(context, 500, { error: 'Could not save the decision.' }); }
-    return S.json(context, 200, { ok: true, id, status: dec });
+    return S.json(context, 200, { ok: true, id, status: dec, courseCode: e.courseCode || null });
   }
 
   // apply

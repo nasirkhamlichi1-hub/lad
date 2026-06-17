@@ -220,7 +220,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green2)}
       var as=(j&&j.applications)||[];
       if(!as.length){box.innerHTML='<div class="empty">You haven’t submitted any applications yet.</div>';return;}
       box.innerHTML=as.map(function(a){return appCard(a,false);}).join('');
-      bindDetails();
+      bindDetails();bindUploads();
     }).catch(function(){box.innerHTML='<div class="empty">Could not load your applications.</div>';});
   }
 
@@ -237,7 +237,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green2)}
       var as=(j.applications)||[];
       if(!as.length){box.innerHTML='<div class="empty">No applications to review.</div>';return;}
       box.innerHTML=as.map(function(a){return appCard(a,true);}).join('');
-      bindDetails();bindDecisions();
+      bindDetails();bindDecisions();bindAi();
     }).catch(function(){box.innerHTML='<div class="empty">Could not load the queue.</div>';});
   }
 
@@ -252,18 +252,65 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green2)}
       (a.summary?detRow('Summary',esc(a.summary)):'')+(a.outcomes?detRow('Outcomes',esc(a.outcomes)):'')+
       (a.reviewReason?detRow('Decision note',esc(a.reviewReason)+(a.reviewedBy?' — '+esc(a.reviewedBy):'')):'')+
       '</div>';
+    var code=a.courseCode?'<span class="tag" style="background:var(--sky-bg);border-color:#bcdcf0;color:var(--sky);font-family:var(--mono);font-weight:700">Code: '+esc(a.courseCode)+'</span>':'';
     var actions='';
     if(review&&a.status==='pending'){
-      actions='<div class="actions"><input class="reason" id="rsn_'+esc(a.id)+'" placeholder="Decision note (required to reject)"/>'+
+      actions='<div id="ai_'+esc(a.id)+'"></div>'+
+        '<div class="actions"><button class="btn btn-soft ai" data-id="'+esc(a.id)+'">🤖 AI assessment</button>'+
+        '<input class="reason" id="rsn_'+esc(a.id)+'" placeholder="Decision note (required to reject)"/>'+
         '<button class="btn btn-soft btn-ok dec" data-id="'+esc(a.id)+'" data-dec="approved">Approve</button>'+
         '<button class="btn btn-soft btn-no dec" data-id="'+esc(a.id)+'" data-dec="rejected">Reject</button></div>';
     }
+    if(!review&&a.status==='approved'&&a.courseCode){
+      actions='<div class="actions" style="display:block"><div class="sec-t" style="margin:6px 0 8px">Upload attendees — points go to each lawyer’s CPD</div>'+
+        '<textarea id="att_'+esc(a.id)+'" placeholder="One per line: email or email, Full name&#10;e.g. nasir@firm.ae, Nasir Khamlichi"></textarea>'+
+        '<button class="btn btn-pri up" data-code="'+esc(a.courseCode)+'" data-id="'+esc(a.id)+'" style="margin-top:10px">Add attendees ('+esc(a.cpdPoints||'0')+' pts each)</button></div>';
+    }
     return '<div class="item"><div class="item-h"><div><div class="item-t">'+esc(a.courseTitle||a.orgName)+'</div><div class="item-s">'+esc(a.orgName)+' · submitted '+esc((a.createdAt||'').slice(0,10))+'</div></div>'+pill+'</div>'+
-      '<div class="meta">'+tag(a.cpdPoints?a.cpdPoints+' CPD pts':'')+tag(a.durationHours?a.durationHours+' hrs':'')+tag(a.format)+tag(a.areas)+'<span class="tag" style="cursor:pointer;color:var(--green2)" data-toggle="'+esc(a.id)+'">Details ▾</span></div>'+
+      '<div class="meta">'+code+tag(a.cpdPoints?a.cpdPoints+' CPD pts':'')+tag(a.durationHours?a.durationHours+' hrs':'')+tag(a.format)+tag(a.areas)+(a.aiScore?'<span class="tag" style="color:var(--sky)">AI: '+esc(a.aiScore)+'</span>':'')+'<span class="tag" style="cursor:pointer;color:var(--green2)" data-toggle="'+esc(a.id)+'">Details ▾</span></div>'+
       det+actions+'</div>';
   }
   function detRow(k,v){return '<div class="det-row"><b>'+k+':</b> '+v+'</div>';}
   function bindDetails(){ Array.prototype.forEach.call(document.querySelectorAll('[data-toggle]'),function(t){ t.onclick=function(){ var d=el('det_'+t.getAttribute('data-toggle')); if(d)d.classList.toggle('on'); }; }); }
+  function bindAi(){
+    Array.prototype.forEach.call(document.querySelectorAll('.ai'),function(btn){
+      btn.onclick=function(){
+        var id=btn.getAttribute('data-id'),box=el('ai_'+id);
+        btn.disabled=true;btn.textContent='Assessing…';box.innerHTML='';
+        fetch('/api/accreditation',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'ai-review',id:id,token:token()})})
+          .then(function(r){return r.json();}).then(function(j){
+            btn.disabled=false;btn.textContent='🤖 AI assessment';
+            if(!j||!j.available){box.innerHTML='<div class="item-s" style="color:var(--amber)">AI model not configured — set the AiModel keys to enable suggestions.</div>';return;}
+            var s=j.suggestion||{};
+            var flags=(s.flags&&s.flags.length)?'<div class="det-row"><b>Flags:</b> '+s.flags.map(esc).join('; ')+'</div>':'';
+            box.innerHTML='<div class="card" style="background:var(--sky-bg);border-color:#bcdcf0;margin:6px 0 4px"><div class="card-b" style="padding:14px 16px">'+
+              '<div style="font-weight:700;color:var(--sky);font-size:13px;margin-bottom:6px">AI assessment'+(s.verdict?' — suggests to '+esc(s.verdict):'')+'</div>'+
+              (s.score!=null?'<div class="det-row"><b>Quality score:</b> '+esc(s.score)+'/100</div>':'')+
+              (s.recommendedPoints!=null?'<div class="det-row"><b>Recommended CPD points:</b> '+esc(s.recommendedPoints)+'</div>':'')+
+              (s.rationale?'<div class="det-row">'+esc(s.rationale)+'</div>':'')+flags+
+              '<div class="item-s" style="margin-top:8px;color:var(--slate3)">A suggestion only — your decision stands.</div></div></div>';
+          }).catch(function(){btn.disabled=false;btn.textContent='🤖 AI assessment';toast('Could not run the assessment.');});
+      };
+    });
+  }
+  function bindUploads(){
+    Array.prototype.forEach.call(document.querySelectorAll('.up'),function(btn){
+      btn.onclick=function(){
+        var id=btn.getAttribute('data-id'),code=btn.getAttribute('data-code');
+        var raw=(el('att_'+id)&&el('att_'+id).value||'').trim();
+        if(!raw){toast('Add at least one attendee email.');return;}
+        var attendees=raw.split(/\n+/).map(function(line){var p=line.split(',');return {email:(p[0]||'').trim(),name:(p[1]||'').trim()};}).filter(function(a){return a.email;});
+        if(!attendees.length){toast('No valid emails found.');return;}
+        btn.disabled=true;btn.textContent='Uploading…';
+        fetch('/api/cpd',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'attend',courseCode:code,attendees:attendees,token:token()})})
+          .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+          .then(function(o){ btn.disabled=false;btn.textContent='Add attendees';
+            if(!o.ok){toast((o.j&&o.j.error)||'Could not upload.');return;}
+            el('att_'+id).value='';toast(o.j.added+' attendee'+(o.j.added===1?'':'s')+' added · '+o.j.points+' pts each');
+          }).catch(function(){btn.disabled=false;btn.textContent='Add attendees';toast('Network error.');});
+      };
+    });
+  }
   function bindDecisions(){
     Array.prototype.forEach.call(document.querySelectorAll('.dec'),function(btn){
       btn.onclick=function(){

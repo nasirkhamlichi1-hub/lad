@@ -3,6 +3,7 @@
     { "route": "/", "rewrite": "/portal.html" },
     { "route": "/aviation", "rewrite": "/aviation.html" },
     { "route": "/accreditation", "rewrite": "/accreditation.html" },
+    { "route": "/my-cpd", "rewrite": "/my-cpd.html" },
     { "route": "/portal", "rewrite": "/portal.html" }
   ],
   "navigationFallback": {
