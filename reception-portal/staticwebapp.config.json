@@ -1,6 +1,6 @@
 {
   "routes": [
-    { "route": "/aviation", "redirect": "/aviation/", "statusCode": 301 }
+    { "route": "/aviation", "rewrite": "/aviation.html" }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
