@@ -91,6 +91,13 @@ input.key:focus{outline:none;border-color:var(--green2)}
 .cap-inner .seg-prev{opacity:.45}
 .cap-inner .seg-cur{opacity:1}
 .unmute{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;background:rgba(18,20,24,.74);backdrop-filter:saturate(160%) blur(12px);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:13px 22px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;box-shadow:0 12px 34px rgba(0,0,0,.4)}
+#stage{cursor:pointer}
+.pause-ov{position:absolute;inset:0;z-index:7;display:grid;place-items:center;background:rgba(8,10,14,.58);backdrop-filter:saturate(140%) blur(7px);cursor:pointer}
+.pause-card{text-align:center;color:#fff}
+.pause-bars{display:flex;gap:9px;justify-content:center;margin-bottom:16px}
+.pause-bars i{width:12px;height:42px;border-radius:4px;background:#fff;box-shadow:0 6px 22px rgba(0,0,0,.45)}
+.pause-title{font-size:23px;font-weight:600;letter-spacing:.3px}
+.pause-sub{font-size:13px;opacity:.82;margin-top:5px}
 /* Slide panel — premium branded slide */
 .slide-card{margin-bottom:18px;overflow:visible;border:0;background:transparent;box-shadow:none}
 .slide{position:relative;overflow:hidden;color:#fff;padding:22px 20px 50px;min-height:300px;display:flex;flex-direction:column;border-radius:16px;
@@ -267,6 +274,13 @@ input.key:focus{outline:none;border-color:var(--green2)}
           </svg>
           <div class="cap"><div class="cap-inner" id="caption">Connecting you to your trainer…</div></div>
           <button id="unmuteBtn" class="unmute" style="display:none">Tap to enable sound</button>
+          <div id="pauseOverlay" class="pause-ov" style="display:none">
+            <div class="pause-card">
+              <div class="pause-bars"><i></i><i></i></div>
+              <div class="pause-title">Paused</div>
+              <div class="pause-sub">Tap the screen to resume</div>
+            </div>
+          </div>
         </div>
         <div class="controls">
           <div class="statusline"><span class="livedot"></span> <span id="recLabel">Live session</span></div>
@@ -765,6 +779,7 @@ Your job is not to finish the material — it is to produce a competent learner.
           if(!S.talking)return;                 // only capture while the learner is answering
           S.anamLiveText=text;
           showCaption('<span class="you">You:</span> '+esc(text));
+          scheduleAutoSend();                   // submit shortly after they stop speaking
         });
         if(S.anam&&S.anam.mute)S.anam.mute(true); // start with Anam's mic closed (push-to-talk)
       });
@@ -819,7 +834,7 @@ Your job is not to finish the material — it is to produce a competent learner.
   // Engagement is scored like part of the test: each ~1.5s sample counts as
   // engaged only if attentive, in-frame, and not on a phone.
   function trackEngagement(){
-    if(!S.startedAt||S.ended)return;
+    if(!S.startedAt||S.ended||S.paused)return;  // don't score time while paused / stepped away
     var e=S.eng;e.samples++;
     if(S.perception.attention==='engaged'&&!S.perception.phone&&S.perception.present!==false)e.engaged++;
     if(S.perception.phone)e.phone++;
@@ -832,7 +847,7 @@ Your job is not to finish the material — it is to produce a competent learner.
   // If the learner is disengaged for several samples while the trainer is idle,
   // interrupt and challenge them (the brain is told to stop teaching and refocus them).
   function maybeChallenge(){
-    if(S.ended||S.busy||S.faceSpeaking)return;
+    if(S.ended||S.busy||S.faceSpeaking||S.paused)return;
     var dis=S.perception.phone||S.perception.attention==='away';   // only clear disengagement
     S.disStreak=dis?(S.disStreak+1):0;
     var now=Date.now();
@@ -874,7 +889,9 @@ Your job is not to finish the material — it is to produce a competent learner.
       S.history.push({role:'trainer',text:r.say});
       updateProgress({done:(r.covered||[]).length,total:(S.selected.objectives||[]).length});
       if(r.slide)renderSlide(r.slide);
-      speak(r.say,function(){ if(r.complete){finish();} else {promptAnswer();} });
+      var doSpeak=function(){ speak(r.say,function(){ if(r.complete){finish();} else {promptAnswer();} }); };
+      if(S.paused){ S.pendingSpeak=doSpeak; }   // hold her reply until the learner resumes
+      else doSpeak();
     }).catch(function(e){S.busy=false;toast('Trainer error: '+(e.message||e));promptAnswer();});
   }
   function submitReply(text){
@@ -901,7 +918,7 @@ Your job is not to finish the material — it is to produce a competent learner.
   function beginTalk(){
     if(S.ended||S.busy||S.talking)return;
     interruptTrainer();                       // stop her so you're not talking over each other
-    S.talking=true;S.muted=false;S.accept=true;
+    S.talking=true;S.muted=false;S.accept=true;clearAutoSend();
     S.anamLiveText='';S.lastAnamSubmitted='';sttBuf='';
     if(S.anam&&S.anam.mute)S.anam.mute(false); // open Anam's mic
     if(!S.anamStt&&SR)ensureReco();            // browser fallback
@@ -910,7 +927,7 @@ Your job is not to finish the material — it is to produce a competent learner.
   }
   function endTalk(silent){
     if(!S.talking)return;
-    S.talking=false;S.accept=false;
+    S.talking=false;S.accept=false;clearAutoSend();
     if(S.anam&&S.anam.mute)S.anam.mute(true);  // close Anam's mic so it can't hear her
     var text=((S.anamStt?S.anamLiveText:sttBuf)||'').replace(/\s+/g,' ').trim();
     S.anamLiveText='';sttBuf='';
@@ -918,6 +935,35 @@ Your job is not to finish the material — it is to produce a competent learner.
     if(!silent&&text&&text!==S.lastAnamSubmitted){ S.lastAnamSubmitted=text; submitReply(text); }
   }
   function toggleTalk(){ if(S.talking)endTalk(false); else beginTalk(); }
+  // Auto-send: once you stop speaking for ~1.4s, submit automatically so you
+  // never have to press Send (you still can). Only runs during an open talk turn.
+  function scheduleAutoSend(){ if(S.autoSendT)clearTimeout(S.autoSendT); S.autoSendT=setTimeout(function(){ if(S.talking&&!S.busy)endTalk(false); },1400); }
+  function clearAutoSend(){ if(S.autoSendT){clearTimeout(S.autoSendT);S.autoSendT=null;} }
+
+  // ─── Click the avatar to pause (step away / take a call) without ending ──
+  function togglePause(){ if(S.ended)return; if(S.paused)resumeSession(); else pauseSession(); }
+  function pauseSession(){
+    if(S.paused||S.ended)return;
+    S.paused=true;S.pauseStart=Date.now();
+    if(S.talking)endTalk(true);
+    clearAutoSend();
+    interruptTrainer();                       // stop her + mute her voice
+    el('pauseOverlay').style.display='';
+    el('micBtn').disabled=true;
+    el('recLabel').textContent='Paused';
+    el('micLabel').textContent='Paused — tap the screen to resume';
+  }
+  function resumeSession(){
+    if(!S.paused)return;
+    S.startedAt+=(Date.now()-S.pauseStart); // exclude paused time from the clock
+    S.paused=false;
+    el('pauseOverlay').style.display='none';
+    el('micBtn').disabled=false;
+    el('recLabel').textContent='Live · '+(S.selected?S.selected.title:'');
+    tickTime();
+    if(S.pendingSpeak){ var f=S.pendingSpeak;S.pendingSpeak=null;f(); }
+    else promptAnswer();
+  }
 
   // ─── Speak + karaoke captions (2-3 lines, bottom, paced to speech) ─────
   var capTimer=null;
@@ -987,9 +1033,10 @@ Your job is not to finish the material — it is to produce a competent learner.
           if(rr.isFinal)fin+=rr[0].transcript+' '; else interim+=rr[0].transcript+' ';
         }
         if(fin)sttBuf+=fin;
-        // Show what we're hearing live; submission happens when you press Send.
+        // Show what we're hearing live; auto-submit shortly after you stop.
         var live=(sttBuf+' '+interim).replace(/\s+/g,' ').trim();
         if(live)showCaption('<span class="you">You:</span> '+esc(live));
+        if(sttBuf.trim())scheduleAutoSend();
       };
       r.onerror=function(){};
       r.onend=function(){S.listening=false;S.reco=null;if(!S.ended&&!S.muted)setTimeout(ensureReco,250);};
@@ -1001,6 +1048,12 @@ Your job is not to finish the material — it is to produce a competent learner.
   function pauseListening(){S.accept=false;if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}sttBuf='';}  // keep engine warm, just stop accepting
   function resumeListening(){ if(!S.muted)startListening(); micUI(); }
   el('micBtn').onclick=function(){ toggleTalk(); };
+  // Click the avatar to pause / resume (step away without ending the session).
+  el('stage').addEventListener('click',function(){
+    if(S.ended)return;
+    if(!S.paused){ var av=el('anamVideo'); if(S.face==='anam'&&av&&av.muted)return; }  // first click only enables sound
+    togglePause();
+  });
   // Spacebar = press to answer / press again to send (ignored while typing).
   document.addEventListener('keydown',function(e){
     if(e.code!=='Space'&&e.key!==' ')return;
@@ -1048,7 +1101,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     sendHeartbeat();
   }
   function tickTime(){
-    if(!S.startedAt)return;
+    if(!S.startedAt||S.paused)return;  // clock is frozen while paused
     var sec=Math.floor((Date.now()-S.startedAt)/1000),mins=Math.floor(sec/60),tgt=S.secTarget||10;
     var pct=Math.min(sec/(tgt*60),1)*100, over=mins>tgt;
     el('tlTimeFill').style.width=pct+'%';
@@ -1057,7 +1110,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     el('tlClock').classList.toggle('over',over);
   }
   function sendHeartbeat(extra){
-    if(!AUTH.token||!S.selected||S.ended)return;
+    if(!AUTH.token||!S.selected||S.ended||S.paused)return;
     var live={courseId:S.selected.courseId||'',sectionId:S.selected.id,sectionTitle:S.selected.title,
       sectionIndex:(S.secIndex||0)+1,sectionTotal:S.secTotal||1,
       objDone:S.lastCovered||0,objTotal:(S.selected.objectives||[]).length||0,
