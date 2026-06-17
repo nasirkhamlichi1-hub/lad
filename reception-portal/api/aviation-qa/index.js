@@ -49,9 +49,11 @@ function json(context, status, body) {
   context.res = { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }, body };
 }
 
+const aimodel = require('../_aimodel');
+
 module.exports = async function (context, req) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return json(context, 503, { error: 'not_configured', message: "Maryam isn't switched on yet — an administrator needs to add the API key." });
+  if (!apiKey && !aimodel.configured()) return json(context, 503, { error: 'not_configured', message: "Maryam isn't switched on yet — an administrator needs to add the AiModel or API key." });
 
   const body = req.body || {};
   let messages = Array.isArray(body.messages) ? body.messages : (typeof body.question === 'string' ? [{ role: 'user', content: body.question }] : null);
@@ -61,6 +63,13 @@ module.exports = async function (context, req) {
     .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
     .slice(-12).map(m => ({ role: m.role, content: m.content.slice(0, 4000) }));
   if (!clean.length || clean[clean.length - 1].role !== 'user') return json(context, 400, { error: 'bad_request', message: 'The last message must be from the user.' });
+
+  // Maryam runs on the AiModel when configured; Claude is the fallback.
+  if (aimodel.configured()) {
+    const alt = await aimodel.callAiModel({ system: SYSTEM, messages: clean, maxTokens: 700, log: m => context.log.error(m) });
+    if (alt) return json(context, 200, { answer: alt });
+  }
+  if (!apiKey) return json(context, 502, { error: 'upstream', message: "Maryam couldn't reach the assistant just now. Please try again in a moment." });
 
   const models = [MODEL, 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001', 'claude-opus-4-8'].filter((m, i, a) => a.indexOf(m) === i);
   for (const model of models) {

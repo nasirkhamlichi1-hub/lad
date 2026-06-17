@@ -51,8 +51,9 @@ module.exports = async function (context, req) {
   };
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return respond(503, { error: "not_configured", message: "Maryam isn't set up yet — an administrator needs to add the ANTHROPIC_API_KEY." });
+  const aimodel = require('../_aimodel');
+  if (!apiKey && !aimodel.configured()) {
+    return respond(503, { error: "not_configured", message: "Maryam isn't set up yet — an administrator needs to add the AiModel or ANTHROPIC_API_KEY." });
   }
 
   const body = req.body || {};
@@ -73,6 +74,13 @@ module.exports = async function (context, req) {
   if (clean.length === 0 || clean[clean.length - 1].role !== "user") {
     return respond(400, { error: "bad_request", message: "The last message must be from the user." });
   }
+
+  // Maryam runs on the AiModel when configured; Claude is the fallback.
+  if (aimodel.configured()) {
+    const alt = await aimodel.callAiModel({ system: SYSTEM, messages: clean, maxTokens: 700, log: m => context.log.error(m) });
+    if (alt) return respond(200, { answer: alt });
+  }
+  if (!apiKey) return respond(502, { error: "upstream", message: "Maryam couldn't reach the assistant just now. Please try again in a moment." });
 
   try {
     const r = await fetch(ANTHROPIC_URL, {
