@@ -1185,6 +1185,10 @@ Your job is not to finish the material — it is to produce a competent learner.
     tickTime();
     if(S.tlTimer)clearInterval(S.tlTimer);
     S.tlTimer=setInterval(function(){tickTime();sendHeartbeat();},5000);
+    // Auto-save the resume state every ~20s so a reload/crash resumes the
+    // session instead of restarting it from the beginning.
+    if(S.saveTimer)clearInterval(S.saveTimer);
+    S.saveTimer=setInterval(autoSaveResume,20000);
     sendHeartbeat();
   }
   function tickTime(){
@@ -1223,7 +1227,15 @@ Your job is not to finish the material — it is to produce a competent learner.
     sendHeartbeat();
   }
 
-  function teardown(){S.ended=true;pauseListening();stopReco();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);if(S.tlTimer)clearInterval(S.tlTimer);
+  function autoSaveResume(){
+    if(!AUTH.token||!S.selected||S.ended||S.finished||(S.history||[]).length<2)return;
+    try{fetch('/api/trainer-progress',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},
+      body:JSON.stringify({token:AUTH.token,name:AUTH.name,result:{
+        courseId:S.selected.courseId||'general',lessonId:S.selected.id,lessonTitle:S.selected.title,completed:false,
+        resume:{history:(S.history||[]).slice(-60),covered:S.lastCovered||0,total:(S.selected.objectives||[]).length||0,
+                elapsedSec:S.startedAt?Math.round((Date.now()-S.startedAt)/1000):0,secIndex:S.secIndex||0}}})});}catch(e){}
+  }
+  function teardown(){S.ended=true;pauseListening();stopReco();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);if(S.tlTimer)clearInterval(S.tlTimer);if(S.saveTimer)clearInterval(S.saveTimer);
     // Drop this attendee off the admin's live list.
     if(AUTH.token)try{fetch('/api/trainer-live',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({token:AUTH.token,live:{ended:true}})});}catch(e){}
     if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
