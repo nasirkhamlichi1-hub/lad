@@ -40,7 +40,7 @@ module.exports = {
   nodeEnv:  process.env.NODE_ENV || 'development',
   isDev:    (process.env.NODE_ENV || 'development') === 'development',
   port:     parseInt(process.env.PORT || '4000', 10),
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:8080',
+  corsOrigin: process.env.CORS_ORIGIN || process.env.CORS_ORIGINS || 'http://localhost:8080',
   publicApiBase: process.env.PUBLIC_API_BASE || 'http://localhost:4000',
 
   databaseUrl: process.env.DATABASE_URL || './data/lad-clpd.sqlite',
