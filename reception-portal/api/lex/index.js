@@ -78,7 +78,7 @@ module.exports = async function (context, req) {
   // Maryam runs on the AiModel when configured; Claude is the fallback.
   if (aimodel.configured()) {
     const alt = await aimodel.callAiModel({ system: SYSTEM, messages: clean, maxTokens: 700, log: m => context.log.error(m) });
-    if (alt) return respond(200, { answer: alt });
+    if (alt) return respond(200, { answer: alt, engine: 'aimodel' });
   }
   if (!apiKey) return respond(502, { error: "upstream", message: "Maryam couldn't reach the assistant just now. Please try again in a moment." });
 
@@ -114,7 +114,7 @@ module.exports = async function (context, req) {
       .join("\n")
       .trim();
 
-    return respond(200, { answer: answer || "Sorry, I didn't catch that — could you rephrase?" });
+    return respond(200, { answer: answer || "Sorry, I didn't catch that — could you rephrase?", engine: "claude" });
   } catch (err) {
     context.log.error("Lex function error", err);
     return respond(500, { error: "server", message: "Something went wrong. Please try again." });

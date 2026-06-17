@@ -67,7 +67,7 @@ module.exports = async function (context, req) {
   // Maryam runs on the AiModel when configured; Claude is the fallback.
   if (aimodel.configured()) {
     const alt = await aimodel.callAiModel({ system: SYSTEM, messages: clean, maxTokens: 700, log: m => context.log.error(m) });
-    if (alt) return json(context, 200, { answer: alt });
+    if (alt) return json(context, 200, { answer: alt, engine: 'aimodel' });
   }
   if (!apiKey) return json(context, 502, { error: 'upstream', message: "Maryam couldn't reach the assistant just now. Please try again in a moment." });
 
@@ -83,7 +83,7 @@ module.exports = async function (context, req) {
         const data = await r.json();
         if (data.stop_reason === 'refusal') return json(context, 200, { answer: "I can't help with that one — let's keep to aviation law within this programme." });
         const answer = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
-        return json(context, 200, { answer: answer || "Sorry, I didn't catch that — could you rephrase?" });
+        return json(context, 200, { answer: answer || "Sorry, I didn't catch that — could you rephrase?", engine: 'claude' });
       }
       if (r.status === 401 || r.status === 403) break;
     } catch (e) { context.log.error('aviation-qa upstream', e && e.message); }

@@ -118,6 +118,7 @@ select{padding:6px 8px;border:1.5px solid var(--line2);border-radius:8px;font-si
       <button class="btn btn-pri" id="aBtn" style="margin-top:14px;width:100%">Sign in</button>
     </div>
     <div id="adminConsole" style="display:none">
+      <div id="aiStat" style="font-size:12px;font-weight:600;margin-bottom:12px;color:var(--slate3)"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><b>People</b><span class="muted" id="uCount" style="font-size:12px"></span><span class="spacer" style="flex:1"></span><a class="muted" id="aSignout" style="font-size:12px;cursor:pointer">Sign out</a></div>
       <div style="overflow:auto"><table id="uTable"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Courses</th></tr></thead><tbody></tbody></table></div>
       <div class="add-row"><div><label>Enrol / update by email</label><input id="newEmail" type="email" placeholder="person@firm.ae"/></div>
@@ -182,8 +183,17 @@ select{padding:6px 8px;border:1.5px solid var(--line2);border-radius:8px;font-si
     // verify token is an admin
     fetch('/api/me?token='+encodeURIComponent(TOKEN)).then(function(r){return r.ok?r.json():null;}).then(function(j){
       if(!j||j.role!=='admin'){ el('adminLogin').style.display='';el('adminConsole').style.display='none'; if(j){el('aErr').textContent='That account is not an administrator.';el('aErr').style.display='block';} return; }
-      el('adminLogin').style.display='none';el('adminConsole').style.display='';loadUsers();
+      el('adminLogin').style.display='none';el('adminConsole').style.display='';loadUsers();aiStatus();
     }).catch(function(){});
+  }
+  function aiStatus(){
+    var box=el('aiStat'); if(!box)return; box.textContent='Checking AI model…';box.style.color='var(--slate3)';
+    fetch('/api/ai-status?token='+encodeURIComponent(TOKEN)).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      if(!j){box.textContent='';return;}
+      if(j.configured&&j.ok){ box.textContent='● AiModel connected — Maryam is running on it.';box.style.color='var(--green2)'; }
+      else if(j.configured){ box.textContent='● AiModel keys found but the test call failed — check the deployment name / endpoint.';box.style.color='var(--red)'; }
+      else { box.textContent='● No AiModel keys detected — Maryam is on Claude until they’re added.';box.style.color='var(--amber)'; }
+    }).catch(function(){box.textContent='';});
   }
   function roleLabel(r){return {lawyer:'Lawyer',staff:'LAD Staff Training',oversight:'LAD Admin (oversight)',admin:'CLPD Admin'}[r]||r;}
   function loadUsers(){
