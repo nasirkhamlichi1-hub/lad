@@ -277,15 +277,21 @@ function getAggregateStats() {
   const deadline = new Date(Date.UTC(today.getUTCFullYear(), 11, 31));
   const daysLeft = Math.max(0, Math.ceil((deadline - today) / (1000*60*60*24)));
 
+  const nonPractising = db.prepare(`SELECT COUNT(*) AS n FROM lawyers WHERE status != 'active'`).get().n;
+  const pct = Math.round(compliance * 10) / 10;
+
   return {
     practitioners: totalLawyers,
+    lawyers: totalLawyers,          // alias the oversight KPI strip reads
+    non_practising: nonPractising,
     firms: totalFirms,
     providers: totalProviders,
     active_courses: totalCourses,
     compliant,
     at_risk: atRisk,
     critical,
-    compliance_pct: Math.round(compliance * 10) / 10,
+    compliance_pct: pct,
+    overall_pct: pct,               // alias the oversight KPI strip reads
     days_to_deadline: daysLeft,
     year,
   };
