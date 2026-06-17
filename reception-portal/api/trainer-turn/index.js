@@ -117,7 +117,8 @@ function learnerProfile(learner) {
   if (learner.returning) parts.push('This learner is RETURNING — they have trained with you before; welcome them back warmly.');
   if (learner.retakingThisLesson) parts.push('They are RE-TAKING this exact section (prior best engagement ' + (parseInt(learner.priorEngagement, 10) || 0) + '%) — acknowledge it and help them do better this time.');
   if (Array.isArray(learner.completedInCourse) && learner.completedInCourse.length) parts.push('Already completed in this course: ' + learner.completedInCourse.slice(0, 8).map(String).join('; ') + ' — connect today to what they already know.');
-  if (learner.weakAreas && String(learner.weakAreas).trim()) parts.push('Known weaker areas to reinforce: ' + String(learner.weakAreas).slice(0, 200) + '.');
+  const weak = (learner.weakAreas && String(learner.weakAreas).trim()) ? String(learner.weakAreas).slice(0, 240) : '';
+  if (weak) parts.push('Weaker prior areas: ' + weak + '.\nSPACED REVIEW (do this): right after your greeting/bridge and BEFORE any new material, run ONE quick retrieval question on a weak area above to refresh it (just one), briefly confirm or correct, then move into today\'s objectives. Keep it to a single exchange — do not re-teach the whole topic.');
   if (!parts.length) return '';
   return ['────────  LEARNER PROFILE (personalise to this person)  ────────', ...parts].join('\n');
 }
