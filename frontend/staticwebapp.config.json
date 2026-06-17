@@ -12,8 +12,8 @@
     { "route": "/change-password", "rewrite": "/change-password.html" },
     { "route": "/firm-capabilities", "rewrite": "/firm-capabilities.html" },
     { "route": "/provider", "rewrite": "/provider-portal.html" },
-    { "route": "/ladstaff", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/", "statusCode": 302 },
-    { "route": "/ladstaff/*", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/", "statusCode": 302 }
+    { "route": "/ladstaff", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/staff", "statusCode": 302 },
+    { "route": "/ladstaff/*", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/staff", "statusCode": 302 }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
