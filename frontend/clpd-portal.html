@@ -635,7 +635,7 @@ function applyLADConfig() {
       <div class="dr-sec">Resources</div>
       <a class="dr-link" onclick="showPage('faq');closeDrawer()"> FAQs</a>
       <a class="dr-link" onclick="window.location.href='provider-portal.html';closeDrawer()"> Accreditation</a>
-      <a class="dr-link" href="https://nice-ocean-0a45eff10.7.azurestaticapps.net/" target="_blank" rel="noopener" onclick="closeDrawer()"> LAD Staff Training ↗</a>
+      <a class="dr-link" href="/ladstaff" target="_blank" rel="noopener" onclick="closeDrawer()"> LAD Staff Training ↗</a>
       <a class="dr-link" onclick="showPage('advocates');closeDrawer()">🇦🇪 Advocates Courses</a>
       <a class="dr-link" onclick="showPage('probono');closeDrawer()"> Pro Bono</a>
       <a class="dr-link" onclick="showPage('exemption');closeDrawer()"> Exemption/Extension</a>
@@ -1355,7 +1355,7 @@ ladCarInit();
         <!-- Sign in entry (one button — login decides which portal opens) -->
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <a style="font-family:var(--mono);font-size:9.5px;color:rgba(255,255,255,.7);cursor:pointer;text-decoration:none;border:1px solid rgba(255,255,255,.18);padding:4px 11px;border-radius:5px;letter-spacing:.4px" onclick="openAuth('login')">SIGN IN</a>
-          <a style="font-family:var(--mono);font-size:9.5px;color:rgba(255,255,255,.7);cursor:pointer;text-decoration:none;border:1px solid rgba(255,255,255,.18);padding:4px 11px;border-radius:5px;letter-spacing:.4px" href="https://nice-ocean-0a45eff10.7.azurestaticapps.net/" target="_blank" rel="noopener">STAFF TRAINING</a>
+          <a style="font-family:var(--mono);font-size:9.5px;color:rgba(255,255,255,.7);cursor:pointer;text-decoration:none;border:1px solid rgba(255,255,255,.18);padding:4px 11px;border-radius:5px;letter-spacing:.4px" href="/ladstaff" target="_blank" rel="noopener">STAFF TRAINING</a>
           <a style="font-family:var(--mono);font-size:9.5px;color:rgba(255,255,255,.55);cursor:pointer;text-decoration:none;border:1px solid rgba(255,255,255,.12);padding:4px 11px;border-radius:5px;letter-spacing:.4px" href="provider-portal.html">PROVIDER APPLICATION</a>
         </div>
         <div class="footer-pay">
@@ -1807,7 +1807,7 @@ ladCarInit();
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold-l)" stroke-width="1.7" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
               <div><div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.8);margin-bottom:2px">Accredited providers</div><div style="font-size:11.5px;color:rgba(255,255,255,.4);line-height:1.5">Submit attendance, manage accreditation status.</div></div>
             </div>
-            <a href="https://nice-ocean-0a45eff10.7.azurestaticapps.net/" target="_blank" rel="noopener" style="padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;display:flex;gap:10px;text-decoration:none">
+            <a href="/ladstaff" target="_blank" rel="noopener" style="padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;display:flex;gap:10px;text-decoration:none">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--purple-l)" stroke-width="1.7" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
               <div><div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.8);margin-bottom:2px">LAD staff training <span style="font-size:9px;color:rgba(255,255,255,.4)">↗</span></div><div style="font-size:11.5px;color:rgba(255,255,255,.4);line-height:1.5">Knowledge hub &amp; live AI trainer for LAD service staff.</div></div>
             </a>
@@ -2229,7 +2229,7 @@ function goAuthRegister() {
 
 // The LAD Staff Training hub (knowledge base + live AI trainer) is deployed
 // on its own Static Web App. This is the sixth workspace of the super portal.
-const STAFF_HUB_URL = 'https://nice-ocean-0a45eff10.7.azurestaticapps.net/';
+const STAFF_HUB_URL = '/ladstaff';
 
 // Map any backend role to its dashboard URL.
 // Single source of truth — mirrored in index.html and router.html so every
