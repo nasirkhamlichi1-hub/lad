@@ -150,6 +150,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
 .actions{display:flex;gap:10px}
 .talk-hint{text-align:center;font-size:12.5px;color:var(--slate2);font-weight:500;min-height:1.2em}
 .perc-dock{padding:22px 0 60px}
+.perc-dock .timeline{margin-bottom:16px}
 .perc-dock .muted-h{font-size:11.5px;color:var(--slate3);font-weight:500;margin-left:auto}
 .perc-dock .perc-list{flex-direction:row;flex-wrap:wrap}
 .perc-dock .perc{flex:1;min-width:150px}
@@ -249,23 +250,6 @@ input.key:focus{outline:none;border-color:var(--green2)}
 
   <section id="session" class="stage-wrap">
     <div class="wrap session-main">
-      <div class="timeline" id="timeline" style="display:none">
-        <div class="tl-row">
-          <span class="tl-label" id="tlSecLabel">Session</span>
-          <div class="tl-steps" id="tlSections"></div>
-          <span class="tl-count" id="tlSecCount">0/0</span>
-        </div>
-        <div class="tl-row">
-          <span class="tl-label">This section</span>
-          <div class="tl-steps" id="tlSteps"></div>
-          <span class="tl-count" id="tlCount">0/0</span>
-        </div>
-        <div class="tl-row">
-          <span class="tl-label">Time</span>
-          <div class="tl-time-track" id="tlTimeTrack"><i id="tlTimeFill"></i></div>
-          <span class="tl-clock" id="tlClock">0 / 0 min</span>
-        </div>
-      </div>
       <div class="grid">
       <div class="col-main">
         <div class="stage" id="stage">
@@ -309,6 +293,23 @@ input.key:focus{outline:none;border-color:var(--green2)}
       </div>
     </div>
     <div class="wrap perc-dock">
+      <div class="timeline" id="timeline" style="display:none">
+        <div class="tl-row">
+          <span class="tl-label" id="tlSecLabel">Session</span>
+          <div class="tl-steps" id="tlSections"></div>
+          <span class="tl-count" id="tlSecCount">0/0</span>
+        </div>
+        <div class="tl-row">
+          <span class="tl-label">This section</span>
+          <div class="tl-steps" id="tlSteps"></div>
+          <span class="tl-count" id="tlCount">0/0</span>
+        </div>
+        <div class="tl-row">
+          <span class="tl-label">Time</span>
+          <div class="tl-time-track" id="tlTimeTrack"><i id="tlTimeFill"></i></div>
+          <span class="tl-clock" id="tlClock">0 / 0 min</span>
+        </div>
+      </div>
       <div class="card">
         <div class="card-h"><h3>Engagement &amp; what your trainer sees</h3><span class="muted-h">Monitored during the session — you don't need to watch this</span></div>
         <div class="card-b">
@@ -650,7 +651,15 @@ Your job is not to finish the material — it is to produce a competent learner.
     startTimeline();
     if(S.resuming)updateProgress({done:S.lastCovered||0,total:(S.selected.objectives||[]).length||0});
     startCamera();
-    initAnam().catch(function(e){
+    // Try the photoreal face, retrying once on a transient connection failure
+    // before dropping to the animated face.
+    function connectFace(attempt){
+      return initAnam().catch(function(e){
+        if(attempt<2){ el('caption').innerHTML='<b>Trainer:</b> reconnecting the photoreal face…'; return new Promise(function(res){setTimeout(res,1300);}).then(function(){return connectFace(attempt+1);}); }
+        throw e;
+      });
+    }
+    connectFace(1).catch(function(e){
       var msg=(e&&(e.message||e.toString()))||'unknown error';
       if(window.console&&console.error)console.error('[Anam initAnam failed]',e);
       S.face='stylised';showStylised();
