@@ -824,6 +824,9 @@ Your job is not to finish the material — it is to produce a competent learner.
           showCaption('<span class="you">You:</span> '+esc(text));
           scheduleAutoSend();                   // submit shortly after they stop speaking
         });
+        // Start with Anam's mic CLOSED — opened only while you hold a Talk turn,
+        // so room conversation can't interrupt her.
+        if(S.anam&&S.anam.mute)S.anam.mute(true);
       });
       });
     });
@@ -972,9 +975,9 @@ Your job is not to finish the material — it is to produce a competent learner.
     interruptTrainer();                       // stop her so you're not talking over each other
     S.talking=true;S.muted=false;S.accept=true;clearAutoSend();
     S.anamLiveText='';S.lastAnamSubmitted='';sttBuf='';
-    // Anam's mic stays live the whole session (reliable on Chrome AND Safari);
-    // we simply start accepting what it hears now. Only fall back to the browser
-    // engine when there's no Anam stream at all.
+    // Open Anam's mic ONLY now (push-to-talk). Closed otherwise so room
+    // conversation never reaches Anam and interrupts her mid-sentence.
+    if(S.anam&&S.anam.mute)S.anam.mute(false);
     if(!S.anam&&SR)ensureReco();
     el('micLabel').textContent='Listening — speak now';
     micUI();
@@ -982,6 +985,7 @@ Your job is not to finish the material — it is to produce a competent learner.
   function endTalk(silent){
     if(!S.talking)return;
     S.talking=false;S.accept=false;clearAutoSend();
+    if(S.anam&&S.anam.mute)S.anam.mute(true);   // close Anam's mic again
     var text=((S.anam?S.anamLiveText:sttBuf)||'').replace(/\s+/g,' ').trim();
     S.anamLiveText='';sttBuf='';
     micUI();
@@ -1033,11 +1037,14 @@ Your job is not to finish the material — it is to produce a competent learner.
     parts.forEach(function(p){p=p.trim();if(!p)return;if((cur+' '+p).trim().length>85){if(cur)segs.push(cur.trim());cur=p;}else{cur=(cur?cur+' ':'')+p;}});
     if(cur)segs.push(cur.trim());
     if(!segs.length)segs=[String(text)];
-    var totalLen=segs.reduce(function(a,s){return a+s.length;},0)||1,i=0;
+    var totalLen=segs.reduce(function(a,s){return a+s.length;},0)||1;
+    // She pauses briefly between sentences; reserve that time per segment so the
+    // captions don't drift ahead at every full stop.
+    var pausePer=260, speakMs=Math.max(800,totalMs-pausePer*segs.length), i=0;
     (function step(){
       if(S.ended)return;
       el('caption').innerHTML='<span class="seg-cur">'+esc(segs[i])+'</span>';  // one phrase at a time
-      var dur=Math.max(1000,Math.round(totalMs*(segs[i].length/totalLen)));i++;
+      var dur=Math.max(900,Math.round(speakMs*(segs[i].length/totalLen))+pausePer);i++;
       if(i<segs.length)capTimer=setTimeout(step,dur);
     })();
   }
