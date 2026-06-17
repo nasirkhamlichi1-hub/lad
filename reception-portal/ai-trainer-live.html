@@ -578,12 +578,16 @@ Your job is not to finish the material — it is to produce a competent learner.
     LESSONS.forEach(function(L){
       var d=document.createElement('div');d.className='lesson'+(S.selected&&S.selected.id===L.id?' sel':'');
       var meta=[];if(L.duration_min)meta.push('<span class="tag">~'+L.duration_min+' min</span>');
-      if(L.cpd_points)meta.push('<span class="tag">'+L.cpd_points+' CPD</span>');
       if((L.objectives||[]).length)meta.push('<span class="tag">'+L.objectives.length+(L.mode==='simulation'?' decisions':' key elements')+'</span>');
       if(L.mode==='simulation')meta.unshift('<span class="tag" style="background:#eef4fb;color:#1a4d80;border-color:#cfe0f0">⚖ Simulation</span>');
+      // Completion tag — how far through this part the learner is.
       var pr=AUTH.progress&&AUTH.progress[(L.courseId||'general')+'::'+L.id];
-      if(pr&&pr.resume&&pr.resume.history&&pr.resume.history.length)meta.unshift('<span class="tag" style="background:#fef3e2;color:#92540a;border-color:#f0d9b0">⏸ Resume where you left off</span>');
-      if(pr&&pr.completed)meta.unshift('<span class="tag" style="background:var(--green-bg);color:var(--green-d);border-color:var(--green-border)">✓ '+(pr.pass?'Passed':'Completed')+' · '+(pr.bestEngagement||0)+'% eng</span>');
+      var total=(L.objectives||[]).length||0, pct=null;
+      if(pr&&pr.completed){ pct=100; }
+      else if(pr&&pr.resume&&pr.resume.total){ pct=Math.min(100,Math.round((pr.resume.covered||0)/pr.resume.total*100)); }
+      else if(pr&&pr.resume&&total){ pct=Math.min(100,Math.round((pr.resume.covered||0)/total*100)); }
+      if(pct===100)meta.unshift('<span class="tag" style="background:var(--green-bg);color:var(--green-d);border-color:var(--green-border)">✓ 100% complete</span>');
+      else if(pct!=null)meta.unshift('<span class="tag" style="background:#fef3e2;color:#92540a;border-color:#f0d9b0">'+pct+'% complete · resume</span>');
       d.innerHTML='<div class="lesson-t">'+esc(L.title)+'</div>'+(L.summary?'<div class="lesson-s">'+esc(L.summary)+'</div>':'')+'<div class="lesson-m">'+meta.join('')+'</div>';
       d.onclick=function(){S.selected=L;renderLessons();refreshStart();};
       c.appendChild(d);
