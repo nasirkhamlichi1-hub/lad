@@ -138,9 +138,9 @@ input.key:focus{outline:none;border-color:var(--green2)}
 .tl-clock.over{color:var(--red)}
 @media(max-width:620px){.tl-label{width:64px}.tl-clock{width:74px}}
 /* ── Single-viewport session layout: video + controls left, slide + Talk right ── */
-.session-main{display:flex;flex-direction:column;height:calc(100dvh - 64px);padding:10px 0 12px;gap:10px;min-height:0}
-#session .grid{flex:1;min-height:0;grid-template-columns:1fr 380px;gap:18px;padding:0;align-items:stretch}
-.col-main{display:flex;flex-direction:column;min-height:0;gap:10px}
+.session-main{display:flex;flex-direction:column;height:calc(100dvh - 64px);max-width:1500px;padding:6px 0 8px;gap:8px;min-height:0}
+#session .grid{flex:1;min-height:0;grid-template-columns:1fr 336px;gap:16px;padding:0;align-items:stretch}
+.col-main{display:flex;flex-direction:column;min-height:0;gap:7px}
 .col-side{display:flex;flex-direction:column;min-height:0;gap:12px}
 #session .stage{flex:1;min-height:0;aspect-ratio:auto}            /* fill leftover vertical space */
 #session .slide-card{margin-bottom:0;flex:1;min-height:0;display:flex}
@@ -148,6 +148,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
 .statusline{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--slate2);font-weight:600}
 .livedot{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 rgba(192,57,43,.5);animation:pulse 2s infinite}
 .actions{display:flex;gap:10px}
+.actions .btn-soft{padding:9px 16px}
 .talk-hint{text-align:center;font-size:12.5px;color:var(--slate2);font-weight:500;min-height:1.2em}
 .perc-dock{padding:22px 0 60px}
 .perc-dock .timeline{margin-bottom:16px}
