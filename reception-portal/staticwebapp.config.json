@@ -1,11 +1,13 @@
 {
   "routes": [
-    { "route": "/", "rewrite": "/portal.html" },
+    { "route": "/", "redirect": "https://icy-mud-07d00dc03.7.azurestaticapps.net/clpd-portal.html", "statusCode": 302 },
+    { "route": "/portal", "redirect": "https://icy-mud-07d00dc03.7.azurestaticapps.net/clpd-portal.html", "statusCode": 302 },
+    { "route": "/staff", "rewrite": "/index.html" },
+    { "route": "/ladstaff", "rewrite": "/index.html" },
     { "route": "/aviation", "rewrite": "/aviation.html" },
     { "route": "/accreditation", "rewrite": "/accreditation.html" },
     { "route": "/my-cpd", "rewrite": "/my-cpd.html" },
-    { "route": "/credits", "rewrite": "/credits.html" },
-    { "route": "/portal", "rewrite": "/portal.html" }
+    { "route": "/credits", "rewrite": "/credits.html" }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
