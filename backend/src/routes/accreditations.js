@@ -174,8 +174,20 @@ router.post('/', optionalAuth, (req, res) => {
 });
 
 // ─── Queue + counts ──────────────────────────────────────────────────
+// Reviewers get the full queue; everyone else gets their OWN submissions
+// (so providers/firms can track what they applied for).
 router.get('/', requireAuth, (req, res) => {
-  if (!isReviewer(req.user)) return res.status(403).json({ error: 'Reviewers only' });
+  if (!isReviewer(req.user)) {
+    const email = (req.user.email || '').toLowerCase();
+    const rows = db.prepare(
+      `SELECT * FROM accreditations
+       WHERE LOWER(submitted_by_email) = ? OR payload LIKE ?
+       ORDER BY submitted_at DESC`
+    ).all(email, '%"applicantEmail":"' + email + '"%').map(rowOut);
+    const counts = { pending: 0, approved: 0, rejected: 0, returned: 0 };
+    rows.forEach((r) => { if (counts[r.status] !== undefined) counts[r.status]++; });
+    return res.json({ rows, counts, mine: true });
+  }
   const { status, reviewer, search } = req.query;
   const limit = Math.min(500, parseInt(req.query.limit || '200', 10) || 200);
   let sql = 'SELECT * FROM accreditations WHERE 1=1';
