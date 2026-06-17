@@ -40,9 +40,27 @@ function uniqueRef(proposed) {
   for (let i = 0; i < 25; i++) { const r = newRef('LAD-'); if (!db.prepare('SELECT 1 FROM accreditations WHERE ref = ?').get(r)) return r; }
   return 'LAD-' + Date.now().toString(36).toUpperCase();
 }
-function genCode() {
-  for (let i = 0; i < 25; i++) { const c = rid('CLPD-'); if (!db.prepare('SELECT 1 FROM accreditations WHERE accreditation_code = ?').get(c)) return c; }
-  return 'CLPD-' + Date.now().toString(36).toUpperCase();
+// Course code methodology: <3 letters of the firm/provider name><2-digit
+// year><2-digit sequence for that firm+year>. E.g. Galadari, 2026, 1st course
+// -> "GAL2601". Sequence increments per firm-prefix + year.
+function genCode(row) {
+  const p = parse(row.payload, {});
+  const nameRaw = (p.providerName || p.firm || p.orgName || row.submitted_by || 'LAD').toString();
+  const letters = (nameRaw.replace(/[^A-Za-z]/g, '') || 'LAD').toUpperCase();
+  const prefix = (letters.slice(0, 3) + 'XXX').slice(0, 3);
+  const yy = String(new Date().getFullYear()).slice(-2);
+  const base = prefix + yy;
+  let max = 0;
+  for (const r of db.prepare('SELECT accreditation_code c FROM accreditations WHERE accreditation_code LIKE ?').all(base + '%')) {
+    const m = String(r.c).slice(base.length).match(/^(\d+)/);
+    if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
+  }
+  let seq = max + 1;
+  let code = base + String(seq).padStart(2, '0');
+  while (db.prepare('SELECT 1 FROM accreditations WHERE accreditation_code = ?').get(code)) {
+    seq += 1; code = base + String(seq).padStart(2, '0');
+  }
+  return code;
 }
 function emailOf(p) { return String((p && (p.applicantEmail || p.contactEmail || p.submittedByEmail)) || '').toLowerCase() || null; }
 function ownsRow(u, row) {
@@ -222,7 +240,7 @@ router.patch('/:ref', requireAuth, (req, res) => {
     if (!['pending', 'approved', 'rejected', 'returned'].includes(b.status)) return res.status(400).json({ error: 'Invalid status' });
     sets.push('status = ?', 'reviewed_by = ?', 'reviewed_at = ?');
     args.push(b.status, me, now);
-    if (b.status === 'approved' && !courseCode) { courseCode = genCode(); sets.push('accreditation_code = ?'); args.push(courseCode); }
+    if (b.status === 'approved' && !courseCode) { courseCode = genCode(row); sets.push('accreditation_code = ?'); args.push(courseCode); }
   }
   if (!sets.length) return res.status(400).json({ error: 'No updates supplied' });
   sets.push('updated_at = ?'); args.push(now, row.ref);
