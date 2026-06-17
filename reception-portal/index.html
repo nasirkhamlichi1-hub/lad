@@ -438,6 +438,9 @@ body.unlocked .lex-fab{display:inline-flex}
 @media(max-width:860px){
   .lad-brand,.lad-util,.nav-links .nav-link{display:none}
   .nav-links{margin-left:auto}
+  /* Keep the AI Trainer link visible on mobile as a tappable chip */
+  .nav-links .nav-trainer{display:inline-flex !important;align-items:center;gap:6px;background:var(--gold);color:#fff;font-weight:700;padding:9px 13px;border-radius:8px}
+  .nav-links .nav-trainer:hover{background:var(--gold2)}
   .charter-grid,.vmv{grid-template-columns:1fr}
   .persona-grid{grid-template-columns:1fr 1fr}
   .intent-grid{grid-template-columns:1fr 1fr}
@@ -527,7 +530,7 @@ body.unlocked .lex-fab{display:inline-flex}
       <div class="lad-brand-ar">منصة سفير الخدمة</div>
     </div>
     <div class="nav-links">
-      <a class="nav-link" href="ai-trainer-live.html" style="font-weight:700" title="Live 1-2-1 AI legal training">🎓 AI Trainer</a>
+      <a class="nav-link nav-trainer" href="ai-trainer-live.html" style="font-weight:700" title="Live 1-2-1 AI legal training">🎓 AI Trainer</a>
       <a class="nav-link" href="#finder">Find a service</a>
       <a class="nav-link" href="#charter">Charter</a>
       <a class="nav-link" href="#services">Services</a>
