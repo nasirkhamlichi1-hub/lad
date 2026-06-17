@@ -367,7 +367,8 @@ input.key:focus{outline:none;border-color:var(--green2)}
   <div class="score" id="resScore">—</div>
   <div id="resVerdict" class="verdict">—</div>
   <p id="resMsg" style="font-size:14px;color:var(--slate);margin:16px 0 20px;line-height:1.5"></p>
-  <button class="btn btn-pri btn-block" onclick="location.reload()">Done</button>
+  <button id="nextSecBtn" class="btn btn-pri btn-block" style="display:none;margin-bottom:10px">Continue →</button>
+  <button id="doneBtn" class="btn btn-soft btn-block" onclick="location.reload()">Back to all sections</button>
 </div></div>
 
 <script>
@@ -616,7 +617,7 @@ Your job is not to finish the material — it is to produce a competent learner.
       return out;
     });
   }
-  loadCourses().then(function(list){ if(list&&list.length){ LESSONS=list; } renderLessons(); }).catch(function(){ renderLessons(); });
+  loadCourses().then(function(list){ if(list&&list.length){ LESSONS=list; } renderLessons(); maybeAutostart(); }).catch(function(){ renderLessons(); });
   refreshStart();
   bootAuth();
 
@@ -631,7 +632,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     el('authToggle').textContent=reg?'Sign in':'Create an account';
     setAuthErr('');
   }
-  function onSignedIn(){ el('whoami').textContent='👤 '+(AUTH.name||AUTH.email); el('whoami').style.display=''; el('logoutBtn').style.display=''; showSetup(); loadProgress(); loadAiCourses(); }
+  function onSignedIn(){ el('whoami').textContent='👤 '+(AUTH.name||AUTH.email); el('whoami').style.display=''; el('logoutBtn').style.display=''; showSetup(); loadProgress(); loadAiCourses(); maybeAutostart(); }
   // Merge AI-built courses (admin-created from uploaded decks) into the lesson list.
   function loadAiCourses(){
     if(!AUTH.token)return;
@@ -683,9 +684,9 @@ Your job is not to finish the material — it is to produce a competent learner.
 
   // ─── Start ───────────────────────────────────────────────────────────
   function resumeFor(L){ var r=L&&AUTH.progress&&AUTH.progress[((L.courseId||'general')+'::'+L.id)]; return (r&&r.resume&&r.resume.history&&r.resume.history.length)?r.resume:null; }
-  el('startBtn').addEventListener('click',function(){
+  function startSession(){
     el('startBtn').disabled=true;el('startBtn').textContent='Connecting…';
-    S.ended=false;
+    S.ended=false;S.finished=false;S.busy=false;S.talking=false;S.paused=false;
     var saved=resumeFor(S.selected);
     if(saved){ S.history=(saved.history||[]).slice();S.resuming=true;S.startedAt=Date.now()-((saved.elapsedSec||0)*1000);S.lastCovered=saved.covered||0; }
     else { S.startedAt=Date.now();S.history=[];S.resuming=false;S.lastCovered=0; }
@@ -711,7 +712,18 @@ Your job is not to finish the material — it is to produce a competent learner.
       el('percNote').textContent='Your trainer\u2019s video is reconnecting — the session continues.';
       toast('Anam face failed: '+msg);
     }).then(function(){nextTurn();});
-  });
+  }
+  el('startBtn').addEventListener('click',startSession);
+  // Next-section: a full reload gives a guaranteed-clean state, then auto-start.
+  function maybeAutostart(){
+    if(S._autostarted||!AUTH.token||!LESSONS||!LESSONS.length)return;
+    var id;try{id=sessionStorage.getItem('tr_autostart');}catch(e){}
+    if(!id)return;
+    try{sessionStorage.removeItem('tr_autostart');}catch(e){}
+    var L=null;for(var i=0;i<LESSONS.length;i++){if(LESSONS[i].id===id){L=LESSONS[i];break;}}
+    if(!L)return;
+    S._autostarted=true;S.selected=L;renderLessons();refreshStart();startSession();
+  }
   function showStylised(){el('anamVideo').classList.add('hidden');el('stylisedFace').classList.remove('hidden');}
 
   // ─── Anam photoreal face — client-side (unsafe_createClientWithApiKey) ─
@@ -946,6 +958,7 @@ Your job is not to finish the material — it is to produce a competent learner.
   function promptAnswer(){ el('micBtn').disabled=false; if(!S.talking)el('micLabel').textContent='Press “Talk” when you’re ready to speak'; micUI(); }
   function interruptTrainer(){
     if(S.speakTimer){clearTimeout(S.speakTimer);S.speakTimer=null;}
+    if(S.karaokeStartT){clearTimeout(S.karaokeStartT);S.karaokeStartT=null;}
     if(capTimer){clearTimeout(capTimer);capTimer=null;}
     if(window.speechSynthesis){try{window.speechSynthesis.cancel();}catch(e){}}
     if(S.anam&&S.anam.interrupt)S.anam.interrupt();
@@ -1028,22 +1041,35 @@ Your job is not to finish the material — it is to produce a competent learner.
       if(i<segs.length)capTimer=setTimeout(step,dur);
     })();
   }
+  var ONSET_MS=480;  // typical time from sending text to her voice actually starting
   function speak(text,done){
     var ms=estMs(text);
-    karaoke(text,ms);
+    if(capTimer){clearTimeout(capTimer);capTimer=null;}
     if(S.speakTimer){clearTimeout(S.speakTimer);S.speakTimer=null;}
+    if(S.karaokeStartT){clearTimeout(S.karaokeStartT);S.karaokeStartT=null;}
+    // Show the opening words immediately so the screen isn't blank, but only start
+    // PACING the captions once her voice begins, so they track the speech.
+    showCaption('<span class="seg-cur">'+esc(firstSeg(text))+'</span>');
+    function startCaptions(){ if(S.ended)return; karaoke(text,ms); }
     if(S.anam&&S.face==='anam'){
       var av=el('anamVideo');if(av)try{av.muted=false;av.volume=1;}catch(e){}  // restore voice after any barge-in
-      try{ S.anam.speak(text); setFaceSpeaking(true); S.speakTimer=setTimeout(function(){S.speakTimer=null;setFaceSpeaking(false);done&&done();},ms); return; }catch(e){}
+      try{
+        S.anam.speak(text); setFaceSpeaking(true);
+        S.karaokeStartT=setTimeout(function(){S.karaokeStartT=null;startCaptions();},ONSET_MS);  // sync to voice onset
+        S.speakTimer=setTimeout(function(){S.speakTimer=null;setFaceSpeaking(false);done&&done();},ms+ONSET_MS);
+        return;
+      }catch(e){}
     }
     if(window.speechSynthesis){
       var u=new SpeechSynthesisUtterance(text);u.rate=1;u.pitch=1;
-      u.onstart=function(){setFaceSpeaking(true);};
+      u.onstart=function(){setFaceSpeaking(true);startCaptions();};   // perfectly synced to onset
       u.onend=function(){setFaceSpeaking(false);done&&done();};
       window.speechSynthesis.cancel();window.speechSynthesis.speak(u);
-    } else { setFaceSpeaking(true);setTimeout(function(){setFaceSpeaking(false);done&&done();},ms); }
+    } else { setFaceSpeaking(true);startCaptions();setTimeout(function(){setFaceSpeaking(false);done&&done();},ms); }
   }
-  function estMs(t){return Math.min(34000,Math.max(2600,t.length*58));}
+  function firstSeg(text){var p=String(text).replace(/\s+/g,' ').trim();return p.length>85?p.slice(0,82).replace(/\s\S*$/,'')+'…':p;}
+  // ~150 words/min including natural pauses, so captions don't race ahead of her.
+  function estMs(t){return Math.min(50000,Math.max(2600,t.length*68));}
   function setFaceSpeaking(on){S.faceSpeaking=!!on;el('stylisedFace').classList.toggle('speaking',!!on);el('micLabel').textContent=on?'Trainer is speaking — press “Talk” to jump in':(S.talking?'Listening — speak now':'Press “Talk” to speak');}
 
   // ─── Push-to-talk: the mic opens only while you answer ───────────────
@@ -1213,7 +1239,15 @@ Your job is not to finish the material — it is to produce a competent learner.
       .then(function(){}).catch(function(){})
       .then(function(){ toast('Progress saved — resume this section any time.'); setTimeout(function(){location.reload();},900); });
   }
+  function nextSection(){
+    if(!S.selected)return null;
+    var cid=S.selected.courseId||'';
+    var secs=LESSONS.filter(function(L){return (L.courseId||'')===cid;});
+    for(var i=0;i<secs.length;i++){ if(secs[i].id===S.selected.id) return secs[i+1]||null; }
+    return null;
+  }
   function finish(){
+    if(S.finished)return;S.finished=true;   // never run twice / loop
     teardown();
     var score=engagementScore(),pass=score>=50;
     // Save this session to the learner's record (engagement, coverage, CPD).
@@ -1232,6 +1266,16 @@ Your job is not to finish the material — it is to produce a competent learner.
     el('resMsg').innerHTML=pass
       ? 'You stayed engaged for <b>'+score+'%</b> of the session — above the 50% pass mark. Saved to your training record.'
       : 'Your engagement was <b>'+score+'%</b>, below the 50% pass mark. Time on your phone or away from the screen counts against you — please retake the session and stay focused throughout.';
+    // Offer the next chapter when there is one.
+    var next=nextSection(),nb=el('nextSecBtn'),db=el('doneBtn');
+    if(next){
+      var nt=(next.title||'').split('—');var label=(nt.length>1?nt[1]:nt[0]).trim()||'next section';
+      nb.textContent='Continue to '+label+' →';nb.style.display='';
+      nb.onclick=function(){ try{sessionStorage.setItem('tr_autostart',next.id);}catch(e){} location.reload(); };
+      db.className='btn btn-soft btn-block';
+    } else {
+      nb.style.display='none';db.className='btn btn-pri btn-block';
+    }
     el('resultOverlay').classList.add('show');
   }
 })();

@@ -56,7 +56,7 @@ A brief diagnostic opening (first section only) to gauge their baseline, then ta
 
 SOURCE GOVERNANCE (ABSOLUTE)
 Teach ONLY from the approved materials provided below — they are your sole authority. If asked something not covered: "The approved materials don't cover that point — let's stay with today's focus on...". Never invent legal rules, never cite outside sources, never guess.
-SESSION LOGISTICS (allowed): Source governance covers LEGAL content only. You MAY answer practical questions about the session itself. In particular, if the learner asks how long this will take / how long the course or session lasts, tell them the full programme takes approximately one hour (unless the materials state otherwise). Never refuse a logistical question like this as "not in the materials".
+SESSION LOGISTICS (allowed): Source governance covers LEGAL content only. You MAY answer practical questions about the session itself. In particular, if the learner asks how long this will take / how long the course or session lasts, tell them the full programme takes approximately one hour — about 60 to 65 minutes (unless the materials state otherwise). Never refuse a logistical question like this as "not in the materials".
 
 SPOKEN STYLE
 Natural spoken conversation — no lists, no markdown, no headings, no "firstly, secondly". You are a real expert sitting across the table from a real person who can see and hear you.
@@ -96,7 +96,7 @@ function perceptionNote(p) {
 
 function pacingNote(elapsedMin, targetMin) {
   elapsedMin = parseInt(elapsedMin, 10) || 0;
-  targetMin = parseInt(targetMin, 10) || 75;
+  targetMin = parseInt(targetMin, 10) || 63;
   if (elapsedMin <= 0) return '';
   const remaining = targetMin - elapsedMin;
   let guide;
@@ -156,7 +156,7 @@ function systemFor(lesson, opening, learner, mode) {
   const sim = mode === 'simulation' || lesson.mode === 'simulation';
   const openingRule = sim ? '' : (opening
     ? 'SESSION OPENING: this is the FIRST section of the programme. Welcome them warmly in one or two sentences and state what they will be able to do by the end — then IMMEDIATELY start teaching the first objective with real substance. Do NOT ask them what they would like to cover and do NOT run a long baseline interview before teaching.'
-    : 'SESSION OPENING: this is a LATER section. The learner has ALREADY heard the programme welcome and given their baseline earlier — do NOT welcome them to the programme again, do NOT re-explain the format or the 75-minute/assessment structure, and do NOT ask about their overall experience again. Begin with a brief one-sentence bridge into this specific section, then teach its first objective.');
+    : 'SESSION OPENING: this is a LATER section. The learner has ALREADY heard the programme welcome and given their baseline earlier — do NOT welcome them to the programme again, do NOT re-explain the format or the hour-long/assessment structure, and do NOT ask about their overall experience again. Begin with a brief one-sentence bridge into this specific section, then teach its first objective.');
   return [SYSTEM_PROMPT, '',
     sim ? SIMULATION_DIRECTIVE : openingRule, '',
     learnerProfile(learner), learnerProfile(learner) ? '' : null,
@@ -189,7 +189,9 @@ function parseReply(text, total) {
   // Safety net: never end the section until EVERY objective is covered, and never
   // end on a turn that is still asking the learner a question (the certificate
   // would cut them off mid-answer). The closing turn must be a wrap-up statement.
-  let complete = obj.complete === true && (total === 0 || covered.length >= total);
+  // Require essentially all objectives (tolerate one tracking discrepancy so the
+  // model can't get stuck unable to ever close), and never end on a question.
+  let complete = obj.complete === true && (total <= 1 || covered.length >= total - 1);
   if (complete && /\?\s*["'’)\]]*$/.test(say)) complete = false;
   return { say, covered, complete, slide: cleanSlide(obj.slide) };
 }
