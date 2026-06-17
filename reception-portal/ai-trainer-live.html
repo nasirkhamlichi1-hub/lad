@@ -81,7 +81,7 @@ input.key{width:100%;padding:9px 11px;border:1.5px solid var(--line2);border-rad
 input.key:focus{outline:none;border-color:var(--green2)}
 .stage-wrap{display:none}
 .stage{position:relative;background:linear-gradient(160deg,#0d1b14,#0a0e14);border-radius:var(--r-lg);overflow:hidden;aspect-ratio:16/9;box-shadow:var(--sh-lg);border:1px solid #000;display:grid;place-items:center}
-.stage video#anamVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.stage video#anamVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .selfcam{position:absolute;right:12px;top:12px;width:120px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,.5);box-shadow:0 4px 16px rgba(0,0,0,.4);background:#000;z-index:4}
 .selfcam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
 /* Karaoke caption — compact 2-3 line teleprompter at the bottom */
@@ -939,7 +939,7 @@ Your job is not to finish the material — it is to produce a competent learner.
   function toggleTalk(){ if(S.talking)endTalk(false); else beginTalk(); }
   // Auto-send: once you stop speaking for ~1.4s, submit automatically so you
   // never have to press Send (you still can). Only runs during an open talk turn.
-  function scheduleAutoSend(){ if(S.autoSendT)clearTimeout(S.autoSendT); S.autoSendT=setTimeout(function(){ if(S.talking&&!S.busy)endTalk(false); },1400); }
+  function scheduleAutoSend(){ if(S.autoSendT)clearTimeout(S.autoSendT); S.autoSendT=setTimeout(function(){ if(S.talking&&!S.busy)endTalk(false); },750); }
   function clearAutoSend(){ if(S.autoSendT){clearTimeout(S.autoSendT);S.autoSendT=null;} }
 
   // ─── Click the avatar to pause (step away / take a call) without ending ──
@@ -963,7 +963,12 @@ Your job is not to finish the material — it is to produce a competent learner.
     el('micBtn').disabled=false;
     el('recLabel').textContent='Live · '+(S.selected?S.selected.title:'');
     tickTime();
-    if(S.pendingSpeak){ var f=S.pendingSpeak;S.pendingSpeak=null;f(); }
+    if(S.pendingSpeak){ var f=S.pendingSpeak;S.pendingSpeak=null;f(); return; }
+    // She wasn't mid-reply — re-engage straight away by repeating her last point
+    // (immediate, no thinking delay) so she starts talking the moment you resume.
+    var lastTrainer=null;
+    for(var i=(S.history||[]).length-1;i>=0;i--){ if(S.history[i].role==='trainer'){ lastTrainer=S.history[i].text; break; } }
+    if(lastTrainer){ speak(lastTrainer,function(){ promptAnswer(); }); }
     else promptAnswer();
   }
 

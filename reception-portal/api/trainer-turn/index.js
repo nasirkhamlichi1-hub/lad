@@ -211,10 +211,10 @@ module.exports = async function (context, req) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return S.json(context, 200, Object.assign(fallbackTurn(lesson, history), { engine: 'fallback' }));
 
-  // Default to Sonnet for world-class coaching depth; turns are short so latency
-  // stays low. Set TRAINER_MODEL=claude-haiku-4-5-20251001 for maximum speed.
-  const wanted = process.env.TRAINER_MODEL || 'claude-sonnet-4-6';
-  const models = [wanted, 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001', 'claude-opus-4-8'].filter((m, i, a) => a.indexOf(m) === i);
+  // Default to Haiku for fast, low-latency turns (the coaching prompt is detailed
+  // enough to keep quality high). Set TRAINER_MODEL=claude-sonnet-4-6 for more depth.
+  const wanted = process.env.TRAINER_MODEL || 'claude-haiku-4-5-20251001';
+  const models = [wanted, 'claude-haiku-4-5-20251001', 'claude-sonnet-4-6'].filter((m, i, a) => a.indexOf(m) === i);
   // Prompt-cache the (large, unchanging) system prompt + lesson materials so every
   // turn after the first in a session has a much faster time-to-first-word.
   const systemText = systemFor(lesson, opening, learner, mode);
