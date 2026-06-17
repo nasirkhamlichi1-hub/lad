@@ -943,7 +943,7 @@ Your job is not to finish the material — it is to produce a competent learner.
       S.history.push({role:'trainer',text:r.say});
       updateProgress({done:(r.covered||[]).length,total:(S.selected.objectives||[]).length});
       if(r.slide)renderSlide(r.slide);
-      var doSpeak=function(){ speak(r.say,function(){ if(r.complete){finish();} else {promptAnswer();} }); };
+      var doSpeak=function(){ speak(r.say,function(){ if(r.complete){completeSection();} else {promptAnswer();} }); };
       if(S.paused){ S.pendingSpeak=doSpeak; }   // hold her reply until the learner resumes
       else doSpeak();
     }).catch(function(e){S.busy=false;toast('Trainer error: '+(e.message||e));promptAnswer();});
@@ -1241,8 +1241,32 @@ Your job is not to finish the material — it is to produce a competent learner.
     if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
   el('endBtn').onclick=function(){ if(confirm('End and score this section now? Use “Save & exit” instead if you want to continue later.'))finish(); };
   el('saveBtn').onclick=function(){ saveAndExit(); };
+  // Natural completion: mark the section done and point the learner at Save & exit
+  // (which takes them to the menu to choose the next chapter). No blocking overlay.
+  function completeSection(){
+    if(S.finished)return;S.finished=true;S.sectionDone=true;
+    var score=engagementScore(),pass=score>=50;
+    teardown();
+    if(AUTH.token&&S.selected){
+      var total=(S.selected.objectives||[]).length;
+      fetch('/api/trainer-progress',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({
+        token:AUTH.token,name:AUTH.name,result:{
+          courseId:S.selected.courseId||'general',lessonId:S.selected.id,lessonTitle:S.selected.title,
+          engagementScore:score,pass:pass,covered:S.lastCovered||0,total:total,
+          durationSec:Math.round((Date.now()-S.startedAt)/1000),completed:true,cpd:S.selected.cpd_points||1
+        }})}).then(function(r){return r.ok?r.json():null;}).then(function(j){if(j&&j.progress)AUTH.progress=j.progress;}).catch(function(){});
+    }
+    try{showStylised();}catch(e){}                 // clean branded screen, not a frozen frame
+    showCaption('✓ Section complete — press “Save &amp; exit” to choose your next chapter');
+    el('recLabel').textContent='Section complete';
+    el('micLabel').textContent='Press “Save & exit” to continue';
+    var sb=el('saveBtn');if(sb)sb.textContent='Save & exit →';
+    el('micBtn').disabled=true;
+    toast('Section complete — engagement '+score+'%'+(pass?'':' · below 50%, consider a retake'));
+  }
   // Save the learner's place mid-section so they can resume rather than restart.
   function saveAndExit(){
+    if(S.sectionDone){ location.reload(); return; }   // already completed — just go to the menu
     if(!AUTH.token||!S.selected){location.reload();return;}
     var btn=el('saveBtn');btn.disabled=true;btn.textContent='Saving…';
     var payload={courseId:S.selected.courseId||'general',lessonId:S.selected.id,lessonTitle:S.selected.title,completed:false,
