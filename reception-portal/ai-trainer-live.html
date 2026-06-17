@@ -790,7 +790,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     if(S.busy||S.ended)return;S.busy=true;pauseListening();endTalk(true);
     el('micLabel').textContent='Trainer is thinking…';el('micBtn').disabled=true;
     claudeTurn(S.selected,S.history,S.perception).then(function(r){
-      S.busy=false;S.perception.challenge=false;
+      S.busy=false;S.perception.challenge=false;el('micBtn').disabled=false;  // allow barge-in while she speaks
       S.history.push({role:'trainer',text:r.say});
       updateProgress({done:(r.covered||[]).length,total:(S.selected.objectives||[]).length});
       if(r.slide)renderSlide(r.slide);
@@ -813,6 +813,9 @@ Your job is not to finish the material — it is to produce a competent learner.
     if(capTimer){clearTimeout(capTimer);capTimer=null;}
     if(window.speechSynthesis){try{window.speechSynthesis.cancel();}catch(e){}}
     if(S.anam&&S.anam.interrupt)S.anam.interrupt();
+    // Guarantee she goes quiet even if the SDK has no interrupt method: mute the
+    // avatar's audio locally. It's un-muted again the moment she next speaks.
+    var av=el('anamVideo');if(av)try{av.muted=true;}catch(e){}
     setFaceSpeaking(false);
   }
   function beginTalk(){
@@ -859,6 +862,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     karaoke(text,ms);
     if(S.speakTimer){clearTimeout(S.speakTimer);S.speakTimer=null;}
     if(S.anam&&S.face==='anam'){
+      var av=el('anamVideo');if(av)try{av.muted=false;av.volume=1;}catch(e){}  // restore voice after any barge-in
       try{ S.anam.speak(text); setFaceSpeaking(true); S.speakTimer=setTimeout(function(){S.speakTimer=null;setFaceSpeaking(false);done&&done();},ms); return; }catch(e){}
     }
     if(window.speechSynthesis){
@@ -869,7 +873,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     } else { setFaceSpeaking(true);setTimeout(function(){setFaceSpeaking(false);done&&done();},ms); }
   }
   function estMs(t){return Math.min(34000,Math.max(2600,t.length*58));}
-  function setFaceSpeaking(on){S.faceSpeaking=!!on;el('stylisedFace').classList.toggle('speaking',!!on);el('micLabel').textContent=on?'Trainer is speaking…':(S.talking?'Listening — speak now':'Press “Answer” to speak');}
+  function setFaceSpeaking(on){S.faceSpeaking=!!on;el('stylisedFace').classList.toggle('speaking',!!on);el('micLabel').textContent=on?'Trainer is speaking — press “Answer” to jump in':(S.talking?'Listening — speak now':'Press “Answer” to speak');}
 
   // ─── Push-to-talk: the mic opens only while you answer ───────────────
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
