@@ -103,7 +103,7 @@ select{padding:6px 8px;border:1.5px solid var(--line2);border-radius:8px;font-si
 <main class="roles">
   <div class="role-label">Choose your workspace</div>
   <div class="grid" id="roleGrid"></div>
-  <div class="footnote">Course access (such as Aviation Law) is granted by your administrator.<br><a href="/accreditation" style="font-weight:650">Course accreditation</a> — providers &amp; firms apply here; LAD reviewers approve from the same page.</div>
+  <div class="footnote">Course access (such as Aviation Law) is granted by your administrator.<br><a href="/accreditation" style="font-weight:650">Course accreditation</a> — providers &amp; firms apply here; LAD reviewers approve from the same page. · <a href="/credits" style="font-weight:650">Buy credits</a></div>
 </main>
 
 <!-- Admin overlay -->
@@ -124,6 +124,12 @@ select{padding:6px 8px;border:1.5px solid var(--line2);border-radius:8px;font-si
       <div class="add-row"><div><label>Enrol / update by email</label><input id="newEmail" type="email" placeholder="person@firm.ae"/></div>
         <select id="newRole"><option value="staff">LAD Staff Training</option><option value="lawyer">Lawyer</option><option value="oversight">LAD Admin (oversight)</option><option value="admin">CLPD Admin</option></select>
         <button class="btn btn-soft" id="newAdd">Add / update</button></div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin:22px 0 12px;padding-top:18px;border-top:1px solid var(--line)"><b>Credits</b><span class="muted" id="credPrice" style="font-size:12px"></span></div>
+      <div id="credReqs"></div>
+      <div class="add-row"><div><label>Top up credits by email</label><input id="cuEmail" type="email" placeholder="person@firm.ae"/></div>
+        <input id="cuAmt" type="number" min="1" step="1" placeholder="Credits" style="max-width:120px"/>
+        <button class="btn btn-soft" id="cuAdd">Top up</button></div>
     </div>
   </div>
 </div></div>
@@ -183,7 +189,7 @@ select{padding:6px 8px;border:1.5px solid var(--line2);border-radius:8px;font-si
     // verify token is an admin
     fetch('/api/me?token='+encodeURIComponent(TOKEN)).then(function(r){return r.ok?r.json():null;}).then(function(j){
       if(!j||j.role!=='admin'){ el('adminLogin').style.display='';el('adminConsole').style.display='none'; if(j){el('aErr').textContent='That account is not an administrator.';el('aErr').style.display='block';} return; }
-      el('adminLogin').style.display='none';el('adminConsole').style.display='';loadUsers();aiStatus();
+      el('adminLogin').style.display='none';el('adminConsole').style.display='';loadUsers();aiStatus();loadCredits();
     }).catch(function(){});
   }
   function aiStatus(){
@@ -218,6 +224,28 @@ select{padding:6px 8px;border:1.5px solid var(--line2);border-radius:8px;font-si
     };});
   }
   el('newAdd').onclick=function(){ var email=(el('newEmail').value||'').trim().toLowerCase(),role=el('newRole').value; if(!email){toast('Enter an email.');return;} save({email:email,role:role,active:true},function(){el('newEmail').value='';loadUsers();toast('Saved '+email);}); };
+
+  // ── Credits administration: pending purchase requests + top-ups ───────
+  function loadCredits(){
+    fetch('/api/credits?scope=requests&token='+encodeURIComponent(TOKEN)).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      if(!j)return; if(j.pricePerCredit)el('credPrice').textContent='AED '+j.pricePerCredit+' per credit';
+      var rq=j.requests||[];
+      el('credReqs').innerHTML=rq.length?('<div class="muted" style="font-size:12px;margin-bottom:6px">Pending purchase requests</div>'+rq.map(function(x){
+        return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)"><div style="flex:1"><b>'+esc(x.email)+'</b> · '+esc(x.amount)+' credits<div class="muted" style="font-size:11px">'+esc((x.at||'').slice(0,16).replace('T',' '))+'</div></div><button class="btn btn-pri creq" data-id="'+esc(x.id)+'" style="padding:7px 14px">Confirm</button></div>';
+      }).join('')):'';
+      Array.prototype.forEach.call(document.querySelectorAll('.creq'),function(btn){ btn.onclick=function(){ btn.disabled=true;
+        fetch('/api/credits',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'confirm',id:btn.getAttribute('data-id'),token:TOKEN})})
+          .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+          .then(function(o){ if(o.ok){toast('Credits granted');loadCredits();}else{btn.disabled=false;toast((o.j&&o.j.error)||'Could not confirm.');} }).catch(function(){btn.disabled=false;toast('Network error.');});
+      };});
+    }).catch(function(){});
+  }
+  el('cuAdd').onclick=function(){ var email=(el('cuEmail').value||'').trim().toLowerCase(),amt=Math.round(Number(el('cuAmt').value)||0); if(!email||!amt){toast('Enter an email and amount.');return;}
+    el('cuAdd').disabled=true;
+    fetch('/api/credits',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'topup',email:email,amount:amt,token:TOKEN})})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+      .then(function(o){ el('cuAdd').disabled=false; if(o.ok){el('cuEmail').value='';el('cuAmt').value='';toast('Topped up — balance '+o.j.balance);loadCredits();}else{toast((o.j&&o.j.error)||'Could not top up.');} }).catch(function(){el('cuAdd').disabled=false;toast('Network error.');});
+  };
   function save(patch,done){ patch.token=TOKEN; fetch('/api/user-admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(patch)})
     .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
     .then(function(o){ if(o.ok)done&&done(o.j); else toast((o.j&&o.j.error)||'Could not save.'); }).catch(function(){toast('Network error.');}); }
