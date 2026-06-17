@@ -158,7 +158,21 @@ input.key:focus{outline:none;border-color:var(--green2)}
 #session .stage{flex:1;min-height:0;aspect-ratio:auto}            /* fill all leftover vertical space */
 #session .slide-card{flex:1;min-height:0;display:flex;margin-bottom:0}
 #session .slide{flex:1;min-height:0;padding:24px 24px 52px}
-@media(max-width:880px){.session-main{height:auto;padding-bottom:30px}#session .grid{grid-template-columns:1fr}#session .stage{aspect-ratio:16/9}#session .slide-card{flex:none}#session .slide{min-height:280px}}
+/* ── Mobile: single column, sensible order (video → Talk/Send → type → slide) ── */
+@media(max-width:880px){
+  .session-main{height:auto;min-height:0;padding:8px 0 28px;gap:0}
+  #session .grid{display:flex;flex-direction:column;gap:10px;align-items:stretch}
+  .col-main,.col-side{display:contents}
+  #session .stage{order:1;flex:none;aspect-ratio:16/9;min-height:0;border-radius:14px}
+  .talk-row{order:2;margin-top:2px}
+  .talk-hint{order:3;min-height:0}
+  .statusline{order:4;justify-content:center}
+  #session .replybox{order:5}
+  #session .slide-card{order:6;flex:none;min-height:0}
+  #session .slide{min-height:230px;padding:22px 20px 46px}
+  .actions{order:7}
+  .btn-talk,.btn-send{padding:15px 18px;font-size:16px}
+}
 .statusline{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--slate2);font-weight:600}
 .livedot{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 rgba(192,57,43,.5);animation:pulse 2s infinite}
 .actions{display:flex;gap:10px}
@@ -533,14 +547,19 @@ Your job is not to finish the material — it is to produce a competent learner.
     };
   }
   function claudeTurn(lesson,history,perception){
+    // Abort a hung request after 30s so a flaky (mobile) network can't leave the
+    // session stuck on "thinking…" forever.
+    var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+    var to=ctrl?setTimeout(function(){try{ctrl.abort();}catch(e){}},30000):null;
     return fetch('/api/trainer-turn',{
       method:'POST',
       headers:{'content-type':'application/json'},
+      signal:ctrl?ctrl.signal:undefined,
       body:JSON.stringify({token:AUTH.token,lesson:lesson,history:history,perception:perception,opening:isOpeningLesson(lesson),learner:buildLearner(lesson),mode:lesson.mode||'lesson',elapsedMin:S.startedAt?Math.round((Date.now()-S.startedAt)/60000):0,targetMin:(S.secTarget||(S.selected&&S.selected.duration_min)||10)})
-    }).then(function(r){return r.json();}).then(function(d){
+    }).then(function(r){if(to)clearTimeout(to);return r.json();}).then(function(d){
       if(d&&typeof d.say==='string')return {say:d.say,covered:d.covered||[],complete:!!d.complete,slide:d.slide||null};
       throw new Error((d&&d.error)||'no turn');
-    }).catch(function(e){toast('Trainer brain: '+(e.message||e)+' — using fallback');return fallbackTurn(lesson,history,perception);});
+    }).catch(function(e){if(to)clearTimeout(to);toast('Trainer brain: '+(e.message||e)+' — using fallback');return fallbackTurn(lesson,history,perception);});
   }
 
   // ─── Setup gate (keys live server-side; just pick a lesson) ───────────
@@ -1060,7 +1079,14 @@ Your job is not to finish the material — it is to produce a competent learner.
   function doSend(){
     var typed=(el('replyInput').value||'').trim();
     if(typed){ if(S.talking)endTalk(true); el('replyInput').value=''; submitReply(typed); return; }
-    if(S.talking){ endTalk(false); return; }   // submit the spoken answer
+    if(S.talking){
+      var spoken=((S.anamStt?S.anamLiveText:sttBuf)||'').replace(/\s+/g,' ').trim();
+      if(spoken){ endTalk(false); }                       // submit what was heard
+      else { el('micLabel').textContent='Didn’t catch that — keep talking, or type your answer'; }
+      return;
+    }
+    // Not talking and nothing typed — nudge the learner.
+    el('micLabel').textContent='Press “Talk” to speak, or type your answer';
   }
   // Click the avatar to pause / resume (step away without ending the session).
   el('stage').addEventListener('click',function(){
