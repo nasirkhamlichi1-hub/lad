@@ -1,6 +1,6 @@
 {
   "routes": [
-    { "route": "/", "rewrite": "/portal.html" },
+    { "route": "/", "rewrite": "/clpd-redirect.html" },
     { "route": "/aviation", "rewrite": "/aviation.html" },
     { "route": "/portal", "rewrite": "/portal.html" }
   ],
