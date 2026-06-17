@@ -663,6 +663,7 @@ Your job is not to finish the material — it is to produce a competent learner.
         el('enginePill').className='pill pill-live';el('enginePill').textContent='● Photoreal · Claude';
         S.anam={speak:function(t){return client.talk(t);},
           stop:function(){try{client.stopStreaming&&client.stopStreaming();}catch(e){}},
+          interrupt:function(){try{(client.interruptPersona||client.stopTalk||client.interrupt||function(){}).call(client);}catch(e){}},
           mute:function(m){try{ if(m){ (client.muteInputAudio||client.muteInput||function(){}).call(client); } else { (client.unmuteInputAudio||client.unmuteInput||function(){}).call(client); } }catch(e){}}};
 
         // ── High-accuracy speech-to-text via Anam's own pipeline ──────────
@@ -672,7 +673,6 @@ Your job is not to finish the material — it is to produce a competent learner.
         // Claude brain. The browser recognizer stays as an automatic fallback:
         // it only takes over input once Anam proves it is producing transcripts.
         var MHU=(mod.AnamEvent&&mod.AnamEvent.MESSAGE_HISTORY_UPDATED)||'MESSAGE_HISTORY_UPDATED';
-        var anamSubT=null;
         on(MHU,function(messages){
           if(!messages||!messages.length)return;
           var um=null;
@@ -682,16 +682,11 @@ Your job is not to finish the material — it is to produce a competent learner.
           if(!text)return;
           // Anam STT is alive — make it authoritative and retire the browser engine.
           if(!S.anamStt){ S.anamStt=true; stopReco(); el('percNote').textContent='High-accuracy voice recognition active.'; }
+          if(!S.talking)return;                 // only capture while the learner is answering
           S.anamLiveText=text;
-          if(!S.busy&&!S.faceSpeaking) showCaption('<span class="you">You:</span> '+esc(text));
-          // Submit once the transcript stops growing (end of the learner's turn).
-          if(anamSubT)clearTimeout(anamSubT);
-          anamSubT=setTimeout(function(){
-            if(S.busy||S.muted||S.ended||S.faceSpeaking)return;
-            var t=(S.anamLiveText||'').trim();
-            if(t&&t!==S.lastAnamSubmitted){ S.lastAnamSubmitted=t; submitReply(t); }
-          },900);
+          showCaption('<span class="you">You:</span> '+esc(text));
         });
+        if(S.anam&&S.anam.mute)S.anam.mute(true); // start with Anam's mic closed (push-to-talk)
       });
       });
     });
@@ -792,15 +787,15 @@ Your job is not to finish the material — it is to produce a competent learner.
 
   // ─── Turn loop ───────────────────────────────────────────────────────
   function nextTurn(){
-    if(S.busy||S.ended)return;S.busy=true;pauseListening();
-    el('micLabel').textContent='Trainer is thinking…';
+    if(S.busy||S.ended)return;S.busy=true;pauseListening();endTalk(true);
+    el('micLabel').textContent='Trainer is thinking…';el('micBtn').disabled=true;
     claudeTurn(S.selected,S.history,S.perception).then(function(r){
       S.busy=false;S.perception.challenge=false;
       S.history.push({role:'trainer',text:r.say});
       updateProgress({done:(r.covered||[]).length,total:(S.selected.objectives||[]).length});
       if(r.slide)renderSlide(r.slide);
-      speak(r.say,function(){ if(r.complete){finish();} else {resumeListening();} });
-    }).catch(function(e){S.busy=false;toast('Trainer error: '+(e.message||e));resumeListening();});
+      speak(r.say,function(){ if(r.complete){finish();} else {promptAnswer();} });
+    }).catch(function(e){S.busy=false;toast('Trainer error: '+(e.message||e));promptAnswer();});
   }
   function submitReply(text){
     text=(text||'').trim();if(!text||S.busy||S.ended)return;
@@ -809,6 +804,37 @@ Your job is not to finish the material — it is to produce a competent learner.
     showCaption('<span class="you">You:</span> '+esc(text));
     nextTurn();
   }
+
+  // ─── Push-to-talk: the mic only opens while you choose to answer, so you and
+  // the trainer never talk over each other. Pressing "answer" also stops her.
+  function promptAnswer(){ el('micBtn').disabled=false; if(!S.talking)el('micLabel').textContent='Press “Answer” when you’re ready to speak'; micUI(); }
+  function interruptTrainer(){
+    if(S.speakTimer){clearTimeout(S.speakTimer);S.speakTimer=null;}
+    if(capTimer){clearTimeout(capTimer);capTimer=null;}
+    if(window.speechSynthesis){try{window.speechSynthesis.cancel();}catch(e){}}
+    if(S.anam&&S.anam.interrupt)S.anam.interrupt();
+    setFaceSpeaking(false);
+  }
+  function beginTalk(){
+    if(S.ended||S.busy||S.talking)return;
+    interruptTrainer();                       // stop her so you're not talking over each other
+    S.talking=true;S.muted=false;S.accept=true;
+    S.anamLiveText='';S.lastAnamSubmitted='';sttBuf='';
+    if(S.anam&&S.anam.mute)S.anam.mute(false); // open Anam's mic
+    if(!S.anamStt&&SR)ensureReco();            // browser fallback
+    el('micLabel').textContent='Listening — speak now, then press “Send”';
+    micUI();
+  }
+  function endTalk(silent){
+    if(!S.talking)return;
+    S.talking=false;S.accept=false;
+    if(S.anam&&S.anam.mute)S.anam.mute(true);  // close Anam's mic so it can't hear her
+    var text=((S.anamStt?S.anamLiveText:sttBuf)||'').replace(/\s+/g,' ').trim();
+    S.anamLiveText='';sttBuf='';
+    micUI();
+    if(!silent&&text&&text!==S.lastAnamSubmitted){ S.lastAnamSubmitted=text; submitReply(text); }
+  }
+  function toggleTalk(){ if(S.talking)endTalk(false); else beginTalk(); }
 
   // ─── Speak + karaoke captions (2-3 lines, bottom, paced to speech) ─────
   var capTimer=null;
@@ -831,8 +857,9 @@ Your job is not to finish the material — it is to produce a competent learner.
   function speak(text,done){
     var ms=estMs(text);
     karaoke(text,ms);
+    if(S.speakTimer){clearTimeout(S.speakTimer);S.speakTimer=null;}
     if(S.anam&&S.face==='anam'){
-      try{ S.anam.speak(text); setFaceSpeaking(true); setTimeout(function(){setFaceSpeaking(false);done&&done();},ms); return; }catch(e){}
+      try{ S.anam.speak(text); setFaceSpeaking(true); S.speakTimer=setTimeout(function(){S.speakTimer=null;setFaceSpeaking(false);done&&done();},ms); return; }catch(e){}
     }
     if(window.speechSynthesis){
       var u=new SpeechSynthesisUtterance(text);u.rate=1;u.pitch=1;
@@ -842,15 +869,15 @@ Your job is not to finish the material — it is to produce a competent learner.
     } else { setFaceSpeaking(true);setTimeout(function(){setFaceSpeaking(false);done&&done();},ms); }
   }
   function estMs(t){return Math.min(34000,Math.max(2600,t.length*58));}
-  function setFaceSpeaking(on){S.faceSpeaking=!!on;el('stylisedFace').classList.toggle('speaking',!!on);el('micLabel').textContent=on?'Trainer is speaking…':(S.muted?'Microphone muted':'Listening…');}
+  function setFaceSpeaking(on){S.faceSpeaking=!!on;el('stylisedFace').classList.toggle('speaking',!!on);el('micLabel').textContent=on?'Trainer is speaking…':(S.talking?'Listening — speak now':'Press “Answer” to speak');}
 
-  // ─── Listen continuously; Mute button stops it ───────────────────────
+  // ─── Push-to-talk: the mic opens only while you answer ───────────────
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   function micUI(){
     var b=el('micBtn');if(!b)return;
-    if(!SR){b.style.display='none';el('micLabel').textContent='Speech not supported — type your answers';return;}
-    if(S.muted){b.textContent='🔇 Muted';b.classList.add('btn-danger');b.classList.remove('btn-ghost');el('micLabel').textContent='Microphone muted';}
-    else{b.textContent='🎙 Mute';b.classList.add('btn-ghost');b.classList.remove('btn-danger');}
+    if(!SR&&!S.anamStt){b.style.display='none';el('micLabel').textContent='Speech not supported — type your answers';return;}
+    if(S.talking){b.textContent='■ Send answer';b.classList.add('btn-danger');b.classList.remove('btn-ghost');}
+    else{b.textContent='🎤 Answer';b.classList.add('btn-ghost');b.classList.remove('btn-danger');}
   }
   // Language is tuned for a clear English accent. Override with ?lang=en-AU etc.
   var STT_LANG=(function(){try{var m=location.search.match(/[?&]lang=([\w-]+)/);return m?m[1]:'en-GB';}catch(e){return 'en-GB';}})();
@@ -869,19 +896,16 @@ Your job is not to finish the material — it is to produce a competent learner.
       var r=new SR();r.lang=STT_LANG;r.interimResults=true;r.continuous=true;r.maxAlternatives=1;
       r.onstart=function(){S.listening=true;if(S.accept&&!S.busy&&!S.muted)el('micLabel').textContent='Listening…';};
       r.onresult=function(ev){
-        if(!S.accept||S.muted||S.busy){sttBuf='';return;}  // ignore her own voice / thinking time
+        if(!S.talking||S.busy){sttBuf='';return;}  // only while the learner is answering
         var fin='',interim='';
         for(var k=ev.resultIndex;k<ev.results.length;k++){
           var rr=ev.results[k];
           if(rr.isFinal)fin+=rr[0].transcript+' '; else interim+=rr[0].transcript+' ';
         }
         if(fin)sttBuf+=fin;
-        // Show what we're hearing live, so it's obvious she's catching your words.
+        // Show what we're hearing live; submission happens when you press Send.
         var live=(sttBuf+' '+interim).replace(/\s+/g,' ').trim();
         if(live)showCaption('<span class="you">You:</span> '+esc(live));
-        // Submit only after a short pause — captures the whole sentence, not a fragment.
-        if(sttTimer)clearTimeout(sttTimer);
-        if(sttBuf.trim())sttTimer=setTimeout(flushSpeech,1000);
       };
       r.onerror=function(){};
       r.onend=function(){S.listening=false;S.reco=null;if(!S.ended&&!S.muted)setTimeout(ensureReco,250);};
@@ -892,7 +916,15 @@ Your job is not to finish the material — it is to produce a competent learner.
   function startListening(){if(S.ended||S.muted)return;S.accept=true;sttBuf='';if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}if(!S.anamStt){if(!SR)return;ensureReco();}if(!S.busy)el('micLabel').textContent='Listening…';}
   function pauseListening(){S.accept=false;if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}sttBuf='';}  // keep engine warm, just stop accepting
   function resumeListening(){ if(!S.muted)startListening(); micUI(); }
-  el('micBtn').onclick=function(){ S.muted=!S.muted; if(S.anam&&S.anam.mute)S.anam.mute(S.muted); if(S.muted){pauseListening();stopReco();} else {resumeListening();} micUI(); };
+  el('micBtn').onclick=function(){ toggleTalk(); };
+  // Spacebar = press to answer / press again to send (ignored while typing).
+  document.addEventListener('keydown',function(e){
+    if(e.code!=='Space'&&e.key!==' ')return;
+    var t=e.target&&e.target.tagName;if(t==='INPUT'||t==='TEXTAREA')return;
+    if(el('session').classList.contains('hidden')||el('session').style.display==='none')return;
+    if(S.ended||S.busy)return;
+    e.preventDefault();toggleTalk();
+  });
   el('sendBtn').onclick=function(){submitReply(el('replyInput').value);};
   el('replyInput').addEventListener('keydown',function(e){if(e.key==='Enter')submitReply(el('replyInput').value);});
   micUI();
