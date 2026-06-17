@@ -35,6 +35,28 @@ module.exports = async function (context, req) {
   const cur = await loadProg(c, email);
   const prog = cur.progress;
   const prev = prog[key] || { attempts: 0, bestEngagement: 0, cpd: 0, pass: false };
+
+  // Mid-session save: keep a resume blob so the learner continues, not restarts.
+  // Does NOT count as an attempt or change pass/score.
+  if (r.resume && r.completed === false) {
+    const rz = r.resume || {};
+    const history = Array.isArray(rz.history) ? rz.history.slice(-60).map(h => ({
+      role: (h && h.role === 'trainer') ? 'trainer' : 'lawyer',
+      text: String((h && h.text) || '').slice(0, 4000)
+    })).filter(h => h.text) : [];
+    prog[key] = Object.assign({}, prev, {
+      title: String(r.lessonTitle || prev.title || '').slice(0, 140), courseId, lessonId,
+      resume: { history, covered: parseInt(rz.covered, 10) || 0, total: parseInt(rz.total, 10) || 0,
+        elapsedSec: parseInt(rz.elapsedSec, 10) || 0, secIndex: parseInt(rz.secIndex, 10) || 0 },
+      savedAt: new Date().toISOString()
+    });
+    try {
+      await c.upsertEntity({ partitionKey: P_TRAINER, rowKey: email, email, name: cur.name || String(b.name || '').slice(0, 80),
+        progress: JSON.stringify(prog), completedCount: Object.values(prog).filter(x => x && x.completed).length,
+        cpdTotal: Object.values(prog).reduce((a, x) => a + ((x && x.cpd) || 0), 0), updated: new Date().toISOString() }, 'Replace');
+    } catch (e) { context.log.error('save resume failed', e && e.message); return S.json(context, 500, { error: 'Could not save your progress.' }); }
+    return S.json(context, 200, { ok: true, saved: true, progress: prog });
+  }
   const cpd = (passed && !prev.pass) ? (parseInt(r.cpd, 10) || 1) : (prev.cpd || 0);
   prog[key] = {
     title: String(r.lessonTitle || prev.title || '').slice(0, 140),
