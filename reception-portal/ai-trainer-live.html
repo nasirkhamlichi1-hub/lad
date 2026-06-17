@@ -939,7 +939,7 @@ Your job is not to finish the material — it is to produce a competent learner.
   function toggleTalk(){ if(S.talking)endTalk(false); else beginTalk(); }
   // Auto-send: once you stop speaking for ~1.4s, submit automatically so you
   // never have to press Send (you still can). Only runs during an open talk turn.
-  function scheduleAutoSend(){ if(S.autoSendT)clearTimeout(S.autoSendT); S.autoSendT=setTimeout(function(){ if(S.talking&&!S.busy)endTalk(false); },750); }
+  function scheduleAutoSend(){ if(S.autoSendT)clearTimeout(S.autoSendT); S.autoSendT=setTimeout(function(){ if(S.talking&&!S.busy)endTalk(false); },450); }
   function clearAutoSend(){ if(S.autoSendT){clearTimeout(S.autoSendT);S.autoSendT=null;} }
 
   // ─── Click the avatar to pause (step away / take a call) without ending ──
