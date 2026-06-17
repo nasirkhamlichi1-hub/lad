@@ -139,12 +139,12 @@ input.key:focus{outline:none;border-color:var(--green2)}
 @media(max-width:620px){.tl-label{width:64px}.tl-clock{width:74px}}
 /* ── Single-viewport session layout: video + controls left, slide + Talk right ── */
 .session-main{display:flex;flex-direction:column;height:calc(100dvh - 64px);max-width:1500px;padding:6px 0 8px;gap:8px;min-height:0}
-#session .grid{flex:1;min-height:0;grid-template-columns:1fr 336px;gap:16px;padding:0;align-items:stretch}
-.col-main{display:flex;flex-direction:column;min-height:0;gap:7px}
-.col-side{display:flex;flex-direction:column;min-height:0;gap:12px}
-#session .stage{flex:1;min-height:0;aspect-ratio:auto}            /* fill leftover vertical space */
-#session .slide-card{margin-bottom:0;flex:1;min-height:0;display:flex}
-#session .slide{flex:1;min-height:0;padding:26px 26px 54px}
+.col-main{flex:1;display:flex;flex-direction:column;min-height:0;gap:8px}
+.controls{width:100%;max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+#session .stage{flex:1;min-height:0;aspect-ratio:auto}            /* fill all leftover vertical space */
+/* Slide now lives in the bottom dock, above the engagement data */
+.perc-dock .slide-card{display:block;margin-bottom:16px;border:0;background:transparent;box-shadow:none}
+.perc-dock .slide{min-height:320px;padding:26px 26px 54px}
 .statusline{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--slate2);font-weight:600}
 .livedot{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 rgba(192,57,43,.5);animation:pulse 2s infinite}
 .actions{display:flex;gap:10px}
@@ -251,7 +251,6 @@ input.key:focus{outline:none;border-color:var(--green2)}
 
   <section id="session" class="stage-wrap">
     <div class="wrap session-main">
-      <div class="grid">
       <div class="col-main">
         <div class="stage" id="stage">
           <video id="anamVideo" autoplay playsinline class="hidden"></video>
@@ -269,28 +268,19 @@ input.key:focus{outline:none;border-color:var(--green2)}
           <div class="cap"><div class="cap-inner" id="caption">Connecting you to your trainer…</div></div>
           <button id="unmuteBtn" class="unmute" style="display:none">Tap to enable sound</button>
         </div>
-        <div class="statusline"><span class="livedot"></span> <span id="recLabel">Live session</span></div>
-        <div class="replybox">
-          <input id="replyInput" type="text" placeholder="Type your answer and press Enter"/>
-          <button id="sendBtn" class="btn btn-soft">Send</button>
-        </div>
-        <div class="actions">
-          <button id="saveBtn" class="btn btn-soft" title="Save your place and continue later">Save &amp; exit</button>
-          <button id="endBtn" class="btn btn-soft danger" title="End and score this session">End session</button>
-        </div>
-      </div>
-      <div class="col-side">
-        <div class="card slide-card">
-          <div class="slide" id="slide">
-            <div class="slide-kicker" id="slideKicker">On screen</div>
-            <div class="slide-title" id="slideTitle">Your session will appear here</div>
-            <ul class="slide-bullets" id="slideBullets"></ul>
-            <div class="slide-foot"><span>Dubai Legal Affairs · CLPD</span><span id="slideNo"></span></div>
+        <div class="controls">
+          <div class="statusline"><span class="livedot"></span> <span id="recLabel">Live session</span></div>
+          <button id="micBtn" class="btn btn-talk">Talk</button>
+          <div class="talk-hint" id="micLabel">Press Talk to speak</div>
+          <div class="replybox">
+            <input id="replyInput" type="text" placeholder="Type your answer and press Enter"/>
+            <button id="sendBtn" class="btn btn-soft">Send</button>
+          </div>
+          <div class="actions">
+            <button id="saveBtn" class="btn btn-soft" title="Save your place and continue later">Save &amp; exit</button>
+            <button id="endBtn" class="btn btn-soft danger" title="End and score this session">End session</button>
           </div>
         </div>
-        <button id="micBtn" class="btn btn-talk">Talk</button>
-        <div class="talk-hint" id="micLabel">Press Talk to speak</div>
-      </div>
       </div>
     </div>
     <div class="wrap perc-dock">
@@ -309,6 +299,14 @@ input.key:focus{outline:none;border-color:var(--green2)}
           <span class="tl-label">Time</span>
           <div class="tl-time-track" id="tlTimeTrack"><i id="tlTimeFill"></i></div>
           <span class="tl-clock" id="tlClock">0 / 0 min</span>
+        </div>
+      </div>
+      <div class="card slide-card">
+        <div class="slide" id="slide">
+          <div class="slide-kicker" id="slideKicker">On screen</div>
+          <div class="slide-title" id="slideTitle">Your session will appear here</div>
+          <ul class="slide-bullets" id="slideBullets"></ul>
+          <div class="slide-foot"><span>Dubai Legal Affairs · CLPD</span><span id="slideNo"></span></div>
         </div>
       </div>
       <div class="card">
