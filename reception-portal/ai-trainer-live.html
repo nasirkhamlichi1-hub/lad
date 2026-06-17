@@ -811,7 +811,7 @@ Your job is not to finish the material — it is to produce a competent learner.
       window.speechSynthesis.cancel();window.speechSynthesis.speak(u);
     } else { setFaceSpeaking(true);setTimeout(function(){setFaceSpeaking(false);done&&done();},ms); }
   }
-  function estMs(t){return Math.min(22000,Math.max(2600,t.length*55));}
+  function estMs(t){return Math.min(34000,Math.max(2600,t.length*58));}
   function setFaceSpeaking(on){S.faceSpeaking=!!on;el('stylisedFace').classList.toggle('speaking',!!on);el('micLabel').textContent=on?'Trainer is speaking…':(S.muted?'Microphone muted':'Listening…');}
 
   // ─── Listen continuously; Mute button stops it ───────────────────────
@@ -828,36 +828,41 @@ Your job is not to finish the material — it is to produce a competent learner.
   function flushSpeech(){
     if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}
     var t=sttBuf.replace(/\s+/g,' ').trim();sttBuf='';
-    if(t&&!S.busy&&!S.muted&&!S.ended)submitReply(t);
+    if(t&&S.accept&&!S.busy&&!S.muted&&!S.ended)submitReply(t);
   }
-  function startListening(){
-    if(S.ended||S.muted||!SR||S.busy||S.listening)return;
+  // Keep ONE recognizer alive the whole session so there is no warm-up gap that
+  // swallows your first words. We just gate acceptance with S.accept instead of
+  // stopping/starting the engine each turn.
+  function ensureReco(){
+    if(!SR||S.reco||S.muted||S.ended)return;
     try{
-      sttBuf='';
-      S.reco=new SR();S.reco.lang=STT_LANG;S.reco.interimResults=true;S.reco.continuous=true;S.reco.maxAlternatives=3;
-      S.reco.onstart=function(){S.listening=true;if(!S.busy&&!S.muted)el('micLabel').textContent='Listening…';};
-      S.reco.onresult=function(ev){
+      var r=new SR();r.lang=STT_LANG;r.interimResults=true;r.continuous=true;r.maxAlternatives=1;
+      r.onstart=function(){S.listening=true;if(S.accept&&!S.busy&&!S.muted)el('micLabel').textContent='Listening…';};
+      r.onresult=function(ev){
+        if(!S.accept||S.muted||S.busy){sttBuf='';return;}  // ignore her own voice / thinking time
         var fin='',interim='';
         for(var k=ev.resultIndex;k<ev.results.length;k++){
-          var r=ev.results[k];
-          if(r.isFinal)fin+=r[0].transcript+' '; else interim+=r[0].transcript+' ';
+          var rr=ev.results[k];
+          if(rr.isFinal)fin+=rr[0].transcript+' '; else interim+=rr[0].transcript+' ';
         }
         if(fin)sttBuf+=fin;
         // Show what we're hearing live, so it's obvious she's catching your words.
         var live=(sttBuf+' '+interim).replace(/\s+/g,' ').trim();
-        if(live&&!S.busy)showCaption('<span class="you">You:</span> '+esc(live));
+        if(live)showCaption('<span class="you">You:</span> '+esc(live));
         // Submit only after a short pause — captures the whole sentence, not a fragment.
         if(sttTimer)clearTimeout(sttTimer);
-        if(sttBuf.trim())sttTimer=setTimeout(flushSpeech,1100);
+        if(sttBuf.trim())sttTimer=setTimeout(flushSpeech,1000);
       };
-      S.reco.onerror=function(){};
-      S.reco.onend=function(){S.listening=false;if(sttBuf.trim()){flushSpeech();return;}if(!S.ended&&!S.muted&&!S.busy)setTimeout(startListening,350);};
-      S.reco.start();
-    }catch(e){}
+      r.onerror=function(){};
+      r.onend=function(){S.listening=false;S.reco=null;if(!S.ended&&!S.muted)setTimeout(ensureReco,250);};
+      r.start();S.reco=r;
+    }catch(e){S.reco=null;}
   }
-  function pauseListening(){S.listening=false;if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}sttBuf='';if(S.reco){try{S.reco.onend=null;S.reco.stop();}catch(e){}}}
+  function stopReco(){if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}sttBuf='';S.listening=false;if(S.reco){try{S.reco.onend=null;S.reco.stop();}catch(e){}S.reco=null;}}
+  function startListening(){if(S.ended||S.muted||!SR)return;S.accept=true;sttBuf='';if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}ensureReco();if(!S.busy)el('micLabel').textContent='Listening…';}
+  function pauseListening(){S.accept=false;if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}sttBuf='';}  // keep engine warm, just stop accepting
   function resumeListening(){ if(!S.muted)startListening(); micUI(); }
-  el('micBtn').onclick=function(){ S.muted=!S.muted; if(S.muted){pauseListening();} else {resumeListening();} micUI(); };
+  el('micBtn').onclick=function(){ S.muted=!S.muted; if(S.muted){pauseListening();stopReco();} else {resumeListening();} micUI(); };
   el('sendBtn').onclick=function(){submitReply(el('replyInput').value);};
   el('replyInput').addEventListener('keydown',function(e){if(e.key==='Enter')submitReply(el('replyInput').value);});
   micUI();
@@ -869,7 +874,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     el('covLabel').textContent=cov.done+' of '+cov.total+' key elements';
   }
 
-  function teardown(){S.ended=true;pauseListening();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
+  function teardown(){S.ended=true;pauseListening();stopReco();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
   el('endBtn').onclick=function(){finish();};
   function finish(){
     teardown();
