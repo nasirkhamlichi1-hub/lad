@@ -52,7 +52,7 @@ PERSONALISATION
 A LEARNER PROFILE may be provided. Greet returning learners by name, connect today to what they have already done, and proactively target any known weak areas.
 
 SESSION ARC
-A brief diagnostic opening (first section only) to gauge their baseline, then take them through each objective with the coaching loop, then a short consolidation, a brief applied assessment, and specific forward-looking feedback. Adapt the pace to the individual — faster when they are strong, slower when they struggle.
+A brief diagnostic opening (first section only) to gauge their baseline, then take them through EVERY objective in turn with the coaching loop — do not stop until all are genuinely covered — then a short consolidation, a brief applied assessment, and specific forward-looking feedback. Finish by telling the learner they have completed this section and can move on to the next part. Adapt the pace to the individual — faster when they are strong, slower when they struggle.
 
 SOURCE GOVERNANCE (ABSOLUTE)
 Teach ONLY from the approved materials provided below — they are your sole authority. If asked something not covered: "The approved materials don't cover that point — let's stay with today's focus on...". Never invent legal rules, never cite outside sources, never guess.
@@ -166,7 +166,8 @@ function systemFor(lesson, opening, learner, mode) {
     'There are ' + total + ' objectives. "say" is spoken aloud by a photoreal avatar: run the TEACHING LOOP — actually TEACH one idea (state the rule, why it matters, and a concrete example from the materials) THEN ask one question that checks what you just taught; OR diagnose the learner\'s answer then advance. When introducing any new point you MUST teach it before asking anything — never quiz them on material you have not yet taught, and never ask "what would you like to cover". Spoken style only — no lists, no markdown, no headings. "say" should be 3 to 5 sentences (roughly 55-95 words): enough to genuinely teach a point with an example, then hand back with a question. Substantive, but never a long monologue.',
     'The "slide" supports THIS turn (dual coding): pick the "type" that fits — definition (a key rule), scenario (a client situation you are posing), keyterm (one term + meaning), comparison (two things contrasted), recap (consolidation), quiz (a question on screen), or concept (default). Title + 2-4 very short points drawn ONLY from the approved materials (keywords/figures, not sentences).',
     'Add an objective to "covered" only once the learner has DEMONSTRATED understanding of it (explained or applied it) — never merely because you explained it.',
-    'Set "complete" true ONLY after every objective is covered AND you have run the applied assessment and delivered specific, forward-looking feedback in "say".'].filter(x => x !== null).join('\n');
+    'FINISH THE WHOLE SECTION BEFORE COMPLETING. There are ' + total + ' objectives and you MUST take the learner through EVERY one (so "covered" reaches all ' + total + ') before the section can end. Keep "complete": false for the entire session while ANY objective is not yet covered — never mark complete early, never skip objectives, and never stop in the middle. Only after all ' + total + ' objectives are covered, run a brief applied assessment, then a short consolidation.',
+    'SECTION HANDOFF: the turn on which you set "complete": true MUST, in "say", clearly tell the learner they have now COMPLETED this section, congratulate them specifically, give brief forward-looking feedback, and tell them they can move on to the next section/part. Set "complete": true ONLY on that closing turn.'].filter(x => x !== null).join('\n');
 }
 
 const SLIDE_TYPES = ['concept', 'definition', 'scenario', 'keyterm', 'comparison', 'recap', 'quiz'];
@@ -183,7 +184,10 @@ function parseReply(text, total) {
   if (!obj || typeof obj.say !== 'string') return { say: (text || '').trim() || 'Let\'s continue.', covered: [], complete: false, slide: null };
   const covered = Array.isArray(obj.covered)
     ? obj.covered.map(n => parseInt(n, 10)).filter(n => n >= 1 && n <= total).filter((v, i, a) => a.indexOf(v) === i) : [];
-  return { say: String(obj.say).trim(), covered, complete: obj.complete === true, slide: cleanSlide(obj.slide) };
+  // Safety net: never let the section be marked complete until EVERY objective
+  // is covered, even if the model says so early.
+  const complete = obj.complete === true && (total === 0 || covered.length >= total);
+  return { say: String(obj.say).trim(), covered, complete, slide: cleanSlide(obj.slide) };
 }
 
 function fallbackTurn(lesson, history) {
