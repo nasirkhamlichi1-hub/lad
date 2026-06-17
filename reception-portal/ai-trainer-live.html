@@ -843,18 +843,22 @@ Your job is not to finish the material — it is to produce a competent learner.
     S.detLoop=setInterval(function(){
       if(!S.detector||video.readyState<2)return;
       S.detector.detect(video).then(function(preds){
-        var person=preds.find(function(p){return p.class==='person'&&p.score>0.45;});
-        var phone=preds.find(function(p){return p.class==='cell phone'&&p.score>0.5;});
-        // Smooth over the last few frames so a single missed detection doesn't
-        // wrongly flag you as away/distracted (the detector flickers frame-to-frame).
+        // Lower threshold so a person who is genuinely in frame is reliably
+        // detected (avoids false "away" when you're sitting right there).
+        var person=preds.find(function(p){return p.class==='person'&&p.score>0.30;});
+        var phone=preds.find(function(p){return p.class==='cell phone'&&p.score>0.55;});
         if(!S.det)S.det={p:[],ph:[]};
-        S.det.p.push(!!person);if(S.det.p.length>4)S.det.p.shift();
-        S.det.ph.push(!!phone);if(S.det.ph.length>4)S.det.ph.shift();
-        var last3=S.det.p.slice(-3);
-        S.perception.present=last3.some(Boolean);                 // present if seen in any of the last 3 frames
-        var away=last3.length>=3&&last3.every(function(x){return !x;}); // away only if absent 3 frames in a row (~4.5s)
-        S.perception.phone=S.det.ph.slice(-3).filter(Boolean).length>=2; // phone only if held across 2+ of last 3 frames
-        S.perception.attention=away?'away':'engaged';             // present = engaged (no strict 'centred' rule)
+        S.det.p.push(!!person);if(S.det.p.length>8)S.det.p.shift();
+        S.det.ph.push(!!phone);if(S.det.ph.length>6)S.det.ph.shift();
+        if(person)S.everPresent=true;                              // we know the detector works for you
+        var recent=S.det.p.slice(-6);
+        S.perception.present=S.det.p.slice(-4).some(Boolean);      // present if seen in any of the last ~6s
+        // "away" only if the detector PREVIOUSLY saw you and now you've been
+        // absent for a sustained run (~9s). If it never detected a person at all,
+        // assume the model just can't see well — never flag away.
+        var away=S.everPresent && recent.length>=6 && recent.every(function(x){return !x;});
+        S.perception.phone=S.det.ph.slice(-4).filter(Boolean).length>=3; // phone held across most of last frames
+        S.perception.attention=away?'away':'engaged';
         paintPerception();
         trackEngagement();
         maybeChallenge();
@@ -886,7 +890,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     var dis=S.perception.phone||S.perception.attention==='away';
     S.disStreak=dis?(S.disStreak+1):0;
     var now=Date.now();
-    if(S.disStreak>=10&&(now-S.lastChallenge)>90000){            // ~15s+ sustained, 90s cooldown
+    if(S.disStreak>=4&&(now-S.lastChallenge)>60000){            // confirmed away ~15s total, 60s cooldown
       S.lastChallenge=now;S.disStreak=0;S.perception.challenge=true;nextTurn();
     }
   }
