@@ -1,5 +1,7 @@
 {
   "routes": [
+    { "route": "/", "rewrite": "/clpd-portal.html" },
+    { "route": "/login", "rewrite": "/clpd-portal.html" },
     { "route": "/lawyer", "rewrite": "/lawyer-portal-v2.html" },
     { "route": "/firm", "rewrite": "/firm-compliance-portal.html" },
     { "route": "/intelligence", "rewrite": "/lad-intelligence-v4.html" },
