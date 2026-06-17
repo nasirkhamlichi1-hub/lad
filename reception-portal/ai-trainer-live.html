@@ -451,7 +451,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     return fetch('/api/trainer-turn',{
       method:'POST',
       headers:{'content-type':'application/json'},
-      body:JSON.stringify({token:AUTH.token,lesson:lesson,history:history,perception:perception,opening:isOpeningLesson(lesson),learner:buildLearner(lesson)})
+      body:JSON.stringify({token:AUTH.token,lesson:lesson,history:history,perception:perception,opening:isOpeningLesson(lesson),learner:buildLearner(lesson),mode:lesson.mode||'lesson'})
     }).then(function(r){return r.json();}).then(function(d){
       if(d&&typeof d.say==='string')return {say:d.say,covered:d.covered||[],complete:!!d.complete,slide:d.slide||null};
       throw new Error((d&&d.error)||'no turn');
@@ -474,7 +474,8 @@ Your job is not to finish the material — it is to produce a competent learner.
       var d=document.createElement('div');d.className='lesson'+(S.selected&&S.selected.id===L.id?' sel':'');
       var meta=[];if(L.duration_min)meta.push('<span class="tag">~'+L.duration_min+' min</span>');
       if(L.cpd_points)meta.push('<span class="tag">'+L.cpd_points+' CPD</span>');
-      if((L.objectives||[]).length)meta.push('<span class="tag">'+L.objectives.length+' key elements</span>');
+      if((L.objectives||[]).length)meta.push('<span class="tag">'+L.objectives.length+(L.mode==='simulation'?' decisions':' key elements')+'</span>');
+      if(L.mode==='simulation')meta.unshift('<span class="tag" style="background:#eef4fb;color:#1a4d80;border-color:#cfe0f0">⚖ Simulation</span>');
       var pr=AUTH.progress&&AUTH.progress[(L.courseId||'general')+'::'+L.id];
       if(pr)meta.unshift('<span class="tag" style="background:var(--green-bg);color:var(--green-d);border-color:var(--green-border)">✓ '+(pr.pass?'Passed':'Completed')+' · '+(pr.bestEngagement||0)+'% eng</span>');
       d.innerHTML='<div class="lesson-t">'+esc(L.title)+'</div>'+(L.summary?'<div class="lesson-s">'+esc(L.summary)+'</div>':'')+'<div class="lesson-m">'+meta.join('')+'</div>';
@@ -485,7 +486,7 @@ Your job is not to finish the material — it is to produce a competent learner.
   // Load the full courses shipped in the repo (frontend/courses/*.json). Falls
   // back to the built-in lessons above if the files can't be fetched.
   function loadCourses(){
-    var files=[{f:'courses/aviation-law.json',c:'aviation-law'},{f:'courses/civil-code-2025.json',c:'civil-code-2025'}];
+    var files=[{f:'courses/aviation-law.json',c:'aviation-law'},{f:'courses/civil-code-2025.json',c:'civil-code-2025'},{f:'courses/simulations.json',c:'simulations'}];
     return Promise.all(files.map(function(o){
       return fetch(o.f).then(function(r){return r.ok?r.json():[];}).catch(function(){return [];}).then(function(data){return {courseId:o.c,data:data};});
     })).then(function(results){
@@ -494,7 +495,7 @@ Your job is not to finish the material — it is to produce a competent learner.
         var L=Array.isArray(res.data)?res.data:(res.data.lessons||[]);
         L.forEach(function(x){
           if(!x||!x.title)return;
-          out.push({id:x.id,courseId:x.course_id||res.courseId,title:x.title,summary:x.summary,duration_min:x.duration_min,
+          out.push({id:x.id,courseId:x.course_id||res.courseId,mode:x.mode||'lesson',title:x.title,summary:x.summary,duration_min:x.duration_min,
                     cpd_points:x.cpd_points,objectives:x.objectives||[],body:x.body||''});
         });
       });

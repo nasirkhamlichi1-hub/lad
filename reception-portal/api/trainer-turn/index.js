@@ -92,16 +92,18 @@ function perceptionNote(p) {
   return note;
 }
 
-function toMessages(history, perception, opening) {
+function toMessages(history, perception, opening, mode) {
   const msgs = (history || []).map(h => ({
     role: (h.role === 'trainer' || h.role === 'assistant') ? 'assistant' : 'user',
     content: String(h.text || h.content || '')
   })).filter(m => m.content);
   const note = perceptionNote(perception);
   if (!msgs.length) {
-    const start = opening
-      ? '[The programme is starting. Welcome the learner to the Legal Affairs training, briefly explain the format, establish their baseline (ask their experience), then begin the first objective.]'
-      : '[This section is starting. The learner has ALREADY had the programme welcome and baseline in an earlier section — do NOT welcome them to the programme again, do NOT re-explain the format, and do NOT ask about their overall experience. Open with a brief one-sentence bridge into THIS section\'s topic, then go straight into teaching its first objective.]';
+    const start = mode === 'simulation'
+      ? '[Begin the case simulation. Greet the learner by name if known, set the scene briefly and vividly, then pose the FIRST decision and stop.]'
+      : (opening
+        ? '[The programme is starting. Welcome the learner to the Legal Affairs training, briefly explain the format, establish their baseline (ask their experience), then begin the first objective.]'
+        : '[This section is starting. The learner has ALREADY had the programme welcome and baseline in an earlier section — do NOT welcome them to the programme again, do NOT re-explain the format, and do NOT ask about their overall experience. Open with a brief one-sentence bridge into THIS section\'s topic, then go straight into teaching its first objective.]');
     msgs.push({ role: 'user', content: [start, note].filter(Boolean).join(' ') });
     return msgs;
   }
@@ -123,13 +125,26 @@ function learnerProfile(learner) {
   return ['────────  LEARNER PROFILE (personalise to this person)  ────────', ...parts].join('\n');
 }
 
-function systemFor(lesson, opening, learner) {
+const SIMULATION_DIRECTIVE = [
+  '════════  SIMULATION MODE — INTERACTIVE BRANCHING CASE  ════════',
+  'This is NOT a taught lesson. It is a live, branching case where the LEARNER is the lawyer and YOU are the narrator who also plays the client and other characters. Follow the case brief in the materials below.',
+  '- Set the scene vividly but briefly; reveal facts one beat at a time.',
+  '- Pose ONE decision at a time ("What do you advise?" / "What is your next move, and why?"), then STOP and wait for them.',
+  '- Judge every decision against the law in the brief. A sound, reasoned choice → narrate a good consequence and advance. A poor choice → narrate the realistic adverse consequence (a missed deadline, a lost defence, an angry client) so they feel the cost, THEN guide them to see why — do not simply hand them the answer.',
+  '- Their choices shape the path. Stay in character, be realistic and engaging, keep it moving.',
+  '- The "objectives" are the case\'s decision points: mark one "covered" once the learner has made a sound, reasoned decision on it.',
+  '- Use the slide with type "scenario" to show the CURRENT situation and the live decision/options on screen.',
+  '- When the case resolves (or every decision point is handled), DEBRIEF: what they did well, where a choice cost them, and the key legal lessons — then set "complete": true.'
+].join('\n');
+
+function systemFor(lesson, opening, learner, mode) {
   const total = (lesson.objectives || []).length;
-  const openingRule = opening
+  const sim = mode === 'simulation' || lesson.mode === 'simulation';
+  const openingRule = sim ? '' : (opening
     ? 'SESSION OPENING: this is the FIRST section of the programme. Do the full opening — welcome them to the Legal Affairs training, briefly explain the format and objectives, and establish their baseline before teaching.'
-    : 'SESSION OPENING: this is a LATER section. The learner has ALREADY heard the programme welcome and given their baseline earlier — do NOT welcome them to the programme again, do NOT re-explain the format or the 90-minute/assessment structure, and do NOT ask about their overall experience again. Begin with a brief one-sentence bridge into this specific section, then teach its first objective.';
+    : 'SESSION OPENING: this is a LATER section. The learner has ALREADY heard the programme welcome and given their baseline earlier — do NOT welcome them to the programme again, do NOT re-explain the format or the 90-minute/assessment structure, and do NOT ask about their overall experience again. Begin with a brief one-sentence bridge into this specific section, then teach its first objective.');
   return [SYSTEM_PROMPT, '',
-    openingRule, '',
+    sim ? SIMULATION_DIRECTIVE : openingRule, '',
     learnerProfile(learner), learnerProfile(learner) ? '' : null,
     '────────  APPROVED TRAINING MATERIALS FOR THIS SESSION  ────────',
     buildLessonContext(lesson), '',
@@ -177,6 +192,7 @@ module.exports = async function (context, req) {
   const perception = b.perception || {};
   const opening = b.opening !== false; // default to full opening unless told otherwise
   const learner = b.learner || null;   // personalisation profile (name, prior progress)
+  const mode = b.mode || lesson.mode || 'lesson';
   const total = (lesson.objectives || []).length;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -186,7 +202,7 @@ module.exports = async function (context, req) {
   // stays low. Set TRAINER_MODEL=claude-haiku-4-5-20251001 for maximum speed.
   const wanted = process.env.TRAINER_MODEL || 'claude-sonnet-4-6';
   const models = [wanted, 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001', 'claude-opus-4-8'].filter((m, i, a) => a.indexOf(m) === i);
-  const body = { max_tokens: 600, system: systemFor(lesson, opening, learner), messages: toMessages(history, perception, opening) };
+  const body = { max_tokens: 600, system: systemFor(lesson, opening, learner, mode), messages: toMessages(history, perception, opening, mode) };
 
   let lastStatus = 0;
   for (const model of models) {
