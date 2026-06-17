@@ -1029,7 +1029,7 @@ Your job is not to finish the material — it is to produce a competent learner.
 
   // ─── Speak + karaoke captions (2-3 lines, bottom, paced to speech) ─────
   var capTimer=null;
-  function showCaption(html){ if(capTimer){clearTimeout(capTimer);capTimer=null;} el('caption').innerHTML=html; }
+  function showCaption(html){ if(capTimer){clearTimeout(capTimer);capTimer=null;} var c=el('caption'); c.innerHTML=html||''; var cap=c.parentElement; if(cap)cap.style.display=html?'':'none'; }
   function karaoke(text,totalMs){
     if(capTimer){clearTimeout(capTimer);capTimer=null;}
     var parts=String(text).replace(/\s+/g,' ').trim().match(/[^.!?;:]+[.!?;:]*\s*/g)||[text];
@@ -1053,29 +1053,25 @@ Your job is not to finish the material — it is to produce a competent learner.
     var ms=estMs(text);
     if(capTimer){clearTimeout(capTimer);capTimer=null;}
     if(S.speakTimer){clearTimeout(S.speakTimer);S.speakTimer=null;}
-    if(S.karaokeStartT){clearTimeout(S.karaokeStartT);S.karaokeStartT=null;}
-    // Show the opening words immediately so the screen isn't blank, but only start
-    // PACING the captions once her voice begins, so they track the speech.
-    showCaption('<span class="seg-cur">'+esc(firstSeg(text))+'</span>');
-    function startCaptions(){ if(S.ended)return; karaoke(text,ms); }
+    // No subtitles for her speech (impossible to keep perfectly in sync without
+    // word timing); clear any stale caption — the avatar speaks the audio.
+    showCaption('');
     if(S.anam&&S.face==='anam'){
       var av=el('anamVideo');if(av)try{av.muted=false;av.volume=1;}catch(e){}  // restore voice after any barge-in
       try{
         S.anam.speak(text); setFaceSpeaking(true);
-        S.karaokeStartT=setTimeout(function(){S.karaokeStartT=null;startCaptions();},ONSET_MS);  // sync to voice onset
         S.speakTimer=setTimeout(function(){S.speakTimer=null;setFaceSpeaking(false);done&&done();},ms+ONSET_MS);
         return;
       }catch(e){}
     }
     if(window.speechSynthesis){
       var u=new SpeechSynthesisUtterance(text);u.rate=1;u.pitch=1;
-      u.onstart=function(){setFaceSpeaking(true);startCaptions();};   // perfectly synced to onset
+      u.onstart=function(){setFaceSpeaking(true);};
       u.onend=function(){setFaceSpeaking(false);done&&done();};
       window.speechSynthesis.cancel();window.speechSynthesis.speak(u);
-    } else { setFaceSpeaking(true);startCaptions();setTimeout(function(){setFaceSpeaking(false);done&&done();},ms); }
+    } else { setFaceSpeaking(true);setTimeout(function(){setFaceSpeaking(false);done&&done();},ms); }
   }
-  function firstSeg(text){var p=String(text).replace(/\s+/g,' ').trim();return p.length>85?p.slice(0,82).replace(/\s\S*$/,'')+'…':p;}
-  // ~150 words/min including natural pauses, so captions don't race ahead of her.
+  // ~150 words/min, used only to time when to re-open listening after she speaks.
   function estMs(t){return Math.min(50000,Math.max(2600,t.length*68));}
   function setFaceSpeaking(on){S.faceSpeaking=!!on;el('stylisedFace').classList.toggle('speaking',!!on);el('micLabel').textContent=on?'Trainer is speaking — press “Talk” to jump in':(S.talking?'Listening — speak now':'Press “Talk” to speak');}
 
