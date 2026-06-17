@@ -42,6 +42,7 @@ const adminUsersRoutes = require('./routes/admin-users');
 const trainerRoutes = require('./routes/trainer');
 const accreditationsRoutes = require('./routes/accreditations');
 const cpdRoutes = require('./routes/cpd');
+const notificationsRoutes = require('./routes/notifications');
 
 const pkg = require('../package.json');
 const app = express();
@@ -164,6 +165,7 @@ app.use('/api/v1/admin/users', adminUsersRoutes);
 app.use('/api/v1/trainer',  trainerRoutes);
 app.use('/api/v1/accreditations', accreditationsRoutes);
 app.use('/api/v1/cpd',      cpdRoutes);
+app.use('/api/v1/notifications', notificationsRoutes);
 
 // Composite /config — the frontend portals call this on boot
 app.get('/api/v1/config', async (_req, res, next) => {

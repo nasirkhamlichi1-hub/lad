@@ -200,16 +200,41 @@ router.get('/_/reviewers', requireAuth, (req, res) => {
   res.json({ reviewers: Array.from(set).filter(Boolean).sort() });
 });
 
-router.get('/catalogue', (_req, res) => {
+// Public catalogue of approved courses. Returns each course with BOTH the
+// review/booking field names the portals expect (accreditation_code,
+// courseTitle, points, credits, ref, applied_at) and friendly aliases.
+function catalogCourse(r) {
+  const p = parse(r.payload, {});
+  const points = r.final_points != null ? r.final_points : (p.pointsRequested != null ? p.pointsRequested : 0);
+  const credits = r.final_credits != null ? r.final_credits : (p.credits != null ? p.credits : (p.proposedCredits != null ? p.proposedCredits : 5));
+  const title = p.courseTitle || p.course || p.title || r.ref;
+  const provider = p.providerName || p.firm || r.submitted_by || 'Accredited provider';
+  return {
+    accreditation_code: r.accreditation_code,
+    courseCode: r.accreditation_code,
+    ref: r.ref,
+    courseTitle: title,
+    title,
+    provider,
+    format: p.format || '',
+    points: Number(points) || 0,
+    cpdPoints: Number(points) || 0,
+    credits: Number(credits) || 5,
+    areas: p.areas || (Array.isArray(p.topics) ? p.topics.map((t) => t.label).join(', ') : ''),
+    summary: p.summary || p.description || '',
+    applied_at: r.submitted_at,
+    approvedAt: r.reviewed_at,
+    earliest_session_date: p.dateHeld || p.earliest_session_date || '',
+  };
+}
+function sendCatalog(_req, res) {
   const rows = db.prepare("SELECT * FROM accreditations WHERE status = 'approved' AND accreditation_code IS NOT NULL ORDER BY reviewed_at DESC").all();
-  res.json({ courses: rows.map((r) => {
-    const p = parse(r.payload, {});
-    return { courseCode: r.accreditation_code, title: p.courseTitle || p.course || p.title || r.ref,
-      provider: p.providerName || p.firm || r.submitted_by, format: p.format || null,
-      cpdPoints: r.final_points != null ? r.final_points : (p.pointsRequested || 0),
-      areas: p.areas || (p.topics || []).map((t) => t.label).join(', '), summary: p.summary || p.description || '', approvedAt: r.reviewed_at };
-  }) });
-});
+  res.json({ courses: rows.map(catalogCourse) });
+}
+router.get('/catalogue', sendCatalog);
+router.get('/catalog', sendCatalog);
+router.get('/_/catalog', sendCatalog);
+router.get('/_/catalogue', sendCatalog);
 
 router.get('/:ref', requireAuth, (req, res) => {
   const row = db.prepare('SELECT * FROM accreditations WHERE ref = ?').get(req.params.ref);
