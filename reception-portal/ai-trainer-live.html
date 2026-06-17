@@ -45,7 +45,8 @@ h1{font-family:var(--serif);font-size:clamp(31px,5.4vw,46px);font-weight:400;let
 .lede{font-size:clamp(14px,2.1vw,16.5px);color:var(--slate2);max-width:600px;margin:14px auto 0;line-height:1.55}
 .grid{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start;padding:24px 0 60px}
 @media(max-width:880px){.grid{grid-template-columns:1fr;gap:14px}}
-@media(max-width:560px){.wrap{padding:0 16px}.hero{padding:18px 0 6px}.card-b{padding:16px}.lessons{max-height:none}}
+@media(max-width:560px){.wrap{padding:0 16px}.hero{padding:18px 0 6px}.card-b{padding:16px}.lessons{max-height:none}
+  .brand-s,#whoami{display:none!important}.brand-t{font-size:16px}.top-in{gap:10px;height:56px}.emblem{width:34px;height:34px}}
 .card{background:var(--white);border:1px solid var(--line);border-radius:20px;box-shadow:0 1px 2px rgba(10,14,20,.04),0 12px 32px rgba(10,14,20,.07);overflow:hidden}
 .card-h{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
 .card-h h3{font-size:13px;font-weight:700;letter-spacing:-.01em}
@@ -230,9 +231,8 @@ input.key:focus{outline:none;border-color:var(--green2)}
 <main>
   <section id="login" style="display:none">
     <div class="wrap" style="max-width:440px;padding:46px 24px 60px">
-      <div class="eyebrow" style="text-align:center">Dubai Legal Affairs · CLPD</div>
-      <h1 style="text-align:center;font-size:30px">AI Legal Trainer</h1>
-      <p class="lede" style="text-align:center;margin:10px auto 0">Sign in to begin. Your progress, engagement score and CPD are saved to your record.</p>
+      <h1 style="text-align:center">AI Legal Trainer</h1>
+      <p class="lede" style="text-align:center;margin:10px auto 0">Sign in to begin your session.</p>
       <div class="card" style="margin-top:22px">
         <div class="card-b">
           <div id="authErr" class="banner" style="display:none;background:var(--red-bg);border-color:var(--red-border);color:var(--red)"></div>
@@ -269,7 +269,7 @@ input.key:focus{outline:none;border-color:var(--green2)}
         <div class="card-h"><h3>Start your session</h3></div>
         <div class="card-b">
           <p style="font-size:13px;color:var(--slate);line-height:1.55">Uses your <b>camera and microphone</b> so your trainer can guide you and your engagement is scored. Find a quiet spot and allow access when prompted.</p>
-          <div class="banner" id="engineNote" style="margin-top:14px"></div>
+          <p class="note" id="engineNote" style="margin-top:10px"></p>
           <button id="startBtn" class="btn btn-pri btn-block" disabled>Begin session</button>
           <p class="note" id="setupNote">Select a lesson to begin.</p>
         </div>
@@ -615,7 +615,7 @@ Your job is not to finish the material — it is to produce a competent learner.
   // ─── Login / register + per-user progress ────────────────────────────
   function setAuthErr(m){var e=el('authErr');if(!e)return;if(m){e.textContent=m;e.style.display='';}else{e.style.display='none';}}
   function showLogin(){el('login').style.display='';el('setup').style.display='none';el('session').style.display='none';el('whoami').style.display='none';el('logoutBtn').style.display='none';el('enginePill').style.display='none';}
-  function showSetup(){el('login').style.display='none';el('setup').style.display='';el('enginePill').style.display='';}
+  function showSetup(){el('login').style.display='none';el('setup').style.display='';el('enginePill').style.display='none';}
   function authMode(m){AUTH.mode=m;var reg=(m==='register');
     el('regName').style.display=reg?'':'none';el('regCode').style.display=reg?'':'none';
     el('authBtn').textContent=reg?'Create account':'Sign in';
@@ -681,7 +681,7 @@ Your job is not to finish the material — it is to produce a competent learner.
     var saved=resumeFor(S.selected);
     if(saved){ S.history=(saved.history||[]).slice();S.resuming=true;S.startedAt=Date.now()-((saved.elapsedSec||0)*1000);S.lastCovered=saved.covered||0; }
     else { S.startedAt=Date.now();S.history=[];S.resuming=false;S.lastCovered=0; }
-    el('setup').classList.add('hidden');el('session').style.display='block';
+    el('setup').classList.add('hidden');el('session').style.display='block';el('enginePill').style.display='';
     el('recLabel').textContent='Live · '+S.selected.title;
     el('brainLabel').textContent='';
     startTimeline();
