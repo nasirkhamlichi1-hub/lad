@@ -1,6 +1,8 @@
 {
   "routes": [
-    { "route": "/", "rewrite": "/clpd-portal.html" },
+    { "route": "/runtime-config.js", "headers": { "cache-control": "no-store, must-revalidate" } },
+    { "route": "/api-client.js", "headers": { "cache-control": "no-store, must-revalidate" } },
+    { "route": "/", "rewrite": "/clpd-portal.html", "headers": { "cache-control": "no-store, must-revalidate" } },
     { "route": "/lawyer", "rewrite": "/lawyer-portal-v2.html" },
     { "route": "/firm", "rewrite": "/firm-compliance-portal.html" },
     { "route": "/intelligence", "rewrite": "/lad-intelligence-v4.html" },
