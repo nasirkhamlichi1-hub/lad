@@ -187,13 +187,16 @@ function parseReply(text, total) {
   const covered = Array.isArray(obj.covered)
     ? obj.covered.map(n => parseInt(n, 10)).filter(n => n >= 1 && n <= total).filter((v, i, a) => a.indexOf(v) === i) : [];
   const say = String(obj.say).trim();
-  // Safety net: never end the section until EVERY objective is covered, and never
-  // end on a turn that is still asking the learner a question (the certificate
-  // would cut them off mid-answer). The closing turn must be a wrap-up statement.
-  // Require essentially all objectives (tolerate one tracking discrepancy so the
-  // model can't get stuck unable to ever close), and never end on a question.
-  let complete = obj.complete === true && (total <= 1 || covered.length >= total - 1);
-  if (complete && /\?\s*["'’)\]]*$/.test(say)) complete = false;
+  // End the section reliably (so it never loops after the summary), but never on a
+  // turn that is still asking a question (the certificate would cut the answer off).
+  const endsQ = /\?\s*["'’)\]]*$/.test(say);
+  const saysDone = /(completed (this|the) section|finished (this|the) section|that (wraps up|concludes) (this|the) section|move on to (the )?next (section|part|chapter)|on to the next (section|part|chapter)|ready to move (on )?to (the )?next (section|part|chapter))/i.test(say);
+  let complete = false;
+  if (!endsQ) {
+    if (obj.complete === true) complete = true;                         // the model says it's done
+    else if (total > 0 && covered.length >= total) complete = true;     // everything is covered
+    else if (saysDone) complete = true;                                 // explicit section-handoff wording
+  }
   return { say, covered, complete, slide: cleanSlide(obj.slide) };
 }
 
