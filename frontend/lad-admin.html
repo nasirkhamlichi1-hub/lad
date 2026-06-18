@@ -1360,11 +1360,11 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
       <div class="adm-sync-card-icon gold">
         <svg viewBox="0 0 24 24"><path d="M14 10l-2-7-9 18 5-2 6-9z"/><path d="M14 10l7 11h-9"/></svg>
       </div>
-      <h3 class="adm-sync-card-h">Connect Azure backend</h3>
-      <p class="adm-sync-card-p">Once Azure Functions and SQL/Cosmos are provisioned, paste the API base URL below. The admin will read &amp; write live — no more manual config-file downloads.</p>
-      <input class="adm-input" id="azureUrl" placeholder="https://<your-app>.azurewebsites.net/api" style="font-family:var(--mono);font-size:11.5px"/>
-      <button class="adm-btn-light" onclick="azureConnect()" disabled style="opacity:.5;cursor:not-allowed">Connect (coming soon)</button>
+      <h3 class="adm-sync-card-h">Backend connection</h3>
+      <p class="adm-sync-card-p">The admin reads &amp; writes live against the CLPD backend. This panel shows the connection status.</p>
+      <div id="admBackendStatus" style="font-family:var(--mono);font-size:11.5px;color:var(--slate2)">Checking…</div>
     </div>
+    <script>(function(){function chk(){var el=document.getElementById('admBackendStatus');if(!el)return;var base=(typeof _admBase==='function'?_admBase():(window.LAD_API_BASE||'')).replace(/\/$/,'');if(!base){el.innerHTML='<span style="color:var(--red)">●</span> Not configured';return;}fetch(base+'/api/v1/health').then(function(r){return r.ok?r.json():null;}).then(function(){el.innerHTML='<span style="color:var(--green)">●</span> Connected · '+base;}).catch(function(){el.innerHTML='<span style="color:var(--amber)">●</span> '+base+' (waking…)';});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',chk);else chk();})();</script>
 
     <div class="adm-sync-card">
       <div class="adm-sync-card-icon" style="background:linear-gradient(135deg,#475569,#1e293b);color:#fff">
@@ -2296,16 +2296,37 @@ let currentImageMode = 'gradient';
 
 // ────────── PERSISTENCE ──────────
 function loadCourses(){
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  // First load: seed defaults. Write directly to storage — calling saveAll()
-  // here would touch `courses` while it's still in its own TDZ.
-  const seed = JSON.parse(JSON.stringify(DEFAULT_COURSES));
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(seed)); } catch {}
-  return seed;
+  // Live-only: the catalogue is loaded from the backend (loadLiveCourses).
+  // No demo seed. A cached copy may exist from a previous live load.
+  try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) return JSON.parse(raw); } catch {}
+  return [];
 }
+// Replace the course catalogue with the LIVE backend catalogue.
+async function loadLiveCourses(){
+  try {
+    const base = _admBase().replace(/\/$/,'');
+    const r = await fetch(base + '/api/v1/courses/upcoming');
+    if (!r.ok) return;
+    const list = await r.json();
+    if (!Array.isArray(list)) return;
+    const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const fd=(iso)=>{const d=new Date(iso);return isNaN(d)?'':(DOW[d.getUTCDay()]+' '+d.getUTCDate()+' '+M[d.getUTCMonth()]+' '+d.getUTCFullYear());};
+    const ft=(iso)=>{if(!iso)return '';const d=new Date(iso);if(isNaN(d))return '';const h=d.getUTCHours(),m=d.getUTCMinutes();return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;};
+    courses = list.map((c)=>{
+      const isMand=(c.type||'').toLowerCase()==='mandatory';
+      const isElearn=/e-?learning/i.test(c.format||'');
+      return { id:c.id, title:c.title, type:isMand?'mandatory':'accredited', pts:Number(c.pts)||2, credits:Number(c.credits)||5,
+        provider:c.provider_id||'LAD Academy', location:c.location||'Dubai',
+        bg:c.bg||(isMand?'linear-gradient(135deg,#241a38,#463a66)':'linear-gradient(135deg,#0a2040,#16386a)'),
+        elearning:isElearn, status:'live', match:0, matchReason:'', desc:(c.title||'')+' — accredited CLPD course.',
+        sessions:(c.sessions||[]).map((s)=>({date:fd(s.scheduled_at),time:ft(s.scheduled_at)+(s.end_at?'–'+ft(s.end_at):''),seats:Number(s.seats_remaining)||0,lang:s.language||'English',sid:s.id})),
+        impact:[] };
+    });
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(courses)); } catch {}
+    renderStats(); applyFilters();
+  } catch(e){}
+}
+document.addEventListener('DOMContentLoaded', loadLiveCourses);
 function saveAll(arr){
   courses = arr;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); } catch {}
@@ -3870,7 +3891,7 @@ const SUPPORT_STORAGE_KEY = 'lad_support_lawyers';
 
 // Cache schema version — bump this whenever SUPPORT_LAWYERS_DEFAULT structure changes,
 // so old cached data gets refreshed automatically on the next page load.
-const SUPPORT_SCHEMA_VERSION = 2;
+const SUPPORT_SCHEMA_VERSION = 3;
 const SUPPORT_VERSION_KEY = 'lad_support_lawyers_schema';
 
 function supLoadLawyers() {
@@ -3892,13 +3913,9 @@ function supLoadLawyers() {
   } catch (e) {
     console.warn('[LAD admin] Resetting lawyer cache:', e.message);
   }
-  // First load OR validation failed: seed defaults
-  const seed = JSON.parse(JSON.stringify(SUPPORT_LAWYERS_DEFAULT));
-  try {
-    localStorage.setItem(SUPPORT_STORAGE_KEY, JSON.stringify(seed));
-    localStorage.setItem(SUPPORT_VERSION_KEY, String(SUPPORT_SCHEMA_VERSION));
-  } catch {}
-  return seed;
+  // Live-only: the directory is loaded from the backend (supLoadData → /lawyers).
+  // No demo seed.
+  return [];
 }
 
 function supSaveLawyers() {
@@ -4059,8 +4076,48 @@ async function admBookingsRender() {
   `;
 }
 
-function admBookOpen() {
-  if (typeof toast === 'function') toast('To book on behalf of a lawyer, open their profile in Support → use "Book a course". (Admin booking flow.)');
+async function admBookOpen() {
+  const lbl='font-family:var(--mono);font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:#8a9a90;font-weight:700;margin:0 0 6px;display:block';
+  const inp='width:100%;border:1.5px solid #d6ddd7;border-radius:9px;padding:10px 12px;font-size:13.5px;font-family:inherit;outline:0;margin-bottom:12px';
+  let courses = [];
+  try { const r = await fetch(_admBase().replace(/\/$/,'')+'/api/v1/courses/upcoming'); courses = r.ok ? await r.json() : []; } catch(e){}
+  courses = (Array.isArray(courses)?courses:[]).filter(c => (c.sessions||[]).length);
+  const courseOpts = '<option value="">Select a course…</option>' + courses.map((c,i)=>'<option value="'+i+'">'+escapeAttr(c.title)+'</option>').join('');
+  window.__admBookCourses = courses;
+  admMiniModal('Book on behalf of a lawyer',
+    '<label style="'+lbl+'">Lawyer (email or L-number)</label><input id="admBkLawyer" style="'+inp+'" placeholder="lawyer.allenovery@clpd.test or L-06818"/>'
+    +'<label style="'+lbl+'">Course</label><select id="admBkCourse" style="'+inp+'" onchange="admBkFillSessions()">'+courseOpts+'</select>'
+    +'<label style="'+lbl+'">Session</label><select id="admBkSession" style="'+inp+'"><option value="">Select a course first…</option></select>'
+    +'<div id="admBkNote" style="font-size:12px;color:#64748b"></div>',
+    'Book course', '#006B3F', async function(){
+      const who=(document.getElementById('admBkLawyer').value||'').trim();
+      const ci=document.getElementById('admBkCourse').value; const si=document.getElementById('admBkSession').value;
+      const note=document.getElementById('admBkNote');
+      if(!who||ci===''||si===''){ note.textContent='Fill in lawyer, course and session.'; return false; }
+      try{
+        // Resolve the lawyer id (accept L-number directly, else search by email).
+        let lawyerId = /^L-/i.test(who) ? who : null;
+        if(!lawyerId){
+          const lr=await fetch(_admBase().replace(/\/$/,'')+'/api/v1/lawyers?search='+encodeURIComponent(who)+'&limit=1',{headers:{Authorization:'Bearer '+_admToken()}});
+          const ld=await lr.json().catch(()=>({})); const first=(ld.data&&ld.data[0])||null;
+          if(!first){ note.textContent='No lawyer matched "'+who+'".'; return false; }
+          lawyerId=first.id;
+        }
+        const c=window.__admBookCourses[ci]; const s=(c.sessions||[])[si];
+        const r=await fetch(_admBase().replace(/\/$/,'')+'/api/v1/bookings',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+_admToken()},body:JSON.stringify({lawyer_id:lawyerId,course_id:c.id,course_title:c.title,session_id:s.id,scheduled_at:s.scheduled_at,credits_used:Number(c.credits)||5})});
+        const d=await r.json().catch(()=>({}));
+        if(r.ok){ toast('Booked '+c.title+' for '+lawyerId,'success'); admBookingsRender(); }
+        else if(r.status===402){ note.textContent=d.message||'That lawyer has insufficient credits.'; return false; }
+        else { note.textContent=d.message||d.error||'Could not book.'; return false; }
+      }catch(e){ note.textContent='Network error.'; return false; }
+    });
+}
+function admBkFillSessions(){
+  const ci=document.getElementById('admBkCourse').value; const sel=document.getElementById('admBkSession');
+  const c=(window.__admBookCourses||[])[ci];
+  if(!c){ sel.innerHTML='<option value="">Select a course first…</option>'; return; }
+  const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  sel.innerHTML=(c.sessions||[]).map(function(s,i){var d=new Date(s.scheduled_at);var lab=isNaN(d)?s.scheduled_at:(d.getUTCDate()+' '+M[d.getUTCMonth()]+' '+d.getUTCFullYear());return '<option value="'+i+'">'+lab+' · '+(Number(s.seats_remaining)||0)+' seats</option>';}).join('');
 }
 function _bkEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];}); }
 function admBookEdit(id) {
@@ -4171,7 +4228,13 @@ async function admPurchasesRender() {
   `;
 }
 
-function admPurchaseInspect(id) { alert('Transaction ' + id + '\n\n— View full audit trail\n— Issue refund\n— Reassign credits\n— Flag for review\n\n(stub; wires to GET /api/v1/purchases/:id)'); }
+function admPurchaseInspect(id) {
+  const t = (window.__admPurchases || []).find(x => String(x.id) === String(id)) || { id };
+  const row = (k,v) => '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px"><span style="color:#64748b">'+k+'</span><span style="font-weight:600;color:#0f172a">'+escape(v==null||v===''?'—':String(v))+'</span></div>';
+  admMiniModal('Transaction ' + escape(t.id || id),
+    row('Type', t.kind) + row('Buyer', t.buyer) + row('Credits', (t.credits>0?'+':'')+(t.credits!=null?t.credits:'—')) + row('Amount', t.aed!=null?('AED '+Number(t.aed).toLocaleString()):'—') + row('Method', t.method) + row('Date', t.date) + row('Status', t.status),
+    'Close', '#006B3F', function(){ return true; });
+}
 function admPurchasesExport() {
   const rows = window.__admPurchases || [];
   const csv = 'id,kind,buyer,credits,aed,method,date,status\n' +
