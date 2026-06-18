@@ -958,6 +958,7 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
     <button class="adm-cnt-subtab" data-cnt="programme" onclick="cntSubtab('programme')">Programme &amp; Compliance</button>
     <button class="adm-cnt-subtab" data-cnt="contact" onclick="cntSubtab('contact')">Contact</button>
     <button class="adm-cnt-subtab" data-cnt="faq" onclick="cntSubtab('faq')">FAQs</button>
+    <button class="adm-cnt-subtab" data-cnt="advanced" onclick="cntSubtab('advanced')">✦ Advanced · all fields</button>
   </nav>
 
   <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
@@ -1335,6 +1336,20 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
   <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
   <!-- FAQs                                                -->
   <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+  <div class="adm-cnt-section" data-cnt-section="advanced">
+    <div class="adm-cnt-block">
+      <div class="adm-cnt-block-head">All content fields</div>
+      <p style="font-size:12.5px;color:var(--slate2);margin:6px 0 14px;line-height:1.6">Every text field the website reads. Edit any value here (this includes fields not shown in the forms above), or add a brand-new field by its key. Saving writes live to all visitors.</p>
+      <input class="adm-input" id="cntAdvSearch" placeholder="Search fields by key or text…" oninput="cntAdvFilter()" style="margin-bottom:14px"/>
+      <div id="cntAdvList" style="max-height:460px;overflow-y:auto"></div>
+      <div style="display:flex;gap:10px;align-items:flex-end;border-top:1px solid var(--line);padding-top:14px;margin-top:6px;flex-wrap:wrap">
+        <div style="flex:1;min-width:180px"><label class="adm-label">New field key</label><input class="adm-input" id="cntAdvNewKey" placeholder="e.g. clpd_footer_note"/></div>
+        <div style="flex:1.6;min-width:200px"><label class="adm-label">Value</label><input class="adm-input" id="cntAdvNewVal" placeholder="Text…"/></div>
+        <button class="adm-btn-green" onclick="cntAdvAdd()">+ Add field</button>
+      </div>
+    </div>
+  </div>
+
   <div class="adm-cnt-section" data-cnt-section="faq">
     <div class="adm-cnt-grid">
       <div class="adm-cnt-card" style="grid-column:1/-1">
@@ -3764,8 +3779,10 @@ document.addEventListener('input', e => {
   }
 });
 
+let CNT_ALL = {};
 async function cntLoad() {
   const c = await api.getContent();
+  CNT_ALL = Object.assign({}, c);
   // Set every input/textarea by ID — convention: id="cnt_<key>"
   Object.keys(c).forEach(k => {
     const el = document.getElementById('cnt_' + k);
@@ -3776,6 +3793,53 @@ async function cntLoad() {
   // FAQ list re-renders separately
   const faqEl = document.getElementById('faqList');
   if (faqEl && typeof faqRender === 'function') faqRender();
+  cntRenderAdvanced();
+}
+
+// ── Advanced editor: every content field, including ones without a form ──
+function _cntStructuredKeys(){
+  const set = {};
+  document.querySelectorAll('[id^="cnt_"]').forEach(function(el){
+    if (!el.closest('[data-cnt-section="advanced"]')) set[el.id.slice(4)] = 1;
+  });
+  return set;
+}
+function cntRenderAdvanced(){
+  const host = document.getElementById('cntAdvList'); if (!host) return;
+  const structured = _cntStructuredKeys();
+  // Keys in the config that have no structured form field (so no duplicate ids).
+  const keys = Object.keys(CNT_ALL).filter(function(k){ return !structured[k]; }).sort();
+  if (!keys.length) {
+    host.innerHTML = '<div style="padding:18px;color:var(--slate3);font-size:13px">All current fields are covered by the forms above. Add a new field below to extend the site.</div>';
+    return;
+  }
+  host.innerHTML = keys.map(function(k){
+    const v = CNT_ALL[k] == null ? '' : String(CNT_ALL[k]);
+    const long = v.length > 70;
+    const ctl = long
+      ? '<textarea class="adm-textarea" id="cnt_'+escapeAttr(k)+'" rows="2" style="flex:1" oninput="cntDirty=true;cntUpdateDirty()">'+escape(v)+'</textarea>'
+      : '<input class="adm-input" id="cnt_'+escapeAttr(k)+'" value="'+escapeAttr(v)+'" style="flex:1" oninput="cntDirty=true;cntUpdateDirty()"/>';
+    return '<div class="cnt-adv-row" data-k="'+escapeAttr(k.toLowerCase())+'" data-v="'+escapeAttr(v.toLowerCase())+'" style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--line)">'
+      + '<div style="flex:0 0 230px;font-family:var(--mono);font-size:10.5px;color:var(--slate2);word-break:break-all;padding-top:9px">'+escape(k)+'</div>'+ctl+'</div>';
+  }).join('');
+}
+function cntAdvFilter(){
+  const q = (document.getElementById('cntAdvSearch')?.value||'').toLowerCase().trim();
+  document.querySelectorAll('#cntAdvList .cnt-adv-row').forEach(function(row){
+    row.style.display = (!q || (row.dataset.k||'').indexOf(q)!==-1 || (row.dataset.v||'').indexOf(q)!==-1) ? '' : 'none';
+  });
+}
+function _cntAdvHarvest(){ document.querySelectorAll('[data-cnt-section="advanced"] [id^="cnt_"]').forEach(function(el){ CNT_ALL[el.id.slice(4)] = el.value; }); }
+function cntAdvAdd(){
+  const kEl=document.getElementById('cntAdvNewKey'), vEl=document.getElementById('cntAdvNewVal');
+  let k=(kEl.value||'').trim().replace(/[^a-zA-Z0-9_]/g,'_');
+  if(!k){ toast('Enter a field key','error'); return; }
+  if(_cntStructuredKeys()[k]){ toast('That key already has a form field above.','error'); return; }
+  _cntAdvHarvest();
+  CNT_ALL[k] = vEl.value||'';
+  kEl.value=''; vEl.value='';
+  cntRenderAdvanced(); cntDirty=true; cntUpdateDirty();
+  toast('Field added — click Save changes to publish','success');
 }
 
 function cntReload() {
