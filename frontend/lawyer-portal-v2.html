@@ -590,7 +590,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 <!-- ══════════════════════════════════════════
      BOOKING MODAL (mirrors training.legal.dubai.gov.ae pattern)
 ══════════════════════════════════════════ -->
-<div id="bookingOverlay" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(10,14,20,.65);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);overflow-y:auto;padding:24px 16px" onclick="if(event.target===this)closeBooking()">
+<div id="bookingOverlay" style="position:fixed;inset:0;z-index:1000;background:rgba(10,14,20,.65);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);overflow-y:auto;padding:24px 16px" onclick="if(event.target===this)closeBooking()">
   <div style="background:var(--white);border-radius:var(--r-2xl);box-shadow:var(--sh-xl);width:min(100%,780px);margin:0 auto;overflow:hidden">
 
     <!-- Course art header -->
@@ -855,7 +855,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 
 <style>
 #bookingOverlay{display:none}
-#bookingOverlay.on{display:block}
+#bookingOverlay.on{display:block !important}
 #skillsQuizOverlay{display:none}
 #skillsQuizOverlay.on{display:flex}
 /* ═══ CUTTING-EDGE SKILLS DIAGNOSTIC ═══ */
