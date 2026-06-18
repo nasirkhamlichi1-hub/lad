@@ -80,4 +80,36 @@ router.post('/chat', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// GET /api/v1/lex/status — non-secret diagnostic for "Maryam isn't working".
+// Reports whether AiModel is configured, which endpoint host/deployment it is
+// using, and the result of a live 1-token probe — so the exact failure
+// (dead tunnel, wrong deployment, bad key) is visible without exposing the key.
+router.get('/status', requireAuth, async (req, res) => {
+  const s = aimodel.settings();
+  let host = '';
+  try { host = s.endpoint ? new URL(s.endpoint).host : ''; } catch (_) { host = s.endpoint || ''; }
+  const isAzure = /openai\.azure\.com/i.test(s.endpoint || '') || /\/openai\/deployments\//i.test(s.endpoint || '');
+  const out = {
+    configured: aimodel.configured(),
+    endpointHost: host,
+    isTunnel: /trycloudflare\.com|ngrok|loca\.lt/i.test(host),
+    isAzure,
+    deployment: s.deployment,
+    apiVersion: s.apiVersion,
+    hasKey: !!s.key,
+    claudeFallback: !!config.anthropic.apiKey,
+    probe: null,
+  };
+  if (aimodel.configured()) {
+    try {
+      const text = await aimodel.chat({ messages: [{ role: 'user', content: 'Reply with the single word OK.' }], maxTokens: 5, temperature: 0 });
+      out.probe = { ok: true, sample: (text || '').slice(0, 40) };
+    } catch (e) {
+      out.probe = { ok: false, code: e.code || 'ERROR', status: (e.detail && e.detail.error && e.detail.error.code) || undefined, message: e.message,
+        detail: typeof e.detail === 'object' ? (e.detail.error ? e.detail.error.message : JSON.stringify(e.detail).slice(0, 300)) : String(e.detail || '').slice(0, 300) };
+    }
+  }
+  res.json(out);
+});
+
 module.exports = router;
