@@ -576,6 +576,10 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
     <div class="adm-stat"><div class="adm-stat-num" id="statSeats">0</div><div class="adm-stat-lbl">Open seats</div></div>
   </div>
   <div class="adm-actions">
+    <button class="adm-btn adm-btn-primary" onclick="admMsgOpen()" title="Message lawyers, firms or the whole profession" style="background:#0d7377;border-color:#0d7377;color:#fff">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Message profession
+    </button>
     <button class="adm-btn" onclick="openImport()" title="Import courses from JSON">
       <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       Import
@@ -5756,6 +5760,58 @@ async function admComplianceReport(){
   }catch(e){ toast('Could not generate report','error'); }
 }
 document.addEventListener('DOMContentLoaded', loadAdmSessions);
+</script>
+
+<!-- ══════ MESSAGE THE PROFESSION · dedicated composer ══════ -->
+<div id="admMsgOv" style="position:fixed;inset:0;background:rgba(8,18,12,.6);backdrop-filter:blur(8px);z-index:2300;display:none;align-items:flex-start;justify-content:center;padding:70px 20px">
+  <div style="background:#fff;border-radius:18px;max-width:600px;width:100%;box-shadow:0 40px 100px rgba(0,0,0,.4);overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+    <div style="background:linear-gradient(135deg,#0a3a28,#0d5a4a);color:#fff;padding:18px 22px;display:flex;align-items:center;justify-content:space-between">
+      <div><div style="font-size:21px;font-weight:600">Message the profession</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;opacity:.8;margin-top:2px">In-system notification · lawyers receive it instantly</div></div>
+      <button onclick="admMsgClose()" style="width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.18);border:0;color:#fff;cursor:pointer;font-size:15px">✕</button>
+    </div>
+    <div style="padding:20px 22px">
+      <label style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:#8a9a90;font-weight:700;margin-bottom:6px;display:block">Send to</label>
+      <select id="admMsgAud" class="adm-input" style="width:100%;margin-bottom:14px">
+        <option value="all">Everyone — all lawyers</option>
+        <option value="critical">Segment · Critical (&lt;8 pts)</option>
+        <option value="at-risk">Segment · At risk (8–15 pts)</option>
+        <option value="compliant">Segment · Compliant (16+ pts)</option>
+        <option value="noBookings">Segment · No bookings yet</option>
+      </select>
+      <label style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:#8a9a90;font-weight:700;margin-bottom:6px;display:block">Describe it — AI drafts</label>
+      <div style="display:flex;gap:8px;margin-bottom:14px"><input id="admMsgPrompt" class="adm-input" style="flex:1" placeholder="e.g. remind everyone the cycle ends 31 Dec and to book now"/><button class="adm-btn-green" id="admMsgDraftBtn" onclick="admMsgDraft()">✦ Draft</button></div>
+      <label style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:#8a9a90;font-weight:700;margin-bottom:6px;display:block">Title</label>
+      <input id="admMsgTitle" class="adm-input" style="width:100%;margin-bottom:14px"/>
+      <label style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:#8a9a90;font-weight:700;margin-bottom:6px;display:block">Message</label>
+      <textarea id="admMsgBody" class="adm-textarea" rows="4" style="width:100%;margin-bottom:6px"></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><span id="admMsgNote" style="font-size:12px;color:#8a9a90"></span><button class="adm-btn-green" id="admMsgSendBtn" onclick="admMsgSend()" style="padding:10px 20px">Send to profession →</button></div>
+    </div>
+  </div>
+</div>
+<script>
+function admMsgOpen(){ document.getElementById('admMsgOv').style.display='flex'; }
+function admMsgClose(){ document.getElementById('admMsgOv').style.display='none'; }
+(function(){ var ov=document.getElementById('admMsgOv'); if(ov) ov.onclick=function(e){ if(e.target===ov) admMsgClose(); }; })();
+function _admMsgAudLabel(){ var v=document.getElementById('admMsgAud').value; return ({all:'all lawyers',critical:'critical lawyers (<8 points)','at-risk':'lawyers at risk (8–15 points)',compliant:'compliant lawyers (16+ points)',noBookings:'lawyers with no bookings yet'})[v]||'the recipients'; }
+async function admMsgDraft(){
+  var p=(document.getElementById('admMsgPrompt').value||'').trim(); if(!p) return;
+  var btn=document.getElementById('admMsgDraftBtn'); btn.disabled=true; btn.textContent='Drafting…';
+  try{ var r=await fetch(_admBase().replace(/\/$/,'')+'/api/v1/notifications/draft',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+_admToken()},body:JSON.stringify({prompt:p,audienceLabel:_admMsgAudLabel()})});
+    var d=await r.json(); if(r.ok){ document.getElementById('admMsgTitle').value=d.title||''; document.getElementById('admMsgBody').value=d.body||''; } }catch(e){}
+  btn.disabled=false; btn.textContent='✦ Draft';
+}
+async function admMsgSend(){
+  var v=document.getElementById('admMsgAud').value;
+  var title=(document.getElementById('admMsgTitle').value||'').trim(), body=(document.getElementById('admMsgBody').value||'').trim();
+  var note=document.getElementById('admMsgNote');
+  if(!title&&!body){ note.textContent='Add a title or message first.'; return; }
+  var payload = v==='all' ? {audience:'all',title:title,body:body} : v==='noBookings' ? {audience:'segment',segment:{noBookings:true},title:title,body:body} : {audience:'segment',segment:{band:v},title:title,body:body};
+  var btn=document.getElementById('admMsgSendBtn'); btn.disabled=true; btn.textContent='Sending…';
+  try{ var r=await fetch(_admBase().replace(/\/$/,'')+'/api/v1/notifications/send',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+_admToken()},body:JSON.stringify(payload)});
+    var d=await r.json(); if(r.ok){ note.style.color='#16a34a'; note.textContent='✓ '+(d.message||'Sent.'); document.getElementById('admMsgTitle').value='';document.getElementById('admMsgBody').value='';document.getElementById('admMsgPrompt').value=''; setTimeout(admMsgClose,1400);} else { note.style.color='#c0392b'; note.textContent=d.error||'Could not send.'; } }
+  catch(e){ note.style.color='#c0392b'; note.textContent='Network error.'; }
+  btn.disabled=false; btn.textContent='Send to profession →';
+}
 </script>
 
 <!-- ══════ AI ADMIN CONSOLE · ⌘K command bar + notifications composer ══════ -->

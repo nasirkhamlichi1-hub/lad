@@ -52,6 +52,7 @@ router.post('/command', requireAuth, async (req, res, next) => {
       answer: 'AI is not configured here, but the live snapshot is: ' + JSON.stringify(snap) });
   }
   const sessList = sessions.map((s) => `- id=${s.id} | ${s.course_title} | ${new Date(s.scheduled_at).toUTCString()} | booked=${s.booked} | seatsLeft=${s.seats_remaining}`).join('\n') || '(no upcoming sessions)';
+  const history = Array.isArray(req.body.history) ? req.body.history.filter((m) => m && m.role && typeof m.content === 'string').slice(-8) : [];
   const system = 'You are the LAD CLPD admin copilot for the Dubai Legal Affairs Department. You can ANSWER questions and PROPOSE actions for the admin to confirm. Use ONLY the provided live data. Reply with ONLY a JSON object.\n'
     + 'Context: practising lawyers need 16 CPD points by 31 December; <8 = critical, 8-15 = at risk, 16+ = compliant.\n'
     + 'If the admin asks a question, reply {"intent":"answer","answer": string} using the real numbers.\n'
@@ -63,7 +64,7 @@ router.post('/command', requireAuth, async (req, res, next) => {
     + '"summary" must be one clear sentence stating what will happen, including the number booked (they will be refunded + notified). For notify, write a professional title and a 2-4 sentence body. Output JSON only.';
   const user = 'Live snapshot:\n' + JSON.stringify(snap) + '\n\nSESSIONS:\n' + sessList + '\n\nAdmin says: ' + prompt;
   try {
-    const text = await aimodel.chat({ system, messages: [{ role: 'user', content: user }], maxTokens: 600, temperature: 0.2 });
+    const text = await aimodel.chat({ system, messages: history.concat([{ role: 'user', content: user }]), maxTokens: 600, temperature: 0.2 });
     let p = null; try { const m = text.match(/\{[\s\S]*\}/); p = JSON.parse(m ? m[0] : text); } catch (_) {}
     if (!p || !p.intent) return res.json({ intent: 'answer', engine: 'aimodel', answer: text });
     // Validate action plans against real data; downgrade to answer if invalid.
