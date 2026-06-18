@@ -63,9 +63,10 @@
   function renderPlan(d){
     plan=d; var a=document.getElementById('aia-ans');
     var color = d.intent==='cancel_session' ? '#c0392b' : '#0d7377';
-    var label = ({cancel_session:'Cancel session',reschedule_session:'Reschedule session',notify:'Send notification',notify_firm:'Message your firm'})[d.intent]||'Action';
+    var label = ({cancel_session:'Cancel session',reschedule_session:'Reschedule session',notify:'Send notification',notify_firm:'Message your firm',book_course:'Book a course'})[d.intent]||'Action';
     var detail='';
     if(d.intent==='cancel_session'||d.intent==='reschedule_session'){ var s=(d.params&&d.params.session)||{}; detail='<div style="margin-top:8px;font-size:12.5px;color:#475569"><strong>'+esc(s.title||'')+'</strong> · '+(s.booked||0)+' booked'+(d.params.scheduled_at?(' → '+esc(new Date(d.params.scheduled_at).toUTCString())):'')+'</div>'; }
+    else if(d.intent==='book_course'){ var bs=(d.params&&d.params.session)||{}; detail='<div style="margin-top:8px;font-size:12.5px;color:#475569"><strong>'+esc(bs.title||'')+'</strong>'+(bs.scheduled_at?(' · '+esc(new Date(bs.scheduled_at).toUTCString())):'')+' · '+(bs.credits||5)+' credits</div>'; }
     else if(d.intent==='notify'||d.intent==='notify_firm'){ var aud=d.intent==='notify_firm'?'your firm':((d.params.audience==='segment')?('segment '+esc(JSON.stringify(d.params.segment||{}))):'everyone'); detail='<div style="margin-top:8px;font-size:12.5px;color:#475569">To: '+aud+'<br><strong>'+esc(d.params.title||'')+'</strong><br>'+esc(d.params.body||'')+'</div>'; }
     if(a)a.innerHTML='<div class="aia-ans" style="border-left-color:'+color+'"><div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:'+color+';font-weight:700;margin-bottom:6px">Proposed · '+esc(label)+'</div><div style="font-size:14px;color:#0f172a">'+esc(d.summary||'')+'</div>'+detail+'<div style="display:flex;gap:8px;margin-top:14px"><button class="aia-btn" style="background:'+color+'" id="aia-go">Confirm &amp; run</button><button class="aia-btn alt" id="aia-no">Cancel</button></div><div id="aia-res" style="margin-top:10px;font-size:12.5px"></div></div>';
     document.getElementById('aia-go').onclick=execute;
@@ -78,9 +79,18 @@
     else if(d.intent==='reschedule_session'){ url=base()+'/api/v1/courses/sessions/'+encodeURIComponent(d.params.sessionId)+'/reschedule'; opts.body=JSON.stringify({scheduled_at:d.params.scheduled_at,venue:d.params.venue}); }
     else if(d.intent==='notify'){ url=base()+'/api/v1/notifications/send'; opts.body=JSON.stringify(d.params); }
     else if(d.intent==='notify_firm'){ url=base()+'/api/v1/notifications/send'; opts.body=JSON.stringify({audience:'firm',title:d.params.title,body:d.params.body}); }
+    else if(d.intent==='book_course'){ var bs=(d.params&&d.params.session)||{}; url=base()+'/api/v1/bookings'; opts.body=JSON.stringify({course_id:bs.course_id,session_id:bs.id,course_title:bs.title,scheduled_at:bs.scheduled_at,credits_used:bs.credits||5}); }
     else { if(rEl)rEl.textContent='Unknown action.'; return; }
-    fetch(url,opts).then(function(r){return r.json().then(function(jd){return {ok:r.ok,jd:jd};});}).then(function(x){
-      if(x.ok){ var m=(d.intent==='notify'||d.intent==='notify_firm')?('✓ '+(x.jd.message||'Sent.')):('✓ Done'+(x.jd.refunded!=null?(' · '+x.jd.refunded+' refunded'):'')+(x.jd.notified!=null?(' · '+x.jd.notified+' notified'):'')); if(rEl)rEl.innerHTML='<span style="color:#16a34a;font-weight:600">'+esc(m)+'</span>'; plan=null; }
+    fetch(url,opts).then(function(r){return r.json().then(function(jd){return {ok:r.ok,status:r.status,jd:jd};});}).then(function(x){
+      if(x.ok){
+        var m;
+        if(d.intent==='notify'||d.intent==='notify_firm') m='✓ '+(x.jd.message||'Sent.');
+        else if(d.intent==='book_course') m='✓ Booked'+(x.jd.balance!=null?(' · '+x.jd.balance+' credits left'):'');
+        else m='✓ Done'+(x.jd.refunded!=null?(' · '+x.jd.refunded+' refunded'):'')+(x.jd.notified!=null?(' · '+x.jd.notified+' notified'):'');
+        if(rEl)rEl.innerHTML='<span style="color:#16a34a;font-weight:600">'+esc(m)+'</span>'; plan=null;
+        if(d.intent==='book_course') setTimeout(function(){ try{ location.reload(); }catch(_){} }, 1400);
+      }
+      else if(x.status===402 && rEl){ rEl.innerHTML='<span style="color:#c2703d">'+esc(x.jd.message||'Not enough credits — top up to book.')+'</span>'; }
       else if(rEl){ rEl.innerHTML='<span style="color:#c0392b">'+esc(x.jd.error||x.jd.message||'Failed.')+'</span>'; }
     }).catch(function(){ if(rEl)rEl.innerHTML='<span style="color:#c0392b">Network error.</span>'; });
   }

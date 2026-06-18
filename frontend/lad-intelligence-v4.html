@@ -2771,7 +2771,7 @@ async function exportDGReport() {
 <div class="krow"><div class="kbox"><div class="kn">10.4%</div><div class="kl">Compliance Rate</div></div><div class="kbox"><div class="kn">4,411</div><div class="kl">Practitioners</div></div><div class="kbox"><div class="kn">96.1%</div><div class="kl">Dec Forecast</div></div><div class="kbox"><div class="kn">+14.2pp</div><div class="kl">vs 2025</div></div></div>
 ${content.split('\n\n').filter(p=>p.trim()).map(p=>`<p>${p.trim()}</p>`).join('')}
 <div class="ftr"><span>© 2026 Government of Dubai · Legal Affairs Department · LAD Intelligence v4.2</span><span class="stamp">CONFIDENTIAL</span></div>
-<script src="ai-assistant.js?v=1"></script>
+<script src="ai-assistant.js?v=2"></script>
 </body></html>`;
   const blob = new Blob([html],{type:'text/html'});
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='LAD_DG_Briefing_10May2026.html'; a.click();

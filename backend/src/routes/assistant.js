@@ -15,6 +15,17 @@ function daysToDec31() {
   const t = new Date(); const d = new Date(Date.UTC(t.getUTCFullYear(), 11, 31));
   return Math.max(0, Math.ceil((d - t) / 86400000));
 }
+// Upcoming, bookable sessions (for lawyer "book me onto X").
+function bookableSessions(limit) {
+  try {
+    return db.prepare(
+      `SELECT s.id, s.course_id, c.title AS course_title, c.credits, s.scheduled_at, s.seats_remaining
+       FROM course_sessions s JOIN courses c ON c.id = s.course_id
+       WHERE COALESCE(s.status,'scheduled') NOT IN ('cancelled','closed') AND s.scheduled_at >= datetime('now') AND s.seats_remaining > 0
+       ORDER BY s.scheduled_at LIMIT ?`
+    ).all(limit || 60);
+  } catch (_) { return []; }
+}
 function lawyerCtx(u) {
   const l = u.user_type === 'lawyer' ? store.getLawyerById(u.sub) : (u.email ? store.getLawyerByEmail(u.email) : null);
   if (!l) return null;
@@ -45,28 +56,46 @@ router.post('/command', requireAuth, async (req, res, next) => {
   const prompt = (req.body && req.body.prompt || '').toString().trim();
   if (!prompt) return res.status(400).json({ error: 'Ask a question.' });
 
-  let ctx = {}, who = 'a LAD user', firmMode = false;
-  if (u.user_type === 'lawyer' || role === 'lawyer') { ctx = lawyerCtx(u) || {}; who = 'a Dubai lawyer about their own CLPD compliance, courses and credits'; }
-  else if (role === 'firm_compliance_officer') { ctx = firmCtx(u) || {}; who = 'a law-firm compliance officer about their firm'; firmMode = true; }
+  let ctx = {}, who = 'a LAD user', mode = 'plain';
+  let sessions = [], sessIndex = {};
+  if (u.user_type === 'lawyer' || role === 'lawyer') {
+    ctx = lawyerCtx(u) || {}; who = 'a Dubai lawyer'; mode = 'lawyer';
+    sessions = bookableSessions(60); sessions.forEach((s) => { sessIndex[s.id] = s; });
+  } else if (role === 'firm_compliance_officer') { ctx = firmCtx(u) || {}; who = 'a law-firm compliance officer'; mode = 'firm'; }
   else if (role === 'provider_admin') { ctx = providerCtx(u) || {}; who = 'an accredited training provider'; }
 
   if (!aimodel.configured()) {
     return res.json({ intent: 'answer', engine: 'snapshot', answer: 'AI is not configured here. Live context: ' + JSON.stringify(ctx) });
   }
-  let system;
-  if (firmMode) {
+  let system, extra = '';
+  if (mode === 'firm') {
     system = 'You are Maryam, assisting a law-firm compliance officer. Use ONLY the provided live firm context (JSON), with real numbers. Lawyers need 16 CPD points by 31 December; <8 critical, 8-15 at risk, 16+ compliant. '
       + 'You can ANSWER questions or PROPOSE one action: message the firm\'s own lawyers. Reply with ONLY JSON. '
-      + 'Question -> {"intent":"answer","answer":string}. Message the firm -> {"intent":"notify_firm","summary":string,"params":{"title":string,"body":string}} (write a professional title and 2-4 sentence body). Be concise.';
+      + 'Question -> {"intent":"answer","answer":string}. Message the firm -> {"intent":"notify_firm","summary":string,"params":{"title":string,"body":string}}. Be concise.';
+  } else if (mode === 'lawyer') {
+    system = 'You are Maryam, the CLPD assistant for a Dubai lawyer. Use ONLY the provided live context (JSON) with real numbers. They need 16 CPD points by 31 December; each course costs 5 credits. '
+      + 'You can ANSWER questions or PROPOSE booking a course. Reply with ONLY JSON. '
+      + 'Question -> {"intent":"answer","answer":string}. Book a course -> {"intent":"book_course","summary":string,"params":{"sessionId":string}}. '
+      + 'Set sessionId to the EXACT id of a session from SESSIONS that matches the request (by course title and date). If they lack enough credits, still propose it but mention it. If no session matches, answer instead. Be concise and warm.';
+    extra = '\n\nSESSIONS (bookable):\n' + (sessions.map((s) => `- id=${s.id} | ${s.course_title} | ${new Date(s.scheduled_at).toUTCString()} | ${s.credits || 5} credits | seatsLeft=${s.seats_remaining}`).join('\n') || '(none)');
   } else {
-    system = 'You are Maryam, the LAD CLPD assistant, helping ' + who + '. Use ONLY the provided live context (JSON), with the real numbers. '
-      + 'Lawyers need 16 CPD points by 31 December; <8 critical, 8-15 at risk, 16+ compliant. Be concise, warm and practical. Plain text, no markdown headings.';
+    system = 'You are Maryam, the LAD CLPD assistant, helping ' + who + '. Use ONLY the provided live context (JSON) with the real numbers. '
+      + 'Lawyers need 16 CPD points by 31 December. Be concise, warm and practical. Plain text, no markdown headings.';
   }
   try {
-    const text = await aimodel.chat({ system, messages: [{ role: 'user', content: 'Live context:\n' + JSON.stringify(ctx) + '\n\nUser says: ' + prompt }], maxTokens: 520, temperature: 0.35 });
-    if (firmMode) {
+    const text = await aimodel.chat({ system, messages: [{ role: 'user', content: 'Live context:\n' + JSON.stringify(ctx) + extra + '\n\nUser says: ' + prompt }], maxTokens: 560, temperature: 0.3 });
+    if (mode === 'firm') {
       let p = null; try { const m = text.match(/\{[\s\S]*\}/); p = JSON.parse(m ? m[0] : text); } catch (_) {}
       if (p && p.intent === 'notify_firm' && p.params) { p.engine = 'aimodel'; return res.json(p); }
+      return res.json({ intent: 'answer', engine: 'aimodel', answer: (p && p.answer) || text });
+    }
+    if (mode === 'lawyer') {
+      let p = null; try { const m = text.match(/\{[\s\S]*\}/); p = JSON.parse(m ? m[0] : text); } catch (_) {}
+      if (p && p.intent === 'book_course' && p.params && sessIndex[p.params.sessionId]) {
+        const s = sessIndex[p.params.sessionId];
+        p.params.session = { id: s.id, course_id: s.course_id, title: s.course_title, scheduled_at: s.scheduled_at, credits: s.credits || 5 };
+        p.engine = 'aimodel'; return res.json(p);
+      }
       return res.json({ intent: 'answer', engine: 'aimodel', answer: (p && p.answer) || text });
     }
     res.json({ intent: 'answer', engine: 'aimodel', answer: text });
