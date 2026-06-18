@@ -95,6 +95,99 @@ router.get('/snapshot', requireAuth, (req, res) => {
   res.json(snapshot());
 });
 
+// ─── City-wide oversight ────────────────────────────────────────────────────
+// One composite, fully-live snapshot for the LAD super-user landing. Compliance
+// points are this-cycle attended-booking points (consistent with stats.js), so
+// every number on the oversight dashboard matches the rest of the platform.
+function cycleYear() { return new Date().getUTCFullYear(); }
+function daysToDeadline() {
+  const now = new Date();
+  const end = new Date(Date.UTC(now.getUTCFullYear(), 11, 31, 23, 59, 59));
+  return Math.max(0, Math.ceil((end - now) / 86400000));
+}
+function oversight() {
+  const year = String(cycleYear());
+  const one = (sql, ...a) => { try { return db.prepare(sql).get(...a) || {}; } catch (_) { return {}; } };
+  const all = (sql, ...a) => { try { return db.prepare(sql).all(...a); } catch (_) { return []; } };
+  // Practising = anyone not explicitly out of the profession.
+  const PRACT = "COALESCE(LOWER(l.status),'active') NOT IN ('inactive','resigned','non-practising','struck off','left')";
+  // Bands by this-cycle attended-booking points: <8 critical, 8–15 at risk, 16+ compliant.
+  const bands = one(
+    `WITH lp AS (
+       SELECT l.id, COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y', b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts
+       FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id = l.id
+       WHERE ${PRACT} GROUP BY l.id)
+     SELECT COUNT(*) practising,
+       SUM(CASE WHEN pts>=16 THEN 1 ELSE 0 END) compliant,
+       SUM(CASE WHEN pts>=8 AND pts<16 THEN 1 ELSE 0 END) atRisk,
+       SUM(CASE WHEN pts<8 THEN 1 ELSE 0 END) critical
+     FROM lp`, year);
+  const roll = one('SELECT COUNT(*) n FROM lawyers').n || 0;
+  const firms = one('SELECT COUNT(*) n FROM firms').n || 0;
+  const providers = one('SELECT COUNT(*) n FROM providers').n || 0;
+  const courses = one('SELECT COUNT(*) n FROM courses WHERE active = 1').n || 0;
+  const sess = one("SELECT COUNT(*) sessions, COALESCE(SUM(seats_remaining),0) openSeats FROM course_sessions WHERE COALESCE(status,'scheduled') NOT IN ('cancelled','closed') AND scheduled_at >= datetime('now')");
+  const lowSeat = one("SELECT COUNT(*) n FROM course_sessions WHERE COALESCE(status,'scheduled') NOT IN ('cancelled','closed') AND scheduled_at >= datetime('now') AND seats_remaining>0 AND seats_remaining<=5").n || 0;
+  const bk = one("SELECT COUNT(*) total, SUM(CASE WHEN status='attended' THEN 1 ELSE 0 END) attended, SUM(CASE WHEN status='no-show' THEN 1 ELSE 0 END) noShow, SUM(CASE WHEN status='cancelled' THEN 1 ELSE 0 END) cancelled FROM bookings");
+  const acc = one("SELECT SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) pending, SUM(CASE WHEN status='approved' THEN 1 ELSE 0 END) approved, SUM(CASE WHEN status='rejected' THEN 1 ELSE 0 END) rejected, SUM(CASE WHEN status='returned' THEN 1 ELSE 0 END) returned FROM accreditations");
+  const firmRows = all(
+    `WITH lp AS (
+       SELECT l.firm_id, l.id, COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y', b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts
+       FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id = l.id
+       WHERE ${PRACT} AND l.firm_id IS NOT NULL GROUP BY l.id)
+     SELECT f.id, f.name, COUNT(lp.id) lawyers, ROUND(AVG(lp.pts),1) avgPts,
+       ROUND(100.0*SUM(CASE WHEN lp.pts>=16 THEN 1 ELSE 0 END)/COUNT(lp.id),1) compliancePct,
+       SUM(CASE WHEN lp.pts<8 THEN 1 ELSE 0 END) critical
+     FROM firms f JOIN lp ON lp.firm_id = f.id
+     GROUP BY f.id HAVING lawyers >= 5
+     ORDER BY compliancePct DESC, avgPts DESC`, year);
+  const practising = bands.practising || 0, compliant = bands.compliant || 0;
+  const attended = bk.attended || 0, noShow = bk.noShow || 0;
+  return {
+    generatedAt: new Date().toISOString(),
+    cycleYear: cycleYear(), daysToDeadline: daysToDeadline(),
+    lawyers: { roll, practising, critical: bands.critical || 0, atRisk: bands.atRisk || 0, compliant,
+      complianceRate: practising ? Math.round(1000 * compliant / practising) / 10 : 0 },
+    firms: { total: firms },
+    providers: { total: providers },
+    courses: { active: courses },
+    sessions: { upcoming: sess.sessions || 0, openSeats: sess.openSeats || 0, lowSeat },
+    bookings: { total: bk.total || 0, attended, noShow, cancelled: bk.cancelled || 0,
+      attendanceRate: (attended + noShow) ? Math.round(1000 * attended / (attended + noShow)) / 10 : null },
+    accreditations: { pending: acc.pending || 0, approved: acc.approved || 0, rejected: acc.rejected || 0, returned: acc.returned || 0 },
+    firmRankings: { top: firmRows.slice(0, 6), bottom: firmRows.slice(-6).reverse() },
+  };
+}
+
+router.get('/oversight', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
+  res.json(oversight());
+});
+
+// GET /api/v1/admin/briefing — AI executive briefing grounded in the live
+// oversight snapshot. Returns headline + summary + ranked actions + risk flags.
+router.get('/briefing', requireAuth, async (req, res, next) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
+  const o = oversight();
+  if (!aimodel.configured()) {
+    return res.json({ engine: 'snapshot', oversight: o,
+      headline: `${o.lawyers.complianceRate}% of practising lawyers are compliant with ${o.daysToDeadline} days to the deadline.`,
+      summary: `${o.lawyers.compliant} of ${o.lawyers.practising} practising lawyers have reached 16 points. ${o.lawyers.critical} are critical (below 8) and ${o.lawyers.atRisk} are at risk. ${o.accreditations.pending} accreditations await review.`,
+      actions: [], watch: [] });
+  }
+  const system = 'You are chief of staff to the Director-General of the Dubai Legal Affairs Department, briefing the LAD super-users who oversee the entire CLPD programme. From the LIVE oversight data, write a crisp executive briefing. Reply with ONLY JSON: {"headline": string (one sentence on overall programme health), "summary": string (2-3 sentences citing the real key numbers), "actions": [{"priority":"high"|"medium"|"low","title": string,"detail": string (one sentence citing a real number)}] (exactly 3, most important first), "watch": [string] (1-3 short risk flags)}. Use ONLY the numbers provided. Context: practising lawyers need 16 CPD points by 31 December; <8 = critical, 8-15 = at risk, 16+ = compliant.';
+  try {
+    const text = await aimodel.chat({ system, messages: [{ role: 'user', content: 'Live oversight snapshot:\n' + JSON.stringify(o) }], maxTokens: 650, temperature: 0.3 });
+    let p = null; try { const m = text.match(/\{[\s\S]*\}/); p = JSON.parse(m ? m[0] : text); } catch (_) {}
+    if (!p) p = { headline: '', summary: text, actions: [], watch: [] };
+    p.engine = 'aimodel'; p.oversight = o;
+    res.json(p);
+  } catch (e) {
+    if (e.code === 'AIMODEL_ERROR') return res.json({ engine: 'snapshot', oversight: o, headline: '', summary: 'AI briefing is unavailable right now — showing live numbers only.', actions: [], watch: [] });
+    next(e);
+  }
+});
+
 // POST /api/v1/admin/reclassify-practising — apply the standard practising rules.
 router.post('/reclassify-practising', requireAuth, (req, res) => {
   if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
