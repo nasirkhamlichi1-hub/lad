@@ -1079,6 +1079,80 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
     <div class="page">
       <!-- ═══ OVERVIEW (slick redesign 2026-05-21 — single calm hero + 3 KPIs) ═══ -->
       <section class="section" id="overview">
+        <!-- ═══ STAGE 0 · AI DAILY BRIEFING (live /copilot) ═══ -->
+        <style>
+          .ai-brief{position:relative;background:linear-gradient(135deg,#06281c 0%,#0a3a28 52%,#0c2a4a 100%);border-radius:18px;padding:26px 30px;margin-bottom:18px;overflow:hidden;box-shadow:0 12px 44px rgba(6,40,28,.2);border:1px solid rgba(255,255,255,.06)}
+          .ai-brief::after{content:'';position:absolute;top:-45%;right:-8%;width:360px;height:360px;background:radial-gradient(circle,rgba(201,145,58,.18),transparent 70%);pointer-events:none}
+          .ai-brief>*{position:relative;z-index:1}
+          .ai-brief-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;gap:12px}
+          .ai-brief-badge{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.2em;color:#e7c98a;display:flex;align-items:center;gap:8px}
+          .ai-brief-badge .pulse{width:6px;height:6px;border-radius:50%;background:#3ec98a;box-shadow:0 0 0 0 rgba(62,201,138,.6);animation:aiPulse 2s infinite}
+          @keyframes aiPulse{0%{box-shadow:0 0 0 0 rgba(62,201,138,.5)}70%{box-shadow:0 0 0 7px rgba(62,201,138,0)}100%{box-shadow:0 0 0 0 rgba(62,201,138,0)}}
+          .ai-brief-engine{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;color:rgba(255,255,255,.4);text-transform:uppercase}
+          .ai-brief-headline{font-family:var(--serif);font-size:26px;line-height:1.28;color:#fff;font-weight:500;letter-spacing:-.01em;max-width:780px}
+          .ai-brief-headline em{color:#e7c98a;font-style:italic}
+          .ai-brief-insights{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+          .ai-brief-chip{display:flex;align-items:flex-start;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:9px 13px;font-size:12.5px;color:rgba(255,255,255,.85);line-height:1.4;max-width:340px}
+          .ai-brief-chip .dot{width:5px;height:5px;border-radius:50%;background:#3ec98a;flex-shrink:0;margin-top:6px}
+          .ai-brief-action{display:flex;align-items:center;gap:16px;margin-top:18px;padding:15px 18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;flex-wrap:wrap}
+          .ai-brief-action-label{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:rgba(255,255,255,.45);text-transform:uppercase;margin-bottom:4px}
+          .ai-brief-action-title{font-family:var(--serif);font-size:18px;color:#fff;font-weight:500;line-height:1.2}
+          .ai-brief-action-why{font-size:12px;color:rgba(255,255,255,.62);margin-top:4px;max-width:520px;line-height:1.5}
+          .ai-brief-pts{font-family:var(--mono);font-size:11px;font-weight:700;color:#0a3a28;background:#e7c98a;padding:6px 10px;border-radius:7px;white-space:nowrap}
+          .ai-brief-book{font-family:var(--sans);font-size:12.5px;font-weight:700;cursor:pointer;border:none;border-radius:9px;padding:10px 18px;background:#e7c98a;color:#0a3a28;transition:transform .15s,box-shadow .15s}
+          .ai-brief-book:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(231,201,138,.35)}
+          .ai-brief-foot{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+          .ai-brief-foot button{font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;border-radius:9px;padding:9px 15px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.88);transition:all .15s}
+          .ai-brief-foot button:hover{background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.28)}
+          .ai-brief-shim{display:inline-block;height:.9em;width:70%;background:linear-gradient(90deg,rgba(255,255,255,.08),rgba(255,255,255,.2),rgba(255,255,255,.08));background-size:200% 100%;animation:aiShim 1.4s infinite;border-radius:6px;vertical-align:middle}
+          @keyframes aiShim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+        </style>
+        <div class="ai-brief" id="aiBriefing">
+          <div class="ai-brief-head">
+            <span class="ai-brief-badge"><span class="pulse"></span>✦ MARYAM · LIVE AI BRIEFING</span>
+            <span class="ai-brief-engine" id="aiBriefEngine"></span>
+          </div>
+          <div class="ai-brief-headline" id="aiBriefHeadline"><span class="ai-brief-shim"></span></div>
+          <div class="ai-brief-insights" id="aiBriefInsights"></div>
+          <div class="ai-brief-action" id="aiBriefAction" style="display:none"></div>
+          <div class="ai-brief-foot">
+            <button onclick="scrollS('coach')">See full AI study plan →</button>
+            <button onclick="if(window.LADPlatform)LADPlatform.toggleLex()">Ask Maryam anything</button>
+          </div>
+        </div>
+        <script>
+        (function(){
+          function b(){return (window.LAD_API_BASE||'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');}
+          function t(){try{return localStorage.getItem('lad_token')||'';}catch(e){return '';}}
+          function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);});}
+          function render(j){
+            var card=document.getElementById('aiBriefing'); if(!card)return;
+            var eng=document.getElementById('aiBriefEngine');
+            eng.textContent = j.engine==='aimodel'?'Generated live by AiModel':(j.engine==='heuristic'?'Generated by planner':'');
+            document.getElementById('aiBriefHeadline').innerHTML = esc(j.headline||'');
+            document.getElementById('aiBriefInsights').innerHTML =
+              (j.insights||[]).slice(0,3).map(function(x){return '<span class="ai-brief-chip"><span class="dot"></span>'+esc(x)+'</span>';}).join('');
+            var rec=(j.recommendations||[])[0];
+            var act=document.getElementById('aiBriefAction');
+            if(rec){
+              act.style.display='';
+              act.innerHTML='<div style="flex:1;min-width:240px">'+
+                '<div class="ai-brief-action-label">Your next best move</div>'+
+                '<div class="ai-brief-action-title">'+esc(rec.title)+'</div>'+
+                '<div class="ai-brief-action-why">'+esc(rec.why||'')+'</div></div>'+
+                '<span class="ai-brief-pts">+'+(Number(rec.points)||0)+' pts</span>'+
+                '<button class="ai-brief-book" id="aiBriefBook">Book this →</button>';
+              var btn=document.getElementById('aiBriefBook');
+              if(btn)btn.onclick=function(){ try{ if(typeof bookSuggestedCourse==='function'){bookSuggestedCourse(rec.title,'','session');return;} }catch(e){} if(typeof goToSection==='function')goToSection('courses'); };
+            } else { act.style.display='none'; }
+            card.style.display='';
+          }
+          function hide(){var c=document.getElementById('aiBriefing');if(c)c.style.display='none';}
+          function load(){ var tk=t(); if(!tk)return; fetch(b()+'/api/v1/lawyers/copilot',{headers:{Authorization:'Bearer '+tk},cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){ if(j)render(j); else hide(); }).catch(hide); }
+          if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load);else load();
+        })();
+        </script>
+
         <!-- Hero card -->
         <div style="background:#fff;border-radius:18px;padding:32px 36px;box-shadow:0 1px 3px rgba(10,14,20,.04);border:1px solid var(--line);margin-bottom:18px">
           <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap">
