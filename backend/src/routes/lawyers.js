@@ -4,6 +4,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const store = require('../services/store');
+const aimodel = require('../services/aimodel');
+const log = require('../logger');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
 // Accredited-course attendance (recorded by providers/firms against a course
@@ -81,6 +83,78 @@ router.get('/me', requireAuth, (req, res) => {
   const profile = store.getLawyerById(req.user.sub);
   if (!profile) return res.status(404).json({ error: 'Lawyer record not found' });
   res.json(lawyerView(profile, fullAttendance(profile)));
+});
+
+// Approved accredited courses (for the copilot's recommendations).
+function approvedCatalogue() {
+  try {
+    return db.prepare("SELECT * FROM accreditations WHERE status='approved' AND accreditation_code IS NOT NULL ORDER BY reviewed_at DESC LIMIT 80").all()
+      .map((r) => { let p = {}; try { p = JSON.parse(r.payload || '{}'); } catch (_) {}
+        return { code: r.accreditation_code, title: p.courseTitle || p.course || p.title || r.ref,
+          points: r.final_points != null ? r.final_points : (p.pointsRequested || 0),
+          areas: p.areas || '', provider: p.providerName || p.firm || r.submitted_by || '',
+          format: p.format || '' }; });
+  } catch (_) { return []; }
+}
+
+// GET /api/v1/lawyers/copilot — Maryam's proactive, personalised briefing +
+// study plan from the lawyer's real record and the live accredited catalogue.
+router.get('/copilot', requireAuth, async (req, res, next) => {
+  const lawyer = req.user.user_type === 'lawyer' ? store.getLawyerById(req.user.sub)
+    : (req.user.email ? store.getLawyerByEmail(req.user.email) : null);
+  if (!lawyer) return res.status(404).json({ error: 'Lawyer record not found' });
+
+  const points = Number(lawyer.lifetime_points) || 0;
+  const needed = Math.max(0, 16 - points);
+  const today = new Date();
+  const deadline = new Date(Date.UTC(today.getUTCFullYear(), 11, 31));
+  const daysLeft = Math.max(0, Math.ceil((deadline - today) / 86400000));
+  const completed = fullAttendance(lawyer).map((b) => b.course_title).filter(Boolean);
+  const firstName = lawyer.first_name || 'there';
+  const courses = approvedCatalogue();
+
+  const meta = { points, needed, daysLeft, firstName, year: today.getUTCFullYear() };
+
+  if (needed === 0) {
+    return res.json(Object.assign({ engine: 'rule', compliant: true,
+      headline: `You're fully compliant — ${points}/16 points for ${meta.year}. Well done, ${firstName}.`,
+      insights: ['You have met the 16-point CLPD requirement for this cycle.', 'Keep skills current — refresher CPD compounds your expertise.'],
+      recommendations: [], plan: [] }, meta));
+  }
+
+  if (aimodel.configured()) {
+    try {
+      const courseList = courses.map((c) => `- ${c.title} [${c.code}] · ${c.points} pts · ${c.format || 'course'} · areas: ${c.areas || 'general'}`).join('\n') || '(no accredited courses available yet)';
+      const system = 'You are Maryam, a proactive CLPD compliance copilot for a Dubai lawyer. From the lawyer\'s record and the accredited course catalogue, produce a short, warm, specific briefing and a concrete study plan to reach 16 CPD points by 31 December. Reply with ONLY a JSON object: {"headline": string, "insights": [string, string, string], "recommendations": [{"code": string, "title": string, "points": number, "why": string}], "plan": [{"when": string, "title": string, "code": string, "points": number, "action": string}]}. Recommendations and plan items must use courses STRICTLY from the catalogue (exact code+title), summing to at least the points needed. The plan should spread courses sensibly across the time remaining. Keep it concise.';
+      const user = `Lawyer: ${firstName}\nCurrent points: ${points}/16 (needs ${needed} more)\nDays to 31 Dec: ${daysLeft}\nAlready completed: ${completed.slice(0, 12).join('; ') || 'none yet'}\n\nAccredited catalogue:\n${courseList}`;
+      const text = await aimodel.chat({ system, messages: [{ role: 'user', content: user }], maxTokens: 1000, temperature: 0.35 });
+      let parsed = null; try { const m = text.match(/\{[\s\S]*\}/); parsed = JSON.parse(m ? m[0] : text); } catch (_) {}
+      if (parsed && (parsed.headline || parsed.recommendations)) return res.json(Object.assign({ engine: 'aimodel' }, meta, parsed));
+    } catch (e) { log.error('copilot_aimodel', { error: e.message }); }
+  }
+
+  // Heuristic fallback: pick highest-point courses until the gap is covered.
+  const picks = []; let acc = 0;
+  for (const c of courses.slice().sort((a, b) => (b.points || 0) - (a.points || 0))) {
+    if (acc >= needed) break;
+    picks.push(c); acc += Number(c.points) || 0;
+  }
+  const weeks = Math.max(1, Math.ceil(daysLeft / 7));
+  const plan = picks.map((c, i) => ({
+    when: `Week ${Math.min(weeks, i + 1)}`,
+    title: c.title, code: c.code, points: c.points,
+    action: /e-?learning|online/i.test(c.format) ? 'Start this e-learning module' : 'Book the next session',
+  }));
+  res.json(Object.assign({ engine: 'heuristic',
+    headline: `You're at ${points}/16, ${firstName} — ${needed} points to go with ${daysLeft} days left.`,
+    insights: [
+      `${needed} CPD point${needed === 1 ? '' : 's'} still needed before 31 December.`,
+      picks.length ? `These ${picks.length} accredited course${picks.length === 1 ? '' : 's'} cover it: ${acc} points available.` : 'No accredited courses are in the catalogue yet — check back soon.',
+      daysLeft < 60 ? 'Time is tight — prioritise the highest-point courses first.' : 'You have runway — spread courses evenly to avoid a year-end crunch.',
+    ],
+    recommendations: picks.map((c) => ({ code: c.code, title: c.title, points: c.points, why: 'High-value accredited course toward your target.' })),
+    plan,
+  }, meta));
 });
 
 // GET /api/v1/lawyers/:id — staff lookup (LAD admin or own firm CO)
