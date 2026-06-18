@@ -1403,6 +1403,53 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
             <button class="btn btn-ink btn-sm">Ask Maryam</button>
           </div>
         </div>
+
+        <!-- ═══ Maryam live copilot · briefing + study plan (AiModel) ═══ -->
+        <div id="maryamCopilot" style="background:linear-gradient(135deg,#0a0e14,#1a2330 55%,#2a1640);border-radius:22px;padding:26px 28px;color:#fff;margin-bottom:18px;position:relative;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+            <div style="width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#7c3aed,#14b8a6);display:grid;place-items:center;font-weight:700;font-size:13px">M</div>
+            <div style="font-family:var(--mono);font-size:9px;color:#a98bff;letter-spacing:2px;text-transform:uppercase;font-weight:700">Maryam · live briefing · AiModel</div>
+            <span style="flex:1"></span>
+            <button onclick="loadMaryamCopilot(true)" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:8px;padding:5px 11px;font-size:11px;cursor:pointer">↻ Refresh</button>
+          </div>
+          <div id="copHeadline" style="font-family:var(--serif);font-size:23px;line-height:1.28;margin:8px 0 14px">Reading your record…</div>
+          <div id="copInsights" style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px"></div>
+          <div id="copBody"></div>
+        </div>
+        <script>
+        (function(){
+          function base(){return (window.LAD_API_BASE||'').replace(/\/$/,'');}
+          function tok(){try{return localStorage.getItem('lad_token')||'';}catch(e){return '';}}
+          function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+          var loaded=false;
+          window.loadMaryamCopilot=function(force){
+            if(loaded&&!force)return; if(!tok())return; loaded=true;
+            var hl=document.getElementById('copHeadline'); if(force&&hl)hl.textContent='Re-reading your record…';
+            fetch(base()+'/api/v1/lawyers/copilot',{headers:{Authorization:'Bearer '+tok()},cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){
+              if(!j){loaded=false; if(hl)hl.textContent='Sign in to see your personalised plan.'; return;}
+              if(hl)hl.textContent=j.headline||'';
+              var ins=document.getElementById('copInsights');
+              if(ins)ins.innerHTML=(j.insights||[]).map(function(s){return '<div style="display:flex;gap:9px;align-items:flex-start;font-size:13px;color:rgba(255,255,255,.8);line-height:1.55"><span style="color:#5fd0a8;flex-shrink:0">▸</span><span>'+esc(s)+'</span></div>';}).join('');
+              var body=document.getElementById('copBody'); if(!body)return;
+              if(j.compliant){ body.innerHTML='<div style="background:rgba(20,184,166,.12);border:1px solid rgba(20,184,166,.3);border-radius:12px;padding:14px 16px;font-size:13.5px">✓ You are compliant for the year — keep your skills fresh with refresher CPD.</div>'; return; }
+              var recs=(j.recommendations||[]),plan=(j.plan||[]),html='';
+              if(recs.length){
+                html+='<div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Fastest path to 16 points</div>';
+                html+=recs.map(function(c){return '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:13px 16px;margin-bottom:8px;display:flex;gap:14px;align-items:center"><div style="flex:1"><div style="font-weight:600;font-size:14px">'+esc(c.title)+'</div><div style="font-size:12px;color:rgba(255,255,255,.55);margin-top:3px">'+esc(c.why||'')+'</div><div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);margin-top:4px">'+esc(c.code||'')+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:var(--serif);font-size:22px;color:#5fd0a8">+'+esc(c.points||0)+'</div><div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.4)">PTS</div></div></div>';}).join('');
+              }
+              if(plan.length){
+                html+='<div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1.5px;text-transform:uppercase;margin:16px 0 12px">Your study plan</div>';
+                html+='<div style="border-left:2px solid rgba(124,58,237,.5);padding-left:18px">'+plan.map(function(p){return '<div style="margin-bottom:13px;position:relative"><div style="position:absolute;left:-23px;top:3px;width:9px;height:9px;border-radius:50%;background:#7c3aed;border:2px solid #1a2330"></div><div style="font-family:var(--mono);font-size:9.5px;color:#a98bff;letter-spacing:.5px">'+esc(p.when||'')+(p.points?' · +'+esc(p.points)+' pts':'')+'</div><div style="font-size:13.5px;font-weight:600;margin-top:2px">'+esc(p.title||'')+'</div><div style="font-size:12px;color:rgba(255,255,255,.55)">'+esc(p.action||'')+'</div></div>';}).join('')+'</div>';
+              }
+              html+='<div style="font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.3);margin-top:10px">Generated by '+(j.engine==='aimodel'?'AiModel':'planner')+'</div>';
+              body.innerHTML=html;
+            }).catch(function(){loaded=false; if(hl)hl.textContent='Couldn\'t load your briefing — try refresh.';});
+          };
+          document.addEventListener('DOMContentLoaded',function(){ setTimeout(function(){try{loadMaryamCopilot();}catch(e){}},1200); });
+          if(document.readyState!=='loading') setTimeout(function(){try{loadMaryamCopilot();}catch(e){}},1200);
+        })();
+        </script>
+
         <div class="lex-coach">
           <div class="lex-hd">
             <div class="lex-avatar">✦</div>
