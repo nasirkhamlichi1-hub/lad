@@ -3147,6 +3147,25 @@ async function loadMyLawyerRecord() {
   }
 }
 
+// Reflect the signed-in lawyer everywhere the UI shows a name/initials:
+// top nav chip, sidebar, welcome greeting, profile modal, page title, and the
+// Maryam coach summary — so nothing stays hardcoded to the demo "Yousef".
+function applyIdentity(first, fullName, initials) {
+  first = (first || '').trim() || fullName || 'there';
+  fullName = (fullName || first || '').trim();
+  initials = (initials || (first[0] || 'L')).toUpperCase();
+  const dot = document.getElementById('sharedUserDot'); if (dot) dot.textContent = initials;
+  document.querySelectorAll('#sharedUserName').forEach(el => { el.textContent = first; });
+  document.querySelectorAll('.sb-user-name').forEach(el => { el.textContent = fullName; });
+  const greet = document.querySelector('[data-cfg="lawyer_welcome_greeting"]'); if (greet) greet.textContent = 'Welcome back, ' + first;
+  const pmH = document.getElementById('pmHeaderName'); if (pmH) pmH.textContent = fullName;
+  const pmN = document.getElementById('pmName'); if (pmN) pmN.value = fullName;
+  const pmP = document.getElementById('pmPreferredName'); if (pmP) pmP.value = first;
+  const ls = document.querySelector('.lex-summary'); if (ls && /Yousef/.test(ls.innerHTML)) ls.innerHTML = ls.innerHTML.replace(/Yousef/g, first);
+  try { document.title = 'My CLPD · ' + fullName + ' — Government of Dubai'; } catch (_) {}
+  window.__LAWYER_FIRST = first; window.__LAWYER_NAME = fullName;
+}
+
 function paintMyRecord(me) {
   const set = (id, val) => { const el = document.getElementById(id); if (el != null && val != null) el.textContent = val; };
 
@@ -3185,6 +3204,7 @@ function paintMyRecord(me) {
     if (tb) { tb.innerHTML = '<span class="tb-status-dot"></span>NON-PRACTISING'; tb.style.background = 'var(--paper2)'; tb.style.color = 'var(--slate2)'; tb.style.borderColor = 'var(--line)'; }
     const fn = document.getElementById('tbFirstName');
     if (fn) fn.textContent = (me.firstName || '').trim() || (me.fullName || 'there');
+    applyIdentity(first, fullName, initials);
     return; // skip the rest of the practising-path painting
   }
 
@@ -3206,6 +3226,7 @@ function paintMyRecord(me) {
   }
   const eyebrow = (me.id || '') + (me.barNo ? ' · ' + me.barNo : '');
   set('ovEyebrow', eyebrow);
+  applyIdentity(first, fullName, initials);
   // Role line
   const roleLine = document.getElementById('ovRoleLine');
   const _pf = document.getElementById('profileFirmName'); if (_pf) _pf.textContent = (me.firmName || me.firm_name || '—');
@@ -3265,6 +3286,19 @@ function paintMyRecord(me) {
 }
 
 document.addEventListener('DOMContentLoaded', loadMyLawyerRecord);
+// Fast identity bootstrap from the login token's stored name, so the nav chip /
+// sidebar never flash the demo "Yousef" while /lawyers/me is loading (or if it
+// is slow on a cold start). The full record refines this a moment later.
+document.addEventListener('DOMContentLoaded', function () {
+  try {
+    var nm = (localStorage.getItem('lad_name') || '').trim();
+    if (!nm) return;
+    var parts = nm.split(/\s+/).filter(Boolean);
+    var first = parts[0] || nm;
+    var initials = ((parts[0] || ' ')[0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+    if (typeof applyIdentity === 'function') applyIdentity(first, nm, initials);
+  } catch (_) {}
+});
 
 // ════════════════════════════════════════════════════════════════
 // Hide every secondary panel that doesn't have a backend data source.
@@ -3404,11 +3438,15 @@ async function loadCatalogueLive() {
     grid.innerHTML = live.map(function (c) {
       var pts = Number(c.pts) || 2, credits = Number(c.credits) || 5;
       var isMand = (c.type || '').toLowerCase() === 'mandatory';
+      // Uniform category colours (match the firm page): mandatory = purple,
+      // accredited (external) = blue, internal = teal.
+      var artBg = isMand ? 'linear-gradient(135deg,#241a38,#463a66)' : 'linear-gradient(135deg,#0a2040,#16386a)';
+      var tagBg = isMand ? '#574a86' : '#1e3a8a';
       var s0 = c.sessions[0];
       var seats = Number(s0.seats_remaining) || 0;
       // Register for the booking modal (real backend session ids + live seats).
       COURSES[c.id] = {
-        title: c.title, icon: '', bg: c.bg || 'linear-gradient(135deg,#0a2040,#1c3a5e)',
+        title: c.title, icon: '', bg: artBg,
         type: (isMand ? 'MANDATORY' : 'ACCREDITED') + ' · ' + ((c.format||'face-to-face').toUpperCase()),
         points: pts, provider: c.provider_id || 'LAD Academy', location: c.location || 'Dubai',
         credits: credits, cost: credits + ' credits',
@@ -3424,7 +3462,7 @@ async function loadCatalogueLive() {
       };
       return '<div class="course-card" onclick="openBooking(\'' + c.id + '\')">'
         +   '<div class="course-art" style="background:' + (COURSES[c.id].bg) + '">'
-        +     '<span class="course-art-tag">' + (isMand ? 'MANDATORY' : 'ACCREDITED') + '</span>'
+        +     '<span class="course-art-tag" style="background:' + tagBg + ';color:#fff">' + (isMand ? 'MANDATORY' : 'ACCREDITED') + '</span>'
         +     '<div class="course-art-pts">+<em>' + pts + '</em>pts</div>'
         +   '</div>'
         +   '<div class="course-body">'
@@ -5556,7 +5594,7 @@ Be concise, practical, and warm. Use markdown sparingly (bold for key terms, ita
 
 You can get one at *console.anthropic.com* — keys start with \`sk-ant-\`.`;
     } else if (_lex.portal === 'lawyer' && lower.match(/point|track|compliance|status/)) {
-      reply = `Based on your record, Yousef, you're at **4/16 points** with 234 days remaining.
+      reply = `Based on your record, ${window.__LAWYER_FIRST || 'there'}, here is your current status and the fastest path to 16 points.
 
 The fastest path to 16:
 - **DIFC Day** (28 May) — 4 points · 5 credits
