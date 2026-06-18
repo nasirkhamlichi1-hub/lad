@@ -5443,5 +5443,143 @@ function renderMigrateResult(res, isDryRun) {
 }
 
 </script>
+<!-- ══════ AI ADMIN CONSOLE · ⌘K command bar + notifications composer ══════ -->
+<style>
+#aicFab{position:fixed;right:22px;bottom:22px;z-index:1400;background:linear-gradient(135deg,#0a3a28,#0d5a4a);color:#fff;border:0;border-radius:30px;padding:13px 20px;font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(10,58,40,.4);display:flex;align-items:center;gap:8px;font-family:inherit}
+#aicFab:hover{transform:translateY(-2px)}
+#aicFab .kbd{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(255,255,255,.18);padding:2px 6px;border-radius:5px}
+#aicOverlay{position:fixed;inset:0;background:rgba(8,18,12,.55);backdrop-filter:blur(8px);z-index:1500;display:none;align-items:flex-start;justify-content:center;padding:80px 20px}
+#aicOverlay.on{display:flex}
+.aic-panel{background:#fff;border-radius:18px;max-width:680px;width:100%;box-shadow:0 40px 100px rgba(0,0,0,.4);overflow:hidden;max-height:80vh;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.aic-head{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid #eef2ee}
+.aic-head .spark{font-size:18px}
+.aic-input{flex:1;border:0;outline:0;font-size:16px;color:#0d1b14;font-family:inherit;background:none}
+.aic-esc{font-family:'JetBrains Mono',monospace;font-size:10px;color:#8a9a90;background:#f1f4f1;border:1px solid #e3e9e4;border-radius:6px;padding:3px 7px;cursor:pointer}
+.aic-tabs{display:flex;gap:4px;padding:10px 16px 0}
+.aic-tab{background:none;border:0;border-bottom:2px solid transparent;padding:6px 10px;font-size:12.5px;font-weight:600;color:#8a9a90;cursor:pointer;font-family:inherit}
+.aic-tab.on{color:#006B3F;border-bottom-color:#006B3F}
+.aic-body{padding:16px 18px;overflow-y:auto}
+.aic-chip{display:inline-block;background:#f1f4f1;border:1px solid #e3e9e4;border-radius:18px;padding:7px 13px;font-size:12.5px;color:#3a4a40;margin:0 6px 8px 0;cursor:pointer}
+.aic-chip:hover{border-color:#006B3F;color:#006B3F}
+.aic-answer{font-size:14px;line-height:1.65;color:#1a2a20;white-space:pre-wrap;background:#f6f8f6;border:1px solid #e3e9e4;border-left:3px solid #0d7377;border-radius:10px;padding:15px 17px;margin-top:6px}
+.aic-engine{font-family:'JetBrains Mono',monospace;font-size:9px;color:#aab8af;letter-spacing:.5px;margin-top:8px;text-transform:uppercase}
+.aic-field{margin-bottom:12px}
+.aic-label{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:#8a9a90;font-weight:700;margin-bottom:6px;display:block}
+.aic-sel,.aic-inp,.aic-ta{width:100%;border:1.5px solid #d6ddd7;border-radius:9px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:#0d1b14;outline:0}
+.aic-sel:focus,.aic-inp:focus,.aic-ta:focus{border-color:#006B3F}
+.aic-ta{resize:vertical;min-height:84px}
+.aic-btn{background:#006B3F;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.aic-btn.alt{background:#fff;color:#006B3F;border:1px solid #006B3F}
+.aic-btn:disabled{opacity:.5;cursor:not-allowed}
+</style>
+<button id="aicFab" onclick="aicOpen()">✦ Ask AI <span class="kbd">⌘K</span></button>
+<div id="aicOverlay" onclick="if(event.target===this)aicClose()">
+  <div class="aic-panel">
+    <div class="aic-head">
+      <span class="spark">✦</span>
+      <input id="aicInput" class="aic-input" placeholder="Ask anything about the programme…" onkeydown="if(event.key==='Enter')aicAsk()"/>
+      <span class="aic-esc" onclick="aicClose()">ESC</span>
+    </div>
+    <div class="aic-tabs">
+      <button class="aic-tab on" data-m="ask" onclick="aicMode('ask',this)">Ask AI</button>
+      <button class="aic-tab" data-m="notify" onclick="aicMode('notify',this)">Compose notification</button>
+    </div>
+    <div class="aic-body">
+      <div id="aicAsk">
+        <div id="aicChips">
+          <span class="aic-chip" onclick="aicQuick(this)">Which firms are below 50% compliant?</span>
+          <span class="aic-chip" onclick="aicQuick(this)">How many lawyers are critical (&lt;8 pts)?</span>
+          <span class="aic-chip" onclick="aicQuick(this)">Which sessions have fewer than 5 seats?</span>
+          <span class="aic-chip" onclick="aicQuick(this)">Summarise booking activity and no-shows</span>
+          <span class="aic-chip" onclick="aicQuick(this)">How do I cancel a session and refund everyone?</span>
+        </div>
+        <div id="aicAnswer"></div>
+      </div>
+      <div id="aicNotify" style="display:none">
+        <div class="aic-field">
+          <label class="aic-label">Send to</label>
+          <select id="aicAudience" class="aic-sel">
+            <option value="all">Everyone (all lawyers)</option>
+            <option value="critical">Segment · Critical (&lt;8 pts)</option>
+            <option value="at-risk">Segment · At risk (8–15 pts)</option>
+            <option value="compliant">Segment · Compliant (16+ pts)</option>
+            <option value="noBookings">Segment · No bookings yet</option>
+          </select>
+        </div>
+        <div class="aic-field">
+          <label class="aic-label">Describe it — AI will draft</label>
+          <div style="display:flex;gap:8px">
+            <input id="aicPrompt" class="aic-inp" placeholder="e.g. remind them the cycle ends 31 Dec and to book now"/>
+            <button class="aic-btn alt" onclick="aicDraft()" id="aicDraftBtn">✦ Draft</button>
+          </div>
+        </div>
+        <div class="aic-field"><label class="aic-label">Title</label><input id="aicTitle" class="aic-inp"/></div>
+        <div class="aic-field"><label class="aic-label">Message</label><textarea id="aicBody" class="aic-ta"></textarea></div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span id="aicSendNote" style="font-size:12px;color:#8a9a90"></span>
+          <button class="aic-btn" onclick="aicSend()" id="aicSendBtn">Send notification →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  function base(){ return (typeof _admBase==='function'?_admBase():(window.LAD_API_BASE||'https://lad-clpd-backend.onrender.com')).replace(/\/$/,''); }
+  function tok(){ try{ return (typeof _admToken==='function'?_admToken():localStorage.getItem('lad_token'))||''; }catch(e){ return ''; } }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);}); }
+  window.aicOpen=function(){ document.getElementById('aicOverlay').classList.add('on'); setTimeout(function(){var i=document.getElementById('aicInput');if(i)i.focus();},50); };
+  window.aicClose=function(){ document.getElementById('aicOverlay').classList.remove('on'); };
+  window.aicMode=function(m,el){ document.querySelectorAll('.aic-tab').forEach(function(t){t.classList.remove('on');}); if(el)el.classList.add('on');
+    document.getElementById('aicAsk').style.display = m==='ask'?'':'none';
+    document.getElementById('aicNotify').style.display = m==='notify'?'':'none';
+    document.getElementById('aicInput').style.display = m==='ask'?'':'none'; };
+  window.aicQuick=function(el){ document.getElementById('aicInput').value=el.textContent; aicAsk(); };
+  window.aicAsk=async function(){
+    var q=(document.getElementById('aicInput').value||'').trim(); if(!q) return;
+    var out=document.getElementById('aicAnswer'); out.innerHTML='<div class="aic-answer">Thinking…</div>';
+    document.getElementById('aicChips').style.display='none';
+    try{
+      var r=await fetch(base()+'/api/v1/admin/command',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({prompt:q})});
+      var d=await r.json();
+      if(!r.ok){ out.innerHTML='<div class="aic-answer">'+esc(d.error||'Could not answer that.')+'</div>'; return; }
+      out.innerHTML='<div class="aic-answer">'+esc(d.answer||'')+'</div><div class="aic-engine">'+(d.engine==='aimodel'?'Powered by AiModel · live data':'Live snapshot')+'</div>';
+    }catch(e){ out.innerHTML='<div class="aic-answer">Network error — please try again.</div>'; }
+  };
+  function audienceLabel(){ var v=document.getElementById('aicAudience').value; return ({all:'all lawyers',critical:'lawyers who are critical (<8 points)','at-risk':'lawyers at risk (8–15 points)',compliant:'compliant lawyers (16+ points)',noBookings:'lawyers with no bookings yet'})[v]||'the recipients'; }
+  window.aicDraft=async function(){
+    var p=(document.getElementById('aicPrompt').value||'').trim(); if(!p){ return; }
+    var btn=document.getElementById('aicDraftBtn'); btn.disabled=true; btn.textContent='Drafting…';
+    try{
+      var r=await fetch(base()+'/api/v1/notifications/draft',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({prompt:p,audienceLabel:audienceLabel()})});
+      var d=await r.json();
+      if(r.ok){ document.getElementById('aicTitle').value=d.title||''; document.getElementById('aicBody').value=d.body||''; }
+    }catch(e){}
+    btn.disabled=false; btn.textContent='✦ Draft';
+  };
+  window.aicSend=async function(){
+    var v=document.getElementById('aicAudience').value;
+    var title=(document.getElementById('aicTitle').value||'').trim();
+    var body=(document.getElementById('aicBody').value||'').trim();
+    if(!title&&!body){ document.getElementById('aicSendNote').textContent='Add a title or message first.'; return; }
+    var payload;
+    if(v==='all') payload={audience:'all',title:title,body:body};
+    else if(v==='noBookings') payload={audience:'segment',segment:{noBookings:true},title:title,body:body};
+    else payload={audience:'segment',segment:{band:v},title:title,body:body};
+    var btn=document.getElementById('aicSendBtn'); btn.disabled=true; btn.textContent='Sending…';
+    try{
+      var r=await fetch(base()+'/api/v1/notifications/send',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify(payload)});
+      var d=await r.json();
+      document.getElementById('aicSendNote').textContent = r.ok ? ('✓ '+(d.message||'Sent.')) : (d.error||'Could not send.');
+      if(r.ok){ document.getElementById('aicTitle').value=''; document.getElementById('aicBody').value=''; document.getElementById('aicPrompt').value=''; }
+    }catch(e){ document.getElementById('aicSendNote').textContent='Network error.'; }
+    btn.disabled=false; btn.textContent='Send notification →';
+  };
+  document.addEventListener('keydown',function(e){
+    if((e.metaKey||e.ctrlKey)&&(e.key==='k'||e.key==='K')){ e.preventDefault(); var o=document.getElementById('aicOverlay'); if(o.classList.contains('on'))aicClose(); else aicOpen(); }
+    else if(e.key==='Escape'){ var o=document.getElementById('aicOverlay'); if(o&&o.classList.contains('on'))aicClose(); }
+  });
+})();
+</script>
 </body>
 </html>
