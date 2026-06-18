@@ -1402,6 +1402,7 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
     <button class="adm-tab" data-tab="description" onclick="switchTab('description')">Description</button>
     <button class="adm-tab" data-tab="schedule" onclick="switchTab('schedule')">Schedule</button>
     <button class="adm-tab" data-tab="impact" onclick="switchTab('impact')">Impact</button>
+    <button class="adm-tab" data-tab="tags" onclick="switchTab('tags')">Smart tags</button>
   </nav>
 
   <div class="adm-editor-body">
@@ -1566,6 +1567,22 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Add skill area
       </button>
+    </div>
+
+    <!-- SMART TAGS -->
+    <div class="adm-pane" data-pane="tags">
+      <div class="adm-hint" style="margin-bottom:12px;padding:11px 14px;background:var(--paper);border-left:3px solid #6d28d9;border-radius:0 7px 7px 0">
+        <strong>Smart tags</strong> place this course in the skills ecosystem — they drive lawyer skill graphs, gap-based recommendations and the firm capability heatmap. Add the course title &amp; description first, then auto-tag. <strong>Required before a course can go live.</strong>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="adm-btn-green" id="autoTagBtn" onclick="autoTagCourse()" style="background:#6d28d9">✦ Auto-tag with AI</button>
+        <span id="tagEngineBadge" style="font-family:var(--mono);font-size:10px;color:var(--slate3)"></span>
+      </div>
+      <div id="smartTagList" class="adm-tag-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <select id="addTagSelect" class="adm-input" style="max-width:340px"><option value="">+ Add a topic manually…</option></select>
+        <button class="adm-btn-light" onclick="addTagManual()">Add</button>
+      </div>
     </div>
   </div>
 
@@ -2393,6 +2410,7 @@ function newCourse(){
     desc: '', matchReason: '',
     sessions: [],
     impact: [],
+    tags: [],
   };
   openEditor('NEW COURSE', 'Untitled course');
 }
@@ -2460,6 +2478,27 @@ function switchTab(tab){
   if (tab === 'image') renderPresets();
   if (tab === 'schedule') renderSessions();
   if (tab === 'impact') renderImpact();
+  if (tab === 'tags') { ensureTagsLoaded().then(() => { populateTagDropdown(); renderSmartTags(); }); }
+}
+
+// Load existing backend tags the first time the Smart-tags tab is opened for a
+// saved course (so the admin sees what's already applied).
+async function ensureTagsLoaded(){
+  if (Array.isArray(editingDraft.tags)) return;
+  editingDraft.tags = [];
+  if (!editingId) return;
+  try {
+    const r = await fetch(_admBase().replace(/\/$/,'') + '/api/v1/courses/' + encodeURIComponent(editingDraft.id) + '/topics', {
+      headers:{ Authorization:'Bearer '+_admToken() },
+    });
+    if (!r.ok) return;
+    const j = await r.json();
+    const flat = await loadTaxonomy();
+    editingDraft.tags = (j.tags||[]).map(t=>{
+      const m = flat.find(x=>x.id===t.topic_id) || {};
+      return { topic_id:t.topic_id, label:t.label||m.label, domain:t.domain||m.domain, domain_label:m.domain_label, weight:t.weight, source:t.source };
+    });
+  } catch(_) {}
 }
 
 function populateForm(){
@@ -2516,6 +2555,12 @@ function saveCourse(){
     switchTab('basics');
     return;
   }
+  // Smart tags are required before a course can go live in the ecosystem.
+  if (editingDraft.status === 'live' && !(editingDraft.tags && editingDraft.tags.length)) {
+    toast('Add at least one smart tag before going live', 'error');
+    switchTab('tags');
+    return;
+  }
   if (editingId) {
     // Update existing
     const idx = courses.findIndex(c => c.id === editingId);
@@ -2529,6 +2574,7 @@ function saveCourse(){
     courses.push(editingDraft);
   }
   saveAll(courses);
+  pushCourseToBackend(editingDraft); // persist to the smart-courses ecosystem (async, offline-tolerant)
   renderStats();
   applyFilters();
   closeEditor();
@@ -2707,6 +2753,135 @@ function removeImpact(idx){
   renderImpact();
 }
 
+// ────────── SMART TAGS (skills ecosystem) ──────────
+function _admBase(){ return (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || ''; }
+function _admToken(){ try { return localStorage.getItem('lad_token') || ''; } catch(_) { return ''; } }
+let TAXONOMY_FLAT = null; // [{id,label,domain,domain_label}]
+
+async function loadTaxonomy(){
+  if (TAXONOMY_FLAT) return TAXONOMY_FLAT;
+  try {
+    const r = await fetch(_admBase().replace(/\/$/,'') + '/api/v1/skills/taxonomy');
+    const tree = await r.json();
+    const flat = [];
+    const roots = Array.isArray(tree) ? tree : (tree.data || []);
+    for (const d of roots) {
+      for (const c of (d.children || [])) flat.push({ id:c.id, label:c.label, domain:c.domain, domain_label:d.label });
+    }
+    TAXONOMY_FLAT = flat;
+  } catch(_) { TAXONOMY_FLAT = []; }
+  return TAXONOMY_FLAT;
+}
+
+async function populateTagDropdown(){
+  const sel = document.getElementById('addTagSelect');
+  if (!sel) return;
+  const flat = await loadTaxonomy();
+  const have = new Set((editingDraft.tags||[]).map(t=>t.topic_id));
+  sel.innerHTML = '<option value="">+ Add a topic manually…</option>' +
+    flat.filter(t=>!have.has(t.id)).map(t=>`<option value="${t.id}">${escapeHtml(t.domain_label)} › ${escapeHtml(t.label)}</option>`).join('');
+}
+
+function renderSmartTags(){
+  const wrap = document.getElementById('smartTagList');
+  if (!wrap) return;
+  const tags = editingDraft.tags || [];
+  if (!tags.length){
+    wrap.innerHTML = '<div style="font-size:12.5px;color:var(--slate3);padding:14px;border:1px dashed var(--line2);border-radius:9px;text-align:center">No tags yet — click <strong>✦ Auto-tag with AI</strong> or add one manually.</div>';
+    return;
+  }
+  wrap.innerHTML = tags.map((t,i)=>{
+    const pct = Math.round((Number(t.weight)||0.5)*100);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line2);border-radius:9px;background:var(--white)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12.5px;font-weight:600;color:var(--ink)">${escapeHtml(t.label||t.topic_id)}</div>
+        <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3)">${escapeHtml(t.domain_label||t.domain||'')}${t.source==='aimodel'?' · AI':''}</div>
+      </div>
+      <div style="width:120px;display:flex;align-items:center;gap:7px">
+        <input type="range" min="10" max="100" value="${pct}" oninput="setTagWeight(${i}, this.value)" style="flex:1"/>
+        <span style="font-family:var(--mono);font-size:10px;color:#6d28d9;width:30px;text-align:right">${pct}%</span>
+      </div>
+      <button class="adm-session-remove" onclick="removeTag(${i})" title="Remove"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>`;
+  }).join('');
+}
+
+function setTagWeight(i, val){
+  if (editingDraft.tags && editingDraft.tags[i]) editingDraft.tags[i].weight = Math.max(0.1, Math.min(1, Number(val)/100));
+}
+
+function removeTag(i){
+  editingDraft.tags.splice(i,1);
+  renderSmartTags(); populateTagDropdown();
+}
+
+async function addTagManual(){
+  const sel = document.getElementById('addTagSelect');
+  const id = sel && sel.value;
+  if (!id) return;
+  const flat = await loadTaxonomy();
+  const t = flat.find(x=>x.id===id);
+  if (!t) return;
+  editingDraft.tags = editingDraft.tags || [];
+  if (editingDraft.tags.some(x=>x.topic_id===id)) return;
+  editingDraft.tags.push({ topic_id:t.id, label:t.label, domain:t.domain, domain_label:t.domain_label, weight:0.6, source:'reviewer' });
+  renderSmartTags(); populateTagDropdown();
+}
+
+async function autoTagCourse(){
+  collectForm();
+  if (!editingDraft.title){ toast('Add a course title first (Basics tab)','error'); switchTab('basics'); return; }
+  const btn = document.getElementById('autoTagBtn');
+  const badge = document.getElementById('tagEngineBadge');
+  const prev = btn.textContent; btn.textContent = 'Tagging…'; btn.style.pointerEvents='none';
+  try {
+    const r = await fetch(_admBase().replace(/\/$/,'') + '/api/v1/courses/' + encodeURIComponent(editingDraft.id) + '/autotag', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+_admToken() },
+      body: JSON.stringify({ title: editingDraft.title, description: editingDraft.desc, areas:(editingDraft.impact||[]).map(i=>i.label).join(', '), matchReason: editingDraft.matchReason }),
+    });
+    if (!r.ok){ const e = await r.json().catch(()=>({})); throw new Error(e.error||('HTTP '+r.status)); }
+    const data = await r.json();
+    // Merge suggestions with any existing tags (don't duplicate)
+    const have = new Set((editingDraft.tags||[]).map(t=>t.topic_id));
+    editingDraft.tags = editingDraft.tags || [];
+    for (const t of (data.tags||[])){
+      if (have.has(t.topic_id)) continue;
+      editingDraft.tags.push({ topic_id:t.topic_id, label:t.label, domain:t.domain, domain_label:t.domain_label, weight:t.weight, source:data.engine==='aimodel'?'aimodel':'reviewer' });
+    }
+    if (badge) badge.textContent = data.engine==='aimodel' ? '✓ Tagged by AiModel' : '✓ Tagged (keyword match — set AiModel for smarter tags)';
+    renderSmartTags(); populateTagDropdown();
+  } catch(e){
+    toast('Auto-tag failed: '+e.message,'error');
+  } finally {
+    btn.textContent = prev; btn.style.pointerEvents='auto';
+  }
+}
+
+// Persist the course + its tags to the backend so it enters the smart
+// ecosystem (course_topics → skill graph → recommendations).
+async function pushCourseToBackend(d){
+  const base = _admBase().replace(/\/$/,''); const token = _admToken();
+  if (!base || !token) return; // demo mode — local only
+  const body = {
+    id: d.id, title: d.title, type: d.type,
+    format: d.elearning ? 'e-learning' : 'face-to-face',
+    pts: d.pts, credits: d.credits, provider_id: null,
+    location: d.location, description: d.desc, language: 'English',
+    active: d.status === 'live' ? 1 : 0, bg: d.bg, icon: d.icon || '',
+    category: (d.tags && d.tags[0] && d.tags[0].domain_label) || d.category || '',
+  };
+  try {
+    await fetch(base + '/api/v1/courses/' + encodeURIComponent(d.id), {
+      method:'PUT', headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token }, body: JSON.stringify(body),
+    });
+    await fetch(base + '/api/v1/courses/' + encodeURIComponent(d.id) + '/topics', {
+      method:'PUT', headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token },
+      body: JSON.stringify({ tags: (d.tags||[]).map(t=>({ topic_id:t.topic_id, weight:t.weight, source:t.source||'reviewer' })) }),
+    });
+  } catch(_) { /* offline-tolerant; local save already succeeded */ }
+}
+
 // ────────── DELETE ──────────
 function askDelete(id){
   const c = courses.find(x => x.id === id);
@@ -2793,6 +2968,7 @@ function downloadExport(){
 // ────────── UTIL ──────────
 function escape(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function escapeAttr(s){ return String(s||'').replace(/"/g,'&quot;').replace(/&/g,'&amp;'); }
+function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function toast(msg, kind){
   const t = document.getElementById('toast');
   t.textContent = msg;
