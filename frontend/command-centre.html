@@ -354,7 +354,7 @@
   // AI briefing
   getJSON('/api/v1/admin/briefing').then(function(b){
     if(!b)return;
-    $('brEngine').textContent = b.engine==='aimodel'?'CLAUDE':'LIVE';
+    $('brEngine').textContent = 'LIVE';
     $('brief').innerHTML=(b.headline?'<strong>'+esc(b.headline)+'</strong> ':'')+esc(b.summary||'');
     var A=Array.isArray(b.actions)?b.actions:[];
     if(A.length){ var top=A[0]; $('nbaBody').innerHTML='<strong>'+esc(top.title||'')+'</strong><br>'+esc(top.detail||''); }
