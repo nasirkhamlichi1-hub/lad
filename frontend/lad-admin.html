@@ -547,7 +547,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
     <a class="lgn-pill on" onclick="switchPage('bookings')" style="cursor:pointer">Bookings</a>
     <a class="lgn-pill" onclick="switchPage('purchases')" style="cursor:pointer">Purchases</a>
     <a class="lgn-pill" onclick="switchPage('schedules')" style="cursor:pointer">Schedules</a>
-    <a class="lgn-pill" onclick="switchPage('migrate')" style="cursor:pointer">Migrate</a>
+    <a class="lgn-pill" onclick="switchPage('migrate')" style="cursor:pointer;display:none">Migrate</a>
     <a class="lgn-pill" onclick="switchPage('website')" style="cursor:pointer">Website</a>
     <a class="lgn-pill" onclick="switchPage('support')" style="cursor:pointer">Support</a>
   </div>
@@ -787,18 +787,19 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
         }).join(''):'<div style="color:#8a98aa;font-size:12.5px;padding:6px 0">No pending requests.</div>';
       }).catch(function(){box.innerHTML='<div style="color:#c0392b;font-size:12.5px">Could not load requests.</div>';});
     };
+    var _t=function(m,k){ if(window.toast)window.toast(m,k); };
     window.confirmCreditRequest=function(id){
       fetch(base()+'/api/v1/credits/confirm',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({id:id})}).then(function(r){return r.json();}).then(function(j){
-        if(j&&j.ok){ loadCreditRequests(); } else { alert((j&&j.error)||'Could not confirm.'); }
-      }).catch(function(){alert('Network error.');});
+        if(j&&j.ok){ _t('✓ Purchase confirmed · credits granted','success'); loadCreditRequests(); } else { _t((j&&j.error)||'Could not confirm.','error'); }
+      }).catch(function(){_t('Network error.','error');});
     };
     window.adminTopup=function(){
       var e=document.getElementById('admTopEmail'), c=document.getElementById('admTopCredits');
       var email=(e&&e.value||'').trim(), credits=parseInt((c&&c.value)||'0',10);
-      if(!email||!credits){alert('Enter an email and a credit amount.');return;}
+      if(!email||!credits){_t('Enter an email and a credit amount.','error');return;}
       fetch(base()+'/api/v1/credits/topup',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({email:email,credits:credits})}).then(function(r){return r.json();}).then(function(j){
-        if(j&&j.ok){alert('Granted. New balance: '+j.balance+' credits');e.value='';c.value='';} else {alert((j&&j.error)||'Could not top up.');}
-      }).catch(function(){alert('Network error.');});
+        if(j&&j.ok){_t('✓ Granted · new balance '+j.balance+' credits','success');e.value='';c.value='';} else {_t((j&&j.error)||'Could not top up.','error');}
+      }).catch(function(){_t('Network error.','error');});
     };
     document.addEventListener('DOMContentLoaded',function(){ setTimeout(function(){ try{loadCreditRequests();}catch(_){} },900); });
   })();
@@ -1973,9 +1974,10 @@ async function togglePractising(id, name, newVal) {
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
       body: JSON.stringify({ practicing: newVal }),
     });
-    if (!r.ok) { alert('Update failed: HTTP ' + r.status); return; }
+    if (!r.ok) { toast('Update failed (HTTP ' + r.status + ')', 'error'); return; }
+    toast('✓ Updated', 'success');
     loadStatus();
-  } catch (e) { alert('Update failed: ' + e.message); }
+  } catch (e) { toast('Update failed: ' + e.message, 'error'); }
 }
 
 async function reclassifyAll() {
@@ -1984,11 +1986,11 @@ async function reclassifyAll() {
   const token = localStorage.getItem('lad_token') || '';
   try {
     const r = await fetch(base + '/api/v1/admin/reclassify-practising', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
-    if (!r.ok) { alert('Reclassify failed: HTTP ' + r.status); return; }
+    if (!r.ok) { toast('Reclassify failed (HTTP ' + r.status + ')', 'error'); return; }
     const j = (await r.json()).data;
-    alert(`Reclassified.\n\nPractising: ${j.practising.toLocaleString()}\nNon-practising: ${j.non_practising.toLocaleString()}\nTotal: ${j.total.toLocaleString()}`);
+    toast(`✓ Reclassified · ${j.practising.toLocaleString()} practising · ${j.non_practising.toLocaleString()} non-practising`, 'success');
     loadStatus();
-  } catch (e) { alert('Reclassify failed: ' + e.message); }
+  } catch (e) { toast('Reclassify failed: ' + e.message, 'error'); }
 }
 
 // Auto-load when the tab opens

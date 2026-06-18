@@ -289,6 +289,21 @@ router.get('/internal-courses', requireAuth, (req, res) => {
   res.json({ courses: out, firm: firmName });
 });
 
+// PATCH /api/v1/lawyers/:id — admin: set practising flag / status.
+router.patch('/:id', requireAuth, (req, res) => {
+  const u = req.user;
+  if (!(isSuper(u.role) || u.role === 'lad_admin' || u.role === 'lad_intelligence')) return res.status(403).json({ error: 'Forbidden' });
+  const lawyer = store.getLawyerById(req.params.id);
+  if (!lawyer) return res.status(404).json({ error: 'Lawyer not found' });
+  const b = req.body || {};
+  let status = null;
+  if (b.practicing !== undefined) status = (b.practicing === 0 || b.practicing === false || b.practicing === '0') ? 'non-practising' : 'active';
+  if (b.status !== undefined) status = String(b.status);
+  if (status === null) return res.status(400).json({ error: 'Nothing to update' });
+  db.prepare('UPDATE lawyers SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(status, lawyer.id);
+  res.json({ ok: true, id: lawyer.id, status });
+});
+
 // GET /api/v1/lawyers/:id — staff lookup (LAD admin or own firm CO)
 router.get('/:id', requireAuth, (req, res) => {
   const lawyer = store.getLawyerById(req.params.id);

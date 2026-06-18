@@ -58,4 +58,26 @@ router.get('/snapshot', requireAuth, (req, res) => {
   res.json(snapshot());
 });
 
+// POST /api/v1/admin/reclassify-practising — apply the standard practising rules.
+router.post('/reclassify-practising', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
+  let total = 0, practising = 0, nonPractising = 0;
+  try {
+    const rows = db.prepare("SELECT id, COALESCE(LOWER(status),'active') status FROM lawyers").all();
+    const upd = db.prepare('UPDATE lawyers SET status = ? WHERE id = ?');
+    const tx = db.transaction(() => {
+      for (const r of rows) {
+        total++;
+        if (r.status === 'inactive' || r.status === 'resigned') { nonPractising++; continue; } // preserve
+        const id = (r.id || '').toUpperCase();
+        const nonLawyer = /^D-?\d/.test(id) || /CWTEAM|LAD|TEAM|ADMIN|STAFF/.test(id);
+        if (nonLawyer) { upd.run('non-practising', r.id); nonPractising++; }
+        else { upd.run('active', r.id); practising++; }
+      }
+    });
+    tx();
+  } catch (e) { return res.status(500).json({ error: e.message }); }
+  res.json({ data: { practising, non_practising: nonPractising, total } });
+});
+
 module.exports = router;
