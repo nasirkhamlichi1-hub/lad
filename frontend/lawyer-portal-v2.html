@@ -2901,6 +2901,12 @@ function bookSuggestedCourse(courseName, when, kind) {
 // entirely (sidebar clicks looked dead because the underlying scroll
 // primitive was hijacked). Renamed to goToSection() so window.scrollTo
 // stays native.
+// The top hero-nav calls scrollS(id); this portal toggles sections via
+// goToSection, so delegate to it (falls back to a plain scroll).
+function scrollS(id) {
+  try { if (typeof goToSection === 'function') { goToSection(id); return; } } catch (_) {}
+  var el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
 function goToSection(id, e) {
   // Stash native ref so we can use it even if some other script tries
   // to override it later. Captured once on first call.
