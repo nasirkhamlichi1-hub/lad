@@ -188,6 +188,89 @@ router.get('/briefing', requireAuth, async (req, res, next) => {
   }
 });
 
+// GET /api/v1/admin/anomalies — REAL anomaly detection from live data (no fakes).
+function detectAnomalies() {
+  const all = (sql, ...a) => { try { return db.prepare(sql).all(...a); } catch (_) { return []; } };
+  const out = [];
+  const fmt = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.toUTCString().slice(5, 16); };
+  // 1. Firms with an elevated no-show rate (>=3 no-shows AND >25%).
+  all(`SELECT f.id, f.name, COUNT(*) total, SUM(CASE WHEN b.status='no-show' THEN 1 ELSE 0 END) ns
+       FROM bookings b JOIN lawyers l ON l.id=b.lawyer_id JOIN firms f ON f.id=l.firm_id
+       GROUP BY f.id HAVING ns>=3 AND ns*1.0/total>0.25 ORDER BY ns DESC LIMIT 5`)
+    .forEach((r) => out.push({ level: 'high', kind: 'attendance', title: r.name + ' — elevated no-show rate',
+      detail: r.ns + ' no-shows across ' + r.total + ' bookings (' + Math.round(100 * r.ns / r.total) + '%). Recommend compliance follow-up.', metric: r.ns, firmId: r.id }));
+  // 2. Sessions within 21 days that are >80% empty.
+  all(`SELECT c.title, s.scheduled_at, s.seats_remaining, s.capacity FROM course_sessions s JOIN courses c ON c.id=s.course_id
+       WHERE COALESCE(s.status,'scheduled') NOT IN ('cancelled','closed') AND s.scheduled_at BETWEEN datetime('now') AND datetime('now','+21 day')
+       AND s.capacity>0 AND s.seats_remaining*1.0/s.capacity>0.8 ORDER BY s.scheduled_at LIMIT 5`)
+    .forEach((r) => out.push({ level: 'medium', kind: 'capacity', title: r.title + ' — under-subscribed',
+      detail: r.seats_remaining + ' of ' + r.capacity + ' seats open with the session on ' + fmt(r.scheduled_at) + '. High-leverage capacity to fill.', metric: r.seats_remaining }));
+  // 3. Cancellation spike in the last 7 days.
+  const cx = (all("SELECT COUNT(*) n FROM bookings WHERE status='cancelled' AND created_at>=datetime('now','-7 day')")[0] || {}).n || 0;
+  if (cx >= 10) out.push({ level: cx >= 25 ? 'high' : 'medium', kind: 'demand', title: 'Cancellation spike', detail: cx + ' bookings cancelled in the last 7 days — review whether sessions are mistimed.', metric: cx });
+  // 4. Firms where >60% of lawyers are critical (and >=5 lawyers).
+  const year = String(cycleYear());
+  all(`WITH lp AS (SELECT l.firm_id, l.id, COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y',b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts
+        FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id=l.id
+        WHERE COALESCE(LOWER(l.status),'active') NOT IN ('inactive','resigned','non-practising','struck off','left') AND l.firm_id IS NOT NULL GROUP BY l.id)
+      SELECT f.id, f.name, COUNT(lp.id) lawyers, SUM(CASE WHEN lp.pts<8 THEN 1 ELSE 0 END) crit
+      FROM firms f JOIN lp ON lp.firm_id=f.id GROUP BY f.id HAVING lawyers>=5 AND crit*1.0/lawyers>0.6 ORDER BY crit*1.0/lawyers DESC LIMIT 5`, year)
+    .forEach((r) => out.push({ level: 'high', kind: 'compliance', title: r.name + ' — compliance cluster',
+      detail: r.crit + ' of ' + r.lawyers + ' lawyers are critical (' + Math.round(100 * r.crit / r.lawyers) + '%). Prioritise firm-wide outreach.', metric: r.crit, firmId: r.id }));
+  const order = { high: 0, medium: 1, low: 2 };
+  out.sort((a, b) => (order[a.level] - order[b.level]));
+  return out;
+}
+router.get('/anomalies', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
+  const anomalies = detectAnomalies();
+  const counts = anomalies.reduce((m, a) => { m[a.level] = (m[a.level] || 0) + 1; return m; }, {});
+  res.json({ anomalies, total: anomalies.length, counts });
+});
+
+// GET /api/v1/admin/forecast — honest pace-based projection of cycle compliance.
+router.get('/forecast', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
+  const year = String(cycleYear());
+  let rows = [];
+  try {
+    rows = db.prepare(
+      `SELECT b.lawyer_id lid, b.points_earned pts, b.created_at FROM bookings b JOIN lawyers l ON l.id=b.lawyer_id
+       WHERE b.status='attended' AND strftime('%Y',b.created_at)=?
+       AND COALESCE(LOWER(l.status),'active') NOT IN ('inactive','resigned','non-practising','struck off','left')
+       ORDER BY b.created_at ASC`, year).all();
+  } catch (_) {}
+  const practising = oversight().lawyers.practising || 0;
+  const sum = {}, compliantMonth = {};
+  rows.forEach((r) => {
+    sum[r.lid] = (sum[r.lid] || 0) + (Number(r.pts) || 0);
+    if (sum[r.lid] >= 16 && compliantMonth[r.lid] == null) {
+      const m = new Date(r.created_at).getUTCMonth();
+      compliantMonth[r.lid] = isNaN(m) ? 11 : m;
+    }
+  });
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const nowM = new Date().getUTCMonth();
+  const cumAt = (m) => Object.values(compliantMonth).filter((cm) => cm <= m).length;
+  const series = [];
+  for (let m = 0; m <= nowM; m++) series.push({ month: MON[m], compliant: cumAt(m), rate: practising ? Math.round(1000 * cumAt(m) / practising) / 10 : 0 });
+  const cNow = cumAt(nowM), cPrev = nowM >= 2 ? cumAt(nowM - 2) : 0;
+  const perMonth = nowM >= 2 ? (cNow - cPrev) / 2 : (cNow / Math.max(nowM + 1, 1));
+  const monthsLeft = 11 - nowM;
+  const projected = Math.min(practising, Math.round(cNow + perMonth * monthsLeft));
+  for (let m = nowM + 1; m <= 11; m++) {
+    const c = Math.min(practising, Math.round(cNow + perMonth * (m - nowM)));
+    series.push({ month: MON[m], compliant: c, rate: practising ? Math.round(1000 * c / practising) / 10 : 0, projected: true });
+  }
+  res.json({
+    cycleYear: cycleYear(), practising,
+    currentCompliant: cNow, currentRate: practising ? Math.round(1000 * cNow / practising) / 10 : 0,
+    projectedCompliant: projected, projectedRate: practising ? Math.round(1000 * projected / practising) / 10 : 0,
+    perMonth: Math.round(perMonth * 10) / 10, daysToDeadline: daysToDeadline(), series,
+    method: 'Pace-based linear projection from the last two months of attendance',
+  });
+});
+
 // POST /api/v1/admin/reclassify-practising — apply the standard practising rules.
 router.post('/reclassify-practising', requireAuth, (req, res) => {
   if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });

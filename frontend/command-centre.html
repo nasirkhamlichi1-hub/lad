@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CLPD Command Centre — Legal Ecosystem Digital Twin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#04060f; --panel:rgba(12,20,40,.55); --panel-b:rgba(90,140,230,.18);
+    --cyan:#34e1ff; --violet:#9a6cff; --teal:#1fe0b4; --amber:#ffb84d; --red:#ff5e7e; --green:#3df0a0;
+    --ink:#dfe9ff; --dim:#7f93c4; --dim2:#5d6f9e;
+    --mono:'Rajdhani',sans-serif; --title:'Orbitron',sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;overflow-x:hidden}
+  body{background:
+    radial-gradient(1200px 700px at 50% 8%,rgba(40,70,150,.28),transparent 60%),
+    radial-gradient(900px 600px at 12% 80%,rgba(120,60,200,.16),transparent 55%),
+    radial-gradient(900px 600px at 88% 78%,rgba(20,180,160,.14),transparent 55%),
+    var(--bg);
+    background-attachment:fixed;min-height:100vh}
+  .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35;
+    background-image:linear-gradient(rgba(90,140,230,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(90,140,230,.06) 1px,transparent 1px);
+    background-size:46px 46px;mask-image:radial-gradient(circle at 50% 40%,#000,transparent 85%)}
+  #twin{position:fixed;inset:0;z-index:1}
+  .scan{position:fixed;inset:0;z-index:2;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(120,200,255,.025) 0 2px,transparent 2px 4px);mix-blend-mode:screen;opacity:.5}
+  .wrap{position:relative;z-index:5;max-width:1640px;margin:0 auto;padding:18px 22px 40px}
+
+  /* Header */
+  header{display:flex;align-items:center;gap:18px;margin-bottom:14px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .mark{width:42px;height:42px;border-radius:11px;border:1px solid var(--panel-b);display:grid;place-items:center;background:linear-gradient(160deg,rgba(52,225,255,.18),rgba(154,108,255,.12));box-shadow:0 0 22px rgba(52,225,255,.25)}
+  .brand .mark svg{width:22px;height:22px;stroke:var(--cyan);fill:none;stroke-width:1.6}
+  .htitle{font-family:var(--title);font-weight:800;font-size:24px;letter-spacing:3px;background:linear-gradient(90deg,#eaf4ff,#7fd6ff 50%,#b9a3ff);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1}
+  .hsub{font-family:var(--mono);font-size:11.5px;letter-spacing:4px;color:var(--dim);text-transform:uppercase;margin-top:3px}
+  .hspace{flex:1}
+  .hclock{font-family:var(--mono);text-align:right;font-size:13px;color:var(--cyan);letter-spacing:1.5px}
+  .hclock b{display:block;font-size:20px;font-weight:700;color:#eaf4ff}
+  .hback{font-family:var(--mono);font-size:12px;letter-spacing:1.5px;color:var(--dim);text-decoration:none;border:1px solid var(--panel-b);border-radius:9px;padding:9px 14px;background:var(--panel);transition:.2s}
+  .hback:hover{color:var(--cyan);border-color:var(--cyan);box-shadow:0 0 16px rgba(52,225,255,.25)}
+
+  /* KPI strip */
+  .kstrip{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
+  .kpi{position:relative;background:var(--panel);border:1px solid var(--panel-b);border-radius:14px;padding:14px 16px;backdrop-filter:blur(10px);overflow:hidden}
+  .kpi::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c,var(--cyan));box-shadow:0 0 14px var(--c,var(--cyan))}
+  .kpi .kl{font-family:var(--mono);font-size:10.5px;letter-spacing:1.8px;color:var(--dim);text-transform:uppercase}
+  .kpi .kv{font-family:var(--title);font-weight:700;font-size:30px;letter-spacing:.5px;margin-top:6px;color:#eaf4ff;text-shadow:0 0 16px var(--c,rgba(52,225,255,.4))}
+  .kpi .km{font-family:var(--mono);font-size:11px;color:var(--dim2);margin-top:2px;letter-spacing:.5px}
+
+  /* Layout */
+  .stage{display:grid;grid-template-columns:300px 1fr 300px;gap:16px;align-items:start}
+  .col{display:flex;flex-direction:column;gap:14px}
+  .card{background:var(--panel);border:1px solid var(--panel-b);border-radius:16px;padding:16px 17px;backdrop-filter:blur(12px);position:relative;overflow:hidden}
+  .card-h{font-family:var(--mono);font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--cyan);margin-bottom:13px;display:flex;align-items:center;justify-content:space-between}
+  .card-h .badge{font-family:var(--title);font-size:10px;letter-spacing:1px;color:var(--green);border:1px solid rgba(61,240,160,.35);border-radius:20px;padding:2px 9px}
+
+  /* Health index rows */
+  .hx{display:flex;align-items:center;gap:10px;margin:11px 0}
+  .hx .hxl{flex:1;font-size:12.5px;color:var(--ink);font-weight:500}
+  .hx .hxbar{width:78px;height:5px;border-radius:5px;background:rgba(120,150,210,.15);overflow:hidden}
+  .hx .hxf{height:100%;width:0;border-radius:5px;transition:width 1.4s cubic-bezier(.3,1,.4,1)}
+  .hx .hxv{font-family:var(--mono);font-size:13px;font-weight:700;width:30px;text-align:right}
+
+  /* Insight rows */
+  .ins{border-left:2px solid var(--c,var(--amber));padding:9px 0 9px 12px;margin:10px 0}
+  .ins .it{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--c,var(--amber));font-weight:700;display:flex;justify-content:space-between;gap:8px}
+  .ins .id{font-size:12.5px;color:var(--ink);line-height:1.5;margin-top:4px}
+  .pill{font-family:var(--mono);font-size:9px;letter-spacing:.5px;border:1px solid currentColor;border-radius:10px;padding:1px 7px}
+
+  /* League */
+  .lg{display:flex;align-items:center;gap:9px;margin:9px 0;font-size:12.5px}
+  .lg .rk{font-family:var(--title);font-size:12px;color:var(--dim2);width:16px}
+  .lg .nm{flex:1;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lg .bar{width:70px;height:5px;border-radius:5px;background:rgba(120,150,210,.15);overflow:hidden}
+  .lg .barf{height:100%;background:linear-gradient(90deg,var(--teal),var(--cyan));border-radius:5px;width:0;transition:width 1.2s ease}
+  .lg .vv{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--teal);width:38px;text-align:right}
+
+  /* Center health score */
+  .hscore{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:6px}
+  .ring{position:relative;width:150px;height:150px}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .num b{font-family:var(--title);font-size:42px;font-weight:800;color:#eaf4ff;line-height:1;text-shadow:0 0 20px rgba(52,225,255,.5)}
+  .ring .num span{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--green);margin-top:4px}
+  .twin-label{position:absolute;transform:translate(-50%,-50%);font-family:var(--mono);font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink);pointer-events:none;text-align:center;text-shadow:0 0 10px #000;z-index:6;transition:opacity .4s}
+  .twin-label b{display:block;font-family:var(--title);font-size:15px;font-weight:700;color:#eaf4ff;letter-spacing:.5px}
+  .twin-label.dim{color:var(--dim)}
+  .centerstage{position:relative;min-height:560px;border:1px solid var(--panel-b);border-radius:18px;background:linear-gradient(180deg,rgba(10,18,38,.30),rgba(6,10,22,.10));overflow:hidden}
+  .cs-h{position:absolute;top:14px;left:0;right:0;text-align:center;z-index:6;pointer-events:none}
+  .cs-h .t{font-family:var(--title);font-size:16px;letter-spacing:3px;color:#eaf4ff}
+  .cs-h .s{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--dim);margin-top:3px}
+  .cs-foot{position:absolute;left:0;right:0;bottom:14px;display:flex;gap:10px;justify-content:center;z-index:6}
+  .cs-foot button{font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--ink);background:var(--panel);border:1px solid var(--panel-b);border-radius:9px;padding:9px 15px;cursor:pointer;backdrop-filter:blur(8px);transition:.2s}
+  .cs-foot button:hover{color:var(--cyan);border-color:var(--cyan);box-shadow:0 0 16px rgba(52,225,255,.25)}
+  .cs-foot button.prim{color:#04101a;background:linear-gradient(90deg,var(--cyan),var(--teal));border:0;font-weight:700}
+
+  /* Bottom row */
+  .bottom{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:16px}
+  .donut{position:relative;width:120px;height:120px;margin:4px auto 0}
+  .donut svg{transform:rotate(-90deg)}
+  .donut .dc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .donut .dc b{font-family:var(--title);font-size:24px;color:#eaf4ff}
+  .donut .dc span{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--dim)}
+  .leg{display:flex;flex-direction:column;gap:5px;margin-top:10px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+  .leg div{display:flex;align-items:center;justify-content:space-between}
+  .leg i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:7px;vertical-align:middle}
+  .aibrief{font-size:13px;line-height:1.6;color:var(--ink)}
+  .aibrief strong{color:#eaf4ff}
+  .spark{width:100%;height:74px;margin-top:6px}
+  .loading{color:var(--dim2);font-family:var(--mono);font-size:12px;letter-spacing:1px}
+  @media(max-width:1200px){.stage{grid-template-columns:1fr}.kstrip{grid-template-columns:repeat(3,1fr)}.bottom{grid-template-columns:1fr 1fr}.centerstage{min-height:440px}}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<canvas id="twin"></canvas>
+<div class="scan"></div>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="mark"><svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 .9-4.5 4.2 1 6L12 16.8 6.5 19l1-6L3 8.9 9 8z"/></svg></div>
+      <div>
+        <div class="htitle">CLPD COMMAND CENTRE</div>
+        <div class="hsub">Legal Ecosystem Digital Twin · Live</div>
+      </div>
+    </div>
+    <div class="hspace"></div>
+    <div class="hclock"><b id="clk">—</b><span id="clkd">—</span></div>
+    <a class="hback" href="lad-intelligence-v4.html">← Dashboard</a>
+  </header>
+
+  <!-- KPI strip -->
+  <div class="kstrip">
+    <div class="kpi" style="--c:var(--cyan)"><div class="kl">Total Lawyers</div><div class="kv" id="kTotal">—</div><div class="km" id="kTotalM">on the roll</div></div>
+    <div class="kpi" style="--c:var(--violet)"><div class="kl">Practising</div><div class="kv" id="kPract">—</div><div class="km">16-pt obligation</div></div>
+    <div class="kpi" style="--c:var(--green)"><div class="kl">Compliance Rate</div><div class="kv" id="kComp">—</div><div class="km" id="kCompM">at or above 16 pts</div></div>
+    <div class="kpi" style="--c:var(--red)"><div class="kl">Critical</div><div class="kv" id="kCrit">—</div><div class="km" id="kCritM">below 8 pts</div></div>
+    <div class="kpi" style="--c:var(--amber)"><div class="kl">Days to Deadline</div><div class="kv" id="kDays">—</div><div class="km" id="kDaysM">31 Dec cycle end</div></div>
+    <div class="kpi" style="--c:var(--teal)"><div class="kl">Accreditations</div><div class="kv" id="kAcc">—</div><div class="km">in pipeline</div></div>
+  </div>
+
+  <div class="stage">
+    <!-- LEFT -->
+    <div class="col">
+      <div class="card">
+        <div class="card-h">CLPD Health Index <span class="badge" id="hxStatus">LIVE</span></div>
+        <div id="hxRows"><div class="loading">Computing index…</div></div>
+      </div>
+      <div class="card">
+        <div class="card-h">Predictive Insights <span class="badge" id="insBadge" style="color:var(--amber);border-color:rgba(255,184,77,.35)">AI</span></div>
+        <div id="insRows"><div class="loading">Scanning for anomalies…</div></div>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="col">
+      <div class="centerstage" id="centerstage">
+        <div class="cs-h"><div class="t">LEGAL ECOSYSTEM DIGITAL TWIN</div><div class="s">People · Practice · Learning · Regulation</div></div>
+        <!-- twin labels injected here -->
+        <div class="cs-foot">
+          <button class="prim" onclick="cmdAsk('Give me a full executive readout of programme health and the three most important actions this week.')">✦ Ask the AI</button>
+          <button onclick="location.href='lad-intelligence-v4.html'">Open dashboard</button>
+          <button onclick="cmdRotate()">⟲ Orbit</button>
+        </div>
+      </div>
+      <div class="card hscore" style="flex-direction:row;gap:22px;align-items:center;justify-content:space-around">
+        <div class="ring">
+          <svg width="150" height="150" viewBox="0 0 150 150">
+            <circle cx="75" cy="75" r="64" fill="none" stroke="rgba(120,150,210,.14)" stroke-width="9"/>
+            <circle id="hsArc" cx="75" cy="75" r="64" fill="none" stroke="url(#hsg)" stroke-width="9" stroke-linecap="round" stroke-dasharray="402" stroke-dashoffset="402"/>
+            <defs><linearGradient id="hsg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34e1ff"/><stop offset="1" stop-color="#3df0a0"/></linearGradient></defs>
+          </svg>
+          <div class="num"><b id="hsNum">—</b><span id="hsLabel">CLPD HEALTH SCORE</span></div>
+        </div>
+        <div style="flex:1">
+          <div class="card-h" style="margin-bottom:8px">Executive Briefing <span class="badge" id="brEngine">AI</span></div>
+          <div class="aibrief" id="brief"><span class="loading">Generating your live briefing…</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="col">
+      <div class="card">
+        <div class="card-h">Firm Performance League <span class="badge">by compliance</span></div>
+        <div id="leagueRows"><div class="loading">Ranking firms…</div></div>
+      </div>
+      <div class="card">
+        <div class="card-h">Risk Radar <span class="badge" id="riskBadge" style="color:var(--red);border-color:rgba(255,94,126,.35)">MONITOR</span></div>
+        <svg id="radar" width="100%" height="190" viewBox="0 0 260 190"></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM -->
+  <div class="bottom">
+    <div class="card">
+      <div class="card-h">Compliance Overview</div>
+      <div class="donut">
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(120,150,210,.14)" stroke-width="11"/>
+          <circle id="dCompliant" cx="60" cy="60" r="48" fill="none" stroke="var(--green)" stroke-width="11" stroke-dasharray="0 999" stroke-linecap="round"/>
+          <circle id="dAtRisk" cx="60" cy="60" r="48" fill="none" stroke="var(--amber)" stroke-width="11" stroke-dasharray="0 999"/>
+          <circle id="dCritical" cx="60" cy="60" r="48" fill="none" stroke="var(--red)" stroke-width="11" stroke-dasharray="0 999"/>
+        </svg>
+        <div class="dc"><b id="dPct">—</b><span>COMPLIANT</span></div>
+      </div>
+      <div class="leg">
+        <div><span><i style="background:var(--green)"></i>Compliant</span><span id="lgC">—</span></div>
+        <div><span><i style="background:var(--amber)"></i>At risk</span><span id="lgA">—</span></div>
+        <div><span><i style="background:var(--red)"></i>Critical</span><span id="lgX">—</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h">Compliance Trajectory <span class="badge" id="fcEngine">forecast</span></div>
+      <svg class="spark" id="spark" viewBox="0 0 300 74" preserveAspectRatio="none"></svg>
+      <div class="leg" style="margin-top:8px"><div><span>Now</span><span id="fcNow">—</span></div><div><span>Projected · 31 Dec</span><span id="fcProj" style="color:var(--cyan)">—</span></div></div>
+    </div>
+    <div class="card">
+      <div class="card-h">Engagement</div>
+      <div class="hx"><div class="hxl">Attendance rate</div><div class="hxbar"><div class="hxf" id="egAtt" style="background:var(--teal)"></div></div><div class="hxv" id="egAttV">—</div></div>
+      <div class="hx"><div class="hxl">No-show rate</div><div class="hxbar"><div class="hxf" id="egNo" style="background:var(--red)"></div></div><div class="hxv" id="egNoV">—</div></div>
+      <div class="hx"><div class="hxl">Seats open (upcoming)</div><div class="hxbar"><div class="hxf" id="egSeat" style="background:var(--cyan)"></div></div><div class="hxv" id="egSeatV">—</div></div>
+      <div class="hx"><div class="hxl">Active courses</div><div class="hxbar"><div class="hxf" id="egCrs" style="background:var(--violet)"></div></div><div class="hxv" id="egCrsV">—</div></div>
+    </div>
+    <div class="card">
+      <div class="card-h">Next Best Action <span class="badge" id="nbaBadge" style="color:var(--cyan);border-color:rgba(52,225,255,.35)">AI</span></div>
+      <div id="nbaBody" class="aibrief"><span class="loading">Prioritising…</span></div>
+      <div style="margin-top:12px"><button class="hback" style="width:100%;text-align:center;cursor:pointer" id="nbaBtn" onclick="cmdAsk('Build me a step-by-step action plan for the highest-priority item right now.')">Build action plan →</button></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  'use strict';
+  var base=((window.LAD_API_BASE)||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
+  function tok(){ try{return localStorage.getItem('lad_token')||'';}catch(e){return '';} }
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]);}); }
+  function nf(x){ var v=Number(x); return Number.isFinite(v)?v.toLocaleString():'—'; }
+  function getJSON(path){ return fetch(base+path,{headers:{Authorization:'Bearer '+tok()}}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}); }
+  function countUp(el,to,suffix,dur){ if(!el)return; to=Number(to)||0; suffix=suffix||''; dur=dur||1100; var t0=null;
+    function step(t){ if(!t0)t0=t; var p=Math.min(1,(t-t0)/dur); var e=1-Math.pow(1-p,3); var v=to*e;
+      el.textContent=(to>=100?Math.round(v):Math.round(v*10)/10).toLocaleString()+suffix; if(p<1)requestAnimationFrame(step); } requestAnimationFrame(step); }
+
+  // ── Clock ──
+  function clock(){ var d=new Date();
+    $('clk').textContent=d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    $('clkd').textContent=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase(); }
+  clock(); setInterval(clock,1000*30);
+
+  // ── AI bridge ──
+  window.cmdAsk=function(prompt){
+    var url=base+'/api/v1/admin/command';
+    var b=$('brief'); var old=b.innerHTML; b.innerHTML='<span class="loading">Thinking…</span>';
+    fetch(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({prompt:prompt})})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d && (d.answer||d.summary)){ b.innerHTML='<strong>You asked:</strong> '+esc(prompt)+'<br><br>'+esc(d.answer||d.summary); }
+        else b.innerHTML=old;
+      }).catch(function(){ b.innerHTML=old; });
+  };
+
+  // ════════════ LIVE DATA ════════════
+  getJSON('/api/v1/admin/oversight').then(function(o){
+    if(!o){ document.querySelectorAll('.loading').forEach(function(e){e.textContent='Live data unavailable — sign in as a LAD admin.';}); return; }
+    var L=o.lawyers||{}, B=o.bookings||{}, S=o.sessions||{}, A=o.accreditations||{}, F=o.firms||{}, C=o.courses||{};
+    // KPIs
+    countUp($('kTotal'), L.roll); $('kTotalM').textContent=nf((L.roll||0)-(L.practising||0))+' non-practising';
+    countUp($('kPract'), L.practising);
+    countUp($('kComp'), L.complianceRate, '%'); $('kCompM').textContent=nf(L.compliant)+' compliant';
+    countUp($('kCrit'), L.critical); $('kCritM').textContent=nf(L.atRisk)+' at risk (8–15)';
+    countUp($('kDays'), o.daysToDeadline);
+    countUp($('kAcc'), A.pending);
+
+    // Health index (derived from REAL data — labelled honestly)
+    var att = (B.attended||0)+(B.noShow||0) ? Math.round(1000*(B.attended||0)/((B.attended||0)+(B.noShow||0)))/10 : 0;
+    var thr = (A.approved||0)+(A.pending||0)+(A.rejected||0)+(A.returned||0) ? Math.round(100*(A.approved||0)/((A.approved||0)+(A.pending||0)+(A.rejected||0)+(A.returned||0))) : 0;
+    var resilience = L.practising ? Math.round(100-(100*(L.critical||0)/L.practising)) : 0;
+    var runway = Math.round(100*(o.daysToDeadline||0)/365);
+    var catalogue = Math.min(100, Math.round((C.active||0)/0.6));
+    var idx=[
+      {l:'Compliance Readiness', v:Math.round(L.complianceRate||0), c:'var(--green)'},
+      {l:'Cohort Resilience',    v:resilience,                      c:'var(--teal)'},
+      {l:'Engagement (attendance)',v:Math.round(att),               c:'var(--cyan)'},
+      {l:'Accreditation Throughput',v:thr,                          c:'var(--violet)'},
+      {l:'Deadline Runway',      v:runway,                          c:'var(--amber)'},
+      {l:'Catalogue Strength',   v:catalogue,                       c:'var(--cyan)'}
+    ];
+    $('hxRows').innerHTML=idx.map(function(r){ return '<div class="hx"><div class="hxl">'+r.l+'</div><div class="hxbar"><div class="hxf" data-w="'+r.v+'" style="background:'+r.c+'"></div></div><div class="hxv" style="color:'+r.c+'">'+r.v+'</div></div>'; }).join('');
+    setTimeout(function(){ document.querySelectorAll('#hxRows .hxf').forEach(function(f){ f.style.width=Math.min(100,f.getAttribute('data-w'))+'%'; }); },80);
+    var health=Math.round(idx.reduce(function(s,r){return s+r.v;},0)/idx.length);
+    var arc=$('hsArc'), C2=2*Math.PI*64; arc.style.strokeDasharray=C2;
+    setTimeout(function(){ arc.style.transition='stroke-dashoffset 1.6s cubic-bezier(.3,1,.4,1)'; arc.style.strokeDashoffset=C2*(1-health/100); },120);
+    countUp($('hsNum'), health);
+    $('hsLabel').textContent = health>=80?'EXCELLENT':health>=60?'STRONG':health>=40?'DEVELOPING':'NEEDS FOCUS';
+
+    // Compliance donut
+    var prac=L.practising||1, segs=[['dCompliant',L.compliant||0,'var(--green)'],['dAtRisk',L.atRisk||0],['dCritical',L.critical||0]];
+    var Cd=2*Math.PI*48, off=0;
+    segs.forEach(function(s){ var frac=(s[1]||0)/prac; var len=frac*Cd; var el=$(s[0]); el.style.strokeDasharray=len+' '+(Cd-len); el.style.strokeDashoffset=-off; off+=len; });
+    countUp($('dPct'), L.complianceRate, '%'); $('lgC').textContent=nf(L.compliant); $('lgA').textContent=nf(L.atRisk); $('lgX').textContent=nf(L.critical);
+
+    // Engagement bars
+    var seatPct = S.upcoming? Math.min(100, Math.round(100*(S.openSeats||0)/Math.max(S.openSeats||0,1))) : 0;
+    function bar(id,vid,pct,txt){ $(vid).textContent=txt; setTimeout(function(){ $(id).style.width=Math.min(100,pct)+'%'; },80); }
+    bar('egAtt','egAttV',att, att+'%');
+    var nos=(B.attended||0)+(B.noShow||0)?Math.round(1000*(B.noShow||0)/((B.attended||0)+(B.noShow||0)))/10:0;
+    bar('egNo','egNoV',nos, nos+'%');
+    bar('egSeat','egSeatV',Math.min(100,(S.openSeats||0)/20), nf(S.openSeats));
+    bar('egCrs','egCrsV',Math.min(100,(C.active||0)/0.6), nf(C.active));
+
+    // Firm league
+    var rk=(o.firmRankings&&o.firmRankings.top)||[];
+    if(rk.length){ $('leagueRows').innerHTML=rk.slice(0,6).map(function(f,i){ var pct=Number(f.compliancePct)||0;
+      return '<div class="lg"><span class="rk">'+(i+1)+'</span><span class="nm" title="'+esc(f.name)+'">'+esc(f.name)+'</span><span class="bar"><span class="barf" data-w="'+pct+'"></span></span><span class="vv">'+pct+'%</span></div>'; }).join('');
+      setTimeout(function(){ document.querySelectorAll('#leagueRows .barf').forEach(function(b){ b.style.width=Math.min(100,b.getAttribute('data-w'))+'%'; }); },90);
+    } else $('leagueRows').innerHTML='<div class="loading">Not enough firm data yet.</div>';
+
+    // Risk radar
+    drawRadar([
+      {a:'Critical',v:L.practising?Math.min(1,(L.critical||0)/L.practising):0},
+      {a:'No-shows',v:Math.min(1,nos/100)},
+      {a:'Backlog',v:Math.min(1,(A.pending||0)/40)},
+      {a:'Empty seats',v:Math.min(1,(S.lowSeat||0)/20)},
+      {a:'At risk',v:L.practising?Math.min(1,(L.atRisk||0)/L.practising):0}
+    ]);
+
+    // 3D twin clusters from real counts
+    buildTwin([
+      {key:'Lawyers',  n:L.practising, color:0x34e1ff, center:true},
+      {key:'Law Firms',n:F.total,      color:0x9a6cff},
+      {key:'Courses',  n:C.active,     color:0x1fe0b4},
+      {key:'Providers',n:o.providers&&o.providers.total, color:0xffb84d},
+      {key:'Accreds',  n:(A.approved||0)+(A.pending||0), color:0x3df0a0},
+      {key:'Sessions', n:S.upcoming,   color:0x6ab8ff},
+      {key:'Regulator · LAD', n:1,     color:0xff5e7e}
+    ]);
+  });
+
+  // AI briefing
+  getJSON('/api/v1/admin/briefing').then(function(b){
+    if(!b)return;
+    $('brEngine').textContent = b.engine==='aimodel'?'CLAUDE':'LIVE';
+    $('brief').innerHTML=(b.headline?'<strong>'+esc(b.headline)+'</strong> ':'')+esc(b.summary||'');
+    var A=Array.isArray(b.actions)?b.actions:[];
+    if(A.length){ var top=A[0]; $('nbaBody').innerHTML='<strong>'+esc(top.title||'')+'</strong><br>'+esc(top.detail||''); }
+    else $('nbaBody').textContent='No urgent action — programme is on track.';
+  });
+
+  // Anomalies → predictive insights
+  getJSON('/api/v1/admin/anomalies').then(function(d){
+    if(!d){ $('insRows').innerHTML='<div class="loading">No anomaly feed.</div>'; return; }
+    var A=d.anomalies||[]; var col={high:'var(--red)',medium:'var(--amber)',low:'var(--dim)'};
+    if(!A.length){ $('insRows').innerHTML='<div class="ins" style="--c:var(--green)"><div class="it" style="color:var(--green)">ALL CLEAR</div><div class="id">No anomalies detected across attendance, capacity or compliance.</div></div>'; return; }
+    $('insRows').innerHTML=A.slice(0,4).map(function(a){ var c=col[a.level]||'var(--amber)';
+      return '<div class="ins" style="--c:'+c+'"><div class="it" style="color:'+c+'">'+esc((a.kind||'signal').toUpperCase())+'<span class="pill">'+esc((a.level||'').toUpperCase())+'</span></div><div class="id">'+esc(a.detail||a.title)+'</div></div>'; }).join('');
+    $('insBadge').textContent=(d.counts&&d.counts.high||0)+' HIGH';
+  });
+
+  // Forecast trajectory
+  getJSON('/api/v1/admin/forecast').then(function(f){
+    if(!f||!f.series||!f.series.length)return;
+    $('fcEngine').textContent='pace-based';
+    $('fcNow').textContent=(f.currentRate||0)+'%'; $('fcProj').textContent=(f.projectedRate||0)+'%';
+    var s=f.series, W=300,H=74,pad=6, max=Math.max(10,f.projectedRate||0,Math.max.apply(null,s.map(function(p){return p.rate;})));
+    function x(i){ return pad+i*(W-2*pad)/Math.max(1,s.length-1); }
+    function y(v){ return H-pad-(v/max)*(H-2*pad); }
+    var solid=[], dash=[], splitDone=false;
+    s.forEach(function(p,i){ var pt=x(i)+','+y(p.rate); if(p.projected){ if(!splitDone){ dash.push(solid[solid.length-1]); splitDone=true; } dash.push(pt);} else solid.push(pt); });
+    var area='M'+x(0)+','+(H-pad)+' L'+solid.join(' L')+' L'+x(solid.length-1)+','+(H-pad)+' Z';
+    var svg='<defs><linearGradient id="fg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(52,225,255,.45)"/><stop offset="1" stop-color="rgba(52,225,255,0)"/></linearGradient></defs>';
+    svg+='<path d="'+area+'" fill="url(#fg)"/>';
+    svg+='<polyline points="'+solid.join(' ')+'" fill="none" stroke="#34e1ff" stroke-width="2"/>';
+    if(dash.length>1) svg+='<polyline points="'+dash.join(' ')+'" fill="none" stroke="#9a6cff" stroke-width="2" stroke-dasharray="4 4"/>';
+    $('spark').innerHTML=svg;
+  });
+
+  // ── Risk radar drawing ──
+  function drawRadar(axes){
+    var cx=130,cy=92,R=70,N=axes.length,svg='';
+    for(var ring=1;ring<=3;ring++){ var pts=[]; for(var i=0;i<N;i++){ var ang=-Math.PI/2+i*2*Math.PI/N; pts.push((cx+Math.cos(ang)*R*ring/3)+','+(cy+Math.sin(ang)*R*ring/3)); } svg+='<polygon points="'+pts.join(' ')+'" fill="none" stroke="rgba(120,150,210,.16)"/>'; }
+    var vp=[]; axes.forEach(function(a,i){ var ang=-Math.PI/2+i*2*Math.PI/N; var r=R*Math.max(.05,a.v); vp.push((cx+Math.cos(ang)*r)+','+(cy+Math.sin(ang)*r));
+      var lx=cx+Math.cos(ang)*(R+14), ly=cy+Math.sin(ang)*(R+14);
+      svg+='<text x="'+lx+'" y="'+ly+'" fill="#7f93c4" font-family="Rajdhani" font-size="10" text-anchor="middle" dominant-baseline="middle">'+a.a+'</text>'; });
+    svg+='<polygon points="'+vp.join(' ')+'" fill="rgba(255,94,126,.20)" stroke="#ff5e7e" stroke-width="1.6"/>';
+    $('radar').innerHTML=svg;
+  }
+
+  // ════════════ 3D DIGITAL TWIN (Three.js) ════════════
+  var TW={scene:null,renderer:null,camera:null,group:null,anchors:[],spin:true,raf:null};
+  window.cmdRotate=function(){ TW.spin=!TW.spin; };
+  function buildTwin(clusters){
+    if(typeof THREE==='undefined'){ return; } // CDN blocked → graceful (panels still work)
+    var canvas=$('twin'); var W=window.innerWidth,H=window.innerHeight;
+    var renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,alpha:true});
+    renderer.setSize(W,H); renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+    var scene=new THREE.Scene();
+    var camera=new THREE.PerspectiveCamera(55,W/H,0.1,2000); camera.position.set(0,40,250);
+    var group=new THREE.Group(); scene.add(group);
+    TW.scene=scene;TW.renderer=renderer;TW.camera=camera;TW.group=group;TW.anchors=[];
+
+    var maxN=Math.max.apply(null,clusters.map(function(c){return Number(c.n)||1;}));
+    var ring=120;
+    clusters.forEach(function(c,ci){
+      var ang=ci*2*Math.PI/Math.max(1,clusters.length-1);
+      var pos = c.center? new THREE.Vector3(0,0,0)
+        : new THREE.Vector3(Math.cos(ang)*ring, (ci%2?28:-26), Math.sin(ang)*ring);
+      var n=Math.max(40, Math.min(900, Math.round((Number(c.n)||1)/maxN*900)));
+      // particle swarm
+      var geo=new THREE.BufferGeometry(); var arr=new Float32Array(n*3); var rad=c.center?54:24;
+      for(var i=0;i<n;i++){ var u=Math.random(),v=Math.random(); var th=2*Math.PI*u, ph=Math.acos(2*v-1); var rr=rad*Math.cbrt(Math.random());
+        arr[i*3]=pos.x+rr*Math.sin(ph)*Math.cos(th); arr[i*3+1]=pos.y+rr*Math.sin(ph)*Math.sin(th); arr[i*3+2]=pos.z+rr*Math.cos(ph); }
+      geo.setAttribute('position',new THREE.BufferAttribute(arr,3));
+      var mat=new THREE.PointsMaterial({color:c.color,size:c.center?2.0:1.7,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false});
+      group.add(new THREE.Points(geo,mat));
+      // glowing core
+      var core=new THREE.Mesh(new THREE.SphereGeometry(c.center?7:4,20,20),new THREE.MeshBasicMaterial({color:c.color,transparent:true,opacity:.9}));
+      core.position.copy(pos); group.add(core);
+      var halo=new THREE.Mesh(new THREE.SphereGeometry(c.center?16:9,20,20),new THREE.MeshBasicMaterial({color:c.color,transparent:true,opacity:.12,blending:THREE.AdditiveBlending,depthWrite:false}));
+      halo.position.copy(pos); group.add(halo);
+      // link to centre
+      if(!c.center){ var lg=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),pos]);
+        group.add(new THREE.Line(lg,new THREE.LineBasicMaterial({color:c.color,transparent:true,opacity:.22,blending:THREE.AdditiveBlending}))); }
+      // HTML label
+      var el=document.createElement('div'); el.className='twin-label'+(c.center?'':' dim');
+      el.innerHTML='<b>'+nf(c.n)+'</b>'+esc(c.key);
+      $('centerstage').appendChild(el);
+      TW.anchors.push({pos:pos,el:el});
+    });
+    // ambient starfield
+    var sg=new THREE.BufferGeometry(); var sn=600; var sa=new Float32Array(sn*3);
+    for(var s=0;s<sn;s++){ sa[s*3]=(Math.random()-.5)*900; sa[s*3+1]=(Math.random()-.5)*600; sa[s*3+2]=(Math.random()-.5)*900; }
+    sg.setAttribute('position',new THREE.BufferAttribute(sa,3));
+    scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0x4a6aa0,size:.8,transparent:true,opacity:.5})));
+
+    var mx=0,my=0; window.addEventListener('mousemove',function(e){ mx=(e.clientX/W-.5); my=(e.clientY/H-.5); });
+    function resize(){ W=window.innerWidth;H=window.innerHeight; camera.aspect=W/H; camera.updateProjectionMatrix(); renderer.setSize(W,H); }
+    window.addEventListener('resize',resize);
+
+    var stage=$('centerstage');
+    function project(){
+      var rect=stage.getBoundingClientRect();
+      TW.anchors.forEach(function(a){
+        var v=a.pos.clone(); v.applyMatrix4(group.matrixWorld); v.project(camera);
+        var sx=(v.x*0.5+0.5)*W, sy=(-v.y*0.5+0.5)*H;
+        // position relative to stage; hide if outside/behind
+        var inStage = sx>rect.left-40 && sx<rect.right+40 && sy>rect.top-20 && sy<rect.bottom+20 && v.z<1;
+        a.el.style.opacity = inStage?'1':'0';
+        a.el.style.left=(sx-rect.left)+'px'; a.el.style.top=(sy-rect.top)+'px';
+      });
+    }
+    function loop(){ TW.raf=requestAnimationFrame(loop);
+      if(TW.spin) group.rotation.y+=0.0016;
+      group.rotation.x += ((my*0.3)-group.rotation.x)*0.04;
+      camera.position.x += ((mx*60)-camera.position.x)*0.03; camera.lookAt(0,0,0);
+      group.updateMatrixWorld(); renderer.render(scene,camera); project();
+    }
+    loop();
+  }
+})();
+</script>
+</body>
+</html>
