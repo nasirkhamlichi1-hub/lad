@@ -744,7 +744,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
       <a class="sb-link" onclick="scrollTo('cohort')"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>Cohort Analysis</a>
       <a class="sb-link" onclick="scrollTo('heatmap')"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="6" height="6"/><rect x="11" y="3" width="6" height="6"/><rect x="3" y="11" width="6" height="6"/><rect x="11" y="11" width="6" height="6"/></svg>Course Heatmap</a>
       <a class="sb-link" onclick="scrollTo('coursefeedback')"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Feedback Intel</a>
-      <a class="sb-link" onclick="scrollTo('anomaly')"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Anomalies<span class="sb-link-badge">5</span></a>
+      <a class="sb-link" onclick="scrollTo('anomaly')"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Anomalies<span class="sb-link-badge" id="sbAnomalyBadge">–</span></a>
       <a class="sb-link" id="sbAccredMonitor" onclick="window.location.href='lad-accreditation-review.html'"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Accred. Compliance<span class="sb-link-badge" id="sbAccredBadge" style="background:var(--red)">–</span></a>
 
       <div class="sb-section">Report</div>
@@ -752,10 +752,10 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
       <a class="sb-link" onclick="showToast('Annual report exporting…')"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export PDF</a>
     </nav>
     <div class="sb-foot">
-      <div class="sb-user-av">SH</div>
+      <div class="sb-user-av">··</div>
       <div class="sb-user-info">
-        <div class="sb-user-name">Sara Hashimi</div>
-        <div class="sb-user-role">DIRECTOR · LAD</div>
+        <div class="sb-user-name">LAD super user</div>
+        <div class="sb-user-role">LAD</div>
       </div>
     </div>
   </aside>
@@ -927,19 +927,19 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
           <div class="ai-summary" id="aiLiveSummary">Generating your live executive briefing from the latest compliance data…</div>
           <div class="ai-grid" id="aiLiveGrid">
             <div class="ai-stat">
-              <div class="ai-stat-label">DEC FORECAST</div>
-              <div class="ai-stat-value">96.1<em>%</em></div>
-              <div class="ai-stat-meta">±2.3% confidence band · 50,000 Monte Carlo runs</div>
+              <div class="ai-stat-label">COMPLIANCE RATE</div>
+              <div class="ai-stat-value">—</div>
+              <div class="ai-stat-meta">reading the live snapshot…</div>
             </div>
             <div class="ai-stat">
-              <div class="ai-stat-label">LARGEST INTERVENTION</div>
-              <div class="ai-stat-value">+6.8<em>pp</em></div>
-              <div class="ai-stat-meta">If Tax/Immigration cohorts complete 2 e-learning modules</div>
+              <div class="ai-stat-label">CRITICAL · BELOW 8</div>
+              <div class="ai-stat-value">—</div>
+              <div class="ai-stat-meta">reading the live snapshot…</div>
             </div>
             <div class="ai-stat">
-              <div class="ai-stat-label">ANOMALIES DETECTED</div>
-              <div class="ai-stat-value">5</div>
-              <div class="ai-stat-meta">2 high-priority · 2 medium · 1 informational</div>
+              <div class="ai-stat-label">ACCREDITATIONS</div>
+              <div class="ai-stat-value">—</div>
+              <div class="ai-stat-meta">reading the live snapshot…</div>
             </div>
           </div>
           <div class="ai-actions-row" id="aiLiveActions">
@@ -947,53 +947,9 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
           </div>
         </div>
 
-        <!-- AI Insights -->
-        <div class="ai-insights" style="margin-top:14px">
-          <div class="ai-insight ai-i-1" style="cursor:pointer" onclick="openInsightDive('solo')">
-            <div class="ai-insight-hd">
-              <div class="ai-insight-icon"></div>
-              <div>
-                <div class="ai-insight-tag">PATTERN INSIGHT</div>
-                <div class="ai-insight-conf"><span class="tb-status-dot" style="background:var(--purple-l);box-shadow:0 0 6px var(--purple-l)"></span>97% conf</div>
-              </div>
-            </div>
-            <div class="ai-insight-title">Solo practitioners lag <em>17.9pp</em> behind large firms</div>
-            <div class="ai-insight-body">Solo and small firms (1–10 lawyers) consistently underperform larger firms by 17.9 percentage points. Targeted outreach to 142 solo practitioners could lift overall compliance by 2.1pp.</div>
-            <div class="ai-insight-foot">
-              <span class="ai-insight-impact">IMPACT · +2.1pp</span>
-              <button class="btn btn-ghost btn-xs">View affected →</button>
-            </div>
-          </div>
-          <div class="ai-insight ai-i-2" style="cursor:pointer" onclick="openInsightDive('difc')">
-            <div class="ai-insight-hd">
-              <div class="ai-insight-icon"></div>
-              <div>
-                <div class="ai-insight-tag">OPPORTUNITY</div>
-                <div class="ai-insight-conf"><span class="tb-status-dot" style="background:var(--teal-l);box-shadow:0 0 6px var(--teal-l)"></span>91% conf</div>
-              </div>
-            </div>
-            <div class="ai-insight-title">DIFC Day 28 May has <em>112 unfilled seats</em></div>
-            <div class="ai-insight-body">High-leverage capacity available. If filled, would resolve 89 at-risk lawyers and lift firm-level compliance metrics across 23 firms simultaneously.</div>
-            <div class="ai-insight-foot">
-              <span class="ai-insight-impact">IMPACT · 89 lawyers</span>
-              <button class="btn btn-ghost btn-xs">Send invitations →</button>
-            </div>
-          </div>
-          <div class="ai-insight ai-i-3" style="cursor:pointer" onclick="openFirmDeepDive('Al Suwaidi & Co.')">
-            <div class="ai-insight-hd">
-              <div class="ai-insight-icon">⚠</div>
-              <div>
-                <div class="ai-insight-tag">RISK ALERT</div>
-                <div class="ai-insight-conf"><span class="tb-status-dot" style="background:var(--red-l);box-shadow:0 0 6px var(--red-l)"></span>88% conf</div>
-              </div>
-            </div>
-            <div class="ai-insight-title"><em>Al Suwaidi & Co.</em> compliance has stalled</div>
-            <div class="ai-insight-body">No improvement in 6 weeks despite 14 critical lawyers. 0 mass bookings YTD. Likely cause: no dedicated compliance officer. Recommend direct LAD outreach.</div>
-            <div class="ai-insight-foot">
-              <span class="ai-insight-impact">IMPACT · 28 lawyers</span>
-              <button class="btn btn-ghost btn-xs">Schedule call →</button>
-            </div>
-          </div>
+        <!-- AI Insights · live-derived from the oversight snapshot -->
+        <div class="ai-insights" style="margin-top:14px" id="aiLiveInsights">
+          <div class="ai-insight ai-i-1"><div class="ai-insight-hd"><div class="ai-insight-icon"></div><div><div class="ai-insight-tag">SIGNAL</div></div></div><div class="ai-insight-title" style="color:var(--slate3)">Deriving live insights…</div><div class="ai-insight-body">Reading the current compliance snapshot.</div></div>
         </div>
       </section>
 
@@ -1082,6 +1038,36 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
           </div>
         </div>
 
+        <!-- ─── LIVE FORECAST TRAJECTORY (SVG, from /api/v1/admin/forecast) ─── -->
+        <div class="forecast-card" style="margin-bottom:14px;padding:18px 20px;position:relative">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px">
+            <div>
+              <div style="font-family:var(--mono);font-size:9.5px;color:var(--purple);letter-spacing:1.2px;text-transform:uppercase;font-weight:700">PROJECTED TRAJECTORY · DEC CYCLE</div>
+              <div style="font-family:var(--serif);font-size:17px;color:var(--ink);letter-spacing:-.014em;margin-top:2px">Compliance to year-end</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+              <div style="text-align:right">
+                <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase">CURRENT</div>
+                <div style="font-family:var(--serif);font-size:22px;color:var(--ink);line-height:1"><span id="fcCurrentRate">—</span><em style="font-size:13px;color:var(--slate3)">%</em></div>
+              </div>
+              <div style="font-size:18px;color:var(--slate3);align-self:flex-end;line-height:1.4">→</div>
+              <div style="text-align:right">
+                <div style="font-family:var(--mono);font-size:9px;color:var(--purple);letter-spacing:1px;text-transform:uppercase">PROJECTED</div>
+                <div style="font-family:var(--serif);font-size:22px;color:var(--purple);line-height:1"><span id="fcProjRate">—</span><em style="font-size:13px">%</em></div>
+              </div>
+            </div>
+          </div>
+          <div id="fcChartWrap" style="width:100%;height:180px;position:relative">
+            <div id="fcChartEmpty" style="position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--slate3)">Loading forecast trajectory…</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--slate2)">
+            <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:14px;height:2px;background:var(--purple);display:inline-block"></span>Actual</span>
+            <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:14px;height:0;border-top:2px dashed var(--purple);display:inline-block"></span>Projected</span>
+            <span style="margin-left:auto" id="fcPaceNote"></span>
+          </div>
+          <div id="fcMethod" style="margin-top:8px;font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:.2px"></div>
+        </div>
+
         <!-- ─── SIMULATOR CONTROLS + OUTPUTS ─── -->
         <div class="sim-card">
           <div class="sim-grid">
@@ -1154,10 +1140,14 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
           <div>
             <div class="section-eyebrow red" data-cfg="intel_sec_anomaly_eyebrow">ANOMALY DETECTION</div>
             <h2 class="section-title" data-cfg-html="intel_sec_anomaly_title">Pattern <em style="color:var(--red)">irregularities</em></h2>
-            <div class="section-desc">5 anomalies flagged this week · 2 high priority · Maryam confidence threshold ≥85%</div>
+            <div class="section-desc" id="anomalyDesc">Scanning the live compliance graph for irregular patterns…</div>
           </div>
+          <div class="section-actions" id="anomalyCounts"></div>
         </div>
-        <div class="anomaly-grid">
+        <div class="anomaly-grid" id="anomalyGrid">
+          <div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:12px">Loading anomaly signals…</div>
+        </div>
+        <div class="anomaly-grid" id="anomalyGridLegacy" style="display:none">
           <div class="anomaly">
             <div class="anomaly-hd">
               <div class="anomaly-icon">⚠</div>
@@ -1281,70 +1271,24 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         <div class="section-hd">
           <div>
             <div class="section-eyebrow gold" data-cfg="intel_sec_heatmap_eyebrow">COMPLIANCE INTELLIGENCE</div>
-            <h2 class="section-title" data-cfg-html="intel_sec_heatmap_title">Course &amp; trainer <em>heatmap</em></h2>
-            <div class="section-desc">Course attendance, trainer feedback ratings, and compliance impact. Click any row to deep-dive.</div>
+            <h2 class="section-title" data-cfg-html="intel_sec_heatmap_title">Skill coverage <em>heatmap</em></h2>
+            <div class="section-desc" id="heatmapDesc">Profession-wide coverage by skill topic — where the bar is dark green, the obligation is well served; red shows gaps to close.</div>
           </div>
           <div class="section-actions">
-            <button class="btn btn-ghost btn-sm" onclick="switchHeatmap('courses')" id="hmBtnCourses" style="background:var(--ink);color:#fff;border-color:var(--ink)">Courses</button>
-            <button class="btn btn-ghost btn-sm" onclick="switchHeatmap('trainers')" id="hmBtnTrainers">Trainers</button>
+            <button class="btn btn-ghost btn-sm" onclick="switchHeatmap('courses')" id="hmBtnCourses" style="background:var(--ink);color:#fff;border-color:var(--ink)">Coverage</button>
+            <button class="btn btn-ghost btn-sm" onclick="switchHeatmap('trainers')" id="hmBtnTrainers">Upcoming demand</button>
           </div>
         </div>
         <div class="heatmap-card" id="heatmapCard">
           <div id="hmCourses">
-          <div class="heatmap-grid" style="grid-template-columns:2fr repeat(5,1fr)">
-            <div class="heatmap-th" style="text-align:left;padding-left:10px">COURSE</div>
-            <div class="heatmap-th">SESSIONS</div>
-            <div class="heatmap-th">ENROLLED</div>
-            <div class="heatmap-th">ATTENDED %</div>
-            <div class="heatmap-th">FEEDBACK</div>
-            <div class="heatmap-th">COMPLIANCE ↑</div>
-
-            <div class="heatmap-th-row" style="cursor:pointer" onclick="openDeepDive('course','AML Update 2026')">AML Update 2026 <span class="pill pill-green" style="font-size:9px;padding:1px 6px;margin-left:6px">TOP</span></div>
-            <div class="heatmap-cell hm-100">11</div><div class="heatmap-cell hm-100">1,247</div><div class="heatmap-cell hm-100">94%</div><div class="heatmap-cell hm-100">4.8★</div><div class="heatmap-cell hm-100">+3.1pp</div>
-
-            <div class="heatmap-th-row" style="cursor:pointer" onclick="openDeepDive('course','AI Governance')">AI Governance &amp; Responsible Use</div>
-            <div class="heatmap-cell hm-95">21</div><div class="heatmap-cell hm-100">1,104</div><div class="heatmap-cell hm-95">91%</div><div class="heatmap-cell hm-100">4.7★</div><div class="heatmap-cell hm-95">+2.8pp</div>
-
-            <div class="heatmap-th-row" style="cursor:pointer" onclick="openDeepDive('course','DIFC Day')">DIFC Day (face-to-face)</div>
-            <div class="heatmap-cell hm-90">8</div><div class="heatmap-cell hm-90">843</div><div class="heatmap-cell hm-85">82%</div><div class="heatmap-cell hm-90">4.5★</div><div class="heatmap-cell hm-90">+2.2pp</div>
-
-            <div class="heatmap-th-row" style="cursor:pointer" onclick="openDeepDive('course','Common Law Contract')">Common Law Contract</div>
-            <div class="heatmap-cell hm-80">14</div><div class="heatmap-cell hm-85">712</div><div class="heatmap-cell hm-80">79%</div><div class="heatmap-cell hm-85">4.3★</div><div class="heatmap-cell hm-80">+1.8pp</div>
-
-            <div class="heatmap-th-row" style="cursor:pointer" onclick="openDeepDive('course','Tax Law Update')">Tax Law Update 2026 <span class="pill pill-amber" style="font-size:9px;padding:1px 6px;margin-left:6px">NEEDS MORE</span></div>
-            <div class="heatmap-cell hm-55">5</div><div class="heatmap-cell hm-55">312</div><div class="heatmap-cell hm-55">61%</div><div class="heatmap-cell hm-65">3.8★</div><div class="heatmap-cell hm-50">+0.7pp</div>
-
-            <div class="heatmap-th-row" style="cursor:pointer" onclick="openDeepDive('course','Immigration Practice')">Immigration Practice Update <span class="pill pill-red" style="font-size:9px;padding:1px 6px;margin-left:6px">CRITICAL</span></div>
-            <div class="heatmap-cell hm-45">4</div><div class="heatmap-cell hm-45">198</div><div class="heatmap-cell hm-45">54%</div><div class="heatmap-cell hm-55">3.4★</div><div class="heatmap-cell hm-40">+0.4pp</div>
-
-            <div class="heatmap-th-row" style="cursor:pointer" onclick="openDeepDive('course','ESG Climate')">ESG &amp; Climate Law</div>
-            <div class="heatmap-cell hm-60">7</div><div class="heatmap-cell hm-60">421</div><div class="heatmap-cell hm-65">68%</div><div class="heatmap-cell hm-70">4.0★</div><div class="heatmap-cell hm-65">+1.1pp</div>
-          </div>
+            <div id="hmCoverageGrid" class="heatmap-grid" style="grid-template-columns:2fr repeat(3,1fr)">
+              <div style="grid-column:1/-1;padding:34px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:12px">Building coverage map…</div>
+            </div>
           </div>
           <div id="hmTrainers" style="display:none">
-          <div class="heatmap-grid" style="grid-template-columns:2fr repeat(5,1fr)">
-            <div class="heatmap-th" style="text-align:left;padding-left:10px">TRAINER</div>
-            <div class="heatmap-th">SESSIONS</div>
-            <div class="heatmap-th">ATTENDEES</div>
-            <div class="heatmap-th">AVG SCORE</div>
-            <div class="heatmap-th">REPEAT RATE</div>
-            <div class="heatmap-th">STATUS</div>
-
-            <div class="heatmap-th-row" style="cursor:pointer" onclick="openDeepDive('trainer','Layla Najjar')">Layla Najjar <span class="pill pill-green" style="font-size:9px;padding:1px 6px;margin-left:6px">TOP</span></div>
-            <div class="heatmap-cell hm-100">42</div><div class="heatmap-cell hm-100">1,890</div><div class="heatmap-cell hm-100">4.9★</div><div class="heatmap-cell hm-100">87%</div><div class="heatmap-cell hm-100"><span class="pill pill-green" style="font-size:9px">EXCELLENT</span></div>
-
-            <div class="heatmap-th-row" style="cursor:pointer" onclick="openDeepDive('trainer','James Whitmore')">James Whitmore</div>
-            <div class="heatmap-cell hm-90">31</div><div class="heatmap-cell hm-90">1,420</div><div class="heatmap-cell hm-90">4.7★</div><div class="heatmap-cell hm-85">79%</div><div class="heatmap-cell hm-90"><span class="pill pill-green" style="font-size:9px">EXCELLENT</span></div>
-
-            <div class="heatmap-th-row" style="cursor:pointer" onclick="openDeepDive('trainer','Dr Fatima Hassan')">Dr Fatima Hassan</div>
-            <div class="heatmap-cell hm-85">11</div><div class="heatmap-cell hm-85">1,203</div><div class="heatmap-cell hm-90">4.6★</div><div class="heatmap-cell hm-80">75%</div><div class="heatmap-cell hm-85"><span class="pill pill-green" style="font-size:9px">STRONG</span></div>
-
-            <div class="heatmap-th-row" style="cursor:pointer" onclick="openDeepDive('trainer','Omar Khalid')">Omar Khalid</div>
-            <div class="heatmap-cell hm-75">19</div><div class="heatmap-cell hm-75">876</div><div class="heatmap-cell hm-75">4.2★</div><div class="heatmap-cell hm-70">64%</div><div class="heatmap-cell hm-75"><span class="pill pill-blue" style="font-size:9px">GOOD</span></div>
-
-            <div class="heatmap-th-row" style="cursor:pointer" onclick="openDeepDive('trainer','Tariq Al-Rashid')">Tariq Al-Rashid <span class="pill pill-red" style="font-size:9px;padding:1px 6px;margin-left:6px">REVIEW</span></div>
-            <div class="heatmap-cell hm-45">8</div><div class="heatmap-cell hm-45">298</div><div class="heatmap-cell hm-40">2.9★</div><div class="heatmap-cell hm-30">28%</div><div class="heatmap-cell hm-40"><span class="pill pill-red" style="font-size:9px">POOR</span></div>
-          </div>
+            <div id="hmDemandGrid" class="heatmap-grid" style="grid-template-columns:2fr repeat(3,1fr)">
+              <div style="grid-column:1/-1;padding:34px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:12px">Loading upcoming course demand…</div>
+            </div>
           </div>
           <div class="chart-legend" style="margin-top:18px">
             <span style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-right:8px">ATTENDANCE SCALE</span>
@@ -1364,30 +1308,44 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         <div class="section-hd">
           <div>
             <div class="section-eyebrow teal" data-cfg="intel_sec_coursefeedback_eyebrow">PERFORMANCE INTELLIGENCE</div>
-            <h2 class="section-title" data-cfg-html="intel_sec_coursefeedback_title">Course &amp; trainer <em style="color:var(--teal)">comparison</em></h2>
-            <div class="section-desc">Compare feedback scores, attendance, and compliance impact across all courses and trainers. Click any row to deep-dive.</div>
+            <h2 class="section-title" data-cfg-html="intel_sec_coursefeedback_title">Course <em style="color:var(--teal)">performance</em></h2>
+            <div class="section-desc" id="perfDesc">Real attendance behaviour across every booking in the system — attended, no-show and cancelled. Structured trainer feedback capture is coming soon.</div>
           </div>
           <div class="section-actions">
-            <button class="btn btn-ghost btn-sm" onclick="switchPerfView('courses')" id="pfBtnCourses" style="background:var(--ink);color:#fff;border-color:var(--ink)">Courses</button>
-            <button class="btn btn-ghost btn-sm" onclick="switchPerfView('trainers')" id="pfBtnTrainers">Trainers</button>
-            <button class="btn btn-ghost btn-sm" onclick="showToast('Exporting feedback report…')">Export</button>
+            <span class="pill" id="perfFeedbackPill" style="background:var(--paper2);color:var(--slate3);border:1px solid var(--line)">FEEDBACK · COMING SOON</span>
           </div>
         </div>
-        <div id="pfCourses">
-          <div class="card" style="padding:0;overflow:hidden">
-            <div style="padding:14px 18px 10px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:2.4fr 1fr 1fr 1fr 1fr 90px;gap:8px;font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;align-items:center">
-              <div>COURSE</div><div>FEEDBACK</div><div>ATTENDANCE</div><div>SESSIONS</div><div>COMPLIANCE ↑</div><div></div>
-            </div>
-            <div id="courseCompRows"></div>
+
+        <!-- Live attendance KPIs (from oversight.bookings) -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px" id="perfKpis">
+          <div class="card" style="text-align:center;padding:18px">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--green);letter-spacing:1px;text-transform:uppercase;font-weight:700">ATTENDANCE RATE</div>
+            <div style="font-family:var(--serif);font-size:32px;color:var(--green);line-height:1.1;margin-top:8px"><span id="perfAttRate">—</span><em style="font-size:16px">%</em></div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);margin-top:2px">attended of all booked</div>
+          </div>
+          <div class="card" style="text-align:center;padding:18px">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;font-weight:700">ATTENDED</div>
+            <div style="font-family:var(--serif);font-size:32px;color:var(--ink);line-height:1.1;margin-top:8px"><span id="perfAttended">—</span></div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);margin-top:2px">confirmed sessions</div>
+          </div>
+          <div class="card" style="text-align:center;padding:18px">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--red);letter-spacing:1px;text-transform:uppercase;font-weight:700">NO-SHOW RATE</div>
+            <div style="font-family:var(--serif);font-size:32px;color:var(--red);line-height:1.1;margin-top:8px"><span id="perfNoShowRate">—</span><em style="font-size:16px">%</em></div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);margin-top:2px"><span id="perfNoShow">—</span> no-shows</div>
+          </div>
+          <div class="card" style="text-align:center;padding:18px">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:1px;text-transform:uppercase;font-weight:700">CANCELLED</div>
+            <div style="font-family:var(--serif);font-size:32px;color:var(--amber);line-height:1.1;margin-top:8px"><span id="perfCancelled">—</span></div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);margin-top:2px">of <span id="perfTotal">—</span> total bookings</div>
           </div>
         </div>
-        <div id="pfTrainers" style="display:none">
-          <div class="card" style="padding:0;overflow:hidden">
-            <div style="padding:14px 18px 10px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:2.4fr 1fr 1fr 1fr 1fr 90px;gap:8px;font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;align-items:center">
-              <div>TRAINER</div><div>SCORE</div><div>REPEAT RATE</div><div>SESSIONS</div><div>ATTENDEES</div><div></div>
-            </div>
-            <div id="trainerCompRows"></div>
+
+        <!-- Per-course attendance, derived from /api/v1/bookings -->
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:14px 18px 10px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:2.4fr 1fr 1fr 1fr;gap:8px;font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;align-items:center">
+            <div>COURSE</div><div>BOOKINGS</div><div>ATTENDED</div><div>ATTENDANCE</div>
           </div>
+          <div id="perfCourseRows"><div style="padding:34px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:12px">Loading bookings…</div></div>
         </div>
       </section>
 
@@ -1513,13 +1471,38 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
           <div>
             <div class="section-eyebrow blue" data-cfg="intel_sec_firms_eyebrow">FIRM DIRECTORY</div>
             <h2 class="section-title" data-cfg-html="intel_sec_firms_title">All registered <em style="color:var(--blue)">firms</em></h2>
-            <div class="section-desc">499 firms · click any firm to view member compliance breakdown · mail individuals directly</div>
+            <div class="section-desc" id="firmsDesc">Click any firm to view member compliance breakdown · mail individuals directly</div>
           </div>
           <div class="section-actions">
             <button class="btn btn-ghost btn-sm">Filter</button>
             <button class="btn btn-ghost btn-sm" onclick="showToast('Exporting CSV…')">Export CSV</button>
           </div>
         </div>
+
+        <!-- ─── COMPLIANCE LEADERBOARD (live, from /admin/oversight firmRankings) ─── -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px" id="firmLeaderWrap">
+          <div class="card" style="padding:0;overflow:hidden">
+            <div style="padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-family:var(--mono);font-size:9px;color:var(--green);letter-spacing:1.2px;text-transform:uppercase;font-weight:700">COMPLIANCE LEADERBOARD</div>
+                <div style="font-family:var(--serif);font-size:15px;color:var(--ink);margin-top:2px">Best performing <em style="color:var(--green);font-style:italic">firms</em></div>
+              </div>
+              <span class="pill pill-green" style="font-size:9px">TOP</span>
+            </div>
+            <div id="firmLeaderTop"><div style="padding:24px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:11px">Loading…</div></div>
+          </div>
+          <div class="card" style="padding:0;overflow:hidden">
+            <div style="padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-family:var(--mono);font-size:9px;color:var(--red);letter-spacing:1.2px;text-transform:uppercase;font-weight:700">PRIORITY WATCHLIST</div>
+                <div style="font-family:var(--serif);font-size:15px;color:var(--ink);margin-top:2px">Needs <em style="color:var(--red);font-style:italic">intervention</em></div>
+              </div>
+              <span class="pill pill-red" style="font-size:9px">BOTTOM</span>
+            </div>
+            <div id="firmLeaderBottom"><div style="padding:24px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:11px">Loading…</div></div>
+          </div>
+        </div>
+
         <div class="firms-table">
           <div class="ft-hd" style="grid-template-columns:auto 1fr 90px 110px 90px 90px 130px 100px">
             <div>#</div>
@@ -1540,60 +1523,37 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         <div class="section-hd">
           <div>
             <div class="section-eyebrow teal" data-cfg="intel_sec_cohort_eyebrow">COHORT ANALYSIS</div>
-            <h2 class="section-title" data-cfg-html="intel_sec_cohort_title">Professional registration <em style="color:var(--teal)">cohorts</em></h2>
-            <div class="section-desc">CLPD compliance by year of professional registration. Reveals retention and engagement patterns.</div>
+            <h2 class="section-title" data-cfg-html="intel_sec_cohort_title">Compliance band <em style="color:var(--teal)">distribution</em></h2>
+            <div class="section-desc" id="cohortDesc">How the practising population splits across the CLPD compliance bands — live across every lawyer on the roll.</div>
           </div>
         </div>
         <div class="card">
-          <div class="cohort-table">
-            <div class="cohort-cell head">COHORT</div>
-            <div class="cohort-cell head">LAWYERS</div>
-            <div class="cohort-cell head">AVG PTS</div>
-            <div class="cohort-cell head">COMPLIANCE</div>
-            <div class="cohort-cell head">CRITICAL %</div>
-            <div class="cohort-cell head">TREND</div>
-
-            <div class="cohort-cell label">2014–15 <span style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.2px">(Founding)</span></div>
-            <div class="cohort-cell">187</div>
-            <div class="cohort-cell" style="color:var(--green);font-weight:700">15.3</div>
-            <div class="cohort-cell" style="color:var(--green);font-weight:700">96.8%</div>
-            <div class="cohort-cell">2.1%</div>
-            <div class="cohort-cell" style="color:var(--green)">▲ +0.4</div>
-
-            <div class="cohort-cell label">2016–17</div>
-            <div class="cohort-cell">241</div>
-            <div class="cohort-cell" style="color:var(--green);font-weight:700">14.8</div>
-            <div class="cohort-cell" style="color:var(--green);font-weight:700">94.2%</div>
-            <div class="cohort-cell">3.8%</div>
-            <div class="cohort-cell" style="color:var(--green)">▲ +0.7</div>
-
-            <div class="cohort-cell label">2018–19</div>
-            <div class="cohort-cell">312</div>
-            <div class="cohort-cell" style="font-weight:700">13.9</div>
-            <div class="cohort-cell" style="color:var(--green);font-weight:700">91.1%</div>
-            <div class="cohort-cell">5.2%</div>
-            <div class="cohort-cell" style="color:var(--green)">▲ +1.2</div>
-
-            <div class="cohort-cell label">2020–21 <span style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.2px">(COVID)</span></div>
-            <div class="cohort-cell">428</div>
-            <div class="cohort-cell" style="color:var(--amber);font-weight:700">12.4</div>
-            <div class="cohort-cell" style="color:var(--amber);font-weight:700">86.7%</div>
-            <div class="cohort-cell">9.4%</div>
-            <div class="cohort-cell" style="color:var(--green)">▲ +2.1</div>
-
-            <div class="cohort-cell label">2022–23</div>
-            <div class="cohort-cell">412</div>
-            <div class="cohort-cell" style="color:var(--amber);font-weight:700">11.1</div>
-            <div class="cohort-cell" style="color:var(--amber);font-weight:700">82.3%</div>
-            <div class="cohort-cell">14.6%</div>
-            <div class="cohort-cell" style="color:var(--green)">▲ +3.2</div>
-
-            <div class="cohort-cell label">2024–25 <span style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.2px">(Recent)</span></div>
-            <div class="cohort-cell">262</div>
-            <div class="cohort-cell" style="color:var(--red);font-weight:700">9.7</div>
-            <div class="cohort-cell" style="color:var(--red);font-weight:700">78.4%</div>
-            <div class="cohort-cell" style="color:var(--red)">18.7%</div>
-            <div class="cohort-cell" style="color:var(--green)">▲ +4.8</div>
+          <!-- Animated stacked band bar -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600">PROFESSION-WIDE BAND SPLIT</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3)"><span id="cohortTotal">—</span> practising lawyers</div>
+          </div>
+          <div style="display:flex;width:100%;height:34px;border-radius:9px;overflow:hidden;background:var(--paper2);border:1px solid var(--line)">
+            <div id="cohortBarCritical" style="width:0;background:var(--red);transition:width 1.1s cubic-bezier(.4,0,.2,1)"></div>
+            <div id="cohortBarRisk" style="width:0;background:var(--amber);transition:width 1.1s cubic-bezier(.4,0,.2,1)"></div>
+            <div id="cohortBarCompliant" style="width:0;background:var(--green);transition:width 1.1s cubic-bezier(.4,0,.2,1)"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px" id="cohortCards">
+            <div style="border:1px solid var(--red-border);background:var(--red-bg);border-radius:12px;padding:16px 18px">
+              <div style="display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9.5px;color:var(--red);letter-spacing:1px;text-transform:uppercase;font-weight:700"><span style="width:8px;height:8px;border-radius:50%;background:var(--red)"></span>CRITICAL · BELOW 8 PTS</div>
+              <div style="font-family:var(--serif);font-size:32px;color:var(--red);line-height:1.1;margin-top:8px"><span id="cohortCriticalN">—</span></div>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--slate2);margin-top:2px"><span id="cohortCriticalPct">—</span>% of the profession · priority outreach</div>
+            </div>
+            <div style="border:1px solid var(--amber-border);background:var(--amber-bg);border-radius:12px;padding:16px 18px">
+              <div style="display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9.5px;color:var(--amber);letter-spacing:1px;text-transform:uppercase;font-weight:700"><span style="width:8px;height:8px;border-radius:50%;background:var(--amber)"></span>AT RISK · 8–15 PTS</div>
+              <div style="font-family:var(--serif);font-size:32px;color:var(--amber);line-height:1.1;margin-top:8px"><span id="cohortRiskN">—</span></div>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--slate2);margin-top:2px"><span id="cohortRiskPct">—</span>% of the profession · close the gap</div>
+            </div>
+            <div style="border:1px solid var(--green-border);background:var(--green-bg);border-radius:12px;padding:16px 18px">
+              <div style="display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9.5px;color:var(--green);letter-spacing:1px;text-transform:uppercase;font-weight:700"><span style="width:8px;height:8px;border-radius:50%;background:var(--green)"></span>COMPLIANT · ≥16 PTS</div>
+              <div style="font-family:var(--serif);font-size:32px;color:var(--green);line-height:1.1;margin-top:8px"><span id="cohortCompliantN">—</span></div>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--slate2);margin-top:2px"><span id="cohortCompliantPct">—</span>% of the profession · obligation met</div>
+            </div>
           </div>
         </div>
       </section>
@@ -1623,7 +1583,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
           <div class="card card-hover" style="cursor:pointer" onclick="showToast('Generating Forecast Model…')">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><div style="width:34px;height:34px;border-radius:9px;background:var(--purple-bg);color:var(--purple);display:grid;place-items:center;font-size:16px"></div><div><div class="card-eyebrow" style="margin-bottom:0">PREDICTIVE</div></div></div>
             <div style="font-family:var(--serif);font-size:18px;color:var(--ink);letter-spacing:-.015em;margin-bottom:5px;font-weight:400">Forecast Model 2027</div>
-            <div style="font-size:11.5px;color:var(--slate2);line-height:1.55;letter-spacing:-.005em">Lex-generated projections · Monte Carlo n=50,000</div>
+            <div style="font-size:11.5px;color:var(--slate2);line-height:1.55;letter-spacing:-.005em">Lex-generated projections · trajectory from live compliance data</div>
             <div style="display:flex;align-items:center;gap:6px;margin-top:11px;padding-top:11px;border-top:1px solid var(--line);font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:.3px;font-weight:600">PDF + XLSX</div>
           </div>
           <div class="card card-hover" style="cursor:pointer" onclick="showToast('Generating Provider Performance…')">
@@ -2175,11 +2135,14 @@ async function runSpAiAnalysis() {
   strip.style.display = 'block';
   text.innerHTML = '<span style="color:var(--purple);font-family:var(--mono);font-size:10px">✦ Claude is analysing…</span>';
   const ctx = _spContext;
+  const _o = (window.LAD_LIVE && window.LAD_LIVE.oversight) || null;
+  const _L = (_o && _o.lawyers) || {};
+  const _pd = _o ? `${(_L.practising||0).toLocaleString()} practitioners, ${_L.complianceRate!=null?_L.complianceRate:'—'}% compliance, ${(_L.critical||0).toLocaleString()} critical, ${_o.daysToDeadline!=null?_o.daysToDeadline:'—'} days to deadline, 31 Dec 2026.` : 'live programme snapshot (figures loading).';
   const prompt = `You are Maryam, the LAD Intelligence AI. Provide a concise, actionable analysis (3–4 sentences) for:
 Subject: ${ctx.title}
 Context: ${ctx.tag}
 Additional context: ${ctx.aiContext || ''}
-Programme data: 4,411 practitioners, 10.4% compliance, 3,492 critical, 234 days to deadline, 31 Dec 2026.
+Programme data: ${_pd}
 Be specific, data-driven, and end with one clear recommended action.`;
   const result = await callClaude([{role:'user',content:prompt}]);
   text.textContent = result;
@@ -2400,7 +2363,15 @@ function openLexChat(prefill) {
   const overlay = document.getElementById('lexChatOverlay');
   overlay.classList.add('on');
   if (lexMessages.length === 0) {
-    appendLexMessage('assistant', 'Good afternoon, Director Hashimi. I\'m Lex, monitoring 4,411 practitioners across 499 firms. The 2026 programme is running at 10.4% — the strongest position in the programme\'s 11-year history. How can I assist you today?');
+    var g = (window.LAD_LIVE && window.LAD_LIVE.oversight) ? window.LAD_LIVE.oversight : null;
+    var greet = 'I\'m Lex, your live oversight agent for the CLPD programme. How can I assist you today?';
+    if (g && g.lawyers) {
+      greet = 'I\'m Lex, monitoring ' + (g.lawyers.practising||0).toLocaleString() + ' practising lawyers across '
+        + ((g.firms&&g.firms.total)||0).toLocaleString() + ' firms. Current compliance is running at '
+        + (g.lawyers.complianceRate!=null?g.lawyers.complianceRate:'—') + '% with ' + (g.daysToDeadline||0)
+        + ' days to the deadline. How can I assist you today?';
+    }
+    appendLexMessage('assistant', greet);
   }
   if (prefill) {
     document.getElementById('lexInput').value = prefill;
@@ -2598,23 +2569,32 @@ function openExportReport() {
 function closeDGReport() { document.getElementById('dgReportOverlay').classList.remove('on'); }
 
 async function generateDGReport() {
-  const prompt = `Compose a formal intelligence briefing for the Director General of the Legal Affairs Department, Government of Dubai. Use the following programme data from 10 May 2026:
+  const o = (window.LAD_LIVE && window.LAD_LIVE.oversight) || null;
+  const f = (window.LAD_LIVE && window.LAD_LIVE.forecast) || null;
+  const a = (window.LAD_LIVE && window.LAD_LIVE.anomalies) || null;
+  const lines = [];
+  if (o) {
+    const L = o.lawyers||{}, F=o.firms||{}, C=o.courses||{}, AC=o.accreditations||{};
+    const rk = o.firmRankings||{};
+    lines.push(`- ${(L.practising||0).toLocaleString()} practising practitioners on the roll`);
+    lines.push(`- ${L.complianceRate!=null?L.complianceRate:'—'}% current compliance rate (at or above 16 points)`);
+    lines.push(`- ${(L.critical||0).toLocaleString()} critical practitioners (below 8 points), ${(L.atRisk||0).toLocaleString()} more at risk (8–15 points)`);
+    lines.push(`- ${o.daysToDeadline!=null?o.daysToDeadline:'—'} days to the 31 December ${o.cycleYear||2026} deadline`);
+    if (F.total!=null) lines.push(`- ${(F.total||0).toLocaleString()} registered firms`);
+    if (C.active!=null) lines.push(`- ${(C.active||0).toLocaleString()} active courses`);
+    if (AC.pending!=null) lines.push(`- ${(AC.pending||0).toLocaleString()} accreditation applications pending review`);
+    if (Array.isArray(rk.top) && rk.top[0]) lines.push(`- Best firm: ${rk.top[0].name} (${Math.round((rk.top[0].compliancePct||0)*10)/10}%)`);
+    if (Array.isArray(rk.bottom) && rk.bottom[0]) lines.push(`- Most at-risk firm: ${rk.bottom[0].name} (${Math.round((rk.bottom[0].compliancePct||0)*10)/10}%)`);
+  }
+  if (f && f.projectedRate!=null) lines.push(`- Projected December compliance: ${f.projectedRate}% (${f.method||'trend projection'})`);
+  if (a && a.counts) lines.push(`- Anomaly signals: ${a.counts.high||0} high, ${a.counts.medium||0} medium, ${a.counts.low||0} low priority`);
+  const dataBlock = lines.length ? lines.join('\n') : '(live programme data is still loading — write from the dashboard context available).';
+  const today = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
+  const prompt = `Compose a formal intelligence briefing for the Director General of the Legal Affairs Department, Government of Dubai. Use only the following live programme data as of ${today}:
 
-- 4,411 registered practitioners (+94 YTD)
-- 10.4% compliance rate (+14.2pp vs 2025 — highest in 11-year programme history)
-- 3,492 critical practitioners (below 8pts), down from 235 in April
-- 234 days to the 31 December 2026 deadline
-- 156 registered firms (+8 this quarter)
-- 69 active courses (+12 vs 2025)
-- AI-projected December compliance: 96.1%
-- Top course: AML Update 2026 (4.8 stars, 94% attendance, 1,247 enrolled)
-- Tax practice dropped 8.2pp in 30 days — intervention underway
-- Best firm: Baker McKenzie (96.1%); most at-risk: Al Suwaidi & Co. (68.4%)
-- Global programme score: 78/100 (top 18% worldwide)
-- AI Governance enrolment: 2.4 times the forecast
-- 3 accreditation applications in SLA breach
+${dataBlock}
 
-Write 4 paragraphs in confident, formal government prose. Highlight the historic compliance milestone, specific programme achievements, current risks being managed, and the December outlook. No bullet points. Suitable for senior leadership presentation.`;
+Write 4 paragraphs in confident, formal government prose. Cover the current compliance position, programme achievements, current risks being managed, and the December outlook. Do not invent figures beyond those provided. No bullet points. Suitable for senior leadership presentation.`;
 
   const result = await callClaude([{role:'user',content:prompt}],
     'You are a senior government communications officer at the Legal Affairs Department of Dubai. Write formal, confident prose for Director General level. No bullet points, no markdown. 4 paragraphs.');
@@ -2623,7 +2603,17 @@ Write 4 paragraphs in confident, formal government prose. Highlight the historic
 
 async function exportDGReport() {
   const content = document.getElementById('dgReportContent').textContent;
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>LAD Intelligence Briefing — Director General — 10 May 2026</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Georgia',serif;font-size:13.5pt;line-height:1.75;color:#0a0e14;background:#fff;padding:60px 80px;max-width:820px;margin:0 auto}.hdr{border-bottom:2px solid #006B3F;padding-bottom:22px;margin-bottom:28px}.gov{font-family:Arial,sans-serif;font-size:8.5pt;font-weight:700;color:#006B3F;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}.ttl{font-size:22pt;font-weight:400;color:#0a0e14;margin-bottom:3px}.sub{font-size:10pt;color:#5a6878}.meta{display:flex;gap:40px;padding:14px 0;border-bottom:1px solid #e8ecf1;margin-bottom:26px;font-family:Arial,sans-serif}.ml{font-size:8pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8a98aa;margin-bottom:3px}.mv{font-size:11pt;font-weight:600;color:#0a0e14}.krow{display:flex;gap:14px;margin:22px 0}.kbox{flex:1;border:1px solid #e8ecf1;border-radius:8px;padding:14px;text-align:center;border-top:3px solid #006B3F}.kn{font-family:Georgia,serif;font-size:24pt;font-weight:400;color:#006B3F;line-height:1}.kl{font-family:Arial,sans-serif;font-size:7.5pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8a98aa;margin-top:4px}p{margin-bottom:16px}.ftr{margin-top:44px;padding-top:16px;border-top:1px solid #e8ecf1;font-family:Arial,sans-serif;font-size:8pt;color:#8a98aa;display:flex;justify-content:space-between;align-items:center}.stamp{background:#006B3F;color:#fff;padding:5px 12px;border-radius:4px;font-weight:700;letter-spacing:1px}
+  const _o = (window.LAD_LIVE && window.LAD_LIVE.oversight) || null;
+  const _f = (window.LAD_LIVE && window.LAD_LIVE.forecast) || null;
+  const _L = (_o && _o.lawyers) || {};
+  const _today = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
+  const _todaySlug = new Date().toISOString().slice(0,10);
+  const _kRate = (_L.complianceRate!=null?_L.complianceRate:'—')+'%';
+  const _kPract = (_L.practising!=null?_L.practising.toLocaleString():'—');
+  const _kFc = (_f && _f.projectedRate!=null) ? _f.projectedRate+'%' : '—';
+  const _kCrit = (_L.critical!=null?_L.critical.toLocaleString():'—');
+  const _cycle = (_o && _o.cycleYear) || 2026;
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>LAD Intelligence Briefing — Director General — ${_today}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Georgia',serif;font-size:13.5pt;line-height:1.75;color:#0a0e14;background:#fff;padding:60px 80px;max-width:820px;margin:0 auto}.hdr{border-bottom:2px solid #006B3F;padding-bottom:22px;margin-bottom:28px}.gov{font-family:Arial,sans-serif;font-size:8.5pt;font-weight:700;color:#006B3F;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}.ttl{font-size:22pt;font-weight:400;color:#0a0e14;margin-bottom:3px}.sub{font-size:10pt;color:#5a6878}.meta{display:flex;gap:40px;padding:14px 0;border-bottom:1px solid #e8ecf1;margin-bottom:26px;font-family:Arial,sans-serif}.ml{font-size:8pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8a98aa;margin-bottom:3px}.mv{font-size:11pt;font-weight:600;color:#0a0e14}.krow{display:flex;gap:14px;margin:22px 0}.kbox{flex:1;border:1px solid #e8ecf1;border-radius:8px;padding:14px;text-align:center;border-top:3px solid #006B3F}.kn{font-family:Georgia,serif;font-size:24pt;font-weight:400;color:#006B3F;line-height:1}.kl{font-family:Arial,sans-serif;font-size:7.5pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8a98aa;margin-top:4px}p{margin-bottom:16px}.ftr{margin-top:44px;padding-top:16px;border-top:1px solid #e8ecf1;font-family:Arial,sans-serif;font-size:8pt;color:#8a98aa;display:flex;justify-content:space-between;align-items:center}.stamp{background:#006B3F;color:#fff;padding:5px 12px;border-radius:4px;font-weight:700;letter-spacing:1px}
 /* ═══════════════════════════════════════
    MOBILE RESPONSIVE SYSTEM
 ═══════════════════════════════════════ */
@@ -2818,14 +2808,14 @@ async function exportDGReport() {
 
 </style></head><body>
 <div class="hdr"><div class="gov">Government of Dubai · Legal Affairs Department</div><div class="ttl">CLPD Intelligence Briefing</div><div class="sub">LAD Intelligence Dashboard · Maryam Agent v4.2 · Prepared for the Director General</div></div>
-<div class="meta"><div><div class="ml">Date</div><div class="mv">10 May 2026</div></div><div><div class="ml">Classification</div><div class="mv">Internal — Confidential</div></div><div><div class="ml">Programme Year</div><div class="mv">Year 11 · 2026</div></div><div><div class="ml">Prepared by</div><div class="mv">Lex Intelligence Agent</div></div></div>
-<div class="krow"><div class="kbox"><div class="kn">10.4%</div><div class="kl">Compliance Rate</div></div><div class="kbox"><div class="kn">4,411</div><div class="kl">Practitioners</div></div><div class="kbox"><div class="kn">96.1%</div><div class="kl">Dec Forecast</div></div><div class="kbox"><div class="kn">+14.2pp</div><div class="kl">vs 2025</div></div></div>
+<div class="meta"><div><div class="ml">Date</div><div class="mv">${_today}</div></div><div><div class="ml">Classification</div><div class="mv">Internal — Confidential</div></div><div><div class="ml">Programme Year</div><div class="mv">${_cycle} cycle</div></div><div><div class="ml">Prepared by</div><div class="mv">Lex Intelligence Agent</div></div></div>
+<div class="krow"><div class="kbox"><div class="kn">${_kRate}</div><div class="kl">Compliance Rate</div></div><div class="kbox"><div class="kn">${_kPract}</div><div class="kl">Practitioners</div></div><div class="kbox"><div class="kn">${_kFc}</div><div class="kl">Dec Forecast</div></div><div class="kbox"><div class="kn">${_kCrit}</div><div class="kl">Critical</div></div></div>
 ${content.split('\n\n').filter(p=>p.trim()).map(p=>`<p>${p.trim()}</p>`).join('')}
 <div class="ftr"><span>© 2026 Government of Dubai · Legal Affairs Department · LAD Intelligence v4.2</span><span class="stamp">CONFIDENTIAL</span></div>
 <script src="ai-assistant.js?v=3"></script>
 </body></html>`;
   const blob = new Blob([html],{type:'text/html'});
-  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='LAD_DG_Briefing_10May2026.html'; a.click();
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='LAD_DG_Briefing_'+_todaySlug+'.html'; a.click();
   showToast('Director General report exported ✓');
 }
 
@@ -2889,7 +2879,8 @@ function statusPill(s){const m={top:'pill-green',good:'pill-blue',ok:'pill-ghost
 function statusLabel(s){const m={top:'TOP',good:'GOOD',ok:'OK',warn:'IMPROVE',critical:'REVIEW'};return m[s]||s.toUpperCase();}
 
 function renderCourseComp() {
-  document.getElementById('courseCompRows').innerHTML = COURSE_PERF.map((c,i) => `
+  var _el=document.getElementById('courseCompRows'); if(!_el) return;
+  _el.innerHTML = COURSE_PERF.map((c,i) => `
     <div style="display:grid;grid-template-columns:2.4fr 1fr 1fr 1fr 1fr 90px;gap:8px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .12s" onmouseover="this.style.background='var(--paper)'" onmouseout="this.style.background=''" onclick="openDeepDive('course','${c.name}')">
       <div style="display:flex;align-items:center;gap:10px;min-width:0">
         <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);font-weight:700;width:20px;flex-shrink:0">${String(i+1).padStart(2,'0')}</div>
@@ -2904,7 +2895,8 @@ function renderCourseComp() {
 }
 
 function renderTrainerComp() {
-  document.getElementById('trainerCompRows').innerHTML = TRAINER_PERF.map((t,i) => `
+  var _el=document.getElementById('trainerCompRows'); if(!_el) return;
+  _el.innerHTML = TRAINER_PERF.map((t,i) => `
     <div style="display:grid;grid-template-columns:2.4fr 1fr 1fr 1fr 1fr 90px;gap:8px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .12s" onmouseover="this.style.background='var(--paper)'" onmouseout="this.style.background=''" onclick="openDeepDive('trainer','${t.name}')">
       <div style="display:flex;align-items:center;gap:10px;min-width:0">
         <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);font-weight:700;width:20px;flex-shrink:0">${String(i+1).padStart(2,'0')}</div>
@@ -2920,10 +2912,13 @@ function renderTrainerComp() {
 }
 
 function switchPerfView(view) {
-  document.getElementById('pfCourses').style.display = view==='courses' ? '' : 'none';
-  document.getElementById('pfTrainers').style.display = view==='trainers' ? '' : 'none';
-  document.getElementById('pfBtnCourses').style.cssText = view==='courses' ? 'background:var(--ink);color:#fff;border-color:var(--ink)' : '';
-  document.getElementById('pfBtnTrainers').style.cssText = view==='trainers' ? 'background:var(--ink);color:#fff;border-color:var(--ink)' : '';
+  var c=document.getElementById('pfCourses'), t=document.getElementById('pfTrainers');
+  if(!c||!t) return;
+  c.style.display = view==='courses' ? '' : 'none';
+  t.style.display = view==='trainers' ? '' : 'none';
+  var bc=document.getElementById('pfBtnCourses'), bt=document.getElementById('pfBtnTrainers');
+  if(bc) bc.style.cssText = view==='courses' ? 'background:var(--ink);color:#fff;border-color:var(--ink)' : '';
+  if(bt) bt.style.cssText = view==='trainers' ? 'background:var(--ink);color:#fff;border-color:var(--ink)' : '';
 }
 
 // ════════ INIT ════════
@@ -3337,9 +3332,16 @@ document.addEventListener('DOMContentLoaded', () => {
               </button>`;
     }).join('');
 
-    const userInitials = (opts.userName || 'User').split(/\s+/).slice(0, 2).map(s => s[0] || '').join('').toUpperCase();
-    const userName = opts.userName || 'User';
-    const userRole = opts.userRole || '—';
+    // Prefer the real logged-in identity over any hardcoded default.
+    let liveName = '', liveRole = '';
+    try { liveName = localStorage.getItem('lad_name') || ''; liveRole = (localStorage.getItem('lad_role') || '').toLowerCase(); } catch (e) {}
+    const roleLabel = (liveRole === 'lad_super_admin' || liveRole === 'super_admin' || liveRole === 'dg') ? 'LAD SUPER USER · LAD'
+      : liveRole === 'lad_admin' ? 'LAD ADMIN · LAD'
+      : liveRole === 'lad_intelligence' ? 'LAD INTELLIGENCE · LAD'
+      : (opts.userRole || 'LAD');
+    const userName = liveName || opts.userName || 'LAD super user';
+    const userRole = liveName ? roleLabel : (opts.userRole || '—');
+    const userInitials = userName.split(/\s+/).filter(Boolean).slice(0, 2).map(s => s[0] || '').join('').toUpperCase() || 'LAD';
     const envBadge = opts.envBadge || 'CLPD · 2026';
 
     const bar = document.createElement('div');
@@ -3384,7 +3386,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const portalContext = {
       lawyer: 'a lawyer tracking their 16-point CLPD target for the year',
       firm:   'a firm compliance officer overseeing their lawyers',
-      intel:  'the Director General of the Legal Affairs Department of Dubai, overseeing 4,411 lawyers across 499 firms with a 92.8% national compliance rate',
+      intel:  (function(){ var o=(window.LAD_LIVE&&window.LAD_LIVE.oversight)||null; if(o&&o.lawyers){ return 'the LAD super user of the Legal Affairs Department of Dubai, overseeing '+(o.lawyers.practising||0).toLocaleString()+' practising lawyers across '+((o.firms&&o.firms.total)||0).toLocaleString()+' firms with a '+(o.lawyers.complianceRate!=null?o.lawyers.complianceRate:'—')+'% compliance rate'; } return 'the LAD super user of the Legal Affairs Department of Dubai, overseeing the city-wide CLPD compliance programme'; })(),
       hub:    'a user navigating the CLPD platform',
     }[opts.portal] || 'a CLPD user';
 
@@ -3828,12 +3830,301 @@ Click the ⚙ icon at the top right to add a key, then ask me again.`;
 <script>
   LADPlatform.init({
     portal: 'intel',
-    userName: 'H.E. Dr. Lowai Belhoul',
-    userRole: 'DG · LAD Dubai',
+    userName: 'LAD super user',
+    userRole: 'LAD · Dubai',
     envBadge: 'INTELLIGENCE · 2026',
   });
 </script>
 <script src="attendance-alerts.js?v=4" data-aa-audience="lad"></script>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     SHARED LIVE HYDRATION · oversight + anomalies + forecast + bookings
+     Paints: #predict trajectory · #anomaly · #firms leaderboard ·
+             #cohort bands · #heatmap coverage · #coursefeedback ·
+             AI insight cards · sidebar badges. Fail-safe everywhere.
+     ══════════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  var base=((window.LAD_API_BASE)||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
+  function tok(){ try{ return localStorage.getItem('lad_token')||''; }catch(e){ return ''; } }
+  function get(p){ return fetch(base+p,{headers:{Authorization:'Bearer '+tok()}}).then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; }); }
+  function getPub(p){ return fetch(base+p).then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; }); }
+  function $(id){ return document.getElementById(id); }
+  function set(id,v){ var e=$(id); if(e) e.textContent=v; }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]);}); }
+  function num(x){ var v=Number(x); return Number.isFinite(v)?Math.round(v).toLocaleString():'—'; }
+  window.LAD_LIVE = window.LAD_LIVE || {};
+
+  // animated count-up for a text node
+  function countUp(id, target, opts){
+    var el=$(id); if(!el) return;
+    opts=opts||{}; var dur=opts.dur||900, dec=opts.dec||0, suf=opts.suffix||'', pre=opts.prefix||'';
+    var start=performance.now(), from=0;
+    function step(now){
+      var t=Math.min(1,(now-start)/dur), e=1-Math.pow(1-t,3), val=from+(target-from)*e;
+      el.textContent=pre+(dec?val.toFixed(dec):Math.round(val).toLocaleString())+suf;
+      if(t<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ───────── FORECAST TRAJECTORY (SVG area/line) ─────────
+  function paintForecast(f){
+    var wrap=$('fcChartWrap'); if(!wrap) return;
+    var empty=$('fcChartEmpty');
+    if(!f){ if(empty) empty.textContent='Forecast unavailable'; return; }
+    set('fcCurrentRate', f.currentRate!=null?f.currentRate:'—');
+    set('fcProjRate', f.projectedRate!=null?f.projectedRate:'—');
+    if(f.method) set('fcMethod', 'Method · '+f.method);
+    if(f.perMonth!=null) set('fcPaceNote', 'Pace · +'+(Math.round(f.perMonth*10)/10)+'pp / month · '+(f.daysToDeadline!=null?f.daysToDeadline+' days left':''));
+    var series=Array.isArray(f.series)?f.series:[];
+    if(series.length<2){ if(empty) empty.textContent='Building forecast trajectory…'; return; }
+    if(empty) empty.style.display='none';
+    var W=Math.max(wrap.clientWidth||640,320), H=180, padL=34, padR=14, padT=14, padB=26;
+    var rates=series.map(function(s){ return Number(s.rate)||0; });
+    var lo=Math.max(0,Math.min.apply(null,rates)-5), hi=Math.min(100,Math.max.apply(null,rates)+5);
+    if(hi-lo<10){ hi=Math.min(100,lo+10); }
+    function X(i){ return padL+(W-padL-padR)*(i/(series.length-1)); }
+    function Y(v){ return padT+(H-padT-padB)*(1-(v-lo)/(hi-lo)); }
+    var solidPts=[], dashPts=[], firstProj=-1;
+    series.forEach(function(s,i){ if(s.projected && firstProj<0) firstProj=i; });
+    var lineSolid='', lineDash='';
+    series.forEach(function(s,i){
+      var x=X(i), y=Y(Number(s.rate)||0), p=x.toFixed(1)+','+y.toFixed(1);
+      var isProj=s.projected;
+      if(!isProj){ lineSolid+=(lineSolid?' L':'M')+p; }
+      else { if(firstProj>=0 && i===firstProj && firstProj>0){ var px=X(i-1).toFixed(1)+','+Y(Number(series[i-1].rate)||0).toFixed(1); lineDash+=(lineDash?' L':'M')+px+' L'+p; } else { lineDash+=(lineDash?' L':'M')+p; } }
+    });
+    var areaD='M'+X(0).toFixed(1)+','+(H-padB)+' ';
+    series.forEach(function(s,i){ areaD+='L'+X(i).toFixed(1)+','+Y(Number(s.rate)||0).toFixed(1)+' '; });
+    areaD+='L'+X(series.length-1).toFixed(1)+','+(H-padB)+' Z';
+    var grid='';
+    [lo,(lo+hi)/2,hi].forEach(function(v){ var y=Y(v).toFixed(1); grid+='<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="var(--line)" stroke-width="1"/>'+'<text x="4" y="'+(+y+3)+'" font-family="var(--mono)" font-size="9" fill="var(--slate3)">'+Math.round(v)+'</text>'; });
+    var labels='';
+    series.forEach(function(s,i){ if(i%Math.ceil(series.length/8)===0||i===series.length-1){ labels+='<text x="'+X(i).toFixed(1)+'" y="'+(H-8)+'" font-family="var(--mono)" font-size="9" fill="var(--slate3)" text-anchor="middle">'+esc(s.month||'')+'</text>'; } });
+    var dots='';
+    series.forEach(function(s,i){ dots+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(Number(s.rate)||0).toFixed(1)+'" r="2.4" fill="'+(s.projected?'#fff':'var(--purple)')+'" stroke="var(--purple)" stroke-width="1.5"/>'; });
+    wrap.innerHTML='<svg width="100%" height="'+H+'" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="overflow:visible">'
+      +'<defs><linearGradient id="fcGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--purple)" stop-opacity="0.18"/><stop offset="100%" stop-color="var(--purple)" stop-opacity="0"/></linearGradient></defs>'
+      +grid
+      +'<path d="'+areaD+'" fill="url(#fcGrad)"/>'
+      +(lineSolid?'<path d="'+lineSolid+'" fill="none" stroke="var(--purple)" stroke-width="2.2" stroke-linejoin="round"/>':'')
+      +(lineDash?'<path d="'+lineDash+'" fill="none" stroke="var(--purple)" stroke-width="2.2" stroke-dasharray="5 4" stroke-linejoin="round" opacity="0.85"/>':'')
+      +dots+labels
+      +'</svg>';
+  }
+
+  // ───────── ANOMALIES ─────────
+  function anomColor(level){ return level==='high'?'var(--red)':level==='medium'?'var(--amber)':'var(--slate2)'; }
+  function anomCls(level){ return level==='high'?'':level==='medium'?'warn':'info'; }
+  function paintAnomalies(a){
+    var grid=$('anomalyGrid'); if(!grid) return;
+    if(!a || !Array.isArray(a.anomalies)){
+      grid.innerHTML='<div style="grid-column:1/-1;padding:34px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:12px">No anomaly feed available right now.</div>';
+      return;
+    }
+    var list=a.anomalies, c=a.counts||{};
+    set('sbAnomalyBadge', list.length||'0');
+    var cnt=$('anomalyCounts');
+    if(cnt) cnt.innerHTML='<span class="pill pill-red">'+(c.high||0)+' high</span> <span class="pill pill-amber">'+(c.medium||0)+' med</span> <span class="pill pill-ghost">'+(c.low||0)+' low</span>';
+    set('anomalyDesc', (a.total!=null?a.total:list.length)+' anomalies flagged · '+(c.high||0)+' high priority · scanned across the live compliance graph');
+    if(!list.length){ grid.innerHTML='<div style="grid-column:1/-1;padding:34px;text-align:center;color:var(--green);font-family:var(--mono);font-size:12px">✓ No irregular patterns detected.</div>'; return; }
+    grid.innerHTML=list.map(function(x){
+      var col=anomColor(x.level), cls=anomCls(x.level);
+      var tag=(x.level||'').toUpperCase()+(x.kind?' · '+esc(String(x.kind).replace(/_/g,' ').toUpperCase()):'');
+      return '<div class="anomaly '+cls+'">'
+        +'<div class="anomaly-hd"><div class="anomaly-icon">'+(x.level==='high'?'⚠':x.level==='medium'?'⏱':'◆')+'</div>'
+        +'<div class="anomaly-info"><div class="anomaly-tag">'+esc(tag)+'</div>'
+        +'<div class="anomaly-title">'+esc(x.title||'Anomaly')+(x.metric?' · <em style="color:'+col+';font-style:italic">'+esc(x.metric)+'</em>':'')+'</div></div></div>'
+        +'<div class="anomaly-body">'+esc(x.detail||'')+'</div>'
+        +'<div class="anomaly-foot">'
+        +'<span style="font-family:var(--mono);font-size:9.5px;color:'+col+';font-weight:700;letter-spacing:.3px">'+(x.level||'').toUpperCase()+' PRIORITY</span>'
+        +'<button class="btn btn-ghost btn-xs" style="margin-left:auto" onclick="ladAskAI(\''+esc(String(x.title||'this anomaly').replace(/'/g,'')) +' — explain this anomaly and recommend an action.\')">Ask Maryam →</button>'
+        +'</div></div>';
+    }).join('');
+  }
+
+  // ───────── FIRM LEADERBOARD (firmRankings) ─────────
+  function firmRow(f, worst){
+    var pct=Number(f.compliancePct); if(!Number.isFinite(pct)) pct=0;
+    var col=pct>=85?'var(--green)':pct>=70?'var(--amber)':'var(--red)';
+    var nm=esc(f.name||'Firm');
+    return '<div style="display:grid;grid-template-columns:1fr 60px 64px 1.1fr 56px;gap:10px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--line);cursor:pointer" onmouseover="this.style.background=\'var(--paper)\'" onmouseout="this.style.background=\'\'" onclick="if(window.openFirmDeepDive)openFirmDeepDive(\''+nm.replace(/'/g,'')+'\')">'
+      +'<div style="min-width:0"><div style="font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+nm+'</div></div>'
+      +'<div style="font-family:var(--mono);font-size:11.5px;color:var(--slate2);text-align:center">'+(f.lawyers!=null?f.lawyers:'—')+'</div>'
+      +'<div style="font-family:var(--mono);font-size:11.5px;color:var(--slate2);text-align:center">'+(f.avgPts!=null?(Math.round(f.avgPts*10)/10):'—')+'</div>'
+      +'<div style="display:flex;align-items:center;gap:7px"><div style="flex:1;height:6px;background:var(--line2);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+Math.max(0,Math.min(100,pct))+'%;background:'+col+';border-radius:3px;transition:width 1s ease"></div></div><span style="font-family:var(--mono);font-size:10.5px;font-weight:700;color:'+col+';width:38px;text-align:right">'+(Math.round(pct*10)/10)+'%</span></div>'
+      +'<div style="font-family:var(--mono);font-size:11.5px;font-weight:700;color:'+((f.critical||0)>0?'var(--red)':'var(--slate3)')+';text-align:center">'+(f.critical||0)+'</div>'
+      +'</div>';
+  }
+  function paintFirmLeaders(o){
+    var top=$('firmLeaderTop'), bot=$('firmLeaderBottom');
+    var rk=(o&&o.firmRankings)||{};
+    function hdr(){ return '<div style="display:grid;grid-template-columns:1fr 60px 64px 1.1fr 56px;gap:10px;padding:8px 16px;background:var(--paper);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:700"><div>FIRM</div><div style="text-align:center">LWYRS</div><div style="text-align:center">AVG PTS</div><div>COMPLIANCE</div><div style="text-align:center">CRIT</div></div>'; }
+    if(top){ var t=Array.isArray(rk.top)?rk.top:[]; top.innerHTML = t.length?(hdr()+t.map(function(f){return firmRow(f,false);}).join('')):'<div style="padding:24px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:11px">No ranking data yet.</div>'; }
+    if(bot){ var b=Array.isArray(rk.bottom)?rk.bottom:[]; bot.innerHTML = b.length?(hdr()+b.map(function(f){return firmRow(f,true);}).join('')):'<div style="padding:24px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:11px">No ranking data yet.</div>'; }
+  }
+
+  // ───────── COHORT BANDS ─────────
+  function paintCohort(o){
+    var L=(o&&o.lawyers)||{};
+    var crit=Number(L.critical)||0, risk=Number(L.atRisk)||0, comp=Number(L.compliant)||0;
+    var total=Number(L.practising)|| (crit+risk+comp);
+    if(!total){ set('cohortDesc','Cohort distribution unavailable.'); return; }
+    function pc(v){ return Math.round(v/total*1000)/10; }
+    set('cohortTotal', num(total));
+    countUp('cohortCriticalN', crit); countUp('cohortRiskN', risk); countUp('cohortCompliantN', comp);
+    set('cohortCriticalPct', pc(crit)); set('cohortRiskPct', pc(risk)); set('cohortCompliantPct', pc(comp));
+    setTimeout(function(){
+      var bc=$('cohortBarCritical'), br=$('cohortBarRisk'), bx=$('cohortBarCompliant');
+      if(bc) bc.style.width=pc(crit)+'%'; if(br) br.style.width=pc(risk)+'%'; if(bx) bx.style.width=pc(comp)+'%';
+    },120);
+  }
+
+  // ───────── HEATMAP (skills coverage) ─────────
+  function hmCell(pct){
+    var v=Math.max(0,Math.min(100,Number(pct)||0));
+    var col = v>=85?'#006B3F':v>=75?'#7ab088':v>=65?'#e0c890':v>=50?'#c87838':'#8a1a1e';
+    var fg = v>=65 && v<85 ? '#3a3a2a' : '#fff';
+    return '<div class="heatmap-cell" style="background:'+col+';color:'+fg+'">'+Math.round(v)+'%</div>';
+  }
+  function paintHeatmap(h){
+    var grid=$('hmCoverageGrid'); if(!grid) return;
+    var topics=(h&&Array.isArray(h.topics))?h.topics:[];
+    if(!topics.length){ grid.innerHTML='<div style="grid-column:1/-1;padding:34px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:12px">Building coverage map… awaiting skill data.</div>'; return; }
+    // normalise each topic to {name, coverage, attended, demand}
+    var rows=topics.map(function(t){
+      var name=t.topic||t.name||t.title||t.label||'Topic';
+      var cov=t.coverage!=null?t.coverage:(t.coverage_pct!=null?t.coverage_pct:(t.pct!=null?t.pct:null));
+      var demand=t.demand!=null?t.demand:(t.lawyers!=null?t.lawyers:(t.count!=null?t.count:null));
+      var covered=t.covered!=null?t.covered:(t.attended!=null?t.attended:null);
+      if(cov==null && demand!=null && covered!=null && demand>0) cov=covered/demand*100;
+      return {name:name, cov:cov, demand:demand, covered:covered};
+    });
+    rows.sort(function(a,b){ return (b.cov||0)-(a.cov||0); });
+    var html='<div class="heatmap-th" style="text-align:left;padding-left:10px">SKILL TOPIC</div>'
+      +'<div class="heatmap-th">LAWYERS</div><div class="heatmap-th">COVERED</div><div class="heatmap-th">COVERAGE</div>';
+    rows.forEach(function(r){
+      html+='<div class="heatmap-th-row">'+esc(r.name)+'</div>'
+        +'<div class="heatmap-cell" style="background:var(--paper2);color:var(--slate2)">'+(r.demand!=null?num(r.demand):'—')+'</div>'
+        +'<div class="heatmap-cell" style="background:var(--paper2);color:var(--slate2)">'+(r.covered!=null?num(r.covered):'—')+'</div>'
+        +(r.cov!=null?hmCell(r.cov):'<div class="heatmap-cell" style="background:var(--paper2);color:var(--slate3)">—</div>');
+    });
+    grid.innerHTML=html;
+  }
+  function paintDemand(courses){
+    var grid=$('hmDemandGrid'); if(!grid) return;
+    var list=Array.isArray(courses)?courses:[];
+    if(!list.length){ grid.innerHTML='<div style="grid-column:1/-1;padding:34px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:12px">No upcoming sessions published.</div>'; return; }
+    var rows=list.map(function(c){
+      var seats=0, cap=0, sess=Array.isArray(c.sessions)?c.sessions:[];
+      sess.forEach(function(s){ seats+=Number(s.seats_remaining)||0; cap+=Number(s.capacity)||0; });
+      var fill = cap>0 ? (cap-seats)/cap*100 : null;
+      return {title:c.title||'Course', sessions:sess.length, seats:seats, cap:cap, fill:fill};
+    });
+    rows.sort(function(a,b){ return (b.fill||0)-(a.fill||0); });
+    var html='<div class="heatmap-th" style="text-align:left;padding-left:10px">UPCOMING COURSE</div>'
+      +'<div class="heatmap-th">SESSIONS</div><div class="heatmap-th">SEATS LEFT</div><div class="heatmap-th">FILL %</div>';
+    rows.forEach(function(r){
+      html+='<div class="heatmap-th-row">'+esc(r.title)+'</div>'
+        +'<div class="heatmap-cell" style="background:var(--paper2);color:var(--slate2)">'+r.sessions+'</div>'
+        +'<div class="heatmap-cell" style="background:var(--paper2);color:'+((r.seats>0)?'var(--amber)':'var(--slate3)')+'">'+(r.cap>0?r.seats:'—')+'</div>'
+        +(r.fill!=null?hmCell(r.fill):'<div class="heatmap-cell" style="background:var(--paper2);color:var(--slate3)">—</div>');
+    });
+    grid.innerHTML=html;
+  }
+
+  // ───────── COURSE PERFORMANCE (bookings) ─────────
+  function paintPerf(o, bookings){
+    var B=(o&&o.bookings)||{};
+    if(B.attendanceRate!=null) countUp('perfAttRate', Number(B.attendanceRate), {dec:1, dur:1000});
+    if(B.attended!=null) countUp('perfAttended', Number(B.attended));
+    if(B.noShow!=null) countUp('perfNoShow', Number(B.noShow));
+    if(B.cancelled!=null) countUp('perfCancelled', Number(B.cancelled));
+    if(B.total!=null) set('perfTotal', num(B.total));
+    var nsRate = (B.total>0)? (Number(B.noShow)||0)/Number(B.total)*100 : null;
+    if(nsRate!=null) countUp('perfNoShowRate', nsRate, {dec:1, dur:1000});
+    // per-course attendance from bookings
+    var rowsEl=$('perfCourseRows'); if(!rowsEl) return;
+    var data=(bookings&&Array.isArray(bookings.data))?bookings.data:[];
+    if(!data.length){ rowsEl.innerHTML='<div style="padding:30px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:12px">No booking records available yet.</div>'; return; }
+    var agg={};
+    data.forEach(function(b){
+      var k=b.course||'—'; if(!agg[k]) agg[k]={total:0, attended:0};
+      agg[k].total++;
+      var st=String(b.status||'').toLowerCase();
+      if(st==='attended'||st==='present'||st==='completed') agg[k].attended++;
+    });
+    var arr=Object.keys(agg).map(function(k){ var a=agg[k]; return {name:k, total:a.total, attended:a.attended, rate:a.total?a.attended/a.total*100:0}; });
+    arr.sort(function(a,b){ return b.total-a.total; });
+    rowsEl.innerHTML=arr.slice(0,12).map(function(r){
+      var col=r.rate>=80?'var(--green)':r.rate>=60?'var(--amber)':'var(--red)';
+      return '<div style="display:grid;grid-template-columns:2.4fr 1fr 1fr 1fr;gap:8px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line)">'
+        +'<div style="font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(r.name)+'</div>'
+        +'<div style="font-family:var(--mono);font-size:11.5px;color:var(--slate2)">'+r.total+'</div>'
+        +'<div style="font-family:var(--mono);font-size:11.5px;color:var(--slate2)">'+r.attended+'</div>'
+        +'<div style="display:flex;align-items:center;gap:7px"><div style="flex:1;height:6px;background:var(--line2);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+Math.round(r.rate)+'%;background:'+col+';border-radius:3px"></div></div><span style="font-family:var(--mono);font-size:10.5px;font-weight:700;color:'+col+';width:36px;text-align:right">'+Math.round(r.rate)+'%</span></div>'
+        +'</div>';
+    }).join('');
+  }
+
+  // ───────── AI INSIGHT CARDS (derived from oversight) ─────────
+  function paintInsights(o, a){
+    var host=$('aiLiveInsights'); if(!host || !o) return;
+    var L=o.lawyers||{}, S=o.sessions||{}, rk=o.firmRankings||{};
+    var cards=[];
+    // 1. worst firm by compliancePct
+    var bottom=Array.isArray(rk.bottom)?rk.bottom:[];
+    if(bottom.length){
+      var w=bottom[0];
+      cards.push({cls:'ai-i-3', tag:'RISK · FIRM', title:esc(w.name||'A firm')+' is the lowest-compliance firm',
+        body:'At '+(Math.round((w.compliancePct||0)*10)/10)+'% compliance with '+(w.critical||0)+' critical lawyer'+((w.critical||0)===1?'':'s')+' across '+(w.lawyers||0)+' on roll. Direct LAD outreach is the highest-leverage intervention here.',
+        impact:(w.lawyers||0)+' lawyers',
+        ask:'Build an intervention plan for '+(String(w.name||'this firm').replace(/'/g,''))+', the lowest-compliance firm.'});
+    }
+    // 2. at-risk cohort
+    if(L.atRisk!=null){
+      cards.push({cls:'ai-i-1', tag:'OPPORTUNITY', title:(Number(L.atRisk)||0).toLocaleString()+' lawyers sit in the at-risk band',
+        body:'These practitioners are between 8 and 15 points — within reach of compliance before the deadline. Two well-targeted course completions each would move the city-wide rate materially.',
+        impact:(Number(L.atRisk)||0).toLocaleString()+' lawyers',
+        ask:'Give me a prioritised plan to move the at-risk (8–15 point) cohort to compliant.'});
+    }
+    // 3. low-seat / open capacity
+    if(S.lowSeat!=null || S.openSeats!=null){
+      cards.push({cls:'ai-i-2', tag:'CAPACITY', title:(S.openSeats!=null?(Number(S.openSeats)||0).toLocaleString()+' open seats':(S.lowSeat||0)+' low-seat sessions')+' across upcoming sessions',
+        body:(S.lowSeat||0)+' upcoming session'+((S.lowSeat||0)===1?'':'s')+' are running low on seats while '+(S.openSeats!=null?(Number(S.openSeats)||0).toLocaleString()+' seats sit open elsewhere':'capacity sits open')+'. Re-targeting invitations to at-risk lawyers fills demand and lifts compliance at once.',
+        impact:(S.upcoming!=null?(Number(S.upcoming)||0)+' upcoming':'live'),
+        ask:'Which upcoming sessions should I fill first to maximise compliance impact?'});
+    }
+    if(!cards.length){ host.innerHTML='<div class="ai-insight ai-i-1"><div class="ai-insight-title">No live signals to surface</div><div class="ai-insight-body">The current snapshot shows nothing requiring escalation.</div></div>'; return; }
+    host.innerHTML=cards.map(function(c){
+      return '<div class="ai-insight '+c.cls+'" style="cursor:pointer" onclick="ladAskAI(\''+esc(c.ask)+'\')">'
+        +'<div class="ai-insight-hd"><div class="ai-insight-icon">'+(c.cls==='ai-i-3'?'⚠':'')+'</div><div><div class="ai-insight-tag">'+c.tag+'</div></div></div>'
+        +'<div class="ai-insight-title">'+c.title+'</div>'
+        +'<div class="ai-insight-body">'+c.body+'</div>'
+        +'<div class="ai-insight-foot"><span class="ai-insight-impact">IMPACT · '+c.impact+'</span><button class="btn btn-ghost btn-xs">Ask Maryam →</button></div>'
+        +'</div>';
+    }).join('');
+  }
+
+  // ───────── ORCHESTRATION ─────────
+  get('/api/v1/admin/oversight').then(function(o){
+    if(o) window.LAD_LIVE.oversight=o;
+    paintFirmLeaders(o);
+    paintCohort(o);
+    paintInsights(o, null);
+    // perf KPIs need oversight + bookings
+    get('/api/v1/bookings').then(function(bk){ paintPerf(o, bk); });
+  });
+  get('/api/v1/admin/anomalies').then(function(a){ window.LAD_LIVE.anomalies=a; paintAnomalies(a); });
+  get('/api/v1/admin/forecast').then(function(f){ window.LAD_LIVE.forecast=f; paintForecast(f); });
+  get('/api/v1/skills/heatmap').then(function(h){ paintHeatmap(h); });
+  getPub('/api/v1/courses/upcoming').then(function(c){ paintDemand(c); });
+
+  // repaint forecast on resize (svg width)
+  var rt; window.addEventListener('resize', function(){ clearTimeout(rt); rt=setTimeout(function(){ if(window.LAD_LIVE.forecast) paintForecast(window.LAD_LIVE.forecast); }, 250); });
+})();
+</script>
 </body>
 
 </html>
