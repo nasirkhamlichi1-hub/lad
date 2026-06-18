@@ -21,11 +21,17 @@ function requireAuth(req, res, next) {
   }
 }
 
+// Super-admin roles bypass every role gate — they have access to all tabs.
+const SUPER_ROLES = new Set(['lad_super_admin', 'super_admin', 'dg']);
+function isSuper(role) { return SUPER_ROLES.has(role); }
+// True if the user holds any of the listed roles, or is a super-admin.
+function hasRole(user, ...roles) { return !!user && (isSuper(user.role) || roles.includes(user.role)); }
+
 function requireRole(...allowedRoles) {
   return (req, res, next) => {
     requireAuth(req, res, (err) => {
       if (err) return;
-      if (!allowedRoles.includes(req.user.role)) {
+      if (!isSuper(req.user.role) && !allowedRoles.includes(req.user.role)) {
         return res.status(403).json({ error: 'Forbidden — insufficient permissions', required: allowedRoles });
       }
       next();
@@ -41,4 +47,4 @@ function optionalAuth(req, _res, next) {
   next();
 }
 
-module.exports = { requireAuth, requireRole, optionalAuth };
+module.exports = { requireAuth, requireRole, optionalAuth, isSuper, hasRole };

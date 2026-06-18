@@ -4,14 +4,14 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const store = require('../services/store');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, isSuper } = require('../middleware/auth');
 
 // GET /api/v1/stats/aggregate — public (used by the hero & landing pages)
 router.get('/aggregate', (_req, res) => res.json(store.getAggregateStats()));
 
 // GET /api/v1/stats/firms — top firms by compliance (for admin dashboard)
 router.get('/firms', requireAuth, (req, res) => {
-  if (!['lad_admin','lad_intelligence'].includes(req.user.role)) {
+  if (!isSuper(req.user.role) && !['lad_admin','lad_intelligence'].includes(req.user.role)) {
     return res.status(403).json({ error: 'Forbidden' });
   }
   const year = String(req.query.year || new Date().getFullYear());
@@ -62,7 +62,7 @@ router.get('/firms', requireAuth, (req, res) => {
 // GET /api/v1/stats/firm/:id — compliance for one firm
 router.get('/firm/:id', requireAuth, (req, res) => {
   const u = req.user;
-  const isLAD = ['lad_admin','lad_intelligence'].includes(u.role);
+  const isLAD = isSuper(u.role) || ['lad_admin','lad_intelligence'].includes(u.role);
   const isOwnCO = u.role === 'firm_compliance_officer' && u.firm_id === req.params.id;
   if (!isLAD && !isOwnCO) return res.status(403).json({ error: 'Forbidden' });
 

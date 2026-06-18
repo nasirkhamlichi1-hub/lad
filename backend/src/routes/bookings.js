@@ -6,7 +6,7 @@ const router = express.Router();
 const db = require('../db');
 const store = require('../services/store');
 const skills = require('../services/skills');
-const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth');
+const { requireAuth, requireRole, optionalAuth, isSuper } = require('../middleware/auth');
 
 const DEFAULT_CREDIT_COST = 5;
 const txId = () => 'TX-' + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8);
@@ -137,7 +137,7 @@ router.patch('/:id', requireAuth, (req, res) => {
   if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
   const isOwner = u.user_type === 'lawyer' && u.sub === booking.lawyer_id;
-  const isLAD = u.role === 'lad_admin' || u.role === 'provider_admin';
+  const isLAD = isSuper(u.role) || u.role === 'lad_admin' || u.role === 'provider_admin';
   const lawyer = store.getLawyerById(booking.lawyer_id);
   const isFirmCO = u.role === 'firm_compliance_officer' && lawyer && lawyer.firm_id === u.firm_id;
   if (!isOwner && !isLAD && !isFirmCO) return res.status(403).json({ error: 'Forbidden' });

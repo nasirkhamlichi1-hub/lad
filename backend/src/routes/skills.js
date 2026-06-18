@@ -7,7 +7,7 @@ const store = require('../services/store');
 const db = require('../db');
 const aimodel = require('../services/aimodel');
 const log = require('../logger');
-const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth');
+const { requireAuth, requireRole, optionalAuth, isSuper } = require('../middleware/auth');
 
 // Approved accredited courses (for skill→course matching).
 function catalogue() {
@@ -94,6 +94,7 @@ router.get('/lawyers/:id', requireAuth, (req, res) => {
   if (!lawyer) return res.status(404).json({ error: 'Lawyer not found' });
 
   const allowed =
+    isSuper(u.role) ||
     (u.role === 'lad_admin' || u.role === 'lad_intelligence') ||
     (u.role === 'firm_compliance_officer' && u.firm_id === lawyer.firm_id) ||
     (u.user_type === 'lawyer' && u.sub === lawyer.id);
@@ -111,7 +112,7 @@ router.get('/lawyers/:id', requireAuth, (req, res) => {
 // GET /api/v1/skills/firms/:id — firm capabilities map
 router.get('/firms/:id', requireAuth, (req, res) => {
   const u = req.user;
-  const isLAD = ['lad_admin','lad_intelligence'].includes(u.role);
+  const isLAD = isSuper(u.role) || ['lad_admin','lad_intelligence'].includes(u.role);
   const isOwnCO = u.role === 'firm_compliance_officer' && u.firm_id === req.params.id;
   const isOwnLawyer = u.user_type === 'lawyer' && u.firm_id === req.params.id;
   if (!isLAD && !isOwnCO && !isOwnLawyer) return res.status(403).json({ error: 'Forbidden' });

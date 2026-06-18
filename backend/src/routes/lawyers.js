@@ -6,7 +6,7 @@ const db = require('../db');
 const store = require('../services/store');
 const aimodel = require('../services/aimodel');
 const log = require('../logger');
-const { requireAuth, requireRole } = require('../middleware/auth');
+const { requireAuth, requireRole, isSuper } = require('../middleware/auth');
 
 // Accredited-course attendance (recorded by providers/firms against a course
 // code) shaped like a booking, so it shows in the lawyer's completed list and
@@ -183,6 +183,7 @@ router.get('/:id', requireAuth, (req, res) => {
   // Authorisation: LAD admin sees all; firm CO sees only their firm; lawyer sees self.
   const u = req.user;
   const allowed =
+    isSuper(u.role) ||
     (u.role === 'lad_admin' || u.role === 'lad_intelligence') ||
     (u.role === 'firm_compliance_officer' && u.firm_id === lawyer.firm_id) ||
     (u.user_type === 'lawyer' && u.sub === lawyer.id);
