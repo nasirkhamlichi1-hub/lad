@@ -2689,6 +2689,7 @@ async function refreshCoursesFromBackend() {
     }));
     window.COURSES = COURSES;
     renderCourseCards();
+    if (typeof renderCal === 'function') renderCal(); // refresh calendar with live sessions
   } catch (e) {
     console.warn('[firm-portal] refreshCoursesFromBackend:', e.message);
   }
@@ -3420,8 +3421,9 @@ function getAllSessions() {
   const all = [];
   COURSES.forEach(c => {
     c.sessions.forEach(s => {
-      // Parse "Wed 20 May 2026" → Date
-      const parts = s.date.replace(/^\w+\s/,'').split(' ');
+      // Parse "Wed 20 May 2026" OR "20 May 2026" → Date.
+      // Only strip a leading ALPHABETIC weekday, never a leading day number.
+      const parts = s.date.replace(/^[A-Za-z]+\s/,'').split(' ');
       const months = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
       const day = parseInt(parts[0]);
       const mon = months[parts[1]];
