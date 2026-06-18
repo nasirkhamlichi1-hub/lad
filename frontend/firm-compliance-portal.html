@@ -1845,10 +1845,30 @@ function renderCreditLawyerList() {
 // ════════════════════════════════════════════
 // RENDER CREDIT HISTORY
 // ════════════════════════════════════════════
+let creditTxnsLive = null;
+async function loadCreditHistory() {
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
+  const token = localStorage.getItem('lad_token') || '';
+  if (!token) { renderCreditHistory(); return; }
+  try {
+    const r = await fetch(base + '/api/v1/firms/F-GA/transactions', { headers: { Authorization: 'Bearer ' + token } });
+    if (!r.ok) { renderCreditHistory(); return; }
+    const rows = await r.json();
+    if (!Array.isArray(rows)) { renderCreditHistory(); return; }
+    const asc = [...rows].reverse(); let bal = 0;
+    asc.forEach(t => { bal += Number(t.amount) || 0; t.balance = bal; });
+    creditTxnsLive = asc.reverse();
+    renderCreditHistory();
+  } catch (_) { renderCreditHistory(); }
+}
 function renderCreditHistory() {
-  document.getElementById('creditHistory').innerHTML = CREDIT_TRANSACTIONS.map((t,i) => {
+  const txns = creditTxnsLive || CREDIT_TRANSACTIONS;
+  const host = document.getElementById('creditHistory');
+  if (!host) return;
+  if (!txns.length) { host.innerHTML = '<div style="padding:20px;text-align:center;color:var(--slate3);font-size:12px">No credit transactions yet.</div>'; return; }
+  host.innerHTML = txns.map((t,i) => {
     const isPos = t.amount > 0;
-    return `<div style="display:grid;grid-template-columns:90px 1fr auto auto auto;gap:12px;align-items:center;padding:11px 18px;border-bottom:${i<CREDIT_TRANSACTIONS.length-1?'1px solid var(--line)':'none'}">
+    return `<div style="display:grid;grid-template-columns:90px 1fr auto auto auto;gap:12px;align-items:center;padding:11px 18px;border-bottom:${i<txns.length-1?'1px solid var(--line)':'none'}">
       <div style="font-family:var(--mono);font-size:10px;color:var(--slate3)">${t.date}</div>
       <div>
         <div style="font-size:12.5px;color:var(--ink);font-weight:${isPos?600:400}">${t.desc}</div>
@@ -1856,7 +1876,7 @@ function renderCreditHistory() {
       </div>
       <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:${isPos?'var(--green)':'var(--slate)'}">${isPos?'+':''}${t.amount} cr</div>
       <div style="font-family:var(--mono);font-size:11px;color:var(--slate3)">${isPos?'AED '+t.aed.toLocaleString():'-AED '+t.aed}</div>
-      <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);text-align:right">${t.balance} bal</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);text-align:right">${t.balance != null ? t.balance + ' bal' : ''}</div>
     </div>`;
   }).join('');
 }
@@ -3853,6 +3873,7 @@ async function loadFirmIdentity() {
 // Auto-load on first render of the dashboard
 async function bootAccreditationData() {
   loadFirmIdentity();
+  loadCreditHistory();
   await loadFirmLawyersFromBackend();
   await syncInternalSessionsFromBackend();
   if (typeof renderInternalCards === 'function') renderInternalCards();
