@@ -93,6 +93,55 @@ function attendanceView(bookings) {
     }));
 }
 
+// GET /api/v1/lawyers — directory across the whole profession (admin/oversight).
+// Server-side search + pagination + practising filter. Powers the LAD admin
+// Support directory and the stats lawyer table.
+//   ?search= ?limit= ?offset= ?practicing=1|0|all
+const DIRECTORY_ROLES = ['lad_admin', 'lad_intelligence', 'lad_super_admin', 'super_admin', 'dg'];
+router.get('/', requireAuth, (req, res) => {
+  if (!DIRECTORY_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Forbidden' });
+  const limit = Math.min(500, Math.max(1, parseInt(req.query.limit || '50', 10) || 50));
+  const offset = Math.max(0, parseInt(req.query.offset || '0', 10) || 0);
+  const search = (req.query.search || '').toString().trim();
+  const practicing = (req.query.practicing != null ? String(req.query.practicing) : 'all');
+
+  const where = []; const args = [];
+  if (practicing === '1') where.push("LOWER(COALESCE(l.status,'active')) NOT IN ('inactive','resigned','non-practising')");
+  else if (practicing === '0') where.push("LOWER(COALESCE(l.status,'active')) IN ('inactive','resigned','non-practising')");
+  if (search) {
+    const q = '%' + search.toLowerCase() + '%';
+    where.push("(LOWER(l.id) LIKE ? OR LOWER(l.first_name) LIKE ? OR LOWER(l.last_name) LIKE ? OR LOWER(l.first_name || ' ' || l.last_name) LIKE ? OR LOWER(COALESCE(l.email,'')) LIKE ? OR LOWER(COALESCE(f.name,'')) LIKE ?)");
+    args.push(q, q, q, q, q, q);
+  }
+  const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+  let total = 0, rows = [];
+  try {
+    total = db.prepare(`SELECT COUNT(*) n FROM lawyers l LEFT JOIN firms f ON f.id = l.firm_id ${whereSql}`).get(...args).n;
+    rows = db.prepare(
+      `SELECT l.id, l.first_name, l.last_name, l.email, l.phone, l.role, l.practice_areas,
+              l.firm_id, f.name AS firm_name, l.lifetime_points, l.credit_balance, l.status,
+              l.nationality, l.admitted_year, l.last_login_at
+       FROM lawyers l LEFT JOIN firms f ON f.id = l.firm_id
+       ${whereSql} ORDER BY l.lifetime_points ASC, l.id ASC LIMIT ? OFFSET ?`
+    ).all(...args, limit, offset);
+  } catch (e) { log.error('lawyers_directory', { error: e.message }); }
+
+  const data = rows.map((l) => {
+    const status = (l.status || 'active').toLowerCase();
+    const name = `${l.first_name || ''} ${l.last_name || ''}`.trim() || l.id;
+    return {
+      id: l.id, name, first_name: l.first_name, last_name: l.last_name,
+      email: l.email || '', phone: l.phone || '', role: l.role || '',
+      practice: l.practice_areas || '', firm_id: l.firm_id || '', firm_name: l.firm_name || '',
+      pts: Number(l.lifetime_points) || 0, points: Number(l.lifetime_points) || 0,
+      credits: Number(l.credit_balance) || 0, status,
+      nationality: l.nationality || '', admitted: l.admitted_year || null,
+      last_login: l.last_login_at || null,
+    };
+  });
+  res.json({ data, meta: { total, limit, offset, returned: data.length } });
+});
+
 // GET /api/v1/lawyers/me — current lawyer's full profile
 router.get('/me', requireAuth, (req, res) => {
   if (req.user.user_type !== 'lawyer') {
