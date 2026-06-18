@@ -31,14 +31,18 @@ function env(names) {
 }
 
 function settings() {
-  const endpoint = env(['AIMODEL_ENDPOINT', 'AZURE_OPENAI_ENDPOINT', 'OPENAI_ENDPOINT',
+  const endpoint = env(['AIMODEL_ENDPOINT', 'INTERNALAI__AIURL', 'InternalAI__AiUrl',
+    'AZURE_OPENAI_ENDPOINT', 'OPENAI_ENDPOINT',
     'OPENAI_BASE_URL', 'AOAI_ENDPOINT', 'AI_ENDPOINT', 'AI_MODEL_ENDPOINT']);
-  const key = env(['AIMODEL_KEY', 'AIMODEL_API_KEY', 'AZURE_OPENAI_KEY', 'AZURE_OPENAI_API_KEY',
+  const key = env(['AIMODEL_KEY', 'AIMODEL_API_KEY', 'INTERNALAI__APIKEY', 'InternalAI__ApiKey',
+    'AZURE_OPENAI_KEY', 'AZURE_OPENAI_API_KEY',
     'OPENAI_API_KEY', 'OPENAI_KEY', 'AOAI_KEY', 'AI_KEY', 'AI_MODEL_KEY']);
-  const deployment = env(['AIMODEL_DEPLOYMENT', 'AIMODEL_MODEL', 'AZURE_OPENAI_DEPLOYMENT',
+  const deployment = env(['AIMODEL_DEPLOYMENT', 'AIMODEL_MODEL', 'INTERNALAI__AIMODEL', 'InternalAI__AiModel',
+    'AZURE_OPENAI_DEPLOYMENT',
     'AZURE_OPENAI_DEPLOYMENT_NAME', 'AZURE_OPENAI_MODEL', 'OPENAI_MODEL', 'OPENAI_DEPLOYMENT',
     'AOAI_DEPLOYMENT', 'AI_MODEL', 'AI_DEPLOYMENT', 'AI_MODEL_NAME']) || 'gpt-4o';
-  const apiVersion = env(['AIMODEL_API_VERSION', 'AZURE_OPENAI_API_VERSION']) || '2024-08-01-preview';
+  const apiVersion = env(['AIMODEL_API_VERSION', 'INTERNALAI__APIVERSION', 'InternalAI__ApiVersion',
+    'AZURE_OPENAI_API_VERSION']) || '2024-08-01-preview';
   return { endpoint: endpoint.replace(/\/+$/, ''), key, deployment, apiVersion };
 }
 
