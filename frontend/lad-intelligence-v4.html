@@ -825,7 +825,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         <script>
         (async function(){
           try {
-            const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://clpd-lad-api-0878.azurewebsites.net';
+            const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
             const r = await fetch(base.replace(/\/$/,'') + '/api/v1/stats/aggregate');
             if (!r.ok) return;
             const j = await r.json();
@@ -1817,7 +1817,7 @@ async function loadPredictBaseline() {
   try {
     const base = (window.LAD_API_BASE)
       || (window.LAD_SYNC && window.LAD_SYNC.base)
-      || 'https://clpd-lad-api-0878.azurewebsites.net';
+      || 'https://lad-clpd-backend.onrender.com';
     const r = await fetch(base.replace(/\/$/, '') + '/api/v1/stats/aggregate');
     if (!r.ok) throw new Error('stats endpoint ' + r.status);
     const j = await r.json();

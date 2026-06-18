@@ -3004,7 +3004,7 @@ async function loadMyLawyerRecord() {
   try {
     const base = (window.LAD_API_BASE)
       || (window.LAD_SYNC && window.LAD_SYNC.base)
-      || 'https://clpd-lad-api-0878.azurewebsites.net';
+      || 'https://lad-clpd-backend.onrender.com';
     const token = (function(){ try { return localStorage.getItem('lad_token') || ''; } catch(_) { return ''; }})();
     if (!token) return;
     const r = await fetch(base.replace(/\/$/,'') + '/api/v1/lawyers/me', {
@@ -3185,7 +3185,7 @@ document.addEventListener('DOMContentLoaded', loadMyLawyerRecord);
 // ════════════════════════════════════════════════════════════════
 async function loadMyAttendance() {
   try {
-    var base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://clpd-lad-api-0878.azurewebsites.net';
+    var base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
     var token = (function(){ try { return localStorage.getItem('lad_token') || ''; } catch(_) { return ''; }})();
     if (!token) return;
     var r = await fetch(base.replace(/\/$/, '') + '/api/v1/lawyers/me', {
@@ -3253,7 +3253,7 @@ document.addEventListener('DOMContentLoaded', loadMyAttendance);
 // ════════════════════════════════════════════════════════════════
 async function loadCatalogueLive() {
   try {
-    var base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://clpd-lad-api-0878.azurewebsites.net';
+    var base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
     var r = await fetch(base.replace(/\/$/,'') + '/api/v1/accreditations/_/catalog');
     if (!r.ok) return;
     var j = await r.json();
@@ -3451,7 +3451,7 @@ let pendingBooking = null;      // remembered when a booking is blocked on credi
 // Authenticated JSON call to the LAD backend. Returns { ok, status, data }.
 async function ladApi(path, opts) {
   opts = opts || {};
-  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || '';
+  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
   let token = ''; try { token = localStorage.getItem('lad_token') || ''; } catch (_) {}
   const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
   if (token) headers.Authorization = 'Bearer ' + token;
@@ -4434,7 +4434,7 @@ async function loadMyAttendance() {
   const subEl  = document.getElementById('completedSubtitle');
   if (!listEl) return;
 
-  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || '';
+  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
   const token = localStorage.getItem('lad_token') || '';
   if (!base || !token) {
     listEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:11px">Sign in to see your attendance history.</div>';
@@ -5265,7 +5265,7 @@ What would you like to know?`
 
   // Maryam runs on the backend AiModel (server holds the key; no client key).
   async function respondViaAiModel(prompt, targetEl) {
-    const base = (window.LAD_API_BASE || '').replace(/\/$/, '');
+    const base = (window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com').replace(/\/$/, '');
     let token = ''; try { token = localStorage.getItem('lad_token') || ''; } catch (_) {}
     const systemPrompt = `You are Maryam, an AI assistant inside the Dubai Legal Affairs Department's CLPD (Continuing Legal Professional Development) compliance platform.
 

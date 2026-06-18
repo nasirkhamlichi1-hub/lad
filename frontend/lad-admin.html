@@ -2754,7 +2754,7 @@ function removeImpact(idx){
 }
 
 // ────────── SMART TAGS (skills ecosystem) ──────────
-function _admBase(){ return (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || ''; }
+function _admBase(){ return (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com'; }
 function _admToken(){ try { return localStorage.getItem('lad_token') || ''; } catch(_) { return ''; } }
 let TAXONOMY_FLAT = null; // [{id,label,domain,domain_label}]
 

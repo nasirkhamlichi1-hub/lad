@@ -2628,7 +2628,7 @@ function renderCourses() { renderCourseCards(); }
 // ════════════════════════════════════════════════════════════════
 async function refreshCoursesFromBackend() {
   try {
-    const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://clpd-lad-api-0878.azurewebsites.net';
+    const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
     const r = await fetch(base.replace(/\/$/, '') + '/api/v1/accreditations/_/catalog');
     if (!r.ok) return;
     const j = await r.json();
@@ -3499,7 +3499,7 @@ async function triggerWorkflow(payload) {
   payload.submittedAt = new Date().toISOString();
   payload.submittedVia = 'Firm Compliance Portal';
 
-  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || '';
+  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
   if (!base) {
     console.error('[accreditations] no backend base URL — submission would be lost');
     alert('Submission not sent — backend URL not configured. Refresh the page and try again.');

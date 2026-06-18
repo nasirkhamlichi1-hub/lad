@@ -481,7 +481,7 @@ function applyLADConfig() {
   try {
     var base = (window.LAD_API_BASE)
       || (window.LAD_SYNC && window.LAD_SYNC.base)
-      || 'https://clpd-lad-api-0878.azurewebsites.net';
+      || 'https://lad-clpd-backend.onrender.com';
     var [stats, courses] = await Promise.all([
       fetch(base.replace(/\/$/,'') + '/api/v1/stats/aggregate').then(r => r.ok ? r.json() : null).catch(()=>null),
       fetch(base.replace(/\/$/,'') + '/api/v1/accreditations/_/catalog').then(r => r.ok ? r.json() : null).catch(()=>null),
@@ -2184,7 +2184,7 @@ function openForgotPassword() {
   const prefill = (document.getElementById('credUsername')?.value || '').trim();
   const username = prompt('Enter your username (email, lawyer number, or bar number) and we will email you a reset link.', prefill);
   if (!username) return;
-  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || '';
+  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
   fetch(base + '/api/v1/auth/request-reset', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -3174,7 +3174,7 @@ async function pubTriggerWorkflow(payload) {
   payload.referenceNumber = ref;
   payload.submittedAt = new Date().toISOString();
   payload.submittedVia = 'CLPD Public Portal';
-  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || '';
+  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
   if (!base) {
     console.error('[accreditations] no backend base URL');
     alert('Submission not sent — backend URL not configured. Refresh and try again.');
