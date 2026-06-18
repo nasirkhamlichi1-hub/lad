@@ -5665,8 +5665,8 @@ document.addEventListener('DOMContentLoaded', loadAdmSessions);
           <span class="aic-chip" onclick="aicQuick(this)">Which firms are below 50% compliant?</span>
           <span class="aic-chip" onclick="aicQuick(this)">How many lawyers are critical (&lt;8 pts)?</span>
           <span class="aic-chip" onclick="aicQuick(this)">Which sessions have fewer than 5 seats?</span>
-          <span class="aic-chip" onclick="aicQuick(this)">Summarise booking activity and no-shows</span>
-          <span class="aic-chip" onclick="aicQuick(this)">How do I cancel a session and refund everyone?</span>
+          <span class="aic-chip" onclick="aicQuick(this)">Notify all critical lawyers to book before 31 December</span>
+          <span class="aic-chip" onclick="aicQuick(this)">Remind everyone the cycle ends soon</span>
         </div>
         <div id="aicAnswer"></div>
       </div>
@@ -5718,8 +5718,53 @@ document.addEventListener('DOMContentLoaded', loadAdmSessions);
       var r=await fetch(base()+'/api/v1/admin/command',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({prompt:q})});
       var d=await r.json();
       if(!r.ok){ out.innerHTML='<div class="aic-answer">'+esc(d.error||'Could not answer that.')+'</div>'; return; }
+      if(d.intent && d.intent!=='answer'){ aicRenderPlan(d); return; }
       out.innerHTML='<div class="aic-answer">'+esc(d.answer||'')+'</div><div class="aic-engine">'+(d.engine==='aimodel'?'Powered by AiModel · live data':'Live snapshot')+'</div>';
     }catch(e){ out.innerHTML='<div class="aic-answer">Network error — please try again.</div>'; }
+  };
+  // The AI proposed an action → show it for confirmation before running.
+  function aicRenderPlan(d){
+    window.__aicPlan = d;
+    var out=document.getElementById('aicAnswer');
+    var color = d.intent==='cancel_session' ? '#c0392b' : '#0d7377';
+    var label = d.intent==='cancel_session' ? 'Cancel session' : d.intent==='reschedule_session' ? 'Reschedule session' : 'Send notification';
+    var detail='';
+    if(d.intent==='cancel_session'||d.intent==='reschedule_session'){
+      var s=(d.params&&d.params.session)||{};
+      detail='<div style="margin-top:8px;font-size:12.5px;color:#475569"><strong>'+esc(s.title||'')+'</strong> · '+(s.booked||0)+' booked'+(d.params.scheduled_at?(' → '+esc(new Date(d.params.scheduled_at).toUTCString())):'')+(d.params.venue?(' · '+esc(d.params.venue)):'')+'</div>';
+    } else if(d.intent==='notify'){
+      var aud = (d.params.audience==='segment') ? ('segment · '+esc(JSON.stringify(d.params.segment||{}))) : 'everyone';
+      detail='<div style="margin-top:8px;font-size:12.5px;color:#475569">To: '+aud+'<br><strong>'+esc(d.params.title||'')+'</strong><br>'+esc(d.params.body||'')+'</div>';
+    }
+    out.innerHTML='<div class="aic-answer" style="border-left-color:'+color+'">'
+      +'<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:'+color+';font-weight:700;margin-bottom:6px">Proposed action · '+esc(label)+'</div>'
+      +'<div style="font-size:14px;color:#0f172a">'+esc(d.summary||'')+'</div>'+detail
+      +'<div style="display:flex;gap:8px;margin-top:14px"><button class="aic-btn" style="background:'+color+'" onclick="aicExecute()">Confirm &amp; run</button><button class="aic-btn alt" onclick="aicCancelPlan()">Cancel</button></div>'
+      +'<div id="aicPlanResult" style="margin-top:10px;font-size:12.5px"></div></div>';
+  }
+  window.aicCancelPlan=function(){ window.__aicPlan=null; document.getElementById('aicAnswer').innerHTML=''; document.getElementById('aicChips').style.display=''; };
+  window.aicExecute=async function(){
+    var d=window.__aicPlan; if(!d) return;
+    var rEl=document.getElementById('aicPlanResult'); if(rEl) rEl.textContent='Running…';
+    try{
+      var r, body;
+      if(d.intent==='cancel_session'){
+        r=await fetch(base()+'/api/v1/courses/sessions/'+encodeURIComponent(d.params.sessionId)+'/cancel',{method:'POST',headers:{Authorization:'Bearer '+tok()}});
+      } else if(d.intent==='reschedule_session'){
+        body={scheduled_at:d.params.scheduled_at}; if(d.params.venue) body.venue=d.params.venue;
+        r=await fetch(base()+'/api/v1/courses/sessions/'+encodeURIComponent(d.params.sessionId)+'/reschedule',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify(body)});
+      } else if(d.intent==='notify'){
+        r=await fetch(base()+'/api/v1/notifications/send',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify(d.params)});
+      } else { if(rEl) rEl.textContent='Unknown action.'; return; }
+      var jd=await r.json().catch(function(){return {};});
+      if(r.ok){
+        var msg = d.intent==='notify' ? ('✓ '+(jd.message||'Sent.'))
+          : ('✓ Done'+(jd.refunded!=null?(' · '+jd.refunded+' refunded'):'')+(jd.notified!=null?(' · '+jd.notified+' notified'):''));
+        if(rEl) rEl.innerHTML='<span style="color:#16a34a;font-weight:600">'+esc(msg)+'</span>';
+        window.__aicPlan=null;
+        try{ if(typeof loadAdmSessions==='function') loadAdmSessions(); if(typeof admBookingsRender==='function') admBookingsRender(); }catch(_){}
+      } else if(rEl){ rEl.innerHTML='<span style="color:#c0392b">'+esc(jd.error||jd.message||'Action failed.')+'</span>'; }
+    }catch(e){ if(rEl) rEl.innerHTML='<span style="color:#c0392b">Network error.</span>'; }
   };
   function audienceLabel(){ var v=document.getElementById('aicAudience').value; return ({all:'all lawyers',critical:'lawyers who are critical (<8 points)','at-risk':'lawyers at risk (8–15 points)',compliant:'compliant lawyers (16+ points)',noBookings:'lawyers with no bookings yet'})[v]||'the recipients'; }
   window.aicDraft=async function(){
