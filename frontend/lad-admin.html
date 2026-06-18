@@ -858,10 +858,28 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
   <div style="background:var(--white);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:20px">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:10px">
       <div><div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--slate3);font-weight:700">LIVE SESSIONS</div><div style="font-size:15px;font-weight:600;margin-top:2px">Manage scheduled sessions</div></div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input id="admSessSearch" class="adm-input" placeholder="Search course / venue…" style="width:210px" oninput="admSessionsRender()"/>
-        <button class="adm-btn-green" onclick="admComplianceReport()" style="font-size:12px">⤓ Compliance report</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input id="admSessSearch" class="adm-input" placeholder="Search course / venue / provider…" style="width:230px" oninput="admSessionsRender()"/>
+        <select id="admSessStatus" class="adm-input" style="font-size:12px" onchange="admSessionsRender()">
+          <option value="all">All statuses</option>
+          <option value="open">Open</option>
+          <option value="closed">Closed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <select id="admSessFormat" class="adm-input" style="font-size:12px" onchange="admSessionsRender()">
+          <option value="all">All formats</option>
+          <option value="online">Online</option>
+          <option value="inperson">Face-to-face</option>
+        </select>
+        <select id="admSessProvider" class="adm-input" style="font-size:12px;max-width:200px" onchange="admSessionsRender()"><option value="all">All providers</option></select>
         <button class="adm-btn-green" onclick="loadAdmSessions()" style="font-size:12px">↻ Refresh</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 18px;border-bottom:1px solid var(--line);background:var(--paper);flex-wrap:wrap;gap:8px">
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--slate2);cursor:pointer"><input type="checkbox" id="admSessAll" onchange="admSessToggleAll(this.checked)"/> Select all <span id="admSessCount" style="font-family:var(--mono);color:var(--slate3)"></span></label>
+      <div style="display:flex;gap:8px">
+        <button class="adm-btn-green" id="admSessExportBtn" onclick="admSessExport()" style="font-size:12px">⤓ Export <span id="admSessExportN"></span></button>
+        <button class="adm-btn-green" onclick="admComplianceReport()" style="font-size:12px">⤓ Compliance report</button>
       </div>
     </div>
     <div id="admSessionsList" style="max-height:380px;overflow-y:auto"><div style="padding:24px;text-align:center;color:var(--slate2);font-size:13px">Loading live sessions…</div></div>
@@ -5538,6 +5556,8 @@ function renderMigrateResult(res, isDryRun) {
 <script>
 // ════════ LIVE SESSIONS MANAGER (cancel / move) + REPORTS ════════
 let ADM_SESSIONS = [];
+let ADM_SESS_SEL = {};
+function _admFmtOf(s){ var v=((s.venue||'')+' '+(s.format||'')+' '+(s.language||'')).toLowerCase(); return /online|webex|zoom|virtual|teams|e-?learning|webinar|remote/.test(v)?'online':'inperson'; }
 async function loadAdmSessions(){
   try {
     const base = _admBase().replace(/\/$/,'');
@@ -5545,27 +5565,70 @@ async function loadAdmSessions(){
     ADM_SESSIONS = r.ok ? await r.json() : [];
     if (!Array.isArray(ADM_SESSIONS)) ADM_SESSIONS = [];
   } catch(e){ ADM_SESSIONS = []; }
+  ADM_SESS_SEL = {};
+  // Populate the provider/firm/trainer filter from the live data.
+  var sel=document.getElementById('admSessProvider');
+  if(sel){ var provs=Array.from(new Set(ADM_SESSIONS.map(function(s){return s.provider_name;}).filter(Boolean))).sort(); var cur=sel.value;
+    sel.innerHTML='<option value="all">All providers</option>'+provs.map(function(p){return '<option value="'+escapeAttr(p)+'">'+escape(p)+'</option>';}).join('');
+    if(provs.indexOf(cur)!==-1) sel.value=cur; }
   admSessionsRender();
 }
 function _admSdate(iso){ if(!iso) return '—'; const d=new Date(iso); if(isNaN(d)) return String(iso).slice(0,16); const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; const hh=String(d.getUTCHours()).padStart(2,'0'), mm=String(d.getUTCMinutes()).padStart(2,'0'); return d.getUTCDate()+' '+M[d.getUTCMonth()]+' '+d.getUTCFullYear()+' · '+hh+':'+mm; }
+function admSessFiltered(){
+  const q=(document.getElementById('admSessSearch')?.value||'').toLowerCase().trim();
+  const st=document.getElementById('admSessStatus')?.value||'all';
+  const fmt=document.getElementById('admSessFormat')?.value||'all';
+  const prov=document.getElementById('admSessProvider')?.value||'all';
+  let rows=ADM_SESSIONS.filter(function(s){
+    const status=(s.status||'scheduled').toLowerCase();
+    if(st==='open' && (status==='closed'||status==='cancelled')) return false;
+    if(st==='closed' && status!=='closed') return false;
+    if(st==='cancelled' && status!=='cancelled') return false;
+    if(fmt!=='all' && _admFmtOf(s)!==fmt) return false;
+    if(prov!=='all' && (s.provider_name||'')!==prov) return false;
+    if(q){ const hay=((s.course_title||'')+' '+(s.venue||'')+' '+(s.provider_name||'')).toLowerCase(); if(hay.indexOf(q)===-1) return false; }
+    return true;
+  });
+  return rows.slice().sort(function(a,b){return String(a.scheduled_at||'').localeCompare(String(b.scheduled_at||''));});
+}
 function admSessionsRender(){
   const el = document.getElementById('admSessionsList'); if(!el) return;
-  const q = (document.getElementById('admSessSearch')?.value||'').toLowerCase().trim();
-  let rows = ADM_SESSIONS.filter(s => !q || ((s.course_title||'')+' '+(s.venue||'')).toLowerCase().includes(q));
-  rows = rows.slice().sort((a,b)=> String(a.scheduled_at||'').localeCompare(String(b.scheduled_at||'')));
-  if(!rows.length){ el.innerHTML='<div style="padding:24px;text-align:center;color:var(--slate2);font-size:13px">No sessions found.</div>'; return; }
-  el.innerHTML = rows.map(s=>{
-    const cancelled = (s.status||'')==='cancelled';
+  const rows = admSessFiltered();
+  const selIds = Object.keys(ADM_SESS_SEL).filter(function(id){return ADM_SESS_SEL[id];});
+  const cnt=document.getElementById('admSessCount'); if(cnt) cnt.textContent='('+rows.length+' shown'+(selIds.length?(' · '+selIds.length+' selected'):'')+')';
+  const exN=document.getElementById('admSessExportN'); if(exN) exN.textContent=selIds.length?('('+selIds.length+')'):('(all '+rows.length+')');
+  const allcb=document.getElementById('admSessAll'); if(allcb) allcb.checked = rows.length>0 && rows.every(function(s){return ADM_SESS_SEL[s.id];});
+  if(!rows.length){ el.innerHTML='<div style="padding:24px;text-align:center;color:var(--slate2);font-size:13px">No sessions match those filters.</div>'; return; }
+  el.innerHTML = rows.map(function(s){
+    const cancelled = (s.status||'').toLowerCase()==='cancelled';
+    const closed = (s.status||'').toLowerCase()==='closed';
     const seats = Number(s.seats_remaining)||0;
-    return '<div style="display:grid;grid-template-columns:1.7fr 1.3fr 90px 100px 150px;gap:0;border-bottom:1px solid var(--line);font-size:12.5px;align-items:center;'+(cancelled?'opacity:.5':'')+'">'
-      +'<div style="padding:9px 14px;font-weight:500">'+escape(s.course_title||s.course_id||'—')+(s.venue?'<span style="color:var(--slate3);font-weight:400"> · '+escape(s.venue)+'</span>':'')+'</div>'
+    const fmt = _admFmtOf(s)==='online'?'Online':'Face-to-face';
+    return '<div style="display:grid;grid-template-columns:34px 1.6fr 1.2fr 70px 96px 92px 140px;gap:0;border-bottom:1px solid var(--line);font-size:12.5px;align-items:center;'+(cancelled?'opacity:.5':'')+'">'
+      +'<div style="padding:9px 0 9px 14px"><input type="checkbox" '+(ADM_SESS_SEL[s.id]?'checked':'')+' onchange="admSessSel(\''+escape(s.id)+'\',this.checked)"/></div>'
+      +'<div style="padding:9px 14px;font-weight:500">'+escape(s.course_title||s.course_id||'—')+(s.provider_name?'<span style="color:var(--slate3);font-weight:400"> · '+escape(s.provider_name)+'</span>':'')+'</div>'
       +'<div style="padding:9px 14px;color:var(--slate2);font-family:var(--mono);font-size:11px">'+_admSdate(s.scheduled_at)+'</div>'
-      +'<div style="padding:9px 14px;text-align:right;font-family:var(--mono)">'+(cancelled?'—':seats+' seats')+'</div>'
-      +'<div style="padding:9px 14px"><span style="font-size:10px;font-weight:600;text-transform:uppercase;color:'+(cancelled?'var(--red)':'var(--green)')+'">'+(cancelled?'cancelled':(s.status||'scheduled'))+'</span></div>'
+      +'<div style="padding:9px 14px;text-align:right;font-family:var(--mono)">'+(cancelled?'—':seats)+'</div>'
+      +'<div style="padding:9px 14px;font-size:11px;color:var(--slate2)">'+fmt+'</div>'
+      +'<div style="padding:9px 14px"><span style="font-size:10px;font-weight:600;text-transform:uppercase;color:'+(cancelled?'var(--red)':(closed?'var(--amber)':'var(--green)'))+'">'+escape(s.status||'scheduled')+'</span></div>'
       +'<div style="padding:9px 14px;text-align:right;display:flex;gap:6px;justify-content:flex-end">'
         +(cancelled?'' : '<button class="adm-btn-green" style="padding:4px 9px;font-size:11px" onclick="admSessionMove(\''+escape(s.id)+'\',\''+escapeAttr(String(s.course_title||''))+'\')">Move</button><button class="adm-btn-green" style="padding:4px 9px;font-size:11px;background:#fdecea;border-color:#f1b8b0;color:#c0392b" onclick="admSessionCancel(\''+escape(s.id)+'\',\''+escapeAttr(String(s.course_title||''))+'\')">Cancel</button>')
       +'</div></div>';
   }).join('');
+}
+function admSessSel(id, checked){ if(checked) ADM_SESS_SEL[id]=true; else delete ADM_SESS_SEL[id]; admSessionsRender(); }
+function admSessToggleAll(checked){ admSessFiltered().forEach(function(s){ if(checked) ADM_SESS_SEL[s.id]=true; else delete ADM_SESS_SEL[s.id]; }); admSessionsRender(); }
+function admSessExport(){
+  const selIds = Object.keys(ADM_SESS_SEL).filter(function(id){return ADM_SESS_SEL[id];});
+  let rows = admSessFiltered();
+  if(selIds.length) rows = rows.filter(function(s){return ADM_SESS_SEL[s.id];});
+  if(!rows.length){ toast('Nothing to export','error'); return; }
+  const cols=['id','course_title','provider_name','scheduled_at','end_at','venue','language','seats_remaining','capacity','status'];
+  const fmtCol=function(s){return _admFmtOf(s)==='online'?'Online':'Face-to-face';};
+  const csv='format,'+cols.join(',')+'\n'+rows.map(function(s){return '"'+fmtCol(s)+'",'+cols.map(function(c){return '"'+String(s[c]==null?'':s[c]).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='clpd-sessions-'+new Date().toISOString().slice(0,10)+'.csv'; a.click(); URL.revokeObjectURL(url);
+  toast('✓ Exported '+rows.length+' session'+(rows.length===1?'':'s'),'success');
 }
 function admMiniModal(title, bodyHtml, confirmLabel, color, onConfirm){
   let m=document.getElementById('admMiniModal'); if(!m){ m=document.createElement('div'); m.id='admMiniModal'; document.body.appendChild(m); }
