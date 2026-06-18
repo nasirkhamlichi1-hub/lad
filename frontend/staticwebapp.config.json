@@ -33,8 +33,10 @@
     { "route": "/ladstaff/*", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/staff", "statusCode": 302 },
     { "route": "/ladtrain", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/staff", "statusCode": 302 },
     { "route": "/ladtrain/*", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/staff", "statusCode": 302 },
-    { "route": "/ai-trainer-live.html", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/ai-trainer-live.html", "statusCode": 302 },
-    { "route": "/ai-trainer", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/ai-trainer-live.html", "statusCode": 302 }
+    { "route": "/ai-trainer-live.html", "headers": { "cache-control": "no-store, must-revalidate" } },
+    { "route": "/servicehub", "rewrite": "/ai-trainer-live.html", "headers": { "cache-control": "no-store, must-revalidate" } },
+    { "route": "/servicehub/*", "rewrite": "/ai-trainer-live.html" },
+    { "route": "/ai-trainer", "rewrite": "/ai-trainer-live.html" }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
