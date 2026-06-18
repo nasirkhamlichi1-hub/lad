@@ -71,8 +71,26 @@ function lawyerView(p, bookings) {
     barNo: p.unified_id || '',
     complianceYear: new Date().getUTCFullYear(),
     bookings: bookings || [],
+    attendance: attendanceView(bookings || []),
     profile: p, // raw record for any consumer that wants column names
   };
+}
+
+// Shape bookings/CPD records into the "attendance history" view-model the
+// lawyer portal's History/Completed section reads.
+function attendanceView(bookings) {
+  return (bookings || [])
+    .filter((b) => !['cancelled', 'refunded'].includes((b.status || '').toLowerCase()))
+    .map((b) => ({
+      course_title: b.course_title || b.course_title_current || 'CLPD activity',
+      delta_points: Number(b.points_earned != null ? b.points_earned : (b.points_received != null ? b.points_received : b.course_points)) || 0,
+      provider: b.provider || b.provider_name || b.venue || '',
+      date_held: b.scheduled_at || b.booked_at || b.created_at || null,
+      awarded_at: b.booked_at || b.created_at || null,
+      accreditation_code: b.accreditation_code || b.course_code || '',
+      session_ref: b.session_id || '',
+      status: (b.status || 'booked').toLowerCase(),
+    }));
 }
 
 // GET /api/v1/lawyers/me — current lawyer's full profile

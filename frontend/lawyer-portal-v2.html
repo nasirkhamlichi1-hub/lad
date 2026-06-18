@@ -4441,11 +4441,30 @@ async function loadMyAttendance() {
     if (subEl) subEl.textContent = 'Sign in required';
     return;
   }
+  // Render free tier can cold-start (~30-60s); retry once before giving up.
+  async function fetchMe(attempt) {
+    try {
+      const r = await fetch(base + '/api/v1/lawyers/me', { headers: { Authorization: 'Bearer ' + token } });
+      if (!r.ok) { const err = new Error('HTTP ' + r.status); err.status = r.status; throw err; }
+      return await r.json();
+    } catch (e) {
+      if (attempt < 2 && (!e.status || e.status >= 500 || e.status === 0)) {
+        await new Promise(res => setTimeout(res, 1800));
+        return fetchMe(attempt + 1);
+      }
+      throw e;
+    }
+  }
   try {
-    const r = await fetch(base + '/api/v1/lawyers/me', { headers: { Authorization: 'Bearer ' + token } });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const me = await r.json();
-    const att = Array.isArray(me.attendance) ? me.attendance : [];
+    const me = await fetchMe(1);
+    // Backend returns `attendance`; fall back to mapping `bookings` for older builds.
+    const att = Array.isArray(me.attendance) ? me.attendance
+      : (Array.isArray(me.bookings) ? me.bookings.map(b => ({
+          course_title: b.course_title || 'CLPD activity',
+          delta_points: b.points_earned || b.points_received || b.course_points || 0,
+          provider: b.provider || b.venue || '', date_held: b.scheduled_at || b.booked_at,
+          accreditation_code: b.accreditation_code || b.course_code || '', session_ref: b.session_id || '',
+        })) : []);
     if (subEl) {
       const total = att.reduce((s, a) => s + (a.delta_points || 0), 0);
       subEl.textContent = `${att.length} ${att.length === 1 ? 'activity' : 'activities'} · ${total} ${total === 1 ? 'point' : 'points'} earned · linked to LAD-accredited courses`;
@@ -4471,8 +4490,13 @@ async function loadMyAttendance() {
       </div>`;
     }).join('');
   } catch (e) {
-    console.warn('[lawyer-portal] loadMyAttendance:', e.message);
-    listEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-family:var(--mono);font-size:11px">Couldn’t load your attendance history. Try refresh.</div>';
+    console.warn('[lawyer-portal] loadMyAttendance:', e.status || '', e.message);
+    const msg = (e.status === 401 || e.status === 403)
+      ? 'Please sign in again to see your attendance history.'
+      : (e.status === 404)
+      ? 'No CLPD record is linked to this account yet.'
+      : 'Couldn’t reach the records service. Tap Refresh in a moment.';
+    listEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-family:var(--mono);font-size:11px">' + msg + (e.status ? ' (HTTP ' + e.status + ')' : '') + '</div>';
     if (subEl) subEl.textContent = 'Could not load attendance history';
   }
 }
