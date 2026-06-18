@@ -88,6 +88,22 @@ router.post('/buy', requireAuth, (req, res) => {
     message: 'Purchase request received — LAD Admin will confirm your credits shortly.' });
 });
 
+// POST /credits/checkout — instant card purchase. Credits the lawyer's balance
+// immediately (simulated PSP authorisation) so they can buy mid-booking and
+// continue. Records a completed purchase transaction for the ledger/audit.
+router.post('/checkout', requireAuth, (req, res) => {
+  const lawyer = lawyerOf(req);
+  if (!lawyer) return res.status(404).json({ error: 'No lawyer account for this user.' });
+  const credits = Math.round(Number((req.body && (req.body.credits || req.body.amount)) || 0));
+  if (credits <= 0) return res.status(400).json({ error: 'A positive credit amount is required.' });
+  const aed = (req.body && req.body.aed != null) ? Math.round(Number(req.body.aed)) : credits * PRICE;
+  const balance = grant(lawyer, credits, {
+    type: 'purchase', aed, method: 'card', reference: rid('PAY-'),
+    description: `Card purchase — ${credits} credits`,
+  });
+  res.status(201).json({ ok: true, credited: true, credits, aed, balance });
+});
+
 router.get('/requests', requireAuth, (req, res) => {
   if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
   res.json({ requests: db.prepare("SELECT * FROM credit_requests WHERE status = 'pending' ORDER BY created_at ASC").all(), pricePerCredit: PRICE });

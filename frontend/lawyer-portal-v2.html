@@ -987,6 +987,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 .bk-session-seats.low{color:var(--red)}
 .bk-session-seats.med{color:var(--amber)}
 .bk-session-seats.ok{color:var(--green)}
+.bk-session-seats.sold{color:var(--slate3);letter-spacing:1px}
 .bk-session-lang{font-family:var(--mono);font-size:9.5px;color:var(--slate3);background:var(--paper2);padding:2px 6px;border-radius:5px;border:1px solid var(--line)}
 .bk-session-provider{font-family:var(--mono);font-size:9px;color:var(--slate3)}
 .sq-option{padding:13px 16px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;transition:all .15s;font-size:13px;color:var(--slate);display:flex;align-items:center;gap:11px}
@@ -3112,9 +3113,11 @@ function paintMyRecord(me) {
       tb.innerHTML = '<span class="tb-status-dot"></span>CRITICAL · ' + pts + '/16 PTS';
     }
   }
-  // Topbar credits chip (existing #tbCreditsDisplay)
+  // Topbar credits chip (existing #tbCreditsDisplay) + sync the live booking
+  // balance so credit-gating in the booking modal uses the real number.
   const cdEl = document.getElementById('tbCreditsDisplay');
   if (cdEl) cdEl.textContent = credits;
+  try { if (typeof setLawyerCredits === 'function') setLawyerCredits(credits); } catch (_) {}
   // Days to 31 December of the compliance year
   const dl = document.getElementById('ovDaysLeft');
   if (dl) {
@@ -3442,15 +3445,53 @@ const COURSES = {
 
 let currentBookingId = null;
 let selectedSessionIdx = null;
+let SEAT_AVAIL = {};            // { "<courseId>#<idx>": seatsRemaining }
+let pendingBooking = null;      // remembered when a booking is blocked on credits
+
+// Authenticated JSON call to the LAD backend. Returns { ok, status, data }.
+async function ladApi(path, opts) {
+  opts = opts || {};
+  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || '';
+  let token = ''; try { token = localStorage.getItem('lad_token') || ''; } catch (_) {}
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (token) headers.Authorization = 'Bearer ' + token;
+  try {
+    const r = await fetch(base.replace(/\/$/, '') + path, {
+      method: opts.method || 'GET', headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    let data = null; try { data = await r.json(); } catch (_) {}
+    return { ok: r.ok, status: r.status, data: data || {} };
+  } catch (e) {
+    return { ok: false, status: 0, data: { error: 'network', message: e.message } };
+  }
+}
+
+// Keep the credit balance in sync everywhere it is shown.
+function setLawyerCredits(n) {
+  lawyerCredits = Math.max(0, Math.round(Number(n) || 0));
+  try { updateLawyerCreditUI(); } catch (_) {}
+}
+
+// Pull live seat counts so sessions render like cinema tickets.
+async function loadAvailability() {
+  const r = await ladApi('/api/v1/bookings/availability');
+  if (r.ok && r.data && r.data.seats) SEAT_AVAIL = r.data.seats;
+  return SEAT_AVAIL;
+}
 
 // ═══════════════════════════════════════════════
 // BOOKING MODAL
 // ═══════════════════════════════════════════════
-function openBooking(courseId) {
+async function openBooking(courseId) {
   const c = COURSES[courseId];
   if (!c) return;
   currentBookingId = courseId;
   selectedSessionIdx = null;
+  // Refresh the live credit balance + seat counts before showing the modal.
+  const bal = document.getElementById('bkCreditsBalance');
+  if (bal) bal.textContent = lawyerCredits;
+  if (!c.elearning) { try { await loadAvailability(); } catch (_) {} }
 
   // Populate header
   document.getElementById('bkArtHeader').style.background = c.bg;
@@ -3498,12 +3539,21 @@ function openBooking(courseId) {
   document.getElementById('bookingOverlay').classList.add('on');
 }
 
+// Live seats for a session = backend count if known, else the seed value.
+function seatsFor(idx, s) {
+  const sid = currentBookingId + '#' + idx;
+  return (SEAT_AVAIL && SEAT_AVAIL[sid] != null) ? Number(SEAT_AVAIL[sid]) : Number(s.seats);
+}
+
 function renderSessions(sessions, booked) {
   const html = sessions.map((s, idx) => {
-    const seatsClass = s.seats <= 5 ? 'low' : s.seats <= 15 ? 'med' : 'ok';
-    const seatsLabel = s.seats <= 5 ? `⚠ ${s.seats} seats left` : `${s.seats} seats available`;
-    return `<div class="bk-session-row ${booked && idx===0 ? 'selected':''}" onclick="selectSession(${idx}, this)">
-      <input type="radio" name="session" value="${idx}" ${booked && idx===0 ? 'checked':''} onchange="selectSession(${idx}, this.closest('.bk-session-row'))">
+    const seats = seatsFor(idx, s);
+    const soldOut = seats <= 0;
+    const seatsClass = soldOut ? 'sold' : seats <= 5 ? 'low' : seats <= 15 ? 'med' : 'ok';
+    const seatsLabel = soldOut ? 'SOLD OUT' : seats <= 5 ? `⚠ ${seats} seats left` : `${seats} seats available`;
+    const onclick = soldOut ? '' : `onclick="selectSession(${idx}, this)"`;
+    return `<div class="bk-session-row ${booked && idx===0 ? 'selected':''} ${soldOut ? 'soldout':''}" ${onclick} style="${soldOut ? 'opacity:.5;cursor:not-allowed' : ''}">
+      <input type="radio" name="session" value="${idx}" ${booked && idx===0 ? 'checked':''} ${soldOut ? 'disabled' : ''} onchange="selectSession(${idx}, this.closest('.bk-session-row'))">
       <div>
         <div class="bk-session-date">${s.date}</div>
         <div class="bk-session-time">${s.start} – ${s.end}</div>
@@ -3517,6 +3567,7 @@ function renderSessions(sessions, booked) {
 }
 
 function selectSession(idx, row) {
+  if (row && row.classList.contains('soldout')) return;
   selectedSessionIdx = idx;
   document.querySelectorAll('.bk-session-row').forEach(r => r.classList.remove('selected'));
   document.querySelectorAll('.bk-session-row input').forEach(r => r.checked = false);
@@ -3528,16 +3579,72 @@ function closeBooking() {
   document.getElementById('bookingOverlay').classList.remove('on');
 }
 
-function confirmBooking(isElearn) {
+// Real booking: credit-gated, seat-controlled. On 402 (not enough credits) we
+// remember the booking and open the buy-credits flow so it resumes after top-up.
+async function confirmBooking(isElearn) {
   const c = COURSES[currentBookingId];
+  if (!c) return;
   if (!isElearn && !c.elearning && selectedSessionIdx === null && !c.booked) {
     showToast('Please select a session date first');
     return;
   }
   if (c.booked) { showToast('Already booked — check your calendar'); closeBooking(); return; }
-  showToast(`✓ Booking confirmed for "${c.title}" — check your email`);
-  // Animate skills graph
+
+  const isF2F = !isElearn && !c.elearning;
+  const sIdx = isF2F ? selectedSessionIdx : null;
+  const sess = (isF2F && c.sessions && c.sessions[sIdx]) ? c.sessions[sIdx] : null;
+  const payload = {
+    course_id: currentBookingId,
+    course_title: c.title,
+    session_id: isF2F && sIdx != null ? currentBookingId + '#' + sIdx : null,
+    scheduled_at: sess ? sess.date : new Date().toISOString(),
+    language: sess ? sess.lang : (c.language || 'English'),
+    credits_used: c.credits || 5,
+  };
+
+  const btn = document.getElementById('bkConfirmBtn');
+  const prevLabel = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Processing…'; }
+
+  const r = await ladApi('/api/v1/bookings', { method: 'POST', body: payload });
+
+  if (btn) { btn.disabled = false; btn.textContent = prevLabel; }
+
+  // Not enough credits → remember the booking, open buy flow, resume after.
+  if (r.status === 402) {
+    const d = r.data || {};
+    pendingBooking = { isElearn, courseId: currentBookingId, sessionIdx: sIdx };
+    showToast(d.message || `You need ${d.needed || c.credits} credits to book — top up to continue.`);
+    closeBooking();
+    setTimeout(() => openBuyCredits(d.shortfall || null), 350);
+    return;
+  }
+  if (r.status === 409) {
+    const d = r.data || {};
+    if (d.error === 'sold_out') {
+      showToast('That session just sold out — please pick another date.');
+      try { await loadAvailability(); renderSessions(c.sessions, c.booked); } catch (_) {}
+    } else if (d.error === 'already_booked') {
+      showToast('You have already booked this session.');
+      c.booked = true; closeBooking();
+    } else {
+      showToast(d.message || 'This session is unavailable.');
+    }
+    return;
+  }
+  if (!r.ok) {
+    showToast((r.data && r.data.message) || 'Booking could not be completed — please try again.');
+    return;
+  }
+
+  // Success
+  const d = r.data || {};
+  if (d.balance != null) setLawyerCredits(d.balance);
+  if (payload.session_id && d.seats_remaining != null) SEAT_AVAIL[payload.session_id] = d.seats_remaining;
   c.booked = true;
+  showToast(isElearn || c.elearning
+    ? `✓ Enrolled in "${c.title}" — start anytime. ${d.credits_used || c.credits} credits used.`
+    : `✓ Booking confirmed for "${c.title}" — check your email. ${d.credits_used || c.credits} credits used.`);
   closeBooking();
   setTimeout(() => showToast('✦ Your skills graph has been updated'), 1800);
 }
@@ -4643,12 +4750,23 @@ function updateLawyerCreditUI() {
   if(bkBal) bkBal.textContent = lawyerCredits;
 }
 
-function openBuyCredits() {
+function openBuyCredits(shortfall) {
   selPkg = null;
   updateLawyerCreditUI();
   renderLBMPkgs();
   document.getElementById('lbmCalcBox').style.display = 'none';
-  document.getElementById('lbmSummary').textContent = 'Select a package above';
+  // If we arrived here because a booking was short on credits, nudge the
+  // smallest package that covers the gap and explain why.
+  const hint = document.getElementById('lbmSummary');
+  if (shortfall && shortfall > 0) {
+    let pick = 0;
+    for (let i = 0; i < PKGS.length; i++) { if (PKGS[i].credits >= shortfall) { pick = i; break; } pick = i; }
+    if (hint) hint.textContent = `You need ${shortfall} more credit${shortfall === 1 ? '' : 's'} to book — pick a package.`;
+    document.getElementById('lawyerBuyModal').classList.add('on');
+    selLBMPkg(pick);
+    return;
+  }
+  if (hint) hint.textContent = 'Select a package above';
   document.getElementById('lbmPayBtn').style.opacity = '.4';
   document.getElementById('lbmPayBtn').style.pointerEvents = 'none';
   document.getElementById('lawyerBuyModal').classList.add('on');
@@ -4685,13 +4803,39 @@ function selLBMPkg(i) {
   document.getElementById('lbmPayBtn').style.pointerEvents = 'auto';
 }
 
-function completeLawyerPurchase() {
+async function completeLawyerPurchase() {
   if(selPkg === null) return;
   const p = PKGS[selPkg];
-  lawyerCredits += p.credits;
-  updateLawyerCreditUI();
+  const btn = document.getElementById('lbmPayBtn');
+  const prev = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = 'Processing…'; btn.style.pointerEvents = 'none'; }
+
+  // Charge the card (simulated PSP) and credit the balance instantly.
+  const r = await ladApi('/api/v1/credits/checkout', { method: 'POST', body: { credits: p.credits, aed: p.price } });
+
+  if (btn) { btn.textContent = prev; btn.style.pointerEvents = 'auto'; }
+
+  if (!r.ok) {
+    showToast((r.data && r.data.message) || 'Payment could not be processed — please try again.');
+    return;
+  }
+  const newBal = (r.data && r.data.balance != null) ? r.data.balance : (lawyerCredits + p.credits);
+  setLawyerCredits(newBal);
   closeBuyCredits();
   showToast(`✓ ${p.credits} credits added · Balance: ${lawyerCredits} credits`);
+
+  // Resume a booking that was blocked on credits.
+  if (pendingBooking) {
+    const pb = pendingBooking; pendingBooking = null;
+    setTimeout(async () => {
+      await openBooking(pb.courseId);
+      if (pb.sessionIdx != null) {
+        const row = document.querySelector(`.bk-session-row input[value="${pb.sessionIdx}"]`);
+        if (row) selectSession(pb.sessionIdx, row.closest('.bk-session-row'));
+      }
+      showToast('You now have enough credits — confirm your booking.');
+    }, 450);
+  }
 }
 </script>
 <nav class="mob-nav" id="mobNav">
