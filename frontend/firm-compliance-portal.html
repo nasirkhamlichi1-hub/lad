@@ -4173,6 +4173,32 @@ function openUploadSession() {
   document.getElementById('sessionSubmitModal').classList.add('on');
 }
 
+// Opened from the attendance-alert banner's "File attendees" action. Opens the
+// Submit-accredited-session modal and pre-selects the accredited course/code so
+// the firm lands straight on the filing form for that session.
+window.openAttendanceFiling = function (code) {
+  openUploadSession();
+  if (!code) return;
+  const want = String(code).replace(/P$/, '');
+  let tries = 0;
+  (function preselect() {
+    const sel = document.getElementById('ss-course');
+    if (sel && sel.options.length > 1) {
+      const opt = Array.prototype.find.call(sel.options, function (o) {
+        return o.value && String(o.value).replace(/P$/, '') === want;
+      });
+      if (opt) { sel.value = opt.value; if (typeof updateSessionImpact === 'function') updateSessionImpact(); return; }
+    }
+    if (tries++ > 16) {
+      // Not in the dropdown — use the manual accreditation-code field instead.
+      const cf = document.getElementById('ss-accred-code');
+      if (cf) { cf.value = code; cf.dispatchEvent(new Event('input', { bubbles: true })); }
+      return;
+    }
+    setTimeout(preselect, 200);
+  })();
+};
+
 // Populate the "SELECT ACCREDITED COURSE" dropdown from live backend data.
 // Calls the public /accreditations/_/catalog endpoint — no auth needed,
 // so any firm user (logged in or not) sees the same approved-course list.
@@ -5213,6 +5239,6 @@ Click the ⚙ icon at the top right to add a key, then ask me again.`;
     envBadge: 'FIRM · 2026',
   });
 </script>
-<script src="attendance-alerts.js?v=3" data-aa-audience="firm"></script>
+<script src="attendance-alerts.js?v=4" data-aa-audience="firm"></script>
 </body>
 </html>

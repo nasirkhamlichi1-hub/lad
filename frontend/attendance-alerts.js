@@ -61,7 +61,7 @@
         '<span class="aa-head">' + esc(a.courseTitle) + '<span class="aa-code">' + esc(a.code) + '</span></span>' +
         '<span class="aa-meta">' + esc(a.message) + (deadline ? ' · Deadline ' + deadline : '') + who + '</span>' +
       '</span>' +
-      (audience === 'firm' || audience === 'provider'
+      (audience === 'firm'
         ? '<button class="aa-cta" style="color:' + t.accent + '" data-code="' + esc(a.code) + '">File attendees</button>' : '') +
       '<button class="aa-x" title="Dismiss">×</button>';
     el.querySelector('.aa-x').onclick = function () { el.remove(); };
