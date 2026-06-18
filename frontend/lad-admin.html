@@ -839,6 +839,20 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
     <h2 class="adm-page-title">Course schedules</h2>
     <p class="adm-page-desc">Upload an Excel schedule (<code>.xlsx</code>) or paste CSV rows. Each row becomes a session attached to a course; titles are fuzzy-matched to existing courses. Existing sessions on a course are <strong>replaced</strong> on import.</p>
   </div>
+
+  <!-- Live sessions manager — cancel / move scheduled sessions -->
+  <div style="background:var(--white);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:10px">
+      <div><div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--slate3);font-weight:700">LIVE SESSIONS</div><div style="font-size:15px;font-weight:600;margin-top:2px">Manage scheduled sessions</div></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="admSessSearch" class="adm-input" placeholder="Search course / venue…" style="width:210px" oninput="admSessionsRender()"/>
+        <button class="adm-btn-green" onclick="admComplianceReport()" style="font-size:12px">⤓ Compliance report</button>
+        <button class="adm-btn-green" onclick="loadAdmSessions()" style="font-size:12px">↻ Refresh</button>
+      </div>
+    </div>
+    <div id="admSessionsList" style="max-height:380px;overflow-y:auto"><div style="padding:24px;text-align:center;color:var(--slate2);font-size:13px">Loading live sessions…</div></div>
+  </div>
+
   <div class="adm-sch-grid">
     <div class="adm-sch-panel">
       <div class="adm-sch-panel-head">
@@ -5443,6 +5457,102 @@ function renderMigrateResult(res, isDryRun) {
 }
 
 </script>
+<script>
+// ════════ LIVE SESSIONS MANAGER (cancel / move) + REPORTS ════════
+let ADM_SESSIONS = [];
+async function loadAdmSessions(){
+  try {
+    const base = _admBase().replace(/\/$/,'');
+    const r = await fetch(base + '/api/v1/courses/sessions/all', { headers:{ Authorization:'Bearer '+_admToken() } });
+    ADM_SESSIONS = r.ok ? await r.json() : [];
+    if (!Array.isArray(ADM_SESSIONS)) ADM_SESSIONS = [];
+  } catch(e){ ADM_SESSIONS = []; }
+  admSessionsRender();
+}
+function _admSdate(iso){ if(!iso) return '—'; const d=new Date(iso); if(isNaN(d)) return String(iso).slice(0,16); const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; const hh=String(d.getUTCHours()).padStart(2,'0'), mm=String(d.getUTCMinutes()).padStart(2,'0'); return d.getUTCDate()+' '+M[d.getUTCMonth()]+' '+d.getUTCFullYear()+' · '+hh+':'+mm; }
+function admSessionsRender(){
+  const el = document.getElementById('admSessionsList'); if(!el) return;
+  const q = (document.getElementById('admSessSearch')?.value||'').toLowerCase().trim();
+  let rows = ADM_SESSIONS.filter(s => !q || ((s.course_title||'')+' '+(s.venue||'')).toLowerCase().includes(q));
+  rows = rows.slice().sort((a,b)=> String(a.scheduled_at||'').localeCompare(String(b.scheduled_at||'')));
+  if(!rows.length){ el.innerHTML='<div style="padding:24px;text-align:center;color:var(--slate2);font-size:13px">No sessions found.</div>'; return; }
+  el.innerHTML = rows.map(s=>{
+    const cancelled = (s.status||'')==='cancelled';
+    const seats = Number(s.seats_remaining)||0;
+    return '<div style="display:grid;grid-template-columns:1.7fr 1.3fr 90px 100px 150px;gap:0;border-bottom:1px solid var(--line);font-size:12.5px;align-items:center;'+(cancelled?'opacity:.5':'')+'">'
+      +'<div style="padding:9px 14px;font-weight:500">'+escape(s.course_title||s.course_id||'—')+(s.venue?'<span style="color:var(--slate3);font-weight:400"> · '+escape(s.venue)+'</span>':'')+'</div>'
+      +'<div style="padding:9px 14px;color:var(--slate2);font-family:var(--mono);font-size:11px">'+_admSdate(s.scheduled_at)+'</div>'
+      +'<div style="padding:9px 14px;text-align:right;font-family:var(--mono)">'+(cancelled?'—':seats+' seats')+'</div>'
+      +'<div style="padding:9px 14px"><span style="font-size:10px;font-weight:600;text-transform:uppercase;color:'+(cancelled?'var(--red)':'var(--green)')+'">'+(cancelled?'cancelled':(s.status||'scheduled'))+'</span></div>'
+      +'<div style="padding:9px 14px;text-align:right;display:flex;gap:6px;justify-content:flex-end">'
+        +(cancelled?'' : '<button class="adm-btn-green" style="padding:4px 9px;font-size:11px" onclick="admSessionMove(\''+escape(s.id)+'\',\''+escapeAttr(String(s.course_title||''))+'\')">Move</button><button class="adm-btn-green" style="padding:4px 9px;font-size:11px;background:#fdecea;border-color:#f1b8b0;color:#c0392b" onclick="admSessionCancel(\''+escape(s.id)+'\',\''+escapeAttr(String(s.course_title||''))+'\')">Cancel</button>')
+      +'</div></div>';
+  }).join('');
+}
+function admMiniModal(title, bodyHtml, confirmLabel, color, onConfirm){
+  let m=document.getElementById('admMiniModal'); if(!m){ m=document.createElement('div'); m.id='admMiniModal'; document.body.appendChild(m); }
+  m.style.cssText='position:fixed;inset:0;background:rgba(10,20,15,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:2200;padding:24px';
+  m.innerHTML='<div style="background:#fff;border-radius:16px;max-width:450px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.34);overflow:hidden">'
+    +'<div style="background:#13231b;color:#fff;padding:16px 20px;font-size:19px;font-weight:600">'+escape(title)+'</div>'
+    +'<div style="padding:18px 20px;font-family:-apple-system,sans-serif">'+bodyHtml+'</div>'
+    +'<div style="padding:0 20px 18px;display:flex;gap:10px;justify-content:flex-end;align-items:center">'
+      +'<button style="background:none;border:0;color:#64748b;font-size:13px;font-weight:600;cursor:pointer" onclick="admMiniClose()">Close</button>'
+      +'<button id="admMiniGo" style="background:'+color+';color:#fff;border:0;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer">'+escape(confirmLabel)+'</button>'
+    +'</div></div>';
+  m.onclick=function(e){ if(e.target===m) admMiniClose(); };
+  document.getElementById('admMiniGo').onclick=async function(){ this.disabled=true; const r=await onConfirm(); if(r!==false) admMiniClose(); else this.disabled=false; };
+}
+function admMiniClose(){ const m=document.getElementById('admMiniModal'); if(m) m.remove(); }
+function admSessionCancel(id, title){
+  admMiniModal('Cancel session',
+    '<div style="font-size:13.5px;color:#475569;line-height:1.65">Cancelling <strong>'+escape(title)+'</strong> will <strong>refund credits</strong> to every booked lawyer, free their seats, and <strong>notify them</strong>. This cannot be undone.</div>',
+    'Cancel session & refund', '#c0392b', async function(){
+      try{
+        const r=await fetch(_admBase().replace(/\/$/,'')+'/api/v1/courses/sessions/'+encodeURIComponent(id)+'/cancel',{method:'POST',headers:{Authorization:'Bearer '+_admToken()}});
+        const d=await r.json().catch(()=>({}));
+        if(r.ok){ toast('Session cancelled · '+(d.refunded||0)+' refunded, '+(d.notified||0)+' notified','success'); loadAdmSessions(); }
+        else { toast(d.error||'Could not cancel','error'); return false; }
+      }catch(e){ toast('Network error','error'); return false; }
+    });
+}
+function admSessionMove(id, title){
+  const lbl='font-family:var(--mono);font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:#8a9a90;font-weight:700;margin:0 0 6px;display:block';
+  const inp='width:100%;border:1.5px solid #d6ddd7;border-radius:9px;padding:10px 12px;font-size:13.5px;font-family:inherit;outline:0;margin-bottom:12px';
+  admMiniModal('Move session',
+    '<div style="font-size:13px;color:#475569;margin-bottom:14px">Reschedule <strong>'+escape(title)+'</strong>. Everyone booked keeps their seat and is notified.</div>'
+    +'<label style="'+lbl+'">New date &amp; time</label><input type="datetime-local" id="admMoveDt" style="'+inp+'"/>'
+    +'<label style="'+lbl+'">Venue (optional)</label><input id="admMoveVenue" style="'+inp+'" placeholder="e.g. DIFC Gate Village"/>',
+    'Move & notify', '#006B3F', async function(){
+      const dt=document.getElementById('admMoveDt').value;
+      const venue=document.getElementById('admMoveVenue').value;
+      if(!dt){ toast('Pick a new date and time','error'); return false; }
+      try{
+        const iso=new Date(dt).toISOString();
+        const body={ scheduled_at:iso }; if(venue) body.venue=venue;
+        const r=await fetch(_admBase().replace(/\/$/,'')+'/api/v1/courses/sessions/'+encodeURIComponent(id)+'/reschedule',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+_admToken()},body:JSON.stringify(body)});
+        const d=await r.json().catch(()=>({}));
+        if(r.ok){ toast('Session moved · '+(d.notified||0)+' lawyer(s) notified','success'); loadAdmSessions(); }
+        else { toast(d.error||'Could not move','error'); return false; }
+      }catch(e){ toast('Network error','error'); return false; }
+    });
+}
+// Compliance-by-firm report (CSV) from the live firms data.
+async function admComplianceReport(){
+  try{
+    const r=await fetch(_admBase().replace(/\/$/,'')+'/api/v1/firms',{headers:{Authorization:'Bearer '+_admToken()}});
+    let list = r.ok ? await r.json() : [];
+    if (list && list.data) list = list.data;
+    if (!Array.isArray(list) || !list.length){ toast('No firm data to report','error'); return; }
+    const cols = Object.keys(list[0]);
+    const csv = cols.join(',') + '\n' + list.map(row => cols.map(c => '"'+String(row[c]==null?'':row[c]).replace(/"/g,'""')+'"').join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download='clpd-firm-compliance-'+new Date().toISOString().slice(0,10)+'.csv'; a.click(); URL.revokeObjectURL(url);
+    toast('✓ Compliance report downloaded','success');
+  }catch(e){ toast('Could not generate report','error'); }
+}
+document.addEventListener('DOMContentLoaded', loadAdmSessions);
+</script>
+
 <!-- ══════ AI ADMIN CONSOLE · ⌘K command bar + notifications composer ══════ -->
 <style>
 #aicFab{position:fixed;right:22px;bottom:22px;z-index:1400;background:linear-gradient(135deg,#0a3a28,#0d5a4a);color:#fff;border:0;border-radius:30px;padding:13px 20px;font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(10,58,40,.4);display:flex;align-items:center;gap:8px;font-family:inherit}
