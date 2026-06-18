@@ -2901,13 +2901,6 @@ function openLawyer(id) {
       <button class="btn btn-xs btn-g" style="flex-shrink:0" onclick="event.stopPropagation();openBookModal('${c.id}','${l.id}')">Book</button>
     </div>`).join('');
 
-  // Past completions (simulated)
-  const completed = l.pts > 0 ? [
-    {course:'Ethics – AI in Legal Sector',date:'Mar 2026',pts:2},
-    ...(l.pts>2?[{course:'AI Governance E-learning',date:'Feb 2026',pts:2}]:[]),
-    ...(l.pts>4?[{course:'Common Law Contract',date:'Jan 2026',pts:2}]:[]),
-  ] : [];
-
   document.getElementById('spBody').innerHTML = `
     <!-- Progress arc -->
     <div style="display:flex;align-items:center;gap:16px;padding:16px;background:${accent}0d;border:1px solid ${accent}33;border-radius:12px;margin-bottom:16px">
@@ -2938,18 +2931,51 @@ function openLawyer(id) {
       </div>
     </div>
 
-    ${completed.length>0?`
     <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:9px">COMPLETED COURSES</div>
-    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-      ${completed.map(c=>`<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:8px">
-        <span style="color:var(--green);font-size:14px">✓</span>
-        <div style="flex:1;font-size:12px;color:var(--ink)">${c.course}</div>
-        <span style="font-family:var(--mono);font-size:9px;color:var(--slate3)">${c.date}</span>
-        <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--green)">+${c.pts}</span>
-      </div>`).join('')}
-    </div>`:''}`;
+    <div id="spCompletedWrap" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+      <div style="padding:9px 11px;color:var(--slate3);font-size:11.5px">Loading course history…</div>
+    </div>`;
 
   document.getElementById('sp').classList.add('on');
+  loadLawyerCompleted(l);
+}
+
+// Fetch a lawyer's REAL completed courses / attendance from the backend.
+async function loadLawyerCompleted(l) {
+  const wrap = document.getElementById('spCompletedWrap');
+  if (!wrap) return;
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
+  const token = localStorage.getItem('lad_token') || '';
+  const lid = l.laId || l.id;
+  if (!token || !lid) { wrap.innerHTML = ''; return; }
+  try {
+    const r = await fetch(base + '/api/v1/lawyers/' + encodeURIComponent(lid), { headers: { Authorization: 'Bearer ' + token } });
+    if (!r.ok) { wrap.innerHTML = '<div style="padding:9px 11px;color:var(--slate3);font-size:11.5px">Could not load course history (' + r.status + ').</div>'; return; }
+    const me = await r.json();
+    let att = Array.isArray(me.attendance) ? me.attendance : [];
+    att = att.filter(a => ['attended', 'completed', 'booked'].includes((a.status || '').toLowerCase()));
+    if (!att.length) {
+      const pts = Number(me.points) || Number(l.pts) || 0;
+      wrap.innerHTML = '<div style="padding:11px;background:var(--paper);border:1px solid var(--line);border-radius:8px;color:var(--slate2);font-size:11.5px">No individual course bookings on file yet — <strong>' + pts + ' CLPD points</strong> recorded for this cycle.</div>';
+      return;
+    }
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const fmt = (iso) => { if (!iso) return ''; const d = new Date(iso); return isNaN(d) ? '' : months[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
+    const esc = (x) => String(x == null ? '' : x).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+    wrap.innerHTML = att.map(a => {
+      const st = (a.status || '').toLowerCase();
+      const done = st === 'attended' || st === 'completed';
+      const pts = Number(a.delta_points) || 0;
+      return '<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:' + (done ? 'var(--green-bg)' : 'var(--paper)') + ';border:1px solid ' + (done ? 'var(--green-border)' : 'var(--line)') + ';border-radius:8px">'
+        + '<span style="color:' + (done ? 'var(--green)' : 'var(--slate3)') + ';font-size:14px">' + (done ? '\u2713' : '\u25CB') + '</span>'
+        + '<div style="flex:1;font-size:12px;color:var(--ink)">' + esc(a.course_title || 'CLPD activity') + (done ? '' : ' \u00b7 ' + esc(st)) + '</div>'
+        + '<span style="font-family:var(--mono);font-size:9px;color:var(--slate3)">' + fmt(a.date_held) + '</span>'
+        + (pts ? '<span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--green)">+' + pts + '</span>' : '')
+        + '</div>';
+    }).join('');
+  } catch (e) {
+    wrap.innerHTML = '<div style="padding:9px 11px;color:var(--slate3);font-size:11.5px">Could not load course history.</div>';
+  }
 }
 
 function closeSP(){document.getElementById('sp').classList.remove('on');}
