@@ -3758,10 +3758,17 @@ async function loadMyApplications() {
       container.innerHTML = '<div style="padding:14px;color:var(--slate3);font-size:12.5px">Sign in to see your applications with LAD\'s live decisions.</div>';
       return;
     }
-    const r = await fetch(base + '/api/v1/accreditations?status=all&limit=50', {
-      headers: { Authorization: 'Bearer ' + token },
-    });
-    if (!r.ok) { container.innerHTML = '<div style="padding:14px;color:var(--slate3);font-size:12.5px">Could not load (' + r.status + ').</div>'; return; }
+    // Cold-start resilient: Render free tier can take ~30-60s to wake, during
+    // which the first request fails. Retry a few times before giving up.
+    let r = null;
+    for (let attempt = 1; attempt <= 4; attempt++) {
+      try {
+        r = await fetch(base + '/api/v1/accreditations?status=all&limit=50', { headers: { Authorization: 'Bearer ' + token } });
+        if (r.status < 502 || r.status > 504) break;
+      } catch (err) { if (attempt === 4) throw err; }
+      await new Promise(res => setTimeout(res, attempt * 2000));
+    }
+    if (!r || !r.ok) { container.innerHTML = '<div style="padding:14px;color:var(--slate3);font-size:12.5px">Could not load (' + (r ? r.status : 'network') + '). Tap Refresh.</div>'; return; }
     const body = await r.json();
     const rows = body.rows || [];
     if (!rows.length) { container.innerHTML = '<div style="padding:14px;color:var(--slate3);font-size:12.5px">No applications yet.</div>'; return; }
