@@ -195,6 +195,29 @@ router.patch('/:id', requireAuth, (req, res) => {
   db.prepare(`UPDATE bookings SET ${fields.join(', ')} WHERE id = ?`).run(...values);
   const updated = db.prepare('SELECT * FROM bookings WHERE id = ?').get(req.params.id);
 
+  // Cancelling/refunding an active booking → refund the credits once and free
+  // the seat. Idempotent: only fires on the transition out of an active state.
+  const wasActive = !['cancelled', 'refunded'].includes((booking.status || '').toLowerCase());
+  const nowCancelled = ['cancelled', 'refunded'].includes((req.body.status || '').toLowerCase());
+  if (nowCancelled && wasActive) {
+    try {
+      const cost = Number(booking.credits_used) || 0;
+      if (cost > 0 && booking.lawyer_id) {
+        db.prepare('UPDATE lawyers SET credit_balance = COALESCE(credit_balance,0) + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(cost, booking.lawyer_id);
+        try {
+          db.prepare(
+            `INSERT INTO credit_transactions (id, lawyer_id, type, amount, aed_amount, description, payment_method, status)
+             VALUES (?,?,?,?,?,?,?, 'completed')`
+          ).run(txId(), booking.lawyer_id, 'refund', cost, cost * Number(process.env.CREDIT_PRICE_AED || 120),
+            'Booking cancelled — credits refunded', 'admin');
+        } catch (_) {}
+      }
+      if (booking.session_id) {
+        db.prepare("UPDATE course_sessions SET seats_remaining = seats_remaining + 1, status = CASE WHEN status = 'closed' THEN 'scheduled' ELSE status END WHERE id = ?").run(booking.session_id);
+      }
+    } catch (_) {}
+  }
+
   // ─── Skill graph propagation ────────────────────────────────────
   // When a booking flips to 'attended', the topic fingerprint of the
   // course is written onto the lawyer's skill graph.

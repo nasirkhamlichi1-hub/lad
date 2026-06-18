@@ -4045,8 +4045,40 @@ async function admBookingsRender() {
   `;
 }
 
-function admBookOpen() { alert('"Book on behalf of a lawyer" modal — wires into POST /api/v1/bookings with actor=lad_admin so the audit trail records the staff member.'); }
-function admBookEdit(id) { alert('Manage booking ' + id + '\n\n— Mark attended\n— Mark no-show\n— Cancel & refund credits\n— Reassign seat\n\n(stub; wires to PATCH /api/v1/bookings/:id)'); }
+function admBookOpen() {
+  if (typeof toast === 'function') toast('To book on behalf of a lawyer, open their profile in Support → use "Book a course". (Admin booking flow.)');
+}
+function _bkEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];}); }
+function admBookEdit(id) {
+  const b = (window.__admBookings || []).find(x => String(x.id) === String(id)) || { id };
+  let m = document.getElementById('admBkModal');
+  if (!m) { m = document.createElement('div'); m.id = 'admBkModal'; document.body.appendChild(m); }
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(10,20,15,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:2000;padding:24px';
+  const aBtn = 'display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--line,#e3e9e4);border-radius:10px;background:#fff;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;transition:all .15s';
+  m.innerHTML =
+    '<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.32);overflow:hidden">'
+    + '<div style="background:#13231b;color:#fff;padding:18px 22px"><div style="font-family:var(--serif,Georgia);font-size:21px;font-weight:600">Manage booking</div>'
+    +   '<div style="font-family:var(--mono);font-size:10.5px;opacity:.72;margin-top:3px">' + _bkEsc(b.id) + (b.lawyer?(' · '+_bkEsc(b.lawyer)):'') + (b.course?(' · '+_bkEsc(b.course)):'') + '</div></div>'
+    + '<div style="padding:18px 22px;display:flex;flex-direction:column;gap:9px">'
+    +   '<button style="'+aBtn+'" onmouseover="this.style.borderColor=\'#006B3F\'" onmouseout="this.style.borderColor=\'var(--line,#e3e9e4)\'" onclick="admBookAction(\''+_bkEsc(b.id)+'\',\'attended\')"><span style="color:#006B3F">✓</span> Mark attended <span style="color:var(--slate3,#aab8af);font-weight:400;font-size:12px">· awards CPD points</span></button>'
+    +   '<button style="'+aBtn+'" onmouseover="this.style.borderColor=\'#c2703d\'" onmouseout="this.style.borderColor=\'var(--line,#e3e9e4)\'" onclick="admBookAction(\''+_bkEsc(b.id)+'\',\'no-show\')"><span style="color:#c2703d">⃠</span> Mark no-show</button>'
+    +   '<button style="'+aBtn+';color:#c0392b" onmouseover="this.style.borderColor=\'#c0392b\'" onmouseout="this.style.borderColor=\'var(--line,#e3e9e4)\'" onclick="admBookAction(\''+_bkEsc(b.id)+'\',\'cancelled\')">✕ Cancel &amp; refund credits</button>'
+    + '</div>'
+    + '<div style="padding:0 22px 18px;text-align:right"><button style="background:none;border:0;color:var(--slate2,#8a9a90);cursor:pointer;font-size:13px;font-weight:600" onclick="admBkClose()">Close</button></div>'
+    + '</div>';
+  m.onclick = function(e){ if (e.target === m) admBkClose(); };
+}
+function admBkClose(){ const m = document.getElementById('admBkModal'); if (m) m.remove(); }
+async function admBookAction(id, status){
+  try {
+    if (window.LAD && window.LAD.updateBooking) { await window.LAD.updateBooking(id, { status }); }
+    else { throw new Error('offline'); }
+    const label = status === 'attended' ? 'marked attended' : status === 'no-show' ? 'marked no-show' : 'cancelled & refunded';
+    if (typeof toast === 'function') toast('Booking ' + id + ' ' + label + '.');
+    admBkClose();
+    admBookingsRender();
+  } catch(e){ if (typeof toast === 'function') toast('Could not update the booking — please try again.', 'error'); }
+}
 function admBookingsExport() {
   const rows = window.__admBookings || [];
   const csv = 'id,lawyer,firm,course,session,credits,pts,status\n' +
