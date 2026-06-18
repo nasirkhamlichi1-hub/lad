@@ -2579,9 +2579,12 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
             </div>
           </div>
 
+          <!-- Live interest-matched course recommendations -->
+          <div id="quizRecs" style="margin:6px 0 16px"></div>
+
           <!-- Actions -->
           <div style="display:flex;gap:8px">
-            <button class="btn btn-ink" style="flex:1;justify-content:center" onclick="showToast('Opening recommended course — ${recCourse}')">Book recommended course →</button>
+            <button class="btn btn-ink" style="flex:1;justify-content:center" onclick="(document.getElementById('quizRecs')||{}).scrollIntoView&&document.getElementById('quizRecs').scrollIntoView({behavior:'smooth',block:'center'})">See your matched courses ↓</button>
             <button class="btn btn-ghost" onclick="resetQuiz()">Retake quiz</button>
           </div>`;
 
@@ -2593,8 +2596,61 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
           });
         }, 200);
 
+        // Live course recommendations matched to the diagnostic interest profile.
+        recommendCoursesFromInterests(qScores);
         // Update the main radar SVG polygon (simplified update)
         updateMainRadar();
+      }
+
+      // Match real catalogue courses to the lawyer's diagnostic interest profile.
+      function recommendCoursesFromInterests(scores){
+        var host=document.getElementById('quizRecs'); if(!host) return;
+        function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);});}
+        var base=(window.LAD_API_BASE||'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
+        var KW={
+          Arbitration:['arbitr','dispute','mediation','adr','litigation','tribunal'],
+          Construction:['construction','infrastructure','fidic','engineering','contract'],
+          Corporate:['corporate','m&a','merger','acquisition','governance','company','commercial','board'],
+          RealEstate:['real estate','property','rera','lease','land','tenancy'],
+          EthicsAI:['ethic','ai ','artificial','data protection','privacy','technology','cyber','digital'],
+          Regulatory:['regulat','compliance','aml','anti-money','sanction','licens','tax','financial']
+        };
+        host.innerHTML='<div style="font-family:var(--mono);font-size:9px;color:var(--purple);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;margin-bottom:10px">✦ Matched to your interests · live catalogue</div><div style="font-size:12.5px;color:var(--slate2)">Finding courses…</div>';
+        fetch(base+'/api/v1/courses/upcoming').then(function(r){return r.ok?r.json():[];}).then(function(list){
+          if(!Array.isArray(list))list=[];
+          var courses=list.filter(function(c){return (c.sessions||[]).length;});
+          function txt(c){return ((c.title||'')+' '+((c.tags||[]).map(function(t){return t.label||'';}).join(' '))).toLowerCase();}
+          var scored=courses.map(function(c){
+            var t=txt(c), s=0;
+            Object.keys(KW).forEach(function(ax){
+              var w=(scores[ax]||0)/100;
+              var hits=KW[ax].reduce(function(n,k){return n+(t.indexOf(k)!==-1?1:0);},0);
+              s+=hits*w;
+            });
+            return {c:c,s:s};
+          }).filter(function(x){return x.s>0;}).sort(function(a,b){return b.s-a.s;}).slice(0,4);
+          if(!scored.length){ host.innerHTML='<div style="font-size:12.5px;color:var(--slate2)">No catalogue courses match your top interests yet — check back as new courses are accredited.</div>'; return; }
+          host.innerHTML='<div style="font-family:var(--mono);font-size:9px;color:var(--purple);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;margin-bottom:10px">✦ Matched to your interests · live catalogue</div>'+
+            '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">'+
+            scored.map(function(x){
+              var c=x.c, isMand=(c.type||'').toLowerCase()==='mandatory', pts=Number(c.pts)||2;
+              var bg=isMand?'linear-gradient(135deg,#241a38,#463a66)':'linear-gradient(135deg,#0a2040,#16386a)';
+              return '<div style="background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden">'+
+                '<div style="height:8px;background:'+bg+'"></div>'+
+                '<div style="padding:12px 13px">'+
+                  '<div style="font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px">'+esc(c.provider_id||'LAD Academy')+' · +'+pts+' pts</div>'+
+                  '<div style="font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;margin-bottom:8px">'+esc(c.title)+'</div>'+
+                  '<button class="btn btn-green btn-xs" style="width:100%;justify-content:center" data-cid="'+esc(c.id)+'" data-title="'+esc(c.title)+'">Book →</button>'+
+                '</div></div>';
+            }).join('')+'</div>';
+          host.querySelectorAll('[data-cid]').forEach(function(btn){
+            btn.onclick=function(){
+              var id=btn.getAttribute('data-cid'), title=btn.getAttribute('data-title');
+              if(window.COURSES && window.COURSES[id] && typeof openBooking==='function') openBooking(id);
+              else if(typeof bookSuggestedCourse==='function') bookSuggestedCourse(title,'','session');
+            };
+          });
+        }).catch(function(){ host.innerHTML=''; });
       }
 
       function updateMainRadar() {
@@ -3342,7 +3398,9 @@ document.addEventListener('DOMContentLoaded', function () {
   // Sections to remove from the page until a backend source exists
   // 'similar' (Based on your history) is live-wired to the AI copilot, so it is
   // NOT hidden — renderBasedOnHistory() shows it only when real recs exist.
-  var DEMO_PANEL_IDS = ['projection', 'coach', 'calendar', 'skills', 'quiz', 'trajectory'];
+  // 'quiz' is an interactive diagnostic (user answers) that ends with live,
+  // interest-matched course recommendations — kept visible.
+  var DEMO_PANEL_IDS = ['projection', 'coach', 'calendar', 'skills', 'trajectory'];
   function applyHide() {
     DEMO_PANEL_IDS.forEach(function (id) {
       var sec = document.getElementById(id);
