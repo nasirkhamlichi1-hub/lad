@@ -2652,30 +2652,40 @@ function renderCourses() { renderCourseCards(); }
 async function refreshCoursesFromBackend() {
   try {
     const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
-    const r = await fetch(base.replace(/\/$/, '') + '/api/v1/accreditations/_/catalog');
+    // Live scheduled catalogue (with real seat-limited sessions) so the firm can
+    // book lawyers onto actual sessions.
+    const r = await fetch(base.replace(/\/$/, '') + '/api/v1/courses/upcoming');
     if (!r.ok) return;
-    const j = await r.json();
-    const cat = (j && j.courses) || [];
-    if (!cat.length) { COURSES = []; renderCourseCards(); return; }
-    COURSES = cat.map((c, i) => ({
-      id: c.accreditation_code || c.ref || ('c-' + i),
-      title: c.courseTitle,
+    const list = await r.json();
+    const live = Array.isArray(list) ? list : [];
+    if (!live.length) return; // keep the demo COURSES rather than blanking
+    const _M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const _fd = (iso) => { if (!iso) return ''; const d = new Date(iso); return isNaN(d) ? '' : d.getUTCDate() + ' ' + _M[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
+    const _ft = (iso) => { if (!iso) return ''; const d = new Date(iso); if (isNaN(d)) return ''; const h = d.getUTCHours(), m = d.getUTCMinutes(); const ap = h < 12 ? 'am' : 'pm'; const hh = h % 12 || 12; return hh + ':' + (m < 10 ? '0' : '') + m + ap; };
+    COURSES = live.map((c, i) => ({
+      id: c.id,
+      title: c.title,
       icon: '',
-      bg: 'linear-gradient(135deg,#0a2040,#1c3a5e)',
-      type: 'accredited',
-      pts: Number(c.points) || 2,
+      bg: c.bg || 'linear-gradient(135deg,#0a2040,#1c3a5e)',
+      type: c.type || 'accredited',
+      pts: Number(c.pts) || 2,
       credits: Number(c.credits) || COURSE_CREDITS,
-      provider: c.provider || 'Accredited provider',
-      location: c.format || '',
+      provider: c.provider_id || 'LAD Academy',
+      location: c.location || (c.elearning ? 'Online · Self-paced' : 'Dubai'),
       cost: (Number(c.credits) || COURSE_CREDITS) + ' credits',
       costNum: (Number(c.credits) || COURSE_CREDITS) * 120,
-      elearning: /e-?learning|online/i.test(c.format || ''),
+      elearning: !!c.elearning,
       match: 0,
       matchReason: '',
-      desc: '',
-      sessions: [],
+      desc: c.title + ' \u2014 ' + ((c.type || 'accredited') === 'mandatory' ? 'mandatory' : 'accredited') + ' CLPD course. Seats are limited per session.',
+      sessions: (c.sessions || []).map(s => ({
+        date: _fd(s.scheduled_at),
+        time: _ft(s.scheduled_at) + (s.end_at ? '\u2013' + _ft(s.end_at) : ''),
+        seats: Number(s.seats_remaining) || 0,
+        lang: s.language || 'English',
+        sid: s.id,
+      })),
       impact: [],
-      accreditation_code: c.accreditation_code,
     }));
     window.COURSES = COURSES;
     renderCourseCards();
@@ -3206,34 +3216,56 @@ function selectSession(idx, el) {
   el.querySelector('input[type=radio]').checked=true;
 }
 
-function confirmBook(isElearn) {
+async function confirmBook(isElearn) {
   if(!bookingFor){showToast('Please select a lawyer first');return;}
-  if(!isElearn && !currentCourse.elearning && selectedSession===null){showToast('Please select a session date');return;}
+  const elearn = isElearn || currentCourse.elearning;
+  if(!elearn && selectedSession===null){showToast('Please select a session date');return;}
   const credits = currentCourse.credits || COURSE_CREDITS;
-  const lawyerCr = bookingFor.credits || 0;
-
-  // Deduct from lawyer first, then firm pool
-  if(lawyerCr >= credits) {
-    bookingFor.credits -= credits;
-    CREDIT_TRANSACTIONS.unshift({date:'10 May 2026',type:'booking',desc:`${bookingFor.name} — ${currentCourse.title}`,amount:-credits,balance:firmCredits,aed:credits*CREDIT_RATE});
-  } else if(firmCredits >= credits) {
-    firmCredits -= credits;
-    CREDIT_TRANSACTIONS.unshift({date:'10 May 2026',type:'booking',desc:`${bookingFor.name} — ${currentCourse.title} (firm pool)`,amount:-credits,balance:firmCredits,aed:credits*CREDIT_RATE});
-  } else {
-    showToast('Insufficient credits'); return;
+  const s = !elearn && currentCourse.sessions[selectedSession];
+  const lid = bookingFor.laId || bookingFor.id;
+  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
+  const token = localStorage.getItem('lad_token') || '';
+  const btn = document.getElementById('bkConfirmBtn');
+  const prev = btn ? btn.textContent : '';
+  if(btn){ btn.disabled=true; btn.textContent='Booking…'; }
+  const postBooking = () => fetch(base + '/api/v1/bookings', {
+    method:'POST', headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token },
+    body: JSON.stringify({ lawyer_id: lid, course_id: currentCourse.id, course_title: currentCourse.title,
+      session_id: s ? s.sid : null, scheduled_at: s ? s.date : new Date().toISOString(),
+      language: s ? s.lang : 'English', credits_used: credits }),
+  });
+  try {
+    let r = await postBooking();
+    if(r.status === 402){
+      // Firm pool covers the lawyer: assign the shortfall, then retry.
+      const d = await r.json().catch(()=>({}));
+      const need = (d && d.shortfall) || credits;
+      await fetch(base + '/api/v1/credits/assign', { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token }, body: JSON.stringify({ lawyerId: lid, credits: need }) });
+      r = await postBooking();
+    }
+    if(r.status === 409){
+      const d = await r.json().catch(()=>({}));
+      showToast(d.error === 'sold_out' ? 'That session just sold out — pick another date.' : (d.error === 'already_booked' ? 'Already booked on this session.' : (d.message || 'Could not book.')));
+      if(btn){ btn.disabled=false; btn.textContent=prev; } return;
+    }
+    if(!r.ok){
+      const d = await r.json().catch(()=>({}));
+      showToast(d.message || d.error || 'Booking failed.');
+      if(btn){ btn.disabled=false; btn.textContent=prev; } return;
+    }
+    const d = await r.json();
+    bookingFor.booked = (bookingFor.booked||0) + 1;
+    if(d.balance != null) bookingFor.credits = d.balance;
+    if(s && d.seats_remaining != null) s.seats = d.seats_remaining;
+    updateCreditUI(); renderCreditLawyerList(); renderCourseCards(); filterLawyers();
+    if(typeof loadFirmBookings==='function') loadFirmBookings();
+    if(typeof loadCreditHistory==='function') loadCreditHistory();
+    closeBook();
+    showToast('\u2713 '+bookingFor.name+' booked onto '+currentCourse.title+' \u00b7 '+credits+' credits');
+  } catch(e) {
+    showToast('Booking failed: '+e.message);
+    if(btn){ btn.disabled=false; btn.textContent=prev; }
   }
-
-  const s = !isElearn && currentCourse.sessions[selectedSession];
-  BOOKINGS.unshift({lawyer:bookingFor.name,role:bookingFor.role,course:currentCourse.title,date:isElearn?'Self-paced · Enrolled':(s?.date+' · '+s?.time),venue:isElearn?'Online':currentCourse.location,pts:currentCourse.pts,credits,status:isElearn?'in-progress':'confirmed'});
-  bookingFor.booked = (bookingFor.booked||0) + 1;
-  updateCreditUI();
-  renderCreditHistory();
-  renderCreditLawyerList();
-  renderCourseCards();
-  renderBookings();
-  filterLawyers();
-  closeBook();
-  showToast(`✓ ${bookingFor.name} booked · ${credits} credits used · ${firmCredits} in pool`);
 }
 
 function closeBook(){document.getElementById('bookModal').classList.remove('on');}
