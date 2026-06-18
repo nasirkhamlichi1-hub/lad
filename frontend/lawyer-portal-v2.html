@@ -1437,8 +1437,9 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
             document.getElementById('projSprintFill').style.opacity  = d.show.includes('sprint') ? '1' : '0';
             // Update numbers
             document.getElementById('projCoursesNum').textContent = d.courses;
+            const _need = (window.__projNeeded!=null) ? window.__projNeeded : 12;
             document.getElementById('projCoursesSub').textContent = mode==='risk'
-              ? 'short of compliance by ' + (16 - 4 - (d.courses*2)) + '+ pts' : 'to clear the remaining 12 points';
+              ? 'projected short at your current pace' : 'to clear the remaining ' + _need + ' point' + (_need===1?'':'s');
             document.getElementById('projPaceNum').textContent = d.pace;
             document.getElementById('projPaceSub').textContent = d.paceSub;
             document.getElementById('projPaceNum').style.color = mode==='risk' ? 'var(--red)' : (mode==='sprint' ? 'var(--purple)' : 'var(--teal)');
@@ -1461,7 +1462,59 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
             }).join('');
           }
           // Default mode = steady
-          setTimeout(() => projSetMode('steady'), 50);
+          projSetMode('steady');
+          // Hydrate all three scenarios from the lawyer's REAL record + AI copilot.
+          hydrateProjection();
+
+          async function hydrateProjection(){
+            try{
+              const apibase=(window.LAD_API_BASE||'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
+              const token=localStorage.getItem('lad_token')||''; if(!token)return;
+              const r=await fetch(apibase+'/api/v1/lawyers/copilot',{headers:{Authorization:'Bearer '+token},cache:'no-store'});
+              if(!r.ok)return; const j=await r.json();
+              const points=Number(j.points)||0;
+              const needed=Number(j.needed!=null?j.needed:Math.max(0,16-points));
+              window.__projNeeded=needed;
+              const daysLeft=Number(j.daysLeft)||0;
+              const recs=Array.isArray(j.recommendations)?j.recommendations:[];
+              const plan=Array.isArray(j.plan)?j.plan:[];
+              const items=(plan.length?plan:recs).slice(0,8);
+              const coursesNeeded=Math.max(items.length, Math.ceil(needed/2))||0;
+              const weeksLeft=Math.max(1,Math.ceil(daysLeft/7));
+              const totalHours=Math.round(coursesNeeded*3.5);
+              const MO=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+              const moOf=(s)=>{const m=String(s||'').match(/jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec/i);return m?m[0].slice(0,3).toUpperCase():'';};
+              const isMand=(t)=>/ethic|aml|anti-money|mandatory|conduct|civil code|criminal|professional/i.test(t||'');
+              const buildList=(spread)=> items.map((it,i)=>{
+                const title=it.title||it.code||'Course';
+                const pts=Number(it.points)||2;
+                let tag=moOf(it.when);
+                if(!tag){ const d=new Date(); d.setDate(d.getDate()+Math.round((i+1)*(daysLeft/(coursesNeeded+1))*spread)); tag=MO[d.getMonth()]; }
+                return {tag, tone:isMand(title)?'mandatory':'accredited', name:title, mins:(it.action||it.why||'Book the next session'), pts:pts+' pts · '+(isMand(title)?'mandatory':'accredited')};
+              });
+              // Current-pace projection from points earned so far this year.
+              const now=new Date(); const start=new Date(Date.UTC(now.getUTCFullYear(),0,1));
+              const elapsed=Math.max(1,Math.round((now-start)/86400000));
+              const projectedEnd=Math.min(16, Math.round(points/elapsed*365));
+              const everyW=Math.max(1,Math.round(weeksLeft/Math.max(1,coursesNeeded)));
+              if(needed===0){
+                document.getElementById('projCoursesSub').textContent='you have met the 16-point requirement';
+              }
+              PROJ_DATA.steady={ courses:coursesNeeded, pace:'1 / '+everyW+' wks', paceSub:'one course every '+everyW+' week'+(everyW===1?'':'s'),
+                hours:totalHours+'h', confidence:(weeksLeft>=coursesNeeded*2?'94%':(weeksLeft>=coursesNeeded?'82%':'61%')),
+                lex:(j.insights&&j.insights[0])||j.headline||'', show:['steady'], list:buildList(1) };
+              PROJ_DATA.sprint={ courses:coursesNeeded, pace:'1 / '+Math.max(1,Math.round(weeksLeft/2/Math.max(1,coursesNeeded)))+' wks', paceSub:'finish your '+needed+' point'+(needed===1?'':'s')+' early',
+                hours:totalHours+'h', confidence:(weeksLeft>=coursesNeeded?'88%':'70%'),
+                lex:(j.insights&&(j.insights[1]||j.insights[0]))||'', show:['sprint'], list:buildList(0.5) };
+              PROJ_DATA.risk={ courses:coursesNeeded, pace:projectedEnd+' / 16', paceSub:'projected at your pace so far',
+                hours:totalHours+'h', confidence:(projectedEnd>=16?'90%':projectedEnd>=12?'55%':'34%'),
+                lex:projectedEnd>=16?('On your current pace you reach '+projectedEnd+'/16 — on track.'):('At your current pace you finish the year at '+projectedEnd+'/16 — short of compliance. Booking '+coursesNeeded+' course'+(coursesNeeded===1?'':'s')+' closes the gap.'),
+                show:['risk'], list:buildList(1) };
+              const subEl=document.getElementById('projCoursesSub');
+              if(needed>0&&subEl) subEl.textContent='to clear the remaining '+needed+' point'+(needed===1?'':'s');
+              projSetMode('steady');
+            }catch(e){ console.warn('[lawyer] hydrateProjection',e.message); }
+          }
         </script>
       </section>
 
@@ -2652,8 +2705,8 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         <div class="section-hd">
           <div>
             <div class="section-eyebrow blue" data-cfg="lawyer_sec_courses_eyebrow">COURSE CATALOGUE</div>
-            <h2 class="section-title" data-cfg-html="lawyer_sec_courses_title">Browse all <em style="color:var(--blue)">accredited courses</em></h2>
-            <div class="section-desc" id="catalogueDesc">Loading accredited courses…</div>
+            <h2 class="section-title" data-cfg-html="lawyer_sec_courses_title">Browse all <em style="color:var(--blue)">courses</em></h2>
+            <div class="section-desc" id="catalogueDesc">Loading courses…</div>
           </div>
           <div class="section-actions">
             <button class="btn btn-ghost btn-sm">All formats ▾</button>
