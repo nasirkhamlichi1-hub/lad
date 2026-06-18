@@ -10,6 +10,43 @@ const { requireAuth, requireRole, optionalAuth, isSuper } = require('../middlewa
 
 const DEFAULT_CREDIT_COST = 5;
 const txId = () => 'TX-' + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8);
+const ADMIN_BK_ROLES = ['lad_admin', 'lad_intelligence', 'lad_super_admin', 'super_admin', 'dg'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function fmtSession(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso); if (isNaN(d)) return String(iso).slice(0, 16);
+  const hh = String(d.getUTCHours()).padStart(2, '0'); const mm = String(d.getUTCMinutes()).padStart(2, '0');
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()} · ${hh}:${mm}`;
+}
+
+// GET /api/v1/bookings — every booking across the platform (admin/oversight).
+router.get('/', requireAuth, (req, res) => {
+  if (!ADMIN_BK_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Forbidden' });
+  const limit = Math.min(1000, Math.max(1, parseInt(req.query.limit || '300', 10) || 300));
+  let rows = [];
+  try {
+    rows = db.prepare(
+      `SELECT b.id, b.status, b.credits_used, b.points_earned, b.scheduled_at, b.booked_at,
+              b.course_title, c.title AS course_cur, l.first_name, l.last_name, f.name AS firm_name
+       FROM bookings b
+       LEFT JOIN lawyers l ON l.id = b.lawyer_id
+       LEFT JOIN firms f ON f.id = l.firm_id
+       LEFT JOIN courses c ON c.id = b.course_id
+       ORDER BY COALESCE(b.booked_at, b.scheduled_at) DESC LIMIT ?`
+    ).all(limit);
+  } catch (_) {}
+  const data = rows.map((b) => ({
+    id: b.id,
+    lawyer: `${b.first_name || ''} ${b.last_name || ''}`.trim() || '—',
+    firm: b.firm_name || '—',
+    course: b.course_title || b.course_cur || '—',
+    session: fmtSession(b.scheduled_at),
+    credits: Number(b.credits_used) || 0,
+    pts: Number(b.points_earned) || 0,
+    status: b.status || 'booked',
+  }));
+  res.json({ data, meta: { total: data.length } });
+});
 
 // GET /api/v1/bookings/availability — public seat counts per session, so the
 // portal can render live "X seats left" / "SOLD OUT" like a cinema.

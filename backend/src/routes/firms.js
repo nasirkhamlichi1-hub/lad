@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const store = require('../services/store');
+const db = require('../db');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
 const LAD_ROLES = ['lad_admin', 'lad_intelligence', 'lad_super_admin', 'super_admin', 'dg'];
@@ -67,6 +68,31 @@ router.get('/:id/lawyers', requireAuth, (req, res) => {
   if (!isLADrole(u) && !isOwnCO) return res.status(403).json({ error: 'Forbidden' });
 
   res.json((store.getLawyersByFirm(id) || []).map(lawyerRow));
+});
+
+// GET /api/v1/firms/:id/transactions — credit ledger across the firm's lawyers
+const _FMONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+router.get('/:id/transactions', requireAuth, (req, res) => {
+  const u = req.user;
+  const id = effectiveFirmId(u, req.params.id);
+  const isOwnCO = u.role === 'firm_compliance_officer' && u.firm_id === id;
+  if (!isLADrole(u) && !isOwnCO) return res.status(403).json({ error: 'Forbidden' });
+  let rows = [];
+  try {
+    rows = db.prepare(
+      `SELECT t.type, t.amount, t.aed_amount, t.description, t.created_at, l.first_name, l.last_name
+       FROM credit_transactions t JOIN lawyers l ON l.id = t.lawyer_id
+       WHERE l.firm_id = ? ORDER BY t.created_at DESC LIMIT 200`
+    ).all(id);
+  } catch (_) {}
+  const fmt = (iso) => { if (!iso) return ''; const d = new Date(iso); return isNaN(d) ? '' : `${d.getUTCDate()} ${_FMONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
+  res.json(rows.map((t) => ({
+    date: fmt(t.created_at),
+    type: t.type === 'use' ? 'booking' : (t.type || 'purchase'),
+    desc: t.description || `${t.first_name || ''} ${t.last_name || ''}`.trim() || 'Credit movement',
+    amount: Number(t.amount) || 0,
+    aed: Math.abs(Number(t.aed_amount) || 0),
+  })));
 });
 
 // GET /api/v1/firms/:id/bookings — recent bookings across the firm

@@ -104,6 +104,47 @@ router.post('/checkout', requireAuth, (req, res) => {
   res.status(201).json({ ok: true, credited: true, credits, aed, balance });
 });
 
+// GET /credits/transactions — full ledger across the platform (admin).
+const _MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function fmtTxDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso); if (isNaN(d)) return String(iso).slice(0, 16);
+  const hh = String(d.getUTCHours()).padStart(2, '0'); const mm = String(d.getUTCMinutes()).padStart(2, '0');
+  return `${d.getUTCDate()} ${_MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()} · ${hh}:${mm}`;
+}
+router.get('/transactions', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
+  const limit = Math.min(1000, Math.max(1, parseInt(req.query.limit || '300', 10) || 300));
+  let rows = [];
+  try {
+    rows = db.prepare(
+      `SELECT t.id, t.type, t.amount, t.aed_amount, t.payment_method, t.created_at, t.status, t.description,
+              l.first_name, l.last_name, f.name AS firm_name
+       FROM credit_transactions t
+       LEFT JOIN lawyers l ON l.id = t.lawyer_id
+       LEFT JOIN firms f ON f.id = l.firm_id
+       ORDER BY t.created_at DESC LIMIT ?`
+    ).all(limit);
+  } catch (_) {}
+  const kindOf = (type, amount) => {
+    if (type === 'refund' || amount < 0 && type !== 'use') return 'refund';
+    if (type === 'use') return 'booking';
+    if (type === 'transfer') return 'adjustment';
+    return 'lawyer';
+  };
+  const data = rows.map((t) => ({
+    id: t.id,
+    kind: kindOf(t.type, Number(t.amount) || 0),
+    buyer: `${t.first_name || ''} ${t.last_name || ''}`.trim() || t.firm_name || '—',
+    credits: Number(t.amount) || 0,
+    aed: Number(t.aed_amount) || 0,
+    method: t.payment_method || t.description || '—',
+    date: fmtTxDate(t.created_at),
+    status: t.status || 'completed',
+  }));
+  res.json({ data, meta: { total: data.length } });
+});
+
 router.get('/requests', requireAuth, (req, res) => {
   if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
   res.json({ requests: db.prepare("SELECT * FROM credit_requests WHERE status = 'pending' ORDER BY created_at ASC").all(), pricePerCredit: PRICE });
