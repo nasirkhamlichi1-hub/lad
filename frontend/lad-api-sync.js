@@ -13,7 +13,7 @@
     if (window.LAD_API_BASE) return window.LAD_API_BASE;
     const h = window.location.hostname;
     if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:4000';
-    return 'https://clpd-lad-api-0878.azurewebsites.net';
+    return 'https://lad-clpd-backend.onrender.com';
   })();
 
   const SYNC_KEYS = new Set([
@@ -38,7 +38,7 @@
   }
 
   function pushKey(key, value) {
-    if (!SYNC_KEYS.has(key)) return;
+    if (!SYNC_KEYS.has(key) || unsupported) return;
     let body = value;
     try { body = JSON.parse(value); } catch { /* leave as-is */ }
     fetch(`${API_BASE}/api/v1/state/${encodeURIComponent(key)}`, {
@@ -55,9 +55,16 @@
     if (this === window.localStorage && SYNC_KEYS.has(key)) pushKey(key, value);
   };
 
+  // If the backend doesn't expose /api/v1/state (the current Render backend
+  // doesn't — portals read live endpoints directly), disable the shim after the
+  // first 404 so it stops polling and cluttering the console.
+  let unsupported = false;
+
   async function pullKey(key) {
+    if (unsupported) return null;
     try {
       const r = await fetch(`${API_BASE}/api/v1/state/${encodeURIComponent(key)}`, { cache: 'no-store' });
+      if (r.status === 404) { unsupported = true; return null; }
       if (!r.ok) return null;
       const j = await r.json();
       if (!j || j.data == null) return null;
