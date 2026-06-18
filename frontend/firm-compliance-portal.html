@@ -911,18 +911,18 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
           </div>
           <div style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;box-shadow:var(--sh-sm);cursor:pointer" onclick="openAssign()">
             <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:6px">ASSIGNED TO LAWYERS</div>
-            <div style="font-family:var(--serif);font-size:36px;color:var(--blue);line-height:1;margin-bottom:4px" id="assignedCreditsDisplay">53</div>
-            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3)">across 10 lawyers</div>
+            <div style="font-family:var(--serif);font-size:36px;color:var(--blue);line-height:1;margin-bottom:4px" id="assignedCreditsDisplay">—</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3)">across <span id="assignedLawyerCount">0</span> lawyers</div>
           </div>
           <div style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;box-shadow:var(--sh-sm)">
             <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:6px">USED THIS CYCLE</div>
-            <div style="font-family:var(--serif);font-size:36px;color:var(--green);line-height:1;margin-bottom:4px">85</div>
-            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3)">= AED 10,200 spent</div>
+            <div style="font-family:var(--serif);font-size:36px;color:var(--green);line-height:1;margin-bottom:4px" id="usedCreditsDisplay">—</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3)">= AED <span id="usedCreditsAED">0</span> spent</div>
           </div>
           <div style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;box-shadow:var(--sh-sm)">
             <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:6px">TOTAL PURCHASED</div>
-            <div style="font-family:var(--serif);font-size:36px;color:var(--ink);line-height:1;margin-bottom:4px">200</div>
-            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3)">= AED 24,000 invested</div>
+            <div style="font-family:var(--serif);font-size:36px;color:var(--ink);line-height:1;margin-bottom:4px" id="totalPurchasedDisplay">—</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3)">= AED <span id="totalPurchasedAED">0</span> invested</div>
           </div>
         </div>
 
@@ -1848,21 +1848,49 @@ function renderCreditLawyerList() {
 // RENDER CREDIT HISTORY
 // ════════════════════════════════════════════
 let creditTxnsLive = null;
-async function loadCreditHistory() {
+let firmWalletLive = null;
+const _MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function _fmtTxDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso); if (isNaN(d)) return String(iso).slice(0, 10);
+  return `${d.getUTCDate()} ${_MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+// Load the live firm credit wallet (pool, assigned, used, total purchased,
+// ledger) and paint every KPI + the transaction history.
+async function loadFirmWallet() {
   const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
   const token = localStorage.getItem('lad_token') || '';
   if (!token) { renderCreditHistory(); return; }
   try {
-    const r = await fetch(base + '/api/v1/firms/F-GA/transactions', { headers: { Authorization: 'Bearer ' + token } });
+    const r = await fetch(base + '/api/v1/credits/firm', { headers: { Authorization: 'Bearer ' + token } });
     if (!r.ok) { renderCreditHistory(); return; }
-    const rows = await r.json();
-    if (!Array.isArray(rows)) { renderCreditHistory(); return; }
-    const asc = [...rows].reverse(); let bal = 0;
-    asc.forEach(t => { bal += Number(t.amount) || 0; t.balance = bal; });
-    creditTxnsLive = asc.reverse();
+    const w = await r.json();
+    firmWalletLive = w;
+    firmCredits = Number(w.pool) || 0;                 // real unassigned pool
+    // KPI cards
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('firmCreditDisplay', firmCredits);
+    set('firmCreditAED', (firmCredits * CREDIT_RATE).toLocaleString());
+    set('sbCreditBadge', firmCredits);
+    set('assignedCreditsDisplay', Number(w.assigned) || 0);
+    set('assignedLawyerCount', Number(w.lawyersWithCredits) || 0);
+    set('usedCreditsDisplay', Number(w.used) || 0);
+    set('usedCreditsAED', ((Number(w.used) || 0) * CREDIT_RATE).toLocaleString());
+    set('totalPurchasedDisplay', Number(w.totalPurchased) || 0);
+    set('totalPurchasedAED', ((Number(w.totalPurchased) || 0) * CREDIT_RATE).toLocaleString());
+    const bcb = document.getElementById('buyCurrentBal'); if (bcb) bcb.textContent = firmCredits + ' credits';
+    // Ledger → history rows (running balance, newest first)
+    const asc = [...(w.transactions || [])].reverse(); let bal = 0;
+    asc.forEach(t => { bal += Number(t.credits) || 0; t._bal = bal; });
+    creditTxnsLive = asc.reverse().map(t => ({
+      date: _fmtTxDate(t.date), desc: t.description || (t.type === 'purchase' ? 'Credit purchase' : 'Credit assignment'),
+      amount: Number(t.credits) || 0, aed: Number(t.aed) || 0, balance: t._bal, type: t.type,
+    }));
     renderCreditHistory();
   } catch (_) { renderCreditHistory(); }
 }
+// Back-compat alias — older call sites used loadCreditHistory().
+const loadCreditHistory = loadFirmWallet;
 function renderCreditHistory() {
   const txns = creditTxnsLive || CREDIT_TRANSACTIONS;
   const host = document.getElementById('creditHistory');
@@ -1874,7 +1902,7 @@ function renderCreditHistory() {
       <div style="font-family:var(--mono);font-size:10px;color:var(--slate3)">${t.date}</div>
       <div>
         <div style="font-size:12.5px;color:var(--ink);font-weight:${isPos?600:400}">${t.desc}</div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--slate3)">${isPos?'Purchase':'Booking'}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--slate3)">${t.type==='purchase'?'Purchase':t.type==='assign'?'Assignment':isPos?'Purchase':'Booking'}</div>
       </div>
       <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:${isPos?'var(--green)':'var(--slate)'}">${isPos?'+':''}${t.amount} cr</div>
       <div style="font-family:var(--mono);font-size:11px;color:var(--slate3)">${isPos?'AED '+t.aed.toLocaleString():'-AED '+t.aed}</div>
@@ -1965,17 +1993,35 @@ function fmtCard(el) {
   el.value = v.replace(/(.{4})/g,'$1 ').trim();
 }
 
-function completePurchase() {
+async function completePurchase() {
   if(selectedPkg===null) return;
   const p = CREDIT_PACKAGES[selectedPkg];
-  firmCredits += p.credits;
-  CREDIT_TRANSACTIONS.unshift({date:'10 May 2026',type:'purchase',desc:`Purchased ${p.credits}-credit package (${p.label})`,amount:+p.credits,balance:firmCredits,aed:p.price});
-  updateCreditUI();
-  renderCreditHistory();
-  renderCreditLawyerList();
-  renderCourseCards(); // refresh course display
-  closeBuy();
-  showToast(`✓ ${p.credits} credits added — new balance: ${firmCredits} credits`);
+  const btn = document.getElementById('buyPayBtn');
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
+  const token = localStorage.getItem('lad_token') || '';
+  if (btn) { btn.style.pointerEvents='none'; btn.style.opacity='.6'; btn.textContent='Processing payment…'; }
+  try {
+    const r = await fetch(base + '/api/v1/credits/firm/checkout', {
+      method:'POST', headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token },
+      body: JSON.stringify({ credits: p.credits, aed: p.price }),
+    });
+    const d = await r.json().catch(()=>({}));
+    if (!r.ok) {
+      if (btn) { btn.style.pointerEvents='auto'; btn.style.opacity='1'; btn.textContent='Pay now →'; }
+      showToast('✕ ' + (d.error || 'Payment could not be completed.'));
+      return;
+    }
+    // Refresh the wallet from the server (authoritative pool + ledger)
+    await loadFirmWallet();
+    renderCreditLawyerList();
+    if (typeof renderCourseCards === 'function') renderCourseCards();
+    closeBuy();
+    if (btn) { btn.style.pointerEvents='auto'; btn.style.opacity='1'; btn.textContent='Pay now →'; }
+    showToast(`✓ ${p.credits} credits added — firm pool now ${firmCredits} credits`);
+  } catch (e) {
+    if (btn) { btn.style.pointerEvents='auto'; btn.style.opacity='1'; btn.textContent='Pay now →'; }
+    showToast('✕ Network error — payment not completed.');
+  }
 }
 
 // ════════════════════════════════════════════
@@ -2080,17 +2126,38 @@ function autoAssign() {
   showToast('Credits auto-assigned by compliance priority');
 }
 
-function saveAssign() {
-  const totalAssigned = Object.values(assignDraft).reduce((s,v)=>s+v,0);
-  const totalPool = firmCredits + getTotalAssigned();
-  if(totalAssigned > totalPool) { showToast('Not enough credits in pool'); return; }
-  LAWYERS.forEach(l => { l.credits = assignDraft[l.id] || 0; });
-  firmCredits = totalPool - totalAssigned;
-  updateCreditUI();
-  renderCreditLawyerList();
-  renderCourseCards();
-  closeAssign();
-  showToast(`✓ Credits assigned — ${firmCredits} unassigned in firm pool`);
+async function saveAssign() {
+  // Persist each changed assignment to the backend (delta vs current balance),
+  // which moves credits between the firm pool and the lawyer for real.
+  const changes = LAWYERS
+    .map(l => ({ l, cur: Number(l.credits) || 0, next: Number(assignDraft[l.id] || 0) }))
+    .filter(c => c.next !== c.cur && c.l.laId);
+  const netOut = changes.reduce((s,c) => s + (c.next - c.cur), 0);
+  if (netOut > firmCredits) { showToast(`Not enough credits in pool — need ${netOut}, have ${firmCredits}`); return; }
+  if (!changes.length) { closeAssign(); return; }
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
+  const token = localStorage.getItem('lad_token') || '';
+  const btn = document.querySelector('#assignModal .btn[onclick="saveAssign()"]');
+  if (btn) { btn.style.pointerEvents='none'; btn.textContent='Saving…'; }
+  try {
+    for (const c of changes) {
+      const delta = c.next - c.cur;
+      const r = await fetch(base + '/api/v1/credits/assign', {
+        method:'POST', headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token },
+        body: JSON.stringify({ lawyerId: c.l.laId, credits: delta }),
+      });
+      if (r.ok) { const d = await r.json().catch(()=>({})); c.l.credits = (d.balance != null) ? d.balance : c.next; }
+    }
+    await loadFirmWallet();
+    renderCreditLawyerList();
+    if (typeof renderCourseCards === 'function') renderCourseCards();
+    closeAssign();
+    showToast(`✓ Credits assigned — ${firmCredits} unassigned in firm pool`);
+  } catch (e) {
+    showToast('Assignment failed: ' + e.message);
+  } finally {
+    if (btn) { btn.style.pointerEvents='auto'; btn.textContent='Save assignments →'; }
+  }
 }
 
 // ════════════════════════════════════════════

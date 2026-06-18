@@ -185,7 +185,81 @@ router.post('/assign', requireAuth, (req, res) => {
   if (!lawyer || !credits) return res.status(400).json({ error: 'lawyerId and credits are required' });
   if (u.role === 'firm_compliance_officer' && lawyer.firm_id !== u.firm_id) return res.status(403).json({ error: 'That lawyer is not in your firm' });
   const balance = grant(lawyer, credits, { type: 'transfer', description: 'Assigned by firm', method: 'firm' });
+  // Move the credits between the firm pool and the lawyer, and record it on
+  // the firm ledger. Positive = assign out of pool; negative = return to pool.
+  // Non-blocking: clamp at 0 so legacy firms with no pool aren't stuck.
+  if (lawyer.firm_id && credits !== 0) {
+    try {
+      const name = `${(lawyer.first_name || '')} ${(lawyer.last_name || '')}`.trim();
+      db.prepare('UPDATE firms SET credit_pool = MAX(0, COALESCE(credit_pool,0) - ?) WHERE id = ?').run(credits, lawyer.firm_id);
+      db.prepare(
+        `INSERT INTO firm_credit_transactions (id, firm_id, type, amount, description, lawyer_id)
+         VALUES (?,?,?,?,?,?)`
+      ).run(rid('FTX-'), lawyer.firm_id, credits > 0 ? 'assign' : 'refund', -credits,
+        credits > 0 ? `Assigned ${credits} credits to ${name}` : `Returned ${-credits} credits from ${name}`, lawyer.id);
+    } catch (_) {}
+  }
   res.json({ ok: true, lawyerId: lawyer.id, balance });
+});
+
+// ─── Firm credit pool ─────────────────────────────────────────────────────
+const canFirm = (u) => !!u && (u.role === 'firm_compliance_officer' || isAdmin(u));
+function firmIdOf(req, explicit) {
+  if (explicit) return explicit.toString();
+  if (req.user.firm_id) return req.user.firm_id;
+  return null;
+}
+// Build the live firm wallet: pool, assigned-to-lawyers, used-this-cycle,
+// total purchased, and the firm-level ledger.
+function firmWallet(firmId) {
+  const firm = db.prepare('SELECT id, name, COALESCE(credit_pool,0) pool, COALESCE(total_purchased,0) totalPurchased FROM firms WHERE id = ?').get(firmId);
+  if (!firm) return null;
+  const a = db.prepare("SELECT COALESCE(SUM(CASE WHEN credit_balance>0 THEN credit_balance ELSE 0 END),0) assigned, COUNT(CASE WHEN COALESCE(credit_balance,0)>0 THEN 1 END) lawyers FROM lawyers WHERE firm_id = ?").get(firmId) || {};
+  const used = db.prepare("SELECT COALESCE(-SUM(t.amount),0) used FROM credit_transactions t JOIN lawyers l ON l.id = t.lawyer_id WHERE l.firm_id = ? AND t.type = 'use'").get(firmId) || {};
+  const txns = db.prepare('SELECT id, type, amount, aed_amount, description, lawyer_id, created_at FROM firm_credit_transactions WHERE firm_id = ? ORDER BY created_at DESC LIMIT 100').all(firmId);
+  return {
+    firmId: firm.id, firmName: firm.name,
+    pool: Number(firm.pool) || 0,
+    totalPurchased: Number(firm.totalPurchased) || 0,
+    assigned: Number(a.assigned) || 0,
+    lawyersWithCredits: Number(a.lawyers) || 0,
+    used: Number(used.used) || 0,
+    pricePerCredit: PRICE,
+    transactions: txns.map((t) => ({
+      id: t.id, type: t.type, credits: Number(t.amount) || 0,
+      aed: Number(t.aed_amount) || 0, description: t.description,
+      lawyerId: t.lawyer_id, date: t.created_at,
+    })),
+  };
+}
+
+// GET /credits/firm — the logged-in firm's wallet (admins may pass ?firmId=).
+router.get('/firm', requireAuth, (req, res) => {
+  if (!canFirm(req.user)) return res.status(403).json({ error: 'Firm officers or admins only' });
+  const firmId = firmIdOf(req, (req.query.firmId || '').toString());
+  if (!firmId) return res.status(400).json({ error: 'No firm context for this user.' });
+  const w = firmWallet(firmId);
+  if (!w) return res.status(404).json({ error: 'Firm not found' });
+  res.json(w);
+});
+
+// POST /credits/firm/checkout — instant card purchase into the firm pool
+// (simulated PSP authorisation), mirroring the lawyer /checkout flow.
+router.post('/firm/checkout', requireAuth, (req, res) => {
+  if (!canFirm(req.user)) return res.status(403).json({ error: 'Firm officers or admins only' });
+  const firmId = firmIdOf(req, (req.body && req.body.firmId || '').toString());
+  if (!firmId) return res.status(400).json({ error: 'No firm context for this user.' });
+  const firm = db.prepare('SELECT id FROM firms WHERE id = ?').get(firmId);
+  if (!firm) return res.status(404).json({ error: 'Firm not found' });
+  const credits = Math.round(Number((req.body && (req.body.credits || req.body.amount)) || 0));
+  if (credits <= 0) return res.status(400).json({ error: 'A positive credit amount is required.' });
+  const aed = (req.body && req.body.aed != null) ? Math.round(Number(req.body.aed)) : credits * PRICE;
+  db.prepare('UPDATE firms SET credit_pool = COALESCE(credit_pool,0) + ?, total_purchased = COALESCE(total_purchased,0) + ? WHERE id = ?').run(credits, credits, firmId);
+  db.prepare(
+    `INSERT INTO firm_credit_transactions (id, firm_id, type, amount, aed_amount, description, payment_method, reference)
+     VALUES (?,?,?,?,?,?,?,?)`
+  ).run(rid('FTX-'), firmId, 'purchase', credits, aed, `Card purchase — ${credits} credits`, 'card', rid('PAY-'));
+  res.status(201).json({ ok: true, credited: true, credits, aed, wallet: firmWallet(firmId) });
 });
 
 module.exports = router;
