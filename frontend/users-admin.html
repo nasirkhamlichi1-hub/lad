@@ -118,22 +118,48 @@
     td{padding:4px 0;border:none}
     td.row-actions{justify-content:flex-start;margin-top:8px}
   }
+
+  /* ═══ SHARED LAD PORTAL TOPBAR — matches every other page ═══ */
+  :root{--lad-nav-h:58px}
+  .lad-shared-nav{background:#1c1f2e;height:var(--lad-nav-h);display:flex;align-items:center;padding:0 24px;gap:20px;position:sticky;top:0;z-index:500;box-shadow:0 2px 12px rgba(0,0,0,.35)}
+  .lad-shared-logos{display:flex;align-items:center;gap:12px;padding-right:18px;border-right:1px solid rgba(255,255,255,.12);flex-shrink:0}
+  .lad-shared-logos img{height:34px;width:auto}
+  .lad-shared-sep{width:1px;height:26px;background:rgba(255,255,255,.22)}
+  .lad-portal-chip{display:flex;align-items:center;gap:7px;padding:4px 12px;border-radius:20px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;flex-shrink:0}
+  .lad-shared-nav-links{display:flex;align-items:center;gap:2px;flex:1}
+  .lad-snl{color:rgba(255,255,255,.75);font-size:12.5px;font-weight:500;padding:6px 12px;border-radius:6px;cursor:pointer;transition:all .15s;white-space:nowrap;text-decoration:none;display:flex;align-items:center}
+  .lad-snl:hover{background:rgba(255,255,255,.1);color:#fff}
+  .lad-snl.active{background:rgba(255,255,255,.1);color:#fff}
+  .lad-shared-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
+  .lad-user-chip{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:4px 12px;color:rgba(255,255,255,.9);font-size:12px;font-weight:600}
+  .lad-user-dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;background:var(--green)}
+  @media(max-width:768px){.lad-shared-nav-links{display:none}}
 </style>
 </head>
 <body>
-<header class="header">
-  <div class="header-l">
-    <img class="crest" alt="Dubai Government" src="img/dubai-logo.svg" onerror="this.style.display='none'">
-    <div class="titles">
-      <h1>User Management</h1>
-      <div class="sub">Continuing Legal Professional Development</div>
-    </div>
+<div class="lad-shared-nav">
+  <!-- LAD Logos -->
+  <div class="lad-shared-logos">
+    <a href="/" title="Home"><img src="https://legal.dubai.gov.ae/assets/govlogo/DG_white.svg" alt="Government of Dubai" onerror="this.style.display='none'"/></a>
+    <div class="lad-shared-sep"></div>
+    <a href="/" title="Home"><img src="https://legal.dubai.gov.ae/assets/govlogo/lad_logo_white.svg" alt="Legal Affairs Department" onerror="this.style.display='none'"/></a>
   </div>
-  <div class="header-r">
-    <span class="user-pill"><span id="userName">…</span><span id="userRole" class="role-tag">…</span></span>
-    <span class="signout" onclick="signOut()">Sign out</span>
+
+  <!-- Portal identity chip -->
+  <div class="lad-portal-chip" style="background:rgba(196,166,107,.18);border:1px solid rgba(196,166,107,.4);color:#e7d3a8">
+    <span style="width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8;flex-shrink:0"></span>
+    USER MANAGEMENT
   </div>
-</header>
+
+  <div class="lad-shared-nav-links">
+    <a class="lad-snl" onclick="goBack();return false" style="cursor:pointer">← Back to portal</a>
+  </div>
+
+  <div class="lad-shared-right">
+    <div class="lad-user-chip"><span class="lad-user-dot" id="userDot">··</span><span id="userName">…</span><span id="userRole" class="role-tag">…</span></div>
+    <a class="lad-snl" onclick="signOut()" style="cursor:pointer;font-size:11.5px;color:rgba(255,255,255,.6)" title="Sign out">Sign out</a>
+  </div>
+</div>
 
 <main class="main">
   <div class="breadcrumb"><a href="#" onclick="goBack();return false">← Back to portal</a></div>
@@ -279,8 +305,8 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="runtime-config.js"></script>
-<script src="api-client.js"></script>
+<script src="runtime-config.js?v=render2"></script>
+<script src="api-client.js?v=render2"></script>
 <script>
 (function () {
   'use strict';
@@ -318,6 +344,8 @@
       CURRENT_ROLE = localStorage.getItem('lad_role') || '';
     } catch (_) {}
     document.getElementById('userName').textContent = CURRENT_USER || 'Signed in';
+    const initials = (CURRENT_USER || 'LAD').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'LAD';
+    const dot = document.getElementById('userDot'); if (dot) dot.textContent = initials;
     const rolePill = document.getElementById('userRole');
     rolePill.textContent = (ROLE_LABELS[CURRENT_ROLE] || CURRENT_ROLE || '').toUpperCase();
     if (CURRENT_ROLE === 'lad_super_admin') rolePill.classList.add('super');

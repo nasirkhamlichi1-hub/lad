@@ -839,6 +839,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
             <div class="eyebrow gold" data-cfg="firm_sec_courses_eyebrow">COURSE CATALOGUE</div>
             <h2 class="sec-title" data-cfg-html="firm_sec_courses_title">Browse &amp; book <em style="color:var(--gold)">courses</em></h2>
             <div class="sec-desc">Select a course, choose your lawyers, pick their session.</div>
+            <div id="courseLegend" style="display:flex;gap:16px;align-items:center;margin-top:10px;flex-wrap:wrap"></div>
           </div>
           <div class="sec-acts">
             <!-- Category filters -->
@@ -2762,7 +2763,31 @@ function scrollToInternal() {
   if (el) { try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (_) { el.scrollIntoView(); } }
 }
 
+// Colour-coordinate catalogue cards by category so the firm can tell at a
+// glance what each course is: MANDATORY, ACCREDITED (external provider) and
+// ACCREDITED (internal in-house) each get their own colour family.
+function courseCategory(c){
+  if (c.internal) return 'internal';
+  if (c.type === 'mandatory') return 'mandatory';
+  return 'external';
+}
+const COURSE_COLORS = {
+  mandatory: { bg:'linear-gradient(135deg,#3a0f14,#6e2230)', tag:'#8a1c2b', dot:'#ef4444', label:'Mandatory' },
+  external:  { bg:'linear-gradient(135deg,#0a2040,#16386a)', tag:'#1e3a8a', dot:'#3b82f6', label:'Accredited · external' },
+  internal:  { bg:'linear-gradient(135deg,#0b3a3e,#0f5f63)', tag:'#0d5a5e', dot:'#14b8a6', label:'Accredited · internal' },
+};
+function courseArtBg(c){ return (COURSE_COLORS[courseCategory(c)] || COURSE_COLORS.external).bg; }
+function courseTagBg(c){ return (COURSE_COLORS[courseCategory(c)] || COURSE_COLORS.external).tag; }
+function renderCourseLegend(){
+  const el = document.getElementById('courseLegend');
+  if (!el) return;
+  el.innerHTML = Object.values(COURSE_COLORS).map(c =>
+    `<span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--slate2)"><span style="width:10px;height:10px;border-radius:3px;background:${c.dot}"></span>${c.label}</span>`
+  ).join('');
+}
+
 function renderCourseCards() {
+  renderCourseLegend();
   if (!COURSES || !COURSES.length) {
     const grid = document.getElementById('courseGrid');
     if (grid) grid.innerHTML = '<div style="grid-column:1/-1;padding:48px 28px;text-align:center;background:var(--paper);border:1px dashed var(--line);border-radius:14px;color:var(--slate2);font-size:14px;line-height:1.6">No accredited courses available yet.<br><span style="font-size:12.5px;color:var(--slate3)">Courses appear here once they\'ve been approved by LAD. Apply for accreditation via the Accreditation section below.</span></div>';
@@ -2782,8 +2807,8 @@ function renderCourseCards() {
     const firmCanBook = Math.floor(firmCredits / credits);
     const credLow = !canAfford;
     return `<div class="course-card">
-      <div class="c-art" style="background:${c.bg}">
-        <span class="c-art-tag">${c.internal?'INTERNALLY ACCREDITED':c.type.toUpperCase()}${c.elearning?' · E-LEARNING':''}</span>
+      <div class="c-art" style="background:${courseArtBg(c)}">
+        <span class="c-art-tag" style="background:${courseTagBg(c)};color:#fff">${c.internal?'INTERNALLY ACCREDITED':c.type.toUpperCase()}${c.elearning?' · E-LEARNING':''}</span>
         ${c.icon ? `<div class="c-art-ico">${c.icon}</div>` : ``}
         <div style="position:absolute;bottom:10px;left:12px;display:flex;gap:5px;align-items:center">
           <span style="background:rgba(255,255,255,.18);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.22);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:5px"> ${credits} credits</span>
