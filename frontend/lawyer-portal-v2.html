@@ -3106,42 +3106,23 @@ function showToast(m){const t=document.getElementById('toast');document.getEleme
 // BOOK SUGGESTED COURSE — confirmation flow for Lex-recommended and history-based cards
 // ════════════════════════════════════════════
 function bookSuggestedCourse(courseName, when, kind) {
-  // Decode HTML entities that may be in courseName from inline onclick handlers
-  const tmp = document.createElement('textarea');
-  tmp.innerHTML = courseName;
-  const name = tmp.value;
-
-  const isElearning = kind === 'elearning';
-  const verb = isElearning ? 'Enrol in' : 'Book';
-  const cost = isElearning ? 'Free' : '5 credits · AED 600';
-  const venueLabel = isElearning ? 'Self-paced · Online' : 'Face-to-face session';
-
-  const confirmed = confirm(
-    `${verb}: ${name}\n\n` +
-    `When: ${when}\n` +
-    `Format: ${venueLabel}\n` +
-    `Cost: ${cost}\n\n` +
-    `Confirm ${isElearning ? 'enrolment' : 'booking'}?`
-  );
-
-  if (!confirmed) return;
-
-  // In production, this would POST to /api/bookings.
-  // For the demo, persist to localStorage so the user sees something stick.
-  try {
-    const key = 'lawyer_bookings';
-    const existing = JSON.parse(localStorage.getItem(key) || '[]');
-    existing.push({
-      course: name,
-      when,
-      kind,
-      bookedAt: new Date().toISOString(),
-      status: isElearning ? 'enrolled' : 'confirmed',
-    });
-    localStorage.setItem(key, JSON.stringify(existing));
-  } catch {}
-
-  showToast(`✓ ${isElearning ? 'Enrolled in' : 'Booked'} ${name}`);
+  // Decode any HTML entities passed from inline handlers.
+  const tmp = document.createElement('textarea'); tmp.innerHTML = courseName || '';
+  const name = (tmp.value || '').trim();
+  // Open the REAL credit-gated booking modal for the matching live course.
+  function norm(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
+  const target = norm(name);
+  let foundId = null;
+  if (window.COURSES && target) {
+    const ids = Object.keys(window.COURSES);
+    foundId = ids.find(function(id){ return norm(window.COURSES[id].title) === target; })
+      || ids.find(function(id){ var t=norm(window.COURSES[id].title); return t && (t.indexOf(target)===0 || target.indexOf(t)===0); })
+      || ids.find(function(id){ var t=norm(window.COURSES[id].title); return t && (t.indexOf(target)!==-1 || target.indexOf(t)!==-1); });
+  }
+  if (foundId && typeof openBooking === 'function') { openBooking(foundId); return; }
+  // Not in the live bookable catalogue — take them there to find it.
+  if (typeof showToast === 'function') showToast('Opening the catalogue — find "' + name + '" to book.');
+  if (typeof goToSection === 'function') goToSection('courses');
 }
 
 // Navigation: classic anchor-scroll. Earlier `function goToSection(id,e)`
