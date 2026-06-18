@@ -573,7 +573,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
     <a class="lad-snl" onclick="scrollS('calendar')" style="cursor:pointer">My bookings</a>
     <a class="lad-snl" href="lawyer-skills.html" style="cursor:pointer">Skills</a>
     <a class="lad-snl" onclick="scrollS('file')" style="cursor:pointer">History</a>
-    <a class="lad-snl" onclick="LADPlatform.toggleLex()" style="cursor:pointer">Lex AI</a>
+    <a class="lad-snl" onclick="LADPlatform.toggleLex()" style="cursor:pointer">Maryam</a>
   </div>
 
   <!-- Right: user chip + sign out (no portal switcher — lawyers see only the lawyer portal) -->
@@ -1028,7 +1028,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
     </div>
     <div class="sb-cmd">
       <button class="sb-cmd-btn" onclick="openCmd()">
-        <svg viewBox="0 0 24 24" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Search · Ask Lex…
+        <svg viewBox="0 0 24 24" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Search · Ask Maryam…
         <span class="sb-cmd-kbd">⌘K</span>
       </button>
     </div>
@@ -1425,13 +1425,13 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
       <section class="section" id="coach">
         <div class="section-hd">
           <div>
-            <div class="section-eyebrow purple" data-cfg="lawyer_sec_coach_eyebrow">LEX · YOUR PERSONAL COACH</div>
+            <div class="section-eyebrow purple" data-cfg="lawyer_sec_coach_eyebrow">MARYAM · YOUR PERSONAL COACH</div>
             <h2 class="section-title" data-cfg-html="lawyer_sec_coach_title">Three paths <em class="purple">back on track</em></h2>
             <div class="section-desc">Lex analysed your filing history, peer cohort, and 47 available courses · last analysis 14:30 GST · confidence 94%</div>
           </div>
           <div class="section-actions">
             <button class="btn btn-ghost btn-sm">Show reasoning</button>
-            <button class="btn btn-ink btn-sm">Ask Lex</button>
+            <button class="btn btn-ink btn-sm">Ask Maryam</button>
           </div>
         </div>
         <div class="lex-coach">
@@ -2805,7 +2805,7 @@ const CMD_ITEMS=[
   {ico:'',name:'DIFC Day · 28 May',desc:'International Arbitration · BOOKED',sec:'Course',action:()=>showToast('Opening DIFC Day…')},
   {ico:'',name:'Mediation Advocacy',desc:'4 pts · 18 Jun · 10 credits',sec:'Course',action:()=>showToast('Opening Mediation…')},
   {ico:'₿',name:'Crypto Tax (CARF)',desc:'2 pts · 8 Jun · webinar',sec:'Course',action:()=>showToast('Opening Crypto Tax…')},
-  {ico:'',name:'Ask Lex anything',desc:'Open AI chat',sec:'Action',action:()=>showToast('Lex chat opening…')}
+  {ico:'',name:'Ask Maryam anything',desc:'Open AI chat',sec:'Action',action:()=>showToast('Maryam chat opening…')}
 ];
 
 function showToast(m){const t=document.getElementById('toast');document.getElementById('tmsg').textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2800);}
@@ -4599,7 +4599,7 @@ function completeLawyerPurchase() {
 </script>
 <nav class="mob-nav" id="mobNav">
   <button class="mob-nav-btn on" onclick="goToSection('overview',event);setMobNav(this)"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7" width="20" height="20"><circle cx="12" cy="8" r="4"/><path d="M6 21v-1a6 6 0 0 1 12 0v1"/></svg><span>Me</span></button>
-  <button class="mob-nav-btn" onclick="goToSection('coach',event);setMobNav(this)"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7" width="20" height="20"><path d="M12 2a8 8 0 0 0-8 8c0 1.5.4 3 1 4l-1 4 4-1c1.2.6 2.6 1 4 1a8 8 0 0 0 0-16z"/></svg><span>Lex</span></button>
+  <button class="mob-nav-btn" onclick="goToSection('coach',event);setMobNav(this)"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7" width="20" height="20"><path d="M12 2a8 8 0 0 0-8 8c0 1.5.4 3 1 4l-1 4 4-1c1.2.6 2.6 1 4 1a8 8 0 0 0 0-16z"/></svg><span>Maryam</span></button>
   <button class="mob-nav-btn" onclick="goToSection('calendar',event);setMobNav(this)"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7" width="20" height="20"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></button>
   <button class="mob-nav-btn" onclick="goToSection('courses',event);setMobNav(this)"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7" width="20" height="20"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span>Courses</span></button>
   <button class="mob-nav-btn" onclick="openBuyCredits();setMobNav(this)"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7" width="20" height="20"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><span>Credits</span></button>
@@ -4641,7 +4641,7 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
  * Single script that:
  *   1. Renders a consistent "blue bar" portal switcher on every page
  *      (Lawyer Portal · Firm Compliance · LAD Intelligence · CLPD Hub)
- *   2. Provides real Claude AI for any "Ask Lex" interaction
+ *   2. Provides real Claude AI for any "Ask Maryam" interaction
  *      - API key modal (saved to localStorage)
  *      - Streaming chat panel
  *      - Falls back to demo mode if no key
@@ -4829,11 +4829,6 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
       <div class="ladnav-switch">${portalSwitcherHtml}</div>
       <div class="ladnav-spacer"></div>
       <div class="ladnav-pill">${envBadge}</div>
-      <div class="ladnav-actions">
-        <button class="ladnav-icon-btn" onclick="LADPlatform.openApiKeyModal()" title="Configure Claude AI">
-          <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
-      </div>
       <div class="ladnav-user">
         <div class="ladnav-avatar">${userInitials}</div>
         <div class="ladnav-user-info">
@@ -4861,7 +4856,7 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
     const fab = document.createElement('button');
     fab.className = 'ladlex-fab';
     fab.id = 'ladlex-fab';
-    fab.title = 'Ask Lex (Claude AI)';
+    fab.title = 'Ask Maryam';
     fab.onclick = () => global.LADPlatform.toggleLex();
     fab.innerHTML = `
       <svg viewBox="0 0 24 24">
@@ -4905,12 +4900,9 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
           <svg viewBox="0 0 24 24"><path d="M12 2a8 8 0 0 0-8 8c0 1.5.4 3 1 4l-1 4 4-1c1.2.6 2.6 1 4 1a8 8 0 0 0 0-16z"/></svg>
         </div>
         <div class="ladlex-hd-text">
-          <div class="ladlex-hd-title">Lex</div>
-          <div class="ladlex-hd-sub">Claude AI · ${portalLabel}</div>
+          <div class="ladlex-hd-title">Maryam</div>
+          <div class="ladlex-hd-sub">AiModel · ${portalLabel}</div>
         </div>
-        <button class="ladlex-hd-close" onclick="LADPlatform.openApiKeyModal()" title="Claude API key">
-          <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
         <button class="ladlex-hd-close" onclick="LADPlatform.toggleLex()" title="Close">
           <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -4926,7 +4918,7 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
         ).join('')}
       </div>
       <div class="ladlex-input-row">
-        <textarea class="ladlex-input" id="ladlex-input" placeholder="Ask Lex anything about your CLPD…" rows="1" onkeydown="LADPlatform._inputKey(event)"></textarea>
+        <textarea class="ladlex-input" id="ladlex-input" placeholder="Ask Maryam anything about your CLPD…" rows="1" onkeydown="LADPlatform._inputKey(event)"></textarea>
         <button class="ladlex-send" id="ladlex-send" onclick="LADPlatform.askLex()" title="Send">
           <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
@@ -4951,14 +4943,8 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
     const statusEl = document.getElementById('ladlex-status');
     const textEl = document.getElementById('ladlex-status-text');
     if (!statusEl) return;
-    const key = STORAGE.getApiKey();
-    if (key && key.startsWith('sk-ant-')) {
-      statusEl.classList.remove('warn');
-      textEl.textContent = `Connected · Claude (key ${key.slice(0, 10)}…${key.slice(-4)})`;
-    } else {
-      statusEl.classList.add('warn');
-      textEl.textContent = 'Demo mode · click ⚙ to add your Claude API key';
-    }
+    statusEl.classList.remove('warn');
+    if (textEl) textEl.textContent = 'Maryam · powered by AiModel';
   }
 
   function toggleLex() {
@@ -4968,7 +4954,7 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
     if (isOpen) {
       if (_lex.history.length === 0) {
         addLexMessage('assistant',
-          `Hello — I'm Lex, your AI assistant for the CLPD platform.
+          `Hello — I'm Maryam, your AI assistant for the CLPD platform.
 
 I'm aware you're in the **${PORTALS[_lex.portal]?.name || 'CLPD platform'}** and I can help with course recommendations, compliance planning, and answering questions about the 2026 programme.
 
@@ -4984,7 +4970,7 @@ What would you like to know?`
     if (!msgs) return null;
     const msg = document.createElement('div');
     msg.className = `ladlex-msg ${role}`;
-    const avatar = role === 'user' ? 'YOU' : 'LEX';
+    const avatar = role === 'user' ? 'YOU' : 'M';
     msg.innerHTML = `
       <div class="ladlex-msg-av">${avatar}</div>
       <div class="ladlex-msg-body"></div>
@@ -5026,21 +5012,49 @@ What would you like to know?`
     const responseEl = addLexMessage('assistant', '', { typing: true });
 
     try {
-      const apiKey = STORAGE.getApiKey();
-      if (apiKey && apiKey.startsWith('sk-ant-')) {
-        await streamFromClaude(prompt, responseEl);
-      } else {
-        await respondInDemoMode(prompt, responseEl);
-      }
+      await respondViaAiModel(prompt, responseEl);
     } catch (err) {
-      responseEl.innerHTML = `<em style="color:#b81c24">Lex couldn't respond:</em> ${formatLexMarkdown(err.message || String(err))}
-
-Click the ⚙ icon in the top bar to check your API key configuration.`;
+      responseEl.innerHTML = `<em style="color:#b81c24">Maryam couldn't respond right now.</em> Please try again in a moment.`;
     } finally {
       sendBtn.disabled = false;
       _lex.isStreaming = false;
       input.focus();
     }
+  }
+
+  // Maryam runs on the backend AiModel (server holds the key; no client key).
+  async function respondViaAiModel(prompt, targetEl) {
+    const base = (window.LAD_API_BASE || '').replace(/\/$/, '');
+    let token = ''; try { token = localStorage.getItem('lad_token') || ''; } catch (_) {}
+    const systemPrompt = `You are Maryam, an AI assistant inside the Dubai Legal Affairs Department's CLPD (Continuing Legal Professional Development) compliance platform.
+
+You are speaking to ${_lex.portalContext}.
+
+Key context:
+- The 2026 CLPD compliance year requires 16 points total: 8 mandatory + 8 accredited
+- The deadline is 31 December 2026
+- Mandatory courses are LAD-run (free or near-free)
+- Accredited courses are provided by external providers (priced in credits)
+- 1 credit = AED 120; a standard course costs 5 credits
+- Failure to comply by the deadline can suspend a lawyer's practising certificate
+
+Be concise, practical and warm. Use markdown sparingly (bold for key terms, italic for emphasis). Don't repeat what the user said. Give specific course names and point values when possible. If a question is outside your scope, say so briefly.`;
+
+    const r = await fetch(base + '/api/v1/lex/chat', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}),
+      body: JSON.stringify({
+        system: systemPrompt,
+        messages: _lex.history.map(m => ({ role: m.role, content: m.content })),
+        max_tokens: 800,
+      }),
+    });
+    if (!r.ok) throw new Error('AI ' + r.status);
+    const j = await r.json();
+    const text = (j && j.content && j.content[0] && j.content[0].text) || (j && j.reply) || 'Sorry — I had trouble responding.';
+    targetEl.innerHTML = formatLexMarkdown(text);
+    _lex.history.push({ role: 'assistant', content: text });
+    const msgs = document.getElementById('ladlex-msgs'); if (msgs) msgs.scrollTop = msgs.scrollHeight;
   }
 
   async function streamFromClaude(prompt, targetEl) {
@@ -5189,8 +5203,10 @@ Click the ⚙ icon at the top right to add a key, then ask me again.`;
     }, 0);
   }
 
-  // ─── API key modal ───────────────────────────────────────────
-  function openApiKeyModal() {
+  // ─── API key modal — disabled (mass customer portal; Maryam runs on the
+  //     server-side AiModel, no client key). Kept as a no-op for safety. ───
+  function openApiKeyModal() { return; }
+  function _deadApiKeyModal() {
     let modal = document.getElementById('ladlex-api-modal');
     if (!modal) {
       modal = document.createElement('div');
@@ -5463,7 +5479,7 @@ Click the ⚙ icon at the top right to add a key, then ask me again.`;
               </label>
               <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:var(--slate);cursor:pointer">
                 <input type="checkbox" id="pmNotifLex" checked style="width:14px;height:14px;cursor:pointer"/>
-                <span style="flex:1">Lex AI insights · weekly study-plan updates and course matches</span>
+                <span style="flex:1">Maryam insights · weekly study-plan updates and course matches</span>
               </label>
             </div>
           </div>
