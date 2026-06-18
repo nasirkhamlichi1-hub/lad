@@ -571,7 +571,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
     <a class="lad-snl active" onclick="scrollS('overview')" style="cursor:pointer">Dashboard</a>
     <a class="lad-snl" onclick="scrollS('completed')" style="cursor:pointer">My bookings</a>
     <a class="lad-snl" onclick="scrollS('skills')" style="cursor:pointer">Skills</a>
-    <a class="lad-snl" onclick="scrollS('file')" style="cursor:pointer">History</a>
+    <a class="lad-snl" onclick="scrollS('completed')" style="cursor:pointer">History</a>
   </div>
 
   <!-- Right: user chip + sign out (no portal switcher — lawyers see only the lawyer portal) -->
@@ -1040,7 +1040,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
       <div class="sb-section">Records</div>
       <a class="sb-link" onclick="goToSection('completed',event)"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Completed<span class="sb-link-badge green">3</span></a>
       <a class="sb-link" onclick="goToSection('trajectory',event)"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Career trajectory</a>
-      <a class="sb-link" onclick="goToSection('file',event)"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>File activity</a>
+      <a class="sb-link" onclick="goToSection('completed',event)"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Course history</a>
     </nav>
     <div class="sb-foot" onclick="openProfileModal()" style="cursor:pointer" title="My profile">
       <div class="sb-user-av">YM</div>
@@ -2910,9 +2910,9 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
       <section class="section" id="completed">
         <div class="section-hd">
           <div>
-            <div class="section-eyebrow green">COMPLETED · 2026</div>
-            <h2 class="section-title">Your <em>filed activities</em></h2>
-            <div class="section-desc" id="completedSubtitle">Loading your attendance history…</div>
+            <div class="section-eyebrow green">COURSE HISTORY</div>
+            <h2 class="section-title">Your <em>completed courses</em></h2>
+            <div class="section-desc" id="completedSubtitle">Loading your course history…</div>
           </div>
           <div class="section-actions">
             <button class="btn btn-ghost btn-sm" onclick="loadMyAttendance()">↻ Refresh</button>
@@ -2928,7 +2928,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
       </section>
 
       <!-- ═══ FILE ACTIVITY ═══ -->
-      <section class="section" id="file">
+      <section class="section" id="file" style="display:none">
         <div class="section-hd">
           <div>
             <div class="section-eyebrow gold">FILE ACTIVITY</div>
@@ -3091,7 +3091,7 @@ const CMD_ITEMS=[
   {ico:'',name:'Browse courses',desc:'47 active courses',sec:'Section',action:()=>scrollToById('courses')},
   {ico:'',name:'Completed',desc:'3 activities · 6 pts',sec:'Section',action:()=>scrollToById('completed')},
   {ico:'',name:'Career trajectory',desc:'7-year story',sec:'Section',action:()=>scrollToById('trajectory')},
-  {ico:'',name:'File activity',desc:'Submit external evidence',sec:'Section',action:()=>scrollToById('file')},
+  {ico:'',name:'Course history',desc:'Your completed courses',sec:'Section',action:()=>scrollToById('completed')},
   {ico:'',name:'Apply The Fast Lane',desc:'Recommended path · 5 credits',sec:'Action',action:()=>showToast('Auto-scheduling The Fast Lane…')},
   {ico:'',name:'Start AI Governance',desc:'Free e-learning · 2 pts',sec:'Course',action:()=>showToast('Starting AI Governance…')},
   {ico:'',name:'DIFC Day · 28 May',desc:'International Arbitration · BOOKED',sec:'Course',action:()=>showToast('Opening DIFC Day…')},
@@ -4993,10 +4993,10 @@ async function loadMyAttendance() {
         })) : []);
     if (subEl) {
       const total = att.reduce((s, a) => s + (a.delta_points || 0), 0);
-      subEl.textContent = `${att.length} ${att.length === 1 ? 'activity' : 'activities'} · ${total} ${total === 1 ? 'point' : 'points'} earned · linked to LAD-accredited courses`;
+      subEl.textContent = `${att.length} completed ${att.length === 1 ? 'course' : 'courses'} · ${total} CPD ${total === 1 ? 'point' : 'points'} · recorded against LAD-accredited courses`;
     }
     if (!att.length) {
-      listEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:11px">No attended sessions yet. Once your firm files attendance for an accredited course, the points and ATP code will appear here.</div>';
+      listEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:11px">No completed courses yet. As you attend accredited courses, your completion history and CPD points will appear here automatically.</div>';
       return;
     }
     listEl.innerHTML = att.map(a => {
