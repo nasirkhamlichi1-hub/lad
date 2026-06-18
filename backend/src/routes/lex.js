@@ -13,7 +13,41 @@ const axios = require('axios');
 const router = express.Router();
 const config = require('../config');
 const aimodel = require('../services/aimodel');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, optionalAuth } = require('../middleware/auth');
+
+// Shared AiModel diagnostic (no key, no secrets) — runs a live 1-token probe
+// and reports the exact failure so "Maryam isn't working" can be pinpointed.
+async function aimodelDiagnostic() {
+  const s = aimodel.settings();
+  let host = '';
+  try { host = s.endpoint ? new URL(s.endpoint).host : ''; } catch (_) { host = s.endpoint || ''; }
+  const isAzure = /openai\.azure\.com/i.test(s.endpoint || '') || /\/openai\/deployments\//i.test(s.endpoint || '');
+  let resolvedPath = '';
+  try { resolvedPath = aimodel.configured() ? new URL(aimodel.buildRequest(s).url).pathname : ''; } catch (_) {}
+  const out = {
+    configured: aimodel.configured(),
+    endpointHost: host,
+    resolvedPath,
+    isTunnel: /trycloudflare\.com|ngrok|loca\.lt/i.test(host),
+    isAzure,
+    deployment: s.deployment,
+    apiVersion: s.apiVersion,
+    hasKey: !!s.key,
+    claudeFallback: !!config.anthropic.apiKey,
+    probe: null,
+  };
+  if (aimodel.configured()) {
+    try {
+      const text = await aimodel.chat({ messages: [{ role: 'user', content: 'Reply with the single word OK.' }], maxTokens: 5, temperature: 0 });
+      out.probe = { ok: true, sample: (text || '').slice(0, 40) };
+    } catch (e) {
+      out.probe = { ok: false, code: e.code || 'ERROR', httpStatus: e.status,
+        message: e.message,
+        detail: typeof e.detail === 'object' ? (e.detail.error ? e.detail.error.message : JSON.stringify(e.detail).slice(0, 300)) : String(e.detail || '').slice(0, 300) };
+    }
+  }
+  return out;
+}
 
 function asAnthropic(text, engine) {
   return {
@@ -84,35 +118,14 @@ router.post('/chat', requireAuth, async (req, res, next) => {
 // Reports whether AiModel is configured, which endpoint host/deployment it is
 // using, and the result of a live 1-token probe — so the exact failure
 // (dead tunnel, wrong deployment, bad key) is visible without exposing the key.
-router.get('/status', requireAuth, async (req, res) => {
-  const s = aimodel.settings();
-  let host = '';
-  try { host = s.endpoint ? new URL(s.endpoint).host : ''; } catch (_) { host = s.endpoint || ''; }
-  const isAzure = /openai\.azure\.com/i.test(s.endpoint || '') || /\/openai\/deployments\//i.test(s.endpoint || '');
-  let resolvedPath = '';
-  try { resolvedPath = aimodel.configured() ? new URL(aimodel.buildRequest(s).url).pathname : ''; } catch (_) {}
-  const out = {
-    configured: aimodel.configured(),
-    endpointHost: host,
-    resolvedPath,
-    isTunnel: /trycloudflare\.com|ngrok|loca\.lt/i.test(host),
-    isAzure,
-    deployment: s.deployment,
-    apiVersion: s.apiVersion,
-    hasKey: !!s.key,
-    claudeFallback: !!config.anthropic.apiKey,
-    probe: null,
-  };
-  if (aimodel.configured()) {
-    try {
-      const text = await aimodel.chat({ messages: [{ role: 'user', content: 'Reply with the single word OK.' }], maxTokens: 5, temperature: 0 });
-      out.probe = { ok: true, sample: (text || '').slice(0, 40) };
-    } catch (e) {
-      out.probe = { ok: false, code: e.code || 'ERROR', status: (e.detail && e.detail.error && e.detail.error.code) || undefined, message: e.message,
-        detail: typeof e.detail === 'object' ? (e.detail.error ? e.detail.error.message : JSON.stringify(e.detail).slice(0, 300)) : String(e.detail || '').slice(0, 300) };
-    }
-  }
-  res.json(out);
+router.get('/status', requireAuth, async (_req, res) => {
+  res.json(await aimodelDiagnostic());
+});
+
+// GET /api/v1/lex/health — same diagnostic, public, so it can be opened
+// directly in a browser tab (no auth header needed). Leaks no credentials.
+router.get('/health', optionalAuth, async (_req, res) => {
+  res.json(await aimodelDiagnostic());
 });
 
 module.exports = router;
