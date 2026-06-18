@@ -1111,6 +1111,12 @@ async function generateAiRationale(ref) {
     const idx = APPLICATIONS.findIndex(a => a.ref === ref);
     if (idx >= 0) {
       APPLICATIONS[idx].aiRationale = text;
+      if (j.scores && typeof j.scores === 'object') {
+        APPLICATIONS[idx].scores = APPLICATIONS[idx].scores || { r1: {}, r2: {}, ai: {} };
+        APPLICATIONS[idx].scores.ai = j.scores;
+      }
+      if (j.recommendedPoints != null) APPLICATIONS[idx].aiRecommendedPoints = j.recommendedPoints;
+      if (j.recommendation) APPLICATIONS[idx].aiRecommendation = j.recommendation;
       // Re-render whichever right-panel tab is currently shown so the new
       // rationale lands without a tab switch — Scoring tab has its own
       // "✦ Lex AI rationale" strip and the AI tab shows the long form.

@@ -316,14 +316,38 @@ router.post('/:ref/ai-rationale', requireAuth, async (req, res, next) => {
     `Description: ${p.description || p.summary || 'n/a'}`,
     `Learning objectives: ${Array.isArray(p.learningObjectives) ? p.learningObjectives.join('; ') : (p.learningObjectives || p.objectives || 'n/a')}`,
   ].join('\n');
+  // Rubric criteria depend on the application kind (course vs renewal).
+  const isRenewal = /renew/i.test(row.type || '');
+  const CRITERIA = isRenewal
+    ? [['compliance','Compliance history'],['quality','Delivery quality'],['reach','Reach & demand'],['governance','Governance & QA'],['fees','Fee structure']]
+    : [['relevance','Relevance & alignment'],['depth','Substantive depth'],['trainer','Trainer credentials'],['materials','Quality of materials'],['pedagogy','Delivery & pedagogy']];
+  const keys = CRITERIA.map((c) => c[0]);
+  const critList = CRITERIA.map((c) => `- ${c[0]}: ${c[1]}`).join('\n');
+
   const system = 'You are Lex, an accreditation assessor for the Dubai Legal Affairs Department CLPD programme. '
-    + 'In 4–6 sentences give a balanced assessment: legal-professional rigour, relevance to practitioners in Dubai, '
-    + 'learning value, and whether the requested CPD points look appropriate (about 1 point per hour of substantive '
-    + 'learning). End with a clear recommendation (approve / request changes / reject).';
+    + 'Score the submission on EACH listed criterion from 1 to 10 (10 = excellent), recommend the CPD points '
+    + '(about 1 point per hour of substantive learning), and write a 4–6 sentence rationale ending with a clear '
+    + 'recommendation. Reply with ONLY a JSON object: {"scores": {<criterionKey>: integer 1-10, ...}, '
+    + '"recommendedPoints": integer, "recommendation": "approve"|"request_changes"|"reject", "rationale": string}. '
+    + 'Use EXACTLY these criterion keys:\n' + critList;
   try {
-    const text = await aimodel.chat({ system, messages: [{ role: 'user', content: 'Assess this submission:\n\n' + profile }], maxTokens: 500, temperature: 0.3 });
-    db.prepare('UPDATE accreditations SET ai_rationale = ?, updated_at = ? WHERE ref = ?').run(text, new Date().toISOString(), row.ref);
-    res.json({ ok: true, rationale: text });
+    const text = await aimodel.chat({ system, messages: [{ role: 'user', content: 'Assess this submission:\n\n' + profile }], maxTokens: 700, temperature: 0.3 });
+    let parsed = null; try { const m = text.match(/\{[\s\S]*\}/); parsed = JSON.parse(m ? m[0] : text); } catch (_) {}
+    const rationale = (parsed && parsed.rationale) ? String(parsed.rationale) : text;
+    const aiScores = {};
+    if (parsed && parsed.scores && typeof parsed.scores === 'object') {
+      for (const k of keys) {
+        const v = Math.round(Number(parsed.scores[k]));
+        if (Number.isFinite(v)) aiScores[k] = Math.max(1, Math.min(10, v));
+      }
+    }
+    const recommendedPoints = parsed && parsed.recommendedPoints != null ? Math.max(0, Math.round(Number(parsed.recommendedPoints))) : null;
+    const recommendation = parsed && parsed.recommendation ? String(parsed.recommendation) : null;
+    const scoresObj = parse(row.scores, { r1: {}, r2: {}, ai: {} });
+    scoresObj.ai = aiScores;
+    db.prepare('UPDATE accreditations SET ai_rationale = ?, scores = ?, updated_at = ? WHERE ref = ?')
+      .run(rationale, JSON.stringify(scoresObj), new Date().toISOString(), row.ref);
+    res.json({ ok: true, rationale, scores: aiScores, recommendedPoints, recommendation });
   } catch (e) {
     if (e.code === 'AIMODEL_ERROR') return res.status(502).json({ error: 'AiModel call failed' });
     next(e);
