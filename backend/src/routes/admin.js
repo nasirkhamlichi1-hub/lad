@@ -271,6 +271,61 @@ router.get('/forecast', requireAuth, (req, res) => {
   });
 });
 
+// GET /api/v1/admin/course-analytics — REAL market intelligence per course:
+// weekly buying patterns, fill rates, accredited-vs-mandatory demand, momentum.
+// Feedback/trainer-rating slots are returned as null until go-live capture.
+router.get('/course-analytics', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
+  const all = (sql, ...a) => { try { return db.prepare(sql).all(...a); } catch (_) { return []; } };
+  const WEEKS = 12, DAY = 86400000, now = Date.now();
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  // week bucket: 0 = (WEEKS-1) weeks ago … WEEKS-1 = this week
+  const bucketOf = (iso) => { const t = Date.parse(iso); if (isNaN(t)) return -1; const b = (WEEKS - 1) - Math.floor((now - t) / (7 * DAY)); return (b >= 0 && b < WEEKS) ? b : -1; };
+  const weeks = []; for (let i = WEEKS - 1; i >= 0; i--) { const d = new Date(now - i * 7 * DAY); weeks.push(d.getUTCDate() + ' ' + MON[d.getUTCMonth()]); }
+
+  const courses = all("SELECT id, title, COALESCE(type,'accredited') type, COALESCE(pts,0) pts, COALESCE(credits,5) credits, category, provider_id FROM courses WHERE active = 1");
+  const fillRows = all("SELECT course_id, SUM(capacity) cap, SUM(seats_remaining) seats, COUNT(*) sessions FROM course_sessions WHERE COALESCE(status,'open') NOT IN ('cancelled','closed') AND scheduled_at >= datetime('now') GROUP BY course_id");
+  const fill = {}; fillRows.forEach((r) => { fill[r.course_id] = r; });
+  const bk = all("SELECT course_id, created_at, status FROM bookings WHERE created_at >= datetime('now', ?)", '-' + (WEEKS * 7) + ' day');
+
+  const perCourse = {}; courses.forEach((c) => { perCourse[c.id] = new Array(WEEKS).fill(0); });
+  const marketWeekly = new Array(WEEKS).fill(0);
+  let byMandatory = 0, byAccredited = 0;
+  const typeOf = {}; courses.forEach((c) => { typeOf[c.id] = (c.type || '').toLowerCase(); });
+  bk.forEach((r) => { const b = bucketOf(r.created_at); if (b < 0) return; if (perCourse[r.course_id]) perCourse[r.course_id][b]++; marketWeekly[b]++; if (typeOf[r.course_id] === 'mandatory') byMandatory++; else byAccredited++; });
+
+  const out = courses.map((c) => {
+    const w = perCourse[c.id] || new Array(WEEKS).fill(0);
+    const f = fill[c.id] || {};
+    const cap = Number(f.cap) || 0, seats = Number(f.seats) || 0;
+    const total = w.reduce((s, x) => s + x, 0);
+    const recent = w.slice(WEEKS - 4).reduce((s, x) => s + x, 0);
+    const prior = w.slice(WEEKS - 8, WEEKS - 4).reduce((s, x) => s + x, 0);
+    return {
+      id: c.id, title: c.title, type: c.type, points: c.pts, credits: c.credits,
+      topic: c.category || null, provider: c.provider_id || null,
+      capacity: cap, seatsRemaining: seats, fillPct: cap ? Math.round(100 * (cap - seats) / cap) : null,
+      upcomingSessions: Number(f.sessions) || 0,
+      totalBookings: total, weekly: w, momentum: recent - prior,
+      rating: null, trainerRating: null, feedbackCount: 0, // awaiting go-live capture
+    };
+  }).sort((a, b) => b.totalBookings - a.totalBookings);
+
+  const ranked = out.filter((c) => c.totalBookings > 0).sort((a, b) => b.momentum - a.momentum);
+  res.json({
+    weeks,
+    market: {
+      totalBookings: marketWeekly.reduce((s, x) => s + x, 0),
+      weekly: marketWeekly,
+      mandatory: byMandatory, accredited: byAccredited,
+      topGrowing: ranked.slice(0, 5).map((c) => ({ id: c.id, title: c.title, momentum: c.momentum, total: c.totalBookings })),
+      cooling: ranked.slice(-3).reverse().map((c) => ({ id: c.id, title: c.title, momentum: c.momentum, total: c.totalBookings })),
+    },
+    courses: out.slice(0, 40),
+    feedbackLive: false, // flips true once course/trainer feedback capture goes live
+  });
+});
+
 // POST /api/v1/admin/reclassify-practising — apply the standard practising rules.
 router.post('/reclassify-practising', requireAuth, (req, res) => {
   if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });

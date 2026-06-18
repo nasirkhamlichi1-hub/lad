@@ -132,6 +132,37 @@
   .fp-btn.back:hover{color:var(--cyan);border-color:var(--cyan)}
   #diveHint{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);z-index:7;font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);background:rgba(7,12,26,.6);border:1px solid var(--panel-b);border-radius:20px;padding:7px 16px;backdrop-filter:blur(8px);pointer-events:none;transition:opacity .4s}
   body.focus #diveHint{opacity:0}
+
+  /* ── Deep layer: dive a level deeper into market/course intelligence ── */
+  #deepLayer{position:fixed;inset:0;z-index:60;display:none;overflow:auto;
+    background:radial-gradient(1200px 720px at 50% -5%,rgba(22,44,96,.6),rgba(4,6,15,.94) 62%),rgba(4,6,15,.97);
+    opacity:0;transform:scale(1.05);transition:opacity .45s,transform .55s cubic-bezier(.2,1,.3,1)}
+  #deepLayer.on{display:block;opacity:1;transform:none}
+  .dl-wrap{max-width:1520px;margin:0 auto;padding:26px 30px 70px}
+  .dl-top{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+  .dl-eye{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--cyan);text-transform:uppercase}
+  .dl-title{font-family:var(--title);font-weight:800;font-size:30px;letter-spacing:2px;line-height:1;background:linear-gradient(90deg,#eaf4ff,#7fd6ff 55%,#b9a3ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .dl-close{margin-left:auto;font-family:var(--mono);font-size:12px;letter-spacing:1.5px;color:var(--dim);border:1px solid var(--panel-b);border-radius:10px;padding:10px 17px;background:var(--panel);cursor:pointer;transition:.2s}
+  .dl-close:hover{color:var(--cyan);border-color:var(--cyan);box-shadow:0 0 16px rgba(52,225,255,.22)}
+  .dl-market{display:grid;grid-template-columns:1.7fr 1fr 1fr;gap:14px;margin-bottom:20px}
+  .dl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+  .cc-card{background:var(--panel);border:1px solid var(--panel-b);border-radius:15px;padding:15px 16px;cursor:pointer;transition:.18s;position:relative;overflow:hidden;backdrop-filter:blur(10px)}
+  .cc-card:hover{border-color:var(--cyan);box-shadow:0 0 26px rgba(52,225,255,.16);transform:translateY(-2px)}
+  .cc-type{font-family:var(--mono);font-size:8.5px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:10px;border:1px solid currentColor;display:inline-block}
+  .cc-title{font-family:var(--title);font-size:14px;font-weight:600;color:#eaf4ff;margin:9px 0 4px;line-height:1.2;min-height:34px}
+  .cc-row{display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:8px}
+  .cc-spark{width:100%;height:34px;margin-top:8px}
+  .cc-mom{font-family:var(--mono);font-size:11px;font-weight:700}
+  /* detail drawer */
+  #ccDetail{position:fixed;top:0;right:0;width:480px;max-width:92vw;height:100%;z-index:70;overflow:auto;
+    background:rgba(7,12,26,.96);border-left:1px solid rgba(52,225,255,.3);box-shadow:-30px 0 80px rgba(0,0,0,.5);
+    transform:translateX(520px);transition:transform .5s cubic-bezier(.25,1,.35,1);padding:24px 26px 50px}
+  #ccDetail.on{transform:none}
+  .cd-feedback{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  .cd-fb{border:1px dashed rgba(120,150,210,.35);border-radius:12px;padding:14px;text-align:center}
+  .cd-fb .v{font-family:var(--title);font-size:26px;color:var(--dim2)}
+  .cd-fb .soon{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--amber);border:1px solid rgba(255,184,77,.4);border-radius:10px;padding:2px 7px;display:inline-block;margin-top:6px}
+  .chip{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.5px;color:var(--ink);background:rgba(52,225,255,.1);border:1px solid rgba(52,225,255,.25);border-radius:12px;padding:4px 10px;margin:3px 4px 0 0}
   @media(max-width:1200px){.stage{grid-template-columns:1fr}.kstrip{grid-template-columns:repeat(3,1fr)}.bottom{grid-template-columns:1fr 1fr}.centerstage{min-height:440px}}
 </style>
 </head>
@@ -268,6 +299,23 @@
     <button class="fp-btn ai" id="fpAsk">✦ Analyse trends &amp; actions</button>
   </div>
   <button class="fp-btn back" onclick="exitFocus()">← Back to orbit</button>
+</div>
+
+<!-- Deep layer: market & course intelligence -->
+<div id="deepLayer">
+  <div class="dl-wrap">
+    <div class="dl-top">
+      <div>
+        <div class="dl-eye">Layer 02 · Market Intelligence</div>
+        <div class="dl-title" id="dlTitle">COURSE & MARKET DEEP-DIVE</div>
+      </div>
+      <button class="dl-close" onclick="closeDeepLayer()">✕ Back to the twin</button>
+    </div>
+    <div class="dl-market" id="dlMarket"></div>
+    <div class="card-h" style="margin:4px 2px 12px">Courses · live demand <span class="badge" id="dlCount"></span></div>
+    <div class="dl-grid" id="dlGrid"><div class="loading">Loading market intelligence…</div></div>
+  </div>
+  <div id="ccDetail"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -582,6 +630,7 @@
       $('fpTitle').textContent=key.replace('Accreds','Accreditations').replace('Regulator · LAD','Regulator (LAD)')+(cnt!=null?(' · '+nf(cnt)):'');
       $('fpSub').textContent=meta.sub;
       $('fpFacts').innerHTML=clusterFacts(key);
+      if(key==='Courses'||key==='Sessions'){ $('fpFacts').innerHTML+='<button class="fp-btn ai" style="margin-top:12px" onclick="openCoursesLayer()">⤢ Open market deep-dive</button>'; }
       var ans=$('fpAnswer'); ans.style.display='none'; ans.textContent='';
       var btn=$('fpAsk'); btn.disabled=false; btn.textContent='✦ Analyse trends & actions'; btn.onclick=function(){ focusAsk(key); };
       $('focusPanel').classList.add('on');
@@ -631,6 +680,92 @@
   // Build the twin now that TW + buildTwin are initialised, so the centre is
   // never blank. Live counts fill in via updateTwinCounts when data loads.
   buildTwin(DEFAULT_CLUSTERS);
+})();
+</script>
+
+<!-- ── Layer 02: Market & course intelligence (own module) ── -->
+<script>
+(function(){
+  'use strict';
+  var base=((window.LAD_API_BASE)||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
+  function tok(){try{return localStorage.getItem('lad_token')||'';}catch(e){return '';}}
+  function $(id){return document.getElementById(id);}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);});}
+  function nf(x){var v=Number(x);return Number.isFinite(v)?v.toLocaleString():'—';}
+  var DATA=null;
+
+  function spark(weekly,w,h,color){ w=w||240;h=h||34;color=color||'#34e1ff';
+    var max=Math.max(1,Math.max.apply(null,weekly)),pad=2,n=weekly.length,id='sg'+color.replace('#','');
+    function x(i){return pad+i*(w-2*pad)/Math.max(1,n-1);} function y(v){return h-pad-(v/max)*(h-2*pad);}
+    var pts=weekly.map(function(v,i){return x(i)+','+y(v);});
+    return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" style="width:100%;height:'+h+'px"><defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+color+'" stop-opacity=".5"/><stop offset="1" stop-color="'+color+'" stop-opacity="0"/></linearGradient></defs><path d="M'+x(0)+','+(h-pad)+' L'+pts.join(' L')+' L'+x(n-1)+','+(h-pad)+' Z" fill="url(#'+id+')"/><polyline points="'+pts.join(' ')+'" fill="none" stroke="'+color+'" stroke-width="1.6"/></svg>'; }
+  function bars(weekly,labels,w,h){ w=w||440;h=h||120; var max=Math.max(1,Math.max.apply(null,weekly)),n=weekly.length,bw=(w-20)/n;
+    var svg='<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:'+h+'px"><defs><linearGradient id="bgg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34e1ff"/><stop offset="1" stop-color="#1f6fae"/></linearGradient></defs>';
+    weekly.forEach(function(v,i){ var bh=(v/max)*(h-26),x=10+i*bw,y=h-18-bh;
+      svg+='<rect x="'+(x+1)+'" y="'+y+'" width="'+(bw-3)+'" height="'+Math.max(0,bh)+'" rx="2" fill="url(#bgg)"/>';
+      if(i%2===0||n<=6) svg+='<text x="'+(x+bw/2)+'" y="'+(h-5)+'" fill="#5d6f9e" font-family="Rajdhani" font-size="8" text-anchor="middle">'+esc(labels[i]||'')+'</text>';
+      if(v) svg+='<text x="'+(x+bw/2)+'" y="'+(y-3)+'" fill="#9fb3d8" font-family="Rajdhani" font-size="9" text-anchor="middle">'+v+'</text>'; });
+    return svg+'</svg>'; }
+  function ring(pct,size,color){ size=size||46;color=color||'#34e1ff';pct=Math.max(0,Math.min(100,pct||0)); var r=(size-6)/2,c=2*Math.PI*r,off=c*(1-pct/100);
+    return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'"><circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="rgba(120,150,210,.18)" stroke-width="4"/><circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="4" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'" transform="rotate(-90 '+size/2+' '+size/2+')"/><text x="'+size/2+'" y="'+(size/2+3)+'" fill="#eaf4ff" font-family="Rajdhani" font-size="11" font-weight="700" text-anchor="middle">'+pct+'%</text></svg>'; }
+  function typeColor(t){ t=(t||'').toLowerCase(); return t==='mandatory'?'#9a6cff':t.indexOf('internal')>=0?'#ffb84d':'#1fe0b4'; }
+
+  window.openCoursesLayer=function(){
+    $('deepLayer').classList.add('on');
+    if(DATA){ render(); return; }
+    $('dlGrid').innerHTML='<div class="loading">Loading market intelligence…</div>';
+    fetch(base+'/api/v1/admin/course-analytics',{headers:{Authorization:'Bearer '+tok()}})
+      .then(function(r){return r.ok?r.json():null;}).then(function(d){ if(!d){ $('dlGrid').innerHTML='<div class="loading">Sign in as a LAD admin to load market intelligence.</div>'; return; } DATA=d; render(); })
+      .catch(function(){ $('dlGrid').innerHTML='<div class="loading">Could not load — try again.</div>'; });
+  };
+  function closeCourseDetail(){ $('ccDetail').classList.remove('on'); }
+  window.closeCourseDetail=closeCourseDetail;
+  window.closeDeepLayer=function(){ $('deepLayer').classList.remove('on'); closeCourseDetail(); };
+
+  function render(){
+    var d=DATA,m=d.market||{},acc=m.accredited||0,man=m.mandatory||0,tot2=Math.max(1,acc+man);
+    $('dlMarket').innerHTML=
+      '<div class="card"><div class="card-h">12-week demand <span class="badge">'+nf(m.totalBookings||0)+' bookings</span></div>'+bars(m.weekly||[],d.weeks||[],520,128)+'</div>'
+     +'<div class="card"><div class="card-h">Demand mix</div>'
+        +'<div class="hx"><div class="hxl">Accredited</div><div class="hxbar"><div class="hxf" style="width:'+Math.round(100*acc/tot2)+'%;background:var(--teal)"></div></div><div class="hxv" style="color:var(--teal)">'+nf(acc)+'</div></div>'
+        +'<div class="hx"><div class="hxl">Mandatory</div><div class="hxbar"><div class="hxf" style="width:'+Math.round(100*man/tot2)+'%;background:var(--violet)"></div></div><div class="hxv" style="color:var(--violet)">'+nf(man)+'</div></div>'
+        +'<div class="cc-row" style="margin-top:12px;color:var(--dim2)">Split of the last 12 weeks of bookings</div></div>'
+     +'<div class="card"><div class="card-h">Trending now</div>'
+        +((m.topGrowing||[]).slice(0,4).map(function(c){return '<div class="cc-row" style="color:var(--ink)"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px">▲ '+esc(c.title)+'</span><span class="cc-mom" style="color:var(--green)">+'+c.momentum+'</span></div>';}).join('')||'<div class="loading">Demand builds with bookings.</div>')
+        +((m.cooling||[]).length?('<div style="height:6px"></div>'+m.cooling.slice(0,2).map(function(c){return '<div class="cc-row" style="color:var(--dim)"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px">▼ '+esc(c.title)+'</span><span class="cc-mom" style="color:var(--red)">'+c.momentum+'</span></div>';}).join('')):'')
+      +'</div>';
+    $('dlCount').textContent=(d.courses||[]).length+' courses';
+    var grid=$('dlGrid');
+    if(!(d.courses||[]).length){ grid.innerHTML='<div class="loading">No course demand recorded in the last 12 weeks yet — cards appear as bookings flow.</div>'; return; }
+    grid.innerHTML=d.courses.map(function(c,idx){ var tc=typeColor(c.type),mom=c.momentum||0;
+      return '<div class="cc-card" data-i="'+idx+'"><div style="display:flex;justify-content:space-between;align-items:flex-start"><span class="cc-type" style="color:'+tc+'">'+esc((c.type||'course').toUpperCase())+'</span>'+(c.fillPct!=null?ring(c.fillPct,44,tc):'')+'</div>'
+        +'<div class="cc-title">'+esc(c.title)+'</div>'+spark(c.weekly||[],240,34,tc)
+        +'<div class="cc-row"><span>'+nf(c.totalBookings)+' booked · 12w</span><span class="cc-mom" style="color:'+(mom>0?'var(--green)':mom<0?'var(--red)':'var(--dim)')+'">'+(mom>0?'▲ +'+mom:mom<0?'▼ '+mom:'– flat')+'</span></div>'
+        +'<div class="cc-row"><span>'+(c.points||0)+' pts · '+(c.credits||0)+' cr</span><span>'+nf(c.upcomingSessions)+' sessions</span></div></div>'; }).join('');
+    grid.querySelectorAll('.cc-card').forEach(function(el){ el.onclick=function(){ openCourseDetail(d.courses[+el.getAttribute('data-i')]); }; });
+  }
+
+  function openCourseDetail(c){ if(!c)return; var tc=typeColor(c.type),mom=c.momentum||0,det=$('ccDetail');
+    det.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><span class="cc-type" style="color:'+tc+'">'+esc((c.type||'course').toUpperCase())+'</span><button class="dl-close" style="margin-left:auto;padding:7px 12px" onclick="closeCourseDetail()">✕</button></div>'
+      +'<div class="dl-title" style="font-size:22px;letter-spacing:.5px;margin-bottom:2px">'+esc(c.title)+'</div>'
+      +'<div class="cc-row" style="margin-bottom:14px">'+(c.topic?('<span class="chip">'+esc(c.topic)+'</span>'):'<span></span>')+'<span class="cc-mom" style="color:'+(mom>0?'var(--green)':mom<0?'var(--red)':'var(--dim)')+'">'+(mom>0?'▲ rising +'+mom+' / 4w':mom<0?'▼ cooling '+mom+' / 4w':'– steady')+'</span></div>'
+      +'<div class="card-h">Weekly buying pattern · 12 weeks</div>'+bars(c.weekly||[],DATA.weeks||[],440,140)
+      +'<div class="cd-feedback"><div class="card" style="text-align:center"><div class="card-h" style="justify-content:center">Fill rate</div>'+(c.fillPct!=null?ring(c.fillPct,70,tc):'<div class="loading">no sessions</div>')+'<div class="cc-row" style="justify-content:center;color:var(--dim2)">'+nf(c.seatsRemaining)+' / '+nf(c.capacity)+' open</div></div>'
+        +'<div class="card" style="text-align:center"><div class="card-h" style="justify-content:center">Demand · 12w</div><div class="cd-fb" style="border-style:solid;border-color:var(--panel-b)"><div class="v" style="color:'+tc+'">'+nf(c.totalBookings)+'</div><div class="cc-row" style="justify-content:center;color:var(--dim2)">bookings</div></div></div></div>'
+      +'<div class="card-h" style="margin-top:16px">Feedback intelligence</div>'
+      +'<div class="cd-feedback"><div class="cd-fb"><div class="cc-row" style="justify-content:center;color:var(--dim)">COURSE RATING</div><div class="v">'+(c.rating!=null?c.rating:'—')+'</div><span class="soon">live at go-live</span></div>'
+        +'<div class="cd-fb"><div class="cc-row" style="justify-content:center;color:var(--dim)">TRAINER RATING</div><div class="v">'+(c.trainerRating!=null?c.trainerRating:'—')+'</div><span class="soon">live at go-live</span></div></div>'
+      +'<div class="fp-ans" id="ccAns" style="display:none"></div>'
+      +'<button class="fp-btn ai" id="ccAsk" style="margin-top:14px">✦ Maryam · market trend &amp; actions</button>';
+    det.classList.add('on');
+    $('ccAsk').onclick=function(){ var ans=$('ccAns'),btn=$('ccAsk'); ans.style.display='block'; ans.textContent='Analysing…'; btn.disabled=true; btn.textContent='Analysing…';
+      var prompt='Analyse the market trend and weekly buying pattern for the course "'+c.title+'" ('+(c.type||'')+', '+nf(c.totalBookings)+' bookings over 12 weeks, momentum '+mom+', fill '+(c.fillPct!=null?c.fillPct+'%':'n/a')+'). What does the demand signal tell us and what are the two best actions?';
+      fetch(base+'/api/v1/admin/command',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({prompt:prompt})})
+        .then(function(r){return r.json();}).then(function(dd){ ans.textContent=(dd&&(dd.answer||dd.summary))||'No response.'; btn.disabled=false; btn.textContent='✦ Re-analyse'; })
+        .catch(function(){ ans.textContent='Network error.'; btn.disabled=false; btn.textContent='✦ Maryam · market trend & actions'; }); };
+  }
+  window.openCourseDetail=openCourseDetail;
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape' && $('deepLayer').classList.contains('on')){ if($('ccDetail').classList.contains('on')) closeCourseDetail(); else closeDeepLayer(); } });
 })();
 </script>
 </body>
