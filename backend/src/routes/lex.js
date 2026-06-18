@@ -13,6 +13,8 @@ const axios = require('axios');
 const router = express.Router();
 const config = require('../config');
 const aimodel = require('../services/aimodel');
+const maryamLocal = require('../services/maryam-local');
+const log = require('../logger');
 const { requireAuth, optionalAuth } = require('../middleware/auth');
 
 // Shared AiModel diagnostic (no key, no secrets) — runs a live 1-token probe
@@ -65,6 +67,16 @@ router.post('/chat', requireAuth, async (req, res, next) => {
   }
   const maxTokens = Math.min(1024, max_tokens || 600);
 
+  // Resilient local answer — Maryam never goes dead even if every remote
+  // engine is unavailable. Used as the last resort below.
+  const localAnswer = () => {
+    try {
+      const text = maryamLocal.respond(req.user, messages);
+      if (text) return res.json(asAnthropic(text, 'assistant-local'));
+    } catch (e) { log.error('maryam_local', { error: e.message }); }
+    return null;
+  };
+
   // ─── Preferred: AiModel ───────────────────────────────────────────
   if (aimodel.configured()) {
     try {
@@ -81,16 +93,15 @@ router.post('/chat', requireAuth, async (req, res, next) => {
       });
       return res.json(asAnthropic(text, 'aimodel'));
     } catch (e) {
-      // Fall through to Claude if available, otherwise surface the error.
-      if (!config.anthropic.apiKey) {
-        return res.status(502).json({ error: 'AiModel call failed', detail: e.detail || e.message });
-      }
+      log.error('aimodel_chat', { status: e.status, detail: e.detail || e.message });
+      // Fall through to Claude if available, otherwise the local assistant.
+      if (!config.anthropic.apiKey) return localAnswer() || res.status(502).json({ error: 'AiModel call failed', detail: e.detail || e.message });
     }
   }
 
   // ─── Fallback: Anthropic / Claude ─────────────────────────────────
   if (!config.anthropic.apiKey) {
-    return res.status(503).json({ error: 'No AI model configured (set AiModel keys or ANTHROPIC_API_KEY)' });
+    return localAnswer() || res.status(503).json({ error: 'No AI model configured (set AiModel keys or ANTHROPIC_API_KEY)' });
   }
   try {
     const r = await axios.post('https://api.anthropic.com/v1/messages', {
@@ -108,10 +119,10 @@ router.post('/chat', requireAuth, async (req, res, next) => {
       validateStatus: () => true,
     });
     if (r.status !== 200) {
-      return res.status(r.status).json({ error: 'Anthropic API error', detail: r.data });
+      return localAnswer() || res.status(r.status).json({ error: 'Anthropic API error', detail: r.data });
     }
     res.json(Object.assign({ engine: 'claude' }, r.data));
-  } catch (e) { next(e); }
+  } catch (e) { return localAnswer() || next(e); }
 });
 
 // GET /api/v1/lex/status — non-secret diagnostic for "Maryam isn't working".
