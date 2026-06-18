@@ -600,16 +600,29 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 </header>
 
 <!-- ═══════════════════ AZURE STATUS BANNER ═══════════════════ -->
-<div class="adm-azure-banner" id="azureBanner">
+<div class="adm-azure-banner" id="azureBanner" style="background:linear-gradient(135deg,#0a6b46 0%,#064d31 100%)">
   <div class="adm-azure-icon">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 10l-2-7-9 18 5-2 6-9z"/><path d="M14 10l7 11h-9"/></svg>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
   </div>
   <div class="adm-azure-text">
-    <div class="adm-azure-title">Azure backend · not yet connected</div>
-    <div class="adm-azure-sub">Edits save to this browser. Use <strong>Sync → Download config</strong> to publish to Netlify, or connect Azure Functions endpoint when ready.</div>
+    <div class="adm-azure-title" id="azureTitle">Backend · checking connection…</div>
+    <div class="adm-azure-sub" id="azureSub">Reading and writing live against the CLPD backend.</div>
   </div>
-  <div class="adm-azure-status">LocalStorage Mode</div>
+  <div class="adm-azure-status" id="azureStatus">…</div>
 </div>
+<script>(function(){
+  function setBanner(){
+    var b=document.getElementById('azureBanner'),t=document.getElementById('azureTitle'),s=document.getElementById('azureSub'),st=document.getElementById('azureStatus');
+    if(!b)return;
+    var base=(typeof _admBase==='function'?_admBase():(window.LAD_API_BASE||'')).replace(/\/$/,'');
+    if(!base){ b.style.background='linear-gradient(135deg,#b45309,#7c2d12)'; t.textContent='Backend not configured'; s.textContent='Set LAD_API_BASE in runtime-config.js.'; st.textContent='Offline'; return; }
+    fetch(base+'/api/v1/health').then(function(r){return r.ok?r.json():null;}).then(function(j){
+      if(j){ b.style.background='linear-gradient(135deg,#0a6b46 0%,#064d31 100%)'; t.textContent='Backend connected · live'; s.innerHTML='Reading &amp; writing live against '+base.replace(/^https?:\/\//,'')+(j.version?(' · v'+j.version):''); st.textContent='Live'; }
+      else throw 0;
+    }).catch(function(){ b.style.background='linear-gradient(135deg,#92540a,#5b3406)'; t.textContent='Backend waking up…'; s.textContent='The server is starting (free tier sleeps). This clears in ~30–60s.'; st.textContent='Waking'; });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setBanner);else setBanner();
+})();</script>
 
 <!-- ═══════════════════ TOP-LEVEL TABS ═══════════════════ -->
 <nav class="adm-tabs-top">
