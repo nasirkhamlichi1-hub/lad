@@ -751,28 +751,6 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
       <a class="sb-link" onclick="scrollTo('reports')"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analytics</a>
       <a class="sb-link" onclick="showToast('Annual report exporting…')"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export PDF</a>
     </nav>
-    <!-- Portal switcher -->
-    <div style="padding:10px;border-top:1px solid var(--line)">
-      <div style="font-family:var(--mono);font-size:8px;color:var(--slate3);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:7px;padding:0 2px">PORTALS</div>
-      <div style="display:flex;flex-direction:column;gap:2px">
-        <div style="display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:7px;background:rgba(26,77,128,.1);border:1px solid rgba(26,77,128,.2)">
-          <span style="width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0;display:inline-block"></span><span style="font-size:11px;font-weight:600;color:var(--blue)">LAD Intelligence</span>
-          <span style="margin-left:auto;font-family:var(--mono);font-size:7px;font-weight:700;color:var(--blue);background:var(--blue-bg);padding:1px 5px;border-radius:3px">ACTIVE</span>
-        </div>
-        <a style="display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:7px;cursor:pointer;text-decoration:none;transition:background .1s" onmouseover="this.style.background='var(--paper2)'" onmouseout="this.style.background=''" onclick="window.open('firm-compliance-portal.html','_self')">
-          <span style="width:7px;height:7px;border-radius:50%;background:#8a98aa;flex-shrink:0;display:inline-block"></span><span style="font-size:11px;color:var(--slate)">Firm Portal</span>
-          <span style="margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--slate4)">→</span>
-        </a>
-        <a style="display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:7px;cursor:pointer;text-decoration:none;transition:background .1s" onmouseover="this.style.background='var(--paper2)'" onmouseout="this.style.background=''" onclick="window.open('lawyer-portal-v2.html','_self')">
-          <span style="width:7px;height:7px;border-radius:50%;background:#8a98aa;flex-shrink:0;display:inline-block"></span><span style="font-size:11px;color:var(--slate)">Lawyer Portal</span>
-          <span style="margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--slate4)">→</span>
-        </a>
-        <a style="display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:7px;cursor:pointer;text-decoration:none;transition:background .1s" onmouseover="this.style.background='var(--paper2)'" onmouseout="this.style.background=''" onclick="window.open('clpd-portal.html','_self')">
-          <span style="width:7px;height:7px;border-radius:50%;background:#8a98aa;flex-shrink:0;display:inline-block"></span><span style="font-size:11px;color:var(--slate)">Public Portal</span>
-          <span style="margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--slate4)">→</span>
-        </a>
-      </div>
-    </div>
     <div class="sb-foot">
       <div class="sb-user-av">SH</div>
       <div class="sb-user-info">
@@ -3275,7 +3253,7 @@ document.addEventListener('DOMContentLoaded', () => {
     bar.id = 'ladnav-bar';
     bar.className = 'ladnav-bar';
     bar.innerHTML = `
-      <div class="ladnav-brand">
+      <div class="ladnav-brand" onclick="location.href='/'" style="cursor:pointer" title="Home">
         <svg class="ladnav-emblem" viewBox="0 0 38 44" fill="none">
           <path d="M19 4L6 10V24C6 33 12 39 19 42C26 39 32 33 32 24V10Z" fill="rgba(255,255,255,.92)"/>
           <path d="M19 8L10 13V24C10 30 14 35 19 38C24 35 28 30 28 24V13Z" fill="#C9913A"/>
@@ -3285,7 +3263,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="ladnav-brand-sub">Government of Dubai</div>
         </div>
       </div>
-      <div class="ladnav-switch">${portalSwitcherHtml}</div>
+      <div class="ladnav-switch"></div>
       <div class="ladnav-spacer"></div>
       <div class="ladnav-pill">${envBadge}</div>
       <div class="ladnav-actions">

@@ -572,7 +572,6 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
     <a class="lad-snl" onclick="scrollS('completed')" style="cursor:pointer">My bookings</a>
     <a class="lad-snl" onclick="scrollS('skills')" style="cursor:pointer">Skills</a>
     <a class="lad-snl" onclick="scrollS('file')" style="cursor:pointer">History</a>
-    <a class="lad-snl" onclick="LADPlatform.toggleLex()" style="cursor:pointer">Maryam</a>
   </div>
 
   <!-- Right: user chip + sign out (no portal switcher — lawyers see only the lawyer portal) -->
@@ -1024,12 +1023,6 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         <div style="font-family:var(--serif);font-size:14px;color:var(--ink);letter-spacing:-.012em">My <em style="color:var(--green)">CLPD</em></div>
         <div class="sb-tag">LAWYER · 2026</div>
       </div>
-    </div>
-    <div class="sb-cmd">
-      <button class="sb-cmd-btn" onclick="openCmd()">
-        <svg viewBox="0 0 24 24" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Search · Ask Maryam…
-        <span class="sb-cmd-kbd">⌘K</span>
-      </button>
     </div>
     <nav class="sb-nav">
       <div class="sb-section">My Year</div>
@@ -3288,7 +3281,7 @@ function buildPeerDistro(){
 }
 
 // ═══ COMMAND PALETTE ═══
-function openCmd(){document.getElementById('cmdOverlay').classList.add('on');setTimeout(()=>document.getElementById('cmdInput').focus(),50);renderCmdResults();}
+function openCmd(){ /* command palette disabled */ return; }
 function closeCmd(){document.getElementById('cmdOverlay').classList.remove('on');document.getElementById('cmdInput').value='';}
 function renderCmdResults(){
   const q=document.getElementById('cmdInput').value.toLowerCase();
@@ -4867,7 +4860,7 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
     bar.id = 'ladnav-bar';
     bar.className = 'ladnav-bar';
     bar.innerHTML = `
-      <div class="ladnav-brand">
+      <div class="ladnav-brand" onclick="location.href='/'" style="cursor:pointer" title="Home">
         <svg class="ladnav-emblem" viewBox="0 0 38 44" fill="none">
           <path d="M19 4L6 10V24C6 33 12 39 19 42C26 39 32 33 32 24V10Z" fill="rgba(255,255,255,.92)"/>
           <path d="M19 8L10 13V24C10 30 14 35 19 38C24 35 28 30 28 24V13Z" fill="#C9913A"/>
