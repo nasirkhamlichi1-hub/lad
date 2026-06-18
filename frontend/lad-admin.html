@@ -5854,7 +5854,7 @@ async function admMsgSend(){
   <div class="aic-panel">
     <div class="aic-head">
       <span class="spark">✦</span>
-      <input id="aicInput" class="aic-input" placeholder="Ask anything about the programme…" onkeydown="if(event.key==='Enter')aicAsk()"/>
+      <input id="aicInput" class="aic-input" placeholder="Ask anything — then follow up to drill deeper…" autocomplete="off" onkeydown="if(event.key==='Enter')aicAsk()"/>
       <span class="aic-esc" onclick="aicClose()">ESC</span>
     </div>
     <div class="aic-tabs">
@@ -5911,43 +5911,66 @@ async function admMsgSend(){
     document.getElementById('aicAsk').style.display = m==='ask'?'':'none';
     document.getElementById('aicNotify').style.display = m==='notify'?'':'none';
     document.getElementById('aicInput').style.display = m==='ask'?'':'none'; };
-  window.aicQuick=function(el){ document.getElementById('aicInput').value=el.textContent; aicAsk(); };
-  window.aicAsk=async function(){
-    var q=(document.getElementById('aicInput').value||'').trim(); if(!q) return;
-    var out=document.getElementById('aicAnswer'); out.innerHTML='<div class="aic-answer">Thinking…</div>';
-    document.getElementById('aicChips').style.display='none';
-    try{
-      var r=await fetch(base()+'/api/v1/admin/command',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({prompt:q})});
-      var d=await r.json();
-      if(!r.ok){ out.innerHTML='<div class="aic-answer">'+esc(d.error||'Could not answer that.')+'</div>'; return; }
-      if(d.intent && d.intent!=='answer'){ aicRenderPlan(d); return; }
-      out.innerHTML='<div class="aic-answer">'+esc(d.answer||'')+'</div><div class="aic-engine">'+(d.engine==='aimodel'?'Powered by AiModel · live data':'Live snapshot')+'</div>';
-    }catch(e){ out.innerHTML='<div class="aic-answer">Network error — please try again.</div>'; }
-  };
-  // The AI proposed an action → show it for confirmation before running.
-  function aicRenderPlan(d){
-    window.__aicPlan = d;
-    var out=document.getElementById('aicAnswer');
-    var color = d.intent==='cancel_session' ? '#c0392b' : '#0d7377';
-    var label = d.intent==='cancel_session' ? 'Cancel session' : d.intent==='reschedule_session' ? 'Reschedule session' : 'Send notification';
-    var detail='';
-    if(d.intent==='cancel_session'||d.intent==='reschedule_session'){
-      var s=(d.params&&d.params.session)||{};
-      detail='<div style="margin-top:8px;font-size:12.5px;color:#475569"><strong>'+esc(s.title||'')+'</strong> · '+(s.booked||0)+' booked'+(d.params.scheduled_at?(' → '+esc(new Date(d.params.scheduled_at).toUTCString())):'')+(d.params.venue?(' · '+esc(d.params.venue)):'')+'</div>';
-    } else if(d.intent==='notify'){
-      var aud = (d.params.audience==='segment') ? ('segment · '+esc(JSON.stringify(d.params.segment||{}))) : 'everyone';
-      detail='<div style="margin-top:8px;font-size:12.5px;color:#475569">To: '+aud+'<br><strong>'+esc(d.params.title||'')+'</strong><br>'+esc(d.params.body||'')+'</div>';
-    }
-    out.innerHTML='<div class="aic-answer" style="border-left-color:'+color+'">'
-      +'<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:'+color+';font-weight:700;margin-bottom:6px">Proposed action · '+esc(label)+'</div>'
-      +'<div style="font-size:14px;color:#0f172a">'+esc(d.summary||'')+'</div>'+detail
-      +'<div style="display:flex;gap:8px;margin-top:14px"><button class="aic-btn" style="background:'+color+'" onclick="aicExecute()">Confirm &amp; run</button><button class="aic-btn alt" onclick="aicCancelPlan()">Cancel</button></div>'
-      +'<div id="aicPlanResult" style="margin-top:10px;font-size:12.5px"></div></div>';
+  window.aicQuick=function(el){ aicSubmit(el.textContent); };
+  // Conversation state for the admin copilot — multi-turn, sent as `history`.
+  window.__aicConvo = window.__aicConvo || [];
+  var AIC_BUSY=false;
+  window.aicReset=function(){ window.__aicConvo=[]; aicRender(); var i=document.getElementById('aicInput'); if(i){ i.value=''; i.focus(); } };
+  window.aicAsk=function(){ var i=document.getElementById('aicInput'); var v=i.value; i.value=''; aicSubmit(v); };
+  function aicPlanLabel(intent){ return ({cancel_session:'Cancel session',reschedule_session:'Reschedule session',notify:'Send notification'})[intent]||'Action'; }
+  function aicPlanDetail(d){
+    if(d.intent==='cancel_session'||d.intent==='reschedule_session'){ var s=(d.params&&d.params.session)||{}; return '<div style="margin-top:8px;font-size:12.5px;color:#475569"><strong>'+esc(s.title||'')+'</strong> · '+(s.booked||0)+' booked'+(d.params.scheduled_at?(' → '+esc(new Date(d.params.scheduled_at).toUTCString())):'')+(d.params.venue?(' · '+esc(d.params.venue)):'')+'</div>'; }
+    if(d.intent==='notify'){ var aud=(d.params.audience==='segment')?('segment · '+esc(JSON.stringify(d.params.segment||{}))):'everyone'; return '<div style="margin-top:8px;font-size:12.5px;color:#475569">To: '+aud+'<br><strong>'+esc(d.params.title||'')+'</strong><br>'+esc(d.params.body||'')+'</div>'; }
+    return '';
   }
-  window.aicCancelPlan=function(){ window.__aicPlan=null; document.getElementById('aicAnswer').innerHTML=''; document.getElementById('aicChips').style.display=''; };
-  window.aicExecute=async function(){
-    var d=window.__aicPlan; if(!d) return;
-    var rEl=document.getElementById('aicPlanResult'); if(rEl) rEl.textContent='Running…';
+  function aicRender(){
+    var out=document.getElementById('aicAnswer'); var chips=document.getElementById('aicChips');
+    var convo=window.__aicConvo;
+    if(chips) chips.style.display = convo.length ? 'none' : '';
+    if(!convo.length){ out.innerHTML=''; return; }
+    var html='<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><span class="aic-esc" style="cursor:pointer" onclick="aicReset()">＋ New chat</span></div>';
+    convo.forEach(function(m,idx){
+      if(m.role==='user'){ html+='<div style="text-align:right;margin:10px 0 4px"><span style="display:inline-block;background:#006B3F;color:#fff;border-radius:14px 14px 4px 14px;padding:9px 13px;font-size:13.5px;line-height:1.5;max-width:85%;text-align:left;white-space:pre-wrap">'+esc(m.content)+'</span></div>'; return; }
+      if(m.pending){ html+='<div class="aic-answer">Thinking…</div>'; return; }
+      if(m.plan){
+        var d=m.plan, color=d.intent==='cancel_session'?'#c0392b':'#0d7377';
+        html+='<div class="aic-answer" style="border-left-color:'+color+'">'
+          +'<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:'+color+';font-weight:700;margin-bottom:6px">Proposed action · '+esc(aicPlanLabel(d.intent))+'</div>'
+          +'<div style="font-size:14px;color:#0f172a">'+esc(d.summary||'')+'</div>'+aicPlanDetail(d);
+        if(m.result){ html+='<div style="margin-top:10px;font-size:12.5px">'+m.result+'</div>'; }
+        else { html+='<div style="display:flex;gap:8px;margin-top:14px"><button class="aic-btn" style="background:'+color+'" onclick="aicExecute('+idx+')">Confirm &amp; run</button><button class="aic-btn alt" onclick="aicDismiss('+idx+')">Dismiss</button></div>'; }
+        html+='</div>';
+        return;
+      }
+      html+='<div class="aic-answer">'+esc(m.content||'')+(m.engine?('<div class="aic-engine">'+(m.engine==='aimodel'?'Powered by AiModel · live data':'Live snapshot')+'</div>'):'')+'</div>';
+    });
+    out.innerHTML=html;
+    var body=out.closest('.aic-body'); if(body) body.scrollTop=body.scrollHeight;
+  }
+  function aicHistoryPayload(){
+    return window.__aicConvo.filter(function(m){ return !m.pending && typeof m.content==='string' && m.content; })
+      .map(function(m){ return {role:m.role, content:m.content}; }).slice(-8);
+  }
+  window.aicSubmit=async function(text){
+    var q=(text||'').trim(); if(!q||AIC_BUSY) return;
+    window.__aicConvo.push({role:'user',content:q});
+    var hist=aicHistoryPayload().slice(0,-1);     // prior turns only
+    var aMsg={role:'assistant',pending:true,content:''}; window.__aicConvo.push(aMsg);
+    AIC_BUSY=true; aicRender();
+    try{
+      var r=await fetch(base()+'/api/v1/admin/command',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({prompt:q,history:hist})});
+      var d=await r.json();
+      aMsg.pending=false;
+      if(!r.ok){ aMsg.content=d.error||'Could not answer that.'; }
+      else if(d.intent && d.intent!=='answer'){ aMsg.plan=d; aMsg.content=d.summary||aicPlanLabel(d.intent); }
+      else { aMsg.content=d.answer||''; aMsg.engine=d.engine; }
+    }catch(e){ aMsg.pending=false; aMsg.content='Network error — please try again.'; }
+    AIC_BUSY=false; aicRender();
+  };
+  window.aicDismiss=function(idx){ var m=window.__aicConvo[idx]; if(m){ m.result='<span style="color:#8a9a90">Dismissed.</span>'; aicRender(); } };
+  window.aicExecute=async function(idx){
+    var m=window.__aicConvo[idx]; if(!m||!m.plan) return; var d=m.plan;
+    m.result='Running…'; aicRender();
     try{
       var r, body;
       if(d.intent==='cancel_session'){
@@ -5957,16 +5980,16 @@ async function admMsgSend(){
         r=await fetch(base()+'/api/v1/courses/sessions/'+encodeURIComponent(d.params.sessionId)+'/reschedule',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify(body)});
       } else if(d.intent==='notify'){
         r=await fetch(base()+'/api/v1/notifications/send',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify(d.params)});
-      } else { if(rEl) rEl.textContent='Unknown action.'; return; }
+      } else { m.result='<span style="color:#c0392b">Unknown action.</span>'; aicRender(); return; }
       var jd=await r.json().catch(function(){return {};});
       if(r.ok){
         var msg = d.intent==='notify' ? ('✓ '+(jd.message||'Sent.'))
           : ('✓ Done'+(jd.refunded!=null?(' · '+jd.refunded+' refunded'):'')+(jd.notified!=null?(' · '+jd.notified+' notified'):''));
-        if(rEl) rEl.innerHTML='<span style="color:#16a34a;font-weight:600">'+esc(msg)+'</span>';
-        window.__aicPlan=null;
+        m.result='<span style="color:#16a34a;font-weight:600">'+esc(msg)+'</span>';
         try{ if(typeof loadAdmSessions==='function') loadAdmSessions(); if(typeof admBookingsRender==='function') admBookingsRender(); }catch(_){}
-      } else if(rEl){ rEl.innerHTML='<span style="color:#c0392b">'+esc(jd.error||jd.message||'Action failed.')+'</span>'; }
-    }catch(e){ if(rEl) rEl.innerHTML='<span style="color:#c0392b">Network error.</span>'; }
+      } else { m.result='<span style="color:#c0392b">'+esc(jd.error||jd.message||'Action failed.')+'</span>'; }
+    }catch(e){ m.result='<span style="color:#c0392b">Network error.</span>'; }
+    aicRender();
   };
   function audienceLabel(){ var v=document.getElementById('aicAudience').value; return ({all:'all lawyers',critical:'lawyers who are critical (<8 points)','at-risk':'lawyers at risk (8–15 points)',compliant:'compliant lawyers (16+ points)',noBookings:'lawyers with no bookings yet'})[v]||'the recipients'; }
   window.aicDraft=async function(){
