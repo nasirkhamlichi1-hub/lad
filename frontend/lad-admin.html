@@ -2393,7 +2393,29 @@ function renderStats(){
   if (provs.includes(prevValue)) provFilter.value = prevValue;
   // Datalist for editor
   document.getElementById('providers').innerHTML = provs.map(p => `<option value="${escape(p)}">`).join('');
+  // Override the headline counters with the LIVE backend catalogue (not local).
+  loadLiveStats();
 }
+
+// Top stat counters from the live backend catalogue (/courses/upcoming).
+async function loadLiveStats(){
+  try {
+    const base = (typeof _admBase==='function' ? _admBase() : (window.LAD_API_BASE||'https://lad-clpd-backend.onrender.com')).replace(/\/$/,'');
+    const r = await fetch(base + '/api/v1/courses/upcoming');
+    if (!r.ok) return;
+    const list = await r.json();
+    if (!Array.isArray(list)) return;
+    const m = list.filter(c => (c.type||'').toLowerCase()==='mandatory').length;
+    const e = list.filter(c => /e-?learning/i.test(c.format||'')).length;
+    const a = Math.max(0, list.length - m);
+    const sessions = list.reduce((s,c) => s + (c.sessions||[]).length, 0);
+    const seats = list.reduce((s,c) => s + (c.sessions||[]).reduce((ss,x) => ss + (Number(x.seats_remaining)||0), 0), 0);
+    const set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('statTotal', list.length); set('statMandatory', m); set('statAccredited', a);
+    set('statElearning', e); set('statSessions', sessions); set('statSeats', seats);
+  } catch(_){}
+}
+document.addEventListener('DOMContentLoaded', loadLiveStats);
 
 // ────────── EDITOR ──────────
 function newCourse(){
@@ -3952,28 +3974,18 @@ function supSetFilter(f) {
 // page is useful in static / Netlify preview mode.
 // ════════════════════════════════════════════════════════════════
 
-const ADM_DEMO_BOOKINGS = [
-  {id:'BK-92041', lawyer:'Yousef Al Mansouri',  firm:'Galadari Advocates',  course:'Ethics & AI Governance',          session:'17 Jun 2026 · 09:00', credits:5, pts:2, status:'confirmed'},
-  {id:'BK-92038', lawyer:'Layla Al Hashimi',    firm:'Al Tamimi & Co.',     course:'International Arbitration',       session:'16 Jun 2026 · 09:00', credits:5, pts:2, status:'confirmed'},
-  {id:'BK-91987', lawyer:'Omar Khalil',         firm:'Hadef & Partners',    course:'AI & Copyright',                  session:'13 Apr 2026 · 14:00', credits:5, pts:2, status:'attended'},
-  {id:'BK-91950', lawyer:'Sara Ahmadi',         firm:'Galadari Advocates',  course:'Data Protection',                 session:'25 Mar 2026 · 10:00', credits:5, pts:2, status:'attended'},
-  {id:'BK-91902', lawyer:'Mohammed Bin Rashid', firm:'BSA Ahmad Bin Hezeem',course:'Advanced Mediation',              session:'17 Mar 2026 · 09:00', credits:5, pts:2, status:'cancelled'},
-  {id:'BK-91871', lawyer:'Reem Al Suwaidi',     firm:'Afridi & Angell',     course:'DIFC Day 2026',                   session:'28 May 2026 · 09:00', credits:5, pts:4, status:'confirmed'},
-  {id:'BK-91838', lawyer:'Khalid Al Mazrouei',  firm:'Clyde & Co.',         course:'UAE Civil Code Update',           session:'04 Jun 2026 · 13:00', credits:5, pts:2, status:'no-show'},
-];
-
 async function admBookingsRender() {
   const el = document.getElementById('admBookingsList');
   const kpis = document.getElementById('admBookKpis');
   if (!el) return;
 
-  let rows = ADM_DEMO_BOOKINGS;
-  if (window.LAD && window.LAD.enabled) {
-    try {
-      const apiRows = await window.LAD.getAllBookings?.() ?? null;
-      if (Array.isArray(apiRows) && apiRows.length) rows = apiRows;
-    } catch (e) { /* fall back to demo */ }
-  }
+  // Live only — never demo. An empty backend shows an empty state.
+  let rows = [];
+  try {
+    const apiRows = await (window.LAD && window.LAD.getAllBookings ? window.LAD.getAllBookings() : Promise.resolve([]));
+    if (Array.isArray(apiRows)) rows = apiRows;
+  } catch (e) { rows = []; }
+  window.__admBookings = rows;
 
   const q = (document.getElementById('admBookSearch')?.value || '').toLowerCase().trim();
   const status = document.getElementById('admBookStatus')?.value || 'all';
@@ -3999,7 +4011,7 @@ async function admBookingsRender() {
   `;
 
   if (!filtered.length) {
-    el.innerHTML = `<div style="padding:32px;text-align:center;color:var(--slate2);font-size:13px">No bookings match those filters.</div>`;
+    el.innerHTML = `<div style="padding:32px;text-align:center;color:var(--slate2);font-size:13px">${rows.length ? 'No bookings match those filters.' : 'No bookings recorded yet — they appear here as lawyers and firms book courses.'}</div>`;
     return;
   }
 
@@ -4036,7 +4048,7 @@ async function admBookingsRender() {
 function admBookOpen() { alert('"Book on behalf of a lawyer" modal — wires into POST /api/v1/bookings with actor=lad_admin so the audit trail records the staff member.'); }
 function admBookEdit(id) { alert('Manage booking ' + id + '\n\n— Mark attended\n— Mark no-show\n— Cancel & refund credits\n— Reassign seat\n\n(stub; wires to PATCH /api/v1/bookings/:id)'); }
 function admBookingsExport() {
-  const rows = ADM_DEMO_BOOKINGS;
+  const rows = window.__admBookings || [];
   const csv = 'id,lawyer,firm,course,session,credits,pts,status\n' +
     rows.map(r => [r.id,r.lawyer,r.firm,r.course,r.session,r.credits,r.pts,r.status].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], {type:'text/csv'});
@@ -4049,24 +4061,18 @@ function admBookingsExport() {
 // PURCHASES TAB · credit transactions across firms + individuals
 // Wired to /api/v1/stats/* and the credits ledger when backend is live.
 // ════════════════════════════════════════════════════════════════
-const ADM_DEMO_PURCHASES = [
-  {id:'TX-44128', kind:'firm',       buyer:'Al Tamimi & Co.',     credits:200, aed:24000, method:'Visa ••4421', date:'09 May 2026 · 11:14', status:'cleared'},
-  {id:'TX-44127', kind:'lawyer',     buyer:'Yousef Al Mansouri',  credits:10,  aed:1200,  method:'Mastercard ••8814', date:'09 May 2026 · 09:42', status:'cleared'},
-  {id:'TX-44119', kind:'firm',       buyer:'Galadari Advocates',  credits:120, aed:14400, method:'Bank transfer',     date:'08 May 2026 · 16:08', status:'cleared'},
-  {id:'TX-44102', kind:'lawyer',     buyer:'Reem Al Suwaidi',     credits:5,   aed:600,   method:'Visa ••0712', date:'07 May 2026 · 13:55', status:'cleared'},
-  {id:'TX-44091', kind:'refund',     buyer:'Mohammed Bin Rashid', credits:-5,  aed:-600,  method:'Visa refund', date:'07 May 2026 · 10:21', status:'cleared'},
-  {id:'TX-44075', kind:'adjustment', buyer:'BSA Ahmad Bin Hezeem',credits:8,   aed:0,     method:'LAD adjustment', date:'06 May 2026 · 14:32', status:'manual'},
-];
-
 async function admPurchasesRender() {
   const el = document.getElementById('admPurchasesList');
   const kpis = document.getElementById('admPurchKpis');
   if (!el) return;
 
-  let rows = ADM_DEMO_PURCHASES;
-  if (window.LAD && window.LAD.enabled) {
-    try { const apiRows = await window.LAD.getPurchases?.(); if (Array.isArray(apiRows) && apiRows.length) rows = apiRows; } catch (e) { /* fall back to demo */ }
-  }
+  // Live only — never demo.
+  let rows = [];
+  try {
+    const apiRows = await (window.LAD && window.LAD.getPurchases ? window.LAD.getPurchases() : Promise.resolve([]));
+    if (Array.isArray(apiRows)) rows = apiRows;
+  } catch (e) { rows = []; }
+  window.__admPurchases = rows;
 
   const q = (document.getElementById('admPurchSearch')?.value || '').toLowerCase().trim();
   const kind = document.getElementById('admPurchKind')?.value || 'all';
@@ -4121,7 +4127,7 @@ async function admPurchasesRender() {
 
 function admPurchaseInspect(id) { alert('Transaction ' + id + '\n\n— View full audit trail\n— Issue refund\n— Reassign credits\n— Flag for review\n\n(stub; wires to GET /api/v1/purchases/:id)'); }
 function admPurchasesExport() {
-  const rows = ADM_DEMO_PURCHASES;
+  const rows = window.__admPurchases || [];
   const csv = 'id,kind,buyer,credits,aed,method,date,status\n' +
     rows.map(r => [r.id,r.kind,r.buyer,r.credits,r.aed,r.method,r.date,r.status].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], {type:'text/csv'});
