@@ -1626,6 +1626,81 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
             <button class="btn btn-ghost btn-sm" onclick="openSkillsQuiz()" style="margin-left:8px">✦ Retake skills assessment</button>
           </div>
         </div>
+
+        <!-- ═══ Maryam · AiModel skill mapping ═══ -->
+        <div id="aiSkillMap" style="background:linear-gradient(160deg,#07211c,#0a0e14);border-radius:18px;padding:24px;margin-bottom:18px;color:#fff">
+          <div style="font-family:var(--mono);font-size:9px;color:#5fd0a8;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:8px">✦ Maryam · AiModel skill mapping</div>
+          <h3 style="font-family:var(--serif);font-size:24px;font-weight:400;margin:0 0 6px">Map your skills, match your courses</h3>
+          <div style="font-size:13px;color:rgba(255,255,255,.6);max-width:580px;line-height:1.6;margin-bottom:18px">Rate your strength across legal practice areas and tell Maryam your goals. She maps your expertise, finds the gaps, and recommends accredited courses that close them and earn CPD points.</div>
+          <div id="skInputWrap">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px 18px;margin-bottom:16px" id="skAreas"></div>
+            <textarea id="skGoals" rows="2" placeholder="Your career goals (e.g. become a DIFC arbitration specialist)…" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:10px;color:#fff;padding:11px 13px;font-size:13px;font-family:var(--sans);outline:none;resize:vertical;margin-bottom:14px"></textarea>
+            <button onclick="runSkillMap()" id="skRunBtn" style="background:linear-gradient(135deg,#0d7377,#14b8a6);color:#fff;border:0;border-radius:11px;padding:12px 22px;font-size:14px;font-weight:600;cursor:pointer">✦ Map my skills with Maryam</button>
+          </div>
+          <div id="skResults" style="display:none;margin-top:20px"></div>
+        </div>
+        <script>
+        (function(){
+          var AREAS=['Commercial Disputes','Arbitration','Corporate / M&A','Real Estate','Banking & Finance','Employment','Construction','Intellectual Property','Tax','Litigation','Family Law','Data & Technology','Regulatory & Compliance'];
+          var levels={};
+          function base(){return (window.LAD_API_BASE||'').replace(/\/$/,'');}
+          function tok(){try{return localStorage.getItem('lad_token')||'';}catch(e){return '';}}
+          function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+          function renderAreas(){
+            var el=document.getElementById('skAreas'); if(!el)return;
+            el.innerHTML=AREAS.map(function(a){
+              var lv=levels[a]||0;
+              var dots=[1,2,3,4,5].map(function(n){return '<span onclick="window.__setSkill(\''+esc(a).replace(/'/g,"\\'")+'\','+n+')" title="'+n+'/5" style="width:15px;height:15px;border-radius:50%;cursor:pointer;background:'+(n<=lv?'#14b8a6':'rgba(255,255,255,.14)')+';transition:background .12s"></span>';}).join('');
+              return '<div style="display:flex;align-items:center;gap:8px"><span style="flex:1;font-size:12.5px;color:rgba(255,255,255,.8)">'+esc(a)+'</span><div style="display:flex;gap:4px">'+dots+'</div></div>';
+            }).join('');
+          }
+          window.__setSkill=function(a,n){ levels[a]=(levels[a]===n?n-1:n); renderAreas(); };
+          function chip(t,color){return '<span style="display:inline-block;background:'+color+'22;color:'+color+';border:1px solid '+color+'55;border-radius:20px;padding:3px 11px;font-size:11.5px;margin:3px 4px 0 0">'+esc(t)+'</span>';}
+          function radarSVG(data){
+            if(!data||!data.length)return '';
+            var cx=150,cy=150,R=110,N=data.length;
+            function pt(i,r){var ang=-Math.PI/2+i*2*Math.PI/N;return [cx+r*Math.cos(ang),cy+r*Math.sin(ang)];}
+            var grid=[0.25,0.5,0.75,1].map(function(f){return '<polygon points="'+data.map(function(_,i){var p=pt(i,R*f);return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="none" stroke="rgba(255,255,255,.1)"/>';}).join('');
+            var tgt='<polygon points="'+data.map(function(d,i){var p=pt(i,R*(Math.max(0,Math.min(100,d.target||80))/100));return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="none" stroke="#C9913A" stroke-width="1.5" stroke-dasharray="4,3"/>';
+            var you='<polygon points="'+data.map(function(d,i){var p=pt(i,R*(Math.max(0,Math.min(100,d.you))/100));return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="rgba(20,184,166,.3)" stroke="#14b8a6" stroke-width="2"/>';
+            var labels=data.map(function(d,i){var p=pt(i,R+20);return '<text x="'+p[0].toFixed(1)+'" y="'+p[1].toFixed(1)+'" font-size="9" fill="rgba(255,255,255,.7)" text-anchor="middle" dominant-baseline="middle">'+esc((d.axis||'').slice(0,15))+'</text>';}).join('');
+            return '<svg viewBox="0 0 300 300" style="width:100%;max-width:320px">'+grid+tgt+you+labels+'</svg>';
+          }
+          function renderResults(j){
+            var res=document.getElementById('skResults'); if(!res)return; res.style.display='block';
+            var recs=(j.recommendations||[]); var html='';
+            if(j.summary)html+='<div style="font-size:13.5px;color:rgba(255,255,255,.85);line-height:1.6;margin-bottom:14px;border-left:2px solid #14b8a6;padding-left:12px">'+esc(j.summary)+'</div>';
+            html+='<div style="display:grid;grid-template-columns:300px 1fr;gap:22px;align-items:start">';
+            html+='<div style="text-align:center">'+radarSVG(j.radar)+'<div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);margin-top:6px">▬ you   ┈ target</div></div>';
+            html+='<div>';
+            if((j.strengths||[]).length)html+='<div style="margin-bottom:10px"><span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1px">STRENGTHS</span><br>'+j.strengths.map(function(s){return chip(s,'#14b8a6');}).join('')+'</div>';
+            if((j.developing||[]).length)html+='<div style="margin-bottom:10px"><span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1px">DEVELOPING</span><br>'+j.developing.map(function(s){return chip(s,'#C9913A');}).join('')+'</div>';
+            if((j.gaps||[]).length)html+='<div style="margin-bottom:10px"><span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1px">GAPS TO CLOSE</span><br>'+j.gaps.map(function(s){return chip(s,'#dc4b3a');}).join('')+'</div>';
+            html+='</div></div>';
+            html+='<div style="margin-top:18px"><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Recommended courses to close your gaps</div>';
+            html+= recs.length ? recs.map(function(c){
+              return '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;gap:14px;align-items:center"><div style="flex:1"><div style="font-weight:600;font-size:14px">'+esc(c.title)+'</div><div style="font-size:12px;color:rgba(255,255,255,.55);margin-top:3px">'+esc(c.rationale||'')+'</div><div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);margin-top:5px">'+esc(c.code||'')+(c.priority?' · '+esc(String(c.priority).toUpperCase())+' PRIORITY':'')+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:var(--serif);font-size:22px;color:#5fd0a8">+'+esc(c.points||0)+'</div><div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.4)">CPD PTS</div></div></div>';
+            }).join('') : '<div style="font-size:13px;color:rgba(255,255,255,.5)">No matching accredited courses yet — check back as the catalogue grows.</div>';
+            html+='</div>';
+            if(j.engine)html+='<div style="font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.3);margin-top:10px">Powered by '+(j.engine==='aimodel'?'AiModel':'skill matcher')+'</div>';
+            res.innerHTML=html; try{res.scrollIntoView({behavior:'smooth',block:'nearest'});}catch(_){}
+          }
+          window.runSkillMap=async function(){
+            var skills=AREAS.filter(function(a){return levels[a]>0;}).map(function(a){return {area:a,level:levels[a]};});
+            if(!skills.length){ if(window.showToast)showToast('Rate at least one practice area first.'); return; }
+            var btn=document.getElementById('skRunBtn'); var res=document.getElementById('skResults');
+            if(btn){btn.disabled=true;btn.textContent='Maryam is mapping…';}
+            try{
+              var r=await fetch(base()+'/api/v1/skills/analyze',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},tok()?{Authorization:'Bearer '+tok()}:{}),body:JSON.stringify({skills:skills,goals:(document.getElementById('skGoals')||{}).value||''})});
+              var j=await r.json(); renderResults(j);
+            }catch(e){ if(res){res.style.display='block';res.innerHTML='<div style="color:#ffb4a8;font-size:13px">Could not reach Maryam. Please try again.</div>';} }
+            finally{ if(btn){btn.disabled=false;btn.textContent='✦ Re-map my skills';} }
+          };
+          document.addEventListener('DOMContentLoaded',function(){ setTimeout(renderAreas,300); });
+          if(document.readyState!=='loading') setTimeout(renderAreas,300);
+        })();
+        </script>
+
         <div class="radar-card">
           <div class="radar-grid">
             <div class="radar-svg-wrap">
