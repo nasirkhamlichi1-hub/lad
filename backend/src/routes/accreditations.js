@@ -35,32 +35,38 @@ const parse = (s, fb) => { try { return s ? JSON.parse(s) : fb; } catch (_) { re
 const newRef = (p) => p + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8);
 const rid = (p) => p + crypto.randomBytes(4).toString('hex').toUpperCase().slice(0, 5);
 
-function uniqueRef(proposed) {
+function uniqueRef(proposed, nameRaw) {
   if (proposed && !db.prepare('SELECT 1 FROM accreditations WHERE ref = ?').get(proposed)) return proposed;
-  for (let i = 0; i < 25; i++) { const r = newRef('LAD-'); if (!db.prepare('SELECT 1 FROM accreditations WHERE ref = ?').get(r)) return r; }
-  return 'LAD-' + Date.now().toString(36).toUpperCase();
+  // Follow the agreed structured naming pattern from submission onward.
+  return structuredCode(nameRaw);
 }
-// Course code methodology: <3 letters of the firm/provider name><2-digit
-// year><2-digit sequence for that firm+year>. E.g. Galadari, 2026, 1st course
-// -> "GAL2601". Sequence increments per firm-prefix + year.
-function genCode(row) {
-  const p = parse(row.payload, {});
-  const nameRaw = (p.providerName || p.firm || p.orgName || row.submitted_by || 'LAD').toString();
-  const letters = (nameRaw.replace(/[^A-Za-z]/g, '') || 'LAD').toUpperCase();
+// Agreed course-code methodology: <3 letters of the provider/firm name><2-digit
+// year><2-digit sequence for that prefix+year>. E.g. Galadari, 2026, 1st course
+// -> "GAL2601". The sequence is unique across BOTH ref and accreditation_code so
+// the same structured code carries from submission through to the issued code.
+function structuredCode(nameRaw) {
+  const letters = (String(nameRaw || 'LAD').replace(/[^A-Za-z]/g, '') || 'LAD').toUpperCase();
   const prefix = (letters.slice(0, 3) + 'XXX').slice(0, 3);
   const yy = String(new Date().getFullYear()).slice(-2);
   const base = prefix + yy;
   let max = 0;
-  for (const r of db.prepare('SELECT accreditation_code c FROM accreditations WHERE accreditation_code LIKE ?').all(base + '%')) {
-    const m = String(r.c).slice(base.length).match(/^(\d+)/);
-    if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
+  for (const col of ['accreditation_code', 'ref']) {
+    for (const r of db.prepare(`SELECT ${col} c FROM accreditations WHERE ${col} LIKE ?`).all(base + '%')) {
+      const m = String(r.c || '').slice(base.length).match(/^(\d+)/);
+      if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
+    }
   }
+  const exists = (code) => db.prepare('SELECT 1 FROM accreditations WHERE accreditation_code = ? OR ref = ?').get(code, code);
   let seq = max + 1;
   let code = base + String(seq).padStart(2, '0');
-  while (db.prepare('SELECT 1 FROM accreditations WHERE accreditation_code = ?').get(code)) {
-    seq += 1; code = base + String(seq).padStart(2, '0');
-  }
+  while (exists(code)) { seq += 1; code = base + String(seq).padStart(2, '0'); }
   return code;
+}
+function genCode(row) {
+  const p = parse(row.payload, {});
+  // A submission already issued a structured ref keeps it as its code.
+  if (/^[A-Z]{3}\d{2,}$/.test(row.ref || '')) return row.ref;
+  return structuredCode(p.providerName || p.firm || p.orgName || row.submitted_by || 'LAD');
 }
 function emailOf(p) { return String((p && (p.applicantEmail || p.contactEmail || p.submittedByEmail)) || '').toLowerCase() || null; }
 function ownsRow(u, row) {
@@ -139,7 +145,7 @@ router.post('/', optionalAuth, (req, res) => {
     return res.status(400).json({ error: 'A provider or course name is required.' });
   }
   const u = req.user || null;
-  const ref = uniqueRef(p.referenceNumber);
+  const ref = uniqueRef(p.referenceNumber, p.providerName || p.firm || p.orgName || (u && u.name) || (u && u.email) || 'LAD');
   const now = new Date().toISOString();
   const type = p.type || 'new';
 
