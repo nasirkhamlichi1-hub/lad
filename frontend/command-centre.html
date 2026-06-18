@@ -265,6 +265,19 @@
       }).catch(function(){ b.innerHTML=old; });
   };
 
+  // Build the 3D twin IMMEDIATELY so the centre is never blank — counts fill
+  // in when (if) the live data loads.
+  var DEFAULT_CLUSTERS=[
+    {key:'Lawyers',  n:null, color:0x34e1ff, center:true},
+    {key:'Law Firms',n:null, color:0x9a6cff},
+    {key:'Courses',  n:null, color:0x1fe0b4},
+    {key:'Providers',n:null, color:0xffb84d},
+    {key:'Accreds',  n:null, color:0x3df0a0},
+    {key:'Sessions', n:null, color:0x6ab8ff},
+    {key:'Regulator · LAD', n:1, color:0xff5e7e}
+  ];
+  buildTwin(DEFAULT_CLUSTERS);
+
   // ════════════ LIVE DATA ════════════
   getJSON('/api/v1/admin/oversight').then(function(o){
     if(!o){ document.querySelectorAll('.loading').forEach(function(e){e.textContent='Live data unavailable — sign in as a LAD admin.';}); return; }
@@ -330,16 +343,12 @@
       {a:'At risk',v:L.practising?Math.min(1,(L.atRisk||0)/L.practising):0}
     ]);
 
-    // 3D twin clusters from real counts
-    buildTwin([
-      {key:'Lawyers',  n:L.practising, color:0x34e1ff, center:true},
-      {key:'Law Firms',n:F.total,      color:0x9a6cff},
-      {key:'Courses',  n:C.active,     color:0x1fe0b4},
-      {key:'Providers',n:o.providers&&o.providers.total, color:0xffb84d},
-      {key:'Accreds',  n:(A.approved||0)+(A.pending||0), color:0x3df0a0},
-      {key:'Sessions', n:S.upcoming,   color:0x6ab8ff},
-      {key:'Regulator · LAD', n:1,     color:0xff5e7e}
-    ]);
+    // 3D twin: update the live counts on the always-on twin labels.
+    updateTwinCounts({
+      'Lawyers': L.practising, 'Law Firms': F.total, 'Courses': C.active,
+      'Providers': o.providers && o.providers.total,
+      'Accreds': (A.approved||0)+(A.pending||0), 'Sessions': S.upcoming, 'Regulator · LAD': 1
+    });
   });
 
   // AI briefing
@@ -394,8 +403,30 @@
   // ════════════ 3D DIGITAL TWIN (Three.js) ════════════
   var TW={scene:null,renderer:null,camera:null,group:null,anchors:[],spin:true,raf:null};
   window.cmdRotate=function(){ TW.spin=!TW.spin; };
+  // Update the count shown on each twin label once live data arrives.
+  window.updateTwinCounts=function(map){
+    TW.anchors.forEach(function(a){ if(map[a.key]!=null){ a.count=map[a.key]; var b=a.el.querySelector('b'); if(b) b.textContent=nf(map[a.key]); } });
+  };
+  // CSS fallback when the 3D library is blocked — still shows the ecosystem.
+  function buildTwinFallback(clusters){
+    var stage=$('centerstage'); if(!stage) return;
+    var R=Math.min(200, stage.clientWidth*0.32)||180;
+    clusters.forEach(function(c,ci){
+      var el=document.createElement('div'); el.className='twin-label'+(c.center?'':' dim');
+      var hex='#'+('000000'+c.color.toString(16)).slice(-6);
+      el.innerHTML='<b>'+(c.n==null?'—':nf(c.n))+'</b>'+esc(c.key);
+      if(c.center){ el.style.left='50%'; el.style.top='52%'; el.style.textShadow='0 0 22px '+hex; }
+      else { var ang=ci*2*Math.PI/Math.max(1,clusters.length-1)-Math.PI/2;
+        el.style.left=(50+Math.cos(ang)*30)+'%'; el.style.top=(52+Math.sin(ang)*34)+'%'; }
+      el.style.opacity='1';
+      var dot=document.createElement('div'); dot.style.cssText='width:'+(c.center?22:12)+'px;height:'+(c.center?22:12)+'px;border-radius:50%;background:'+hex+';box-shadow:0 0 24px '+hex+';margin:0 auto 6px';
+      el.insertBefore(dot, el.firstChild);
+      stage.appendChild(el);
+      TW.anchors.push({key:c.key, count:c.n, el:el, pos:null});
+    });
+  }
   function buildTwin(clusters){
-    if(typeof THREE==='undefined'){ return; } // CDN blocked → graceful (panels still work)
+    if(typeof THREE==='undefined'){ buildTwinFallback(clusters); return; } // CDN blocked → CSS fallback
     var canvas=$('twin'); var W=window.innerWidth,H=window.innerHeight;
     var renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,alpha:true});
     renderer.setSize(W,H); renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
@@ -404,13 +435,17 @@
     var group=new THREE.Group(); scene.add(group);
     TW.scene=scene;TW.renderer=renderer;TW.camera=camera;TW.group=group;TW.anchors=[];
 
-    var maxN=Math.max.apply(null,clusters.map(function(c){return Number(c.n)||1;}));
+    var known=clusters.map(function(c){return Number(c.n);}).filter(function(v){return Number.isFinite(v)&&v>0;});
+    var maxN=known.length?Math.max.apply(null,known):1;
     var ring=120;
     clusters.forEach(function(c,ci){
       var ang=ci*2*Math.PI/Math.max(1,clusters.length-1);
       var pos = c.center? new THREE.Vector3(0,0,0)
         : new THREE.Vector3(Math.cos(ang)*ring, (ci%2?28:-26), Math.sin(ang)*ring);
-      var n=Math.max(40, Math.min(900, Math.round((Number(c.n)||1)/maxN*900)));
+      // Nominal swarm size when the count isn't known yet, so it always looks full.
+      var cn=Number(c.n); var n = Number.isFinite(cn)&&cn>0
+        ? Math.max(60, Math.min(900, Math.round(cn/maxN*900)))
+        : (c.center?520:240);
       // particle swarm
       var geo=new THREE.BufferGeometry(); var arr=new Float32Array(n*3); var rad=c.center?54:24;
       for(var i=0;i<n;i++){ var u=Math.random(),v=Math.random(); var th=2*Math.PI*u, ph=Math.acos(2*v-1); var rr=rad*Math.cbrt(Math.random());
@@ -428,9 +463,9 @@
         group.add(new THREE.Line(lg,new THREE.LineBasicMaterial({color:c.color,transparent:true,opacity:.22,blending:THREE.AdditiveBlending}))); }
       // HTML label
       var el=document.createElement('div'); el.className='twin-label'+(c.center?'':' dim');
-      el.innerHTML='<b>'+nf(c.n)+'</b>'+esc(c.key);
+      el.innerHTML='<b>'+(c.n==null?'—':nf(c.n))+'</b>'+esc(c.key);
       $('centerstage').appendChild(el);
-      TW.anchors.push({pos:pos,el:el});
+      TW.anchors.push({key:c.key, count:c.n, pos:pos, el:el});
     });
     // ambient starfield
     var sg=new THREE.BufferGeometry(); var sn=600; var sa=new Float32Array(sn*3);
