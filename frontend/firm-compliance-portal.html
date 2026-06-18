@@ -3491,8 +3491,8 @@ function submitUpload() {
 // ACCREDITATION SUBMIT — self-contained (LAD CLPD backend)
 // ════════════════════════════════════════════
 async function triggerWorkflow(payload) {
-  const ref = 'LAD-' + Date.now().toString(36).toUpperCase();
-  payload.referenceNumber = ref;
+  // No client-side reference — the backend issues the structured ref (e.g.
+  // GAL2601P for a pending application) and we display whatever it returns.
   payload.submittedBy = (window.LAD && window.LAD.getName && window.LAD.getName()) || localStorage.getItem('lad_name') || 'Fatima Al Mansouri';
   payload.firm = (window.__FIRM_NAME__ || 'your firm');
   payload.accreditationRef = 'ATP-2022-0041';
@@ -3522,7 +3522,7 @@ async function triggerWorkflow(payload) {
     // Stash the auto-award summary for submitSession() to surface in the confirmation banner
     window.__LAST_SUBMIT_RESULT__ = body;
     // Backend may issue its own ref if ours collides — prefer it
-    return body.ref || body.data?.ref || ref;
+    return body.ref || body.data?.ref || '';
   } catch (e) {
     console.error('[accreditations] network error', e);
     alert('Submission failed: ' + e.message + '\\n\\nCheck your network and try again.');

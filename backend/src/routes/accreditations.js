@@ -64,8 +64,10 @@ function structuredCode(nameRaw) {
 }
 function genCode(row) {
   const p = parse(row.payload, {});
-  // A submission already issued a structured ref keeps it as its code.
-  if (/^[A-Z]{3}\d{2,}$/.test(row.ref || '')) return row.ref;
+  // A submission with a structured ref (GAL2601 or pending GAL2601P) keeps that
+  // base as its issued code — drop the trailing pending 'P'.
+  const m = (row.ref || '').match(/^([A-Z]{3,4}\d{2,})P?$/);
+  if (m) return m[1];
   return structuredCode(p.providerName || p.firm || p.orgName || row.submitted_by || 'LAD');
 }
 function emailOf(p) { return String((p && (p.applicantEmail || p.contactEmail || p.submittedByEmail)) || '').toLowerCase() || null; }
@@ -145,7 +147,6 @@ router.post('/', optionalAuth, (req, res) => {
     return res.status(400).json({ error: 'A provider or course name is required.' });
   }
   const u = req.user || null;
-  const ref = uniqueRef(p.referenceNumber, p.providerName || p.firm || p.orgName || (u && u.name) || (u && u.email) || 'LAD');
   const now = new Date().toISOString();
   const type = p.type || 'new';
 
@@ -158,6 +159,10 @@ router.post('/', optionalAuth, (req, res) => {
   // approved course (authoritative) so submissions can't inflate them.
   const autoApprove = type === 'session_submission' && !!linked;
   const status = autoApprove ? 'approved' : 'pending';
+  // Structured reference (e.g. GAL2601). Pending applications carry a trailing
+  // 'P' (GAL2601P); the 'P' is dropped to the clean code on approval.
+  const _structBase = structuredCode(p.providerName || p.firm || p.orgName || (u && u.name) || (u && u.email) || 'LAD');
+  const ref = autoApprove ? _structBase : _structBase + 'P';
   const authPoints = linked ? (linked.final_points != null ? linked.final_points : (parse(linked.payload, {}).pointsRequested || null)) : null;
 
   db.prepare(`INSERT INTO accreditations
