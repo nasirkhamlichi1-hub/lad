@@ -2634,12 +2634,14 @@ function renderDashboard() {
 // BUY CREDITS
 // ════════════════════════════════════════════
 function openBuyModal() {
-  // Buy credits is intentionally disabled in this release. Real payment
-  // processing requires a PSP integration (Adyen / Network International /
-  // Telr) and a signed merchant agreement — both deliberately deferred
-  // until after the DG sign-off. Credits are still tracked in the database
-  // and can be granted by LAD Admin from the admin portal.
-  showToast('Credit purchases will be enabled after launch. Please contact LAD Admin to top up your balance.');
+  // Buy credits raises a purchase request that LAD Admin confirms (a payment
+  // gateway can be slotted in later). Credits are tracked in the database.
+  if (!currentUser) { openAuth('login'); return; }
+  selectedPkg = null;
+  try { renderBuyPkgs(); } catch (_) {}
+  const m = document.getElementById('buyModal');
+  if (m) m.classList.add('on');
+  else showToast('Choose a credit pack to request a top-up.');
 }
 function closeBuyModal() { document.getElementById('buyModal').classList.remove('on'); }
 
@@ -2673,16 +2675,30 @@ function selectPkg(i) {
   document.getElementById('buyPayBtn').style.pointerEvents='auto';
 }
 
-function doPurchase() {
+async function doPurchase() {
   if(selectedPkg===null) return;
   if(!currentUser) { closeBuyModal(); openAuth('login'); return; }
   const p = PACKAGES[selectedPkg];
-  userCredits += p.credits;
-  document.getElementById('tbCredits').textContent = userCredits;
-  document.getElementById('buyBalDisplay').textContent = `${userCredits} credits`;
-  document.getElementById('creditBadge').style.display = 'flex';
-  closeBuyModal();
-  showToast(` ${p.credits} credits added · New balance: ${userCredits} credits`);
+  const base = (window.LAD_API_BASE || '').replace(/\/$/,'');
+  let token = ''; try { token = localStorage.getItem('lad_token') || ''; } catch(_) {}
+  const btn = document.getElementById('buyPayBtn');
+  if (btn) { btn.style.pointerEvents='none'; btn.style.opacity='.6'; }
+  try {
+    const r = await fetch(base + '/api/v1/credits/buy', {
+      method:'POST',
+      headers: Object.assign({'Content-Type':'application/json'}, token ? {Authorization:'Bearer '+token} : {}),
+      body: JSON.stringify({ credits: p.credits }),
+    });
+    const j = await r.json().catch(()=>({}));
+    closeBuyModal();
+    if (r.ok) showToast(j.message || ('Request submitted for ' + p.credits + ' credits — LAD Admin will confirm shortly.'));
+    else showToast((j && j.error) || 'Could not submit your credit request.');
+  } catch (e) {
+    closeBuyModal();
+    showToast('Network error — could not submit your credit request.');
+  } finally {
+    if (btn) { btn.style.pointerEvents='auto'; btn.style.opacity='1'; }
+  }
 }
 
 function fmtCard(el){let v=el.value.replace(/\D/g,'').slice(0,16);el.value=v.replace(/(.{4})/g,'$1 ').trim();}
