@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Galadari Advocates — CLPD Compliance Portal</title>
+<title>CLPD Compliance Portal — Legal Affairs Department</title>
 <!-- LAD CLPD — live API sync shim (multi-user persistence) -->
 <script src="runtime-config.js?v=render2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -671,7 +671,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
     <div class="sb-brand">
       <!-- Firm identity -->
       <div style="padding:10px 12px;background:var(--paper);border:1px solid var(--line);border-radius:9px">
-        <div id="firmNameSidebar" data-firm-name style="font-family:var(--serif);font-size:14.5px;color:var(--ink);letter-spacing:-.014em;line-height:1.25">Galadari <em style="color:var(--green)">Advocates</em></div>
+        <div id="firmNameSidebar" data-firm-name style="font-family:var(--serif);font-size:14.5px;color:var(--ink);letter-spacing:-.014em;line-height:1.25">Your Firm</div>
         <div style="font-family:var(--mono);font-size:8px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:3px">CLPD Compliance Portal · 2026</div>
       </div>
     </div>
@@ -740,7 +740,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
         <div style="background:#fff;border-radius:18px;padding:30px 34px;box-shadow:0 1px 3px rgba(10,14,20,.04);border:1px solid var(--line);margin-bottom:16px;display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center">
           <div>
             <div class="eyebrow green" data-cfg="firm_sec_overview_eyebrow" style="margin-bottom:6px">FIRM OVERVIEW · 2026 CYCLE</div>
-            <h1 class="sec-title" id="firmNameTitle" data-cfg-html="firm_sec_overview_title" style="font-size:38px;letter-spacing:-.022em;line-height:1.1;margin:0 0 8px">Galadari <em style="color:var(--green);font-style:italic">compliance</em></h1>
+            <h1 class="sec-title" id="firmNameTitle" data-cfg-html="firm_sec_overview_title" style="font-size:38px;letter-spacing:-.022em;line-height:1.1;margin:0 0 8px">Firm <em style="color:var(--green);font-style:italic">compliance</em></h1>
             <div style="font-size:14px;color:var(--slate);line-height:1.55"><span id="ovFirmLawyerCount">31</span> lawyers · 234 days to the 31&nbsp;December 2026 deadline</div>
           </div>
           <div style="text-align:right">
@@ -1465,7 +1465,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div style="grid-column:1/-1">
               <label style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:5px">CARDHOLDER NAME</label>
-              <input type="text" placeholder="As it appears on card" value="Galadari Advocates — Finance" style="width:100%;padding:9px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--line2)'"/>
+              <input type="text" placeholder="As it appears on card" id="firmCardName" value="" style="width:100%;padding:9px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--line2)'"/>
             </div>
             <div style="grid-column:1/-1">
               <label style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:5px">CARD NUMBER</label>
@@ -2965,7 +2965,7 @@ async function runAI() {
   const l = currentLawyer;
   if(!l) return;
   const missing = 16 - l.pts;
-  const prompt = `You are Maryam, AI compliance advisor for Galadari Advocates law firm.
+  const prompt = `You are Maryam, AI compliance advisor for ${window.__FIRM_NAME__ || "this"} law firm.
 Lawyer: ${l.name} · ${l.role} · ${l.practice} practice
 CLPD status: ${l.pts}/16 points earned · ${missing} points missing · ${l.booked} courses booked
 Deadline: 31 December 2026 · 234 days remaining
@@ -3169,7 +3169,7 @@ async function genOR(){
   document.getElementById('orBody').value='';
   const l = orLawyer;
   const missing = l ? Math.max(0,16-l.pts) : 0;
-  const prompt = `Write a professional CLPD compliance reminder email from Fatima Al Mansouri, Compliance Officer at Galadari Advocates, to ${l?l.name:'the lawyer'}.
+  const prompt = `Write a professional CLPD compliance reminder email from ${localStorage.getItem("lad_name")||"the Compliance Officer"}, Compliance Officer at ${window.__FIRM_NAME__||"the firm"}, to ${l?l.name:'the lawyer'}.
 ${l?`Context: ${l.name} is a ${l.role} in the ${l.practice} practice. They have ${l.pts}/16 CLPD points and ${missing} points still needed before 31 December 2026. They have booked ${l.booked} course${l.booked!==1?'s':''} so far.`:'They have outstanding CLPD compliance requirements.'}
 Requirements: Friendly but firm. Internal firm tone (not government). Mention specific points missing. CTA to book at training.legal.dubai.gov.ae or speak to Fatima. 2-3 paragraphs. Sign off as Fatima Al Mansouri, CLPD Compliance Officer.
 Start with "Subject: " on the first line.`;
@@ -3494,7 +3494,7 @@ async function triggerWorkflow(payload) {
   const ref = 'LAD-' + Date.now().toString(36).toUpperCase();
   payload.referenceNumber = ref;
   payload.submittedBy = (window.LAD && window.LAD.getName && window.LAD.getName()) || localStorage.getItem('lad_name') || 'Fatima Al Mansouri';
-  payload.firm = (window.__FIRM_NAME__ || 'Galadari Advocates');
+  payload.firm = (window.__FIRM_NAME__ || 'your firm');
   payload.accreditationRef = 'ATP-2022-0041';
   payload.submittedAt = new Date().toISOString();
   payload.submittedVia = 'Firm Compliance Portal';
@@ -3813,6 +3813,7 @@ async function loadFirmIdentity() {
     if (t) t.innerHTML = esc(name) + ' <em style="color:var(--green);font-style:italic">compliance</em>';
     document.querySelectorAll('[data-firm-name]').forEach((el) => { if (el.id !== 'firmNameSidebar' && el.id !== 'firmNameTitle') el.textContent = name; });
     window.__FIRM_NAME__ = name;
+    const cc = document.getElementById('firmCardName'); if (cc && !cc.value) cc.value = name + ' — Finance';
   } catch (_) { /* keep default */ }
 }
 
@@ -4170,14 +4171,14 @@ async function submitSession() {
     db.sessions.unshift({
       id: ref,
       providerRef: 'ATP-2022-0041',
-      providerName: (window.__FIRM_NAME__ || 'Galadari Advocates'),
+      providerName: (window.__FIRM_NAME__ || 'your firm'),
       courseTitle: courseLabel,
       pts, sessionDate: date || new Date().toISOString().split('T')[0],
       submittedAt: new Date().toISOString(),
       attendanceFiledAt: lawyers.length ? new Date().toISOString() : null,
       status: lawyers.length ? 'attendance_filed' : 'pending_attendance',
       warning1SentAt: null, warning2SentAt: null,
-      attendees: lawyers.map(l=>({name:l.name, practitionerId:`DBA-2018-${l.id}`, email:l.email||`${l.name.split(' ')[0].toLowerCase()}@galadari.ae`, firm:(window.__FIRM_NAME__ || 'Galadari Advocates'), pts})),
+      attendees: lawyers.map(l=>({name:l.name, practitionerId:`DBA-2018-${l.id}`, email:l.email||`${l.name.split(' ')[0].toLowerCase()}@clpd.test`, firm:(window.__FIRM_NAME__ || 'your firm'), pts})),
     });
     localStorage.setItem(REGISTRY_KEY, JSON.stringify(db));
   } catch(e) { console.warn('Registry write failed', e); }
@@ -4197,7 +4198,7 @@ renderCreditLawyerList();
 renderCreditHistory();
 
 // Init Lex
-lexMsg('assistant','Good afternoon, Fatima. Galadari is sitting at 48.4% compliance — the highest of any major Dubai firm this cycle. The risk concentration is at the junior end: Lina Mansour is at 0 pts, and 12 others are at 4 pts or below. I recommend mass-enrolling all 29 lawyers missing Ethics onto the AI Governance e-learning today — that alone moves the firm from 48.4% to 64.7%. How can I help?');
+lexMsg('assistant','Good afternoon. I'+String.fromCharCode(39)+'m Maryam, your firm'+String.fromCharCode(39)+'s CLPD compliance advisor. I can flag at-risk lawyers, recommend courses to close their gaps, and help you bulk-book or assign credits. How can I help?');
 
 // Animate bars
 setTimeout(()=>{document.querySelectorAll('.pts-fill').forEach(b=>{const w=b.style.width;b.style.width='0';setTimeout(()=>b.style.width=w,80);});},200);
@@ -4457,8 +4458,8 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
     injectCss();
 
     const portalContext = {
-      lawyer: 'the lawyer Fatima Al Mansouri (DBA-2018-4471, Senior Associate at Galadari Advocates, 6/16 CLPD points this year, 234 days to the 31 Dec 2026 deadline)',
-      firm:   'the compliance officer for Galadari Advocates (LAD-FIRM-2008-0142, 48.4% firm compliance, 25 lawyers, 7 in the critical zone)',
+      lawyer: 'a lawyer at ' + (window.__FIRM_NAME__ || 'the firm') + ' tracking their 16-point CLPD target for the year',
+      firm:   'the compliance officer for ' + (window.__FIRM_NAME__ || 'the firm') + ', overseeing the firm'+String.fromCharCode(39)+'s lawyers and their CLPD compliance',
       intel:  'the Director General of the Legal Affairs Department of Dubai, overseeing 4,411 lawyers across 156 firms with a 92.8% national compliance rate',
       hub:    'a user navigating the CLPD platform',
     }[opts.portal] || 'a CLPD user';
