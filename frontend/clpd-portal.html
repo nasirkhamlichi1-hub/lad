@@ -468,8 +468,21 @@ function applyLADConfig() {
 }
 </script>
 <!-- Backend wiring — runtime-config sets window.LAD_API_BASE, api-client exposes window.LAD -->
-<script src="runtime-config.js?v=render2"></script>
-<script src="api-client.js?v=render2"></script>
+<script src="runtime-config.js?v=render3"></script>
+<script>
+  // Hard guard: never let the sign-in page fall into "demo mode" because a CDN
+  // edge served a stale (empty) runtime-config. If no API base resolved AND we
+  // are not on localhost, force the production backend BEFORE api-client.js
+  // snapshots window.LAD.enabled. This makes login work regardless of cache.
+  (function () {
+    var host = (location && location.hostname) || '';
+    var isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!window.LAD_API_BASE && !isLocal) {
+      window.LAD_API_BASE = 'https://lad-clpd-backend.onrender.com';
+    }
+  })();
+</script>
+<script src="api-client.js?v=render3"></script>
 </head>
 <body>
 
