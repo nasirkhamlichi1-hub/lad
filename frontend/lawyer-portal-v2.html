@@ -1790,7 +1790,6 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
             <div class="section-desc">Practice depth vs Dubai cohort percentile · derived from CLPD history, filings, and self-declared focus areas</div>
           </div>
           <div class="section-actions">
-            <span class="pill pill-teal">vs CITY MEDIAN</span>
             <button class="btn btn-ghost btn-sm" onclick="openSkillsQuiz()" style="margin-left:8px">✦ Retake skills assessment</button>
           </div>
         </div>
@@ -1801,6 +1800,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
           <h3 style="font-family:var(--serif);font-size:24px;font-weight:400;margin:0 0 6px">Match your interests against courses</h3>
           <div style="font-size:13px;color:rgba(255,255,255,.6);max-width:580px;line-height:1.6;margin-bottom:18px">Rate your strength and interest across legal practice areas and tell Maryam your goals. She maps your profile and matches accredited courses to your interests that earn CPD points.</div>
           <div id="skInputWrap">
+            <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1.4px;text-transform:uppercase;margin-bottom:9px">Rate your interest &amp; strength in each area · 1 = low → 5 = high</div>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px 18px;margin-bottom:16px" id="skAreas"></div>
             <textarea id="skGoals" rows="2" placeholder="Your career goals (e.g. become a DIFC arbitration specialist)…" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:10px;color:#fff;padding:11px 13px;font-size:13px;font-family:var(--sans);outline:none;resize:vertical;margin-bottom:14px"></textarea>
             <button onclick="runSkillMap()" id="skRunBtn" style="background:linear-gradient(135deg,#0d7377,#14b8a6);color:#fff;border:0;border-radius:11px;padding:12px 22px;font-size:14px;font-weight:600;cursor:pointer">✦ Map my skills with Maryam</button>
@@ -4599,7 +4599,8 @@ function paintSkillsRadar(scores, ptsByAxis){
   var cx=200, cy=180, r=100;
   function poly(valFn){ return SQ_AXES.map(function(ax,i){ var a=(-90+60*i)*Math.PI/180; var v=Math.max(0,Math.min(100,valFn(ax)))/100; return (cx+Math.cos(a)*r*v).toFixed(1)+','+(cy+Math.sin(a)*r*v).toFixed(1); }).join(' '); }
   var you=document.getElementById('skillsYouPoly'); if(you) you.setAttribute('points', poly(function(ax){return scores[ax]||0;}));
-  var city=document.getElementById('skillsCityPoly'); if(city) city.setAttribute('points', poly(function(ax){return CITY[ax]||50;}));
+  // "vs city median" comparison removed per request — hide the dashed polygon.
+  var city=document.getElementById('skillsCityPoly'); if(city) city.style.display='none';
   var ord=function(n){var s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);};
   document.querySelectorAll('#skills .radar-axis-row').forEach(function(row){
     var name=((row.querySelector('.radar-axis-name')||{}).textContent||'').trim();
