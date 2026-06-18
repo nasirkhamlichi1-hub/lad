@@ -2,17 +2,56 @@
 
 const express = require('express');
 const router = express.Router();
+const db = require('../db');
 const store = require('../services/store');
+const tagger = require('../services/coursetagger');
 const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth');
+
+// Current smart tags for a course (joined to taxonomy labels).
+function courseTopics(courseId) {
+  try {
+    return db.prepare(
+      `SELECT ct.topic_id, ct.weight, ct.source, t.label, t.domain
+       FROM course_topics ct JOIN taxonomies t ON t.id = ct.topic_id
+       WHERE ct.course_id = ? ORDER BY ct.weight DESC`
+    ).all(courseId);
+  } catch (_) { return []; }
+}
 
 // GET /api/v1/courses — public (used by the public CLPD portal)
 router.get('/', optionalAuth, (_req, res) => res.json(store.getCourses()));
+
+// GET /api/v1/courses/upcoming — "Upcoming activities" feed: active courses
+// with their next session, live seat counts and smart tags. (Before /:id.)
+router.get('/upcoming', optionalAuth, (_req, res) => {
+  const now = new Date().toISOString();
+  let courses = [];
+  try { courses = db.prepare('SELECT * FROM courses WHERE active = 1').all(); } catch (_) {}
+  const out = courses.map((c) => {
+    let sessions = [];
+    try {
+      sessions = db.prepare(
+        "SELECT id, scheduled_at, end_at, seats_remaining, capacity, venue, language, status FROM course_sessions WHERE course_id = ? AND scheduled_at >= ? AND status != 'cancelled' ORDER BY scheduled_at ASC"
+      ).all(c.id, now);
+    } catch (_) {}
+    return {
+      id: c.id, title: c.title, type: c.type, format: c.format,
+      pts: c.pts, credits: c.credits, provider_id: c.provider_id,
+      location: c.location, bg: c.bg, icon: c.icon,
+      elearning: /e-?learning/i.test(c.format || ''),
+      next_session: sessions.length ? sessions[0].scheduled_at : null,
+      sessions, tags: courseTopics(c.id),
+    };
+  });
+  out.sort((a, b) => (a.next_session || '9999').localeCompare(b.next_session || '9999'));
+  res.json(out);
+});
 
 // GET /api/v1/courses/:id
 router.get('/:id', optionalAuth, (req, res) => {
   const c = store.getCourseById(req.params.id);
   if (!c) return res.status(404).json({ error: 'Course not found' });
-  res.json(c);
+  res.json(Object.assign({}, c, { tags: courseTopics(c.id) }));
 });
 
 // PUT /api/v1/courses/:id — CMS edit (LAD admin only)
@@ -33,6 +72,51 @@ router.post('/', requireRole('lad_admin', 'provider_admin'), (req, res) => {
 router.delete('/:id', requireRole('lad_admin'), (req, res) => {
   store.deleteCourse(req.params.id);
   res.json({ ok: true });
+});
+
+// ─── Smart meta-tagging ──────────────────────────────────────────────
+// POST /api/v1/courses/:id/autotag — suggest taxonomy tags from the course's
+// title/description (AiModel, heuristic fallback). Does NOT persist; the admin
+// reviews then saves via PUT. Accepts an unsaved draft in the body.
+router.post('/:id/autotag', requireRole('lad_admin', 'provider_admin'), async (req, res, next) => {
+  const saved = store.getCourseById(req.params.id) || {};
+  const course = {
+    title:       req.body.title || saved.title,
+    description: req.body.description || req.body.desc || saved.description,
+    areas:       req.body.areas || req.body.practice_areas || '',
+    category:    req.body.category || saved.category,
+    matchReason: req.body.matchReason || '',
+  };
+  if (!course.title) return res.status(400).json({ error: 'A course title is required to tag.' });
+  try { res.json(await tagger.suggestTags(course)); }
+  catch (e) { next(e); }
+});
+
+// GET /api/v1/courses/:id/topics — current confirmed tags
+router.get('/:id/topics', requireAuth, (req, res) => res.json({ tags: courseTopics(req.params.id) }));
+
+// PUT /api/v1/courses/:id/topics — persist confirmed tags (replaces the set)
+router.put('/:id/topics', requireRole('lad_admin', 'provider_admin'), (req, res) => {
+  const courseId = req.params.id;
+  const incoming = Array.isArray(req.body.tags) ? req.body.tags : [];
+  let valid = new Set();
+  try { valid = new Set(db.prepare('SELECT id FROM taxonomies WHERE level = 2').all().map((r) => r.id)); } catch (_) {}
+  const clean = [];
+  const seen = new Set();
+  for (const t of incoming) {
+    if (!t || !valid.has(t.topic_id) || seen.has(t.topic_id)) continue;
+    seen.add(t.topic_id);
+    clean.push({ topic_id: t.topic_id, weight: Math.max(0.1, Math.min(1, Number(t.weight) || 0.5)), source: t.source || 'reviewer' });
+  }
+  try {
+    const tx = db.transaction(() => {
+      db.prepare('DELETE FROM course_topics WHERE course_id = ?').run(courseId);
+      const ins = db.prepare('INSERT OR REPLACE INTO course_topics (course_id, topic_id, weight, source, confirmed_by) VALUES (?,?,?,?,?)');
+      for (const t of clean) ins.run(courseId, t.topic_id, t.weight, t.source, req.user.email || req.user.sub || 'admin');
+    });
+    tx();
+  } catch (e) { return res.status(500).json({ error: 'Could not save tags', detail: e.message }); }
+  res.json({ ok: true, count: clean.length, tags: courseTopics(courseId) });
 });
 
 // ─── Sessions (calendar / schedule) ──────────────────────────────────
