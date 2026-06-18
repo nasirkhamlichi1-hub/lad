@@ -1798,8 +1798,8 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         <!-- ═══ Maryam · AiModel skill mapping ═══ -->
         <div id="aiSkillMap" style="background:linear-gradient(160deg,#07211c,#0a0e14);border-radius:18px;padding:24px;margin-bottom:18px;color:#fff">
           <div style="font-family:var(--mono);font-size:9px;color:#5fd0a8;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:8px">✦ Maryam · AiModel skill mapping</div>
-          <h3 style="font-family:var(--serif);font-size:24px;font-weight:400;margin:0 0 6px">Map your skills, match your courses</h3>
-          <div style="font-size:13px;color:rgba(255,255,255,.6);max-width:580px;line-height:1.6;margin-bottom:18px">Rate your strength across legal practice areas and tell Maryam your goals. She maps your expertise, finds the gaps, and recommends accredited courses that close them and earn CPD points.</div>
+          <h3 style="font-family:var(--serif);font-size:24px;font-weight:400;margin:0 0 6px">Match your interests against courses</h3>
+          <div style="font-size:13px;color:rgba(255,255,255,.6);max-width:580px;line-height:1.6;margin-bottom:18px">Rate your strength and interest across legal practice areas and tell Maryam your goals. She maps your profile and matches accredited courses to your interests that earn CPD points.</div>
           <div id="skInputWrap">
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px 18px;margin-bottom:16px" id="skAreas"></div>
             <textarea id="skGoals" rows="2" placeholder="Your career goals (e.g. become a DIFC arbitration specialist)…" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:10px;color:#fff;padding:11px 13px;font-size:13px;font-family:var(--sans);outline:none;resize:vertical;margin-bottom:14px"></textarea>
@@ -1845,14 +1845,23 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
             if((j.developing||[]).length)html+='<div style="margin-bottom:10px"><span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1px">DEVELOPING</span><br>'+j.developing.map(function(s){return chip(s,'#C9913A');}).join('')+'</div>';
             if((j.gaps||[]).length)html+='<div style="margin-bottom:10px"><span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1px">GAPS TO CLOSE</span><br>'+j.gaps.map(function(s){return chip(s,'#dc4b3a');}).join('')+'</div>';
             html+='</div></div>';
-            html+='<div style="margin-top:18px"><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Recommended courses to close your gaps</div>';
+            html+='<div style="margin-top:18px"><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Courses matched to your interests</div>';
             html+= recs.length ? recs.map(function(c){
-              return '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;gap:14px;align-items:center"><div style="flex:1"><div style="font-weight:600;font-size:14px">'+esc(c.title)+'</div><div style="font-size:12px;color:rgba(255,255,255,.55);margin-top:3px">'+esc(c.rationale||'')+'</div><div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);margin-top:5px">'+esc(c.code||'')+(c.priority?' · '+esc(String(c.priority).toUpperCase())+' PRIORITY':'')+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:var(--serif);font-size:22px;color:#5fd0a8">+'+esc(c.points||0)+'</div><div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.4)">CPD PTS</div></div></div>';
+              return '<div data-rec-title="'+esc(c.title)+'" data-rec-code="'+esc(c.code||'')+'" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;gap:14px;align-items:center;cursor:pointer;transition:background .15s,border-color .15s" onmouseover="this.style.background=\'rgba(255,255,255,.09)\';this.style.borderColor=\'rgba(20,184,166,.45)\'" onmouseout="this.style.background=\'rgba(255,255,255,.05)\';this.style.borderColor=\'rgba(255,255,255,.1)\'"><div style="flex:1"><div style="font-weight:600;font-size:14px">'+esc(c.title)+'</div><div style="font-size:12px;color:rgba(255,255,255,.55);margin-top:3px">'+esc(c.rationale||'')+'</div><div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);margin-top:5px">'+esc(c.code||'')+(c.priority?' · '+esc(String(c.priority).toUpperCase())+' PRIORITY':'')+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:var(--serif);font-size:22px;color:#5fd0a8">+'+esc(c.points||0)+'</div><div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.4)">CPD PTS</div><div style="font-family:var(--mono);font-size:9px;color:#5fd0a8;margin-top:6px;font-weight:700">Book →</div></div></div>';
             }).join('') : '<div style="font-size:13px;color:rgba(255,255,255,.5)">No matching accredited courses yet — check back as the catalogue grows.</div>';
             html+='</div>';
             if(j.engine)html+='<div style="font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.3);margin-top:10px">Powered by '+(j.engine==='aimodel'?'AiModel':'skill matcher')+'</div>';
-            res.innerHTML=html; try{res.scrollIntoView({behavior:'smooth',block:'nearest'});}catch(_){}
+            res.innerHTML=html;
+            res.querySelectorAll('[data-rec-title]').forEach(function(el){ el.onclick=function(){ if(window.__bookSkillRec) window.__bookSkillRec(el.getAttribute('data-rec-title'), el.getAttribute('data-rec-code')); }; });
+            try{res.scrollIntoView({behavior:'smooth',block:'nearest'});}catch(_){}
           }
+          // Make a matched-course recommendation clickable → open its booking,
+          // or fall back to the catalogue.
+          window.__bookSkillRec=function(title,code){
+            try{ if(window.COURSES){ for(var id in window.COURSES){ if((window.COURSES[id].title||'')===title){ if(typeof openBooking==='function'){ openBooking(id); return; } } } } }catch(e){}
+            if(typeof bookSuggestedCourse==='function'){ bookSuggestedCourse(title||code||'','','session'); return; }
+            if(typeof goToSection==='function') goToSection('courses');
+          };
           window.runSkillMap=async function(){
             var skills=AREAS.filter(function(a){return levels[a]>0;}).map(function(a){return {area:a,level:levels[a]};});
             if(!skills.length){ if(window.showToast)showToast('Rate at least one practice area first.'); return; }
@@ -3407,7 +3416,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // NOT hidden — renderBasedOnHistory() shows it only when real recs exist.
   // 'quiz' is an interactive diagnostic (user answers) that ends with live,
   // interest-matched course recommendations — kept visible.
-  var DEMO_PANEL_IDS = ['projection', 'coach', 'calendar', 'trajectory'];
+  var DEMO_PANEL_IDS = ['projection', 'coach', 'calendar', 'trajectory', 'peers'];
   function applyHide() {
     DEMO_PANEL_IDS.forEach(function (id) {
       var sec = document.getElementById(id);
@@ -3733,6 +3742,9 @@ function buildCalendar(){
 // Peer benchmark — live from /api/v1/lawyers/insights (real cohort, no demo).
 // The section stays hidden until real cohort data loads.
 function buildPeerDistro(){
+  // Peer benchmark removed per request — keep the section hidden.
+  var sec0 = document.getElementById('peers'); if (sec0) sec0.style.display = 'none';
+  return;
   var sec = document.getElementById('peers');
   var base = (window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
   var tk = ''; try { tk = localStorage.getItem('lad_token') || ''; } catch(e){}
