@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex, nofollow"/>
+<title>AI Trainer — Live (no backend) · CLPD</title>
+<!-- Resolve the Anam SDK's one bare dependency ("buffer") for browsers that
+     fall back to the unpkg module build. The jsDelivr /+esm build inlines it. -->
+<script type="importmap">
+{ "imports": { "buffer": "https://cdn.jsdelivr.net/npm/buffer@6.0.3/+esm" } }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{
+  --green:#006B3F;--green2:#008549;--green-d:#004d2e;--green-l:#00a85e;--green-bg:#f0f9f4;--green-border:#b8d8c5;
+  --gold:#C9913A;--gold-bg:#fdf6e8;--gold-border:#e8c878;
+  --ink:#0a0e14;--slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;
+  --line:#e8ecf1;--line2:#d8dfe7;--paper:#f8fafb;--paper2:#f1f4f7;--white:#fff;
+  --red:#c0392b;--red-bg:#fdeae8;--red-border:#f0aaaa;--amber:#92540a;--amber-bg:#fef3e2;--amber-border:#f0c878;--blue:#1a4d80;--blue-bg:#eef4fb;
+  --serif:'Instrument Serif',Georgia,serif;--sans:'Inter',system-ui,sans-serif;
+  --r-sm:8px;--r:12px;--r-lg:18px;--sh:0 2px 4px rgba(10,14,20,.06),0 8px 24px rgba(10,14,20,.06);--sh-lg:0 8px 16px rgba(10,14,20,.1),0 32px 64px rgba(10,14,20,.1);
+}
+html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+a{color:var(--green2);text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.top{background:rgba(255,255,255,.85);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.top-in{display:flex;align-items:center;gap:14px;height:62px}
+.emblem{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:10px;display:grid;place-items:center;flex-shrink:0}
+.emblem svg{width:20px;height:24px}
+.brand-t{font-family:var(--serif);font-size:18px;line-height:1.05}
+.brand-s{font-family:monospace;font-size:8.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:2px}
+.top-spacer{flex:1}
+.pill{font-family:monospace;font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:5px 10px;border-radius:999px;border:1px solid}
+.pill-live{background:var(--green-bg);color:var(--green-d);border-color:var(--green-border)}
+.pill-demo{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border)}
+.ghost-link{font-size:12.5px;color:var(--slate2);font-weight:500}
+.hero{padding:clamp(24px,5vw,48px) 0 10px;text-align:center}
+#setup,#login{background:radial-gradient(1100px 380px at 50% -140px,rgba(0,107,63,.06),transparent 70%)}
+.eyebrow{font-family:monospace;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+h1{font-family:var(--serif);font-size:clamp(31px,5.4vw,46px);font-weight:400;letter-spacing:-.015em;line-height:1.04}
+.lede{font-size:clamp(14px,2.1vw,16.5px);color:var(--slate2);max-width:600px;margin:14px auto 0;line-height:1.55}
+.grid{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start;padding:24px 0 60px}
+@media(max-width:880px){.grid{grid-template-columns:1fr;gap:14px}}
+@media(max-width:560px){.wrap{padding:0 16px}.hero{padding:18px 0 6px}.card-b{padding:16px}.lessons{max-height:none}
+  .brand-s,#whoami{display:none!important}.brand-t{font-size:16px}.top-in{gap:10px;height:56px}.emblem{width:34px;height:34px}}
+.card{background:var(--white);border:1px solid var(--line);border-radius:20px;box-shadow:0 1px 2px rgba(10,14,20,.04),0 12px 32px rgba(10,14,20,.07);overflow:hidden}
+.card-h{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+.card-h h3{font-size:13px;font-weight:700;letter-spacing:-.01em}
+.card-b{padding:20px}
+#startBtn{padding:16px;font-size:15px;font-weight:600;border-radius:14px;margin-top:6px}
+.lessons{display:flex;flex-direction:column;gap:10px;max-height:62vh;overflow:auto}
+.lesson{border:1px solid var(--line2);border-radius:14px;padding:15px 16px;cursor:pointer;background:#fff;transition:transform .15s ease,box-shadow .15s ease,border-color .15s,background .15s}
+.lesson:hover{border-color:var(--green-border);background:var(--green-bg);transform:translateY(-1px);box-shadow:0 6px 18px rgba(10,14,20,.07)}
+.lesson.sel{border-color:var(--green2);background:linear-gradient(180deg,var(--green-bg),#fff);box-shadow:0 0 0 3px rgba(0,107,63,.1),0 10px 24px rgba(0,107,63,.08)}
+.lesson-t{font-size:14px;font-weight:650}
+.lesson-s{font-size:12.5px;color:var(--slate2);margin-top:4px}
+.lesson-m{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.tag{font-family:monospace;font-size:9.5px;font-weight:600;padding:3px 7px;border-radius:6px;background:var(--paper2);color:var(--slate2);border:1px solid var(--line)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600;padding:12px 20px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;transition:all .15s}
+.btn-pri{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;box-shadow:0 2px 10px rgba(0,107,63,.25)}
+.btn-pri:hover{transform:translateY(-1px)}
+.btn-pri:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-danger{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+.btn-ghost{background:var(--white);color:var(--slate);border-color:var(--line2)}
+.btn-block{width:100%}
+/* Premium, Apple-style action buttons */
+.btn-talk{width:100%;background:linear-gradient(180deg,#0a9159,#067544);color:#fff;font-size:16px;font-weight:600;padding:16px 28px;border-radius:14px;letter-spacing:.2px;border:0;box-shadow:0 1px 1px rgba(0,0,0,.05),0 8px 22px rgba(6,117,68,.26);transition:transform .12s ease,box-shadow .12s ease,background .2s ease}
+.btn-talk:hover{transform:translateY(-1px);box-shadow:0 1px 1px rgba(0,0,0,.05),0 12px 28px rgba(6,117,68,.32)}
+.btn-talk:active{transform:translateY(0)}
+.btn-talk:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-talk.live{background:linear-gradient(180deg,#e84135,#c0231a);box-shadow:0 1px 1px rgba(0,0,0,.05),0 8px 22px rgba(192,35,26,.28)}
+.talk-row{display:flex;gap:10px}
+.talk-row .btn-talk{flex:1.6}
+.btn-send{flex:1;background:#fff;color:var(--green-d,#004d2e);border:1.5px solid var(--green-border,#b8d8c5);font-size:16px;font-weight:600;padding:16px 20px;border-radius:14px;transition:background .15s,border-color .15s,transform .12s}
+.btn-send:hover{background:var(--green-bg,#eaf6ef);transform:translateY(-1px)}
+.btn-send:active{transform:translateY(0)}
+.btn-send:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-soft{background:#f3f5f7;color:var(--slate);border:1px solid var(--line2);font-size:13.5px;font-weight:600;padding:11px 18px;border-radius:11px;box-shadow:0 1px 1px rgba(0,0,0,.02);transition:background .15s,border-color .15s,color .15s}
+.btn-soft:hover{background:#e9edf1}
+.btn-soft.danger{color:var(--red)}
+.btn-soft.danger:hover{background:var(--red-bg);border-color:var(--red-border)}
+.actions .btn-soft{flex:1}
+.note{font-size:11px;color:var(--slate3);margin-top:12px;line-height:1.5}
+.banner{display:flex;gap:10px;align-items:flex-start;background:var(--blue-bg);border:1px solid #cfe0f0;border-radius:var(--r);padding:11px 13px;margin:14px 0;font-size:12px;color:var(--slate);line-height:1.5}
+label.fld{display:block;font-size:12px;font-weight:650;color:var(--slate);margin:12px 0 5px}
+input.key{width:100%;padding:9px 11px;border:1.5px solid var(--line2);border-radius:var(--r-sm);font-size:13px;font-family:monospace}
+input.key:focus{outline:none;border-color:var(--green2)}
+.stage-wrap{display:none}
+.stage{position:relative;background:linear-gradient(160deg,#0d1b14,#0a0e14);border-radius:var(--r-lg);overflow:hidden;aspect-ratio:16/9;box-shadow:var(--sh-lg);border:1px solid #000;display:grid;place-items:center}
+.stage video#anamVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform:scale(1.2)}
+.selfcam{position:absolute;right:12px;top:12px;width:120px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,.5);box-shadow:0 4px 16px rgba(0,0,0,.4);background:#000;z-index:4}
+.selfcam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+/* Karaoke caption — compact 2-3 line teleprompter at the bottom */
+.cap{position:absolute;left:0;right:0;bottom:0;padding:46px 20px 18px;background:linear-gradient(to top,rgba(0,0,0,.86),rgba(0,0,0,.55) 55%,transparent);color:#fff;z-index:3;display:flex;justify-content:center}
+.cap-inner{max-width:680px;width:100%;text-align:center;font-size:17px;font-weight:600;line-height:1.38;letter-spacing:.1px;min-height:2em;max-height:2.9em;overflow:hidden;text-shadow:0 1px 4px rgba(0,0,0,.7)}
+.cap-inner .you{color:var(--gold);font-weight:700}
+.cap-inner .seg-prev{opacity:.45}
+.cap-inner .seg-cur{opacity:1}
+.unmute{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;background:rgba(18,20,24,.74);backdrop-filter:saturate(160%) blur(12px);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:13px 22px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;box-shadow:0 12px 34px rgba(0,0,0,.4)}
+#stage{cursor:pointer}
+.pause-ov{position:absolute;inset:0;z-index:7;display:grid;place-items:center;background:rgba(8,10,14,.58);backdrop-filter:saturate(140%) blur(7px);cursor:pointer}
+.pause-card{text-align:center;color:#fff}
+.pause-bars{display:flex;gap:9px;justify-content:center;margin-bottom:16px}
+.pause-bars i{width:12px;height:42px;border-radius:4px;background:#fff;box-shadow:0 6px 22px rgba(0,0,0,.45)}
+.pause-title{font-size:23px;font-weight:600;letter-spacing:.3px}
+.pause-sub{font-size:13px;opacity:.82;margin-top:5px}
+/* Slide panel — premium branded slide */
+.slide-card{margin-bottom:18px;overflow:visible;border:0;background:transparent;box-shadow:none}
+.slide{position:relative;overflow:hidden;color:#fff;padding:22px 20px 50px;min-height:300px;display:flex;flex-direction:column;border-radius:16px;
+  background:radial-gradient(130% 90% at 0% 0%,rgba(0,168,94,.40),transparent 58%),linear-gradient(158deg,#04231a 0%,#063a25 52%,#03281c 100%);
+  box-shadow:0 14px 38px rgba(2,20,12,.45),inset 0 0 0 1px rgba(255,255,255,.06)}
+.slide:before{content:"";position:absolute;inset:0;pointer-events:none;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.045) 0 1px,transparent 1px 15px)}
+.slide:after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,var(--slacc,var(--gold)),#f3d99a 60%,var(--slacc,var(--gold)))}
+.slide{--slacc:var(--gold)}
+.slide[data-type=scenario]{--slacc:#5ab0ff}
+.slide[data-type=quiz]{--slacc:#ffcf5a}
+.slide[data-type=definition]{--slacc:#6fe0a4}
+.slide[data-type=keyterm]{--slacc:#ffd98a}
+.slide[data-type=comparison]{--slacc:#b69cff}
+.slide[data-type=recap]{--slacc:#8ee6c0}
+.slide.enter{animation:slidecard .5s cubic-bezier(.2,.7,.2,1)}
+@keyframes slidecard{from{opacity:0;transform:scale(.985) translateY(10px)}to{opacity:1;transform:none}}
+.slide-kicker{position:relative;font-family:monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--slacc,var(--gold));font-weight:700;display:flex;align-items:center;gap:9px}
+.slide-kicker:before{content:"";width:18px;height:2px;background:var(--gold)}
+.slide-title{position:relative;font-family:var(--serif);font-size:25px;line-height:1.15;margin:11px 0 16px;text-shadow:0 1px 6px rgba(0,0,0,.25)}
+.slide-bullets{position:relative;list-style:none;display:flex;flex-direction:column;gap:11px;margin:0;padding:0}
+.slide-bullets li{position:relative;padding-left:21px;font-size:13.5px;line-height:1.45;color:#e9fff4;opacity:0;transform:translateY(6px);animation:slidein .5s forwards}
+.slide-bullets li:before{content:"";position:absolute;left:0;top:6px;width:8px;height:8px;border-radius:2px;background:var(--slacc,var(--gold));box-shadow:0 0 10px rgba(255,255,255,.25)}
+@keyframes slidein{to{opacity:1;transform:none}}
+.slide-foot{position:absolute;left:20px;right:20px;bottom:14px;display:flex;justify-content:space-between;align-items:center;font-family:monospace;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.5)}
+/* Blank branded panel shown while connecting or if the photoreal stream is
+   unavailable — no cartoon face, just a clean dark screen. */
+.face-blank{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:none}
+.fb-emblem{width:46px;height:56px;color:rgba(255,255,255,.14)}
+.fb-emblem svg{width:100%;height:100%}
+.fb-word{font-family:var(--serif,Georgia,serif);font-size:17px;letter-spacing:1px;color:rgba(255,255,255,.18)}
+/* Session timeline — how far along the session the learner is, in steps + time */
+.timeline{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:8px 14px}
+.tl-row{display:flex;align-items:center;gap:12px}
+.tl-row+.tl-row{margin-top:5px}
+.tl-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--slate3);width:120px;flex:none}
+.tl-steps{display:flex;align-items:center;gap:6px;flex:1;flex-wrap:wrap}
+.tl-step{flex:1;min-width:14px;height:8px;border-radius:99px;background:var(--paper2);position:relative;transition:background .3s}
+.tl-step.done{background:var(--green2)}
+.tl-step.cur{background:var(--gold);box-shadow:0 0 0 3px rgba(201,145,58,.25)}
+.tl-count{font-size:12.5px;font-weight:700;color:var(--slate);width:54px;text-align:right;flex:none}
+.tl-time-track{flex:1;height:8px;border-radius:99px;background:var(--paper2);overflow:hidden}
+.tl-time-track>i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--green2));transition:width .5s}
+.tl-time-track.over>i{background:var(--red)}
+.tl-clock{font-size:12.5px;font-weight:700;color:var(--slate);width:90px;text-align:right;flex:none}
+.tl-clock.over{color:var(--red)}
+@media(max-width:620px){.tl-label{width:64px}.tl-clock{width:74px}}
+/* ── Single-viewport session layout: video + controls left, slide + Talk right ── */
+.session-main{display:flex;flex-direction:column;height:calc(100dvh - 64px);max-width:1500px;padding:6px 0 8px;gap:8px;min-height:0}
+#session .grid{flex:1;min-height:0;display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:stretch;padding:0}
+.col-main{display:flex;flex-direction:column;min-height:0;gap:8px}
+.col-side{display:flex;flex-direction:column;min-height:0;gap:10px}
+#session .stage{flex:1;min-height:0;aspect-ratio:auto}            /* fill all leftover vertical space */
+#session .slide-card{flex:1;min-height:0;display:flex;margin-bottom:0}
+#session .slide{flex:1;min-height:0;padding:24px 24px 52px}
+/* ── Mobile: single column, sensible order (video → Talk/Send → type → slide) ── */
+@media(max-width:880px){
+  .session-main{height:auto;min-height:0;padding:8px 0 28px;gap:0}
+  #session .grid{display:flex;flex-direction:column;gap:10px;align-items:stretch}
+  .col-main,.col-side{display:contents}
+  #session .stage{order:1;flex:none;aspect-ratio:16/9;min-height:0;border-radius:14px}
+  .talk-row{order:2;margin-top:2px}
+  .talk-hint{order:3;min-height:0}
+  .statusline{order:4;justify-content:center}
+  #session .replybox{order:5}
+  #session .slide-card{order:6;flex:none;min-height:0}
+  #session .slide{min-height:230px;padding:22px 20px 46px}
+  .actions{order:7}
+  .btn-talk,.btn-send{padding:15px 18px;font-size:16px}
+}
+.statusline{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--slate2);font-weight:600}
+.livedot{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 rgba(192,57,43,.5);animation:pulse 2s infinite}
+.actions{display:flex;gap:10px}
+.actions .btn-soft{padding:9px 16px}
+.talk-hint{text-align:center;font-size:12.5px;color:var(--slate2);font-weight:500;min-height:1.2em}
+.perc-dock{padding:22px 0 60px}
+.perc-dock .timeline{margin-bottom:16px}
+.perc-dock .muted-h{font-size:11.5px;color:var(--slate3);font-weight:500;margin-left:auto}
+.perc-dock .perc-list{flex-direction:row;flex-wrap:wrap}
+.perc-dock .perc{flex:1;min-width:150px}
+.rec{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--slate2);font-weight:500}
+.rec .dot{width:9px;height:9px;border-radius:50%;background:var(--red);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.5)}70%{box-shadow:0 0 0 8px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
+.miclbl{font-size:12px;color:var(--slate2)}
+.replybox{display:flex;gap:8px;margin-top:10px}
+.replybox input{flex:1;font-family:var(--sans);font-size:14px;border:1.5px solid var(--line2);border-radius:var(--r-sm);padding:10px 12px}
+.replybox input:focus{outline:none;border-color:var(--green2)}
+.perc-list{display:flex;flex-direction:column;gap:9px}
+.perc{display:flex;gap:11px;align-items:flex-start;padding:11px 12px;border-radius:var(--r);border:1px solid var(--line);background:var(--paper);transition:all .25s}
+.perc.hot{background:var(--amber-bg);border-color:var(--amber-border)}
+.perc.good{background:var(--green-bg);border-color:var(--green-border)}
+.perc-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;background:var(--white);border:1px solid var(--line);font-size:15px}
+.perc-tx{font-size:12.5px;color:var(--slate)}.perc-tx b{color:var(--ink);font-weight:650}
+.prog{height:8px;background:var(--paper2);border-radius:999px;overflow:hidden;margin-top:4px}
+.prog>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green2),var(--green-l));transition:width .4s}
+.kpi{display:flex;justify-content:space-between;font-size:12px;color:var(--slate2);margin-top:14px}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh-lg);z-index:50;opacity:0;transition:opacity .2s}
+.overlay{position:fixed;inset:0;background:rgba(8,16,12,.84);display:none;place-items:center;z-index:60;padding:20px}
+.overlay.show{display:grid}
+.result{background:#fff;border-radius:18px;max-width:460px;width:100%;padding:30px;text-align:center;box-shadow:var(--sh-lg)}
+.result .score{font-family:var(--serif);font-size:64px;line-height:1;margin:6px 0}
+.result .verdict{font-weight:800;letter-spacing:.6px;text-transform:uppercase;font-size:13px;padding:6px 16px;border-radius:999px;display:inline-block}
+.result .pass{background:var(--green-bg);color:var(--green-d)}
+.result .fail{background:var(--red-bg);color:var(--red)}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <div class="emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="#fff" opacity=".95"/></svg></div>
+    <div><div class="brand-t">CLPD AI Trainer · Live</div><div class="brand-s">Dubai Legal Affairs Department</div></div>
+    <div class="top-spacer"></div>
+    <span id="whoami" class="ghost-link" style="display:none"></span>
+    <a href="#" id="logoutBtn" class="ghost-link" style="display:none">Log out</a>
+    <span id="enginePill" class="pill pill-demo">Setup</span>
+    <a class="ghost-link" href="/portal">← Platform</a>
+  </div>
+</header>
+
+<main>
+  <section id="login" style="display:none">
+    <div class="wrap" style="max-width:440px;padding:46px 24px 60px">
+      <h1 style="text-align:center">AI Legal Trainer</h1>
+      <p class="lede" style="text-align:center;margin:10px auto 0">Sign in to begin your session.</p>
+      <div class="card" style="margin-top:22px">
+        <div class="card-b">
+          <div id="authErr" class="banner" style="display:none;background:var(--red-bg);border-color:var(--red-border);color:var(--red)"></div>
+          <div id="regName" style="display:none">
+            <label class="fld" for="auName">Full name</label>
+            <input id="auName" class="key" type="text" placeholder="Your name" style="font-family:var(--sans)"/>
+          </div>
+          <label class="fld" for="auEmail">Email</label>
+          <input id="auEmail" class="key" type="email" autocomplete="username" placeholder="you@firm.ae" style="font-family:var(--sans)"/>
+          <label class="fld" for="auPass">Password</label>
+          <input id="auPass" class="key" type="password" autocomplete="current-password" placeholder="Password (min 8 characters)" style="font-family:var(--sans)"/>
+          <div id="regCode" style="display:none">
+            <label class="fld" for="auCode">Enrolment code <span style="color:var(--slate3);font-weight:400">— if your administrator gave you one</span></label>
+            <input id="auCode" class="key" type="text" placeholder="Enrolment code" style="font-family:var(--sans)"/>
+          </div>
+          <button id="authBtn" class="btn btn-pri btn-block" style="margin-top:16px">Sign in</button>
+          <p class="note" style="text-align:center"><span id="authToggleText">New here?</span> <a href="#" id="authToggle" style="font-weight:650">Create an account</a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="setup" style="display:none">
+    <div class="wrap hero">
+      <div class="eyebrow">Continuing Legal Professional Development</div>
+      <h1>Your live AI legal trainer.</h1>
+      <p class="lede">A personal, interactive training session that guides you through the material, checks your understanding, and tracks your progress and CPD.</p>
+    </div>
+    <div class="wrap grid">
+      <div class="card">
+        <div class="card-h"><h3>Choose today's lesson</h3></div>
+        <div class="card-b"><div id="lessons" class="lessons"></div></div>
+      </div>
+      <div class="card" id="startCard">
+        <div class="card-h"><h3>Start your session</h3></div>
+        <div class="card-b">
+          <p style="font-size:13px;color:var(--slate);line-height:1.55">Uses your <b>camera and microphone</b> so your trainer can guide you and your engagement is scored. Find a quiet spot and allow access when prompted.</p>
+          <p class="note" id="engineNote" style="margin-top:10px"></p>
+          <button id="startBtn" class="btn btn-pri btn-block" disabled>Begin session</button>
+          <p class="note" id="setupNote">Select a lesson to begin.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="session" class="stage-wrap">
+    <div class="wrap session-main">
+      <div class="grid">
+      <div class="col-main">
+        <div class="stage" id="stage">
+          <video id="anamVideo" autoplay playsinline class="hidden"></video>
+          <div id="stylisedFace" class="face-blank">
+            <div class="fb-emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="currentColor"/></svg></div>
+            <div class="fb-word">CLPD · Legal Faculty AI</div>
+          </div>
+          <div class="cap"><div class="cap-inner" id="caption">Connecting you to your trainer…</div></div>
+          <button id="unmuteBtn" class="unmute" style="display:none">Tap to enable sound</button>
+          <div id="pauseOverlay" class="pause-ov" style="display:none">
+            <div class="pause-card">
+              <div class="pause-bars"><i></i><i></i></div>
+              <div class="pause-title">Paused</div>
+              <div class="pause-sub">Tap the screen to resume</div>
+            </div>
+          </div>
+        </div>
+        <div class="statusline"><span class="livedot"></span> <span id="recLabel">Live session</span></div>
+        <div class="replybox">
+          <input id="replyInput" type="text" placeholder="…or type your answer and press Enter"/>
+        </div>
+        <div class="actions">
+          <button id="saveBtn" class="btn btn-soft" title="Save your place and continue later">Save &amp; exit</button>
+          <button id="endBtn" class="btn btn-soft danger" title="End and score this session">End session</button>
+        </div>
+      </div>
+      <div class="col-side">
+        <div class="card slide-card">
+          <div class="slide" id="slide">
+            <div class="slide-kicker" id="slideKicker">On screen</div>
+            <div class="slide-title" id="slideTitle">Your session will appear here</div>
+            <ul class="slide-bullets" id="slideBullets"></ul>
+            <div class="slide-foot"><span>Dubai Legal Affairs · CLPD</span><span id="slideNo"></span></div>
+          </div>
+        </div>
+        <div class="talk-row">
+          <button id="micBtn" class="btn btn-talk">Talk</button>
+          <button id="sendBtn" class="btn btn-send">Send</button>
+        </div>
+        <div class="talk-hint" id="micLabel">Press Talk to speak</div>
+      </div>
+      </div>
+    </div>
+    <div class="wrap perc-dock">
+      <div class="timeline" id="timeline" style="display:none">
+        <div class="tl-row">
+          <span class="tl-label" id="tlSecLabel">Session</span>
+          <div class="tl-steps" id="tlSections"></div>
+          <span class="tl-count" id="tlSecCount">0/0</span>
+        </div>
+        <div class="tl-row">
+          <span class="tl-label">This section</span>
+          <div class="tl-steps" id="tlSteps"></div>
+          <span class="tl-count" id="tlCount">0/0</span>
+        </div>
+        <div class="tl-row">
+          <span class="tl-label">Time</span>
+          <div class="tl-time-track" id="tlTimeTrack"><i id="tlTimeFill"></i></div>
+          <span class="tl-clock" id="tlClock">0 / 0 min</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Engagement &amp; what your trainer sees</h3><span class="muted-h">Monitored during the session — you don't need to watch this</span></div>
+        <div class="card-b">
+          <div class="perc-list">
+            <div class="perc" data-k="attention"><div class="perc-tx"><b>Attention</b><br><span class="v">—</span></div></div>
+            <div class="perc" data-k="mood"><div class="perc-tx"><b>Mood</b><br><span class="v">—</span></div></div>
+            <div class="perc" data-k="phone"><div class="perc-tx"><b>Phone</b><br><span class="v">—</span></div></div>
+            <div class="perc" data-k="presence"><div class="perc-tx"><b>Presence</b><br><span class="v">—</span></div></div>
+          </div>
+          <div style="margin-top:16px;font-size:12px;font-weight:650;color:var(--slate)">Lesson progress</div>
+          <div class="prog"><i id="progBar"></i></div>
+          <div class="kpi"><span id="covLabel">0 of 0 key elements</span><span id="brainLabel"></span></div>
+          <div class="kpi" style="margin-top:10px;align-items:center"><span style="font-weight:650;color:var(--slate)">Engagement (scored)</span><span id="engScore" style="font-weight:800;font-size:15px;color:var(--green2)">100%</span></div>
+          <p class="note" id="percNote">You're being scored on attention — stay focused and in frame. Below 50% is a fail.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+<div class="overlay" id="resultOverlay"><div class="result">
+  <div style="font-family:monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold)">Engagement result</div>
+  <div class="score" id="resScore">—</div>
+  <div id="resVerdict" class="verdict">—</div>
+  <p id="resMsg" style="font-size:14px;color:var(--slate);margin:16px 0 20px;line-height:1.5"></p>
+  <button id="nextSecBtn" class="btn btn-pri btn-block" style="display:none;margin-bottom:10px">Continue →</button>
+  <button id="doneBtn" class="btn btn-soft btn-block" onclick="location.reload()">Back to all sections</button>
+</div></div>
+
+<script>
+(function(){
+  'use strict';
+  var el=function(id){return document.getElementById(id);};
+  function toast(m){var t=el('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2600);}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+  var CLAUDE_MODEL='claude-sonnet-4-6';
+  var S={selected:null,session:null,history:[],perception:{attention:'engaged',phone:false,present:true,mood:'neutral'},
+         anam:null,stream:null,reco:null,listening:false,muted:false,startedAt:0,busy:false,ended:false,detector:null,detLoop:null,selfVideo:null,
+         faceSpeaking:false,disStreak:0,lastChallenge:0,lastCovered:0,eng:{samples:0,engaged:0,phone:0,away:0,distracted:0}};
+  var AUTH={token:null,name:'',email:'',progress:{},mode:'login',role:'lawyer',courses:[]};
+  // Courses that require an admin assignment (courseId -> assignment id).
+  var GATED={'aviation-law':'aviation'};
+  function courseAccessible(L){ if(!L)return true; var req=GATED[L.courseId]; if(!req)return true; return AUTH.role==='admin'||(AUTH.courses||[]).indexOf(req)>=0; }
+
+  // ─── Built-in lessons (no backend / DB needed) ───────────────────────
+  var LESSONS=[
+    {id:'av-welcome',title:'Aviation Law — Welcome & How This Works',duration_min:5,cpd_points:1,
+     summary:'Orientation to the aviation-law programme and how the 1-2-1 runs.',
+     objectives:[
+       'Understand the three parts of the programme: carrier liability, unfair competition, and arbitration/enforcement',
+       'Know that the session is informational CLPD and not legal advice',
+       'Understand the conversational format and the 80% pass mark on the final assessment'],
+     body:'This is a CLPD seminar of the Dubai Government Legal Affairs Department on litigation and arbitration in aviation law. It has three parts: first, the liability of the air carrier under the international conventions (Warsaw 1929 and Montreal 1999) and then under UAE law; second, the unfair-competition claim in air transport; third, arbitration in international aviation disputes and the role of the national courts, including enforcement of awards. There is a worked case study and a short assessment. This is informational CLPD, not legal advice; the authoritative sources are the conventions and the cited statutes themselves.'},
+    {id:'av-carrier',title:'Carrier Liability — Warsaw & Montreal Conventions',duration_min:12,cpd_points:1,
+     summary:'The core international-law thresholds for air-carrier liability.',
+     objectives:[
+       'Explain the Montreal Convention strict-liability tier up to 128,821 SDR for passenger injury/death',
+       'State the two-year limitation period for bringing a claim',
+       'Explain how the Warsaw and Montreal regimes differ on the carrier’s defences'],
+     body:'Under the Montreal Convention 1999, an air carrier is strictly liable for proven damages up to 128,821 SDR per passenger for death or bodily injury, and can only avoid liability above that tier by proving it was not negligent. Warsaw 1929 used lower caps and allowed the carrier an "all necessary measures" defence. Both regimes impose a two-year limitation period from arrival (or the date the aircraft ought to have arrived). Baggage and cargo have their own per-kilogram limits. Teach these one at a time and check the lawyer can apply them.'},
+    {id:'goodfaith',title:'Mock — Good Faith in Negotiations',duration_min:5,cpd_points:1,
+     summary:'A short, self-contained taster to try the trainer end-to-end.',
+     objectives:[
+       'Explain what the duty to negotiate in good faith means',
+       'State what an injured party can recover (reliance loss, not lost profit)',
+       'Apply the duty to a short scenario'],
+     body:'Under UAE civil-law principles, parties negotiating a contract must act in good faith. Breaking off negotiations arbitrarily, or negotiating without serious intent, can give rise to liability. The injured party generally recovers its reliance loss (wasted expenditure incurred in reliance on the negotiation) rather than the profit it would have made had the contract been concluded. Teach the concept, then test with a short scenario about a party who walks away at the last minute.'}
+  ];
+
+  // ─── Teaching charter (mirrors the verified backend prompt) ──────────
+  var SYSTEM_PROMPT = `MASTER SYSTEM PROMPT: AI LEGAL TRAINING FACULTY ENGINE
+
+IDENTITY
+You are Legal Faculty AI, an advanced professional legal education trainer for the Dubai Legal Affairs Department. You replicate an elite legal instructor delivering accredited professional training to lawyers. You are NOT a question-answering assistant. You are a structured learning facilitator whose purpose is to move a learner from Exposure → Understanding → Application → Competence. Your success is measured by whether the learner can demonstrate understanding, not by how much information you provide.
+
+CORE OPERATING PRINCIPLE
+Always follow this teaching loop: Teach → Question → Evaluate → Correct → Reinforce → Advance. Never skip the cycle. Never simply provide information — every concept must be converted into learner engagement.
+
+SOURCE GOVERNANCE (ABSOLUTE)
+Your knowledge is restricted to the approved training materials provided in this session (below). They are your only authority — treat them as the official course handbook. Do NOT use general AI knowledge, external legal knowledge, supplement missing information, infer legal rules, or provide explanations not supported by the materials. If information is absent, say: "The approved training materials do not cover this point. I cannot provide additional information beyond the course content." Never guess, fabricate, or cite outside sources.
+
+SESSION CONTROLLER (~75 minutes)
+Internally track elapsed time, completed/remaining topics, learner performance and pace. Do not spend excessive time on one topic. Opening (~5 min): welcome to the Legal Affairs Training, explain the session format and learning objectives, and establish the learner's baseline — ask "What is your current experience with this topic?" before teaching.
+
+TEACHING BLOCKS
+Phase 1 — Concept Introduction: explain ONE concept only (never several together), then STOP and ask a question.
+Phase 2 — Understanding Check (mandatory): ask recall / explanation / application questions, e.g. "Can you explain this principle in your own words?", "What is the purpose of this requirement?", "What risk does this address?" Do not continue until the learner responds.
+Phase 3 — Response Analysis: Correct → "Correct. The key point is…" then deepen. Partially correct → "You have identified part of the issue. The missing element is…" then explain. Incorrect → "Let's revisit this point." explain simply and ask again.
+Phase 4 — Practical Application: connect theory to practice — "Imagine you are advising a client. What would you do?", "What would be the consequence of failing to follow this?"
+
+CONVERSATION CONTROL
+Anti-monologue: never produce long uninterrupted explanations. Aim 200–300 words then a question; never exceed ~500 words without interaction. Target talk split — Trainer 40% / Learner 60%. The learner should speak regularly.
+
+QUESTION ENGINE
+Every question tests one of: Knowledge ("What is the definition of…"), Understanding ("Why does this matter?"), Application ("How would this work in practice?"), Analysis ("What issue would arise?"), Evaluation ("What approach would you recommend?").
+
+SOCRATIC MODE
+Use guided questioning frequently. Do not immediately reveal answers — ask what the learner thinks and why, identify their reasoning, correct, then explain. Prefer "What do you think the correct approach is, and why?" over "The answer is X."
+
+DIFFICULTY CALIBRATION
+Maintain a learner profile (knowledge level, mistakes, confidence, recurring gaps). Beginner: simpler language, more examples. Intermediate: scenarios, comparisons. Advanced: judgement questions, professional dilemmas.
+
+TRAINER BEHAVIOUR
+You are authoritative, precise, patient, demanding, practical — and professional in language. You are not casual, not overly conversational, not a generic tutor, not a chatbot.
+
+OUT-OF-COURSE QUESTIONS
+If asked about something, first check the materials. If covered, answer. If not: "That topic is outside today's approved training content. The relevant focus of this session is…" then return to curriculum.
+
+REPETITION ENGINE
+If the learner repeatedly fails, do not simply repeat — change method: simplify, give an example, ask a guided question, reassess.
+
+END-OF-TRAINING PROTOCOL
+The final part of the session must include: Consolidation — "What are the three main principles you are taking away?"; Application — "How will you apply this in practice?"; Assessment — five final questions covering definitions, principles, application, risks, judgement; then a performance summary with strengths, improvement areas, and recommended next steps.
+
+FINAL GOVERNING RULE
+Your job is not to finish the material — it is to produce a competent learner. A session where the learner talks, answers, applies and understands is a success. A session where you deliver a lecture is a failure.`;
+
+  function buildLessonContext(lesson){
+    var objectives=(lesson.objectives||[]).length
+      ? ['KEY ELEMENTS — take the lawyer through every one, in order, teaching each conversationally and',
+         'confirming understanding before moving on. Do not end until all are covered and understood:']
+         .concat(lesson.objectives.map(function(o,i){return '  '+(i+1)+'. '+o;})).join('\n')
+      : 'Identify the main points from the material below and take the lawyer through each one.';
+    return ['Today\'s lesson: "'+lesson.title+'".',
+      lesson.summary?('Summary: '+lesson.summary):'',
+      objectives,
+      'Lesson material — teach ONLY from this, in your own words, never read it out in bulk:',
+      lesson.body].filter(Boolean).join('\n\n');
+  }
+  function systemFor(lesson){
+    var total=(lesson.objectives||[]).length;
+    return [SYSTEM_PROMPT,'',
+      '────────────  APPROVED TRAINING MATERIALS FOR THIS SESSION  ────────────',
+      'These materials are the ONLY authority for this session. Teach strictly from them.',
+      buildLessonContext(lesson),
+      '',
+      'CAMERA AWARENESS: real-time observations about the learner (attention, mood, phone, presence) may be appended to messages in [brackets]. React briefly like a trainer in the room — bring them back if distracted, ask them to put a phone away, acknowledge engagement — then continue the teaching loop. Never narrate their face constantly.',
+      '',
+      'OUTPUT FORMAT — respond with ONLY a JSON object, no other text, exactly this shape:',
+      '{"say": "<the spoken turn you deliver to the learner right now>", "covered": [<1-based numbers of the learning objectives the learner has DEMONSTRATED understanding of so far>], "complete": <true|false>}',
+      'There are '+total+' learning objectives (the key elements listed above). "say" is spoken aloud by a photoreal avatar: follow the teaching loop — teach ONE concept then STOP and ask a question, OR evaluate the learner\'s answer then advance. Spoken style only: no lists, no markdown, no headings, no bullet points. Keep turns tight (aim 200–300 words max) so the learner speaks ~60% of the time.',
+      'Add an objective to "covered" only once the learner has DEMONSTRATED understanding of it (answered or applied it correctly) — never merely because you explained it.',
+      'Set "complete" to true ONLY after every objective is covered AND you have run the end-of-session assessment (five questions) and delivered the performance summary in "say".'].join('\n');
+  }
+  function perceptionNote(p){
+    if(!p)return '';
+    var bits=[];
+    if(p.phone)bits.push('they are holding or looking at a phone');
+    if(p.attention==='distracted')bits.push('they look distracted');
+    else if(p.attention==='away')bits.push('they have looked away from the screen');
+    if(p.present===false)bits.push('they have left the camera frame');
+    if(p.mood==='confused')bits.push('they look confused');
+    else if(p.mood==='happy')bits.push('they look happy and engaged');
+    if(!bits.length)return '';
+    return '[What you can see on camera right now: '+bits.join('; ')+'.]';
+  }
+  function toMessages(history,perception){
+    var msgs=(history||[]).map(function(h){return {role:(h.role==='trainer'||h.role==='assistant')?'assistant':'user',content:String(h.text||h.content||'')};}).filter(function(m){return m.content;});
+    var note=perceptionNote(perception);
+    if(!msgs.length){msgs.push({role:'user',content:['[The session is starting. Greet the lawyer briefly and begin teaching the first key element.]',note].filter(Boolean).join(' ')});return msgs;}
+    if(msgs[msgs.length-1].role==='assistant'){msgs.push({role:'user',content:note||'[continue]'});}
+    else if(note){msgs[msgs.length-1].content+='\n'+note;}
+    return msgs;
+  }
+  function parseReply(text,total){
+    var obj=null;
+    if(text){var m=text.match(/\{[\s\S]*\}/);if(m){try{obj=JSON.parse(m[0]);}catch(e){}}}
+    if(!obj||typeof obj.say!=='string')return {say:(text||'').trim()||'Let\'s continue.',covered:[],complete:false};
+    var covered=Array.isArray(obj.covered)?obj.covered.map(function(n){return parseInt(n,10);}).filter(function(n){return n>=1&&n<=total;}):[];
+    return {say:String(obj.say).trim(),covered:covered.filter(function(v,i,a){return a.indexOf(v)===i;}),complete:obj.complete===true};
+  }
+
+  // Deterministic fallback if the Claude call fails — keeps the session alive.
+  function fallbackTurn(lesson,history,perception){
+    var objs=lesson.objectives||[];var total=objs.length;
+    var lawyerTurns=history.filter(function(h){return h.role==='lawyer';}).length;
+    var note=perception&&(perception.phone||perception.attention==='distracted'||perception.attention==='away');
+    var nudge=note?'I want to make sure this lands — let\'s keep our focus here for a moment. ':'';
+    if(!total)return {say:'Tell me what you\'d like to focus on today.',covered:[],complete:false};
+    if(lawyerTurns===0)return {say:nudge+'Welcome — let\'s begin. '+objs[0]+'. In your own words, what do you understand by that?',covered:[],complete:false};
+    var idx=lawyerTurns;var covered=[];for(var i=0;i<Math.min(idx,total);i++)covered.push(i+1);
+    if(idx>=total)return {say:nudge+'Good — that covers everything we set out to. Well done; you can apply these now.',covered:covered,complete:true};
+    return {say:nudge+'Good. Next: '+objs[idx]+'. How would you apply that?',covered:covered,complete:false};
+  }
+
+  // ─── Claude brain — direct browser call ──────────────────────────────
+  // Brain runs server-side (/api/trainer-turn) so the Anthropic key stays off the
+  // browser. Sends the lesson (approved materials) + history + camera perception.
+  // The full programme welcome only belongs in the first/welcome section; later
+  // sections skip it (the learner already heard it).
+  function isOpeningLesson(l){ return /welcome|orientation|how this works/i.test((l&&l.title)||'')||/_00_|welcome/i.test((l&&l.id)||''); }
+  // Build a personalisation profile from the learner's saved progress so the coach
+  // can greet them by name, connect to prior sessions, and target weak areas.
+  function buildLearner(lesson){
+    var p=AUTH.progress||{},keys=Object.keys(p);
+    var courseId=lesson.courseId||'general';
+    var here=p[courseId+'::'+lesson.id];
+    var completedInCourse=keys.filter(function(k){return p[k]&&p[k].courseId===courseId&&p[k].completed&&p[k].lessonId!==lesson.id;}).map(function(k){return p[k].title;}).filter(Boolean);
+    var weak=keys.filter(function(k){return p[k]&&(p[k].bestEngagement||0)<50||(p[k]&&p[k].pass===false);}).map(function(k){return p[k].title;}).filter(Boolean).slice(0,3);
+    return {
+      name:AUTH.name||'',
+      returning:keys.length>0,
+      retakingThisLesson:!!here,
+      priorEngagement:here?(here.bestEngagement||0):0,
+      completedInCourse:completedInCourse,
+      weakAreas:weak.join('; ')
+    };
+  }
+  function claudeTurn(lesson,history,perception){
+    // Abort a hung request after 30s so a flaky (mobile) network can't leave the
+    // session stuck on "thinking…" forever.
+    var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+    var to=ctrl?setTimeout(function(){try{ctrl.abort();}catch(e){}},30000):null;
+    return fetch('/api/trainer-turn',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      signal:ctrl?ctrl.signal:undefined,
+      body:JSON.stringify({token:AUTH.token,lesson:lesson,history:history,perception:perception,opening:isOpeningLesson(lesson),learner:buildLearner(lesson),mode:lesson.mode||'lesson',elapsedMin:S.startedAt?Math.round((Date.now()-S.startedAt)/60000):0,targetMin:(S.secTarget||(S.selected&&S.selected.duration_min)||10)})
+    }).then(function(r){if(to)clearTimeout(to);return r.json();}).then(function(d){
+      if(d&&typeof d.say==='string')return {say:d.say,covered:d.covered||[],complete:!!d.complete,slide:d.slide||null};
+      throw new Error((d&&d.error)||'no turn');
+    }).catch(function(e){if(to)clearTimeout(to);toast('Trainer brain: '+(e.message||e)+' — using fallback');return fallbackTurn(lesson,history,perception);});
+  }
+
+  // ─── Setup gate (keys live server-side; just pick a lesson) ───────────
+  function refreshStart(){
+    var ok=!!S.selected;
+    el('startBtn').disabled=!ok;
+    el('setupNote').textContent=ok?'Ready when you are.':'Select a lesson to begin.';
+    el('enginePill').className='pill pill-live';
+    el('enginePill').textContent='● Ready';
+    el('engineNote').innerHTML='<span>Allow camera &amp; microphone access when prompted, then begin.</span>';
+  }
+
+  function renderLessons(){
+    var c=el('lessons');c.innerHTML='';
+    LESSONS.forEach(function(L){
+      if(!courseAccessible(L))return;   // hide courses not assigned to this learner
+      var d=document.createElement('div');d.className='lesson'+(S.selected&&S.selected.id===L.id?' sel':'');
+      var meta=[];if(L.duration_min)meta.push('<span class="tag">~'+L.duration_min+' min</span>');
+      if((L.objectives||[]).length)meta.push('<span class="tag">'+L.objectives.length+(L.mode==='simulation'?' decisions':' key elements')+'</span>');
+      if(L.mode==='simulation')meta.unshift('<span class="tag" style="background:#eef4fb;color:#1a4d80;border-color:#cfe0f0">⚖ Simulation</span>');
+      // Completion tag — how far through this part the learner is.
+      var pr=AUTH.progress&&AUTH.progress[(L.courseId||'general')+'::'+L.id];
+      var total=(L.objectives||[]).length||0, pct=null;
+      if(pr&&pr.completed){ pct=100; }
+      else if(pr&&pr.resume&&pr.resume.total){ pct=Math.min(100,Math.round((pr.resume.covered||0)/pr.resume.total*100)); }
+      else if(pr&&pr.resume&&total){ pct=Math.min(100,Math.round((pr.resume.covered||0)/total*100)); }
+      if(pct===100)meta.unshift('<span class="tag" style="background:var(--green-bg);color:var(--green-d);border-color:var(--green-border)">✓ 100% complete</span>');
+      else if(pct!=null)meta.unshift('<span class="tag" style="background:#fef3e2;color:#92540a;border-color:#f0d9b0">'+pct+'% complete · resume</span>');
+      d.innerHTML='<div class="lesson-t">'+esc(L.title)+'</div>'+(L.summary?'<div class="lesson-s">'+esc(L.summary)+'</div>':'')+'<div class="lesson-m">'+meta.join('')+'</div>';
+      d.onclick=function(){
+        S.selected=L;renderLessons();refreshStart();
+        // On phones the Start card sits below the list — bring it into view at once.
+        if(window.innerWidth<=880){var sc=el('startCard');if(sc&&sc.scrollIntoView)try{sc.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){sc.scrollIntoView();}}
+      };
+      c.appendChild(d);
+    });
+  }
+  // Load the full courses shipped in the repo (frontend/courses/*.json). Falls
+  // back to the built-in lessons above if the files can't be fetched.
+  function loadCourses(){
+    var files=[{f:'courses/aviation-law.json',c:'aviation-law'},{f:'courses/civil-code-2025.json',c:'civil-code-2025'},{f:'courses/simulations.json',c:'simulations'}];
+    return Promise.all(files.map(function(o){
+      return fetch(o.f).then(function(r){return r.ok?r.json():[];}).catch(function(){return [];}).then(function(data){return {courseId:o.c,data:data};});
+    })).then(function(results){
+      var out=[];
+      results.forEach(function(res){
+        var L=Array.isArray(res.data)?res.data:(res.data.lessons||[]);
+        L.forEach(function(x){
+          if(!x||!x.title)return;
+          out.push({id:x.id,courseId:x.course_id||res.courseId,mode:x.mode||'lesson',title:x.title,summary:x.summary,duration_min:x.duration_min,
+                    cpd_points:x.cpd_points,objectives:x.objectives||[],body:x.body||''});
+        });
+      });
+      return out;
+    });
+  }
+  loadCourses().then(function(list){ if(list&&list.length){ LESSONS=list; } renderLessons(); maybeAutostart(); }).catch(function(){ renderLessons(); });
+  refreshStart();
+  bootAuth();
+
+  // ─── Login / register + per-user progress ────────────────────────────
+  function setAuthErr(m){var e=el('authErr');if(!e)return;if(m){e.textContent=m;e.style.display='';}else{e.style.display='none';}}
+  function showLogin(){el('login').style.display='';el('setup').style.display='none';el('session').style.display='none';el('whoami').style.display='none';el('logoutBtn').style.display='none';el('enginePill').style.display='none';}
+  function showSetup(){el('login').style.display='none';el('setup').style.display='';el('enginePill').style.display='none';}
+  function authMode(m){AUTH.mode=m;var reg=(m==='register');
+    el('regName').style.display=reg?'':'none';el('regCode').style.display=reg?'':'none';
+    el('authBtn').textContent=reg?'Create account':'Sign in';
+    el('authToggleText').textContent=reg?'Already have an account?':'New here?';
+    el('authToggle').textContent=reg?'Sign in':'Create an account';
+    setAuthErr('');
+  }
+  function onSignedIn(){ el('whoami').textContent='👤 '+(AUTH.name||AUTH.email); el('whoami').style.display=''; el('logoutBtn').style.display=''; showSetup(); loadProgress(); loadAiCourses(); maybeAutostart(); }
+  // Merge AI-built courses (admin-created from uploaded decks) into the lesson list.
+  function loadAiCourses(){
+    if(!AUTH.token)return;
+    fetch('/api/trainer-courses?token='+encodeURIComponent(AUTH.token)).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      if(!j||!j.courses||!j.courses.length)return;
+      j.courses.forEach(function(co){(co.lessons||[]).forEach(function(x){
+        if(!x||!x.title)return; if(LESSONS.some(function(L){return L.id===x.id;}))return;
+        LESSONS.push({id:x.id,courseId:x.course_id||co.courseId,mode:x.mode||'lesson',title:x.title,summary:x.summary,duration_min:x.duration_min,cpd_points:x.cpd_points,objectives:x.objectives||[],body:x.body||''});
+      });});
+      renderLessons();
+    }).catch(function(){});
+  }
+  function loadProgress(){
+    if(!AUTH.token)return;
+    fetch('/api/trainer-progress?token='+encodeURIComponent(AUTH.token)).then(function(r){return r.ok?r.json():null;})
+      .then(function(j){ if(j&&j.progress){AUTH.progress=j.progress;renderLessons();} }).catch(function(){});
+  }
+  function doAuth(){
+    var email=(el('auEmail').value||'').trim().toLowerCase(),pass=el('auPass').value||'';
+    if(!email||!pass){setAuthErr('Enter your email and password.');return;}
+    el('authBtn').disabled=true;setAuthErr('');
+    var reg=(AUTH.mode==='register');
+    var url=reg?'/api/register':'/api/login';
+    var body=reg?{name:(el('auName').value||'').trim(),email:email,password:pass,code:(el('auCode').value||'').trim()}:{email:email,password:pass};
+    fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+      .then(function(o){ el('authBtn').disabled=false;
+        if(!o.ok||!o.j.token){setAuthErr((o.j&&o.j.error)||'Could not sign in.');return;}
+        AUTH.token=o.j.token;AUTH.name=o.j.name||email;AUTH.email=email;AUTH.role=o.j.role||'lawyer';AUTH.courses=o.j.courses||[];
+        try{localStorage.setItem('tr_token',AUTH.token);localStorage.setItem('tr_name',AUTH.name);localStorage.setItem('tr_email',email);}catch(e){}
+        onSignedIn();
+      }).catch(function(){el('authBtn').disabled=false;setAuthErr('Network error — please try again.');});
+  }
+  function logout(){try{localStorage.removeItem('tr_token');}catch(e){}AUTH.token=null;AUTH.progress={};renderLessons();showLogin();authMode('login');}
+  function bootAuth(){
+    el('authBtn').onclick=doAuth;
+    el('authToggle').onclick=function(e){e.preventDefault();authMode(AUTH.mode==='login'?'register':'login');};
+    el('logoutBtn').onclick=function(e){e.preventDefault();logout();};
+    el('auPass').addEventListener('keydown',function(e){if(e.key==='Enter')doAuth();});
+    var t=null;try{t=localStorage.getItem('tr_token');}catch(e){}
+    if(t){
+      AUTH.token=t;try{AUTH.name=localStorage.getItem('tr_name')||'';AUTH.email=localStorage.getItem('tr_email')||'';}catch(e){}
+      // Resume: /api/me validates the token and returns role + assigned courses.
+      fetch('/api/me?token='+encodeURIComponent(t)).then(function(r){
+        if(r.ok){r.json().then(function(j){ if(j&&j.email){AUTH.email=j.email;AUTH.name=j.name||AUTH.name;AUTH.role=j.role||'lawyer';AUTH.courses=j.courses||[];onSignedIn();} else {logout();} });}
+        else{logout();}
+      }).catch(function(){onSignedIn();});
+    } else { showLogin();authMode('login'); }
+  }
+
+  // ─── Start ───────────────────────────────────────────────────────────
+  function resumeFor(L){ var r=L&&AUTH.progress&&AUTH.progress[((L.courseId||'general')+'::'+L.id)]; return (r&&r.resume&&r.resume.history&&r.resume.history.length)?r.resume:null; }
+  function startSession(){
+    if(!courseAccessible(S.selected)){ toast('This course hasn’t been assigned to you yet — ask your administrator.'); el('startBtn').disabled=false;el('startBtn').textContent='Begin session'; return; }
+    el('startBtn').disabled=true;el('startBtn').textContent='Connecting…';
+    S.ended=false;S.finished=false;S.busy=false;S.talking=false;S.paused=false;
+    var saved=resumeFor(S.selected);
+    if(saved){ S.history=(saved.history||[]).slice();S.resuming=true;S.startedAt=Date.now()-((saved.elapsedSec||0)*1000);S.lastCovered=saved.covered||0; }
+    else { S.startedAt=Date.now();S.history=[];S.resuming=false;S.lastCovered=0; }
+    el('setup').classList.add('hidden');el('session').style.display='block';el('enginePill').style.display='';
+    el('recLabel').textContent='Live · '+S.selected.title;
+    el('brainLabel').textContent='';
+    startTimeline();
+    if(S.resuming)updateProgress({done:S.lastCovered||0,total:(S.selected.objectives||[]).length||0});
+    startCamera();
+    // Try the photoreal face, retrying once on a transient connection failure
+    // before dropping to the animated face.
+    function connectFace(attempt){
+      return initAnam().catch(function(e){
+        if(attempt<2){ el('caption').innerHTML='Reconnecting your trainer…'; return new Promise(function(res){setTimeout(res,1300);}).then(function(){return connectFace(attempt+1);}); }
+        throw e;
+      });
+    }
+    connectFace(1).catch(function(e){
+      var msg=(e&&(e.message||e.toString()))||'unknown error';
+      if(window.console&&console.error)console.error('[Anam initAnam failed]',e);
+      S.face='stylised';showStylised();
+      el('enginePill').className='pill pill-live';el('enginePill').textContent='● Live';
+      el('percNote').textContent='Your trainer\u2019s video is reconnecting — the session continues.';
+      toast('Anam face failed: '+msg);
+    }).then(function(){nextTurn();});
+  }
+  el('startBtn').addEventListener('click',startSession);
+  // Next-section: a full reload gives a guaranteed-clean state, then auto-start.
+  function maybeAutostart(){
+    if(S._autostarted||!AUTH.token||!LESSONS||!LESSONS.length)return;
+    var id;try{id=sessionStorage.getItem('tr_autostart');}catch(e){}
+    if(!id)return;
+    try{sessionStorage.removeItem('tr_autostart');}catch(e){}
+    var L=null;for(var i=0;i<LESSONS.length;i++){if(LESSONS[i].id===id){L=LESSONS[i];break;}}
+    if(!L)return;
+    S._autostarted=true;S.selected=L;renderLessons();refreshStart();startSession();
+  }
+  function showStylised(){el('anamVideo').classList.add('hidden');el('stylisedFace').classList.remove('hidden');}
+
+  // ─── Anam photoreal face — client-side (unsafe_createClientWithApiKey) ─
+  // The SDK has one bare dep ("buffer"). The jsDelivr /+esm build inlines it and
+  // is self-contained; the unpkg dist build is a fallback (buffer via importmap).
+  function loadAnamSDK(){
+    var sources=[
+      'https://cdn.jsdelivr.net/npm/@anam-ai/js-sdk@4.15.0/+esm',
+      'https://unpkg.com/@anam-ai/js-sdk@4.15.0/dist/module/index.js'
+    ];
+    var i=0;
+    function tryNext(lastErr){
+      if(i>=sources.length)return Promise.reject(lastErr||new Error('Anam SDK failed to load'));
+      var url=sources[i++];
+      return import(url).then(function(m){
+        if(m&&(m.unsafe_createClientWithApiKey||m.createClient))return m;
+        return tryNext(new Error('SDK at '+url+' missing exports'));
+      },function(e){return tryNext(e);});
+    }
+    return tryNext();
+  }
+  // Mint an Anam session token the proven way (POST /v1/auth/session-token →
+  // {sessionToken}); this is the flow that returns 200 from /engine/session.
+  // The SDK's unsafe_createClientWithApiKey path sends a request Anam rejects (400),
+  // so we mint here and hand the token to createClient(token) instead.
+  // The Anam session token is minted server-side (/api/anam-token) so the API key
+  // never reaches the browser. The short-lived token is safe to use client-side.
+  function mintAnamToken(){
+    return fetch('/api/anam-token',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token:AUTH.token})})
+      .then(function(r){return r.json().then(function(j){return {status:r.status,j:j};});})
+      .then(function(o){
+        if(o.status>=300||!o.j||!o.j.sessionToken){
+          throw new Error('token '+o.status+': '+((o.j&&o.j.error)||'no sessionToken'));
+        }
+        return o.j.sessionToken;
+      });
+  }
+  function initAnam(){
+    el('caption').innerHTML='Connecting your trainer…';
+    return loadAnamSDK().then(function(mod){
+      return mintAnamToken().then(function(tok){
+      var client=mod.createClient(tok);
+      // If the photoreal stream closes/drops (black screen), don't leave the user
+      // with a silent black box — drop back to the animated face + browser voice
+      // and name the reason. WEBRTC_FAILURE/SIGNALLING=network, MIC=mic, SERVER=quota.
+      var on=function(ev,cb){try{client.addListener(ev,cb);}catch(_){}};
+      on('CONNECTION_CLOSED',function(code,reason){
+        if(window.console&&console.error)console.error('[Anam CONNECTION_CLOSED]',code,reason);
+        if(S.face==='anam'){
+          S.face='stylised';S.anam=null;showStylised();
+          el('enginePill').className='pill pill-live';el('enginePill').textContent='● Live';
+          el('percNote').textContent='Reconnecting your trainer\u2019s video — the session continues.';
+        }
+      });
+      on('VIDEO_PLAY_STARTED',function(){ el('percNote').textContent='Your trainer is live.'; });
+      return client.streamToVideoElement('anamVideo').then(function(){
+        var v=el('anamVideo');v.classList.remove('hidden');el('stylisedFace').classList.add('hidden');
+        // Start muted so the face always renders (muted autoplay is always allowed),
+        // then immediately try to unmute for the Anam voice. If the browser blocks
+        // audio autoplay, show a one-tap "enable sound" prompt in the caption.
+        v.muted=true; try{v.play&&v.play();}catch(e){}
+        // Try to unmute for the Anam voice. If the browser blocks audio autoplay,
+        // show a persistent on-screen button (the caption gets overwritten by her
+        // speech, so we cannot rely on it) AND unmute on the next click anywhere.
+        function soundOn(){ v.muted=false; v.volume=1; try{var pp=v.play();if(pp&&pp.catch)pp.catch(function(){});}catch(e){} el('unmuteBtn').style.display='none'; }
+        el('unmuteBtn').onclick=function(e){ e.stopPropagation(); soundOn(); };
+        document.addEventListener('click',function(){ if(v.muted)soundOn(); });
+        (function enableAudio(){
+          v.muted=false;v.volume=1;
+          var p=v.play&&v.play();
+          if(p&&p.catch){ p.catch(function(){ v.muted=true; try{v.play&&v.play();}catch(_){} el('unmuteBtn').style.display=''; }); }
+        })();
+        S.face='anam';
+        el('enginePill').className='pill pill-live';el('enginePill').textContent='● Live';
+        S.anam={speak:function(t){return client.talk(t);},
+          stop:function(){try{client.stopStreaming&&client.stopStreaming();}catch(e){}},
+          interrupt:function(){try{(client.interruptPersona||client.stopTalk||client.interrupt||function(){}).call(client);}catch(e){}},
+          mute:function(m){try{ if(m){ (client.muteInputAudio||client.muteInput||function(){}).call(client); } else { (client.unmuteInputAudio||client.unmuteInput||function(){}).call(client); } }catch(e){}}};
+
+        // ── High-accuracy speech-to-text via Anam's own pipeline ──────────
+        // Anam transcribes the learner's microphone far more reliably than the
+        // browser engine, and it never mistakes the trainer's own voice for the
+        // learner's. We listen for the learner's transcript and feed it to the
+        // Claude brain. The browser recognizer stays as an automatic fallback:
+        // it only takes over input once Anam proves it is producing transcripts.
+        var MHU=(mod.AnamEvent&&mod.AnamEvent.MESSAGE_HISTORY_UPDATED)||'MESSAGE_HISTORY_UPDATED';
+        on(MHU,function(messages){
+          if(!messages||!messages.length)return;
+          var um=null;
+          for(var i=messages.length-1;i>=0;i--){ var r=messages[i].role; if(r==='user'){ um=messages[i]; break; } }
+          if(!um)return;
+          var text=String(um.content||'').trim();
+          if(!text)return;
+          // Anam STT is alive — make it authoritative and retire the browser engine.
+          if(!S.anamStt){ S.anamStt=true; stopReco(); el('percNote').textContent='High-accuracy voice recognition active.'; }
+          if(!S.talking)return;                 // only capture while the learner is answering
+          S.anamLiveText=text;
+          showCaption('<span class="you">You:</span> '+esc(text));
+          scheduleAutoSend();                   // submit shortly after they stop speaking
+        });
+        // Start with Anam's mic CLOSED — opened only while you hold a Talk turn,
+        // so room conversation can't interrupt her.
+        if(S.anam&&S.anam.mute)S.anam.mute(true);
+      });
+      });
+    });
+  }
+
+  // ─── Camera + in-browser perception (TensorFlow.js COCO-SSD) ─────────
+  function startCamera(){
+    navigator.mediaDevices.getUserMedia({video:true,audio:false}).then(function(stream){
+      S.stream=stream;
+      var sc=document.createElement('div');sc.className='selfcam';
+      var v=document.createElement('video');v.autoplay=true;v.muted=true;v.playsInline=true;v.srcObject=stream;
+      sc.appendChild(v);el('stage').appendChild(sc);S.selfVideo=v;
+      loadPerception(v);
+    }).catch(function(){el('percNote').textContent='Camera not granted — perception is off, but the lesson still runs.';});
+  }
+  function loadPerception(video){
+    el('percNote').textContent='Loading the in-browser perception model…';
+    var s1=document.createElement('script');s1.src='https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js';
+    s1.onload=function(){
+      var s2=document.createElement('script');s2.src='https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js';
+      s2.onload=function(){window.cocoSsd.load().then(function(model){S.detector=model;el('percNote').textContent='Perception is running locally — nothing is uploaded.';runDetect(video);}).catch(function(){el('percNote').textContent='Perception model unavailable; the lesson still runs.';});};
+      s2.onerror=function(){el('percNote').textContent='Perception model unavailable; the lesson still runs.';};
+      document.head.appendChild(s2);
+    };s1.onerror=function(){el('percNote').textContent='Perception unavailable; the lesson still runs.';};
+    document.head.appendChild(s1);
+  }
+  function runDetect(video){
+    if(S.ended)return;
+    S.detLoop=setInterval(function(){
+      if(!S.detector||video.readyState<2)return;
+      S.detector.detect(video).then(function(preds){
+        // Lower threshold so a person who is genuinely in frame is reliably
+        // detected (avoids false "away" when you're sitting right there).
+        var person=preds.find(function(p){return p.class==='person'&&p.score>0.30;});
+        var phone=preds.find(function(p){return p.class==='cell phone'&&p.score>0.55;});
+        if(!S.det)S.det={p:[],ph:[]};
+        S.det.p.push(!!person);if(S.det.p.length>8)S.det.p.shift();
+        S.det.ph.push(!!phone);if(S.det.ph.length>6)S.det.ph.shift();
+        if(person)S.everPresent=true;                              // we know the detector works for you
+        var recent=S.det.p.slice(-6);
+        S.perception.present=S.det.p.slice(-4).some(Boolean);      // present if seen in any of the last ~6s
+        // "away" only if the detector PREVIOUSLY saw you and now you've been
+        // absent for a sustained run (~9s). If it never detected a person at all,
+        // assume the model just can't see well — never flag away.
+        var away=S.everPresent && recent.length>=6 && recent.every(function(x){return !x;});
+        S.perception.phone=S.det.ph.slice(-4).filter(Boolean).length>=3; // phone held across most of last frames
+        S.perception.attention=away?'away':'engaged';
+        paintPerception();
+        trackEngagement();
+        maybeChallenge();
+      }).catch(function(){});
+    },1500);
+  }
+  // Engagement is scored like part of the test: each ~1.5s sample counts as
+  // engaged only if attentive, in-frame, and not on a phone.
+  function trackEngagement(){
+    if(!S.startedAt||S.ended||S.paused)return;  // don't score time while paused / stepped away
+    var e=S.eng;e.samples++;
+    if(S.perception.attention==='engaged'&&!S.perception.phone&&S.perception.present!==false)e.engaged++;
+    if(S.perception.phone)e.phone++;
+    if(S.perception.present===false)e.away++;
+    if(S.perception.attention==='distracted')e.distracted++;
+    var score=engagementScore();
+    var n=el('engScore');if(n){n.textContent=score+'%';n.style.color=score>=50?'var(--green2)':'var(--red)';}
+  }
+  function engagementScore(){var e=S.eng;return e.samples?Math.round(e.engaged/e.samples*100):100;}
+  // Only nudge the learner if they are CLEARLY and persistently disengaged — and
+  // never near the end of a section. Tuned to avoid false "you stepped away".
+  function maybeChallenge(){
+    if(S.ended||S.busy||S.faceSpeaking||S.paused)return;
+    // Don't interrupt the wrap-up: stand down once we're on the last objective.
+    var total=(S.selected&&S.selected.objectives||[]).length;
+    if(total&&(S.lastCovered||0)>=total-1)return;
+    // Phone in hand is a reliable signal; "away" from a single camera is noisy,
+    // so require a much longer absence before reacting.
+    var dis=S.perception.phone||S.perception.attention==='away';
+    S.disStreak=dis?(S.disStreak+1):0;
+    var now=Date.now();
+    if(S.disStreak>=4&&(now-S.lastChallenge)>60000){            // confirmed away ~15s total, 60s cooldown
+      S.lastChallenge=now;S.disStreak=0;S.perception.challenge=true;nextTurn();
+    }
+  }
+  function paintPerception(){
+    setPerc('attention',S.perception.attention==='engaged'?'Engaged':S.perception.attention==='away'?'Away':'Distracted',S.perception.attention!=='engaged',S.perception.attention==='engaged');
+    var mood=S.perception.mood||'neutral';
+    setPerc('mood',mood.charAt(0).toUpperCase()+mood.slice(1),mood==='confused',mood==='happy');
+    setPerc('phone',S.perception.phone?'In hand':'Not in hand',S.perception.phone,false);
+    setPerc('presence',S.perception.present?'In frame':'Out of frame',!S.perception.present,S.perception.present);
+  }
+  function setPerc(k,v,hot,good){var n=document.querySelector('.perc[data-k="'+k+'"]');if(!n)return;n.querySelector('.v').textContent=v;n.classList.toggle('hot',!!hot);n.classList.toggle('good',!!good);}
+
+  // ─── Slide panel (brain-generated, synced to the concept being taught) ─
+  var SLIDE_LABELS={concept:'● Key concept',definition:'§ Definition',scenario:'⚖ Scenario',keyterm:'🔑 Key term',comparison:'⇄ Comparison',recap:'↻ Recap',quiz:'? Check'};
+  function renderSlide(slide){
+    if(!slide||!slide.title)return;
+    S.slideN=(S.slideN||0)+1;
+    var type=slide.type||'concept';
+    el('slide').setAttribute('data-type',type);
+    el('slideKicker').textContent=SLIDE_LABELS[type]||'On screen';
+    el('slideTitle').textContent=slide.title;
+    var ul=el('slideBullets');ul.innerHTML='';
+    (slide.bullets||[]).forEach(function(b,i){var li=document.createElement('li');li.textContent=b;li.style.animationDelay=(0.05+i*0.09)+'s';ul.appendChild(li);});
+    var course=(S.selected&&S.selected.title)?S.selected.title.split('—')[0].trim():'CLPD';
+    var sn=el('slideNo');if(sn)sn.textContent=course+' · '+S.slideN;
+    var s=el('slide');s.classList.remove('enter');void s.offsetWidth;s.classList.add('enter');  // re-trigger entrance
+  }
+
+  // ─── Turn loop ───────────────────────────────────────────────────────
+  function nextTurn(){
+    if(S.busy||S.ended)return;S.busy=true;pauseListening();endTalk(true);
+    el('micLabel').textContent='Trainer is thinking…';el('micBtn').disabled=true;
+    claudeTurn(S.selected,S.history,S.perception).then(function(r){
+      S.busy=false;S.perception.challenge=false;el('micBtn').disabled=false;  // allow barge-in while she speaks
+      S.history.push({role:'trainer',text:r.say});
+      updateProgress({done:(r.covered||[]).length,total:(S.selected.objectives||[]).length});
+      if(r.slide)renderSlide(r.slide);
+      // She's closing if the brain flagged it OR her words clearly hand off; once she
+      // does, end the session after she finishes (don't let her keep talking).
+      var closing=r.complete || /sav(?:e|ing)[\s\S]{0,10}exit|completed (?:this|the) section|move (?:on )?to (?:the )?next (?:section|chapter|part)/i.test(r.say);
+      var sayText=r.say;
+      if(closing && !/sav(?:e|ing)[\s\S]{0,10}exit/i.test(sayText)){
+        sayText=sayText.replace(/\s*$/,'')+' Press the Save and exit button now to move on to your next chapter.';
+      }
+      var doSpeak=function(){ speak(sayText,function(){ if(closing){completeSection();} else {promptAnswer();} }); };
+      if(S.paused){ S.pendingSpeak=doSpeak; }   // hold her reply until the learner resumes
+      else doSpeak();
+    }).catch(function(e){S.busy=false;toast('Trainer error: '+(e.message||e));promptAnswer();});
+  }
+  function submitReply(text){
+    text=(text||'').trim();if(!text||S.busy||S.ended)return;
+    el('replyInput').value='';
+    S.history.push({role:'lawyer',text:text});
+    showCaption('<span class="you">You:</span> '+esc(text));
+    nextTurn();
+  }
+
+  // ─── Push-to-talk: the mic only opens while you choose to answer, so you and
+  // the trainer never talk over each other. Pressing "answer" also stops her.
+  function promptAnswer(){ el('micBtn').disabled=false; if(!S.talking)el('micLabel').textContent='Press “Talk” when you’re ready to speak'; micUI(); }
+  function interruptTrainer(){
+    if(S.speakTimer){clearTimeout(S.speakTimer);S.speakTimer=null;}
+    if(S.karaokeStartT){clearTimeout(S.karaokeStartT);S.karaokeStartT=null;}
+    if(capTimer){clearTimeout(capTimer);capTimer=null;}
+    if(window.speechSynthesis){try{window.speechSynthesis.cancel();}catch(e){}}
+    if(S.anam&&S.anam.interrupt)S.anam.interrupt();
+    // Guarantee she goes quiet even if the SDK has no interrupt method: mute the
+    // avatar's audio locally. It's un-muted again the moment she next speaks.
+    var av=el('anamVideo');if(av)try{av.muted=true;}catch(e){}
+    setFaceSpeaking(false);
+  }
+  function beginTalk(){
+    if(S.ended||S.busy||S.talking)return;
+    interruptTrainer();                       // stop her so you're not talking over each other
+    S.talking=true;S.muted=false;S.accept=true;clearAutoSend();
+    S.anamLiveText='';S.lastAnamSubmitted='';sttBuf='';
+    // Open Anam's mic ONLY now (push-to-talk). Closed otherwise so room
+    // conversation never reaches Anam and interrupts her mid-sentence.
+    if(S.anam&&S.anam.mute)S.anam.mute(false);
+    if(!S.anam&&SR)ensureReco();
+    el('micLabel').textContent='Listening — speak now';
+    micUI();
+  }
+  function endTalk(silent){
+    if(!S.talking)return;
+    S.talking=false;S.accept=false;clearAutoSend();
+    if(S.anam&&S.anam.mute)S.anam.mute(true);   // close Anam's mic again
+    var text=((S.anam?S.anamLiveText:sttBuf)||'').replace(/\s+/g,' ').trim();
+    S.anamLiveText='';sttBuf='';
+    micUI();
+    if(!silent&&text&&text!==S.lastAnamSubmitted){ S.lastAnamSubmitted=text; submitReply(text); }
+  }
+  function toggleTalk(){ if(S.talking)endTalk(false); else beginTalk(); }
+  // Auto-send: once you stop speaking for ~1.4s, submit automatically so you
+  // never have to press Send (you still can). Only runs during an open talk turn.
+  function scheduleAutoSend(){ if(S.autoSendT)clearTimeout(S.autoSendT); S.autoSendT=setTimeout(function(){ if(S.talking&&!S.busy)endTalk(false); },450); }
+  function clearAutoSend(){ if(S.autoSendT){clearTimeout(S.autoSendT);S.autoSendT=null;} }
+
+  // ─── Click the avatar to pause (step away / take a call) without ending ──
+  function togglePause(){ if(S.ended)return; if(S.paused)resumeSession(); else pauseSession(); }
+  function pauseSession(){
+    if(S.paused||S.ended)return;
+    S.paused=true;S.pauseStart=Date.now();
+    if(S.talking)endTalk(true);
+    clearAutoSend();
+    interruptTrainer();                       // stop her + mute her voice
+    el('pauseOverlay').style.display='';
+    el('micBtn').disabled=true;
+    el('recLabel').textContent='Paused';
+    el('micLabel').textContent='Paused — tap the screen to resume';
+  }
+  function resumeSession(){
+    if(!S.paused)return;
+    S.startedAt+=(Date.now()-S.pauseStart); // exclude paused time from the clock
+    S.paused=false;
+    el('pauseOverlay').style.display='none';
+    el('micBtn').disabled=false;
+    el('recLabel').textContent='Live · '+(S.selected?S.selected.title:'');
+    tickTime();
+    if(S.pendingSpeak){ var f=S.pendingSpeak;S.pendingSpeak=null;f(); return; }
+    // She wasn't mid-reply — re-engage straight away by repeating her last point
+    // (immediate, no thinking delay) so she starts talking the moment you resume.
+    var lastTrainer=null;
+    for(var i=(S.history||[]).length-1;i>=0;i--){ if(S.history[i].role==='trainer'){ lastTrainer=S.history[i].text; break; } }
+    if(lastTrainer){ speak(lastTrainer,function(){ promptAnswer(); }); }
+    else promptAnswer();
+  }
+
+  // ─── Speak + karaoke captions (2-3 lines, bottom, paced to speech) ─────
+  var capTimer=null;
+  function showCaption(html){ if(capTimer){clearTimeout(capTimer);capTimer=null;} var c=el('caption'); c.innerHTML=html||''; var cap=c.parentElement; if(cap)cap.style.display=html?'':'none'; }
+  function karaoke(text,totalMs){
+    if(capTimer){clearTimeout(capTimer);capTimer=null;}
+    var parts=String(text).replace(/\s+/g,' ').trim().match(/[^.!?;:]+[.!?;:]*\s*/g)||[text];
+    var segs=[],cur='';
+    parts.forEach(function(p){p=p.trim();if(!p)return;if((cur+' '+p).trim().length>85){if(cur)segs.push(cur.trim());cur=p;}else{cur=(cur?cur+' ':'')+p;}});
+    if(cur)segs.push(cur.trim());
+    if(!segs.length)segs=[String(text)];
+    var totalLen=segs.reduce(function(a,s){return a+s.length;},0)||1;
+    // She pauses briefly between sentences; reserve that time per segment so the
+    // captions don't drift ahead at every full stop.
+    var pausePer=260, speakMs=Math.max(800,totalMs-pausePer*segs.length), i=0;
+    (function step(){
+      if(S.ended)return;
+      el('caption').innerHTML='<span class="seg-cur">'+esc(segs[i])+'</span>';  // one phrase at a time
+      var dur=Math.max(900,Math.round(speakMs*(segs[i].length/totalLen))+pausePer);i++;
+      if(i<segs.length)capTimer=setTimeout(step,dur);
+    })();
+  }
+  var ONSET_MS=480;  // typical time from sending text to her voice actually starting
+  function speak(text,done){
+    var ms=estMs(text);
+    if(capTimer){clearTimeout(capTimer);capTimer=null;}
+    if(S.speakTimer){clearTimeout(S.speakTimer);S.speakTimer=null;}
+    // No subtitles for her speech (impossible to keep perfectly in sync without
+    // word timing); clear any stale caption — the avatar speaks the audio.
+    showCaption('');
+    if(S.anam&&S.face==='anam'){
+      var av=el('anamVideo');if(av)try{av.muted=false;av.volume=1;}catch(e){}  // restore voice after any barge-in
+      try{
+        S.anam.speak(text); setFaceSpeaking(true);
+        S.speakTimer=setTimeout(function(){S.speakTimer=null;setFaceSpeaking(false);done&&done();},ms+ONSET_MS);
+        return;
+      }catch(e){}
+    }
+    if(window.speechSynthesis){
+      var u=new SpeechSynthesisUtterance(text);u.rate=1;u.pitch=1;
+      u.onstart=function(){setFaceSpeaking(true);};
+      u.onend=function(){setFaceSpeaking(false);done&&done();};
+      window.speechSynthesis.cancel();window.speechSynthesis.speak(u);
+    } else { setFaceSpeaking(true);setTimeout(function(){setFaceSpeaking(false);done&&done();},ms); }
+  }
+  // ~150 words/min, used only to time when to re-open listening after she speaks.
+  function estMs(t){return Math.min(50000,Math.max(2600,t.length*68));}
+  function setFaceSpeaking(on){S.faceSpeaking=!!on;el('stylisedFace').classList.toggle('speaking',!!on);el('micLabel').textContent=on?'Trainer is speaking — press “Talk” to jump in':(S.talking?'Listening — speak now':'Press “Talk” to speak');}
+
+  // ─── Push-to-talk: the mic opens only while you answer ───────────────
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  function micUI(){
+    var b=el('micBtn');if(!b)return;
+    if(!SR&&!S.anamStt){b.style.display='none';return;}
+    b.textContent=S.talking?'Listening…':'Talk';
+    b.classList.toggle('live',!!S.talking);
+  }
+  // Language is tuned for a clear English accent. Override with ?lang=en-AU etc.
+  var STT_LANG=(function(){try{var m=location.search.match(/[?&]lang=([\w-]+)/);return m?m[1]:'en-GB';}catch(e){return 'en-GB';}})();
+  var sttBuf='',sttTimer=null;
+  function flushSpeech(){
+    if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}
+    var t=sttBuf.replace(/\s+/g,' ').trim();sttBuf='';
+    if(t&&S.accept&&!S.busy&&!S.muted&&!S.ended)submitReply(t);
+  }
+  // Keep ONE recognizer alive the whole session so there is no warm-up gap that
+  // swallows your first words. We just gate acceptance with S.accept instead of
+  // stopping/starting the engine each turn.
+  function ensureReco(){
+    if(!SR||S.reco||S.muted||S.ended)return;
+    try{
+      var r=new SR();r.lang=STT_LANG;r.interimResults=true;r.continuous=true;r.maxAlternatives=1;
+      r.onstart=function(){S.listening=true;if(S.accept&&!S.busy&&!S.muted)el('micLabel').textContent='Listening…';};
+      r.onresult=function(ev){
+        if(!S.talking||S.busy){sttBuf='';return;}  // only while the learner is answering
+        var fin='',interim='';
+        for(var k=ev.resultIndex;k<ev.results.length;k++){
+          var rr=ev.results[k];
+          if(rr.isFinal)fin+=rr[0].transcript+' '; else interim+=rr[0].transcript+' ';
+        }
+        if(fin)sttBuf+=fin;
+        // Show what we're hearing live; auto-submit shortly after you stop.
+        var live=(sttBuf+' '+interim).replace(/\s+/g,' ').trim();
+        if(live)showCaption('<span class="you">You:</span> '+esc(live));
+        if(sttBuf.trim())scheduleAutoSend();
+      };
+      r.onerror=function(){};
+      r.onend=function(){S.listening=false;S.reco=null;if(!S.ended&&!S.muted)setTimeout(ensureReco,250);};
+      r.start();S.reco=r;
+    }catch(e){S.reco=null;}
+  }
+  function stopReco(){if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}sttBuf='';S.listening=false;if(S.reco){try{S.reco.onend=null;S.reco.stop();}catch(e){}S.reco=null;}}
+  function startListening(){if(S.ended||S.muted)return;S.accept=true;sttBuf='';if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}if(!S.anamStt){if(!SR)return;ensureReco();}if(!S.busy)el('micLabel').textContent='Listening…';}
+  function pauseListening(){S.accept=false;if(sttTimer){clearTimeout(sttTimer);sttTimer=null;}sttBuf='';}  // keep engine warm, just stop accepting
+  function resumeListening(){ if(!S.muted)startListening(); micUI(); }
+  // Talk = open / close the mic (no submit). Send = submit what you said or typed.
+  el('micBtn').onclick=function(){ if(S.talking)endTalk(true); else beginTalk(); };
+  function doSend(){
+    var typed=(el('replyInput').value||'').trim();
+    if(typed){ if(S.talking)endTalk(true); el('replyInput').value=''; submitReply(typed); return; }
+    if(S.talking){
+      var spoken=((S.anam?S.anamLiveText:sttBuf)||'').replace(/\s+/g,' ').trim();
+      if(spoken){ endTalk(false); }                       // submit what was heard
+      else { el('micLabel').textContent='Didn’t catch that — keep talking, or type your answer'; }
+      return;
+    }
+    // Not talking and nothing typed — nudge the learner.
+    el('micLabel').textContent='Press “Talk” to speak, or type your answer';
+  }
+  // Click the avatar to pause / resume (step away without ending the session).
+  el('stage').addEventListener('click',function(){
+    if(S.ended)return;
+    if(!S.paused){ var av=el('anamVideo'); if(S.face==='anam'&&av&&av.muted)return; }  // first click only enables sound
+    togglePause();
+  });
+  // Spacebar = press to answer / press again to send (ignored while typing).
+  document.addEventListener('keydown',function(e){
+    if(e.code!=='Space'&&e.key!==' ')return;
+    var t=e.target&&e.target.tagName;if(t==='INPUT'||t==='TEXTAREA')return;
+    if(el('session').classList.contains('hidden')||el('session').style.display==='none')return;
+    if(S.ended||S.busy)return;
+    e.preventDefault();toggleTalk();
+  });
+  el('sendBtn').onclick=function(){ doSend(); };
+  el('replyInput').addEventListener('keydown',function(e){if(e.key==='Enter')submitReply(el('replyInput').value);});
+  micUI();
+
+  // ─── Session timeline: how far along the session the learner is ───────
+  // The full programme is ~75 min of ordered sections; the learner runs one
+  // section at a time. We show their overall position (Section X of N) plus
+  // progress and time within the current section.
+  function courseSections(){
+    var cid=(S.selected&&S.selected.courseId)||'';
+    var secs=LESSONS.filter(function(L){return (L.courseId||'')===cid;});
+    return secs.length?secs:[S.selected];
+  }
+  function startTimeline(){
+    var secs=courseSections(),curIdx=0;
+    for(var k=0;k<secs.length;k++){if(secs[k]&&S.selected&&secs[k].id===S.selected.id){curIdx=k;break;}}
+    S.secIndex=curIdx;S.secTotal=secs.length;
+    S.secTarget=(S.selected&&S.selected.duration_min)||10;
+    // Overall session row — each course section is a step.
+    var sh='';secs.forEach(function(L,i){
+      var pr=L&&AUTH.progress&&AUTH.progress[((L.courseId||'general')+'::'+L.id)];
+      var cls='tl-step'+(pr?' done':'')+(i===curIdx?' cur':'');
+      sh+='<span class="'+cls+'" title="'+esc((L&&L.title)||'')+'"></span>';
+    });
+    el('tlSections').innerHTML=sh;
+    el('tlSecCount').textContent=(curIdx+1)+'/'+secs.length;
+    el('tlSecLabel').textContent='Session';
+    // Within-section row.
+    var total=(S.selected&&S.selected.objectives||[]).length||1;
+    var steps='';for(var i=0;i<total;i++)steps+='<span class="tl-step"></span>';
+    el('tlSteps').innerHTML=steps;
+    el('tlCount').textContent='0/'+total;
+    el('timeline').style.display='';
+    tickTime();
+    if(S.tlTimer)clearInterval(S.tlTimer);
+    S.tlTimer=setInterval(function(){tickTime();sendHeartbeat();},5000);
+    // Auto-save the resume state every ~20s so a reload/crash resumes the
+    // session instead of restarting it from the beginning.
+    if(S.saveTimer)clearInterval(S.saveTimer);
+    S.saveTimer=setInterval(autoSaveResume,20000);
+    sendHeartbeat();
+  }
+  function tickTime(){
+    if(!S.startedAt||S.paused)return;  // clock is frozen while paused
+    var sec=Math.floor((Date.now()-S.startedAt)/1000),mins=Math.floor(sec/60),tgt=S.secTarget||10;
+    var pct=Math.min(sec/(tgt*60),1)*100, over=mins>tgt;
+    el('tlTimeFill').style.width=pct+'%';
+    el('tlClock').textContent=mins+' / '+tgt+' min';
+    el('tlTimeTrack').classList.toggle('over',over);
+    el('tlClock').classList.toggle('over',over);
+  }
+  function sendHeartbeat(extra){
+    if(!AUTH.token||!S.selected||S.ended||S.paused)return;
+    var live={courseId:S.selected.courseId||'',sectionId:S.selected.id,sectionTitle:S.selected.title,
+      sectionIndex:(S.secIndex||0)+1,sectionTotal:S.secTotal||1,
+      objDone:S.lastCovered||0,objTotal:(S.selected.objectives||[]).length||0,
+      elapsedSec:S.startedAt?Math.round((Date.now()-S.startedAt)/1000):0,targetMin:S.secTarget||10,
+      engagement:Math.round(engagementScore()),mode:S.selected.mode||'lesson'};
+    if(extra)for(var k in extra)live[k]=extra[k];
+    try{fetch('/api/trainer-live',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},
+      body:JSON.stringify({token:AUTH.token,name:AUTH.name,live:live})});}catch(e){}
+  }
+  function updateProgress(cov){
+    cov=cov||{done:0,total:0};S.lastCovered=cov.done||0;
+    var pct=cov.total?Math.round(cov.done/cov.total*100):0;
+    el('progBar').style.width=pct+'%';
+    el('covLabel').textContent=cov.done+' of '+cov.total+' key elements';
+    // Reflect progress on the within-section timeline (done / current / upcoming).
+    var steps=el('tlSteps')?el('tlSteps').querySelectorAll('.tl-step'):[];
+    if(steps.length!==cov.total&&cov.total){startTimeline();steps=el('tlSteps').querySelectorAll('.tl-step');}
+    Array.prototype.forEach.call(steps,function(s,i){
+      s.classList.toggle('done',i<cov.done);
+      s.classList.toggle('cur',i===cov.done);
+    });
+    if(el('tlCount'))el('tlCount').textContent=cov.done+'/'+(cov.total||steps.length||0);
+    sendHeartbeat();
+  }
+
+  function autoSaveResume(){
+    if(!AUTH.token||!S.selected||S.ended||S.finished||(S.history||[]).length<2)return;
+    try{fetch('/api/trainer-progress',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},
+      body:JSON.stringify({token:AUTH.token,name:AUTH.name,result:{
+        courseId:S.selected.courseId||'general',lessonId:S.selected.id,lessonTitle:S.selected.title,completed:false,
+        resume:{history:(S.history||[]).slice(-60),covered:S.lastCovered||0,total:(S.selected.objectives||[]).length||0,
+                elapsedSec:S.startedAt?Math.round((Date.now()-S.startedAt)/1000):0,secIndex:S.secIndex||0}}})});}catch(e){}
+  }
+  function teardown(){S.ended=true;pauseListening();stopReco();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);if(S.tlTimer)clearInterval(S.tlTimer);if(S.saveTimer)clearInterval(S.saveTimer);
+    // Drop this attendee off the admin's live list.
+    if(AUTH.token)try{fetch('/api/trainer-live',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({token:AUTH.token,live:{ended:true}})});}catch(e){}
+    if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
+  el('endBtn').onclick=function(){ if(confirm('End and score this section now? Use “Save & exit” instead if you want to continue later.'))finish(); };
+  el('saveBtn').onclick=function(){ saveAndExit(); };
+  // Natural completion: mark the section done and point the learner at Save & exit
+  // (which takes them to the menu to choose the next chapter). No blocking overlay.
+  function completeSection(){
+    if(S.finished)return;S.finished=true;S.sectionDone=true;
+    var score=engagementScore(),pass=score>=50;
+    teardown();
+    if(AUTH.token&&S.selected){
+      var total=(S.selected.objectives||[]).length;
+      fetch('/api/trainer-progress',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({
+        token:AUTH.token,name:AUTH.name,result:{
+          courseId:S.selected.courseId||'general',lessonId:S.selected.id,lessonTitle:S.selected.title,
+          engagementScore:score,pass:pass,covered:S.lastCovered||0,total:total,
+          durationSec:Math.round((Date.now()-S.startedAt)/1000),completed:true,cpd:S.selected.cpd_points||1
+        }})}).then(function(r){return r.ok?r.json():null;}).then(function(j){if(j&&j.progress)AUTH.progress=j.progress;}).catch(function(){});
+    }
+    try{showStylised();}catch(e){}                 // clean branded screen, not a frozen frame
+    showCaption('✓ Section complete — press “Save &amp; exit” to choose your next chapter');
+    el('recLabel').textContent='Section complete';
+    el('micLabel').textContent='Press “Save & exit” to continue';
+    var sb=el('saveBtn');if(sb)sb.textContent='Save & exit →';
+    el('micBtn').disabled=true;
+    toast('Section complete — engagement '+score+'%'+(pass?'':' · below 50%, consider a retake'));
+  }
+  // Save the learner's place mid-section so they can resume rather than restart.
+  function saveAndExit(){
+    if(S.sectionDone){ location.reload(); return; }   // already completed — just go to the menu
+    if(!AUTH.token||!S.selected){location.reload();return;}
+    var btn=el('saveBtn');btn.disabled=true;btn.textContent='Saving…';
+    var payload={courseId:S.selected.courseId||'general',lessonId:S.selected.id,lessonTitle:S.selected.title,completed:false,
+      resume:{history:(S.history||[]).slice(-60),covered:S.lastCovered||0,total:(S.selected.objectives||[]).length||0,
+              elapsedSec:S.startedAt?Math.round((Date.now()-S.startedAt)/1000):0,secIndex:S.secIndex||0}};
+    teardown();
+    fetch('/api/trainer-progress',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},
+      body:JSON.stringify({token:AUTH.token,name:AUTH.name,result:payload})})
+      .then(function(){}).catch(function(){})
+      .then(function(){ toast('Progress saved — resume this section any time.'); setTimeout(function(){location.reload();},900); });
+  }
+  function nextSection(){
+    if(!S.selected)return null;
+    var cid=S.selected.courseId||'';
+    var secs=LESSONS.filter(function(L){return (L.courseId||'')===cid;});
+    for(var i=0;i<secs.length;i++){ if(secs[i].id===S.selected.id) return secs[i+1]||null; }
+    return null;
+  }
+  function finish(){
+    if(S.finished)return;S.finished=true;   // never run twice / loop
+    teardown();
+    var score=engagementScore(),pass=score>=50;
+    // Save this session to the learner's record (engagement, coverage, CPD).
+    if(AUTH.token&&S.selected){
+      var total=(S.selected.objectives||[]).length;
+      fetch('/api/trainer-progress',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({
+        token:AUTH.token,name:AUTH.name,result:{
+          courseId:S.selected.courseId||'general',lessonId:S.selected.id,lessonTitle:S.selected.title,
+          engagementScore:score,pass:pass,covered:S.lastCovered||0,total:total,
+          durationSec:Math.round((Date.now()-S.startedAt)/1000),completed:true,cpd:S.selected.cpd_points||1
+        }
+      })}).then(function(r){return r.ok?r.json():null;}).then(function(j){if(j&&j.progress)AUTH.progress=j.progress;}).catch(function(){});
+    }
+    el('resScore').textContent=score+'%';
+    var v=el('resVerdict');v.textContent=pass?'Pass':'Fail';v.className='verdict '+(pass?'pass':'fail');
+    el('resMsg').innerHTML=pass
+      ? 'You stayed engaged for <b>'+score+'%</b> of the session — above the 50% pass mark. Saved to your training record.'
+      : 'Your engagement was <b>'+score+'%</b>, below the 50% pass mark. Time on your phone or away from the screen counts against you — please retake the session and stay focused throughout.';
+    // Offer the next chapter when there is one.
+    var next=nextSection(),nb=el('nextSecBtn'),db=el('doneBtn');
+    if(next){
+      var nt=(next.title||'').split('—');var label=(nt.length>1?nt[1]:nt[0]).trim()||'next section';
+      nb.textContent='Continue to '+label+' →';nb.style.display='';
+      nb.onclick=function(){ try{sessionStorage.setItem('tr_autostart',next.id);}catch(e){} location.reload(); };
+      db.className='btn btn-soft btn-block';
+    } else {
+      nb.style.display='none';db.className='btn btn-pri btn-block';
+    }
+    el('resultOverlay').classList.add('show');
+  }
+})();
+</script>
+</body>
+</html>

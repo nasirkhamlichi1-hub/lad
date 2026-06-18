@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Service Ambassador Academy — Orbit</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script>
+window.ORBIT_CONFIG={ anthropicModel:'claude-sonnet-4-6', anthropicKey:'', elevenKey:'', elevenVoice:'EXAVITQu4vr4xnSDxMaL', elevenVoiceAr:'' };
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{--ink:#e8ecf6;--mut:#8a93b0;--line:rgba(255,255,255,.10);--panel:rgba(14,18,34,.78);--green:#34d399;--amber:#fbbf24;--red:#f87171;--gold:#ffd479;--blue:#6aa6ff;--violet:#a78bfa;--sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--serif:'Instrument Serif',serif;--mono:'JetBrains Mono',ui-monospace,monospace;}
+html,body{height:100%}body{background:#04050d;color:var(--ink);font-family:var(--sans);overflow:hidden}
+#scene{position:fixed;inset:0;z-index:1}#scene canvas{display:block}
+#labels{position:fixed;inset:0;z-index:2;pointer-events:none}
+#vignette{position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(125% 125% at 50% 46%,transparent 50%,rgba(2,4,12,.55) 100%)}
+.lbl{text-align:center;transform:translate(-50%,-50%);text-shadow:0 1px 6px rgba(0,0,0,.9);white-space:nowrap}
+.lbl b{font-size:11px;font-weight:600;color:#fff;display:block;letter-spacing:-.01em}
+.lbl span{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.55)}
+.lbl .ok{color:var(--gold)}
+#loader{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#04050d;transition:opacity .6s}
+#loader.gone{opacity:0;pointer-events:none}
+.lspin{width:46px;height:46px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:var(--gold);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loader p{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--mut)}
+.hud{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:16px;padding:14px 20px;pointer-events:none}
+.brand{display:flex;align-items:center;gap:11px;pointer-events:auto}
+.brand .logo{width:34px;height:34px;border-radius:10px;background:radial-gradient(circle at 32% 30%,var(--gold),#b5781b 70%);box-shadow:0 0 22px rgba(255,196,90,.45)}
+.brand b{font-size:14.5px}.brand span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:2.4px;text-transform:uppercase;color:var(--mut)}
+.hud-sp{flex:1}
+.prog-pill{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 14px;backdrop-filter:blur(12px);font-size:13px;pointer-events:auto}
+.prog-pill b{font-weight:700}.prog-pill small{color:var(--mut)}
+.prog-bar{width:90px;height:7px;border-radius:5px;background:rgba(255,255,255,.1);overflow:hidden}
+.prog-bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--gold));border-radius:5px;transition:width .5s}
+.hud-admin,.hud-hub{pointer-events:auto;text-decoration:none;background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:11px;padding:9px 13px;font-size:12.5px;font-weight:500;backdrop-filter:blur(12px);white-space:nowrap}
+.hud-hub:hover{color:#fff}
+.hud-admin:hover{color:#fff}
+.cert-btn{pointer-events:auto;background:rgba(255,212,121,.12);border:1px solid rgba(255,212,121,.4);color:var(--gold);border-radius:11px;padding:9px 15px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+.cert-btn[disabled]{opacity:.45;cursor:not-allowed}.cert-btn:not([disabled]):hover{background:rgba(255,212,121,.2)}
+/* Keys are hardwired in the backend now — no user-facing settings/keys UI. */
+.gearbtn,.kpop{display:none!important}
+.gearbtn-x{position:fixed;top:62px;right:20px;z-index:20;width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--mut);cursor:pointer;display:grid;place-items:center;backdrop-filter:blur(12px)}
+.gearbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7}
+.soundbtn{position:fixed;right:16px;bottom:16px;z-index:62;display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:10px 14px;color:var(--ink);font-size:13px;font-weight:600;backdrop-filter:blur(12px);cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.4);transition:color .15s,border-color .15s}
+.soundbtn:hover{border-color:var(--accent)}
+.soundbtn .sb-ic{font-size:15px;line-height:1}
+.soundbtn.muted{color:var(--mut)}
+@media(max-width:680px){.soundbtn{right:14px;bottom:64px;padding:9px 12px;font-size:12px}}
+.help{position:fixed;left:20px;bottom:20px;z-index:18;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 15px;backdrop-filter:blur(12px);font-size:12px;max-width:240px;color:var(--mut);line-height:1.55}
+.help b{color:var(--ink)}
+@media(max-width:600px){.help{display:none}}
+/* ── left navigator: About + the 11 services with completion ticks ── */
+.sidebar{position:fixed;left:16px;top:64px;bottom:18px;z-index:18;width:244px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:15px;backdrop-filter:blur(14px);overflow:hidden;pointer-events:auto;box-shadow:0 18px 50px rgba(0,0,0,.4)}
+.sb-about{margin:10px;padding:11px 12px;border-radius:11px;cursor:pointer;display:flex;align-items:center;gap:11px;background:linear-gradient(135deg,rgba(255,207,122,.18),rgba(255,233,176,.05));border:1px solid rgba(255,207,122,.38);transition:filter .15s}
+.sb-about:hover{filter:brightness(1.12)}
+.sb-about .sb-sun{width:30px;height:30px;border-radius:50%;flex:none;background:radial-gradient(circle at 34% 30%,#ffe9b0,#e0a23c);box-shadow:0 0 16px rgba(255,196,90,.55)}
+.sb-about b{display:block;font-size:12.5px;color:var(--ink)}.sb-about span{font-size:10.5px;color:var(--mut)}
+.sb-cap{padding:2px 14px 6px;font-family:var(--mono);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--mut)}
+.sb-list{flex:1;overflow-y:auto;padding:2px 8px 8px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:9px;cursor:pointer;font-size:12px;color:var(--ink);transition:background .14s}
+.sb-item:hover{background:rgba(255,255,255,.06)}
+.sb-tick{width:19px;height:19px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:10px;font-weight:700;border:1.5px solid var(--line);color:var(--mut);background:rgba(255,255,255,.03)}
+.sb-item.done .sb-tick{background:var(--green);border-color:var(--green);color:#04240f}
+.sb-item.prog .sb-tick{border-color:var(--violet);color:var(--violet)}
+.sb-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-foot{padding:9px 13px;border-top:1px solid var(--line);font-size:10.5px;color:var(--mut);line-height:1.5}
+.sb-toggle{display:none;position:fixed;left:14px;bottom:14px;z-index:61;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;color:var(--ink);font-size:12.5px;font-weight:600;backdrop-filter:blur(12px);cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+@media(max-width:820px){
+  .sidebar{transform:translateX(-118%);transition:transform .28s ease;top:58px;bottom:14px;z-index:60;box-shadow:0 24px 70px rgba(0,0,0,.65)}
+  .sidebar.open{transform:none}
+  .sb-toggle{display:flex}
+}
+/* ── legend: decode the galaxy (bottom-right) ── */
+.legend3d{position:fixed;right:16px;bottom:16px;z-index:18;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:11px 13px;backdrop-filter:blur(12px);font-size:11.5px;color:var(--mut);line-height:1.7;max-width:230px;box-shadow:0 14px 40px rgba(0,0,0,.4)}
+.legend3d .lg-t{font-family:var(--mono);font-size:9px;letter-spacing:1.8px;text-transform:uppercase;color:#9ec6ff;margin-bottom:6px}
+.legend3d .lg-row{display:flex;align-items:center;gap:7px;color:#cdd6ea}
+.legend3d .lg-sun{width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#ffe9b0,#e0a23c);box-shadow:0 0 8px rgba(255,196,90,.6);flex:none}
+.legend3d .lg-dot{width:10px;height:10px;border-radius:50%;flex:none;box-shadow:0 0 6px currentColor}
+.legend3d .lg-moons{display:flex;flex-wrap:wrap;gap:9px;margin-top:3px}
+.legend3d .lg-moons span{display:flex;align-items:center;gap:5px}
+@media(max-width:820px){.legend3d{display:none}}
+.amodal{position:fixed;inset:0;z-index:56;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(4,6,14,.74);backdrop-filter:blur(6px)}
+.amodal.on{display:flex}
+.acard{position:relative;width:min(620px,94vw);max-height:88vh;overflow-y:auto;background:linear-gradient(180deg,#0e1226,#0a0d1f);border:1px solid rgba(255,207,122,.4);border-radius:18px;padding:26px 28px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.acard .a-k{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#ffcf7a}
+.acard h2{font-family:var(--serif);font-size:26px;margin:6px 30px 2px 0;line-height:1.15}
+.acard .a-ar{color:var(--mut);font-size:13px;margin-bottom:15px}
+.a-dg{display:flex;align-items:center;gap:12px;background:rgba(255,207,122,.08);border:1px solid rgba(255,207,122,.25);border-radius:12px;padding:11px 13px;margin-bottom:17px}
+.a-dg .a-av{width:40px;height:40px;border-radius:50%;flex:none;background:radial-gradient(circle at 35% 30%,#ffe9b0,#e0a23c);display:grid;place-items:center;color:#3a2606;font-weight:700;font-size:16px}
+.a-dg b{font-size:13.5px}.a-dg small{display:block;color:var(--mut);font-size:11px}
+.a-sec{margin-bottom:15px}
+.a-sec h4{font-size:11px;text-transform:uppercase;letter-spacing:1.3px;color:#9fb0cc;margin-bottom:6px}
+.a-sec p{font-size:13px;color:var(--ink);line-height:1.55}
+.a-sec ul{margin:0;padding-left:18px}.a-sec li{font-size:12.5px;color:var(--ink);line-height:1.5;margin-bottom:5px}
+.a-vals{display:flex;flex-wrap:wrap;gap:6px}
+.a-vals span{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:20px;padding:4px 12px;font-size:11.5px}
+.aclose{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--mut);font-size:26px;cursor:pointer;line-height:1}
+/* ── Immersive stage ── */
+.stage{position:fixed;inset:0;z-index:28;display:none;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 0 30px;
+  background:radial-gradient(130% 100% at 50% 28%,rgba(6,8,20,.55),rgba(3,4,12,.9) 52%,rgba(1,2,7,.98));backdrop-filter:blur(4px) brightness(.5);opacity:0;transition:opacity .55s}
+.stage.on{display:flex;opacity:1}
+#voxCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1.1s ease}
+.stage.on #voxCanvas{opacity:1}
+/* cinematic mode — the morphing constellation is the stage; hide orb, coach label, equaliser & data board */
+.orb-dock,#capEq,#capRole,.board{display:none!important}
+.cap-wrap{justify-content:center;margin:0 0 4px}
+.cap{background:linear-gradient(180deg,rgba(4,6,16,0),rgba(4,6,16,.66) 42%);border:0!important;backdrop-filter:none;box-shadow:none;text-align:center;color:#eef2ff;text-shadow:0 2px 14px rgba(0,0,0,.75);padding:16px 20px 10px;max-height:none!important;overflow:hidden}
+#capText{display:block;position:relative;line-height:1.62;max-height:4.86em;overflow:hidden}
+#capText .kw{color:rgba(220,228,245,.26);transition:color .18s ease,text-shadow .18s ease}
+#capText .kw.spoken{color:#fff;text-shadow:0 0 10px rgba(167,139,250,.5),0 2px 14px rgba(0,0,0,.7)}
+.st-top{position:absolute;top:18px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 20px}
+.phase-rail{display:flex;gap:8px;background:rgba(10,13,26,.6);border:1px solid var(--line);border-radius:30px;padding:6px;backdrop-filter:blur(12px)}
+.phase{font-size:12px;font-weight:600;color:var(--mut);padding:6px 14px;border-radius:24px;display:flex;align-items:center;gap:7px}
+.phase.on{color:#fff;background:rgba(167,139,250,.22)}
+.phase .d{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.6}
+.phase.done{color:var(--green)}
+.st-exit{position:absolute;top:18px;right:20px;background:rgba(10,13,26,.6);border:1px solid var(--line);color:var(--mut);border-radius:10px;padding:8px 13px;font-size:12.5px;cursor:pointer;backdrop-filter:blur(12px)}
+.st-exit:hover{color:#fff}
+.st-title{position:absolute;top:52px;left:0;right:0;text-align:center;font-family:var(--serif);font-size:21px;color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.85);pointer-events:none}
+/* coach avatar is docked as a small badge on the caption bubble — never floats over the lesson */
+.cap-wrap{position:relative;display:flex;width:92%;max-width:660px;margin:30px 0 10px}
+.orb-dock{position:absolute;top:-23px;left:50%;transform:translateX(-50%);z-index:3;width:46px;height:46px;cursor:pointer}
+.orb{width:48px;height:48px;border-radius:50%;display:block;position:relative;
+  background:radial-gradient(circle at 38% 32%,#cbb6ff,#7c5cff 55%,#3a1d9e);box-shadow:0 0 20px rgba(124,92,255,.55),inset 0 0 16px rgba(255,255,255,.25);transition:transform .25s}
+.orb::after{content:'';position:absolute;inset:-7px;border-radius:50%;border:2px solid rgba(167,139,250,.4);opacity:0}
+.orb.speak{animation:orbpulse 1.1s ease-in-out infinite}
+.orb.speak::after{animation:orbring 1.1s ease-out infinite}
+@keyframes orbpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
+@keyframes orbring{0%{opacity:.5;transform:scale(1)}100%{opacity:0;transform:scale(1.45)}}
+.orb.cust{background:radial-gradient(circle at 38% 32%,#bfe0ff,#5b8def 55%,#1e4fa8);box-shadow:0 0 20px rgba(91,141,239,.55),inset 0 0 16px rgba(255,255,255,.25)}
+/* live equalizer in the caption header — the coach visibly "talks" */
+.capeq{display:flex;gap:4px;justify-content:center;align-items:center;height:0;opacity:0;overflow:hidden;transition:height .22s,opacity .22s,margin .22s;margin:0 auto}
+.cap.talk .capeq{height:24px;opacity:1;margin-bottom:9px}
+.capeq i{width:4px;height:6px;border-radius:3px;background:linear-gradient(180deg,#d6c9ff,#7c5cff);box-shadow:0 0 10px rgba(124,92,255,.75)}
+.cap.cust.talk .capeq i{background:linear-gradient(180deg,#cfe6ff,#5b8def);box-shadow:0 0 10px rgba(91,141,239,.75)}
+.cap.talk .capeq i{animation:eqbar .85s ease-in-out infinite}
+.capeq i:nth-child(2){animation-delay:.13s}.capeq i:nth-child(3){animation-delay:.27s}.capeq i:nth-child(4){animation-delay:.05s}.capeq i:nth-child(5){animation-delay:.33s}.capeq i:nth-child(6){animation-delay:.17s}.capeq i:nth-child(7){animation-delay:.23s}
+@keyframes eqbar{0%,100%{height:5px}50%{height:24px}}
+/* floating "key fact" cards that pop above the caption as she mentions them */
+.factpops{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);width:max-content;max-width:92%;display:flex;flex-direction:column-reverse;align-items:center;gap:7px;margin-bottom:14px;pointer-events:none;z-index:6}
+.factpop{display:inline-flex;align-items:baseline;gap:8px;background:rgba(10,14,30,.96);border:1px solid rgba(124,92,255,.5);border-radius:13px;padding:8px 15px;font-size:13px;color:#eaf0ff;box-shadow:0 12px 34px rgba(0,0,0,.55);opacity:0;transform:translateY(16px) scale(.9);transition:opacity .3s ease,transform .38s cubic-bezier(.2,1.3,.4,1);white-space:nowrap}
+.factpop.in{opacity:1;transform:none}
+.factpop.out{opacity:0;transform:translateY(-14px) scale(.96)}
+.factpop b{font-size:15px;font-weight:700;text-shadow:0 0 12px rgba(124,92,255,.4)}
+.factpop span{color:#cdd6ea;font-size:11.5px}
+.factpop.gold{border-color:rgba(255,212,121,.6)}.factpop.gold b{color:var(--gold);text-shadow:0 0 14px rgba(255,212,121,.5)}
+.factpop.teal{border-color:rgba(45,212,191,.55)}.factpop.teal b{color:#8df3da;text-shadow:0 0 12px rgba(45,212,191,.45)}
+.factpop.blue{border-color:rgba(106,166,255,.6)}.factpop.blue b{color:#9ec6ff;text-shadow:0 0 12px rgba(106,166,255,.45)}
+.cap{position:relative;width:100%;text-align:center;font-size:16px;line-height:1.5;color:#fff;min-height:48px;max-height:21vh;overflow-y:auto;background:rgba(6,8,18,.92);border:1px solid var(--line);border-radius:16px;padding:24px 20px 14px;backdrop-filter:blur(10px);transition:opacity .22s;box-shadow:0 12px 40px rgba(0,0,0,.55)}
+.cap::-webkit-scrollbar{width:6px}.cap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:6px}
+.cap .role{display:block;font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--violet);margin-bottom:7px}
+.cap.cust .role{color:var(--blue)}
+.coach{max-width:680px;width:92%;text-align:center;font-size:13.5px;color:var(--gold);min-height:20px;margin-bottom:14px;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+.listening{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--green);margin-bottom:10px;opacity:0;transition:opacity .2s}
+.listening.on{opacity:1}
+.st-controls{display:flex;gap:10px;align-items:center;width:92%;max-width:640px;justify-content:center}
+.st-controls .mic{width:54px;height:54px;border-radius:50%;flex-shrink:0;border:none;cursor:pointer;background:radial-gradient(circle at 35% 30%,var(--violet),#6d28d9);color:#fff;display:grid;place-items:center}
+.st-controls .mic.live{background:radial-gradient(circle at 35% 30%,var(--red),#b91c1c);animation:miclive 1.4s infinite}
+@keyframes miclive{0%{box-shadow:0 0 0 0 rgba(248,113,113,.5)}70%{box-shadow:0 0 0 16px rgba(248,113,113,0)}100%{box-shadow:0 0 0 0 rgba(248,113,113,0)}}
+.st-controls .mic svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2}
+.st-input{flex:1;max-width:360px;background:rgba(255,255,255,.07);border:1px solid var(--line);color:#fff;border-radius:26px;padding:13px 18px;font-size:14px;font-family:var(--sans);outline:none}
+.st-input:focus{border-color:var(--violet)}
+.sbtn{background:rgba(255,255,255,.08);border:1px solid var(--line);color:#fff;border-radius:24px;padding:12px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);white-space:nowrap}
+.sbtn:hover{background:rgba(255,255,255,.14)}
+.sbtn.go{background:var(--violet);border-color:var(--violet)}
+.sbtn.gold{background:var(--gold);border-color:var(--gold);color:#1a1407}
+.st-controls.hide{display:none}
+.peek{position:absolute;bottom:22px;left:20px;font-size:11.5px;color:var(--mut);max-width:230px;line-height:1.5;opacity:.7}
+.askbtn{margin:2px 0 8px;background:rgba(167,139,250,.22);border:1px solid var(--violet);color:#fff;border-radius:24px;padding:10px 22px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:var(--sans);display:none;align-items:center;gap:8px;backdrop-filter:blur(10px);box-shadow:0 8px 30px rgba(124,92,255,.3)}
+.askbtn.on{display:inline-flex}
+.askbtn:hover{background:rgba(167,139,250,.34)}
+.warp{position:fixed;inset:0;z-index:27;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 45%,rgba(167,139,250,.32),rgba(106,166,255,.12) 35%,transparent 65%)}
+.warp.go{animation:warpf 1s ease-out}
+@keyframes warpf{0%{opacity:0;transform:scale(1.7)}25%{opacity:1}100%{opacity:0;transform:scale(.55)}}
+/* lesson board */
+.board{position:absolute;top:78px;left:0;right:0;bottom:auto;max-height:48vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:14px;pointer-events:none;padding:0 24px;overflow:hidden}
+/* progress rail — shows which part of the service she is on (Journey → Fees → Channels) */
+.bd-rail{display:flex;gap:9px;align-items:center}
+.bd-railseg{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--mut);opacity:.45;transition:all .45s}
+.bd-railseg i{width:20px;height:20px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:10px;font-style:normal;transition:all .45s}
+.bd-railseg.active{opacity:1;color:#bcd6ff;text-shadow:0 0 12px rgba(106,166,255,.6)}
+.bd-railseg.active i{border-color:#6aa6ff;color:#eaf2ff;background:rgba(106,166,255,.22);box-shadow:0 0 16px rgba(106,166,255,.6)}
+.bd-railseg.done{opacity:.9;color:#7df0d0}
+.bd-railseg.done i{border-color:#2dd4bf;color:#091227;background:#2dd4bf;font-size:0}
+.bd-railseg.done i::after{content:'✓';font-size:11px;color:#091227}
+/* ── premium journey scene: a luminous pulse traces the service path as the coach narrates ── */
+.scene{position:relative;width:100%;max-width:920px;height:32vh;min-height:188px;margin:0 auto;overflow:hidden}
+.track{position:absolute;left:6%;right:6%;top:57%;height:1px;background:linear-gradient(90deg,transparent,rgba(150,180,230,.2) 8%,rgba(150,180,230,.2) 92%,transparent)}
+.track-fill{position:absolute;left:6%;top:57%;height:1px;width:0;background:linear-gradient(90deg,rgba(124,92,255,.55),#a78bfa);box-shadow:0 0 10px rgba(167,139,250,.9),0 0 24px rgba(124,92,255,.45);transition:width .9s cubic-bezier(.65,0,.35,1);z-index:3}
+.endcap{position:absolute;left:90%;top:57%;transform:translate(-50%,-50%);width:30px;height:30px;display:grid;place-items:center;color:rgba(190,205,230,.4);border:1px solid rgba(150,180,230,.22);border-radius:50%;background:rgba(8,11,24,.5);transition:all .5s}
+.endcap svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.scene.ph-fees .endcap,.scene.ph-channels .endcap{color:#cbb8ff;border-color:rgba(167,139,250,.55);box-shadow:0 0 16px rgba(124,92,255,.4)}
+/* stations — minimal hairline rings */
+.stations{position:absolute;inset:0}
+.station{position:absolute;top:57%;transform:translate(-50%,-50%);width:36px;height:36px}
+.st-ring{position:relative;width:36px;height:36px;border-radius:50%;border:1px solid rgba(150,180,230,.3);display:grid;place-items:center;color:rgba(190,205,230,.45);background:rgba(8,11,24,.9);transition:border-color .5s,color .5s,box-shadow .5s,background .5s;z-index:4}
+.st-ring svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round}
+.scene.ph-fees .station,.scene.ph-channels .station{opacity:.28;transition:opacity .5s}
+.station.lit .st-ring{border-color:rgba(167,139,250,.9);color:#fff;background:rgba(124,92,255,.16);box-shadow:0 0 0 1px rgba(167,139,250,.4),0 0 20px rgba(124,92,255,.5)}
+.station.done .st-ring{border-color:rgba(167,139,250,.45);color:#b9a6ff;background:rgba(124,92,255,.08);box-shadow:0 0 10px rgba(124,92,255,.2)}
+.station.arrive .st-ring{animation:ringpop .55s cubic-bezier(.2,1.5,.4,1)}
+@keyframes ringpop{0%{transform:scale(1)}45%{transform:scale(1.16)}100%{transform:scale(1)}}
+.station.arrive::after{content:'';position:absolute;top:50%;left:50%;width:36px;height:36px;transform:translate(-50%,-50%);border-radius:50%;border:1.5px solid #a78bfa;animation:ringwave .75s ease-out forwards;z-index:3}
+@keyframes ringwave{0%{transform:translate(-50%,-50%) scale(.8);opacity:.85}100%{transform:translate(-50%,-50%) scale(2);opacity:0}}
+.st-lbl{position:absolute;top:46px;left:50%;transform:translateX(-50%);width:128px;text-align:center;font-size:11px;line-height:1.35;letter-spacing:.2px;color:#eaf0ff;opacity:0;transition:opacity .4s}
+.station.lit:not(.done) .st-lbl{opacity:1}
+/* the traveller — a luminous pulse with a comet trail */
+.pulse{position:absolute;left:6%;top:57%;width:12px;height:12px;border-radius:50%;transform:translate(-50%,-50%);z-index:9;background:radial-gradient(circle at 50% 50%,#fff,#d6c9ff 38%,#7c5cff 78%);box-shadow:0 0 10px #a78bfa,0 0 22px rgba(124,92,255,.8),0 0 40px rgba(124,92,255,.45);transition:left .9s cubic-bezier(.65,0,.35,1)}
+.pulse::before{content:'';position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(167,139,250,.45);animation:pulsehalo 1.9s ease-out infinite}
+@keyframes pulsehalo{0%{transform:scale(.6);opacity:.85}100%{transform:scale(1.8);opacity:0}}
+.pulse::after{content:'';position:absolute;right:50%;top:50%;height:2px;width:0;transform:translateY(-50%);background:linear-gradient(90deg,transparent,rgba(167,139,250,.9));border-radius:2px;transition:width .22s ease}
+.pulse.moving::after{width:38px}
+/* phase cards — glass telemetry panels */
+.scene-cards{position:absolute;top:0;left:50%;transform:translateX(-50%);width:94%;max-width:560px;height:0;pointer-events:none}
+.scard{position:absolute;top:4px;left:50%;transform:translate(-50%,-14px) scale(.96);opacity:0;transition:opacity .45s,transform .55s cubic-bezier(.2,.7,.2,1);background:rgba(10,14,28,.72);border:1px solid rgba(150,180,230,.18);border-radius:15px;padding:15px 22px;backdrop-filter:blur(16px);box-shadow:0 16px 44px rgba(0,0,0,.5);text-align:left;min-width:200px}
+.scard .k{font-family:var(--mono);font-size:8.5px;letter-spacing:2.6px;text-transform:uppercase;color:rgba(190,205,230,.7);margin-bottom:9px}
+.scard.fee{border-color:rgba(255,212,121,.32)}.scard.fee .k{color:#ffd97a}
+.scene.ph-fees #bdFee{opacity:1;transform:translate(-50%,0) scale(1)}
+.scene-ch{position:absolute;top:4px;left:50%;transform:translate(-50%,-14px) scale(.96);opacity:0;transition:opacity .45s,transform .55s cubic-bezier(.2,.7,.2,1);display:flex;gap:14px;align-items:flex-start;justify-content:center;flex-wrap:wrap;width:100%}
+.scene.ph-channels .scene-ch{opacity:1;transform:translate(-50%,0) scale(1)}
+.scene-ch .scard{position:relative;top:0;left:0;transform:none;opacity:1}
+.scard.docs{border-color:rgba(45,212,191,.32)}.scard.docs .k{color:#7df0d0}
+.scard .bd-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start}
+.scard .bd-chip{opacity:1;transform:none;font-size:12px;padding:6px 13px;background:rgba(124,92,255,.1);border-color:rgba(167,139,250,.4);color:#dcd2ff;box-shadow:none;transition:all .4s}
+.scard .bd-chip.lit{background:rgba(124,92,255,.26);border-color:#a78bfa;box-shadow:0 0 18px rgba(124,92,255,.45);color:#fff}
+.scard .bd-fline{margin-top:6px}.scard .bd-fline b{font-size:15px;font-variant-numeric:tabular-nums}
+.scard .bd-dlist>div{font-size:12px;color:#dbe3f2;line-height:1.7;transition:color .35s}.scard .bd-dlist>div::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#2dd4bf;margin-right:8px;vertical-align:middle;opacity:.6}
+.scard .bd-dlist>div.lit{color:#fff}.scard .bd-dlist>div.lit::before{opacity:1;box-shadow:0 0 8px #2dd4bf}
+/* holographic section header: centred mono label with flanking energy rules */
+.bd-sec{display:flex;flex-direction:column;align-items:center;gap:13px;width:100%}
+.bd-hd{font-family:var(--mono);font-size:10px;letter-spacing:3.4px;text-transform:uppercase;color:#9ec6ff;display:flex;align-items:center;gap:11px;text-shadow:0 0 14px rgba(106,166,255,.55)}
+.bd-hd::before,.bd-hd::after{content:'';width:42px;height:1px;background:linear-gradient(90deg,transparent,rgba(143,182,255,.85))}
+.bd-hd::after{transform:scaleX(-1)}
+.bd-proc{display:flex;align-items:flex-start;flex-wrap:wrap;justify-content:center;max-width:820px;gap:4px}
+.bd-step{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;width:152px;opacity:0;transform:translateY(14px) scale(.9);transition:all .55s cubic-bezier(.2,.7,.2,1)}
+.bd-step.on{opacity:1;transform:none}
+/* flowing connector beam between holographic nodes */
+.bd-step::before{content:'';position:absolute;top:25px;left:-50%;width:100%;height:2px;background:linear-gradient(90deg,transparent,rgba(45,212,191,.15) 20%,#2dd4bf,rgba(45,212,191,.15) 80%,transparent);background-size:200% 100%;opacity:0;transition:opacity .6s;animation:beam 2.4s linear infinite}
+@keyframes beam{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.bd-step:first-child::before{display:none}.bd-step.on::before{opacity:.9}
+.bd-node{position:relative;z-index:2;width:46px;height:46px;margin-bottom:9px;display:grid;place-items:center}
+.bd-node::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#2dd4bf,#3a9ff5);clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);filter:drop-shadow(0 0 11px rgba(45,212,191,.7))}
+.bd-node::after{content:'';position:absolute;inset:2.5px;background:#091227;clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%)}
+.bd-node b{position:relative;z-index:2;font-family:var(--mono);font-weight:700;font-size:16px;color:#8df3da;text-shadow:0 0 12px rgba(125,240,208,.9)}
+.bd-step.on .bd-node{animation:nodepop .6s cubic-bezier(.2,1.4,.4,1)}
+@keyframes nodepop{0%{transform:scale(.4)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+.bd-step .t{font-size:11.5px;color:#dfe6f5;line-height:1.35;max-width:140px}
+.bd-cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+/* sci-fi framed cards with corner brackets + inner glow */
+.bd-card{position:relative;background:linear-gradient(160deg,rgba(16,22,46,.92),rgba(8,11,26,.92));border:1px solid rgba(106,166,255,.3);border-radius:12px;padding:12px 22px;min-width:148px;backdrop-filter:blur(12px);box-shadow:0 0 30px rgba(106,166,255,.12),inset 0 0 24px rgba(106,166,255,.05);opacity:0;transform:translateY(12px) scale(.96);transition:all .55s;text-align:center;overflow:hidden}
+.bd-card.on{opacity:1;transform:none}
+.bd-card::before,.bd-card::after{content:'';position:absolute;width:13px;height:13px;border:2px solid var(--blue);opacity:.8}
+.bd-card::before{top:7px;left:7px;border-right:0;border-bottom:0}
+.bd-card::after{bottom:7px;right:7px;border-left:0;border-top:0}
+.bd-card .k{font-family:var(--mono);font-size:9px;letter-spacing:2.2px;text-transform:uppercase;color:#9ec6ff;margin-bottom:6px}
+.bd-card.fee,.bd-card.docs{text-align:left;min-width:190px;padding:13px 18px}
+.bd-fline{display:flex;gap:8px;align-items:baseline;margin-top:4px}
+.bd-fline b{color:var(--gold);font-size:13.5px;white-space:nowrap;text-shadow:0 0 14px rgba(255,212,121,.4)}
+.bd-fline span{color:#cdd6ea;font-size:11px;line-height:1.35}
+.bd-note{font-size:10.5px;color:#8df3da;margin-top:7px;line-height:1.45}
+.bd-dlist{margin-top:3px}.bd-dlist>div{font-size:11.5px;color:#dbe3f2;line-height:1.55}.bd-dlist>div::before{content:'• ';color:#2dd4bf}
+.bd-card .v{font-size:21px;font-weight:700;color:#eaf2ff;text-shadow:0 0 16px rgba(106,166,255,.4)}.bd-card .s{font-size:11.5px;color:var(--mut);margin-top:4px}
+.bd-card.fee{border-color:rgba(255,212,121,.42);box-shadow:0 0 30px rgba(255,212,121,.14),inset 0 0 24px rgba(255,212,121,.05)}
+.bd-card.fee::before,.bd-card.fee::after{border-color:var(--gold)}
+.bd-card.fee .k{color:#ffd97a}.bd-card.fee .v{color:var(--gold);text-shadow:0 0 16px rgba(255,212,121,.5)}
+.bd-card.docs::before,.bd-card.docs::after{border-color:#2dd4bf}.bd-card.docs .k{color:#7df0d0}.bd-card.docs .v{color:#7df0d0}
+.bd-chips{display:flex;gap:9px;flex-wrap:wrap;justify-content:center}
+.bd-chip{font-size:12.5px;color:#d4e6ff;background:rgba(106,166,255,.14);border:1px solid rgba(106,166,255,.45);border-radius:20px;padding:7px 15px;opacity:0;transform:scale(.85);transition:all .45s;box-shadow:0 0 18px rgba(106,166,255,.16);text-shadow:0 0 9px rgba(106,166,255,.4)}
+.bd-chip.on{opacity:1;transform:none}.bd-chip.docs{color:#8df3da;background:rgba(45,212,191,.12);border-color:rgba(45,212,191,.42);box-shadow:0 0 18px rgba(45,212,191,.18)}
+/* live highlight — the step she is currently explaining lights up boldly; finished steps tick green */
+.bd-step.active{transform:scale(1.08)}
+.bd-step.active .bd-node{animation:nodeactive 1s ease-in-out infinite}
+@keyframes nodeactive{0%,100%{transform:scale(1)}50%{transform:scale(1.22)}}
+.bd-step.active .bd-node::before{filter:drop-shadow(0 0 22px rgba(45,212,191,1)) brightness(1.25)}
+.bd-step.active .bd-node b{color:#fff;text-shadow:0 0 16px rgba(125,240,208,1)}
+.bd-step.active .t{color:#fff;font-weight:600;text-shadow:0 0 12px rgba(125,240,208,.8)}
+.bd-step.active::after{content:'';position:absolute;top:23px;left:50%;width:46px;height:46px;margin-left:-23px;border-radius:50%;animation:nodewave 1s ease-out infinite;pointer-events:none}
+@keyframes nodewave{0%{box-shadow:0 0 0 0 rgba(45,212,191,.6)}100%{box-shadow:0 0 0 22px rgba(45,212,191,0)}}
+.bd-step.done .bd-node::after{background:#0c2a26}
+.bd-step.done .bd-node b{font-size:0}
+.bd-step.done .bd-node b::after{content:'✓';font-size:17px;color:#2dd4bf;text-shadow:0 0 12px rgba(45,212,191,.9)}
+.bd-step.done .t{color:#8aa0bd}
+.bd-step.done::before{opacity:1!important;background:#2dd4bf;animation:none}
+.bd-fline{transition:background .3s,box-shadow .3s,transform .3s;border-radius:8px;padding:3px 6px;margin:4px -6px 0}
+.bd-fline.pop{background:rgba(255,212,121,.16);box-shadow:0 0 20px rgba(255,212,121,.22);transform:scale(1.04)}
+.bd-fline.pop b{text-shadow:0 0 16px rgba(255,212,121,.85)}
+.bd-chip.lit{background:rgba(106,166,255,.32);border-color:#9ec6ff;box-shadow:0 0 22px rgba(106,166,255,.5);transform:translateY(-2px) scale(1.06)}
+.bd-chip.docs.lit{background:rgba(45,212,191,.28);border-color:#8df3da;box-shadow:0 0 22px rgba(45,212,191,.5)}
+.bd-dlist>div{transition:background .3s,color .3s;border-radius:6px;padding:1px 6px;margin:0 -6px}
+.bd-dlist>div.lit{background:rgba(45,212,191,.16);color:#fff}
+.bd-card.pop{border-color:rgba(124,92,255,.7);box-shadow:0 0 30px rgba(124,92,255,.3),inset 0 0 24px rgba(124,92,255,.08);transform:translateY(-2px) scale(1.02)}
+/* About-the-Department induction board */
+.ab-hero{display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,rgba(255,207,122,.15),rgba(255,233,176,.04));border:1px solid rgba(255,207,122,.42);border-radius:16px;padding:13px 20px 13px 14px;opacity:0;transform:translateY(10px);transition:all .55s;box-shadow:0 0 34px rgba(255,196,90,.16)}
+.ab-hero.on{opacity:1;transform:none}
+.ab-photo{width:78px;height:78px;border-radius:14px;flex:none;overflow:hidden;border:2px solid rgba(255,207,122,.6);box-shadow:0 0 22px rgba(255,196,90,.35);background:radial-gradient(circle at 35% 30%,#ffe9b0,#e0a23c)}
+.ab-photo img{width:100%;height:100%;object-fit:cover;object-position:center 18%;display:block}
+.ab-photo.noimg{display:grid;place-items:center;color:#3a2606;font-weight:700;font-size:32px;font-family:var(--serif)}
+.ab-photo.noimg::before{content:attr(data-i)}
+.ab-hero-t .ab-k{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#ffd97a;margin-bottom:4px}
+.ab-hero-t b{font-size:16.5px;color:#fff;display:block;line-height:1.2}
+.ab-hero-t span{font-size:11.5px;color:var(--mut)}
+.bd-card .s.big{font-size:12.5px;color:#e3eaf7;max-width:240px;line-height:1.42;margin-top:2px}
+.bd-cust{display:flex;gap:14px;align-items:flex-start;background:#fff;color:#0a0e14;border-radius:16px;padding:18px 22px;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.5);opacity:0;transform:translateY(12px);transition:all .5s}
+.bd-cust.on{opacity:1;transform:none}
+.bd-cust-av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#6aa6ff,#a78bfa);flex-shrink:0;display:grid;place-items:center;color:#fff;font-weight:700;font-size:18px}
+.bd-cust-t{font-size:16px;line-height:1.5}.bd-cust-t small{display:block;color:#5a6878;font-size:12px;margin-top:5px}
+/* certificate */
+.cmodal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(4,6,14,.7);backdrop-filter:blur(5px)}
+.cmodal.on{display:flex}
+.cert{width:min(680px,94vw);background:linear-gradient(160deg,#0e1226,#0a0d1f);border:1px solid rgba(255,212,121,.4);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6);position:relative}
+.cert-x{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--mut);cursor:pointer;font-size:17px;display:grid;place-items:center;z-index:2}
+.cert-in{padding:38px 40px;text-align:center;border:2px solid rgba(255,212,121,.25);margin:14px;border-radius:12px}
+.cert-k{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold)}
+.cert-h{font-family:var(--serif);font-size:34px;margin:14px 0 6px}.cert-sub{color:var(--mut);font-size:13px;margin-bottom:22px}
+.cert-name input{background:none;border:none;border-bottom:1px solid var(--line);color:var(--gold);font-family:var(--serif);font-size:30px;text-align:center;min-width:280px;padding:0 24px 6px;outline:none}
+.cert-body{font-size:13.5px;color:var(--ink);line-height:1.6;margin:22px auto;max-width:480px}
+.cert-foot{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-top:20px}
+.cert-actions{display:flex;gap:10px;justify-content:center;padding:0 40px 30px}
+.btn{background:var(--violet);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+.btn.gold{background:var(--gold);color:#1a1407}.btn.ghost{background:rgba(255,255,255,.05);color:var(--ink);border:1px solid var(--line)}
+@media print{body *{visibility:hidden}.cmodal,.cmodal *{visibility:visible}.cmodal{position:absolute;inset:0;background:#fff}.cert{box-shadow:none}.cert-x,.cert-actions{display:none}}
+.kpop{position:fixed;inset:0;z-index:55;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(4,6,14,.62);backdrop-filter:blur(5px)}
+.kpop.on{display:flex}
+.kcard{position:relative;width:min(440px,94vw);background:linear-gradient(180deg,rgba(16,20,38,.99),rgba(9,11,24,1));border:1px solid var(--line);border-radius:16px;padding:20px 22px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.kcard h3{font-size:14px;margin-bottom:4px}.kcard p{font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px}
+.kcard label{display:block;font-size:11px;color:var(--mut);margin-bottom:9px}
+.kcard input{width:100%;margin-top:4px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 10px;font-size:12.5px;outline:none}
+.kcard .pr input{border-color:var(--violet)}
+.kclose{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--mut);cursor:pointer;font-size:17px;display:grid;place-items:center}
+.kstatus{font-size:11.5px;color:var(--green);margin-left:10px}
+/* ── Training Solar System front door (login) ── */
+.authgate{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:24px;
+  background:radial-gradient(130% 100% at 50% -10%,#101a40,#070b1e 55%,#03040b);overflow:hidden}
+.authgate.on{display:flex}
+.authgate::before{content:'';position:absolute;inset:-20%;background:
+  radial-gradient(2px 2px at 20% 30%,rgba(255,255,255,.5),transparent),
+  radial-gradient(2px 2px at 70% 60%,rgba(255,255,255,.35),transparent),
+  radial-gradient(1.5px 1.5px at 40% 80%,rgba(255,255,255,.4),transparent),
+  radial-gradient(1.5px 1.5px at 85% 20%,rgba(255,255,255,.3),transparent),
+  radial-gradient(2px 2px at 55% 15%,rgba(255,255,255,.35),transparent);background-size:cover;opacity:.6;animation:agdrift 60s linear infinite}
+@keyframes agdrift{from{transform:translateY(0)}to{transform:translateY(-40px)}}
+.ag-card{position:relative;width:min(430px,94vw);text-align:center}
+.ag-sun{width:74px;height:74px;border-radius:50%;margin:0 auto 18px;background:radial-gradient(circle at 34% 30%,#ffe9b0,#e0a23c);box-shadow:0 0 50px rgba(255,196,90,.6),0 0 120px rgba(255,160,60,.35)}
+.ag-k{font-family:var(--mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#ffcf7a;margin-bottom:8px}
+.ag-card h1{font-family:var(--serif);font-size:38px;margin:0 0 6px;color:#fff;line-height:1.05}
+.ag-card .ag-sub{color:var(--mut);font-size:13.5px;line-height:1.55;margin:0 auto 24px;max-width:340px}
+.ag-form{background:rgba(10,14,30,.72);border:1px solid var(--line);border-radius:16px;padding:20px;backdrop-filter:blur(12px);text-align:left;box-shadow:0 24px 70px rgba(0,0,0,.5)}
+.ag-form label{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--mut);margin:0 0 5px}
+.ag-form input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:12px 13px;font-size:14.5px;outline:none;font-family:var(--sans);margin-bottom:14px}
+.ag-form input:focus{border-color:var(--gold)}
+.ag-btn{width:100%;background:linear-gradient(135deg,#ffcf7a,#e0a23c);color:#2a1c04;border:none;border-radius:11px;padding:13px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+.ag-btn:hover{filter:brightness(1.06)}.ag-btn:disabled{opacity:.6;cursor:default}
+.ag-err{color:#f87171;font-size:12.5px;margin-top:10px;min-height:16px;text-align:center}
+.ag-foot{color:var(--mut);font-size:11px;margin-top:16px;line-height:1.5}
+.ag-admin{display:inline-block;margin-top:14px;color:#9ec6ff;font-size:12.5px;text-decoration:none;border:1px solid var(--line);border-radius:9px;padding:8px 14px;transition:background .15s}
+.ag-admin:hover{background:rgba(255,255,255,.06);color:#fff}
+.whoami{display:none;align-items:center;gap:9px;pointer-events:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:7px 11px;backdrop-filter:blur(12px);font-size:12px}
+.whoami .who-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.whoami b{font-weight:600;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.whoami button{background:none;border:none;color:var(--mut);cursor:pointer;font-size:11px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;padding:0 0 0 4px}
+.whoami button:hover{color:#fff}
+#tip{position:fixed;z-index:40;pointer-events:none;background:rgba(10,12,26,.95);border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:12px;display:none;max-width:230px}
+#tip .n{font-weight:700;margin-bottom:2px}#tip .m{color:var(--mut);font-size:11px}
+/* ════ first-time spoken welcome (in the galaxy) ════ */
+.welcomebar{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:30;width:min(620px,92vw);background:rgba(8,11,26,.94);border:1px solid rgba(167,139,250,.45);border-radius:16px;padding:26px 22px 16px;backdrop-filter:blur(12px);box-shadow:0 18px 60px rgba(0,0,0,.55);display:none;text-align:center}
+.welcomebar.on{display:block;animation:wbin .4s ease}
+@keyframes wbin{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translateX(-50%)}}
+.wb-orb{position:absolute;top:-22px;left:50%;transform:translateX(-50%);width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#cbb6ff,#7c5cff 55%,#3a1d9e);box-shadow:0 0 22px rgba(124,92,255,.6);animation:orbpulse 1.1s ease-in-out infinite}
+.wb-role{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--violet);margin-bottom:7px}
+.wb-text{font-size:15.5px;line-height:1.55;color:#fff;margin-bottom:14px}
+.wb-skip{background:var(--violet);border:none;color:#fff;border-radius:22px;padding:9px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+.wb-skip:hover{filter:brightness(1.1)}
+/* ════ Mobile / phone layout ════ */
+@media(max-width:680px){
+  .lbl b{font-size:10.5px}.lbl span{font-size:8px}
+  .hud{padding:9px 11px;gap:7px;flex-wrap:wrap}
+  .brand .logo{width:26px;height:26px}.brand b{font-size:11.5px}.brand span{font-size:7.5px;letter-spacing:1.4px}
+  .hud-sp{flex:1 1 0}
+  .prog-pill{padding:5px 9px;font-size:10.5px}.prog-bar{width:54px}
+  .hud-admin,.hud-hub{padding:6px 9px;font-size:11px}
+  .cert-btn{padding:6px 9px;font-size:11px}
+  .gearbtn{top:auto;bottom:14px;right:14px;width:34px;height:34px}
+  .whoami{display:none!important}
+  .st-top{top:12px}.phase-rail{padding:4px;gap:4px}.phase{font-size:10.5px;padding:5px 9px}
+  .st-exit{top:10px;right:10px;padding:6px 10px;font-size:11px}
+  .st-title{top:46px;font-size:17px;padding:0 12px}
+  .board{top:78px;max-height:33vh;gap:9px;padding:0 12px}
+  .bd-hd{font-size:9px;letter-spacing:1.8px}.bd-hd::before,.bd-hd::after{width:24px}
+  .bd-step{width:104px}.bd-node{width:38px;height:38px;margin-bottom:6px}.bd-node b{font-size:13px}.bd-step .t{font-size:10px;max-width:104px}
+  .bd-card.fee,.bd-card.docs{min-width:0;padding:11px 14px}.bd-fline b{font-size:12.5px}.bd-fline span{font-size:10.5px}.bd-note{font-size:9.5px}.bd-dlist>div{font-size:11px}
+  .bd-chip{font-size:11px;padding:5px 11px}
+  .bd-railseg{font-size:8px;letter-spacing:1px;gap:5px}.bd-railseg i{width:17px;height:17px;font-size:9px}
+  .scene{height:30vh;min-height:170px}.station{width:30px;height:30px}.st-ring{width:30px;height:30px}.st-ring svg{width:15px;height:15px}.st-lbl{width:90px;font-size:9.5px;top:40px}.endcap{width:26px;height:26px}
+  .scard{min-width:0;padding:11px 14px}.scene-ch{gap:8px}.scard .bd-chip{font-size:11px;padding:5px 10px}.scard .bd-dlist>div{font-size:11px}
+  .cap-wrap{width:96%;margin:24px 0 8px}.cap{font-size:13.5px;max-height:30vh;padding:22px 13px 12px;line-height:1.45}
+  .orb-dock,.orb{width:42px;height:42px}.orb-dock{top:-21px}
+  .coach{font-size:11.5px}
+  .askbtn{padding:9px 15px;font-size:12px;margin:2px 0 6px}
+  .st-controls{gap:7px;width:97%}.st-controls .mic{width:46px;height:46px}.st-controls .mic svg{width:20px;height:20px}
+  .st-input{font-size:13px;padding:10px 13px;max-width:none}.sbtn{padding:10px 12px;font-size:12px}
+  .peek{display:none}
+  .welcomebar{width:94vw;bottom:14px;padding:24px 15px 13px}.wb-text{font-size:13.5px;line-height:1.5}
+  .acard{padding:20px 17px}.acard h2{font-size:21px}.a-dg .a-av{width:34px;height:34px}
+  .ag-card h1{font-size:30px}.ag-sun{width:58px;height:58px}.ag-card .ag-sub{font-size:12.5px}
+  .cert{width:96vw}.cert-in{padding:26px 18px;margin:10px}.cert-h{font-size:26px}.cert-name input,.cert-name{font-size:24px}
+}
+@media(max-width:680px) and (orientation:landscape){
+  .board{max-height:46vh}.cap{max-height:38vh}
+}
+</style>
+</head>
+<body>
+<div id="loader"><div class="lspin"></div><p>Building the academy…</p></div>
+
+<div class="authgate" id="authgate">
+  <div class="ag-card">
+    <div class="ag-sun"></div>
+    <div class="ag-k">Government of Dubai · Legal Affairs Department</div>
+    <h1>Training Solar System</h1>
+    <p class="ag-sub">Sign in to begin — or pick up exactly where you left off. Your journey across the 11 services is saved to your account.</p>
+    <div class="ag-form">
+      <label for="agEmail">Your work email</label>
+      <input id="agEmail" type="email" placeholder="name@legalaffairs.gov.ae" autocomplete="username"/>
+      <label for="agPass">Password</label>
+      <input id="agPass" type="password" placeholder="Password" autocomplete="current-password"/>
+      <button class="ag-btn" id="agBtn">Begin training →</button>
+      <div class="ag-err" id="agErr"></div>
+    </div>
+    <div class="ag-foot">Trouble signing in? Contact your training administrator.</div>
+    <a class="ag-admin" href="/admin">🛡 Trainer / Admin sign in →</a>
+  </div>
+</div>
+
+<div id="scene"></div><div id="labels"></div><div id="vignette"></div>
+
+<div class="hud">
+  <div class="brand"><div class="logo"></div><div><b>Service Ambassador Academy</b><span>Legal Affairs Department · Dubai</span></div></div>
+  <a class="hud-hub" href="/" title="Back to the training hub">← Training hub</a>
+  <div class="hud-sp"></div>
+  <div class="whoami" id="whoami"><span class="who-dot"></span><b id="whoEmail"></b><button id="whoOut" title="Sign out">Sign out</button></div>
+  <div class="prog-pill"><div class="prog-bar"><i id="progFill"></i></div><b id="progN">0</b><small>/ 11 certified</small></div>
+  <button class="cert-btn" id="certBtn" disabled>🏅 Certificate</button>
+</div>
+<button class="soundbtn" id="soundBtn" title="Tap to replay the voice, or mute / unmute"><span class="sb-ic" id="soundIc">🔊</span><span id="soundLbl">Voice</span></button>
+<button class="gearbtn" id="gearBtn" title="Connect Claude + ElevenLabs"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+<div class="sidebar" id="sidebar">
+  <div class="sb-about" id="aboutBtn" title="Learn about the Legal Affairs Department">
+    <div class="sb-sun"></div>
+    <div><b>About the Department</b><span>Who we are · our Director General</span></div>
+  </div>
+  <div class="sb-cap">The 11 services</div>
+  <div class="sb-list" id="sbList"></div>
+  <div class="sb-foot">Tap a service here or a planet in the galaxy to train. Each one ticks ✓ when certified.</div>
+</div>
+
+<button class="sb-toggle" id="sbToggle">☰ Services</button>
+
+<div class="legend3d" id="legend3d">
+  <div class="lg-t">Reading the galaxy</div>
+  <div class="lg-row"><span class="lg-sun"></span> Sun — about the Department</div>
+  <div class="lg-row" style="margin-top:3px">Each planet is one of the 11 services</div>
+  <div class="lg-moons" style="color:#9fb0cc"><span><i class="lg-dot" style="background:#9fb0cc;color:#9fb0cc"></i>steps</span><span><i class="lg-dot" style="background:#ffd479;color:#ffd479"></i>fee</span><span><i class="lg-dot" style="background:#6aa6ff;color:#6aa6ff"></i>channel</span><span><i class="lg-dot" style="background:#2dd4bf;color:#2dd4bf"></i>docs</span></div>
+</div>
+
+<div class="welcomebar" id="welcomeBar">
+  <div class="wb-orb" id="wbOrb"></div>
+  <div class="wb-role">Your coach</div>
+  <div class="wb-text" id="welcomeText"></div>
+  <button class="wb-skip" id="welcomeSkip">Got it ✓</button>
+</div>
+
+<div class="amodal" id="amodal"><div class="acard">
+  <button class="aclose" id="aClose">&times;</button>
+  <div id="aBody"></div>
+</div></div>
+
+<div class="warp" id="warp"></div>
+<div class="stage" id="stage">
+  <canvas id="voxCanvas"></canvas>
+  <div class="st-top"><div class="phase-rail"><div class="phase" data-ph="learn"><span class="d"></span>Learn &amp; check</div><div class="phase" data-ph="sim"><span class="d"></span>Role-play</div></div></div>
+  <button class="st-exit" id="stExit">Exit to galaxy ✕</button>
+  <div class="st-title" id="stTitle"></div>
+  <div class="board" id="board"></div>
+  <div class="cap-wrap"><span class="orb-dock"><span class="orb" id="orb"></span></span><div class="factpops" id="factPops"></div><div class="cap" id="cap"><span class="capeq" id="capEq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="role" id="capRole">Coach</span><span id="capText"></span></div></div>
+  <div class="coach" id="coach"></div>
+  <div class="listening" id="listening">● listening…</div>
+  <button class="askbtn" id="askBtn">✋ Pause &amp; ask a question</button>
+  <div class="st-controls" id="stControls">
+    <button class="mic" id="stMic" title="Speak"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg></button>
+    <input class="st-input" id="stInput" placeholder="…or type your answer"/>
+    <button class="sbtn go" id="stSubmit">Send</button>
+    <button class="sbtn" id="stSkip">Skip</button>
+  </div>
+  <div class="peek" id="peek"></div>
+</div>
+
+<div class="cmodal" id="cmodal"><div class="cert"><button class="cert-x" onclick="document.getElementById('cmodal').classList.remove('on')">&times;</button>
+  <div class="cert-in">
+    <div class="cert-k">Government of Dubai · Legal Affairs Department</div>
+    <div class="cert-h">Certificate of Completion</div><div class="cert-sub">Service Ambassador Academy</div>
+    <div class="cert-name"><input id="certName" placeholder="Type your name"/></div>
+    <div class="cert-body">has completed voice‑led training across all <b>eleven</b> Legal Affairs Department services — learning each service from the AI coach, passing every skills test and handling live customer simulations — and is hereby certified a <b>Service Ambassador</b>.</div>
+    <div class="cert-foot"><span id="certDate"></span><span>Know our services. Serve with happiness.</span></div>
+  </div>
+  <div class="cert-actions"><button class="btn gold" onclick="window.print()">Print / Save PDF</button><button class="btn ghost" onclick="document.getElementById('cmodal').classList.remove('on')">Close</button></div>
+</div></div>
+
+<div class="kpop" id="kpop"><div class="kcard">
+  <button class="kclose" onclick="document.getElementById('kpop').classList.remove('on')">&times;</button>
+  <h3>Connect your AI coach</h3>
+  <p>The academy works on its own, but for the full <b>talking</b> experience paste a Claude key (conversational teaching + live grading) and an ElevenLabs key (natural voice). Keys stay in your browser only.</p>
+  <label class="pr">① Anthropic API key <span style="opacity:.6">· the coach's brain</span><input type="password" id="kAnthropic" placeholder="sk-ant-…"></label>
+  <label>② ElevenLabs API key <span style="opacity:.6">· natural voice</span><input type="password" id="kEleven" placeholder="optional but recommended"></label>
+  <div style="display:flex;align-items:center;margin-top:6px"><button class="btn" id="kSave">Save &amp; test</button><span class="kstatus" id="kStatus"></span></div>
+</div></div>
+<div id="tip"></div>
+
+<!-- ════════ DATA + DIRECTOR ════════ -->
+<script>
+const SERVICES=[
+ {id:'reg',name:'Registration of Advocates & Legal Consultants',ar:'قيد المحامين والمستشارين القانونيين',who:'Advocates & legal consultants',color:'#6aa6ff',type:'terran',
+  channels:['Legal Professions System (LPS)','Smart App'],desc:"Joining and maintaining a place on the Roll of practising advocates and legal consultants — the gateway to practising law in Dubai.",
+  steps:['Apply on the Legal Professions System or Smart App','The Department reviews the application and documents','Pay the fees','Registration decision and registration card issued'],
+  fees:[{n:'New advocate registration',fee:'AED 2,020',time:'14 working days'},{n:'New legal-consultant registration',fee:'AED 2,020',time:'18 working days'},{n:'Replacement card',fee:'AED 120',time:'1 working day'},{n:"'To whom it may concern' certificate",fee:'AED 220',time:'1 working day'}],
+  note:'New advocates get 50% off the registration fee for their first 3 years.',
+  docs:['University law degree','Passport','Good-conduct certificate','Ministry of Justice training certificate','MOHRE-attested employment contract','CV'],
+  quiz:[{q:'How much is new advocate registration, and how long does it take?',a:'AED 2,020, about 14 working days.',kw:['2,020','2020','14']},
+        {q:'Which channel do they use to register?',a:'The Legal Professions System (LPS) or the Smart App.',kw:['legal professions','lps','smart app']},
+        {q:'Name two documents a new advocate must bring.',a:'Any two of: law degree, passport, good-conduct certificate, MoJ training certificate, MOHRE contract, CV.',kw:['degree','passport','good','ministry','mohre','cv','conduct']}],
+  sims:["I just graduated in law and want to become a registered advocate in Dubai — what do I do?","How much will it cost me to register, and how long does it take?","I've lost my registration card. Can I get a replacement?"]},
+
+ {id:'firm',name:'Licensing of Advocacy & Legal Consultancy Firms',ar:'ترخيص مكاتب المحاماة',who:'Law & consultancy firms',color:'#a78bfa',type:'terran',
+  channels:['Legal Professions System (LPS)','Invest in Dubai'],desc:"Licensing and managing an advocacy or legal-consultancy firm in Dubai — partners, managers, name, address, activities and cessation.",
+  steps:['Apply on the Legal Professions System / Invest in Dubai','The Department reviews the application','Pay the fees','No-objection certificate and professional licence issued'],
+  fees:[{n:'New firm licence',fee:'AED 3,020 (AED 3,000 per partner)',time:'20 working days'},{n:'Firm licence renewal',fee:'AED 3,000 per advocate/consultant',time:'1 working day'},{n:'Amend licence',fee:'AED 1,020',time:'5 working days'},{n:'Temporary / permanent cessation',fee:'No fee',time:'5 working days'}],
+  note:'New advocates get 50% off the licence fees for their first 3 years.',
+  docs:['Experience certificate (advocates under 2 years)','Undertaking naming a UAE-national managing advocate (offices outside Dubai)','Signed acceptance from the proposed manager','Proof the manager has 2+ years experience'],
+  quiz:[{q:'How much is a new firm licence, and how long does it take?',a:'AED 3,020 (AED 3,000 per partner for companies), about 20 working days.',kw:['3,020','3020','3,000','3000','20']},
+        {q:'Where does a firm apply for its licence?',a:'The Legal Professions System or Invest in Dubai.',kw:['legal professions','lps','invest in dubai']},
+        {q:'Can a firm add a partner later, and how?',a:'Yes — amend the licence on the Legal Professions System (AED 1,020).',kw:['amend','partner','legal professions','1,020','1020']}],
+  sims:["My partners and I want to open a new law firm in Dubai. How does licensing work?","We need to add a new partner to our firm's licence — what's the process?","How much is it to renew our firm licence each year?"]},
+
+ {id:'fines',name:'Violations & Fines',ar:'المخالفات والغرامات',who:'Advocates & legal consultants',color:'#f472b6',type:'rocky',
+  channels:['Legal Professions System (LPS)','Smart App'],desc:"Settling professional fines, arranging instalments, or grieving a decision to impose a fine.",
+  steps:['Submit the payment, settlement or grievance on the LPS','The Grievances Committee reviews (for grievances)','A decision is issued and the person is notified'],
+  fees:[{n:'Pay a fine',fee:'Fine amount',time:'Immediate'},{n:'Amicable settlement',fee:'No fee',time:'5 working days'},{n:'Pay by instalments',fee:'No fee',time:'5 working days'},{n:'Grievance against a fine',fee:'No fee',time:'60 working days'}],
+  note:'',docs:['A written grievance stating the reasons','Any supporting documents'],
+  quiz:[{q:'Can a lawyer pay a fine in instalments, and does it cost extra?',a:'Yes — instalments and amicable settlement are available at no fee.',kw:['instalment','installment','no fee','free','settle']},
+        {q:'If they think a fine is unfair, what can they do?',a:'Lodge a grievance — no fee, up to 60 working days.',kw:['grievance','dispute','appeal','60']},
+        {q:'Which channel handles fines?',a:'The Legal Professions System or Smart App.',kw:['legal professions','lps','smart app']}],
+  sims:["I received a professional fine but I can't pay it all at once. What are my options?","I think this fine is completely unfair — can I challenge it?","Where do I actually go to pay a fine?"]},
+
+ {id:'probono',name:'Voluntary Legal Services (Pro Bono)',ar:'الخدمات القانونية التطوعية',who:'Members of the public',color:'#34d399',type:'terran',
+  channels:['Voluntary Legal Services Smart Portal','Smart App','DubaiNow'],desc:"A free service connecting members of the public to volunteering lawyers — 395 lawyers across 48 areas of law.",
+  steps:['Register on the Voluntary Legal Services Smart Portal','Choose the area of law and preferred language','Pick an available firm and a convenient time','Receive the free legal consultation'],
+  fees:[{n:'Ask a lawyer (free legal advice)',fee:'Free',time:'Instant'}],note:'395 volunteer lawyers across 48 areas of law.',docs:['None'],
+  quiz:[{q:'What does Pro Bono legal advice cost the public?',a:'It is completely free.',kw:['free','no cost','no fee']},
+        {q:'Where does a member of the public register for it?',a:'The Voluntary Legal Services Smart Portal (also Smart App / DubaiNow).',kw:['voluntary','smart portal','smart app','dubainow']},
+        {q:'Who is allowed to use Pro Bono?',a:'Any member of the public.',kw:['public','anyone','everyone']}],
+  sims:["I have a legal problem but I really can't afford a lawyer. Is there any help?","Does the free legal advice cost anything at all?","I only speak Urdu — can I still get the free advice?"]},
+
+ {id:'clpd',name:'Professional Training & Development (CLPD)',ar:'التدريب والتطوير المهني',who:'Advocates · consultants · providers',color:'#c084fc',type:'ice',
+  channels:['CLPD Portal'],desc:"The Continuing Legal Professional Development programme — registering for CLPD activities; providers become accredited and accredit courses.",
+  steps:['Log in to the CLPD Portal','Buy enough units','Choose the development activity','Choose the date and time','Register for the activity'],
+  fees:[{n:'Register in a CLPD activity',fee:'AED 1,050 (1,000 + 50 VAT)',time:'1 day'},{n:'Provider accreditation',fee:'No fee',time:'30 days'},{n:'Course accreditation',fee:'No fee',time:'30 days'}],note:'',docs:['Not applicable'],
+  quiz:[{q:'How much is registering in a CLPD activity?',a:'AED 1,050 (1,000 + 50 VAT).',kw:['1,050','1050']},
+        {q:'What does provider or course accreditation cost?',a:'No fee, about 30 days.',kw:['no fee','free','30']},
+        {q:'Which channel is used for CLPD?',a:'The CLPD Portal.',kw:['clpd portal','clpd']}],
+  sims:["I run a training company and want to deliver accredited CLPD courses — what's the process?","How much does it cost to register for a CLPD activity?","Where do I sign up for CLPD?"]},
+
+ {id:'rep',name:'Representation in Government Cases',ar:'التمثيل في الدعاوى الحكومية',who:'Dubai Government entities',color:'#22d3ee',type:'gas',
+  channels:['Central Legal Services Portal (Gov Portal)'],desc:"The Department representing the Government and its entities before the courts and in arbitration.",
+  steps:['The entity submits the request via the Gov Portal or email','The Department takes up the representation','Amicable settlement, or a final judgment/order'],
+  fees:[{n:'Representation in civil, criminal or arbitration cases',fee:'No fee',time:'Tied to the final judgment'}],note:'For Dubai Government entities only.',docs:['Government request form/letter with supporting documents'],
+  quiz:[{q:'Who is this service for?',a:'Dubai Government entities.',kw:['government','entity','entities']},
+        {q:'What does representation cost the entity?',a:'No fee.',kw:['no fee','free']},
+        {q:'Which channel is used?',a:'The Central Legal Services Portal — the Gov Portal.',kw:['gov portal','central legal services']}],
+  sims:["Our government department is being taken to court. Can the Department represent us?","Do you handle arbitration cases for us too?","What does it cost our entity to be represented?"]},
+
+ {id:'exec',name:'Execution of Judgments & Instruments',ar:'تنفيذ الأحكام والسندات',who:'Government entities · individuals',color:'#fb923c',type:'rocky',
+  channels:['Gov Portal','Email'],desc:"Executing judgments and instruments — cheques, administrative resolutions, criminal judgments — for or against the Government, entities and individuals.",
+  steps:['Submit via the Gov Portal or email with the judgment and its executory wording','The Department prepares and approves the enforcement letter','The entity is notified and complies — settlement, or the claim is registered'],
+  fees:[{n:'Execution of cheques',fee:'No fee',time:'Varies by case'},{n:'Execution of judgments against individuals',fee:'No fee',time:'60 working days'}],note:'',
+  docs:['Copy of the cheque','Bank return notice (with reason)','Certified translation of the cheque and bank notice','ID or company licence of the defendant'],
+  quiz:[{q:'What does executing a cheque cost?',a:'No fee.',kw:['no fee','free']},
+        {q:'A non-Arabic cheque needs what extra document?',a:'A certified translation.',kw:['translation','translate','certified']},
+        {q:'Which channel handles execution?',a:'The Gov Portal or email.',kw:['gov portal','email']}],
+  sims:["A customer wants to execute a cheque through the Department — how does that work?","What documents are needed to execute a cheque?","How long does executing a judgment against an individual take?"]},
+
+ {id:'govsup',name:'Government Legal Support',ar:'الدعم القانوني الحكومي',who:'Dubai Government entities',color:'#60a5fa',type:'terran',
+  channels:['Central Legal Services Portal (Gov Portal)'],desc:"End-to-end legal support for government bodies — legislation, advice, company governance, IP, and contracts.",
+  steps:['Submit the request via the Gov Portal or email','The Department classifies and works the request','The output is delivered — a draft law, contract or legal observations'],
+  fees:[{n:'Legislative support',fee:'No fee',time:'10–30 working days'},{n:'Legal advice',fee:'No fee',time:'10–20 working days'},{n:'Contract drafting / review',fee:'No fee',time:'First response 5–30 working days'}],note:'No LAD fee (Ministry of Economy fees may apply for IP).',
+  docs:['Official request from the government entity','The draft legislation or contract to prepare or review'],
+  quiz:[{q:'A government entity needs a contract reviewed — does it cost anything, and how long?',a:'No fee; typically 5–30 working days.',kw:['no fee','free','30','5']},
+        {q:'Name two things this service covers.',a:'Any two of: legislation, legal advice, governance, IP, contracts.',kw:['legislat','advice','contract','governance','ip']},
+        {q:'Which channel is used?',a:'The Central Legal Services Portal — the Gov Portal.',kw:['gov portal','central legal services']}],
+  sims:["We need a contract reviewed urgently for our government entity. Can you help, and how long?","Can the Department help us draft a new regulation?","Is there any fee for legal advice to a government entity?"]},
+
+ {id:'complaints',name:'Government & Legal Professional Complaints',ar:'الشكاوى الحكومية والمهنية',who:'Public · private organisations',color:'#f87171',type:'rocky',
+  channels:['Website','Smart App'],desc:"Raising a claim against a government entity (Law No. 16 of 2025 — no fees, amicable settlement), or complaining about an advocate or legal consultant for the Professional Conduct process.",
+  steps:['File via the website, Smart App or in person','Amicable settlement is attempted (negotiation or mediation)','A settlement agreement or certificate of compliance is issued'],
+  fees:[{n:'Claim against a government entity',fee:'No fee',time:'Up to 60 working days'},{n:'Complaint against an advocate / consultant',fee:'No fee',time:'Up to 60 working days'}],
+  note:'Government claims fall under Law No. 16 of 2025. The Department does NOT handle criminal matters — redirect those to Dubai Police / Public Prosecution.',
+  docs:['A signed statement of claim (name, ID, contact)','The respondent entity name','The subject, details and grounds of the claim','ID of the complainant'],
+  quiz:[{q:'A complaint about a lawyer goes to which process?',a:'The Professional Conduct process.',kw:['professional conduct','conduct']},
+        {q:'Does the Department handle criminal complaints?',a:'No — redirect to Dubai Police or Public Prosecution.',kw:['no','police','prosecution','redirect']},
+        {q:'What does a claim against a government entity cost?',a:'No fee — resolved by amicable settlement under Law No. 16 of 2025.',kw:['no fee','free','amicable','16']}],
+  sims:["A lawyer treated me badly and took my money — I'm furious. What can I do?","I want to make a claim against a government department. How does that work?","My neighbour assaulted me — I want to file a criminal case here."]},
+
+ {id:'monitor',name:'Monitoring & Inspection',ar:'الرقابة والتفتيش',who:'Public · the profession',color:'#fbbf24',type:'rocky',
+  channels:['Report','Field inspection'],desc:"Safeguarding the profession — reporting unlicensed legal practice and flagging breaches of professional conduct rules.",
+  steps:['Report the suspected unlicensed practice to the Department','The Department reviews and inspects','Action is taken where a breach is confirmed'],
+  fees:[{n:'Report unlicensed practice / conduct breach',fee:'No fee',time:'Reporting 24/7'}],note:'',docs:['Details of the person or activity being reported','Any supporting evidence'],
+  quiz:[{q:'Does reporting unlicensed practice cost anything?',a:'No — it is free and open 24/7.',kw:['no fee','free','24']},
+        {q:'Which service handles unlicensed-practice reports?',a:'Monitoring & Inspection.',kw:['monitoring','inspection']},
+        {q:'What should a report include?',a:'Details of the activity and any supporting evidence.',kw:['details','evidence','name']}],
+  sims:["I think someone is practising law without a licence. Can I report them?","Does it cost anything to make a report?","What information should I include in my report?"]},
+
+ {id:'directory',name:'Informational Services — Legal Directory',ar:'الخدمات المعلوماتية',who:'Everyone',color:'#2dd4bf',type:'ice',
+  channels:['Website','Smart App'],desc:"The Advocates & Legal Consultants Directory — verifying whether an advocate, consultant or firm is registered/licensed in Dubai by searching a name.",
+  steps:['Open the Advocates & Legal Consultants Directory on the website','Search by the person or firm name','View the registration / licensing status'],
+  fees:[{n:'Search advocates, consultants & firms',fee:'Free',time:'Instant'}],note:'Free and instant, available to everyone.',docs:['None'],
+  quiz:[{q:'What does a Directory search cost?',a:'It is free and instant.',kw:['free','instant','no fee']},
+        {q:'Who can use the Directory?',a:'Everyone.',kw:['everyone','anyone','public']},
+        {q:'How do you verify a firm is licensed?',a:'Search the Advocates & Legal Consultants Directory by name.',kw:['directory','search','name']}],
+  sims:["How do I check that 'XYZ Law Firm' is actually licensed before I hire them?","Is there a fee to search the directory?","Can anyone use the directory, or just lawyers?"]}
+];
+
+const QEXTRA={
+ reg:[{q:"What discount do new advocates get on the registration fee?",a:"50% off for their first three years.",kw:['50','half','three','3 year']},{q:"What does a 'to whom it may concern' certificate cost?",a:"220 dirhams, issued in one working day.",kw:['220','1 day','one day']},{q:"Who is the registration service for?",a:"Advocates and legal consultants.",kw:['advocate','consultant']}],
+ firm:[{q:"How long does a firm licence renewal take?",a:"One working day.",kw:['1 day','one day','working day']},{q:"What does temporary or permanent cessation cost?",a:"No fee, about five working days.",kw:['no fee','free','5','five']}],
+ fines:[{q:"How long can a grievance against a fine take?",a:"Up to 60 working days.",kw:['60','sixty']},{q:"Who is the violations and fines service for?",a:"Advocates and legal consultants.",kw:['advocate','consultant']}],
+ probono:[{q:"How many lawyers and areas of law does Pro Bono cover?",a:"395 volunteer lawyers across 48 areas of law.",kw:['395','48']},{q:"Can the public choose their language for the advice?",a:"Yes — they pick the area of law and their preferred language.",kw:['language','area']}],
+ clpd:[{q:"Who is the CLPD programme for?",a:"Advocates, consultants and training providers.",kw:['advocate','consultant','provider']},{q:"How long does provider accreditation take?",a:"About 30 days.",kw:['30','thirty']}],
+ rep:[{q:"Name a type of case the Department represents the government in.",a:"Civil, criminal or arbitration cases.",kw:['civil','criminal','arbitration']}],
+ exec:[{q:"How long can executing a judgment against an individual take?",a:"Up to 60 working days.",kw:['60','sixty']},{q:"Who can use the execution service?",a:"Government entities and individuals.",kw:['government','individual','entit']}],
+ govsup:[{q:"How long does legal advice for a government entity take?",a:"About 10 to 20 working days.",kw:['10','20']},{q:"Who is Government Legal Support for?",a:"Dubai Government entities.",kw:['government','entit']}],
+ complaints:[{q:"How are claims against a government entity resolved?",a:"By amicable settlement — negotiation or mediation, with no fee.",kw:['amicable','settlement','negotiation','mediation']},{q:"Within how long is a government claim referred to the entity?",a:"Within five working days, with a 15-day response window.",kw:['5','five','15']}],
+ monitor:[{q:"When can you report unlicensed practice?",a:"Any time — reporting is open 24/7.",kw:['24','anytime','any time']},{q:"Who can report unlicensed legal practice?",a:"Anyone — the public and the profession.",kw:['public','anyone','profession']}],
+ directory:[{q:"How quickly does a directory search return a result?",a:"Instantly.",kw:['instant','immediately']},{q:"What can you search the directory by?",a:"By the person's or the firm's name.",kw:['name','firm']}]
+};
+SERVICES.forEach(s=>{if(QEXTRA[s.id])s.quiz=s.quiz.concat(QEXTRA[s.id]);});
+
+/* ════ About the Department (the Sun) — sourced from legal.dubai.gov.ae ════ */
+const ABOUT={
+  name:"The Government of Dubai Legal Affairs Department",
+  ar:"دائرة الشؤون القانونية لحكومة دبي",
+  dg:"His Excellency Dr. Lowai Mohamed Belhoul",
+  dgTitle:"Director General",
+  who:"It serves Dubai's government entities, the legal profession and the public.",
+  vision:"Excellence in government legal work — pioneering the future of legal services.",
+  mission:"To enhance the level of legal services provided to those who deal with the Department, in line with international best practice.",
+  values:["Transparency","Integrity","Reliability","Innovation","Proactivity"],
+  role:[
+    "Provides legal advice and drafts legislation for Dubai Government entities.",
+    "Represents the Government in civil, criminal and arbitration cases.",
+    "Regulates and licenses the legal profession — advocates and legal consultants.",
+    "Runs Continuing Legal Professional Development (CLPD) for the profession.",
+    "Resolves complaints and claims against government entities by amicable settlement.",
+    "Offers Pro Bono legal advice to the public and monitors unlicensed practice."
+  ],
+  strategy:{
+    title:"2026–2028 Strategy",
+    intro:"A roadmap to reinforce Dubai's position as a global model for the rule of law.",
+    pillars:[
+      "Effectiveness of legal practice — integrating emerging technologies and AI across services to lift quality, efficiency and customer experience.",
+      "Strategic partnerships — empowering the legal professional sector to reach the highest levels of competitiveness.",
+      "Training, qualification and knowledge transfer — meeting the demands of a global investment climate."
+    ]
+  },
+  motto:"Know our services. Serve with happiness."
+};
+window.ABOUT=ABOUT;
+
+const LS='academy_v2';
+let progress=load();
+function load(){try{const s=JSON.parse(localStorage.getItem(LS));if(s)return s;}catch(e){}return {};}
+function save(){try{localStorage.setItem(LS,JSON.stringify(progress));}catch(e){}if(window.AUTH&&AUTH.hosted&&AUTH.token)queueSync();}
+function P(id){return progress[id]||(progress[id]={quiz:false,sim:false});}
+function certified(id){const p=P(id);return p.quiz&&p.sim;}
+function certCount(){return SERVICES.filter(s=>certified(s.id)).length;}
+function findS(id){return SERVICES.find(s=>s.id===id);}
+function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function shortName(s){return s.name.split(' (')[0].split(' — ')[0];}
+function dirhams(t){return String(t==null?'':t).replace(/AED\s*([\d.,]+)/gi,'$1 Dirhams').replace(/\bAED\b/gi,'Dirhams');}
+function key(){const f=document.getElementById('kAnthropic');return window.ORBIT_CONFIG.anthropicKey||(f?f.value.trim():'')||'';}
+
+function updateHUD(){const n=certCount();document.getElementById('progN').textContent=n;document.getElementById('progFill').style.width=Math.round(n/11*100)+'%';const cb=document.getElementById('certBtn');cb.disabled=n<11;cb.textContent=n<11?('🏅 Certificate ('+n+'/11)'):'🏅 Get certificate';renderSidebar();if(window.orbit3d)window.orbit3d.refresh();}
+function renderSidebar(){const el=document.getElementById('sbList');if(!el)return;
+  el.innerHTML=SERVICES.map((s,i)=>{const cert=certified(s.id),p=P(s.id),prog=!cert&&(p.quiz||p.sim);
+    const cls=cert?'done':(prog?'prog':'');const tick=cert?'✓':(prog?'◐':(i+1));
+    return '<div class="sb-item '+cls+'" data-id="'+s.id+'"><span class="sb-tick">'+tick+'</span><span class="sb-name">'+esc(shortName(s))+'</span></div>';}).join('');
+  el.querySelectorAll('.sb-item').forEach(it=>it.addEventListener('click',()=>{document.getElementById('sidebar').classList.remove('open');if(window.enterPlanet)window.enterPlanet(it.getAttribute('data-id'));}));
+}
+function openAbout(){const A=ABOUT;
+  const h='<div class="a-k">'+esc(A.name)+'</div>'+
+    '<h2>About the Department</h2><div class="a-ar">'+esc(A.ar)+'</div>'+
+    '<div class="a-dg"><div class="a-av">'+esc(A.dg.replace(/^His Excellency\s*/,'').replace(/^Dr\.\s*/,'').trim().charAt(0))+'</div><div><b>'+esc(A.dg)+'</b><small>'+esc(A.dgTitle)+'</small></div></div>'+
+    '<div class="a-sec"><h4>Who we are</h4><p>'+esc(A.who)+'</p></div>'+
+    '<div class="a-sec"><h4>Vision</h4><p>'+esc(A.vision)+'</p></div>'+
+    '<div class="a-sec"><h4>Mission</h4><p>'+esc(A.mission)+'</p></div>'+
+    '<div class="a-sec"><h4>Our values</h4><div class="a-vals">'+A.values.map(v=>'<span>'+esc(v)+'</span>').join('')+'</div></div>'+
+    '<div class="a-sec"><h4>What we do</h4><ul>'+A.role.map(r=>'<li>'+esc(r)+'</li>').join('')+'</ul></div>'+
+    '<div class="a-sec"><h4>'+esc(A.strategy.title)+'</h4><p>'+esc(A.strategy.intro)+'</p><ul>'+A.strategy.pillars.map(r=>'<li>'+esc(r)+'</li>').join('')+'</ul></div>'+
+    '<div class="a-sec"><p style="color:var(--gold);font-family:var(--serif);font-size:18px">'+esc(A.motto)+'</p></div>';
+  document.getElementById('aBody').innerHTML=h;
+  document.getElementById('amodal').classList.add('on');
+}
+window.openAbout=openAbout;
+document.getElementById('aboutBtn').addEventListener('click',()=>{document.getElementById('sidebar').classList.remove('open');enterAbout();});
+document.getElementById('sbToggle').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
+document.getElementById('aClose').addEventListener('click',()=>document.getElementById('amodal').classList.remove('on'));
+document.getElementById('amodal').addEventListener('click',e=>{if(e.target.id==='amodal')e.currentTarget.classList.remove('on');});
+
+/* ════ Claude + voice helpers ════ */
+async function callClaude(messages,system,model){return fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'x-api-key':key(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},body:JSON.stringify({model:model||window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6',max_tokens:900,system,messages})});}
+async function claudeText(messages,system){system=(system||'')+langDirective();
+  // 1) hardwired backend coach — works for every signed-in trainee with nothing to configure
+  try{
+    const tok=(window.AUTH&&window.AUTH.token)||'';
+    const r=await fetch('/api/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,system,token:tok,model:window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6'})});
+    if(r.ok){const j=await r.json();const t=(j.text||'').trim();if(t)return t;}
+  }catch(e){}
+  // 2) fallback: direct Anthropic with a user-supplied key (offline preview / manual override)
+  if(!key())return null;const models=[window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6','claude-sonnet-4-6','claude-opus-4-8','claude-haiku-4-5-20251001'].filter((m,i,a)=>a.indexOf(m)===i);
+  for(const m of models){try{const r=await callClaude(messages,system,m);if(r.ok){const j=await r.json();window.ORBIT_CONFIG.anthropicModel=m;return (((j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n'))||'').trim();}if(r.status===401||r.status===403)break;}catch(e){break;}}return null;}
+function facts(s){return JSON.stringify({service:s.name,for:s.who,channels:s.channels,about:s.desc,steps:s.steps,fees:s.fees,note:s.note,documents:s.docs});}
+
+let curAudio=null,_audioEl=null,_actx=null,_curSrc=null,_unmuteEl=null;
+// iOS / mobile: prefer an unlocked HTML <audio> element (plays as media, ignores the ring/silent
+// switch — the reason other sites have sound) over Web Audio (which the silent switch mutes).
+const _isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const _mobAudio=_isiOS||(navigator.maxTouchPoints>1&&innerWidth<1024);
+// Web Audio context — used on desktop and as the mobile fallback.
+function getCtx(){if(_actx===null){try{_actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){_actx=false;}}return _actx||null;}
+function getAudioEl(){if(!_audioEl){_audioEl=new Audio();_audioEl.setAttribute('playsinline','');_audioEl.setAttribute('webkit-playsinline','');_audioEl.preload='auto';_audioEl.style.display='none';try{document.body.appendChild(_audioEl);}catch(e){}}return _audioEl;}
+function bufToB64(buf){let bin='';const b=new Uint8Array(buf),ch=0x8000;for(let i=0;i<b.length;i+=ch){bin+=String.fromCharCode.apply(null,b.subarray(i,i+ch));}return btoa(bin);}
+function stopAudio(){if(_curSrc){try{_curSrc.onended=null;_curSrc.stop();}catch(e){}_curSrc=null;}if(_audioEl){try{_audioEl.onended=null;_audioEl.onerror=null;_audioEl.onloadedmetadata=null;_audioEl.pause();}catch(e){}}curAudio=null;_play=null;if(window.speechSynthesis)window.speechSynthesis.cancel();}
+// ── real playback clock: lets the lesson visuals sync to the coach's actual voice (real start + real duration) ──
+let _play=null;let _playSubs=[];
+function emitPlay(dur,el){_play={t0:performance.now(),dur:(isFinite(dur)&&dur>0?dur:0),el:el||null};const subs=_playSubs;_playSubs=[];subs.forEach(fn=>{try{fn(_play);}catch(e){}});}
+function onPlayStart(fn){if(_play&&_play.dur)fn(_play);else _playSubs.push(fn);}
+function playPos(){if(!_play)return 0;if(_play.el&&isFinite(_play.el.currentTime))return _play.el.currentTime;return (performance.now()-_play.t0)/1000;}
+// shared analyser tapped off the coach's voice — drives the reactive particle field
+let _analyser=null,_voxFreq=null;
+function getAnalyser(c){if(!c)return null;if(!_analyser){try{_analyser=c.createAnalyser();_analyser.fftSize=256;_analyser.smoothingTimeConstant=0.82;_analyser.connect(c.destination);_voxFreq=new Uint8Array(_analyser.frequencyBinCount);}catch(e){_analyser=null;}}return _analyser;}
+function voxLevel(){
+  // speaking-driven envelope (no audio-graph tap, so nothing can interfere with playback)
+  return _voiceSpeaking?(0.42+0.22*Math.sin(performance.now()/130)+0.16*Math.sin(performance.now()/47)+0.08*Math.random()):0;
+}
+// Unlock audio on the first user gesture so the coach's voice plays on phones (autoplay is blocked until then).
+let _audioPrimed=false;const _silentClip='data:audio/wav;base64,UklGRvQHAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YdAHAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==';
+function primeAudio(){if(_audioPrimed)return;_audioPrimed=true;adbg('prime: gesture unlocked');
+  try{const c=getCtx();adbg('ctx created: '+(c?c.state:'NONE'));if(c){if(c.state==='suspended')c.resume();const b=c.createBuffer(1,1,22050),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start(0);
+    // keep-alive: a permanent silent looping source so iOS never auto-suspends the context before speech arrives
+    const kb=c.createBuffer(1,Math.max(1,Math.ceil(c.sampleRate*0.5)),c.sampleRate),ks=c.createBufferSource();ks.buffer=kb;ks.loop=true;const g=c.createGain();g.gain.value=0;ks.connect(g);g.connect(c.destination);ks.start(0);}}catch(e){}
+  // keep a looping silent element playing: holds iOS in "playback" audio session so sound isn't killed by the mute switch or context auto-suspend
+  try{if(!_unmuteEl){_unmuteEl=new Audio(_silentClip);_unmuteEl.loop=true;_unmuteEl.setAttribute('playsinline','');_unmuteEl.style.display='none';try{document.body.appendChild(_unmuteEl);}catch(e){}}_unmuteEl.play().catch(()=>{});}catch(e){}
+  try{const a=getAudioEl();a.src=_silentClip;const p=a.play();if(p&&p.then)p.then(()=>{try{a.pause();a.currentTime=0;}catch(e){}}).catch(()=>{});}catch(e){}
+  try{if(window.speechSynthesis){window.speechSynthesis.resume();const u=new SpeechSynthesisUtterance(' ');u.volume=0;window.speechSynthesis.speak(u);}}catch(e){}}
+['pointerdown','touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,primeAudio,true));
+function stripMd(t){return (t||'').replace(/\*\*(.+?)\*\*/g,'$1').replace(/\*(.+?)\*/g,'$1').replace(/`+/g,'').replace(/[#>_]/g,'').replace(/\s+/g,' ').trim();}
+// On-screen audio diagnostic (only when explicitly enabled with ?adbg=1; off for normal users)
+try{if(/[?&]adbg/.test(location.search))localStorage.setItem('adbg','1');}catch(_){}
+function adbg(m){try{if(!/[?&]adbg/.test(location.search)&&localStorage.getItem('adbg')!=='1')return;let e=document.getElementById('adbg');if(!e){e=document.createElement('div');e.id='adbg';e.style.cssText='position:fixed;left:6px;bottom:6px;z-index:99999;font:11px/1.45 monospace;color:#7dffa0;background:rgba(0,0,0,.8);padding:5px 8px;border-radius:6px;max-width:92vw;white-space:pre-wrap;pointer-events:none';document.body.appendChild(e);}e._log=((e._log||'')+'\n'+m).split('\n').slice(-7).join('\n');e.textContent=e._log;}catch(_){}}
+let _voiceMuted=false,_voiceSpeaking=false,_lastSpoken='';
+function speakAsync(text,onEnd){
+  stopAudio();text=stripMd(text).replace(/AED\s*([\d.,]+)/g,isAr()?'$1 درهم':'$1 dirhams').replace(/\bAED\b/g,isAr()?'درهم':'dirhams');
+  _lastSpoken=text;
+  let done=false;const finish=()=>{if(done)return;done=true;_play=null;_setVoiceState('idle');onEnd();};
+  if(_voiceMuted){adbg('muted — skip');setTimeout(finish,Math.min(2600,Math.max(700,text.length*22)));return;}
+  let safety=setTimeout(finish,Math.max(4000,text.length*95));   // generous fallback only
+  const webAudioPlay=(buf,onFail)=>{
+    const c=getCtx();
+    if(!c){adbg('no ctx');(onFail||(()=>browserSpeak(text,finish)))();return;}
+    try{if(c.state==='suspended')c.resume();}catch(e){}
+    let copy;try{copy=buf.slice(0);}catch(e){copy=buf;}
+    try{
+      c.decodeAudioData(copy,(audioBuf)=>{
+        try{ if(_curSrc){try{_curSrc.onended=null;_curSrc.stop();}catch(e){}}
+          const s=c.createBufferSource();s.buffer=audioBuf;s.connect(c.destination);_curSrc=s;curAudio=s;
+          clearTimeout(safety);safety=setTimeout(finish,audioBuf.duration*1000+2500);
+          s.onended=()=>{clearTimeout(safety);finish();};
+          if(c.state==='suspended')c.resume();
+          s.start(0);emitPlay(audioBuf.duration,null);_setVoiceState('play');adbg('▶ webaudio start ('+audioBuf.duration.toFixed(1)+'s) ctx='+c.state);
+        }catch(e){adbg('webaudio play err: '+(e&&e.message));(onFail||(()=>browserSpeak(text,finish)))();}
+      },(err)=>{adbg('decode FAIL');(onFail||(()=>browserSpeak(text,finish)))();});
+    }catch(e){adbg('decode threw');(onFail||(()=>browserSpeak(text,finish)))();}
+  };
+  const htmlPlay=(buf,onFail)=>{
+    const fail=onFail||(()=>browserSpeak(text,finish));
+    const a=getAudioEl();curAudio=a;a.muted=false;a.volume=1;
+    a.onloadedmetadata=()=>{if(isFinite(a.duration)&&a.duration>0){clearTimeout(safety);safety=setTimeout(finish,a.duration*1000+2500);}};
+    a.onplaying=()=>{emitPlay(a.duration,a);_setVoiceState('play');adbg('html playing dur='+(isFinite(a.duration)?a.duration.toFixed(1):'?'));};
+    a.onended=()=>{clearTimeout(safety);finish();};
+    a.onerror=()=>{clearTimeout(safety);adbg('html error → fallback');fail();};
+    // data: URI is more reliable than a blob URL on iOS WebKit
+    try{a.src='data:audio/mpeg;base64,'+bufToB64(buf);}catch(e){a.src=URL.createObjectURL(new Blob([buf],{type:'audio/mpeg'}));}
+    a.load();const p=a.play();adbg('▶ html audio play');if(p&&p.catch)p.catch((e)=>{_setVoiceState('blocked');adbg('html play blocked: '+(e&&e.name)+' → fallback');clearTimeout(safety);fail();});
+  };
+  const playBuf=(buf)=>{
+    const c=getCtx();adbg('audio '+(buf&&buf.byteLength)+'B, ctx='+(c?c.state:'none')+(_mobAudio?' [mob]':''));
+    // On mobile, play through the unlocked media element first (ignores the silent switch);
+    // if that fails, fall back to Web Audio, then browser speech.
+    if(_mobAudio){adbg('mobile → html first');htmlPlay(buf,()=>webAudioPlay(buf));return;}
+    // Desktop: Web Audio first, HTML element as fallback.
+    webAudioPlay(buf,()=>htmlPlay(buf));
+  };
+  const directEleven=()=>{const ek=window.ORBIT_CONFIG.elevenKey;
+    if(ek){fetch('https://api.elevenlabs.io/v1/text-to-speech/'+(isAr()?(window.ORBIT_CONFIG.elevenVoiceAr||window.ORBIT_CONFIG.elevenVoice):window.ORBIT_CONFIG.elevenVoice)+'?output_format=mp3_44100_128',{method:'POST',headers:{'xi-api-key':ek,'Content-Type':'application/json'},body:JSON.stringify({text,model_id:isAr()?'eleven_multilingual_v2':'eleven_turbo_v2_5',voice_settings:{stability:0.45,similarity_boost:0.8,style:0.4,use_speaker_boost:true}})}).then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(playBuf).catch(()=>{clearTimeout(safety);browserSpeak(text,finish);});}
+    else{clearTimeout(safety);browserSpeak(text,finish);}};
+  // 1) hardwired backend voice (ElevenLabs via server) — no per-user keys
+  const tok=(window.AUTH&&window.AUTH.token)||'';adbg('tts request…');_setVoiceState('load');
+  fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,token:tok,lang:LANG})}).then(r=>{adbg('tts HTTP '+r.status);return r.ok?r.json():Promise.reject(r.status);}).then(j=>{
+    const bin=atob(j.audio||'');const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);playBuf(arr.buffer);
+  }).catch((st)=>{adbg('tts failed ('+st+') → fallback');_setVoiceState('noserver');directEleven();});  // 2) fallback: user key direct, else browser speech
+}
+function browserSpeak(text,done){adbg('browser speech');
+  // Guarantee the callback fires even if speechSynthesis never reports onend (common on iOS Chrome) —
+  // otherwise the lesson await never resolves, the session never clears, and clicks get blocked.
+  let fired=false;const fin=()=>{if(fired)return;fired=true;done();};
+  const estDur=Math.max(3.2,((text||'').match(/\S+/g)||[]).length*0.36);
+  const guard=setTimeout(fin,Math.max(3500,text.length*70));
+  if(!window.speechSynthesis){emitPlay(estDur,null);clearTimeout(guard);fin();return;}
+  try{const u=new SpeechSynthesisUtterance(text);u.rate=1.02;u.lang=isAr()?'ar-AE':'en-US';const vs=window.speechSynthesis.getVoices();const p=vs.find(v=>isAr()?(v.lang||'').toLowerCase().startsWith('ar'):(/Natural|Aria|Ava|Jenny|Google US English|Samantha/i.test(v.name)&&(v.lang||'').toLowerCase().startsWith('en')));if(p)u.voice=p;u.onstart=()=>emitPlay(estDur,null);u.onend=()=>{clearTimeout(guard);fin();};u.onerror=()=>{clearTimeout(guard);fin();};window.speechSynthesis.speak(u);setTimeout(()=>{if(!_play)emitPlay(estDur,null);},350);}catch(e){clearTimeout(guard);fin();}}
+if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){};window.speechSynthesis.getVoices();}
+// First-time spoken welcome shown in the galaxy
+function playWelcome(){
+  const txt=T("Welcome to the Service Ambassador Academy. Each planet you can see is one of the eleven Legal Affairs Department services. To complete the course and earn your certificate, you'll need to visit every planet and pass its training. A great place to begin is the Sun at the centre — tap it to learn about the Department itself. Whenever you're ready, choose a planet and dive in.","مرحباً فيك في أكاديمية سفراء الخدمة. كل كوكب تشوفه هو وحدة من إحدى عشرة خدمة لدائرة الشؤون القانونية. عشان تكمّل الدورة وتاخذ شهادتك، لازم تزور كل كوكب وتنجح في تدريبه. أحلى بداية هي الشمس في النص — اضغط عليها تعرف عن الدائرة. ووقت ما تجهز، اختر كوكب وابدأ.");
+  const bar=document.getElementById('welcomeBar');if(!bar)return;
+  document.getElementById('welcomeText').textContent=txt;bar.classList.add('on');
+  let hidden=false;const hide=()=>{if(hidden)return;hidden=true;try{stopAudio();}catch(e){}bar.classList.remove('on');};
+  const sk=document.getElementById('welcomeSkip');if(sk)sk.onclick=hide;
+  try{speakAsync(txt,()=>{setTimeout(hide,800);});}catch(e){setTimeout(hide,9000);}
+}
+
+/* speech recognition */
+let recog=null,recognising=false,onUserFinal=null;
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(SR){recog=new SR();recog.lang='en-US';recog.interimResults=true;recog.continuous=false;
+  recog.onend=()=>{recognising=false;document.getElementById('stMic').classList.remove('live');};
+  recog.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript;document.getElementById('stInput').value=t;if(e.results[e.results.length-1].isFinal&&onUserFinal){onUserFinal(t);}};}
+
+/* ════ Stage UI ════ */
+const stage=document.getElementById('stage');
+function setOrb(mode){const o=document.getElementById('orb');o.classList.toggle('cust',mode==='cust');}
+function setSpeaking(b,cust){_voiceSpeaking=b;document.getElementById('orb').classList.toggle('speak',b);const cap=document.getElementById('cap');if(cap)cap.classList.toggle('talk',b);if(!b)finishKaraoke();setOrb(cust?'cust':'coach');}
+// karaoke caption — words light up as she speaks them (driven by the real audio clock)
+let _kRAF=0;
+function stopKaraoke(){if(_kRAF){cancelAnimationFrame(_kRAF);_kRAF=0;}}
+function finishKaraoke(){stopKaraoke();document.querySelectorAll('#capText .kw').forEach(w=>w.classList.add('spoken'));}
+function renderCaptionWords(text){const el=document.getElementById('capText');el.innerHTML='';String(text).split(/(\s+)/).forEach(p=>{if(/^\s+$/.test(p))el.appendChild(document.createTextNode(p));else if(p){const s=document.createElement('span');s.className='kw';s.textContent=p;el.appendChild(s);}});}
+function runKaraoke(){
+  stopKaraoke();const words=[...document.querySelectorAll('#capText .kw')];if(!words.length)return;
+  if(_voiceMuted){words.forEach(w=>w.classList.add('spoken'));return;}
+  const ct=document.getElementById('capText'),t0=performance.now();
+  // character-weighted timeline: longer words are held proportionally longer, matching real speech far better than one-word-per-tick
+  const cum=[];let acc=0;for(let i=0;i<words.length;i++){acc+=words[i].textContent.length+1;cum[i]=acc;}const total=acc||1;
+  let last=-1;
+  const tick=()=>{
+    if(_play&&_play.dur){const dur=_play.dur,pos=playPos(),target=Math.min(1,(pos+0.06)/dur)*total;
+      let upto=0;while(upto<words.length&&cum[upto]<=target)upto++;
+      if(upto!==last){for(let i=Math.max(0,last);i<upto;i++)if(words[i])words[i].classList.add('spoken');
+        const w=words[Math.min(words.length-1,Math.max(0,upto-1))];if(w&&ct)ct.scrollTop=Math.max(0,w.offsetTop-ct.clientHeight*0.5);last=upto;}
+      if(pos>=dur){_kRAF=0;words.forEach(w=>w.classList.add('spoken'));return;}}
+    else if(performance.now()-t0>8000){_kRAF=0;words.forEach(w=>w.classList.add('spoken'));return;}
+    _kRAF=requestAnimationFrame(tick);};
+  _kRAF=requestAnimationFrame(tick);
+}
+/* ── live lesson visuals: facts light up / pop exactly when the coach says them ──
+   driven by the REAL audio clock (playPos/onPlayStart), with each fact mapped to where
+   its words actually appear in the spoken script so the timing tracks her voice. */
+// ── reactive particle field: a crystallising voice constellation that responds to the coach ──
+const VOX=(function(){
+  let cv,ctx,raf=0,W=0,H=0,DPR=1,running=false,t=0,N=460;
+  let P=[],stars=[],forms={},curKey=null,flow=true,lineMode='flow',cryst=0,spin=0;
+  // single-path silhouettes (24×24) the constellation morphs into — sampled along their outline
+  const PATHS={
+    doc:'M7 3H14L18 7V21H7Z M14 3V7H18 M9.5 12H15.5 M9.5 15.2H15.5',
+    coin:'M4 12A8 8 0 1 0 20 12A8 8 0 1 0 4 12Z M8 12A4 4 0 1 0 16 12A4 4 0 1 0 8 12Z',
+    card:'M3 6H21V18H3Z M3 10H21 M6 14H11',
+    review:'M4.5 10A5.5 5.5 0 1 0 15.5 10A5.5 5.5 0 1 0 4.5 10Z M14.5 14L20 19.5',
+    gavel:'M3 21H12 M8 9.5L12.5 14L9.5 17L5 12.5Z M13 4.5L19.5 11 M10.5 7L17 13.5',
+    pin:'M5 9A7 7 0 1 1 19 9C19 14 12 22 12 22C12 22 5 14 5 9Z M9.5 9A2.5 2.5 0 1 0 14.5 9A2.5 2.5 0 1 0 9.5 9Z',
+    phone:'M8 2H16V22H8Z M11 19H13',
+    people:'M6 8A3 3 0 1 0 12 8A3 3 0 1 0 6 8Z M3.5 20A5.5 5.5 0 0 1 14.5 20 M17 9A2.4 2.4 0 1 0 17.01 9',
+    seal:'M12 3L14.4 5L17.8 5.2L18 8.6L20.7 11L18 13.4L17.8 16.8L14.4 17L12 19L9.6 17L6.2 16.8L6 13.4L3.3 11L6 8.6L6.2 5.2L9.6 5Z M9 11L11.2 13.2L15 9.4',
+    star:'M12 2L15 9L22 9L16.5 13.5L18.5 21L12 16.5L5.5 21L7.5 13.5L2 9L9 9Z',
+    scale:'M12 3V21 M6 21H18 M12 6L5 9 M12 6L19 9 M3 12A4 2.5 0 0 0 11 12 M13 12A4 2.5 0 0 0 21 12'
+  };
+  let measPath=null;
+  function meas(){if(!measPath){const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('width','0');svg.setAttribute('height','0');svg.style.cssText='position:absolute;left:-9999px;top:-9999px';measPath=document.createElementNS(ns,'path');svg.appendChild(measPath);document.body.appendChild(svg);}return measPath;}
+  function samplePath(d){const p=meas();p.setAttribute('d',d);let L=0;try{L=p.getTotalLength();}catch(e){}if(!L)return null;const pts=[];for(let i=0;i<N;i++){let q;try{q=p.getPointAtLength(L*i/N);}catch(e){q={x:12,y:12};}pts.push([(q.x-12)/12,(q.y-12)/12]);}return pts;}
+  // rasterise text/numbers and scatter particles across the glyph
+  function sampleText(str){const S=140,off=document.createElement('canvas');off.width=S;off.height=S;const o=off.getContext('2d');o.fillStyle='#fff';o.textAlign='center';o.textBaseline='middle';const fs=String(str).length>=3?78:108;o.font='900 '+fs+'px Inter,Arial,sans-serif';o.fillText(str,S/2,S/2+4);const d=o.getImageData(0,0,S,S).data,fill=[];for(let y=0;y<S;y+=2)for(let x=0;x<S;x+=2){if(d[(y*S+x)*4+3]>128)fill.push([x,y]);}const pts=[];if(!fill.length)return null;for(let i=0;i<N;i++){const f=fill[(Math.random()*fill.length)|0];pts.push([(f[0]-S/2)/(S/2)*0.92,(f[1]-S/2)/(S/2)*0.92]);}return pts;}
+  // scatter particles to fill an arbitrary drawn silhouette
+  function sampleFilled(draw){const S=170,off=document.createElement('canvas');off.width=S;off.height=S;const o=off.getContext('2d');o.fillStyle='#fff';draw(o,S);const d=o.getImageData(0,0,S,S).data,fill=[];for(let y=0;y<S;y+=2)for(let x=0;x<S;x+=2){if(d[(y*S+x)*4+3]>128)fill.push([x,y]);}if(!fill.length)return null;const pts=[];for(let i=0;i<N;i++){const f=fill[(Math.random()*fill.length)|0];pts.push([(f[0]-S/2)/(S/2)*0.95,(f[1]-S/2)/(S/2)*0.95]);}return pts;}
+  // an Emirati figure — head under a ghutra headdress draping to the shoulders, over a long kandura robe
+  function drawPerson(o,S){const cx=S*0.5;o.fillStyle='#fff';
+    o.beginPath();o.moveTo(cx,S*0.09);
+    o.bezierCurveTo(cx-S*0.115,S*0.09,cx-S*0.165,S*0.25,cx-S*0.205,S*0.42);
+    o.lineTo(cx-S*0.205,S*0.47);o.lineTo(cx+S*0.205,S*0.47);o.lineTo(cx+S*0.205,S*0.42);
+    o.bezierCurveTo(cx+S*0.165,S*0.25,cx+S*0.115,S*0.09,cx,S*0.09);o.closePath();o.fill();
+    o.beginPath();o.moveTo(cx-S*0.14,S*0.45);o.lineTo(cx-S*0.225,S*0.90);
+    o.quadraticCurveTo(cx,S*0.955,cx+S*0.225,S*0.90);o.lineTo(cx+S*0.14,S*0.45);o.closePath();o.fill();}
+  function getForm(key){if(forms[key])return forms[key];let f=key.indexOf('t:')===0?sampleText(key.slice(2)):key==='person'?sampleFilled(drawPerson):(PATHS[key]?samplePath(PATHS[key]):null);if(!f||!f.length){f=[];for(let i=0;i<N;i++){const a=(i/N)*6.28;f.push([Math.cos(a)*0.7,Math.sin(a)*0.7]);}}while(f.length<N)f.push(f[f.length%f.length]);forms[key]=f;return f;}
+  function morph(key){if(!P.length||key===curKey)return;
+    if(key==='nebula'){flow=true;lineMode='flow';curKey=key;for(const p of P){p.r0=Math.cbrt(Math.random())*0.92+0.06;p.vx=(Math.random()-.5)*0.01;p.vy=(Math.random()-.5)*0.01;p.vz=(Math.random()-.5)*0.01;}return;}
+    const f=getForm(key);if(!f)return;flow=false;curKey=key;lineMode=(key.indexOf('t:')===0||key==='person'?'none':'outline');
+    for(let i=0;i<N;i++){const tp=f[i%f.length];P[i].tx=tp[0];P[i].ty=tp[1];P[i].tz=(Math.random()-.5)*0.13;}}
+  function morphText(str){morph('t:'+str);}
+  function init(){P=[];for(let i=0;i<N;i++){const u=Math.random()*6.28,v=Math.acos(2*Math.random()-1),r=Math.cbrt(Math.random());
+      P.push({x:Math.sin(v)*Math.cos(u)*r,y:Math.sin(v)*Math.sin(u)*r,z:Math.cos(v)*r,r0:r*0.92+0.06,vx:(Math.random()-.5)*0.006,vy:(Math.random()-.5)*0.006,vz:(Math.random()-.5)*0.006,sx:0,sy:0,pp:1,tx:0,ty:0,tz:0,ph:Math.random()*6.28});}
+    forms={};curKey=null;flow=true;lineMode='flow';spin=0;stars=[];for(let i=0;i<70;i++)stars.push({x:Math.random(),y:Math.random(),z:Math.random()*0.6+0.2,ph:Math.random()*6.28});}
+  function resize(){if(!cv||!ctx)return;DPR=Math.min(2,window.devicePixelRatio||1);W=cv.clientWidth||window.innerWidth;H=cv.clientHeight||window.innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+  function proximity(lvl,sc){const lim=sc*0.20,lim2=lim*lim,cell=lim||1,grid={};for(let i=0;i<N;i++){const p=P[i],gx=Math.floor(p.sx/cell),gy=Math.floor(p.sy/cell),k=gx+','+gy;(grid[k]||(grid[k]=[])).push(i);}const la=(0.05+lvl*0.5)*cryst;if(la<0.02)return;ctx.strokeStyle='rgba(150,135,255,'+la+')';ctx.lineWidth=1;ctx.beginPath();for(let i=0;i<N;i++){const p=P[i],gx=Math.floor(p.sx/cell),gy=Math.floor(p.sy/cell);const offs=[[0,0],[0,1],[1,-1],[1,0],[1,1]];for(const o of offs){const arr=grid[(gx+o[0])+','+(gy+o[1])];if(!arr)continue;for(const j of arr){if(j<=i)continue;const q=P[j],dx=p.sx-q.sx,dy=p.sy-q.sy;if(dx*dx+dy*dy<lim2){ctx.moveTo(p.sx,p.sy);ctx.lineTo(q.sx,q.sy);}}}}ctx.stroke();}
+  function frame(){
+    if(!running)return;t++;const lvl=voxLevel();cryst+=((0.2+lvl*0.8)-cryst)*0.06;
+    const cx=W*0.5,cy=H*0.46,sc=Math.min(W,H)*0.27*(1+lvl*0.06),fov=3.2;
+    spin+=flow?(0.0035+lvl*0.0045):0.0012;const rot=flow?spin:Math.sin(t*0.011)*0.55,tilt=Math.sin(t*0.0075)*0.17;
+    const cR=Math.cos(rot),sR=Math.sin(rot),cT=Math.cos(tilt),sT=Math.sin(tilt);
+    ctx.clearRect(0,0,W,H);ctx.globalCompositeOperation='lighter';
+    for(const s of stars){const x=((s.x+t*0.00002*s.z)%1)*W,y=s.y*H,tw=0.4+0.6*Math.abs(Math.sin(t*0.02*s.z+s.ph));ctx.fillStyle='rgba(150,170,255,'+(0.08*s.z*tw)+')';ctx.beginPath();ctx.arc(x,y,s.z*1.3,0,6.28);ctx.fill();}
+    const jit=sc*0.012*(0.4+lvl*2.0);
+    if(flow){
+      for(const p of P){const r=Math.sqrt(p.x*p.x+p.y*p.y+p.z*p.z)||1,radial=((p.r0+lvl*0.20)-r)*0.013,ux=p.x/r,uy=p.y/r,uz=p.z/r;
+        p.vx+=ux*radial+(Math.random()-.5)*0.0016;p.vy+=uy*radial+(Math.random()-.5)*0.0016;p.vz+=uz*radial+(Math.random()-.5)*0.0016;
+        p.vx*=0.95;p.vy*=0.95;p.vz*=0.95;p.x+=p.vx;p.y+=p.vy;p.z+=p.vz;}
+    }else{const ease=0.19;for(const p of P){p.x+=(p.tx-p.x)*ease;p.y+=(p.ty-p.y)*ease;p.z+=(p.tz-p.z)*ease;}}
+    // rotate (Y then X) and project with perspective
+    for(const p of P){const jx=flow?0:Math.cos(p.ph)*jit,jy=flow?0:Math.sin(p.ph*1.7)*jit;
+      const x1=p.x*cR+p.z*sR,z1=-p.x*sR+p.z*cR,y1=p.y*cT-z1*sT,z2=p.y*sT+z1*cT,persp=fov/(fov-z2);
+      p.pp=persp;p.sx=cx+x1*sc*persp+jx;p.sy=cy+y1*sc*persp+jy;}
+    if(lineMode==='outline'){const la=(0.08+lvl*0.4)*cryst,lim=sc*0.4,lim2=lim*lim;ctx.lineWidth=1;ctx.strokeStyle='rgba(150,135,255,'+la+')';ctx.beginPath();for(let i=0;i<N-1;i++){const a=P[i],b=P[i+1],dx=a.sx-b.sx,dy=a.sy-b.sy;if(dx*dx+dy*dy<lim2){ctx.moveTo(a.sx,a.sy);ctx.lineTo(b.sx,b.sy);}}ctx.stroke();}
+    else if(lineMode==='flow'){proximity(lvl,sc);}
+    for(const p of P){const dep=Math.max(0,Math.min(1,(p.pp-0.78)/0.7)),rad=(1.05+lvl*1.4)*(0.55+dep*0.95),bri=(0.5+lvl*0.4)*(0.42+dep*0.7);
+      ctx.fillStyle='rgba(185,165,255,'+(0.4*bri)+')';ctx.beginPath();ctx.arc(p.sx,p.sy,rad*2.3,0,6.28);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,'+Math.min(1,bri)+')';ctx.beginPath();ctx.arc(p.sx,p.sy,rad*0.78,0,6.28);ctx.fill();}
+    ctx.globalCompositeOperation='source-over';
+    raf=requestAnimationFrame(frame);
+  }
+  return {
+    start(){cv=document.getElementById('voxCanvas');if(!cv)return;ctx=cv.getContext('2d');resize();init();if(!running){running=true;raf=requestAnimationFrame(frame);}window.addEventListener('resize',resize);},
+    stop(){running=false;if(raf)cancelAnimationFrame(raf);raf=0;window.removeEventListener('resize',resize);try{if(ctx)ctx.clearRect(0,0,W,H);}catch(e){}},
+    morph:morph,morphText:morphText
+  };
+})();
+function pathKeyFor(text,i,n){const t=(text||'').toLowerCase(),has=(...k)=>k.some(w=>t.includes(w));
+  if(has('pay','payment','dirham','fee','cost','cashier'))return 'coin';
+  if(has('review','assess','examin','verif','evaluat','inspect','process'))return 'review';
+  if(has('committee','hearing','panel','tribunal'))return 'people';
+  if(has('decision','approv','grant','reject','outcome','result','notif','hearing'))return 'gavel';
+  if(has('card','certificate','licen','permit','issued','issue','print','collect','receive'))return 'card';
+  if(has('document','attach','upload','form','submit','apply','application','register','request','lodge'))return 'doc';
+  if(i===n-1)return 'card';if(i===0)return 'doc';return 'star';}
+// scene icon set + avatar
+const IC={
+ doc:'<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M9.5 12h6M9.5 15.2h6"/></svg>',
+ coins:'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="7" rx="7" ry="3"/><path d="M5 7v5c0 1.7 3.1 3 7 3s7-1.3 7-3V7"/><path d="M5 12v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5"/></svg>',
+ review:'<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg>',
+ card:'<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8" cy="12" r="2.2"/><path d="M13 10.4h5M13 13.6h5"/></svg>',
+ gavel:'<svg viewBox="0 0 24 24"><path d="M3 21h9"/><path d="M13.5 4.5l6 6"/><path d="M10.5 7.5l6 6"/><path d="M8 10l4 4-3 3-4-4z"/></svg>',
+ people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 20c0-3.3 2.5-5.6 5.5-5.6S14.5 16.7 14.5 20"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14.6c2.6.2 4.5 2.5 4.5 5.4"/></svg>',
+ flag:'<svg viewBox="0 0 24 24"><path d="M6 3v18"/><path d="M6 4h11l-2.5 4L17 12H6"/></svg>'
+};
+function iconFor(text,i,n){const t=(text||'').toLowerCase();const has=(...k)=>k.some(w=>t.includes(w));
+ if(has('pay','payment','dirham',' fee','fees','cost','cashier'))return IC.coins;
+ if(has('review','assess','examin','verif','evaluat','inspect','process'))return IC.review;
+ if(has('committee','hearing','panel','board ','tribunal'))return IC.people;
+ if(has('decision','approv','grant','reject','outcome','result','notif'))return IC.gavel;
+ if(has('card','certificate','licen','permit','issued','issue','print','collect','receive'))return IC.card;
+ if(has('document','attach','upload','form','submit','apply','application','register','request','lodge'))return IC.doc;
+ if(i===n-1)return IC.card;if(i===0)return IC.doc;return IC.flag;}
+function stationX(i,n){if(n<=1)return 46;const a=13,b=80;return a+i*(b-a)/(n-1);}
+function movePulse(pct,moving){const p=document.getElementById('pulse');if(!p)return;if(moving){p.classList.add('moving');setTimeout(()=>p.classList.remove('moving'),900);}p.style.left=pct+'%';const f=document.getElementById('sceneFill');if(f)f.style.width=Math.max(0,pct-6)+'%';}
+// count a fee figure up from 0 — slick, tabular, premium
+function countUp(el,target){if(!el)return;const t=Number(target)||0;if(t<=0){el.textContent=dirhams(t);return;}const dur=620,t0=performance.now();
+  const step=()=>{const k=Math.min(1,(performance.now()-t0)/dur);const e=1-Math.pow(1-k,3);el.textContent=dirhams(Math.round(t*e));if(k<1)requestAnimationFrame(step);};requestAnimationFrame(step);}
+let _fxRAF=0;
+const _STOP=new Set('the and for with from your you this that into are will their they them then once step also have has been must when where which what who whom whose about over under within without through after before each both either fees fee time card issued submitted application documents document required'.split(' '));
+function longWords(str,k){return (String(str||'').toLowerCase().match(/[a-z]{4,}/g)||[]).filter(w=>!_STOP.has(w)).sort((a,b)=>b.length-a.length).slice(0,k||2);}
+function textFrac(text,needles,fb){const t=(text||'').toLowerCase();let best=-1;(needles||[]).forEach(nd=>{const k=String(nd==null?'':nd).toLowerCase().trim();if(k.length<2)return;const i=t.indexOf(k);if(i>=0&&(best<0||i<best))best=i;});return best<0?fb:Math.max(.02,Math.min(.97,best/Math.max(t.length,40)));}
+const _WNUM=['one','two','three','four','five','six','seven','eight','nine'];
+// when does she announce step i? prefer the spoken cue ("step one"/"step 1"/"1.") then fall back to the step's own keywords
+function stepFrac(text,i,n,stepText){let fr=textFrac(text,['step '+(_WNUM[i]||''),'step '+(i+1),(i+1)+'.',(i+1)+')'],-1);if(fr<0)fr=textFrac(text,longWords(stepText,2),(i+0.5)/n);return fr;}
+function clearFX(){if(_fxRAF){cancelAnimationFrame(_fxRAF);_fxRAF=0;}_playSubs=[];const lp=document.getElementById('factPops');if(lp)lp.innerHTML='';}
+function popFact(inner,tone){const lp=document.getElementById('factPops');if(!lp)return;const c=document.createElement('div');c.className='factpop'+(tone?' '+tone:'');c.innerHTML=inner;lp.appendChild(c);requestAnimationFrame(()=>c.classList.add('in'));setTimeout(()=>{c.classList.remove('in');c.classList.add('out');},2800);setTimeout(()=>{if(c.parentNode)c.remove();},3300);}
+// schedule beats (each {frac:0..1 of the line, fn}) against the actual playback position
+function scheduleBeats(text,beats){
+  clearFX();beats=beats.slice().sort((a,b)=>a.frac-b.frac);
+  onPlayStart(p=>{
+    const dur=p.dur||Math.max(3,((text||'').match(/\S+/g)||[]).length*0.36);
+    const fired=new Array(beats.length).fill(false);
+    const tick=()=>{const pos=playPos()+0.22;
+      for(let i=0;i<beats.length;i++){if(!fired[i]&&pos>=beats[i].frac*dur){fired[i]=true;try{beats[i].fn();}catch(e){}}}
+      if(fired.every(Boolean)){_fxRAF=0;return;}_fxRAF=requestAnimationFrame(tick);};
+    if(_fxRAF)cancelAnimationFrame(_fxRAF);_fxRAF=requestAnimationFrame(tick);
+  });
+}
+function sectionFX(kind,s,text){
+  if(kind==='steps'){
+    const sts=[...document.querySelectorAll('#stations .station')];const n=sts.length||1;let prev=0;
+    const beats=sts.map((el,i)=>{let fr=stepFrac(text,i,n,s.steps[i]);if(fr<prev+0.015)fr=Math.min(.97,prev+0.72/n);prev=fr;
+      return {frac:fr,fn:()=>{for(let j=0;j<i;j++)sts[j].classList.add('done','lit');el.classList.add('lit','arrive');setTimeout(()=>el.classList.remove('arrive'),750);
+        movePulse(stationX(i,n),true);VOX.morphText(numStr(i+1));}};});
+    if(!sts.length){const st=s.steps||[],m=st.length||1;scheduleBeats(text,st.map((p,i)=>{let fr=stepFrac(text,i,m,p);if(fr<prev+0.015)fr=Math.min(.97,prev+0.72/m);prev=fr;return{frac:fr,fn:()=>VOX.morphText(numStr(i+1))};}));return;}
+    scheduleBeats(text,beats);
+  }else if(kind==='fees'){
+    const lines=[...document.querySelectorAll('#bdFee .bd-fline')];const fees=s.fees||[];const n=Math.max(fees.length,1);
+    const beats=fees.map((f,i)=>({frac:textFrac(text,[String(f.fee),...longWords(f.n,1)],(i+0.5)/n),fn:()=>{
+      lines.forEach(x=>x.classList.remove('pop'));if(lines[i]){lines[i].classList.add('pop');countUp(lines[i].querySelector('.cnt'),f.fee);}
+      if(Number(f.fee)>0)VOX.morphText(numStr(f.fee));else VOX.morph('seal');
+      popFact('<b>'+esc(dirhams(f.fee))+'</b><span>'+esc(f.n)+(f.time&&f.time!=='Instant'?' · '+esc(f.time):'')+'</span>','gold');}}));
+    scheduleBeats(text,beats);
+  }else if(kind==='channels'){
+    const chips=[...document.querySelectorAll('#bdChips .bd-chip')];const docEls=[...document.querySelectorAll('#bdDocs .bd-dlist>div')];
+    const chans=(s.channels||[]),docs=(s.docs||[]).filter(d=>d&&d!=='None'&&d!=='Not applicable');
+    const items=[];chans.forEach((c,i)=>items.push({t:'ch',label:c,el:chips[i],fb:(i+0.4)/(chans.length+docs.length||1)}));
+    docs.forEach((d,i)=>items.push({t:'doc',label:d,el:docEls[i],fb:(chans.length+i+0.4)/(chans.length+docs.length||1)}));
+    const beats=items.map(it=>({frac:textFrac(text,[it.label,...longWords(it.label,1)],it.fb),fn:()=>{if(it.el)it.el.classList.add('lit');
+      VOX.morph(it.t==='doc'?'doc':(/app|smart|online|website|portal|e-|digital/i.test(it.label)?'phone':'pin'));
+      popFact((it.t==='doc'?'📄 ':'📍 ')+'<span style="font-size:13px;color:#eaf0ff">'+esc(it.label)+'</span>',it.t==='doc'?'teal':'blue');}}));
+    scheduleBeats(text,beats);
+  }
+}
+function aboutFX(kind,text){
+  const A=ABOUT;
+  if(kind==='intro'){VOX.morph('seal');const facts=[[A.dg,'Director General','blue',[A.dg,...longWords(A.dg,1)]],['Legal Affairs Department','Government of Dubai','',['legal affairs','department','dubai']]];
+    scheduleBeats(text,facts.map((f,i)=>({frac:textFrac(text,f[3],(i+0.4)/facts.length),fn:()=>{VOX.morph(i===0?'people':'seal');popFact('<b>'+esc(f[0])+'</b><span>'+esc(f[1])+'</span>',f[2])}})));}
+  else if(kind==='vm'){const e=document.getElementById('abVision'),m=document.getElementById('abMission');
+    const it=[[e,'Vision','star',['vision','envision','aspire','future']],[m,'Mission','scale',['mission','exist','deliver','provide','role']]];
+    scheduleBeats(text,it.map((x,i)=>({frac:textFrac(text,x[3],(i+0.3)/2),fn:()=>{it.forEach(y=>y[0]&&y[0].classList.remove('pop'));if(x[0])x[0].classList.add('pop');VOX.morph(x[2]);popFact('✦ <span style="font-size:13px;color:#eaf0ff">'+esc(x[1])+'</span>','blue')}})));}
+  else if(kind==='values'){const chips=[...document.querySelectorAll('#abValues .bd-chip')];const vs=A.values||[];const n=Math.max(vs.length,1);
+    scheduleBeats(text,vs.map((v,i)=>({frac:textFrac(text,[v,...longWords(v,1)],(i+0.4)/n),fn:()=>{if(chips[i])chips[i].classList.add('lit');VOX.morph('star');popFact('✦ <span style="font-size:13px;color:#eaf0ff">'+esc(v)+'</span>','teal')}})));}
+  else if(kind==='role'){VOX.morph('scale');const rs=(A.role||[]).slice(0,4);const n=Math.max(rs.length,1);
+    scheduleBeats(text,rs.map((r,i)=>({frac:textFrac(text,longWords(r,2),(i+0.4)/n),fn:()=>popFact('<span style="font-size:12.5px;color:#eaf0ff">'+esc(String(r).replace(/\.$/,''))+'</span>','blue')})));}
+}
+// Floating sound button: tap to replay the current line, or mute / unmute. Each tap is a real
+// user gesture, which iOS always allows for audio — so it doubles as a guaranteed sound unlock.
+function updateSoundBtn(){_setVoiceState('idle');}
+// Live status shown right on the Voice button — so the trainee (and we) can see exactly what the
+// audio is doing without any debug URL: Loading… / Playing / Tap to play / No voice.
+function _setVoiceState(s){const ic=document.getElementById('soundIc'),lbl=document.getElementById('soundLbl'),b=document.getElementById('soundBtn');if(!lbl)return;
+  if(_voiceMuted){b.classList.add('muted');ic.textContent='🔇';lbl.textContent='Muted';return;}
+  b.classList.remove('muted');
+  if(s==='load'){ic.textContent='⏳';lbl.textContent='Loading…';}
+  else if(s==='play'){ic.textContent='🔊';lbl.textContent='Playing';}
+  else if(s==='blocked'){ic.textContent='👆';lbl.textContent='Tap to play';}
+  else if(s==='noserver'){ic.textContent='🔈';lbl.textContent='No voice';}
+  else{ic.textContent='🔊';lbl.textContent='Voice';}}
+function replayVoice(){if(!_lastSpoken)return;_voiceSpeaking=true;speakAsync(_lastSpoken,()=>{_voiceSpeaking=false;});}
+(function(){const b=document.getElementById('soundBtn');if(!b)return;b.addEventListener('click',()=>{
+  try{primeAudio();}catch(e){}
+  if(_voiceMuted){_voiceMuted=false;updateSoundBtn();replayVoice();}          // unmute + replay
+  else if(_voiceSpeaking){_voiceMuted=true;stopAudio();updateSoundBtn();}      // mute mid-sentence
+  else{replayVoice();}                                                         // idle → replay
+});updateSoundBtn();})();
+function setCaption(text,cust){text=stripMd(text);const cap=document.getElementById('cap');cap.style.opacity='0';stopKaraoke();setTimeout(()=>{document.getElementById('capRole').textContent=cust?'Customer':'Coach';cap.classList.toggle('cust',!!cust);renderCaptionWords(text);document.getElementById('capText').dir=isAr()?'rtl':'ltr';cap.scrollTop=0;cap.style.opacity='1';runKaraoke();},55);}
+function setCoach(text){document.getElementById('coach').textContent=text||'';}
+function setListening(b){document.getElementById('listening').classList.toggle('on',b);document.getElementById('stControls').classList.toggle('hide',false);}
+function showControls(show){document.getElementById('stControls').classList.toggle('hide',!show);}
+function setPhase(ph){document.querySelectorAll('.phase').forEach(p=>{const k=p.dataset.ph;p.classList.toggle('on',k===ph);});}
+function markPhaseDone(ph){const el=document.querySelector('.phase[data-ph="'+ph+'"]');if(el)el.classList.add('done');}
+
+/* ════ Awaitable say / listen ════ */
+// Every spoken line is interruptible: the trainee can pause and ask a question at any moment.
+function say(text,cust){
+  setCaption(text,cust);setSpeaking(true,cust);showControls(false);showInterrupt(true);
+  return new Promise(resolve=>{
+    let settled=false;
+    const finish=()=>{if(settled)return;settled=true;showInterrupt(false);window._skip=null;window._ask=null;setSpeaking(false,cust);resolve();};
+    window._skip=()=>{stopAudio();finish();};
+    window._ask=async()=>{if(settled)return;settled=true;showInterrupt(false);window._skip=null;window._ask=null;stopAudio();setSpeaking(false,cust);const u=await listen(T('Go ahead — ask your question…','تفضل — اسأل سؤالك…'));if(u&&!ab())await handleInterjection(u);resolve();};
+    speakAsync(text,finish);
+  });
+}
+function listen(placeholder){
+  const inp=document.getElementById('stInput');inp.value='';inp.placeholder=placeholder||T('…or type your answer','…أو اكتب جوابك');
+  setListening(true);showControls(true);
+  return new Promise(res=>{
+    let done=false;const finish=v=>{if(done)return;done=true;setListening(false);onUserFinal=null;window._submit=null;window._skipL=null;if(recog&&recognising){try{recog.stop();}catch(e){}}res((v||'').trim());};
+    onUserFinal=finish;window._submit=()=>finish(inp.value);window._skipL=()=>finish('');
+    if(recog){try{recog.lang=isAr()?'ar-AE':'en-US';recog.start();recognising=true;document.getElementById('stMic').classList.add('live');}catch(e){}}
+  });
+}
+document.getElementById('stMic').addEventListener('click',()=>{if(!recog){document.getElementById('stInput').focus();return;}if(recognising){recog.stop();return;}try{recog.lang=isAr()?'ar-AE':'en-US';recog.start();recognising=true;document.getElementById('stMic').classList.add('live');}catch(e){}});
+document.getElementById('stSubmit').addEventListener('click',()=>{if(window._submit)window._submit();});
+document.getElementById('stInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&window._submit)window._submit();});
+document.getElementById('stSkip').addEventListener('click',()=>{if(window._skip)window._skip();else if(window._skipL)window._skipL();});
+document.getElementById('stExit').addEventListener('click',exitStage);
+document.getElementById('orb').addEventListener('click',()=>{if(window._skip)window._skip();});
+document.getElementById('askBtn').addEventListener('click',()=>{if(window._ask)window._ask();});
+
+/* ════ Grading ════ */
+async function gradeAnswer(s,question,correct,answer){
+  if(key()){const sys="You are an honest but kind training coach for a Service Ambassador at the Government of Dubai Legal Affairs Department. Judge the trainee's answer STRICTLY. Mark correct=true ONLY if the answer genuinely states the key fact from the model answer. Empty, vague, off-topic, or wrong answers are correct=false — do not be lenient. Use ONLY these facts: "+facts(s)+". The question: \""+question+"\". Model answer: \""+correct+"\". Reply STRICT JSON only: {\"correct\": <true|false>, \"feedback\": \"<one or two spoken sentences: if right, confirm warmly; if wrong, clearly say it's not right and give the correct answer plus a quick memory tip>\"}.";
+    const t=await claudeText([{role:'user',content:'The trainee said: "'+(answer||'(no answer given)')+'"'}],sys);
+    if(t){try{const m=t.match(/\{[\s\S]*\}/);const j=JSON.parse(m?m[0]:t);return {correct:!!j.correct,feedback:j.feedback||correct};}catch(e){}}}
+  // offline
+  const a=(answer||'').toLowerCase().trim();const kw=(findQ(s,question)||{}).kw||[];const hit=kw.filter(k=>a.includes(k.toLowerCase())).length;const ok=a.length>2&&hit>=Math.max(1,Math.ceil(kw.length/2));
+  return {correct:ok,feedback:ok?(pick(LL('CORRECT'))+' '+correct):pick(LL('WRONG')).replace('{A}',correct)};
+}
+function findQ(s,question){return s.quiz.find(q=>q.q===question);}
+async function gradeSim(s,line,answer){
+  if(key()){const sys="You are a fair, supportive examiner scoring how a trainee Service Ambassador handled a real customer at the Government of Dubai Legal Affairs Department. Score 0-100 on: correct service, right channel, correct fee/timeline, key documents where relevant, warm manner, and correctly redirecting non-LAD matters (e.g. criminal cases go to Dubai Police / Public Prosecution). Use ONLY these facts: "+facts(s)+". Reply STRICT JSON only: {\"score\": <0-100 int>, \"feedback\": \"<two short, specific, encouraging spoken sentences of coaching>\"}.";
+    const t=await claudeText([{role:'user',content:'The customer said: "'+line+'"\nThe trainee answered: "'+answer+'"'}],sys);
+    if(t){try{const m=t.match(/\{[\s\S]*\}/);const j=JSON.parse(m?m[0]:t);if(typeof j.score==='number')return {score:Math.max(0,Math.min(100,Math.round(j.score))),feedback:j.feedback||'Good effort.'};}catch(e){}}}
+  // offline: match service key terms
+  const a=(answer||'').toLowerCase();const terms=[shortName(s).toLowerCase().split(' ')[0],...s.channels.map(c=>c.toLowerCase().split(' ')[0]),(s.fees[0].fee||'').toLowerCase().replace('aed ','')];
+  let hit=0;terms.forEach(t=>{if(t&&t.length>2&&a.includes(t))hit++;});const score=Math.min(100,Math.round(hit/Math.max(3,terms.length)*100)+ (a.length>40?15:0));
+  return {score,feedback:score>=60?'Well handled — you pointed them to the right service and channel.':'Cover the service name, the channel they should use, and the fee or timeline — and reassure them warmly.'};
+}
+
+/* ════ The Director ════ */
+let session=null;
+async function enterPlanet(id){
+  const s=findS(id);if(!s)return;
+  // Self-heal: if a previous lesson left a stale session but its UI is already closed, clear it
+  // so the trainee can enter again (otherwise every planet click would silently return).
+  if(session){if(stage.classList.contains('on'))return;session=null;if(window.orbit3d)window.orbit3d.surface();}
+  session={s,aborted:false};
+  document.getElementById('stTitle').textContent=shortName(s);
+  document.getElementById('peek').textContent='Tip: speak naturally, or type. Say "repeat" if you miss something.';
+  document.querySelectorAll('.phase').forEach(p=>p.classList.remove('done','on'));
+  const wp=document.getElementById('warp');if(wp){wp.classList.remove('go');void wp.offsetWidth;wp.classList.add('go');}
+  stage.classList.add('on');VOX.start();
+  if(window.orbit3d)window.orbit3d.dive(id);
+  try{await runLesson(s);}catch(e){console.error(e);setCoach('(Something interrupted the lesson — you can exit and try again.)');}
+}
+function ab(){return !session||session.aborted;}
+
+/* ════ About the Department — a real, voice-led induction lesson ════ */
+const AB_WELCOME=["Let's get to know the Department you represent, so you can speak about it with real confidence to the public.","Before we tour the services, here's the bigger picture of the Legal Affairs Department — who we are and what we stand for.","A quick, sharp overview of the Department first — then the galaxy of services is yours to explore.","Let's ground you in the Department itself: who we are, who leads us, and what we're known for."];
+function buildAboutBoard(){const A=ABOUT;const init=A.dg.replace(/^His Excellency\s*/i,'').replace(/^Dr\.\s*/i,'').trim().charAt(0)||'L';
+  let h='<div class="ab-hero" id="abHero"><div class="ab-photo" id="abPhoto"><img id="dgImg" src="assets/dg.jpg" alt="Director General"></div>'
+    +'<div class="ab-hero-t"><div class="ab-k">Director General</div><b>'+esc(A.dg)+'</b><span>'+esc(A.name)+'</span></div></div>';
+  h+='<div class="bd-cards"><div class="bd-card" id="abVision"><div class="k">Vision</div><div class="s big">'+esc(A.vision)+'</div></div>'
+    +'<div class="bd-card" id="abMission"><div class="k">Mission</div><div class="s big">'+esc(A.mission)+'</div></div></div>';
+  h+='<div class="bd-chips" id="abValues">'+A.values.map(v=>'<span class="bd-chip">'+esc(v)+'</span>').join('')+'</div>';
+  document.getElementById('board').innerHTML=h;
+  const img=document.getElementById('dgImg');if(img)img.onerror=function(){const p=document.getElementById('abPhoto');p.classList.add('noimg');p.setAttribute('data-i',init);this.remove();};
+}
+function revealAbout(sec){if(sec==='vm'){['abVision','abMission'].forEach((id,i)=>{const e=document.getElementById(id);if(e)setTimeout(()=>e.classList.add('on'),i*200);});}
+  if(sec==='values')document.querySelectorAll('#abValues .bd-chip').forEach((e,i)=>setTimeout(()=>e.classList.add('on'),i*150));}
+async function getAboutLesson(){const A=ABOUT;
+  const af=JSON.stringify({department:A.name,directorGeneral:A.dg,who:A.who,vision:A.vision,mission:A.mission,values:A.values,whatWeDo:A.role,strategy:A.strategy});
+  const sys="You are an expert briefing coach giving a Service Ambassador (an existing support-staff member, NOT a new joiner) a confident, polished overview of the Government of Dubai Legal Affairs Department they already work for — so they can speak about it knowledgeably to the public. IMPORTANT: do NOT welcome them, do NOT say 'welcome aboard' or 'you've just joined' or 'begin your journey' or treat them as a new starter. Just inform them about the Department. Give a short, engaging spoken overview as STRICT JSON only: {\"intro\":\"2-3 spoken sentences stating who the Department is and that "+A.dg+" leads it — informative, not a welcome\",\"visionMission\":\"2 vivid spoken sentences on the vision and mission\",\"values\":\"1-2 spoken sentences bringing the values to life\",\"role\":\"2 spoken sentences on what the Department actually does for the public and government\",\"strategy\":\"1-2 spoken sentences on the 2026-2028 strategy and its push toward AI and excellence\",\"close\":\"one short line pointing them to pick a service to begin\"}. Conversational and interesting, never dry or list-like. Say 'dirhams', never 'AED'. No markdown. Use ONLY these facts: "+af;
+  const t=await claudeText([{role:'user',content:'Create the Department overview.'}],sys);
+  if(t){try{const j=JSON.parse((t.match(/\{[\s\S]*\}/)||[t])[0]);if(j.intro&&j.visionMission)return j;}catch(e){}}
+  return {intro:"The Government of Dubai Legal Affairs Department is the legal arm of the Dubai Government, led by "+A.dg+". "+A.who,
+    visionMission:"Our vision is simple but bold: "+A.vision.replace(/\.$/,'')+". And our mission is "+A.mission.charAt(0).toLowerCase()+A.mission.slice(1),
+    values:"Everything we do runs on five values — "+A.values.slice(0,-1).join(', ')+" and "+A.values.slice(-1)+". That's the spirit behind every service you'll learn.",
+    role:"Day to day, the Department "+A.role.slice(0,3).map(r=>r.replace(/\.$/,'').replace(/^[A-Z]/,c=>c.toLowerCase())).join('; ')+".",
+    strategy:A.strategy.intro+" The first pillar is all about "+A.strategy.pillars[0].split('—')[0].trim().toLowerCase()+", bringing AI into our services to lift quality and the customer experience.",
+    close:"Now pick your first service — tap one on the left, or fly to a planet — and let's get you certified."};
+}
+async function runAbout(){
+  setCoach('');buildAboutBoard();
+  const lp=getAboutLesson();let L=null;lp.then(v=>{L=v;});
+  await say(pick(AB_WELCOME));if(ab())return;
+  document.getElementById('abHero').classList.add('on');
+  if(!L){setCoach('One moment…');L=await lp;setCoach('');}if(ab())return;
+  await teachSay(L.intro,()=>aboutFX('intro',L.intro));if(ab())return;
+  revealAbout('vm');await teachSay(L.visionMission,()=>aboutFX('vm',L.visionMission));if(ab())return;
+  revealAbout('values');await teachSay(L.values,()=>aboutFX('values',L.values));if(ab())return;
+  await teachSay(L.role,()=>aboutFX('role',L.role));if(ab())return;
+  await teachSay(L.strategy);if(ab())return;
+  await say(L.close);if(ab())return;
+  showControls(true);document.getElementById('stControls').innerHTML='<button class="sbtn gold" onclick="exitStage()">Choose a service →</button>';
+}
+async function enterAbout(){
+  if(session){if(stage.classList.contains('on'))return;session=null;if(window.orbit3d)window.orbit3d.surface();}
+  session={about:true,aborted:false};
+  document.getElementById('stTitle').textContent='About the Legal Affairs Department';
+  document.getElementById('peek').textContent='Your induction — speak or type to ask anything about the Department.';
+  const rail=document.querySelector('.phase-rail');if(rail)rail.style.display='none';
+  const wp=document.getElementById('warp');if(wp){wp.classList.remove('go');void wp.offsetWidth;wp.classList.add('go');}
+  stage.classList.add('on');VOX.start();
+  try{await runAbout();}catch(e){console.error(e);setCoach('(Something interrupted — you can exit and try again.)');}
+}
+window.enterAbout=enterAbout;
+/* ── lesson board (animated process visualisation) ── */
+function buildBoard(s){
+  const docs=s.docs.filter(d=>d&&d!=='None'&&d!=='Not applicable');
+  const n=s.steps.length;
+  const feeList=s.fees.map(f=>'<div class="bd-fline"><b class="cnt">'+esc(dirhams(0))+'</b><span>'+esc(f.n)+(f.time&&f.time!=='Instant'?' · '+esc(f.time):'')+'</span></div>').join('');
+  const stationsH=s.steps.map((p,i)=>'<div class="station" data-i="'+i+'" style="left:'+stationX(i,n)+'%"><div class="st-ring">'+iconFor(p,i,n)+'</div><div class="st-lbl">'+esc(p)+'</div></div>').join('');
+  const chips='<div class="bd-chips" id="bdChips">'+s.channels.map(c=>'<span class="bd-chip">'+esc(c)+'</span>').join('')+'</div>';
+  let h='<div class="bd-rail" id="bdRail">'
+    +'<span class="bd-railseg" data-k="journey"><i>1</i>Journey</span>'
+    +'<span class="bd-railseg" data-k="fees"><i>2</i>Fees</span>'
+    +'<span class="bd-railseg" data-k="channels"><i>3</i>'+(docs.length?'Channels':'Where')+'</span></div>';
+  h+='<div class="scene ph-journey" id="scene">'
+    +'<div class="track"></div><div class="track-fill" id="sceneFill"></div>'
+    +'<div class="endcap">'+IC.card+'</div>'
+    +'<div class="stations" id="stations">'+stationsH+'</div>'
+    +'<div class="scene-cards">'
+      +'<div class="scard fee" id="bdFee"><div class="k">What it costs</div>'+feeList+(s.note?'<div class="bd-note">'+esc(s.note)+'</div>':'')+'</div>'
+      +'<div class="scene-ch"><div class="scard chans"><div class="k">Where to apply</div>'+chips+'</div>'
+        +(docs.length?'<div class="scard docs" id="bdDocs"><div class="k">'+docs.length+' document'+(docs.length>1?'s':'')+' needed</div><div class="bd-dlist">'+docs.map(d=>'<div>'+esc(d)+'</div>').join('')+'</div></div>':'')
+      +'</div>'
+    +'</div>'
+    +'<div class="pulse" id="pulse"></div>'
+    +'</div>';
+  document.getElementById('board').innerHTML=h;
+  focusPhase('journey');
+}
+function focusPhase(k){const order=['journey','fees','channels'];const sc=document.getElementById('scene');if(!sc)return;
+  sc.className='scene ph-'+k;
+  document.querySelectorAll('#bdRail .bd-railseg').forEach(seg=>{const a=order.indexOf(seg.dataset.k),c=order.indexOf(k);seg.classList.toggle('active',a===c);seg.classList.toggle('done',a>=0&&a<c);});
+  if(k!=='journey')movePulse(90,true);}
+function showCover(){const c=document.getElementById('bdCover');if(c){c.classList.add('on');c.querySelectorAll('.it').forEach((el,i)=>setTimeout(()=>el.style.transitionDelay=(i*0.12)+'s',0));}}
+function hideCover(){const c=document.getElementById('bdCover');if(c)c.style.display='none';}
+function revealSteps(){focusPhase('journey');}
+function revealFees(){focusPhase('fees');VOX.morph('nebula');}
+function revealChannels(){focusPhase('channels');VOX.morph('nebula');}
+function hideBoard(){document.getElementById('board').innerHTML='';}
+function showCustomerCard(line,label){document.getElementById('board').innerHTML='<div class="bd-cust on"><div class="bd-cust-av">'+esc((label||'C').replace(/^a |^an /i,'').charAt(0).toUpperCase())+'</div><div class="bd-cust-t">“'+esc(line)+'”<small>— '+esc(label||'a customer')+'</small></div></div>';}
+
+/* ── interruptible teaching: a clear "Pause & ask" button (reliable, no false cut-offs) ── */
+function showInterrupt(b){const a=document.getElementById('askBtn');if(a)a.classList.toggle('on',b);}
+function teachSay(text,fxStart){
+  setCaption(text);setSpeaking(true);showControls(false);showInterrupt(true);
+  if(typeof fxStart==='function')try{fxStart();}catch(e){}
+  return new Promise(resolve=>{
+    let settled=false;
+    const finish=()=>{if(settled)return;settled=true;clearFX();showInterrupt(false);window._skip=null;window._ask=null;setSpeaking(false);resolve();};
+    window._skip=()=>{stopAudio();finish();};
+    window._ask=async()=>{if(settled)return;settled=true;clearFX();showInterrupt(false);window._skip=null;window._ask=null;stopAudio();setSpeaking(false);const u=await listen(T('Go ahead — ask your question…','تفضل — اسأل سؤالك…'));if(u&&!ab())await handleInterjection(u);resolve();};
+    speakAsync(text,finish);
+  });
+}
+async function handleInterjection(u){
+  if(session&&session.about){setCoach(T('answering your question…','نجاوب على سؤالك…'));const sys="You are a warm induction coach for the Government of Dubai Legal Affairs Department. A new Service Ambassador just asked you a question during their induction. Answer warmly and briefly — 1 to 2 spoken sentences — using ONLY these facts: "+JSON.stringify(ABOUT)+". Say 'dirhams', never 'AED'. No markdown.";let a=await claudeText([{role:'user',content:u}],sys)||ABOUT.who;setCoach('');await say(a);return;}
+  const s=session.s;setCoach(T('answering your question…','نجاوب على سؤالك…'));
+  const sys="You are a warm expert coach training a Legal Affairs Department support-staff member (a Service Ambassador) so they can teach the public about "+s.name+". They are the helper, not the applicant. The learner just interrupted you with a question or comment. Answer it warmly and briefly — 1 to 2 spoken sentences — using ONLY these facts: "+facts(s)+". No markdown.";
+  let a=await claudeText([{role:'user',content:u}],sys);
+  if(!a)a=guideOffline(s,u);
+  setCoach('');await say(a);
+}
+function guideOffline(s,q){const ql=(q||'').toLowerCase();
+  if(/document|need|bring|paper/.test(ql)){const d=s.docs.filter(x=>x&&x!=='None'&&x!=='Not applicable');return d.length?('They will need '+d.join(', ')+'.'):'No documents are required for this one.';}
+  if(/fee|cost|much|price|pay/.test(ql))return s.fees.map(f=>f.n+': '+f.fee).join('; ')+'.';
+  if(/how long|time|days|when/.test(ql))return s.fees.map(f=>f.n+' takes '+f.time).join('; ')+'.';
+  if(/channel|where|apply|portal/.test(ql))return 'It runs through '+s.channels.join(' or ')+'.';
+  if(/who|for whom/.test(ql))return 'This service is for '+s.who+'.';
+  return s.desc;
+}
+async function getLesson(s){
+  const sys="You are an expert, engaging training coach with warmth and personality at the Government of Dubai Legal Affairs Department. You are training a SUPPORT-STAFF member (a Service Ambassador) so they can confidently GUIDE and TEACH members of the public through this service at the desk — they are NOT the applicant themselves, so never talk to them as if they are using the service; talk to them as the helper who will explain it to customers. COMPLETENESS OF INFORMATION IS THE PRIORITY: the ambassador must be able to answer ANY customer question, so the lesson must actually convey EVERY fact — every step, EVERY fee (each with its exact amount in dirhams and its timeline), EVERY required document, and EVERY channel. You may be concise and group things naturally (summarising is fine) — but never DROP a fact. Stay warm and natural, not a dry robotic list. ACCURACY OF TERMS: use the Department's exact service names from the facts and do not rename, embellish or editorialise them — for example, the service is 'execution of cheques', so never call it a 'bounced cheque'. Produce the lesson as STRICT JSON only: {\"steps\":\"spoken sentences walking through ALL the steps in order, completely; open with a quick why-it-matters hook\",\"fees\":\"spoken sentences covering EVERY fee in the data — for each: its name, the exact amount in dirhams, and how long it takes; then mention any note/discount. Say 'dirhams', never 'AED'\",\"channels\":\"spoken sentences naming ALL the channels and listing EVERY document the customer must bring, plus one genuinely useful insider tip\",\"tip\":\"one short, warm closing line\"}. No markdown. Use ONLY these facts: "+facts(s);
+  const t=await claudeText([{role:'user',content:'Create the complete lesson for '+s.name+', leaving out none of the fees, documents, channels or steps. Department context (weave in lightly, do not recite): the Legal Affairs Department\'s mission is '+ABOUT.mission+' Its people serve with the values of '+ABOUT.values.join(', ')+'.'}],sys);
+  if(t){try{const m=t.match(/\{[\s\S]*\}/);const j=JSON.parse(m?m[0]:t);if(j.steps&&j.fees&&j.channels)return {steps:j.steps,fees:j.fees,channels:j.channels,tip:j.tip||"You've got this."};}catch(e){}}
+  const docs=s.docs.filter(d=>d&&d!=='None'&&d!=='Not applicable');
+  return {steps:"Here's the full journey: "+s.steps.join('; then ')+".",
+    fees:"Every fee and timeline — "+s.fees.map(f=>f.n+" is "+dirhams(f.fee)+(f.time&&f.time!=='Instant'?", about "+f.time:"")).join("; ")+"."+(s.note?" "+s.note:""),
+    channels:"They apply through "+s.channels.join(" or ")+"."+(docs.length?" They'll need every one of these: "+docs.join(', ')+".":"")+" Keep all of this at your fingertips so you can answer any question.",
+    tip:"That's the complete picture of "+shortName(s)+" — nicely done."};
+}
+async function acknowledge(s,known){
+  const sys="You are a warm expert coach training a Legal Affairs Department support-staff member so they can teach the public about "+s.name+". The learner just told you what they already know. In TWO encouraging spoken sentences, acknowledge what they got right, gently note anything missing, then flow naturally into the lesson — say you'll build on that so they can confidently guide customers, and invite them to pause you anytime to ask. It must feel like one smooth continuation, not an abrupt topic change. Use ONLY these facts: "+facts(s)+". No markdown.";
+  const a=await claudeText([{role:'user',content:'The learner said: "'+known+'"'}],sys);
+  return a||"Good — that's a solid start to build on. Let me join the dots so you've got the whole picture and can explain it to anyone; pause me anytime to ask.";
+}
+
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;const t=a[i];a[i]=a[j];a[j]=t;}return a;}
+const L_GREET=[
+ "Welcome — I'm your coach for {S}. I'll teach it in three short parts and check in with a quick question after each, so it really sticks. Then three live customer role-plays. Pause me anytime.",
+ "Good to have you on {S}. Here's how it works: I'll walk you through it section by section, ask you a question after each part to lock it in, then we'll run three customer role-plays. Stop me whenever you like.",
+ "Let's get into {S}. I'll cover it in a few short pieces, and after each one I'll pop you a question so you're learning by doing — then three role-plays at the desk. Jump in anytime.",
+ "Right — {S}. We'll learn it in small chunks, with a quick check after each so nothing slips past, then three live customers. Pause me whenever you want."];
+const L_CHECK=["Quick check —","Let's lock that in —","One for you —","Here's a question on that —","Let me test that —","Quick one —","So you've got it —"];
+const L_MORECHECKS=["Almost there — let's nail it down with a couple more quick questions before the role-plays.","You're close. A few more quick ones to make sure it's solid, then we'll go live.","Let's tighten it up with a couple more questions before you face real customers.","Nearly — one or two more checks to lock it in, then the role-plays."];
+const L_SIMGOOD=["You clearly know it — now for the real thing. Three live customers; I'll play them, you respond like you would at the desk.","Strong work. Let's make it real: three customer role-plays. I'm the customer, you're the ambassador.","You've got the knowledge — let's pressure-test it. Three customers, back to back."];
+const L_SIMOK=["Good effort — practice will lock it in. Three customer role-plays now; I'm the customer.","Let's reinforce it with the real thing — three role-plays. I'll be the customer.","No worries — repetition helps. Three customers coming up; respond as the ambassador."];
+const L_ROLE=["Here comes a customer.","Next one — someone steps up to your desk.","A customer approaches.","Okay, customer {N}.","Right, here's another."];
+const L_CORRECT=["Spot on.","Exactly right.","That's it.","Nailed it.","Yes — correct.","Perfect.","Bang on.","Love it — correct."];
+const L_WRONG=["Not quite — {A}","Close, but {A}","Not this time — {A}","Hmm, not exactly. {A}","Not quite there — {A}"];
+const L_RETRY=["Have another go.","Give it one more try.","Take another run at it.","One more attempt — you've got this.","Try again, think it through."];
+const L_FAILQUIZ=["That's {C} out of 3 — you need at least 2 to pass, so we haven't quite cleared the test yet. No worries, let's run it again with a fresh set of questions.","Not enough this time — {C} of 3, and you need 2 to pass. We'll redo the test with different questions; you'll get it.","You scored {C} of 3, just short of the 2 you need. Let's go again — a new mix of questions this round.","Close — {C} of 3, but the pass mark is 2. We'll take the test again with fresh questions to lock it in."];
+const L_REDO=["Fresh set of questions — here we go.","New questions this time. Take your time.","Round two, different questions. You've got this.","Let's try again with a different mix."];
+const L_CERT=["Outstanding — you've certified {S}. Head back and pick your next planet whenever you're ready.","Brilliant work — {S} is certified. Choose your next planet when you like.","That's a certification on {S}. Back to the galaxy when you're ready for the next."];
+const L_NOTCERT=["Good progress on {S} — revisit it any time to sharpen up and certify.","Solid effort on {S}. Come back to tighten the tricky bits and lock in the certificate.","Nice work on {S} — another pass and you'll have it certified."];
+/* ════ Bilingual: English / Emirati Arabic (اللهجة الإماراتية) ════ */
+let LANG='en';try{LANG=localStorage.getItem('academy_lang')||'en';}catch(e){}
+function isAr(){return LANG==='ar';}
+function T(en,ar){return isAr()?ar:en;}
+function numStr(n){return isAr()?String(n).replace(/[0-9]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[+d];}):String(n);}
+function langDirective(){return isAr()?' \n\nLANGUAGE: Write ALL spoken text — every JSON string value and your entire reply — in warm, natural EMIRATI / GULF dialect Arabic (اللهجة الإماراتية الدارجة), the way a friendly Emirati coach actually talks; not Modern Standard Arabic and not stiff/formal. Keep JSON keys and the official English service and field names in English. Write currency as «درهم».':'';}
+async function tr(text){if(!isAr()||!text)return text;try{var a=await claudeText([{role:'user',content:'Translate into warm, natural spoken Emirati Gulf Arabic. Output ONLY the translation, nothing else:\n'+text}],'You are an expert translator into Emirati Gulf Arabic dialect. Output only the translation.');return (a&&a.trim())||text;}catch(e){return text;}}
+const L_GREET_AR=["هلا والله! أنا مدربك في خدمة {S}. بشرحها لك على ثلاث أجزاء قصيرة، وبعد كل جزء بسألك سؤال بسيط عشان ترسخ المعلومة، وبعدها ثلاث تمارين مع عملاء. وقّفني أي وقت تبي تسأل."];
+const L_CHECK_AR=["سؤال سريع —","خل نثبّتها —","وحدة لك —","عندي لك سؤال —","عشان تتمكّن —","سؤال خفيف —"];
+const L_MORECHECKS_AR=["قرّبنا — خل نثبّتها بكم سؤال قصير قبل التمارين.","قريب! كم سؤال ثاني عشان نتأكد إنها راسخة، وبعدها نبدأ.","خل نقوّيها بكم سؤال قبل ما تواجه عملاء حقيقيين."];
+const L_SIMGOOD_AR=["واضح إنك متمكّن — الحين الجد. ثلاث عملاء، أنا أمثّلهم وانت ترد مثل ما بترد عالمكتب.","شغل قوي. خل نخلّيها واقع: ثلاث عملاء. أنا العميل وانت السفير."];
+const L_SIMOK_AR=["مجهود طيب — التكرار بيثبّتها. ثلاث تمارين الحين، أنا العميل.","ولا يهمك — التكرار يساعد. ثلاث عملاء جايين؛ رد مثل السفير."];
+const L_ROLE_AR=["يا عميل جاي.","التالي — واحد يقرب لمكتبك.","عميل يقرب.","زين، العميل رقم {N}.","طيب، هذا واحد ثاني."];
+const L_CORRECT_AR=["بالضبط.","صح تماماً.","هذي هي.","جبتها.","ممتاز.","عين الصواب."];
+const L_WRONG_AR=["مو بالضبط — {A}","قريب، بس {A}","مو هالمرة — {A}","مم، مو بالضبط. {A}"];
+const L_RETRY_AR=["جرّب مرة ثانية.","عطها محاولة ثانية.","حاول مرة ثانية وفكّر فيها.","محاولة أخيرة — تقدر."];
+const L_FAILQUIZ_AR=["جبت {C} من ٣ — تحتاج ٢ على الأقل عشان تنجح، فما عدّيناها بعد. ولا يهمك، خل نعيدها بأسئلة جديدة.","مو كافية هالمرة — {C} من ٣، وتحتاج ٢. بنعيد بأسئلة مختلفة؛ بتجيبها.","جبت {C} من ٣، ناقصك وحدة. خل نعيد بمجموعة أسئلة جديدة."];
+const L_REDO_AR=["أسئلة جديدة — يلا.","أسئلة جديدة هالمرة، خذ وقتك.","الجولة الثانية بأسئلة مختلفة. تقدر."];
+const L_CERT_AR=["ممتاز — حصّلت شهادة {S}. ارجع واختر الكوكب التالي وقت ما تجهز.","شغل رائع — {S} صارت معتمدة. اختر كوكبك التالي وقت ما تبي."];
+const L_NOTCERT_AR=["تقدّم زين في {S} — ارجع لها أي وقت تقوّي نفسك وتعتمد.","مجهود طيب في {S}. ارجع تضبط النقاط الصعبة وتحصّل الشهادة."];
+const _LMAP={GREET:[L_GREET,L_GREET_AR],CHECK:[L_CHECK,L_CHECK_AR],MORECHECKS:[L_MORECHECKS,L_MORECHECKS_AR],SIMGOOD:[L_SIMGOOD,L_SIMGOOD_AR],SIMOK:[L_SIMOK,L_SIMOK_AR],ROLE:[L_ROLE,L_ROLE_AR],CORRECT:[L_CORRECT,L_CORRECT_AR],WRONG:[L_WRONG,L_WRONG_AR],RETRY:[L_RETRY,L_RETRY_AR],FAILQUIZ:[L_FAILQUIZ,L_FAILQUIZ_AR],REDO:[L_REDO,L_REDO_AR],CERT:[L_CERT,L_CERT_AR],NOTCERT:[L_NOTCERT,L_NOTCERT_AR]};
+function LL(n){var e=_LMAP[n];return e?(isAr()?e[1]:e[0]):[''];}
+function setLang(l){LANG=(l==='ar')?'ar':'en';try{localStorage.setItem('academy_lang',LANG);}catch(e){}applyLang();}
+function applyLang(){try{
+  var ar=isAr();document.documentElement.lang=ar?'ar':'en';if(document.body)document.body.classList.toggle('ar',ar);
+  var lbl=document.getElementById('langLbl');if(lbl)lbl.textContent=ar?'English':'العربية';
+  var byId=function(id,t){var e=document.getElementById(id);if(e)e.textContent=t;};
+  byId('stExit',ar?'✕ رجوع للمجرة':'Exit to galaxy ✕');byId('stSubmit',ar?'إرسال':'Send');byId('stSkip',ar?'تخطّي':'Skip');
+  var ab=document.getElementById('askBtn');if(ab)ab.textContent=ar?'✋ وقّفني واسأل':'✋ Pause & ask a question';
+  var inp=document.getElementById('stInput');if(inp)inp.placeholder=ar?'…أو اكتب جوابك':'…or type your answer';
+  var ph=function(k,t){var e=document.querySelector('.phase[data-ph="'+k+'"]');if(e)e.innerHTML='<span class="d"></span>'+t;};
+  ph('learn',ar?'تعلّم وتحقّق':'Learn &amp; check');ph('sim',ar?'محاكاة':'Role-play');
+}catch(e){}}
+(function(){try{
+  var st=document.createElement('style');
+  st.textContent='.langbtn{position:fixed;top:12px;left:12px;z-index:45;background:rgba(10,13,26,.62);border:1px solid rgba(255,255,255,.16);color:#e7edf8;border-radius:20px;padding:7px 14px;font-size:12.5px;font-weight:700;cursor:pointer;backdrop-filter:blur(12px);font-family:var(--sans,system-ui,sans-serif)}.langbtn:active{transform:scale(.96)}body.ar #cap{direction:rtl}body.ar #capText{direction:rtl}';
+  document.head.appendChild(st);
+  var b=document.createElement('button');b.className='langbtn';b.id='langBtn';b.type='button';b.innerHTML='<span id="langLbl"></span>';
+  b.addEventListener('click',function(){setLang(isAr()?'en':'ar');});
+  if(document.body)document.body.appendChild(b);
+}catch(e){}})();
+try{applyLang();}catch(e){}
+
+// pull a question from the remaining pool that best fits the section just taught
+function pickQFor(cat,pool){
+  if(!pool||!pool.length)return null;
+  const pats={steps:/\b(step|first|how do|process|apply|who|after|begin|start|register)\b/i,
+    fees:/\b(fee|cost|dirham|pay|price|much|long|day|time|vat|free|discount|certificate)\b/i,
+    channels:/\b(channel|portal|app|online|system|document|need|bring|where|search|report|24)\b/i};
+  const pat=pats[cat];let idx=-1;
+  if(pat)idx=pool.findIndex(q=>pat.test(q.q)||(q.kw||[]).some(k=>pat.test(k)));
+  if(idx<0)idx=0;
+  return pool.splice(idx,1)[0];
+}
+// ask one embedded check (with a single retry); returns 1 if correct, else 0
+async function askCheck(s,q){
+  if(!q)return 0;
+  VOX.morph('nebula');
+  const _qq=await tr(q.q);if(ab())return 0;
+  await say(pick(LL('CHECK'))+' '+_qq);if(ab())return 0;
+  let ans=await listen(T('Answer the question…','جاوب على السؤال…'));if(ab())return 0;
+  let g=await gradeAnswer(s,q.q,q.a,ans);if(ab())return 0;
+  if(!g.correct){setCoach(T('↻ one more try','↻ حاول مرة ثانية'));await say(pick(LL('RETRY')));if(ab())return 0;ans=await listen(T('Try once more…','حاول مرة ثانية…'));if(ab())return 0;g=await gradeAnswer(s,q.q,q.a,ans);if(ab())return 0;}
+  setCoach(g.correct?T('✓ correct','✓ صح'):T('✗ noted','✗ مسجل'));await say(g.feedback);setCoach('');
+  return g.correct?1:0;
+}
+async function runLesson(s){
+  buildBoard(s);setPhase('learn');setCoach('');
+  let L=null;const lessonP=getLesson(s).then(v=>{L=v;return v;});  // prefetch during the greeting so there's no dead pause
+  await say(pick(LL('GREET')).replace('{S}',shortName(s)));if(ab())return;
+  if(!L){setCoach(T('Putting your lesson together…','نجهز درسك…'));L=await lessonP;setCoach('');}if(ab())return;
+  // teach a section, then immediately check it — questions sprinkled through the lesson, not bunched at the end
+  const pool=shuffle(s.quiz);let correct=0;
+  revealSteps();await teachSay(L.steps,()=>sectionFX('steps',s,L.steps));if(ab())return;
+  correct+=await askCheck(s,pickQFor('steps',pool));if(ab())return;
+  revealFees();await teachSay(L.fees,()=>sectionFX('fees',s,L.fees));if(ab())return;
+  correct+=await askCheck(s,pickQFor('fees',pool));if(ab())return;
+  revealChannels();await teachSay(L.channels,()=>sectionFX('channels',s,L.channels));if(ab())return;
+  correct+=await askCheck(s,pickQFor('channels',pool));if(ab())return;
+  VOX.morph('nebula');await say(L.tip);if(ab())return;
+  // need at least 2 of 3 right; if short, sprinkle a couple more until it sticks (cap to avoid trapping)
+  let extra=0;
+  while(correct<2&&extra<4){
+    if(extra===0){await say(pick(LL('MORECHECKS')));if(ab())return;}
+    if(!pool.length)pool.push(...shuffle(s.quiz));
+    correct+=await askCheck(s,pool.shift());if(ab())return;extra++;
+  }
+  hideBoard();P(s.id).quiz=correct>=2;save();updateHUD();flushSync();
+  markPhaseDone('learn');setPhase('sim');VOX.morph('nebula');
+  await say(correct>=2?pick(LL('SIMGOOD')):pick(LL('SIMOK')));if(ab())return;
+  let total=0;
+  for(let i=0;i<s.sims.length;i++){if(ab())return;const line=s.sims[i];
+    await say(pick(LL('ROLE')).replace('{N}',(i+1)));if(ab())return;
+    const _cl=await tr(line);if(ab())return;showCustomerCard(_cl,"a customer");VOX.morph('person');
+    await say(_cl,true);if(ab())return;
+    const ans=await listen(T('Respond to the customer…','رد على العميل…'));if(ab())return;
+    const g=await gradeSim(s,line,ans);if(ab())return;
+    total+=g.score;setCoach(T('Score: ','النتيجة: ')+g.score+'/100');
+    await say(g.feedback);if(ab())return;setCoach('');}
+  hideBoard();
+  const avg=total/s.sims.length;P(s.id).sim=avg>=55;save();updateHUD();flushSync();
+  markPhaseDone('sim');
+  const done=certified(s.id);
+  await say((done?pick(LL('CERT')):pick(LL('NOTCERT'))).replace('{S}',shortName(s)));
+  showControls(true);document.getElementById('stControls').innerHTML='<button class="sbtn gold" onclick="exitStage()">Back to the galaxy →</button>';
+}
+function exitStage(){
+  if(session)session.aborted=true;session=null;
+  stopAudio();if(recog&&recognising){try{recog.stop();}catch(e){}}
+  onUserFinal=null;window._submit=null;window._skip=null;window._skipL=null;
+  const rail=document.querySelector('.phase-rail');if(rail)rail.style.display='';
+  stage.classList.remove('on');VOX.stop();
+  document.getElementById('stControls').innerHTML='<button class="mic" id="stMic" title="Speak"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg></button><input class="st-input" id="stInput" placeholder="…or type your answer"/><button class="sbtn go" id="stSubmit">Send</button><button class="sbtn" id="stSkip">Skip</button>';applyLang();
+  document.getElementById('stMic').addEventListener('click',()=>{if(!recog){document.getElementById('stInput').focus();return;}if(recognising){recog.stop();return;}try{recog.lang=isAr()?'ar-AE':'en-US';recog.start();recognising=true;document.getElementById('stMic').classList.add('live');}catch(e){}});
+  document.getElementById('stSubmit').addEventListener('click',()=>{if(window._submit)window._submit();});
+  document.getElementById('stInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&window._submit)window._submit();});
+  document.getElementById('stSkip').addEventListener('click',()=>{if(window._skip)window._skip();else if(window._skipL)window._skipL();});
+  if(window.orbit3d)window.orbit3d.surface();
+}
+
+/* ════ certificate + keys ════ */
+document.getElementById('certBtn').addEventListener('click',()=>{if(certCount()<11)return;document.getElementById('certDate').textContent='Dubai · '+new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});try{const n=localStorage.getItem('academy_name');if(n)document.getElementById('certName').value=n;}catch(e){}document.getElementById('cmodal').classList.add('on');});
+document.getElementById('certName').addEventListener('input',e=>{try{localStorage.setItem('academy_name',e.target.value);}catch(_){}});
+document.getElementById('gearBtn').addEventListener('click',()=>{const k=document.getElementById('kpop');try{document.getElementById('kAnthropic').value=localStorage.getItem('academy_anthropic')||'';document.getElementById('kEleven').value=localStorage.getItem('academy_eleven')||'';}catch(e){}k.classList.add('on');});
+document.getElementById('kpop').addEventListener('click',e=>{if(e.target.id==='kpop')e.currentTarget.classList.remove('on');});
+document.getElementById('cmodal').addEventListener('click',e=>{if(e.target.id==='cmodal')e.currentTarget.classList.remove('on');});
+/* robust close — works even if an inline handler is ever blocked */
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;
+  if(t.closest('.cert-x'))document.getElementById('cmodal').classList.remove('on');
+  if(t.closest('.kclose'))document.getElementById('kpop').classList.remove('on');
+  if(t.closest('.st-exit')&&stage.classList.contains('on'))exitStage();
+},true);
+function applyKeys(){const a=document.getElementById('kAnthropic').value.trim(),e=document.getElementById('kEleven').value.trim();window.ORBIT_CONFIG.anthropicKey=a;window.ORBIT_CONFIG.elevenKey=e;try{a?localStorage.setItem('academy_anthropic',a):localStorage.removeItem('academy_anthropic');e?localStorage.setItem('academy_eleven',e):localStorage.removeItem('academy_eleven');}catch(_){}}
+document.getElementById('kAnthropic').addEventListener('input',applyKeys);document.getElementById('kEleven').addEventListener('input',applyKeys);
+document.getElementById('kSave').addEventListener('click',async()=>{applyKeys();const st=document.getElementById('kStatus');if(!key()){st.style.color='var(--mut)';st.textContent='saved (coach runs offline)';return;}st.style.color='var(--mut)';st.textContent='testing…';const t=await claudeText([{role:'user',content:'Reply OK'}],'Reply with OK.');st.style.color=t?'var(--green)':'var(--red)';st.textContent=t?'● Claude connected':'✗ could not connect — check the key';});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(stage.classList.contains('on'))exitStage();document.getElementById('cmodal').classList.remove('on');document.getElementById('kpop').classList.remove('on');document.getElementById('amodal').classList.remove('on');}});
+try{window.ORBIT_CONFIG.anthropicKey=localStorage.getItem('academy_anthropic')||'';window.ORBIT_CONFIG.elevenKey=localStorage.getItem('academy_eleven')||'';}catch(e){}
+window.AcademyData={SERVICES,certified,P,findS,esc,shortName};
+window.enterPlanet=enterPlanet;
+updateHUD();
+
+/* ════ multi-user login + central progress tracking ════
+   On Azure (with the /api backend) the app runs in "hosted" mode: trainees sign
+   in with their email + the shared password, and progress is saved centrally so
+   they can resume on any device and a trainer can track everyone (see admin.html).
+   On the GitHub Pages preview there is no /api, so it stays in local mode. */
+const AUTH={hosted:false,email:null,token:null,name:''};window.AUTH=AUTH;
+let _syncT=null;
+function queueSync(){clearTimeout(_syncT);_syncT=setTimeout(syncServer,800);}
+function flushSync(){clearTimeout(_syncT);syncServer();}
+async function syncServer(){if(!(window.AUTH&&AUTH.hosted&&AUTH.token))return;try{await fetch('/api/progress',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify({token:AUTH.token,name:AUTH.name||localStorage.getItem('academy_name')||'',progress})});}catch(e){}}
+// never lose a completion: take the union of local + server per service
+function mergeProgress(a,b){const out={},ids=new Set([...Object.keys(a||{}),...Object.keys(b||{})]);ids.forEach(id=>{const x=(a&&a[id])||{},y=(b&&b[id])||{};out[id]={quiz:!!(x.quiz||y.quiz),sim:!!(x.sim||y.sim)};});return out;}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)flushSync();});
+addEventListener('pagehide',flushSync);
+function setWhoami(){const w=document.getElementById('whoami');if(!w)return;if(AUTH.hosted&&AUTH.email){w.style.display='flex';document.getElementById('whoEmail').textContent=AUTH.email;}else{w.style.display='none';}}
+function showGate(show){document.getElementById('authgate').classList.toggle('on',show);}
+async function loadServerProgress(){
+  try{const r=await fetch('/api/progress?token='+encodeURIComponent(AUTH.token),{cache:'no-store'});
+    if(r.status===401){doLogout();return;}
+    if(r.ok){const j=await r.json();progress=mergeProgress(progress,j.progress||{});try{localStorage.setItem(LS,JSON.stringify(progress));}catch(_){}flushSync();}
+  }catch(e){}
+  updateHUD();setWhoami();
+}
+async function doLogin(){
+  const email=(document.getElementById('agEmail').value||'').trim().toLowerCase();
+  const pass=document.getElementById('agPass').value||'';
+  const err=document.getElementById('agErr');const btn=document.getElementById('agBtn');
+  err.textContent='';btn.disabled=true;btn.textContent='Signing in…';
+  try{
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){err.textContent=j.error||'Could not sign in.';return;}
+    AUTH.token=j.token;AUTH.email=j.email;AUTH.name=j.name||'';
+    try{localStorage.setItem('academy_token',j.token);localStorage.setItem('academy_email',j.email);}catch(_){}
+    progress=mergeProgress(progress,j.progress||{});try{localStorage.setItem(LS,JSON.stringify(progress));}catch(_){}flushSync();
+    updateHUD();setWhoami();showGate(false);if(window.orbit3d&&window.orbit3d.intro)window.orbit3d.intro();
+    try{const wk='academy_welcomed_'+(AUTH.email||'x');if(!localStorage.getItem(wk)){localStorage.setItem(wk,'1');setTimeout(()=>{if(typeof playWelcome==='function')playWelcome();},1000);}}catch(e){}
+  }catch(e){err.textContent='Could not reach the server. Please try again.';}
+  finally{btn.disabled=false;btn.textContent='Begin training →';}
+}
+function doLogout(){AUTH.token=AUTH.email=null;AUTH.name='';try{localStorage.removeItem('academy_token');localStorage.removeItem('academy_email');}catch(_){}setWhoami();showGate(true);}
+async function initAuth(){
+  try{const r=await fetch('/api/config',{cache:'no-store'});if(r.ok){const j=await r.json();AUTH.hosted=!!j.hosted;}}catch(e){}
+  if(!AUTH.hosted)return; // local mode (e.g. GitHub Pages) — unchanged
+  const t=localStorage.getItem('academy_token'),e=localStorage.getItem('academy_email');
+  if(t&&e){AUTH.token=t;AUTH.email=e;AUTH.name=localStorage.getItem('academy_name')||'';showGate(false);await loadServerProgress();}
+  else{showGate(true);}
+}
+document.getElementById('agBtn').addEventListener('click',doLogin);
+document.getElementById('agPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('agEmail').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('agPass').focus();});
+document.getElementById('whoOut').addEventListener('click',doLogout);
+initAuth();
+</script>
+
+<!-- ════════ 3D ENGINE ════════ -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/renderers/CSS2DRenderer.js"></script>
+<!-- premium post-processing: real bloom (loaded after the core; used with a safe fallback) -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/MaskPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script>
+(function(){
+  const loaderEl=document.getElementById('loader');
+  function fail(m){loaderEl.classList.remove('gone');loaderEl.innerHTML='<div style="max-width:430px;text-align:center;padding:0 26px"><p style="color:#f87171;font-family:JetBrains Mono,monospace;font-size:11px;letter-spacing:1.5px">COULD NOT RENDER</p><p style="text-transform:none;letter-spacing:0;color:#c9d2e6;margin-top:12px;font-size:13px;font-family:Inter,sans-serif;line-height:1.6">'+m+'</p></div>';}
+  if(typeof THREE==='undefined'){fail('The 3D library (three.js) could not load. Check the connection and reload.');return;}
+  let glok=false;try{const c=document.createElement('canvas');glok=!!(c.getContext('webgl2')||c.getContext('webgl'));}catch(e){}
+  if(!glok){fail('This browser/GPU does not support WebGL. Try Chrome or Edge.');return;}
+  try{main();}catch(err){console.error(err);fail('Error building the scene: '+((err&&err.message)?err.message:err));}
+  function main(){
+  const D=window.AcademyData;
+  const sceneEl=document.getElementById('scene'),labelEl=document.getElementById('labels');
+  let W=innerWidth,H=innerHeight;
+  const isMobile=(innerWidth<760)||(navigator.maxTouchPoints>1&&innerWidth<1024);
+  const renderer=new THREE.WebGLRenderer({antialias:!isMobile});renderer.setPixelRatio(Math.min(devicePixelRatio,isMobile?1.5:2));renderer.setSize(W,H);renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;renderer.domElement.style.touchAction='none';sceneEl.appendChild(renderer.domElement);
+  const labelRenderer=new THREE.CSS2DRenderer();labelRenderer.setSize(W,H);labelRenderer.domElement.style.position='absolute';labelRenderer.domElement.style.top='0';labelEl.appendChild(labelRenderer.domElement);
+  const scene=new THREE.Scene();scene.background=new THREE.Color('#04050d');
+  const camera=new THREE.PerspectiveCamera(52,W/H,0.1,3000);camera.position.set(0,26,58);
+  const controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=0.06;controls.minDistance=4;controls.maxDistance=180;controls.autoRotate=true;controls.autoRotateSpeed=0.3;controls.enablePan=false;controls.maxPolarAngle=Math.PI*0.92;
+  // cinematic intro camera (eases in from far/high on first load and after sign-in)
+  let introT=0,introDone=false;const INTRO=2.8;controls.enabled=false;controls.autoRotate=false;
+  scene.add(new THREE.PointLight(0xfff2d6,2.4,0,1));scene.add(new THREE.AmbientLight(0x4a5880,0.85));
+  controls.addEventListener('start',()=>{if(!diveId)focusId=null;});
+  // ── deep-space backdrop: a layered nebula sky, depth fog, an ecliptic glow and drifting dust ──
+  // Soft cosmic cloud sky (procedural fbm in blue / teal / violet) — depth without cheap pin-stars.
+  function makeNebula(){const w=768,h=384,c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');
+    const bg=ctx.createLinearGradient(0,0,0,h);bg.addColorStop(0,'#04060f');bg.addColorStop(0.5,'#070b1d');bg.addColorStop(1,'#040510');ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+    const img=ctx.getImageData(0,0,w,h),d=img.data,cols=[[46,84,168],[28,130,150],[104,60,168]];
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const nx=x/w*4,ny=y/h*3;
+      let n=fbm(nx+11.3,ny+4.1,2.7,4);n=Math.max(0,n-0.46)*1.9;
+      const mix=fbm(nx*0.6+40,ny*0.6+9,1.1,3),ci=mix<0.42?0:(mix<0.7?1:2),col=cols[ci],a=Math.min(0.55,n*0.55),i=(y*w+x)*4;
+      d[i]=Math.min(255,d[i]+col[0]*a);d[i+1]=Math.min(255,d[i+1]+col[1]*a);d[i+2]=Math.min(255,d[i+2]+col[2]*a);}
+    ctx.putImageData(img,0,0);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t;}
+  scene.background=new THREE.Color('#04050d');
+  scene.fog=new THREE.FogExp2(0x060a18,0.0040);
+  const sky=new THREE.Mesh(new THREE.SphereGeometry(600,40,40),new THREE.MeshBasicMaterial({map:makeNebula(),side:THREE.BackSide,fog:false,depthWrite:false}));scene.add(sky);
+  // soft radial sprite helper (for the disc glow and dust motes)
+  function radialTex(stops){const s=128,cv=document.createElement('canvas');cv.width=cv.height=s;const x=cv.getContext('2d');const g=x.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);stops.forEach(st=>g.addColorStop(st[0],st[1]));x.fillStyle=g;x.fillRect(0,0,s,s);return new THREE.CanvasTexture(cv);}
+  // glowing ecliptic disc — a sense of a galactic plane the planets ride on
+  const disc=new THREE.Mesh(new THREE.PlaneGeometry(380,380),new THREE.MeshBasicMaterial({map:radialTex([[0,'rgba(80,128,205,0.14)'],[0.5,'rgba(55,85,160,0.05)'],[1,'rgba(0,0,0,0)']]),transparent:true,opacity:0.5,depthWrite:false,blending:THREE.AdditiveBlending,fog:false}));disc.rotation.x=-Math.PI/2;disc.position.y=-1.4;scene.add(disc);
+  // very faint orbital-plane grid, kept subtle
+  const grid=new THREE.GridHelper(170,34,0x3f6fb0,0x152743);grid.material.transparent=true;grid.material.opacity=0.07;grid.position.y=-1.25;scene.add(grid);
+  // drifting dust motes — soft bokeh for depth + life (slow parallax, low opacity)
+  const dustTex=radialTex([[0,'rgba(255,255,255,0.95)'],[0.35,'rgba(180,210,255,0.45)'],[1,'rgba(180,210,255,0)']]);
+  const dN=300,dpos=new Float32Array(dN*3),dcol=new Float32Array(dN*3),dpal=[[0.72,0.86,1],[0.6,1,0.95],[0.86,0.8,1],[1,0.95,0.84]];
+  for(let i=0;i<dN;i++){const r=26+Math.random()*210,a=Math.random()*6.283,yy=(Math.random()-0.5)*130;dpos[i*3]=Math.cos(a)*r;dpos[i*3+1]=yy;dpos[i*3+2]=Math.sin(a)*r;const cc=dpal[i%dpal.length];dcol[i*3]=cc[0];dcol[i*3+1]=cc[1];dcol[i*3+2]=cc[2];}
+  const dgeo=new THREE.BufferGeometry();dgeo.setAttribute('position',new THREE.BufferAttribute(dpos,3));dgeo.setAttribute('color',new THREE.BufferAttribute(dcol,3));
+  const dust=new THREE.Points(dgeo,new THREE.PointsMaterial({size:2.0,map:dustTex,vertexColors:true,transparent:true,opacity:0.38,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true,fog:false}));scene.add(dust);
+  const halo=new THREE.Mesh(new THREE.RingGeometry(38,150,96),new THREE.MeshBasicMaterial({color:0x244a86,transparent:true,opacity:0.05,side:THREE.DoubleSide,fog:false}));halo.rotation.x=Math.PI/2;halo.position.y=-1.1;scene.add(halo);
+  function hx(c){const n=parseInt(c.slice(1),16);return [n>>16&255,n>>8&255,n&255];}
+  function L3(a,b,t){return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];}
+  function hash(x,y,z){let n=(x*374761393+y*668265263+z*1274126177)|0;n=(n^(n>>13))*1274126177|0;return ((n^(n>>16))>>>0)/4294967295;}
+  function vnoise(x,y,z){const xi=Math.floor(x),yi=Math.floor(y),zi=Math.floor(z),xf=x-xi,yf=y-yi,zf=z-zi;const u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf),w=zf*zf*(3-2*zf),Lr=(a,b,t)=>a+(b-a)*t,c=(X,Y,Z)=>hash(xi+X,yi+Y,zi+Z);const x00=Lr(c(0,0,0),c(1,0,0),u),x10=Lr(c(0,1,0),c(1,1,0),u),x01=Lr(c(0,0,1),c(1,0,1),u),x11=Lr(c(0,1,1),c(1,1,1),u);return Lr(Lr(x00,x10,v),Lr(x01,x11,v),w);}
+  function fbm(x,y,z,o){let a=0,amp=0.5,f=1;for(let i=0;i<o;i++){a+=amp*vnoise(x*f,y*f,z*f);f*=2;amp*=0.5;}return a;}
+  function tex(type,base){const w=512,h=256,cnv=document.createElement('canvas');cnv.width=w;cnv.height=h;const c2=cnv.getContext('2d'),img=c2.createImageData(w,h),d=img.data,b=hx(base),seed=Math.random()*50;
+    for(let y=0;y<h;y++){const lat=(y/h-0.5)*Math.PI;for(let x=0;x<w;x++){const lon=(x/w)*2*Math.PI,dx=Math.cos(lat)*Math.cos(lon),dy=Math.sin(lat),dz=Math.cos(lat)*Math.sin(lon);let e=fbm(dx*2.2+seed,dy*2.2+seed,dz*2.2+seed,5),col;
+      if(type==='gas'){const band=Math.sin(lat*9+(fbm(dx*3,dy*3,dz*3,3)-0.5)*5),t=band*0.5+0.5;col=L3(L3(b,[0,0,0],0.35),L3(b,[255,255,255],0.5),t);}
+      else if(type==='ice'){col=e<0.5?[176,202,228]:e<0.7?[214,232,244]:[244,249,255];col=L3(col,b,0.16);}
+      else if(type==='rocky'){col=e<0.45?[84,66,58]:e<0.6?[136,98,70]:e<0.8?[168,138,102]:[202,182,150];col=L3(col,b,0.14);}
+      else{if(e<0.48)col=L3([18,46,104],[28,88,156],e/0.48);else if(e<0.52)col=[198,188,140];else if(e<0.7)col=L3([58,128,68],[92,150,82],(e-0.52)/0.18);else if(e<0.85)col=L3([112,94,68],[88,72,52],(e-0.7)/0.15);else col=[236,241,246];col=L3(col,b,0.12);}
+      const i=(y*w+x)*4;d[i]=col[0];d[i+1]=col[1];d[i+2]=col[2];d[i+3]=255;}}
+    c2.putImageData(img,0,0);const t=new THREE.CanvasTexture(cnv);t.encoding=THREE.sRGBEncoding;return t;}
+  // ── Saturn-style ring (banded, radial-UV remapped so the bands read as concentric) ──
+  function ringTex(col){const w=256,h=8,cv=document.createElement('canvas');cv.width=w;cv.height=h;const x=cv.getContext('2d');
+    for(let i=0;i<w;i++){const t=i/(w-1);let a=Math.pow(Math.sin(t*Math.PI),0.7)*0.95;a*=0.5+0.5*Math.sin(t*46+1.3);if(t>0.46&&t<0.52)a*=0.1;a=Math.max(0,Math.min(1,a));x.fillStyle='rgba('+col[0]+','+col[1]+','+col[2]+','+a.toFixed(3)+')';x.fillRect(i,0,1,h);}
+    const tx=new THREE.CanvasTexture(cv);tx.encoding=THREE.sRGBEncoding;return tx;}
+  function addRing(parent,pr,col){const inner=pr*1.5,outer=pr*2.5,g=new THREE.RingGeometry(inner,outer,100,1),pos=g.attributes.position,uv=g.attributes.uv,v=new THREE.Vector3();
+    for(let i=0;i<pos.count;i++){v.fromBufferAttribute(pos,i);const r=Math.hypot(v.x,v.y),u=(r-inner)/(outer-inner);uv.setXY(i,u,0.5);}
+    const ring=new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:ringTex(col),transparent:true,side:THREE.DoubleSide,depthWrite:false,opacity:0.95}));
+    ring.rotation.x=Math.PI*0.5-0.4;ring.rotation.y=0.18;parent.add(ring);return ring;}
+  // ── lit drifting cloud layer (white alpha wisps) ──
+  function cloudTex(){const w=256,h=128,cv=document.createElement('canvas');cv.width=w;cv.height=h;const x=cv.getContext('2d'),img=x.createImageData(w,h),d=img.data,seed=Math.random()*40;
+    for(let y=0;y<h;y++){const lat=(y/h-0.5)*Math.PI;for(let i2=0;i2<w;i2++){const lon=(i2/w)*2*Math.PI,dx=Math.cos(lat)*Math.cos(lon),dy=Math.sin(lat),dz=Math.cos(lat)*Math.sin(lon);
+      let e=fbm(dx*2.6+seed,dy*2.6+seed,dz*2.6+seed,5),a=Math.min(1,Math.max(0,(e-0.52)/0.36))*235;const k=(y*w+i2)*4;d[k]=d[k+1]=d[k+2]=255;d[k+3]=a;}}
+    x.putImageData(img,0,0);const tx=new THREE.CanvasTexture(cv);return tx;}
+  const sun=new THREE.Mesh(new THREE.SphereGeometry(2.5,64,64),new THREE.MeshBasicMaterial({color:0xf6c45a}));sun.userData={type:'sun'};scene.add(sun);
+  // a single restrained warm corona — no white-hot wash
+  sun.add(new THREE.Mesh(new THREE.SphereGeometry(3.1,40,40),new THREE.MeshBasicMaterial({color:0xffb858,transparent:true,opacity:0.14,side:THREE.BackSide,blending:THREE.AdditiveBlending,depthWrite:false})));
+  // small soft halo
+  const sunGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:radialTex([[0,'rgba(255,206,120,0.5)'],[0.35,'rgba(255,170,80,0.14)'],[0.75,'rgba(255,140,60,0.03)'],[1,'rgba(0,0,0,0)']]),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));
+  sunGlow.scale.set(6.5,6.5,1);sun.add(sunGlow);
+  const sl=document.createElement('div');sl.className='lbl';sl.innerHTML='<b style="font-family:Instrument Serif,serif;font-size:14px">About the Department</b><span>click to learn about us</span>';const slo=new THREE.CSS2DObject(sl);slo.position.set(0,3.7,0);sun.add(slo);
+  const reg={};const sys=new THREE.Group();scene.add(sys);
+  const MC={step:0x9fb0cc,fees:0xffd479,channels:0x6aa6ff,docs:0x2dd4bf};
+  function build(){
+    const list=D.SERVICES,n=list.length;
+    list.forEach((s,i)=>{const orbR=9+i*2.7;const pivot=new THREE.Group();sys.add(pivot);
+      const ring=new THREE.Mesh(new THREE.RingGeometry(orbR-0.015,orbR+0.015,128),new THREE.MeshBasicMaterial({color:0x445072,transparent:true,opacity:0.22,side:THREE.DoubleSide}));ring.rotation.x=Math.PI/2;sys.add(ring);
+      const pr=1.0;const planet=new THREE.Mesh(new THREE.SphereGeometry(pr,40,40),new THREE.MeshStandardMaterial({map:tex(s.type,s.color),roughness:0.95,metalness:0.05}));planet.userData={id:s.id};
+      const atm=new THREE.Mesh(new THREE.SphereGeometry(pr*1.14,30,30),new THREE.MeshBasicMaterial({color:new THREE.Color(s.color),transparent:true,opacity:0.18,side:THREE.BackSide,blending:THREE.AdditiveBlending,depthWrite:false}));planet.add(atm);
+      const el=document.createElement('div');el.className='lbl';const lo=new THREE.CSS2DObject(el);lo.position.set(0,pr+0.7,0);planet.add(lo);
+      const pg=new THREE.Group();pg.add(planet);pg.position.set(orbR,0,0);pivot.add(pg);pivot.rotation.y=(i/n)*Math.PI*2;
+      // Saturn-style rings on gas/ice giants; a drifting cloud layer on earth-like worlds
+      if(s.type==='gas')addRing(pg,pr,[228,208,170]); else if(s.type==='ice')addRing(pg,pr,[176,208,236]);
+      let cloud=null;
+      if(s.type!=='gas'&&s.type!=='ice'&&s.type!=='rocky'){cloud=new THREE.Mesh(new THREE.SphereGeometry(pr*1.02,32,32),new THREE.MeshLambertMaterial({map:cloudTex(),transparent:true,depthWrite:false,opacity:0.5}));planet.add(cloud);}
+      const moons=[];const facets=[];s.steps.forEach((st,j)=>facets.push('step'));facets.push('fees');facets.push('channels');if(s.docs.filter(x=>x&&x!=='None'&&x!=='Not applicable').length)facets.push('docs');
+      facets.forEach((f,j)=>{const mp=new THREE.Group();const mr=f==='step'?0.13:0.17;const moon=new THREE.Mesh(new THREE.SphereGeometry(mr,16,16),new THREE.MeshBasicMaterial({color:MC[f]}));moon.position.set(pr+0.5+j*0.32,0,0);moon.userData={id:s.id};mp.add(moon);mp.rotation.x=(Math.random()-0.5)*0.5;mp.userData.spin=0.4+j*0.12+Math.random()*0.2;mp.rotation.y=Math.random()*6.28;planet.add(mp);moons.push(mp);});
+      reg[s.id]={s,pivot,pg,planet,atm,el,moons,cloud,pr,spin:0.1+0.02*(i%3)};});
+    refreshVisuals();
+  }
+  function refreshVisuals(){for(const id in reg){const r=reg[id];const cert=D.certified(id);const p=D.P(id);r.atm.material.color.set(cert?0xffd479:(p.quiz?r.s.color:0x55607a));r.el.innerHTML='<b>'+D.esc(D.shortName(r.s))+'</b><span'+(cert?' class="ok"':'')+'>'+(cert?'✓ certified':(p.quiz?'in progress':'not started'))+'</span>';}}
+  window.orbit3d={dive(id){diveId=id;focusId=id;controls.autoRotate=false;labelRenderer.domElement.style.opacity='0.1';},surface(){diveId=null;focusId=null;controls.autoRotate=true;labelRenderer.domElement.style.opacity='1';},focus(id){focusId=id;controls.autoRotate=false;},clearFocus(){focusId=null;controls.autoRotate=true;},refresh(){refreshVisuals();},intro(){introT=0;introDone=false;controls.enabled=false;controls.autoRotate=false;}};
+  const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();const tip=document.getElementById('tip');
+  function pick(ev){mouse.x=(ev.clientX/W)*2-1;mouse.y=-(ev.clientY/H)*2+1;ray.setFromCamera(mouse,camera);const ms=[sun];for(const id in reg){ms.push(reg[id].planet);reg[id].moons.forEach(m=>ms.push(m.children[0]));}const hit=ray.intersectObjects(ms,false);return hit.length?hit[0].object:null;}
+  renderer.domElement.addEventListener('pointermove',ev=>{if(diveId){tip.style.display='none';return;}const o=pick(ev);renderer.domElement.style.cursor=o?'pointer':'grab';if(o&&o.userData.type==='sun'){tip.style.display='block';tip.style.left=(ev.clientX+14)+'px';tip.style.top=(ev.clientY+14)+'px';tip.innerHTML='<div class="n">About the Department</div><div class="m">Click to learn who we are &amp; our Director General</div>';}else if(o){const s=D.findS(o.userData.id);tip.style.display='block';tip.style.left=(ev.clientX+14)+'px';tip.style.top=(ev.clientY+14)+'px';tip.innerHTML='<div class="n">'+D.esc(s.name)+'</div><div class="m">'+(D.certified(s.id)?'Certified ✓ · click to revisit':'Click to dive in &amp; train')+'</div>';}else tip.style.display='none';});
+  renderer.domElement.addEventListener('mouseleave',()=>{tip.style.display='none';});
+  let downXY=null;renderer.domElement.addEventListener('pointerdown',ev=>{downXY=[ev.clientX,ev.clientY];});
+  renderer.domElement.addEventListener('pointerup',ev=>{if(!downXY)return;const moved=Math.hypot(ev.clientX-downXY[0],ev.clientY-downXY[1]);downXY=null;if(moved>6||(diveId&&stage.classList.contains('on')))return;const o=pick(ev);if(!o)return;if(o.userData.type==='sun'){if(window.enterAbout)window.enterAbout();return;}window.enterPlanet(o.userData.id);});
+  let focusId=null,diveId=null;const tmp=new THREE.Vector3(),des=new THREE.Vector3();
+  function applyFocus(){if(!focusId||!reg[focusId])return;reg[focusId].planet.getWorldPosition(tmp);const close=!!diveId;controls.target.lerp(tmp,close?0.12:0.07);const out=tmp.clone().normalize();des.copy(tmp).add(out.multiplyScalar(close?2.6:8)).add(new THREE.Vector3(0,close?0.8:3,0));camera.position.lerp(des,close?0.1:0.06);}
+  // ── premium bloom (cinematic glow). Falls back to a plain render if the post-processing scripts didn't load. ──
+  let composer=null;
+  try{
+    if(!isMobile&&THREE.EffectComposer&&THREE.RenderPass&&THREE.UnrealBloomPass){
+      composer=new THREE.EffectComposer(renderer);
+      composer.addPass(new THREE.RenderPass(scene,camera));
+      const bloom=new THREE.UnrealBloomPass(new THREE.Vector2(W,H),0.28,0.4,0.9); // very gentle — just a hint of glow on the brightest cores
+      composer.addPass(bloom);
+    }
+  }catch(e){composer=null;}
+  const clock=new THREE.Clock();
+  function animate(){requestAnimationFrame(animate);const dt=clock.getDelta(),t=clock.elapsedTime;sun.scale.setScalar(1+0.04*Math.sin(t*1.5));grid.rotation.y+=dt*0.012;sky.rotation.y+=dt*0.0016;dust.rotation.y+=dt*0.008;disc.material.opacity=0.46+0.06*Math.sin(t*0.6);
+    for(const id in reg){const r=reg[id];r.pivot.rotation.y+=r.spin*dt*0.12;r.planet.rotation.y+=dt*(diveId===id?0.05:0.08);if(r.cloud)r.cloud.rotation.y+=dt*0.03;r.moons.forEach(m=>{m.rotation.y+=m.userData.spin*dt;});if(D.certified(id))r.atm.material.opacity=0.2+0.07*Math.sin(t*2);}
+    if(!introDone&&introT<INTRO){introT+=dt;const k=Math.min(1,introT/INTRO),e=1-Math.pow(1-k,3);camera.position.set(0,90-(90-26)*e,150-(150-58)*e);camera.lookAt(0,1.5,0);}
+    else{if(!introDone){introDone=true;controls.enabled=true;controls.autoRotate=!diveId;controls.target.set(0,0,0);}applyFocus();controls.update();}
+    if(composer)composer.render();else renderer.render(scene,camera);labelRenderer.render(scene,camera);}
+  addEventListener('resize',()=>{W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);if(composer)composer.setSize(W,H);labelRenderer.setSize(W,H);});
+  build();animate();
+  setTimeout(()=>{loaderEl.classList.add('gone');setTimeout(()=>loaderEl.remove(),700);},80);
+  }
+})();
+</script>
+</body>
+</html>

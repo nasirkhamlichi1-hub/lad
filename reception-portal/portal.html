@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>The Legal Affairs Platform — CLPD · Government of Dubai</title>
+<meta name="description" content="The unified Legal Affairs Department platform — choose your workspace: LAD staff training, lawyer CLPD, firms, accredited providers, and administration."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{
+  --green:#006B3F;--green2:#008549;--green-d:#004d2e;--green-l:#00a85e;--green-bg:#eaf6ef;--green-border:#bfe0cd;
+  --gold:#C9913A;--gold2:#dba84e;--gold-l:#f0cc88;--gold-bg:#fdf6e8;
+  --sky:#0e6ba8;--sky2:#1488cc;--sky-bg:#eaf4fb;
+  --purple:#6b4ea8;--purple-bg:#f1ecf9;--rose:#b03a6e;--rose-bg:#fbecf3;--teal:#127d74;--teal-bg:#e6f5f3;
+  --ink:#0a0e14;--navy:#1c1f2e;--navy2:#12141e;
+  --slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;--line:#e8ecf1;--line2:#d8dfe7;--amber:#92540a;
+  --paper:#f8fafb;--paper2:#f1f4f7;--white:#fff;--red:#c0392b;
+  --serif:'Instrument Serif',Georgia,serif;--sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:12px;--r-lg:18px;--r-xl:24px;
+  --sh:0 2px 4px rgba(10,14,20,.06),0 8px 24px rgba(10,14,20,.06);
+  --sh-md:0 6px 14px rgba(10,14,20,.1),0 24px 48px rgba(10,14,20,.12);
+}
+html,body{color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;background:var(--paper);min-height:100vh}
+a{color:var(--green2);text-decoration:none}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+.muted{color:var(--slate3)}
+
+.top{position:absolute;top:0;left:0;right:0;z-index:20}
+.top-in{display:flex;align-items:center;gap:13px;height:70px;max-width:1200px;margin:0 auto;padding:0 24px;color:#fff}
+.emblem{width:38px;height:38px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:10px;display:grid;place-items:center;flex-shrink:0}
+.emblem svg{width:19px;height:23px}
+.brand-t{font-family:var(--serif);font-size:18px;line-height:1.05}
+.brand-s{font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.6);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:2px}
+.spacer{flex:1}
+.adminlink{font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;font-weight:600;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.18)}
+.adminlink:hover{color:#fff;background:rgba(255,255,255,.1)}
+
+.hero{background:linear-gradient(165deg,#0c1f2e,#0a0e14 58%);color:#fff;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(900px 380px at 80% -8%,rgba(20,136,204,.26),transparent 70%),radial-gradient(700px 320px at 8% 120%,rgba(0,168,94,.18),transparent 70%)}
+.hero-in{position:relative;max-width:1200px;margin:0 auto;padding:120px 24px 52px;text-align:center}
+.eyebrow{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;color:var(--gold-l);margin-bottom:16px}
+.hero h1{font-family:var(--serif);font-size:clamp(32px,5.5vw,52px);font-weight:400;line-height:1.04;letter-spacing:-.015em}
+.hero p{color:rgba(255,255,255,.76);font-size:clamp(15px,2.2vw,18px);max-width:60ch;margin:16px auto 0;line-height:1.55}
+
+.roles{max-width:1200px;margin:-30px auto 0;padding:0 24px 70px;position:relative;z-index:5}
+.role-label{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--slate3);margin:30px 4px 14px;display:flex;align-items:center;gap:10px}
+.role-label:after{content:"";flex:1;height:1px;background:var(--line)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+.role{display:flex;flex-direction:column;gap:12px;background:var(--white);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:var(--sh);cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;position:relative;overflow:hidden;text-align:left}
+.role:hover{transform:translateY(-4px);box-shadow:var(--sh-md)}
+.role:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--accent,var(--green2))}
+.role .ic{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-size:25px;background:var(--accent-bg,var(--green-bg))}
+.role h3{font-size:18px;font-weight:700;letter-spacing:-.01em}
+.role p{font-size:13px;color:var(--slate2);line-height:1.55;flex:1}
+.role .go{font-size:13px;font-weight:700;color:var(--accent,var(--green2));display:flex;align-items:center;gap:6px;margin-top:2px}
+.role .ext{position:absolute;top:18px;right:18px;font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 7px;border-radius:5px;background:var(--paper2);color:var(--slate3);border:1px solid var(--line)}
+.footnote{text-align:center;color:var(--slate3);font-size:12.5px;margin-top:34px;line-height:1.6}
+
+/* Admin overlay */
+.overlay{position:fixed;inset:0;background:rgba(10,14,20,.55);backdrop-filter:blur(3px);z-index:60;display:none;align-items:flex-start;justify-content:center;padding:40px 18px;overflow:auto}
+.overlay.on{display:flex}
+.sheet{background:#fff;border-radius:20px;box-shadow:var(--sh-md);width:100%;max-width:920px;overflow:hidden}
+.sheet-h{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.sheet-h h3{font-size:16px;font-weight:700}.sheet-h .x{margin-left:auto;cursor:pointer;color:var(--slate3);font-size:24px;line-height:1}
+.sheet-b{padding:22px}
+label{display:block;font-size:12px;font-weight:650;color:var(--slate);margin:10px 0 5px}
+input{width:100%;padding:10px 12px;border:1.5px solid var(--line2);border-radius:10px;font-size:14px;font-family:var(--sans)}
+input:focus{outline:none;border-color:var(--green2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600;padding:11px 18px;border-radius:11px;border:1px solid transparent;cursor:pointer}
+.btn-pri{background:linear-gradient(135deg,var(--green2),var(--green));color:#fff}
+.btn-soft{background:#f3f5f7;color:var(--slate);border:1px solid var(--line2);font-weight:600}
+.err{color:var(--red);font-size:13px;margin-top:8px;display:none}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--slate3);padding:9px 12px;border-bottom:1px solid var(--line);font-weight:700}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+select{padding:6px 8px;border:1.5px solid var(--line2);border-radius:8px;font-size:12.5px;background:#fff}
+.cchip{font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:999px;border:1.5px solid var(--line2);cursor:pointer;color:var(--slate2);background:#fff;display:inline-block}
+.cchip.on{background:var(--sky-bg);border-color:#bcdcf0;color:var(--sky)}
+.add-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.add-row input{max-width:240px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:11px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:100}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:560px){.hero-in{padding:96px 24px 44px}}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="top-in">
+  <div class="emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="#fff" opacity=".95"/></svg></div>
+  <div><div class="brand-t">Legal Affairs Platform</div><div class="brand-s">Government of Dubai · CLPD</div></div>
+  <div class="spacer"></div>
+  <span class="adminlink" id="adminOpen">Administrator</span>
+</div></header>
+
+<header class="hero"><div class="hero-in">
+  <div class="eyebrow">Continuing Legal Professional Development</div>
+  <h1>One platform. Every role.</h1>
+  <p>Choose your workspace to continue. The Legal Affairs Department platform brings staff training, lawyer CLPD, firms, accredited providers and oversight together in one place.</p>
+</div></header>
+
+<main class="roles">
+  <div class="role-label">Choose your workspace</div>
+  <div class="grid" id="roleGrid"></div>
+  <div class="footnote">Course access (such as Aviation Law) is granted by your administrator.<br><a href="/accreditation" style="font-weight:650">Course accreditation</a> — providers &amp; firms apply here; LAD reviewers approve from the same page. · <a href="/credits" style="font-weight:650">Buy credits</a></div>
+</main>
+
+<!-- Admin overlay -->
+<div class="overlay" id="adminOverlay"><div class="sheet">
+  <div class="sheet-h"><h3>Administrator</h3><span class="x" id="adminClose">&times;</span></div>
+  <div class="sheet-b">
+    <div id="adminLogin">
+      <p class="muted" style="margin-bottom:6px">Sign in as an administrator to manage people, roles and course access.</p>
+      <label for="aEmail">Email</label><input id="aEmail" type="email" placeholder="you@legal.dubai.gov.ae"/>
+      <label for="aPass">Password</label><input id="aPass" type="password" placeholder="Password"/>
+      <div id="aErr" class="err"></div>
+      <button class="btn btn-pri" id="aBtn" style="margin-top:14px;width:100%">Sign in</button>
+    </div>
+    <div id="adminConsole" style="display:none">
+      <div id="aiStat" style="font-size:12px;font-weight:600;margin-bottom:12px;color:var(--slate3)"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><b>People</b><span class="muted" id="uCount" style="font-size:12px"></span><span class="spacer" style="flex:1"></span><a class="muted" id="aSignout" style="font-size:12px;cursor:pointer">Sign out</a></div>
+      <div style="overflow:auto"><table id="uTable"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Courses</th></tr></thead><tbody></tbody></table></div>
+      <div class="add-row"><div><label>Enrol / update by email</label><input id="newEmail" type="email" placeholder="person@firm.ae"/></div>
+        <select id="newRole"><option value="staff">LAD Staff Training</option><option value="lawyer">Lawyer</option><option value="oversight">LAD Admin (oversight)</option><option value="admin">CLPD Admin</option></select>
+        <button class="btn btn-soft" id="newAdd">Add / update</button></div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin:22px 0 12px;padding-top:18px;border-top:1px solid var(--line)"><b>Credits</b><span class="muted" id="credPrice" style="font-size:12px"></span></div>
+      <div id="credReqs"></div>
+      <div class="add-row"><div><label>Top up credits by email</label><input id="cuEmail" type="email" placeholder="person@firm.ae"/></div>
+        <input id="cuAmt" type="number" min="1" step="1" placeholder="Credits" style="max-width:120px"/>
+        <button class="btn btn-soft" id="cuAdd">Top up</button></div>
+    </div>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var el=function(i){return document.getElementById(i);};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function toast(m){var t=el('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},2600);}
+
+  // The CLPD platform (lawyer/firm/provider/admin/oversight) deployment.
+  var CLPD='https://icy-mud-07d00dc03.7.azurestaticapps.net/';
+  // Per-user assignable courses on the training side.
+  var ASSIGNABLE=[{id:'aviation',name:'Aviation Law'}];
+
+  // ── The six role entries ──────────────────────────────────────────────
+  var ROLES=[
+    {ic:'🛎️',acc:'var(--green2)',bg:'var(--green-bg)',t:'LAD Staff Training',d:'The knowledge hub and live AI training for Legal Affairs Department service staff.',href:'/index.html',go:'Enter staff hub',ext:false},
+    {ic:'⚖️',acc:'var(--sky)',bg:'var(--sky-bg)',t:'Lawyer',d:'Your CPD points toward the 16-point cycle, earned from accredited courses you complete.',href:'/my-cpd',go:'Open my CPD',ext:false},
+    {ic:'🏛️',acc:'var(--purple)',bg:'var(--purple-bg)',t:'Firm',d:'Manage your firm’s lawyers, credits and compliance — and apply for accreditation.',href:CLPD+'firm-compliance-portal.html',go:'Open firm portal',ext:true},
+    {ic:'🎓',acc:'var(--gold)',bg:'var(--gold-bg)',t:'Accredited Provider',d:'Apply to accredit your CLPD courses (A1 & A2), track your application, and browse the accredited catalogue.',href:'/accreditation',go:'Apply for accreditation',ext:false},
+    {ic:'🗂️',acc:'var(--teal)',bg:'var(--teal-bg)',t:'CLPD Admin',d:'The admin team’s operations: bookings, purchases, schedules, website and support.',href:CLPD+'lad-admin.html',go:'Open admin team',ext:true},
+    {ic:'🛰️',acc:'var(--rose)',bg:'var(--rose-bg)',t:'LAD Admin',d:'Full oversight of the entire programme — the profession, firms, accreditation and reports.',href:CLPD+'lad-intelligence-v4.html',go:'Open oversight',ext:true}
+  ];
+  el('roleGrid').innerHTML=ROLES.map(function(r){
+    return '<a class="role" style="--accent:'+r.acc+';--accent-bg:'+r.bg+'" href="'+esc(r.href)+'"'+(r.ext?' target="_blank" rel="noopener"':'')+'>'+
+      (r.ext?'<span class="ext">CLPD platform</span>':'')+
+      '<div class="ic">'+r.ic+'</div>'+
+      '<h3>'+esc(r.t)+'</h3><p>'+esc(r.d)+'</p>'+
+      '<div class="go">'+esc(r.go)+' →</div></a>';
+  }).join('');
+
+  // ── Administrator: people, roles & course access ──────────────────────
+  var TOKEN=null;
+  el('adminOpen').onclick=function(){ el('adminOverlay').classList.add('on'); var t=null;try{t=localStorage.getItem('tr_token');}catch(e){} if(t){TOKEN=t;showConsole();} };
+  el('adminClose').onclick=function(){ el('adminOverlay').classList.remove('on'); };
+  el('adminOverlay').onclick=function(e){ if(e.target===el('adminOverlay'))el('adminOverlay').classList.remove('on'); };
+  el('aSignout').onclick=function(){ try{localStorage.removeItem('tr_token');}catch(e){} TOKEN=null; el('adminConsole').style.display='none';el('adminLogin').style.display=''; };
+  el('aBtn').onclick=adminSignIn;
+  el('aPass').addEventListener('keydown',function(e){if(e.key==='Enter')adminSignIn();});
+  function adminSignIn(){
+    var email=(el('aEmail').value||'').trim().toLowerCase(),pass=el('aPass').value||'';
+    if(!email||!pass){el('aErr').textContent='Enter your email and password.';el('aErr').style.display='block';return;}
+    el('aBtn').disabled=true;el('aErr').style.display='none';
+    fetch('/api/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:email,password:pass})})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+      .then(function(o){ el('aBtn').disabled=false;
+        if(!o.ok||!o.j.token){el('aErr').textContent=(o.j&&o.j.error)||'Could not sign in.';el('aErr').style.display='block';return;}
+        if(o.j.role!=='admin'){el('aErr').textContent='That account is not an administrator.';el('aErr').style.display='block';return;}
+        TOKEN=o.j.token;try{localStorage.setItem('tr_token',TOKEN);}catch(e){}
+        showConsole();
+      }).catch(function(){el('aBtn').disabled=false;el('aErr').textContent='Network error.';el('aErr').style.display='block';});
+  }
+  function showConsole(){
+    // verify token is an admin
+    fetch('/api/me?token='+encodeURIComponent(TOKEN)).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      if(!j||j.role!=='admin'){ el('adminLogin').style.display='';el('adminConsole').style.display='none'; if(j){el('aErr').textContent='That account is not an administrator.';el('aErr').style.display='block';} return; }
+      el('adminLogin').style.display='none';el('adminConsole').style.display='';loadUsers();aiStatus();loadCredits();
+    }).catch(function(){});
+  }
+  function aiStatus(){
+    var box=el('aiStat'); if(!box)return; box.textContent='Checking AI model…';box.style.color='var(--slate3)';
+    fetch('/api/ai-status?token='+encodeURIComponent(TOKEN)).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      if(!j){box.textContent='';return;}
+      if(j.configured&&j.ok){ box.textContent='● AiModel connected — Maryam is running on it.';box.style.color='var(--green2)'; }
+      else if(j.configured){ box.textContent='● AiModel keys found but the test call failed — check the deployment name / endpoint.';box.style.color='var(--red)'; }
+      else { box.textContent='● No AiModel keys detected — Maryam is on Claude until they’re added.';box.style.color='var(--amber)'; }
+    }).catch(function(){box.textContent='';});
+  }
+  function roleLabel(r){return {lawyer:'Lawyer',staff:'LAD Staff Training',oversight:'LAD Admin (oversight)',admin:'CLPD Admin'}[r]||r;}
+  function loadUsers(){
+    fetch('/api/user-admin?token='+encodeURIComponent(TOKEN)).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      if(!j)return; el('uCount').textContent=(j.users||[]).length+' people';
+      var tb=el('uTable').querySelector('tbody');
+      tb.innerHTML=(j.users||[]).map(function(u){return row(u);}).join('')||'<tr><td colspan="4" class="muted" style="padding:16px">No one enrolled yet.</td></tr>';
+      bindRows();
+    }).catch(function(){});
+  }
+  function row(u){
+    var rsel='<select class="rsel" data-email="'+esc(u.email)+'"'+(u.isSuper?' disabled':'')+'>'+
+      ['staff','lawyer','oversight','admin'].map(function(r){return '<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+roleLabel(r)+'</option>';}).join('')+'</select>';
+    var courses=ASSIGNABLE.map(function(c){var on=(u.courses||[]).indexOf(c.id)>=0;return '<span class="cchip'+(on?' on':'')+'" data-email="'+esc(u.email)+'" data-course="'+c.id+'">'+esc(c.name)+'</span>';}).join(' ');
+    return '<tr><td><b>'+esc(u.name||'—')+'</b></td><td class="muted">'+esc(u.email)+'</td><td>'+rsel+'</td><td>'+courses+'</td></tr>';
+  }
+  function bindRows(){
+    Array.prototype.forEach.call(document.querySelectorAll('.rsel'),function(s){ s.onchange=function(){ save({email:s.getAttribute('data-email'),role:s.value},function(){toast('Role updated');}); }; });
+    Array.prototype.forEach.call(document.querySelectorAll('.cchip'),function(ch){ ch.onclick=function(){
+      var row=ch.closest('tr'),on=[];Array.prototype.forEach.call(row.querySelectorAll('.cchip'),function(c){var willOn=(c===ch)?!c.classList.contains('on'):c.classList.contains('on');if(willOn)on.push(c.getAttribute('data-course'));});
+      ch.classList.toggle('on'); save({email:ch.getAttribute('data-email'),courses:on},function(){toast(ch.classList.contains('on')?'Assigned':'Unassigned');});
+    };});
+  }
+  el('newAdd').onclick=function(){ var email=(el('newEmail').value||'').trim().toLowerCase(),role=el('newRole').value; if(!email){toast('Enter an email.');return;} save({email:email,role:role,active:true},function(){el('newEmail').value='';loadUsers();toast('Saved '+email);}); };
+
+  // ── Credits administration: pending purchase requests + top-ups ───────
+  function loadCredits(){
+    fetch('/api/credits?scope=requests&token='+encodeURIComponent(TOKEN)).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      if(!j)return; if(j.pricePerCredit)el('credPrice').textContent='AED '+j.pricePerCredit+' per credit';
+      var rq=j.requests||[];
+      el('credReqs').innerHTML=rq.length?('<div class="muted" style="font-size:12px;margin-bottom:6px">Pending purchase requests</div>'+rq.map(function(x){
+        return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)"><div style="flex:1"><b>'+esc(x.email)+'</b> · '+esc(x.amount)+' credits<div class="muted" style="font-size:11px">'+esc((x.at||'').slice(0,16).replace('T',' '))+'</div></div><button class="btn btn-pri creq" data-id="'+esc(x.id)+'" style="padding:7px 14px">Confirm</button></div>';
+      }).join('')):'';
+      Array.prototype.forEach.call(document.querySelectorAll('.creq'),function(btn){ btn.onclick=function(){ btn.disabled=true;
+        fetch('/api/credits',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'confirm',id:btn.getAttribute('data-id'),token:TOKEN})})
+          .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+          .then(function(o){ if(o.ok){toast('Credits granted');loadCredits();}else{btn.disabled=false;toast((o.j&&o.j.error)||'Could not confirm.');} }).catch(function(){btn.disabled=false;toast('Network error.');});
+      };});
+    }).catch(function(){});
+  }
+  el('cuAdd').onclick=function(){ var email=(el('cuEmail').value||'').trim().toLowerCase(),amt=Math.round(Number(el('cuAmt').value)||0); if(!email||!amt){toast('Enter an email and amount.');return;}
+    el('cuAdd').disabled=true;
+    fetch('/api/credits',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'topup',email:email,amount:amt,token:TOKEN})})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+      .then(function(o){ el('cuAdd').disabled=false; if(o.ok){el('cuEmail').value='';el('cuAmt').value='';toast('Topped up — balance '+o.j.balance);loadCredits();}else{toast((o.j&&o.j.error)||'Could not top up.');} }).catch(function(){el('cuAdd').disabled=false;toast('Network error.');});
+  };
+  function save(patch,done){ patch.token=TOKEN; fetch('/api/user-admin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(patch)})
+    .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+    .then(function(o){ if(o.ok)done&&done(o.j); else toast((o.j&&o.j.error)||'Could not save.'); }).catch(function(){toast('Network error.');}); }
+})();
+</script>
+</body>
+</html>

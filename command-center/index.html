@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Orbit — LAD Mission Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script>
+/* Pluggable AI backend — leave empty to use the built-in offline analyst.
+   Point aiEndpoint at a Maryam-style route ({question,context}->{answer}) to use a real model. */
+window.ORBIT_CONFIG = { aiEndpoint:'/api/analyst', ttsEndpoint:'/api/tts', anthropicModel:'claude-sonnet-4-6', anthropicKey:'', elevenKey:'', elevenVoice:'EXAVITQu4vr4xnSDxMaL', orgName:'Legal Affairs Department · Dubai' };
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{
+  --ink:#e8ecf6;--mut:#8a93b0;--line:rgba(255,255,255,.10);--panel:rgba(14,18,34,.74);
+  --green:#34d399;--amber:#fbbf24;--red:#f87171;--gold:#ffd479;--blue:#6aa6ff;--violet:#a78bfa;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+}
+html,body{height:100%}
+body{background:#04050d;color:var(--ink);font-family:var(--sans);overflow:hidden}
+#scene{position:fixed;inset:0;z-index:1}
+#scene canvas{display:block}
+#labels{position:fixed;inset:0;z-index:2;pointer-events:none}
+.lbl{font-family:var(--sans);text-align:center;transform:translate(-50%,-50%);text-shadow:0 1px 6px rgba(0,0,0,.9);white-space:nowrap;transition:opacity .3s}
+.lbl b{font-size:10px;font-weight:500;color:rgba(255,255,255,.92);display:block;letter-spacing:-.01em}
+.lbl span{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.5)}
+
+/* loader */
+#loader{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#04050d;transition:opacity .6s}
+#loader.gone{opacity:0;pointer-events:none}
+.lspin{width:46px;height:46px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:var(--gold);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loader p{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--mut)}
+
+/* HUD */
+.hud{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:18px;padding:14px 20px;pointer-events:none}
+.brand{display:flex;align-items:center;gap:11px;pointer-events:auto}
+.brand .logo{width:34px;height:34px;border-radius:10px;background:radial-gradient(circle at 32% 30%,var(--gold),#b5781b 70%);box-shadow:0 0 22px rgba(255,196,90,.45)}
+.brand b{font-size:14.5px;letter-spacing:.1px}
+.brand span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:2.4px;text-transform:uppercase;color:var(--mut)}
+.hud-spacer{flex:1}
+.pills{display:flex;gap:9px;pointer-events:auto}
+.pill{display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:8px 13px;backdrop-filter:blur(12px);font-size:12.5px}
+.pill .dot{width:9px;height:9px;border-radius:50%}
+.pill b{font-weight:700}.pill small{color:var(--mut);font-size:11px}
+
+.legend{position:fixed;left:20px;bottom:20px;z-index:20;display:flex;flex-direction:column;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 15px;backdrop-filter:blur(12px);font-size:12px;max-width:215px}
+.legend .lh{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:3px}
+.legend .row{display:flex;align-items:center;gap:9px;color:var(--mut)}
+.legend .row .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.legend .hint{margin-top:5px;font-size:11px;color:var(--mut);line-height:1.5}
+
+/* inspector */
+.inspector{position:fixed;top:0;left:0;bottom:0;width:398px;max-width:92vw;z-index:30;background:linear-gradient(180deg,rgba(12,16,32,.95),rgba(7,9,20,.97));border-right:1px solid var(--line);backdrop-filter:blur(18px);transform:translateX(-100%);transition:transform .34s cubic-bezier(.22,.7,.2,1);display:flex;flex-direction:column;box-shadow:30px 0 60px rgba(0,0,0,.45)}
+.inspector.on{transform:none}
+.insp-head{padding:20px 22px 16px;border-bottom:1px solid var(--line);position:relative}
+.insp-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:2.2px;text-transform:uppercase;color:var(--mut);margin-bottom:9px}
+.insp-title{display:flex;align-items:center;gap:12px}
+.insp-orb{width:30px;height:30px;border-radius:50%;flex-shrink:0;box-shadow:0 0 18px currentColor}
+.insp-title h2{font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.15}
+.insp-sub{margin-top:6px;font-size:12.5px;color:var(--mut)}
+.insp-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--mut);cursor:pointer;font-size:17px;display:grid;place-items:center}
+.insp-close:hover{color:var(--ink);background:rgba(255,255,255,.08)}
+.insp-body{flex:1;overflow-y:auto;padding:18px 22px 30px}
+.insp-body::-webkit-scrollbar{width:8px}.insp-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:8px}
+.block-label{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin:18px 0 10px;display:flex;justify-content:space-between;align-items:center}
+.block-label:first-child{margin-top:0}
+.addbtn{font-family:var(--sans);font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;text-transform:none;letter-spacing:0}
+.addbtn:hover{text-decoration:underline}
+.healthbar{height:8px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden;margin:2px 0 4px}
+.healthbar>i{display:block;height:100%;border-radius:6px;transition:width .4s,background .4s}
+.kpi{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:10px}
+.kpi-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}
+.kpi-name{font-size:13px;font-weight:600}.kpi-att{font-family:var(--mono);font-size:12px;font-weight:700}
+.kpi-edit{display:flex;gap:8px;margin-top:8px}
+.kpi-edit label{font-size:10.5px;color:var(--mut);display:flex;flex-direction:column;gap:3px;flex:1}
+input,select,textarea{font-family:var(--sans);background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:7px 9px;font-size:12.5px;width:100%;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+select option{background:#0d1124}
+.proj{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:11px;position:relative}
+.proj.alert{border-color:rgba(248,113,113,.5);box-shadow:0 0 0 1px rgba(248,113,113,.25),0 0 22px rgba(248,113,113,.14)}
+.proj-top{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.proj-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.proj-name{font-size:13.5px;font-weight:600;flex:1}
+.proj-meta{display:flex;gap:14px;font-size:11px;color:var(--mut);margin:3px 0 9px}
+.proj-meta b{color:var(--ink);font-weight:600}
+.proj-controls{display:grid;gap:9px;margin-top:9px}
+.range-row{display:flex;align-items:center;gap:10px}
+.range-row input[type=range]{flex:1;accent-color:var(--blue);padding:0}
+.range-row .pct{font-family:var(--mono);font-size:12px;font-weight:700;width:42px;text-align:right}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field label{font-size:10.5px;color:var(--mut);display:block;margin-bottom:3px}
+.concern textarea{min-height:48px;resize:vertical;line-height:1.45}
+.delbtn{position:absolute;top:11px;right:11px;background:none;border:none;color:var(--mut);cursor:pointer;font-size:13px}
+.delbtn:hover{color:var(--red)}
+.ghost-btn{width:100%;padding:9px;border:1px dashed var(--line);background:none;color:var(--mut);border-radius:10px;cursor:pointer;font-size:12.5px;font-family:var(--sans)}
+.ghost-btn:hover{color:var(--ink);border-color:var(--blue)}
+
+/* voice */
+.voice{position:fixed;right:20px;bottom:20px;z-index:35;width:min(360px,40vw)}
+.voice-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(16px);box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden}
+.voice-answer{padding:15px 18px;font-size:14px;line-height:1.55;max-height:232px;overflow-y:auto;display:none;border-bottom:1px solid var(--line)}
+.voice-answer.on{display:block}
+.voice-answer .who{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--violet);margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.voice-answer b{color:#fff}.voice-answer .sev{color:var(--red);font-weight:700}
+.voice-input{display:flex;align-items:center;gap:11px;padding:11px 12px 11px 16px}
+.mic{width:46px;height:46px;border-radius:50%;flex-shrink:0;border:none;cursor:pointer;background:radial-gradient(circle at 35% 30%,var(--violet),#6d28d9);color:#fff;display:grid;place-items:center;transition:transform .15s}
+.mic:hover{transform:scale(1.05)}
+.mic.live{background:radial-gradient(circle at 35% 30%,var(--red),#b91c1c);animation:miclive 1.4s infinite}
+@keyframes miclive{0%{box-shadow:0 0 0 0 rgba(248,113,113,.5)}70%{box-shadow:0 0 0 16px rgba(248,113,113,0)}100%{box-shadow:0 0 0 0 rgba(248,113,113,0)}}
+.mic svg{width:21px;height:21px;fill:none;stroke:#fff;stroke-width:2}
+.voice-text{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:13.5px}
+.voice-text::placeholder{color:var(--mut)}
+.spk{width:40px;height:40px;border-radius:11px;flex-shrink:0;border:1px solid var(--line);background:rgba(255,255,255,.04);cursor:pointer;display:grid;place-items:center}
+.spk.on{color:var(--violet);border-color:var(--violet)}.spk.off{color:var(--mut)}
+.spk svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2}
+.chips{display:flex;gap:7px;flex-wrap:wrap;padding:0 12px 12px}
+.chip{font-size:11.5px;color:var(--mut);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:20px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+.chip:hover{color:var(--ink);border-color:var(--violet)}
+.convo-row{display:flex;gap:8px;align-items:center;padding:0 12px 8px}
+.convo-btn{flex:1;font-size:12px;color:var(--mut);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:20px;padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;justify-content:center}
+.convo-btn .cdot{width:8px;height:8px;border-radius:50%;background:var(--mut);flex-shrink:0}
+.convo-btn.on{color:var(--green);border-color:var(--green)}
+.convo-btn.on .cdot{background:var(--green);box-shadow:0 0 8px var(--green)}
+.stopbtn{display:none;font-size:12px;color:#fff;background:var(--red);border:none;border-radius:20px;padding:7px 14px;cursor:pointer;font-weight:600;flex-shrink:0}
+.stopbtn.on{display:inline-block}
+.mic.stop{background:radial-gradient(circle at 35% 30%,var(--red),#b91c1c)!important;animation:none}
+.ume{font-size:12.5px;color:var(--mut);margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.ume b{color:var(--violet);font-weight:600}
+.listening{font-size:11px;color:var(--violet);padding:0 16px 10px;display:none;font-family:var(--mono)}
+.listening.on{display:block}
+.cfgbtn{width:40px;height:40px;border-radius:11px;flex-shrink:0;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--mut);cursor:pointer;display:grid;place-items:center}
+.cfgbtn:hover{color:var(--ink)}
+.cfgbtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7}
+.voice-settings{display:none}
+.voice-settings.on{display:flex;position:fixed;inset:0;z-index:55;align-items:center;justify-content:center;padding:24px;background:rgba(4,6,14,.62);backdrop-filter:blur(5px)}
+.cfg-card{position:relative;width:min(440px,94vw);max-height:88vh;overflow-y:auto;background:linear-gradient(180deg,rgba(16,20,38,.99),rgba(9,11,24,1));border:1px solid var(--line);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.6);padding:20px 22px}
+.cfg-h{font-family:var(--mono);font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--mut);margin-bottom:14px}
+.cfg-primary{color:var(--ink)!important;font-weight:600}
+.cfg-primary input{border-color:var(--violet);box-shadow:0 0 0 2px rgba(167,139,250,.16)}
+.voice-settings label{display:block;font-size:11px;color:var(--mut);margin-bottom:10px}
+.voice-settings label small{opacity:.65;font-weight:400}
+.voice-settings input{margin-top:5px}
+.cfg-row{display:flex;align-items:center;gap:11px;margin-top:2px}
+.cfg-save{background:var(--violet);color:#fff;border:none;border-radius:9px;padding:8px 15px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);white-space:nowrap}
+.cfg-save:hover{filter:brightness(1.08)}
+.cfg-status{font-size:11px;color:var(--green);font-weight:600}
+.cfg-note{margin-top:11px;font-size:10.5px;color:var(--mut);line-height:1.55}
+#tip{position:fixed;z-index:40;pointer-events:none;background:rgba(10,12,26,.95);border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:12px;display:none;max-width:240px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+#tip .t-name{font-weight:700;margin-bottom:3px}#tip .t-meta{color:var(--mut);font-size:11px}
+@media(max-width:560px){.legend{display:none}.chips{display:none}}
+/* filters bar */
+.filters{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:18;display:flex;gap:7px;flex-wrap:wrap;justify-content:center;max-width:78vw}
+.fchip{font-size:11.5px;color:var(--mut);background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:6px 12px;cursor:pointer;backdrop-filter:blur(12px);white-space:nowrap}
+.fchip:hover{color:var(--ink)}
+.fchip.on{color:#04060e;background:var(--amber);border-color:var(--amber);font-weight:600}
+.fchip.brief{color:var(--gold);border-color:rgba(255,212,121,.4)}
+.fchip.brief:hover{background:rgba(255,212,121,.12)}
+@media(max-width:760px){.filters{display:none}}
+/* project deep-dive modal */
+.pmodal{position:fixed;inset:0;z-index:45;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(4,6,14,.62);backdrop-filter:blur(4px)}
+.pmodal.on{display:flex}
+.pmodal-card{width:min(620px,94vw);max-height:88vh;overflow-y:auto;background:linear-gradient(180deg,rgba(15,19,36,.98),rgba(9,11,24,.99));border:1px solid var(--line);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.pmodal-card::-webkit-scrollbar{width:8px}.pmodal-card::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:8px}
+.pm-head{padding:20px 24px;border-bottom:1px solid var(--line);position:relative}
+.pm-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.pm-title{font-size:21px;font-weight:700;letter-spacing:-.01em;line-height:1.15}
+.pm-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--mut);cursor:pointer;font-size:17px;display:grid;place-items:center}
+.pm-close:hover{color:var(--ink)}
+.pm-body{padding:20px 24px 26px}
+.pm-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pm-stat{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:12px 13px}
+.pm-stat .l{font-family:var(--mono);font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.pm-stat .v{font-size:15px;font-weight:700}
+.pm-stat .s{font-size:11px;color:var(--mut);margin-top:3px;line-height:1.4}
+.pm-section{margin-top:18px}
+.pm-section .h{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:9px}
+.pm-section .s{font-size:11px;color:var(--mut);margin-top:5px;line-height:1.45}
+.pm-dual{height:10px;border-radius:6px;background:rgba(255,255,255,.08);position:relative;overflow:visible;margin:4px 0}
+.pm-dual>i{position:absolute;left:0;top:0;height:100%;border-radius:6px}
+.pm-plan{position:absolute;top:-3px;width:2px;height:16px;background:#fff;opacity:.8;border-radius:2px}
+.pm-ms{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.pm-ms .dot{width:15px;height:15px;border-radius:50%;flex-shrink:0;margin-top:2px;display:grid;place-items:center;font-size:10px;color:#04060e}
+.pm-reason{display:flex;gap:9px;font-size:13px;padding:5px 0;line-height:1.5}
+.pm-reason svg{width:15px;height:15px;flex-shrink:0;stroke:var(--amber);fill:none;stroke-width:2;margin-top:2px}
+.pm-rec{margin-top:16px;background:rgba(106,166,255,.08);border:1px solid rgba(106,166,255,.3);border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.55}
+.pm-rec b{color:var(--blue)}
+.spark{display:inline-flex;align-items:flex-end;gap:3px;height:24px}
+.spark i{width:6px;border-radius:2px;opacity:.9}
+.pm-chip{display:inline-block;font-size:11px;color:var(--mut);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:20px;padding:4px 11px;margin:3px 5px 3px 0}
+</style>
+</head>
+<body>
+<div id="loader"><div class="lspin"></div><p>Rendering the system…</p></div>
+<div id="scene"></div>
+<div id="labels"></div>
+
+<div class="hud">
+  <div class="brand"><div class="logo"></div><div><b id="orgName">Mission Control</b><span>Orbit · Portfolio Health</span></div></div>
+  <div class="hud-spacer"></div>
+  <div class="pills">
+    <div class="pill"><span class="dot" id="ovDot"></span><b id="ovScore">—</b><small>overall</small></div>
+    <div class="pill"><span class="dot" style="background:var(--red)"></span><b id="cntFail">0</b><small>failing</small></div>
+    <div class="pill"><span class="dot" style="background:var(--amber)"></span><b id="cntRisk">0</b><small>at risk</small></div>
+    <div class="pill"><span class="dot" style="background:#fb923c"></span><b id="cntOverdue">0</b><small>overdue</small></div>
+    <div class="pill"><b id="budgetPill">—</b><small>budget used</small></div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="lh">Project health</div>
+  <div class="row"><span class="dot" style="background:var(--green)"></span>On track</div>
+  <div class="row"><span class="dot" style="background:var(--amber)"></span>At risk</div>
+  <div class="row"><span class="dot" style="background:var(--red)"></span>Failing</div>
+  <div class="hint">Planets are divisions · moons are projects (bigger = higher priority). Click a moon for a deep dive, a planet to edit. Use the filters up top, or just ask the analyst.</div>
+</div>
+
+<aside class="inspector" id="inspector">
+  <button class="insp-close" onclick="closeInspector()">&times;</button>
+  <div class="insp-head">
+    <div class="insp-eyebrow" id="inspEyebrow">Division</div>
+    <div class="insp-title"><div class="insp-orb" id="inspOrb"></div><h2 id="inspName">—</h2></div>
+    <div class="insp-sub" id="inspSub"></div>
+    <div class="healthbar" style="margin-top:13px"><i id="inspHealth"></i></div>
+  </div>
+  <div class="insp-body" id="inspBody"></div>
+</aside>
+
+<div class="voice"><div class="voice-card">
+  <div class="voice-settings" id="cfgPanel"><div class="cfg-card">
+    <button class="pm-close" onclick="document.getElementById('cfgPanel').classList.remove('on')">&times;</button>
+    <div class="cfg-h">Connect AI</div>
+    <label class="cfg-primary">① Claude / Anthropic API key <small>· this powers the intelligent analyst</small><input type="password" id="cfgAnthropic" placeholder="sk-ant-…  ← paste your Claude key here" autocomplete="off"></label>
+    <label>Model <small>· intelligence vs speed</small><select id="cfgModel"><option value="claude-sonnet-4-6">Claude Sonnet 4.6 — balanced</option><option value="claude-opus-4-8">Claude Opus 4.8 — deepest</option><option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — fastest</option></select></label>
+    <label>② ElevenLabs API key <small>· natural voice ONLY — not the analyst (optional)</small><input type="password" id="cfgEleven" placeholder="optional — leave blank" autocomplete="off"></label>
+    <div class="cfg-row"><button class="cfg-save" id="cfgSave">Save &amp; test connection</button><span class="cfg-status" id="cfgStatus"></span></div>
+    <div class="cfg-note">Keys stay in your browser (localStorage) and call the providers directly — nothing is uploaded or committed.</div>
+  </div></div>
+  <div class="voice-answer" id="answer"></div>
+  <div class="listening" id="listening">● listening…</div>
+  <div class="voice-input">
+    <button class="mic" id="mic" title="Tap to speak"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg></button>
+    <input class="voice-text" id="vtext" placeholder="Ask anything about the portfolio…"/>
+    <button class="cfgbtn" id="cfgBtn" title="Connect AI keys"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <button class="spk on" id="spk" title="Toggle voice replies"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14"/></svg></button>
+  </div>
+  <div class="convo-row"><button class="convo-btn" id="convoBtn"><span class="cdot"></span> Hands-free conversation</button><button class="stopbtn" id="stopBtn">■ Stop</button></div>
+  <div class="chips" id="chips"></div>
+</div></div>
+<div class="filters" id="filters"></div>
+<div class="pmodal" id="pmodal"><div class="pmodal-card" id="pmodalCard"></div></div>
+<div id="tip"></div>
+
+<!-- ════════ CLASSIC SCRIPT: data, health, editor, analyst, voice (global scope) ════════ -->
+<script>
+const PALETTE=['#6aa6ff','#a78bfa','#22d3ee','#f472b6','#fb923c','#34d399','#c084fc','#ffd479'];
+function mk(o){return Object.assign({priority:'medium',team:4,budget:300,spend:200,trend:'flat',deps:[],milestones:[]},o);}
+function seed(){return {departments:[
+ {id:'profession',name:'Advocates & Legal Consultants Affairs',weight:5,color:'#6aa6ff',type:'terran',
+  kpis:[{name:'Registrations within SLA',actual:88,target:95,unit:'%'},{name:'Avg registration time',actual:16,target:14,unit:'d',higherIsBetter:false},{name:'Active on the Roll',actual:5400,target:6000,unit:''}],
+  projects:[
+   mk({id:'p1',name:'LPS Smart App upgrade',progress:62,status:'at-risk',owner:'Digital / IT',priority:'high',team:9,start:'2026-02-01',due:'2026-07-20',budget:1800,spend:1300,trend:'down',milestones:[{name:'Renewals module',due:'2026-06-10',done:false},{name:'UAT',due:'2026-07-05',done:false}],concern:'Vendor sprint slip on the renewals module.'}),
+   mk({id:'p2',name:'Roll data cleanse',progress:80,status:'on-track',owner:'Registration',priority:'medium',team:4,start:'2026-03-01',due:'2026-06-30',budget:300,spend:230,trend:'up',milestones:[{name:'Dedup pass',due:'2026-05-20',done:true},{name:'Final reconciliation',due:'2026-06-25',done:false}],concern:''}),
+   mk({id:'p3',name:'Visiting consultant permit automation',progress:40,status:'at-risk',owner:'Registration',priority:'medium',team:5,start:'2026-03-15',due:'2026-08-10',budget:600,spend:280,trend:'flat',deps:['p1'],milestones:[{name:'MoJ integration',due:'2026-06-01',done:false},{name:'Pilot',due:'2026-07-20',done:false}],concern:'Integration with the Ministry of Justice still pending.'}),
+   mk({id:'p4',name:'Court of Cassation audience workflow',progress:90,status:'on-track',owner:'Registration',priority:'high',team:3,start:'2026-02-10',due:'2026-06-25',budget:250,spend:210,trend:'up',milestones:[{name:'Build',due:'2026-05-15',done:true},{name:'Go-live',due:'2026-06-24',done:false}],concern:''})]},
+ {id:'govlegal',name:'Government Legal Services',weight:4.5,color:'#a78bfa',type:'terran',
+  kpis:[{name:'Advice within SLA',actual:84,target:95,unit:'%'},{name:'Contracts reviewed / mo',actual:120,target:150,unit:''},{name:'Entity satisfaction',actual:91,target:95,unit:'%'}],
+  projects:[
+   mk({id:'p5',name:'Central Legal Services Portal v2',progress:55,status:'at-risk',owner:'Digital',priority:'critical',team:14,start:'2026-01-15',due:'2026-08-01',budget:3200,spend:2100,trend:'down',milestones:[{name:'Phase 1 entities',due:'2026-05-30',done:false},{name:'Phase 2',due:'2026-07-20',done:false}],concern:'Scope creep across 12 government entities.'}),
+   mk({id:'p6',name:'Contract template library',progress:78,status:'on-track',owner:'Contracts',priority:'medium',team:4,start:'2026-03-01',due:'2026-07-10',budget:400,spend:300,trend:'up',milestones:[{name:'Top 50 templates',due:'2026-06-05',done:true},{name:'Publish',due:'2026-07-08',done:false}],concern:''}),
+   mk({id:'p7',name:'AI contract-review pilot',progress:35,status:'on-track',owner:'Innovation',priority:'high',team:6,start:'2026-04-01',due:'2026-09-15',budget:900,spend:250,trend:'up',deps:['p6'],milestones:[{name:'Model eval',due:'2026-07-01',done:false},{name:'Pilot 3 entities',due:'2026-09-01',done:false}],concern:''})]},
+ {id:'legislation',name:'Legislation & Drafting',weight:3.5,color:'#22d3ee',type:'ice',
+  kpis:[{name:'Drafts within 10–30 days',actual:90,target:95,unit:'%'},{name:'Legislative requests cleared',actual:60,target:72,unit:''}],
+  projects:[
+   mk({id:'p8',name:'Law No. 16 of 2025 rollout',progress:70,status:'on-track',owner:'Legislation',priority:'critical',team:7,start:'2026-02-01',due:'2026-07-01',budget:500,spend:360,trend:'flat',milestones:[{name:'Entity guidance',due:'2026-05-20',done:true},{name:'Full enforcement',due:'2026-06-30',done:false}],concern:''}),
+   mk({id:'p9',name:'Legislative tracker dashboard',progress:45,status:'at-risk',owner:'Strategy',priority:'medium',team:4,start:'2026-03-20',due:'2026-08-20',budget:350,spend:200,trend:'down',deps:['p5'],milestones:[{name:'Data feeds',due:'2026-06-10',done:false},{name:'Launch',due:'2026-08-15',done:false}],concern:'Data feed from entities is incomplete.'}),
+   mk({id:'p10',name:'Bilingual drafting QA',progress:85,status:'on-track',owner:'Legislation',priority:'medium',team:3,start:'2026-02-15',due:'2026-06-28',budget:200,spend:170,trend:'up',milestones:[{name:'Glossary',due:'2026-05-10',done:true},{name:'QA cycle',due:'2026-06-26',done:false}],concern:''})]},
+ {id:'litigation',name:'Litigation & Representation',weight:4,color:'#f472b6',type:'rocky',
+  kpis:[{name:'Cases resolved within target',actual:76,target:90,unit:'%'},{name:'Active caseload',actual:210,target:180,unit:'',higherIsBetter:false},{name:'Favourable outcomes',actual:82,target:80,unit:'%'}],
+  projects:[
+   mk({id:'p11',name:'Case management system',progress:48,status:'failing',owner:'Cases',priority:'critical',team:11,start:'2025-11-01',due:'2026-06-13',budget:2600,spend:2200,trend:'down',milestones:[{name:'Data migration',due:'2026-05-01',done:false},{name:'Cutover',due:'2026-06-12',done:false}],concern:'Migration stalled; legacy records not reconciled. Now overdue.'}),
+   mk({id:'p12',name:'Arbitration playbook',progress:88,status:'on-track',owner:'Cases',priority:'medium',team:3,start:'2026-03-01',due:'2026-07-05',budget:180,spend:150,trend:'up',milestones:[{name:'Draft',due:'2026-05-20',done:true},{name:'Sign-off',due:'2026-07-03',done:false}],concern:''}),
+   mk({id:'p13',name:'E-bundling for hearings',progress:60,status:'at-risk',owner:'Cases',priority:'high',team:5,start:'2026-03-10',due:'2026-08-12',budget:700,spend:420,trend:'flat',deps:['p11'],milestones:[{name:'Court integration',due:'2026-06-20',done:false},{name:'Rollout',due:'2026-08-10',done:false}],concern:'Court e-filing integration delayed.'})]},
+ {id:'conduct',name:'Professional Conduct & Inspection',weight:3.5,color:'#fb923c',type:'rocky',
+  kpis:[{name:'Complaints within 60 days',actual:71,target:90,unit:'%'},{name:'Inspections completed',actual:140,target:160,unit:''},{name:'Unlicensed reports actioned',actual:95,target:100,unit:'%'}],
+  projects:[
+   mk({id:'p14',name:'Conduct case backlog clearance',progress:33,status:'failing',owner:'Conduct Committee',priority:'critical',team:6,start:'2026-01-10',due:'2026-06-05',budget:450,spend:380,trend:'down',milestones:[{name:'Triage 200 cases',due:'2026-04-30',done:false},{name:'Clear backlog',due:'2026-06-01',done:false}],concern:'60-day cases piling up; committee capacity short. Overdue.'}),
+   mk({id:'p15',name:'Field inspection programme',progress:65,status:'on-track',owner:'Inspection',priority:'medium',team:8,start:'2026-03-01',due:'2026-09-01',budget:600,spend:340,trend:'up',milestones:[{name:'Inspector training',due:'2026-06-15',done:false},{name:'200 inspections',due:'2026-08-30',done:false}],concern:''}),
+   mk({id:'p16',name:'Unlicensed-practice crackdown',progress:58,status:'at-risk',owner:'Inspection',priority:'high',team:5,start:'2026-03-15',due:'2026-07-25',budget:300,spend:190,trend:'flat',milestones:[{name:'Enforcement MoU',due:'2026-06-10',done:false},{name:'Campaign',due:'2026-07-20',done:false}],concern:'Awaiting an enforcement MoU.'})]},
+ {id:'probono',name:'Voluntary Legal Services (Pro Bono)',weight:3,color:'#34d399',type:'terran',
+  kpis:[{name:'Public served / mo',actual:540,target:600,unit:''},{name:'Volunteer lawyers',actual:395,target:450,unit:''},{name:'Avg match time',actual:3,target:2,unit:'d',higherIsBetter:false}],
+  projects:[
+   mk({id:'p17',name:'Pro Bono portal expansion',progress:72,status:'on-track',owner:'Pro Bono',priority:'medium',team:5,start:'2026-03-01',due:'2026-07-30',budget:500,spend:330,trend:'up',milestones:[{name:'New intake flow',due:'2026-06-20',done:true},{name:'Launch',due:'2026-07-28',done:false}],concern:''}),
+   mk({id:'p18',name:'Coverage to 48 areas of law',progress:90,status:'on-track',owner:'Pro Bono',priority:'high',team:4,start:'2026-02-01',due:'2026-06-26',budget:200,spend:180,trend:'up',milestones:[{name:'Recruit firms',due:'2026-05-30',done:true},{name:'Go-live',due:'2026-06-25',done:false}],concern:''}),
+   mk({id:'p19',name:'Multilingual matching',progress:50,status:'at-risk',owner:'Digital',priority:'medium',team:4,start:'2026-04-01',due:'2026-08-18',budget:350,spend:180,trend:'down',deps:['p17'],milestones:[{name:'3 dialects',due:'2026-06-25',done:false},{name:'Pilot',due:'2026-08-15',done:false}],concern:'Language coverage gaps for three dialects.'})]},
+ {id:'clpd',name:'Professional Training & Development (CLPD)',weight:3,color:'#c084fc',type:'ice',
+  kpis:[{name:'Activities delivered',actual:24,target:30,unit:''},{name:'Providers accredited',actual:18,target:25,unit:''},{name:'CLPD points logged',actual:12000,target:15000,unit:''}],
+  projects:[
+   mk({id:'p20',name:'CLPD portal migration',progress:44,status:'at-risk',owner:'Digital',priority:'high',team:6,start:'2026-02-20',due:'2026-08-05',budget:800,spend:480,trend:'flat',milestones:[{name:'UAE PASS SSO',due:'2026-06-05',done:false},{name:'Migrate users',due:'2026-07-25',done:false}],concern:'UAE PASS single sign-on still pending.'}),
+   mk({id:'p21',name:'Provider accreditation drive',progress:68,status:'on-track',owner:'CLPD',priority:'medium',team:4,start:'2026-03-10',due:'2026-07-15',budget:250,spend:160,trend:'up',milestones:[{name:'25 providers',due:'2026-06-20',done:false},{name:'Audit',due:'2026-07-12',done:false}],concern:''}),
+   mk({id:'p22',name:'16-point cycle dashboard',progress:82,status:'on-track',owner:'CLPD',priority:'medium',team:3,start:'2026-02-25',due:'2026-06-29',budget:220,spend:180,trend:'up',deps:['p20'],milestones:[{name:'Build',due:'2026-05-25',done:true},{name:'Launch',due:'2026-06-28',done:false}],concern:''})]},
+ {id:'happiness',name:'Customer Happiness & Excellence',weight:3.5,color:'#ffd479',type:'gas',
+  kpis:[{name:'Customer happiness',actual:89,target:95,unit:'%'},{name:'Mystery shopper',actual:86,target:90,unit:'%'},{name:'Ambassadors ready',actual:60,target:100,unit:'%'}],
+  projects:[
+   mk({id:'p23',name:'Service Ambassador Hub launch',progress:92,status:'on-track',owner:'L&D',priority:'high',team:4,start:'2026-04-01',due:'2026-06-20',budget:180,spend:150,trend:'up',milestones:[{name:'Content build',due:'2026-05-30',done:true},{name:'Public launch',due:'2026-06-19',done:false}],concern:''}),
+   mk({id:'p24',name:'Maryam AI assistant',progress:70,status:'at-risk',owner:'Digital',priority:'high',team:3,start:'2026-04-15',due:'2026-06-30',budget:120,spend:70,trend:'flat',deps:['p23'],milestones:[{name:'Function ready',due:'2026-06-12',done:true},{name:'API key + go-live',due:'2026-06-28',done:false}],concern:'Goes live once the ANTHROPIC_API_KEY is set in Azure.'}),
+   mk({id:'p25',name:'Customers Happiness Charter v2 rollout',progress:75,status:'on-track',owner:'Excellence',priority:'medium',team:3,start:'2026-03-01',due:'2026-07-10',budget:90,spend:60,trend:'up',milestones:[{name:'Approval',due:'2026-05-15',done:true},{name:'Rollout',due:'2026-07-08',done:false}],concern:''})]}
+]};}
+
+const LS='orbit_lad_v2';
+let state=load();
+function load(){try{const s=JSON.parse(localStorage.getItem(LS));if(s&&s.departments)return s;}catch(e){}return seed();}
+function save(){try{localStorage.setItem(LS,JSON.stringify(state));}catch(e){}}
+
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:1;
+function kpiAtt(k){const a=+k.actual,t=+k.target;if(!t)return 1;const r=k.higherIsBetter===false?(a?t/a:1):a/t;return clamp(r,0,1.25);}
+function deptKpiScore(d){return d.kpis&&d.kpis.length?clamp(avg(d.kpis.map(kpiAtt)),0,1):0.9;}
+function projScore(p){const base=(+p.progress||0)/100;const w=p.status==='failing'?0.45:p.status==='at-risk'?0.82:1;return clamp(base*w+(p.status==='on-track'?0.04:0),0,1);}
+function deptScore(d){const ps=d.projects&&d.projects.length?avg(d.projects.map(projScore)):0.8;let s=0.55*ps+0.45*deptKpiScore(d);if(d.projects&&d.projects.some(p=>p.status==='failing'))s=Math.min(s,0.6);return clamp(s,0,1);}
+function statusOf(s){return s>=0.8?'on-track':s>=0.6?'at-risk':'failing';}
+const COL={'on-track':'#34d399','at-risk':'#fbbf24','failing':'#f87171'};
+function colorOf(s){return COL[statusOf(s)];}
+function orgScore(){const t=state.departments.reduce((s,d)=>s+d.weight,0)||1;return state.departments.reduce((s,d)=>s+deptScore(d)*d.weight,0)/t;}
+function allProjects(){const a=[];state.departments.forEach(d=>d.projects.forEach(p=>a.push(Object.assign({},p,{deptName:d.name,deptId:d.id}))));return a;}
+
+/* ════════ ANALYTICS ENGINE — the real oversight intelligence ════════ */
+const DAY=86400000;
+function dnum(s){const t=s?Date.parse(s):NaN;return isNaN(t)?null:t;}
+function dDays(a,b){return Math.round((b-a)/DAY);}
+function money(k){k=+k||0;return k>=1000?'AED '+(k/1000).toFixed(1)+'m':'AED '+Math.round(k)+'k';}
+function expectedProgress(p){const s=dnum(p.start),e=dnum(p.due);if(s==null||e==null||e<=s)return null;return clamp((Date.now()-s)/(e-s),0,1)*100;}
+function scheduleVar(p){const ep=expectedProgress(p);return ep==null?null:(+p.progress||0)-ep;}      /* <0 = behind plan */
+function isOverdue(p){const e=dnum(p.due);return e!=null&&Date.now()>e&&(+p.progress||0)<100;}
+function daysToDue(p){const e=dnum(p.due);return e==null?null:dDays(Date.now(),e);}
+function budgetBurn(p){return p.budget?(+p.spend||0)/p.budget:null;}                                  /* 0..1+ */
+function budgetVar(p){return p.budget?((+p.progress||0)/100)-((+p.spend||0)/p.budget):null;}          /* <0 = spending ahead of delivery */
+function milestoneInfo(p){const ms=p.milestones||[];const done=ms.filter(m=>m.done).length;
+  const overdue=ms.filter(m=>!m.done&&dnum(m.due)!=null&&Date.now()>dnum(m.due));
+  const upcoming=ms.filter(m=>!m.done&&dnum(m.due)!=null&&dnum(m.due)>=Date.now()).sort((a,b)=>dnum(a.due)-dnum(b.due));
+  return {total:ms.length,done,overdue,next:upcoming[0]||null};}
+function momentum(p){if(p.history&&p.history.length>1){const h=p.history,sl=h[h.length-1].h-h[0].h;return sl>0.06?'improving':sl<-0.06?'declining':'steady';}
+  return p.trend==='up'?'improving':p.trend==='down'?'declining':'steady';}
+function blockedBy(p){if(!p.deps||!p.deps.length)return [];const map={};allProjects().forEach(x=>map[x.id]=x);
+  return p.deps.map(id=>map[id]).filter(x=>x&&(x.status==='failing'||x.status==='at-risk'||isOverdue(x)));}
+function dependents(id){return allProjects().filter(p=>(p.deps||[]).indexOf(id)>-1);}
+function reportedHealth(p){return p.status==='failing'?0.32:p.status==='at-risk'?0.6:0.85;}
+function analyticalHealth(p){let h=(+p.progress||0)/100;
+  const sv=scheduleVar(p);if(sv!=null)h+=clamp(sv/100,-0.35,0.1);
+  const bv=budgetVar(p);if(bv!=null)h+=clamp(bv,-0.2,0.08);
+  const mi=milestoneInfo(p);if(mi.total)h-=0.06*mi.overdue.length;
+  if(isOverdue(p))h-=0.18;
+  if(blockedBy(p).length)h-=0.12;
+  const m=momentum(p);h+=m==='improving'?0.05:m==='declining'?-0.07:0;
+  return clamp(h,0,1);}
+function divergence(p){return reportedHealth(p)-analyticalHealth(p);}                                 /* >0.18 = reported greener than reality */
+function sparkline(p){if(p.history&&p.history.length)return p.history.map(x=>x.h);
+  const end=analyticalHealth(p),dir=p.trend==='up'?-1:p.trend==='down'?1:0,a=[];
+  for(let i=5;i>=0;i--)a.push(clamp(end+dir*0.045*i+Math.sin(i*1.3)*0.012,0.05,0.98));return a;}
+const PW={critical:1.6,high:1.3,medium:1,low:0.7};
+function priorityWeight(p){return PW[p.priority||'medium']||1;}
+function riskScore(p){let r=0;
+  r+=p.status==='failing'?3:p.status==='at-risk'?1.6:0;
+  const sv=scheduleVar(p);if(sv!=null&&sv<0)r+=Math.min(2.5,-sv/15);
+  const bv=budgetVar(p);if(bv!=null&&bv<0)r+=Math.min(1.6,-bv*4);
+  if(isOverdue(p))r+=1.8;
+  r+=milestoneInfo(p).overdue.length*0.6;
+  r+=blockedBy(p).length*1.2;
+  if(momentum(p)==='declining')r+=0.8;
+  if(divergence(p)>0.18)r+=1.2;
+  return r*priorityWeight(p);}
+function riskReasons(p){const out=[];
+  const sv=scheduleVar(p);if(sv!=null&&sv<-8)out.push(Math.round(-sv)+'% behind plan');
+  if(isOverdue(p))out.push('overdue by '+Math.abs(daysToDue(p))+' days');
+  const bv=budgetVar(p);if(bv!=null&&bv<-0.08)out.push(Math.round(budgetBurn(p)*100)+'% of budget spent at '+(+p.progress||0)+'% complete');
+  const mi=milestoneInfo(p);if(mi.overdue.length)out.push(mi.overdue.length+' milestone'+(mi.overdue.length>1?'s':'')+' overdue ('+mi.overdue.map(m=>m.name).join(', ')+')');
+  const bl=blockedBy(p);if(bl.length)out.push('blocked by '+bl.map(x=>x.name+' ('+x.status.replace('-',' ')+')').join(', '));
+  if(momentum(p)==='declining')out.push('momentum declining');
+  if(divergence(p)>0.18)out.push('reported '+p.status.replace('-',' ')+' but the data looks more like '+statusOf(analyticalHealth(p)).replace('-',' '));
+  if(!out.length&&p.concern)out.push(p.concern);
+  return out;}
+function recommend(p){
+  if(blockedBy(p).length)return 'Unblock the dependency ('+blockedBy(p).map(x=>x.name).join(', ')+') or de-scope around it.';
+  if(isOverdue(p))return 'Re-baseline the date and agree a recovery plan this week.';
+  const sv=scheduleVar(p);if(sv!=null&&sv<-12)return 'Add capacity or cut scope — it is materially behind plan.';
+  const bv=budgetVar(p);if(bv!=null&&bv<-0.1)return 'Review burn rate before the next milestone; spend is outpacing delivery.';
+  if(milestoneInfo(p).overdue.length)return 'Close out the overdue milestone before starting new work.';
+  if(divergence(p)>0.18)return 'Validate the reported status with the team — the metrics tell a tougher story.';
+  if(momentum(p)==='declining')return 'Check in with the owner — momentum is slipping.';
+  return 'On track — keep the current cadence.';}
+function projAnalytics(p){return {scheduleVarPct:scheduleVar(p)==null?null:Math.round(scheduleVar(p)),expectedPct:expectedProgress(p)==null?null:Math.round(expectedProgress(p)),overdue:isOverdue(p),daysToDue:daysToDue(p),budgetBurnPct:budgetBurn(p)==null?null:Math.round(budgetBurn(p)*100),budgetVarPct:budgetVar(p)==null?null:Math.round(budgetVar(p)*100),milestones:milestoneInfo(p),momentum:momentum(p),blockedBy:blockedBy(p).map(x=>x.name),analyticalStatus:statusOf(analyticalHealth(p)),divergence:+divergence(p).toFixed(2),riskScore:+riskScore(p).toFixed(2),reasons:riskReasons(p),recommendation:recommend(p)};}
+function portfolio(){const ps=allProjects();
+  const byStatus={'on-track':0,'at-risk':0,'failing':0};ps.forEach(p=>{byStatus[p.status]=(byStatus[p.status]||0)+1;});
+  const overdue=ps.filter(isOverdue);
+  const behind=ps.filter(p=>{const sv=scheduleVar(p);return sv!=null&&sv<-10;});
+  const overBudget=ps.filter(p=>{const bv=budgetVar(p);return bv!=null&&bv<-0.1;});
+  const blocked=ps.filter(p=>blockedBy(p).length);
+  const watermelon=ps.filter(p=>divergence(p)>0.18);
+  const declining=ps.filter(p=>momentum(p)==='declining');
+  const budget=ps.reduce((s,p)=>s+(+p.budget||0),0),spend=ps.reduce((s,p)=>s+(+p.spend||0),0);
+  const ranked=ps.slice().sort((a,b)=>riskScore(b)-riskScore(a));
+  return {ps,byStatus,overdue,behind,overBudget,blocked,watermelon,declining,budget,spend,ranked};}
+const FILTERS={
+  attention:{label:'Needs attention',test:p=>riskScore(p)>=1.4},
+  overdue:{label:'Overdue',test:isOverdue},
+  behind:{label:'Behind plan',test:p=>{const s=scheduleVar(p);return s!=null&&s<-10;}},
+  budget:{label:'Over budget',test:p=>{const b=budgetVar(p);return b!=null&&b<-0.1;}},
+  blocked:{label:'Blocked',test:p=>blockedBy(p).length>0},
+  watermelon:{label:'Optimistic',test:p=>divergence(p)>0.18}
+};
+let activeFilter=null;
+function applyFilter(key){
+  activeFilter=(activeFilter===key)?null:key;
+  const set=new Set();
+  if(activeFilter){allProjects().forEach(p=>{if(FILTERS[activeFilter].test(p))set.add(p.id);});}
+  alertFocus=set;if(window.orbit3d)window.orbit3d.setAlerts(alertFocus);
+  document.querySelectorAll('.fchip').forEach(c=>c.classList.toggle('on',c.dataset.k===activeFilter));
+  if(activeFilter){const items=allProjects().filter(p=>FILTERS[activeFilter].test(p)).sort((a,b)=>riskScore(b)-riskScore(a));
+    const body=items.length?items.map(p=>`<b>${esc(p.name)}</b> (${esc(p.deptName)})${riskReasons(p).length?' — '+esc(riskReasons(p)[0]):''}`).join('<br>• '):'Nothing matches this filter — good news.';
+    showAnswer(`<span class="who"><span style="width:7px;height:7px;border-radius:50%;background:var(--amber);display:inline-block"></span> ${FILTERS[activeFilter].label} · ${items.length}</span>${items.length?'• '+body:body}`);}
+}
+
+let selectedId=null, alertFocus=new Set();
+function pct(n){return Math.round(n)+'%';}
+function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ── HUD ── */
+function updateHUD(){
+  const s=orgScore();document.getElementById('ovScore').textContent=pct(s*100);
+  document.getElementById('ovDot').style.background=colorOf(s);
+  const all=allProjects();
+  document.getElementById('cntFail').textContent=all.filter(p=>p.status==='failing').length;
+  document.getElementById('cntRisk').textContent=all.filter(p=>p.status==='at-risk').length;
+  const odEl=document.getElementById('cntOverdue');if(odEl)odEl.textContent=all.filter(isOverdue).length;
+  const bp=document.getElementById('budgetPill');if(bp){const f=portfolio();bp.textContent=Math.round(f.spend/(f.budget||1)*100)+'%';}
+  document.getElementById('orgName').textContent=window.ORBIT_CONFIG.orgName||'Mission Control';
+}
+
+/* ── Inspector / editor ── */
+const insp=document.getElementById('inspector');
+function findD(id){return state.departments.find(x=>x.id===id);}
+function findP(d,id){return d.projects.find(x=>x.id===id);}
+function openInspector(deptId,projId){
+  selectedId=deptId;const d=findD(deptId);if(!d)return;
+  const sc=deptScore(d),col=colorOf(sc);
+  const orb=document.getElementById('inspOrb');orb.style.background=col;orb.style.color=col;
+  document.getElementById('inspName').textContent=d.name;
+  document.getElementById('inspSub').textContent=`${d.projects.length} projects · health ${pct(sc*100)} · ${statusOf(sc).replace('-',' ')}`;
+  const hb=document.getElementById('inspHealth');hb.style.width=pct(sc*100);hb.style.background=col;
+  renderInspBody(d);insp.classList.add('on');
+  if(window.orbit3d)window.orbit3d.focusDept(deptId);
+  if(projId)setTimeout(()=>{const el=document.getElementById('proj_'+projId);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},140);
+}
+function closeInspector(){insp.classList.remove('on');selectedId=null;if(window.orbit3d)window.orbit3d.clearFocus();}
+function refreshInsp(){if(selectedId)openInspector(selectedId);updateHUD();save();}
+function renderInspBody(d){
+  const b=document.getElementById('inspBody');let h='';
+  h+=`<div class="block-label">Key performance indicators <button class="addbtn" onclick="addKpi('${d.id}')">+ Add KPI</button></div>`;
+  d.kpis.forEach((k,i)=>{const att=kpiAtt(k);const c=att>=0.95?'var(--green)':att>=0.75?'var(--amber)':'var(--red)';
+    h+=`<div class="kpi"><div class="kpi-top"><span class="kpi-name">${esc(k.name)}</span><span class="kpi-att" style="color:${c}">${pct(att*100)}</span></div>
+      <div class="healthbar"><i style="width:${Math.round(clamp(att,0,1)*100)}%;background:${c}"></i></div>
+      <div class="kpi-edit">
+        <label>Actual<input type="number" step="any" value="${k.actual}" oninput="editKpi('${d.id}',${i},'actual',this.value)"></label>
+        <label>Target<input type="number" step="any" value="${k.target}" oninput="editKpi('${d.id}',${i},'target',this.value)"></label>
+        <label>Unit<input value="${esc(k.unit||'')}" oninput="editKpi('${d.id}',${i},'unit',this.value)"></label>
+      </div></div>`;});
+  h+=`<div class="block-label">Projects (moons) <button class="addbtn" onclick="addProject('${d.id}')">+ Add project</button></div>`;
+  d.projects.forEach(p=>{const c=COL[p.status];const al=alertFocus.has(p.id)?' alert':'';const a=projAnalytics(p),rs=riskReasons(p);
+    h+=`<div class="proj${al}" id="proj_${p.id}"><button class="delbtn" title="Remove" onclick="delProject('${d.id}','${p.id}')">✕</button>
+      <div class="proj-top"><span class="proj-dot" style="background:${c}"></span><span class="proj-name">${esc(p.name)}</span><button class="addbtn" style="margin-left:auto;flex-shrink:0" onclick="openProject('${p.id}')">Deep dive ▸</button></div>
+      <div class="proj-meta"><span>${esc(p.priority||'medium')} priority</span><span>Due <b>${esc(p.due||'—')}</b></span>${a.scheduleVarPct!=null&&a.scheduleVarPct<-8?`<span style="color:var(--amber)">${-a.scheduleVarPct}% behind</span>`:''}</div>
+      ${rs.length?`<div class="proj-meta" style="color:var(--amber);margin-top:-4px">⚠ ${esc(rs[0])}</div>`:''}
+      <div class="proj-controls">
+        <div class="field"><label>Name</label><input value="${esc(p.name)}" oninput="editProj('${d.id}','${p.id}','name',this.value)"></div>
+        <div class="range-row"><input type="range" min="0" max="100" value="${p.progress}" oninput="editProj('${d.id}','${p.id}','progress',this.value);this.nextElementSibling.textContent=this.value+'%'"><span class="pct">${p.progress}%</span></div>
+        <div class="twocol">
+          <div class="field"><label>Status</label><select onchange="editProj('${d.id}','${p.id}','status',this.value)">${['on-track','at-risk','failing'].map(s=>`<option value="${s}"${p.status===s?' selected':''}>${s.replace('-',' ')}</option>`).join('')}</select></div>
+          <div class="field"><label>Due date</label><input type="date" value="${esc(p.due||'')}" oninput="editProj('${d.id}','${p.id}','due',this.value)"></div>
+        </div>
+        <div class="field"><label>Owner</label><input value="${esc(p.owner||'')}" oninput="editProj('${d.id}','${p.id}','owner',this.value)"></div>
+        <div class="field concern"><label>Concern / note (the AI reads this)</label><textarea oninput="editProj('${d.id}','${p.id}','concern',this.value)" placeholder="What's the risk?">${esc(p.concern||'')}</textarea></div>
+      </div></div>`;});
+  h+=`<button class="ghost-btn" style="margin-top:6px" onclick="addDept()">+ Add a division (planet)</button>`;
+  h+=`<button class="ghost-btn" style="margin-top:9px" onclick="resetData()">↺ Reset to sample data</button>`;
+  b.innerHTML=h;
+}
+function liveHealth(d){const sc=deptScore(d),col=colorOf(sc);const hb=document.getElementById('inspHealth');if(hb){hb.style.width=pct(sc*100);hb.style.background=col;}const orb=document.getElementById('inspOrb');if(orb)orb.style.background=col;const sub=document.getElementById('inspSub');if(sub)sub.textContent=`${d.projects.length} projects · health ${pct(sc*100)} · ${statusOf(sc).replace('-',' ')}`;if(window.orbit3d)window.orbit3d.refreshDept(d.id);}
+function editKpi(did,i,f,v){const d=findD(did);d.kpis[i][f]=(f==='unit')?v:(v===''?'':+v);liveHealth(d);save();updateHUD();}
+function editProj(did,pid,f,v){const d=findD(did);const p=findP(d,pid);p[f]=(f==='progress')?+v:v;liveHealth(d);save();updateHUD();}
+function addKpi(did){findD(did).kpis.push({name:'New KPI',actual:0,target:100,unit:'%'});refreshInsp();}
+function addProject(did){const d=findD(did);const id='p'+Math.random().toString(36).slice(2,7);d.projects.push({id,name:'New project',progress:0,status:'on-track',owner:'',due:'',concern:''});save();if(window.orbit3d)window.orbit3d.rebuild();refreshInsp();}
+function delProject(did,pid){const d=findD(did);d.projects=d.projects.filter(p=>p.id!==pid);save();if(window.orbit3d)window.orbit3d.rebuild();refreshInsp();}
+function addDept(){const id='d'+Math.random().toString(36).slice(2,6);const col=PALETTE[state.departments.length%PALETTE.length];state.departments.push({id,name:'New Division',weight:3,color:col,type:'rocky',kpis:[{name:'KPI',actual:50,target:100,unit:'%'}],projects:[]});save();if(window.orbit3d)window.orbit3d.rebuild();openInspector(id);}
+function resetData(){if(!confirm('Reset all divisions and projects to the sample data?'))return;localStorage.removeItem(LS);location.reload();}
+
+/* ── Analyst (offline NLU) ── */
+function context(){const f=portfolio();const nm=id=>{const x=allProjects().find(y=>y.id===id);return x?x.name:id;};
+  return {organisation:window.ORBIT_CONFIG.orgName,today:new Date().toISOString().slice(0,10),overallHealthPct:Math.round(orgScore()*100),
+  portfolio:{projects:f.ps.length,onTrack:f.byStatus['on-track'],atRisk:f.byStatus['at-risk'],failing:f.byStatus['failing'],overdue:f.overdue.length,behindPlan:f.behind.length,overBudget:f.overBudget.length,blocked:f.blocked.length,optimisticReporting:f.watermelon.length,decliningMomentum:f.declining.length,budgetK:f.budget,spendK:f.spend,
+    topRisks:f.ranked.slice(0,6).map(p=>({project:p.name,division:p.deptName,riskScore:+riskScore(p).toFixed(1),reasons:riskReasons(p)}))},
+  departments:state.departments.map(d=>({name:d.name,healthPct:Math.round(deptScore(d)*100),status:statusOf(deptScore(d)),
+    kpis:d.kpis.map(k=>({name:k.name,actual:k.actual,target:k.target,unit:k.unit,attainmentPct:Math.round(kpiAtt(k)*100)})),
+    projects:d.projects.map(p=>{const a=projAnalytics(p);return {name:p.name,status:p.status,progressPct:p.progress,priority:p.priority,owner:p.owner,start:p.start,due:p.due,budgetK:p.budget,spentK:p.spend,team:p.team,concern:p.concern,dependsOn:(p.deps||[]).map(nm),analytics:a};})}))};}
+function overdue(){const t=new Date();return allProjects().filter(p=>p.due&&new Date(p.due)<t&&(p.progress||0)<100);}
+function laggingKpis(){const out=[];state.departments.forEach(d=>d.kpis.forEach(k=>{if(kpiAtt(k)<0.8)out.push({dept:d.name,name:k.name,att:kpiAtt(k)});}));return out.sort((a,b)=>a.att-b.att);}
+function findEntity(q){const ql=q.toLowerCase();let best=null,bl=0;
+  state.departments.forEach(d=>{if(ql.includes(d.name.toLowerCase())&&d.name.length>bl){best={type:'dept',d};bl=d.name.length;}
+    const short=d.name.split(/[ (&]/)[0].toLowerCase();if(short.length>3&&ql.includes(short)&&short.length>bl){best={type:'dept',d};bl=short.length;}
+    d.projects.forEach(p=>{if(ql.includes(p.name.toLowerCase())&&p.name.length>bl){best={type:'project',p,d};bl=p.name.length;}});});
+  if(best)return best;
+  const words=ql.split(/\W+/).filter(w=>w.length>3);
+  state.departments.forEach(d=>d.projects.forEach(p=>{const pn=p.name.toLowerCase().split(/\W+/).filter(w=>w.length>3);const hit=pn.filter(w=>words.includes(w)).length;if(hit>bl){best={type:'project',p,d};bl=hit;}}));
+  return best;
+}
+function briefing(){const f=portfolio(),s=orgScore(),L=[];
+  L.push(`<b>Portfolio health ${pct(s*100)}</b> (${statusOf(s).replace('-',' ')}) · ${f.ps.length} projects across ${state.departments.length} divisions — ${f.byStatus['on-track']} on track, ${f.byStatus['at-risk']} at risk, <span class="sev">${f.byStatus['failing']} failing</span>.`);
+  const top=f.ranked.slice(0,3).filter(p=>riskScore(p)>=1.2);
+  if(top.length)L.push(`<u>Focus first</u><br>• `+top.map(p=>`<b>${p.name}</b> (${p.deptName}) — ${(riskReasons(p).slice(0,2).join('; ')||p.status.replace('-',' '))}`).join('<br>• '));
+  if(f.overdue.length)L.push(`<u>Overdue (${f.overdue.length})</u>: ${f.overdue.map(p=>p.name).join(', ')}.`);
+  L.push(`<u>Budget</u>: ${money(f.spend)} of ${money(f.budget)} committed (${Math.round(f.spend/(f.budget||1)*100)}%)${f.overBudget.length?` — watch ${f.overBudget.map(p=>p.name).join(', ')}, spending ahead of delivery`:''}.`);
+  if(f.blocked.length)L.push(`<u>Dependencies</u>: ${f.blocked.map(p=>`${p.name} ← ${blockedBy(p).map(x=>x.name).join(', ')}`).join('; ')}.`);
+  if(f.watermelon.length)L.push(`<u>Optimistic reporting</u>: ${f.watermelon.map(p=>p.name).join(', ')} look greener than the metrics suggest.`);
+  return L;}
+function localAnswer(q){
+  const ql=' '+q.toLowerCase().replace(/[^\w\s%]/g,' ')+' ';
+  const f=portfolio(),projs=f.ps;
+  const failing=projs.filter(p=>p.status==='failing').sort((a,b)=>riskScore(b)-riskScore(a));
+  const risk=projs.filter(p=>p.status==='at-risk').sort((a,b)=>riskScore(b)-riskScore(a));
+  const focus=new Set();const has=(...w)=>w.some(x=>ql.includes(x));const top=p=>{focus.add(p.id);return p;};
+  const ent=findEntity(q);
+  if(ent&&!has('summary','overall','everything','portfolio','which','concern','worried','worry','rank','brief','focus','budget')){
+    if(ent.type==='dept'){const d=ent.d,sc=deptScore(d);d.projects.forEach(p=>{if(p.status!=='on-track')focus.add(p.id);});
+      const bad=d.projects.slice().sort((a,b)=>riskScore(b)-riskScore(a)).filter(p=>p.status!=='on-track');
+      let t=`<b>${d.name}</b> — health <b>${pct(sc*100)}</b> (${statusOf(sc).replace('-',' ')}). `;
+      const lk=d.kpis.filter(k=>kpiAtt(k)<0.85);t+=lk.length?`KPIs to watch: ${lk.map(k=>`${k.name} ${pct(kpiAtt(k)*100)} of target`).join(', ')}. `:`KPIs broadly on target. `;
+      if(bad.length)t+=`${bad.length} project${bad.length>1?'s need':' needs'} attention:<br>• `+bad.slice(0,4).map(p=>`<b>${p.name}</b> (${p.status.replace('-',' ')}, ${p.progress}%)${riskReasons(p).length?' — '+riskReasons(p)[0]:''}`).join('<br>• ');
+      else t+=`All projects on track.`;
+      return {text:t,focus,select:d.id};}
+    const p=top(ent.p),a=projAnalytics(p);
+    let t=`<b>${p.name}</b> (${ent.d.name}) — ${p.status.replace('-',' ')}, <b>${p.progress}%</b> complete`;
+    if(a.expectedPct!=null)t+=` vs ${a.expectedPct}% planned (${a.scheduleVarPct>=0?'+':''}${a.scheduleVarPct}%)`;
+    t+=`. ${p.priority} priority, owner ${p.owner||'—'}, due ${p.due}. `;
+    if(a.budgetBurnPct!=null)t+=`Budget ${money(p.spend)} of ${money(p.budget)} (${a.budgetBurnPct}%). `;
+    if(a.blockedBy.length)t+=`Blocked by ${a.blockedBy.join(', ')}. `;
+    if(a.milestones.next)t+=`Next milestone: ${a.milestones.next.name} (${a.milestones.next.due}). `;
+    t+=`Momentum ${a.momentum}. <i>${a.recommendation}</i>`;
+    return {text:t,focus,select:ent.d.id};
+  }
+  if(has('what should i do','what do i do','recommend','prioriti','focus','action','next step','where do i start',' fix')){
+    const r=f.ranked.slice(0,3);r.forEach(top);
+    return {text:`<u>Do these first</u><br>• `+r.map(p=>`<b>${p.name}</b> (${p.deptName}) — <i>${recommend(p)}</i>`).join('<br>• '),focus,select:r[0]?r[0].deptId:null};
+  }
+  if(has('budget','cost','spend','spent','money','burn','financ')){
+    f.overBudget.forEach(top);
+    let t=`Portfolio spend <b>${money(f.spend)}</b> of ${money(f.budget)} (${Math.round(f.spend/(f.budget||1)*100)}%). `;
+    if(f.overBudget.length)t+=`Spending ahead of delivery:<br>• `+f.overBudget.slice().sort((a,b)=>budgetVar(a)-budgetVar(b)).map(p=>`<b>${p.name}</b> — ${Math.round(budgetBurn(p)*100)}% of budget at ${p.progress}% done`).join('<br>• ');
+    else t+=`No project is materially over budget relative to progress.`;
+    return {text:t,focus,select:f.overBudget[0]?f.overBudget[0].deptId:null};
+  }
+  if(has('behind','schedule','slipp','timeline',' plan ','on time')){
+    f.behind.forEach(top);
+    if(!f.behind.length)return {text:`Nothing is materially behind plan right now.`,focus};
+    return {text:`<u>Behind plan</u><br>• `+f.behind.slice().sort((a,b)=>scheduleVar(a)-scheduleVar(b)).map(p=>`<b>${p.name}</b> (${p.deptName}) — ${Math.round(-scheduleVar(p))}% behind (${p.progress}% vs ${Math.round(expectedProgress(p))}% planned)`).join('<br>• '),focus,select:f.behind[0].deptId};
+  }
+  if(has('block','depend','waiting on','stuck')){
+    f.blocked.forEach(top);
+    if(!f.blocked.length)return {text:`No project is currently blocked by an unhealthy dependency.`,focus};
+    return {text:`<u>Blocked by dependencies</u><br>• `+f.blocked.map(p=>`<b>${p.name}</b> ← ${blockedBy(p).map(x=>`${x.name} (${x.status.replace('-',' ')})`).join(', ')}`).join('<br>• '),focus,select:f.blocked[0].deptId};
+  }
+  if(has('momentum','trend','stall','declin','improv','moving','direction')){
+    f.declining.forEach(top);const improving=projs.filter(p=>momentum(p)==='improving');
+    let t=f.declining.length?`<u>Losing momentum</u><br>• `+f.declining.map(p=>`<b>${p.name}</b> (${p.deptName}, ${p.progress}%)`).join('<br>• '):`Nothing is visibly losing momentum.`;
+    t+=`<br><u>Building</u>: ${improving.slice(0,4).map(p=>p.name).join(', ')||'—'}.`;
+    return {text:t,focus,select:f.declining[0]?f.declining[0].deptId:null};
+  }
+  if(has('milestone','deliverable','gate')){
+    const overdueMs=[],nextMs=[];projs.forEach(p=>{const mi=milestoneInfo(p);mi.overdue.forEach(m=>overdueMs.push({p,m}));if(mi.next)nextMs.push({p,m:mi.next});});
+    overdueMs.forEach(x=>top(x.p));nextMs.sort((a,b)=>dnum(a.m.due)-dnum(b.m.due));
+    let t=overdueMs.length?`<u>Overdue milestones</u><br>• `+overdueMs.map(x=>`<b>${x.m.name}</b> — ${x.p.name} (was due ${x.m.due})`).join('<br>• '):`No overdue milestones.`;
+    t+=`<br><u>Next up</u>: `+nextMs.slice(0,4).map(x=>`${x.m.name} (${x.p.name}, ${x.m.due})`).join('; ');
+    return {text:t,focus};
+  }
+  if(has('optimist','watermelon','sandbag','hiding','honest','reported','true picture','sugarcoat','really')){
+    f.watermelon.forEach(top);
+    if(!f.watermelon.length)return {text:`Reported statuses line up with the underlying metrics — no obvious optimism.`,focus};
+    return {text:`<u>Reported greener than the data</u><br>• `+f.watermelon.map(p=>`<b>${p.name}</b> (${p.deptName}) — reported ${p.status.replace('-',' ')}, metrics look more like ${statusOf(analyticalHealth(p)).replace('-',' ')}: ${riskReasons(p).slice(0,2).join('; ')}`).join('<br>• '),focus,select:f.watermelon[0].deptId};
+  }
+  if(has('failing','fail','worst','red','trouble','off track','off-track','biggest risk','biggest problem','most at risk','top risk')){
+    const show=(failing.length?failing:f.ranked).slice(0,4);show.forEach(top);
+    if(!failing.length&&!risk.length)return {text:`Good news — nothing is failing and no project is materially at risk.`,focus};
+    const head=failing.length?`<span class="sev">${failing.length} failing.</span>`:`Top risks by impact:`;
+    return {text:`${head}<br>• `+show.map(p=>`<b>${p.name}</b> (${p.deptName}, ${p.progress}%) — ${riskReasons(p).slice(0,2).join('; ')||p.status.replace('-',' ')}`).join('<br>• '),focus,select:show[0].deptId};
+  }
+  if(has('concern','worried','worry','attention','watch','flag','careful','risk')){
+    const r=f.ranked.slice(0,5).filter(p=>riskScore(p)>=1);r.forEach(top);
+    if(!r.length)return {text:`Healthy — overall ${pct(orgScore()*100)} with nothing failing or overdue.`,focus};
+    return {text:`<u>What I'd put in front of leadership</u><br>• `+r.map(p=>`<b>${p.name}</b> (${p.deptName}) — ${riskReasons(p).slice(0,2).join('; ')}`).join('<br>• '),focus,select:r[0].deptId};
+  }
+  if(has('overdue','past due','late','missed')){
+    f.overdue.forEach(top);
+    if(!f.overdue.length)return {text:`Nothing is overdue. Nearest deadlines: `+projs.filter(p=>p.due).sort((a,b)=>dnum(a.due)-dnum(b.due)).slice(0,3).map(p=>`<b>${p.name}</b> (${p.due})`).join(', ')+'.',focus};
+    return {text:`<b>${f.overdue.length} overdue:</b><br>• `+f.overdue.map(p=>`<b>${p.name}</b> (${p.deptName}) — due ${p.due}, ${p.progress}% done`).join('<br>• '),focus,select:f.overdue[0].deptId};
+  }
+  if(has('best','on track','on-track','green','going well','good news','strongest','healthiest','star')){
+    const good=projs.filter(p=>p.status==='on-track').sort((a,b)=>b.progress-a.progress);
+    const topd=[...state.departments].sort((a,b)=>deptScore(b)-deptScore(a))[0];
+    return {text:`Strongest division: <b>${topd.name}</b> (${pct(deptScore(topd)*100)}). Furthest along: ${good.slice(0,4).map(p=>`<b>${p.name}</b> (${p.progress}%)`).join(', ')}.`,focus,select:topd.id};
+  }
+  if(has('which division','division','department','rank','compare','leaderboard','team')){
+    const ranked=[...state.departments].sort((a,b)=>deptScore(b)-deptScore(a));
+    return {text:`<u>Divisions by health</u><br>`+ranked.map((d,i)=>`${i+1}. <b>${d.name}</b> — ${pct(deptScore(d)*100)} (${statusOf(deptScore(d)).replace('-',' ')})`).join('<br>'),focus};
+  }
+  if(has('summary','overall','how are we','health','state of','big picture','brief','report','status','overview','update')){
+    f.ranked.slice(0,3).forEach(top);
+    return {text:briefing().join('<br><br>'),focus,select:f.ranked[0]?f.ranked[0].deptId:null};
+  }
+  return {text:`I can analyse this portfolio in depth. Try: <b>“what should I focus on?”</b>, <b>“what's behind plan?”</b>, <b>“which projects are over budget?”</b>, <b>“what's blocked?”</b>, <b>“any optimistic reporting?”</b>, <b>“how is Litigation doing?”</b>, or <b>“give me the executive briefing.”</b>`,focus};
+}
+const ANALYST_SYSTEM="You are Orbit — a sharp, personable portfolio advisor, like a trusted chief of staff to a senior leader at the Government of Dubai Legal Affairs Department who is overseeing many projects at once. You are in a natural, spoken, back-and-forth CONVERSATION, so talk like a real person: warm, direct, plain-spoken and engaging — never a robotic status report. Keep most replies to 1-3 sentences and get to the point, but it's good to occasionally ask a clarifying question or invite a follow-up so it feels like a dialogue. You remember the conversation so far, so handle follow-ups naturally ('why?', 'tell me more', 'what about the other one?', 'what should I do about it?'). Everything you say must be grounded in the LIVE PORTFOLIO SNAPSHOT given to you below (divisions, projects, KPIs, and per-project analytics: scheduleVarPct negative=behind, budgetVarPct negative=spending ahead of delivery, overdue, milestones, momentum, blockedBy, divergence>0.18=reported greener than reality, riskScore, reasons, recommendation). Never invent projects, numbers, owners or dates; if it's not in the data, just say so. Lead with what matters most, explain WHY in human terms, and say what you'd actually do about it. Speak plainly — no markdown, asterisks, bullet characters, headings or emoji, since this is read aloud.";
+let convoHistory=[];
+function claudeSystem(){return ANALYST_SYSTEM+"\n\nLIVE PORTFOLIO SNAPSHOT (JSON) — your single source of truth, refreshed every turn:\n"+JSON.stringify(context());}
+function focusFromText(t){const s=new Set();const tl=(t||'').toLowerCase();allProjects().forEach(p=>{if(p.name&&p.name.length>4&&tl.includes(p.name.toLowerCase()))s.add(p.id);});return s;}
+function effKey(){const f=document.getElementById('cfgAnthropic');return (window.ORBIT_CONFIG.anthropicKey||(f?f.value.trim():'')||'');}
+function pack(answer){const focus=focusFromText(answer);let select=null;for(const p of allProjects()){if(focus.has(p.id)){select=p.deptId;break;}}return {text:answer,focus,select};}
+async function askLLM(q){
+  // 1) secure server backend (Azure) — preferred when deployed
+  const ep=window.ORBIT_CONFIG.aiEndpoint;
+  if(ep){try{const r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,context:context()})});
+    if(r.ok){const j=await r.json();if(j&&j.answer)return pack(j.answer);}}catch(e){}}
+  // 2) direct Anthropic call with the user's own key (runs in this browser)
+  const key=effKey();window.ORBIT_CONFIG.anthropicKey=key;
+  if(key){
+    const models=[window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6','claude-sonnet-4-6','claude-opus-4-8','claude-haiku-4-5-20251001'].filter((m,i,a)=>m&&a.indexOf(m)===i);
+    for(const model of models){
+      try{
+        const r=await callClaude(q,model,true);
+        if(r.ok){const j=await r.json();const a=(((j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n'))||'').trim();
+          if(a){window.ORBIT_CONFIG.anthropicModel=model;try{localStorage.setItem('orbit_model',model);}catch(_){}
+            convoHistory.push({role:'user',content:q},{role:'assistant',content:a});if(convoHistory.length>16)convoHistory=convoHistory.slice(-16);
+            return pack(a);}
+          window.__llmError='Claude returned an empty response.';break;}
+        let detail='',type='';try{const ej=await r.json();type=ej.error?ej.error.type:'';detail=ej.error?ej.error.message:'';}catch(_){detail=(await r.text().catch(()=>''))||'';}
+        window.__llmError='Claude API '+r.status+(type?' ('+type+')':'')+': '+String(detail).slice(0,260);console.warn(window.__llmError);
+        if(r.status===401||r.status===403)break;                       /* bad key — don't retry other models */
+      }catch(e){window.__llmError='Could not reach Claude (network/CORS): '+((e&&e.message)?e.message:e);console.warn(window.__llmError);break;}
+    }
+  }
+  return null;
+}
+async function callClaude(q,model,withHistory){const key=effKey();
+  const msgs=(withHistory?convoHistory.slice(-12):[]).concat([{role:'user',content:q}]);
+  return fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+    headers:{'x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},
+    body:JSON.stringify({model:model,max_tokens:600,system:claudeSystem(),messages:msgs})});}
+async function testClaude(){const s=document.getElementById('cfgStatus');const key=effKey();
+  if(!key){if(s){s.style.color='var(--mut)';s.textContent='Paste a key first';}return;}
+  if(s){s.style.color='var(--mut)';s.textContent='Testing…';}
+  const models=[window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6','claude-sonnet-4-6','claude-opus-4-8','claude-haiku-4-5-20251001'].filter((m,i,a)=>m&&a.indexOf(m)===i);
+  let lastErr='unknown error';
+  for(const m of models){try{
+    const r=await callClaude('Reply with the single word OK.',m,false);
+    if(r.ok){window.ORBIT_CONFIG.anthropicModel=m;try{localStorage.setItem('orbit_model',m);}catch(_){}const sel=document.getElementById('cfgModel');if(sel)sel.value=m;
+      if(s){s.style.color='var(--green)';s.textContent='● Claude responding ('+m.replace('claude-','').replace('-20251001','')+')';}return true;}
+    let detail='',type='';try{const ej=await r.json();type=ej.error?ej.error.type:'';detail=ej.error?ej.error.message:'';}catch(_){}
+    lastErr=r.status+(type?' '+type:'')+': '+String(detail).slice(0,90);
+    if(r.status===401||r.status===403)break;
+  }catch(e){lastErr=(e&&e.message)?e.message:'network/CORS blocked';break;}}
+  if(s){s.style.color='var(--red)';s.textContent='✗ '+lastErr;}return false;
+}
+function showAnswer(html){const a=document.getElementById('answer');a.innerHTML=html;a.classList.add('on');}
+function stripHtml(h){const d=document.createElement('div');d.innerHTML=h.replace(/<br>/g,'. ').replace(/•/g,'');return (d.textContent||'').replace(/Analyst/,'').replace(/\s+/g,' ').trim();}
+async function handleQuery(q){q=(q||'').trim();if(!q)return;
+  setBusy(true);
+  showAnswer(`<div class="ume"><b>You</b> · ${esc(q)}</div><span class="who"><span style="width:7px;height:7px;border-radius:50%;background:var(--violet);display:inline-block"></span> thinking…</span>`);
+  alertFocus=new Set();window.__llmError='';
+  let res=await askLLM(q),who='Analyst',dot='var(--violet)',spoken=true;
+  if(res){who='Claude';dot='#34d399';}
+  else if(effKey()){res={text:'⚠ '+(window.__llmError||'Claude did not return a response — re-check the key/model in the ⚙ panel.'),focus:new Set()};who='Error';dot='var(--red)';spoken=false;}
+  else res=localAnswer(q);
+  alertFocus=res.focus||new Set();if(window.orbit3d)window.orbit3d.setAlerts(alertFocus);
+  showAnswer(`<div class="ume"><b>You</b> · ${esc(q)}</div><span class="who"><span style="width:7px;height:7px;border-radius:50%;background:${dot};display:inline-block"></span> ${who}</span>${res.text}`);
+  if(res.select)openInspector(res.select);
+  if(spoken)speak(stripHtml(res.text));else setBusy(false);
+}
+
+/* ── Voice ── */
+let speakOn=true,recog=null,recognising=false,convoMode=false,aiBusy=false,interrupted=false,ttsAudio=null;
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const micBtn=document.getElementById('mic'),listenEl=document.getElementById('listening');
+const stopBtn=document.getElementById('stopBtn'),convoBtn=document.getElementById('convoBtn');
+const MIC_SVG='<svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg>';
+const STOP_SVG='<svg viewBox="0 0 24 24" style="fill:#fff;stroke:none"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+function updateMicUI(){
+  if(aiBusy){micBtn.innerHTML=STOP_SVG;micBtn.classList.add('stop');micBtn.classList.remove('live');micBtn.title='Stop';}
+  else{micBtn.innerHTML=MIC_SVG;micBtn.classList.remove('stop');micBtn.classList.toggle('live',recognising);micBtn.title=convoMode?'Conversation on — tap to interrupt':'Tap to speak';}
+  if(stopBtn)stopBtn.classList.toggle('on',aiBusy||recognising);
+  if(convoBtn)convoBtn.classList.toggle('on',convoMode);
+}
+function setBusy(b){aiBusy=b;updateMicUI();}
+function startListen(){if(!recog)return;interrupted=false;try{recog.start();}catch(e){}}
+function fullStop(){convoMode=false;interrupted=true;if(recog&&recognising){try{recog.stop();}catch(e){}}stopSpeak();setBusy(false);}
+if(SR){recog=new SR();recog.lang='en-US';recog.interimResults=true;recog.continuous=false;
+  recog.onstart=()=>{recognising=true;listenEl.classList.add('on');updateMicUI();};
+  recog.onend=()=>{recognising=false;listenEl.classList.remove('on');updateMicUI();};
+  recog.onerror=e=>{listenEl.textContent='● mic: '+e.error;setTimeout(()=>{listenEl.textContent='● listening…';},1600);};
+  recog.onresult=e=>{let txt='';for(const r of e.results)txt+=r[0].transcript;document.getElementById('vtext').value=txt;if(e.results[e.results.length-1].isFinal){const qq=txt.trim();if(qq)handleQuery(qq);}};
+  micBtn.addEventListener('click',()=>{
+    if(aiBusy){interrupted=true;stopSpeak();setBusy(false);if(convoMode)startListen();return;}  // barge-in / stop
+    if(recognising){recog.stop();return;}
+    startListen();
+  });
+}else{micBtn.addEventListener('click',()=>{if(aiBusy){stopSpeak();setBusy(false);return;}document.getElementById('vtext').focus();showAnswer('<span class="who">Note</span>Voice input needs Chrome or Edge — you can type your question instead.');});}
+if(convoBtn)convoBtn.addEventListener('click',()=>{convoMode=!convoMode;updateMicUI();if(convoMode){interrupted=false;startListen();}else{fullStop();}});
+if(stopBtn)stopBtn.addEventListener('click',fullStop);
+function stopSpeak(){stopVAD();if(ttsAudio){try{ttsAudio.onended=null;ttsAudio.pause();}catch(e){}ttsAudio=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();}
+function afterSpeak(){stopVAD();setBusy(false);if(convoMode&&!interrupted)startListen();}
+/* ── barge-in: listen (with echo cancellation) while the AI talks; stop it the moment you speak ── */
+let vadStream=null,vadCtx=null,vadRAF=null;
+function armBargeIn(){
+  if(vadStream||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return;
+  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).then(function(stream){
+    if(!aiBusy){try{stream.getTracks().forEach(t=>t.stop());}catch(e){}return;}        // already finished
+    vadStream=stream;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+    vadCtx=new AC();const src=vadCtx.createMediaStreamSource(stream);const an=vadCtx.createAnalyser();an.fftSize=512;src.connect(an);
+    const data=new Uint8Array(an.fftSize);let voiced=0,baseline=0,frames=0;
+    const tick=function(){ if(!vadStream)return;
+      an.getByteTimeDomainData(data);let sum=0;for(let i=0;i<data.length;i++){const v=(data[i]-128)/128;sum+=v*v;}
+      const rms=Math.sqrt(sum/data.length);frames++;
+      if(frames<16){baseline=Math.max(baseline,rms);}                                  // calibrate noise floor (~250ms)
+      const thresh=Math.max(0.05,baseline*2.4);
+      if(rms>thresh){voiced++;if(voiced>=5){bargeIn();return;}}else{voiced=voiced>0?voiced-1:0;}
+      vadRAF=requestAnimationFrame(tick);
+    };
+    vadRAF=requestAnimationFrame(tick);
+  }).catch(function(){});
+}
+function stopVAD(){if(vadRAF){cancelAnimationFrame(vadRAF);vadRAF=null;}if(vadStream){try{vadStream.getTracks().forEach(t=>t.stop());}catch(e){}vadStream=null;}if(vadCtx){try{vadCtx.close();}catch(e){}vadCtx=null;}}
+function bargeIn(){stopVAD();interrupted=false;if(ttsAudio){try{ttsAudio.onended=null;ttsAudio.pause();}catch(e){}ttsAudio=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();setBusy(false);startListen();}
+async function speak(text){
+  if(!speakOn||!text){afterSpeak();return;}
+  stopSpeak();
+  if(convoMode)armBargeIn();                            // listen for you while the AI talks
+  const ek=window.ORBIT_CONFIG.elevenKey;              // natural neural voice via the user's ElevenLabs key
+  if(ek){try{
+    const vid=window.ORBIT_CONFIG.elevenVoice||'EXAVITQu4vr4xnSDxMaL';
+    const r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+vid+'?output_format=mp3_44100_128',{method:'POST',
+      headers:{'xi-api-key':ek,'Content-Type':'application/json'},
+      body:JSON.stringify({text,model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.45,similarity_boost:0.8,style:0.35,use_speaker_boost:true}})});
+    if(r.ok){const blob=new Blob([await r.arrayBuffer()],{type:'audio/mpeg'});ttsAudio=new Audio(URL.createObjectURL(blob));ttsAudio.onended=afterSpeak;ttsAudio.onerror=()=>browserSpeak(text);ttsAudio.play().catch(()=>browserSpeak(text));return;}
+  }catch(e){}}
+  const ep=window.ORBIT_CONFIG.ttsEndpoint;            // neural voice via the Azure backend when deployed
+  if(ep){try{
+    const r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    if(r.ok){const j=await r.json();if(j&&j.audio){ttsAudio=new Audio('data:audio/mp3;base64,'+j.audio);ttsAudio.onended=afterSpeak;ttsAudio.onerror=()=>browserSpeak(text);ttsAudio.play().catch(()=>browserSpeak(text));return;}}
+  }catch(e){}}
+  browserSpeak(text);                                  // best available browser voice otherwise
+}
+function browserSpeak(text){if(!window.speechSynthesis){afterSpeak();return;}const u=new SpeechSynthesisUtterance(text);u.rate=1.02;u.pitch=1.0;u.lang='en-US';const v=pickVoice();if(v)u.voice=v;u.onend=afterSpeak;u.onerror=afterSpeak;window.speechSynthesis.speak(u);}
+function pickVoice(){
+  const vs=window.speechSynthesis?window.speechSynthesis.getVoices():[];if(!vs.length)return null;
+  const pats=[/Natural/i,/Aria|Ava|Emma|Jenny|Libby|Sonia|Michelle|Andrew/i,/Google US English/i,/Google UK English Female/i,/Samantha/i];
+  for(const p of pats){const v=vs.find(x=>(x.lang||'').toLowerCase().startsWith('en')&&p.test(x.name));if(v)return v;}
+  return vs.find(x=>(x.lang||'').toLowerCase().startsWith('en'))||vs[0];
+}
+if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=function(){};window.speechSynthesis.getVoices();}
+const spk=document.getElementById('spk');
+spk.addEventListener('click',()=>{speakOn=!speakOn;spk.classList.toggle('on',speakOn);spk.classList.toggle('off',!speakOn);if(!speakOn)stopSpeak();});
+document.getElementById('vtext').addEventListener('keydown',e=>{if(e.key==='Enter'){const qq=e.target.value.trim();if(qq)handleQuery(qq);}});
+const CHIPS=['What should I focus on?','What\'s behind plan?','Which projects are over budget?','What\'s blocked?','Any optimistic reporting?','Executive briefing'];
+document.getElementById('chips').innerHTML=CHIPS.map(c=>`<button class="chip">${esc(c)}</button>`).join('');
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{document.getElementById('vtext').value=c.textContent;handleQuery(c.textContent);}));
+
+/* ── Bring-your-own-key settings (stored in this browser only) ── */
+try{window.ORBIT_CONFIG.anthropicKey=localStorage.getItem('orbit_anthropic_key')||'';window.ORBIT_CONFIG.elevenKey=localStorage.getItem('orbit_eleven_key')||'';window.ORBIT_CONFIG.anthropicModel=localStorage.getItem('orbit_model')||window.ORBIT_CONFIG.anthropicModel;}catch(_){}
+function syncCfgUI(){const a=document.getElementById('cfgAnthropic'),e=document.getElementById('cfgEleven'),m=document.getElementById('cfgModel'),s=document.getElementById('cfgStatus');if(a)a.value=window.ORBIT_CONFIG.anthropicKey||'';if(e)e.value=window.ORBIT_CONFIG.elevenKey||'';if(m)m.value=window.ORBIT_CONFIG.anthropicModel||'claude-sonnet-4-6';if(s)s.textContent=window.ORBIT_CONFIG.anthropicKey?'● Claude connected':'';}
+document.getElementById('cfgBtn').addEventListener('click',()=>{document.getElementById('cfgPanel').classList.toggle('on');syncCfgUI();});
+document.getElementById('cfgSave').addEventListener('click',()=>{
+  const a=document.getElementById('cfgAnthropic').value.trim(),e=document.getElementById('cfgEleven').value.trim(),m=document.getElementById('cfgModel').value;
+  window.ORBIT_CONFIG.anthropicKey=a;window.ORBIT_CONFIG.elevenKey=e;window.ORBIT_CONFIG.anthropicModel=m;
+  try{a?localStorage.setItem('orbit_anthropic_key',a):localStorage.removeItem('orbit_anthropic_key');e?localStorage.setItem('orbit_eleven_key',e):localStorage.removeItem('orbit_eleven_key');localStorage.setItem('orbit_model',m);}catch(_){}
+  updateHUD();
+  if(a)testClaude();else{const s=document.getElementById('cfgStatus');if(s){s.style.color='var(--mut)';s.textContent='saved';}}
+});
+/* apply keys the instant they're typed/pasted — no Save click needed */
+function applyKeysFromFields(){
+  const a=(document.getElementById('cfgAnthropic').value||'').trim();
+  const e=(document.getElementById('cfgEleven').value||'').trim();
+  window.ORBIT_CONFIG.anthropicKey=a;window.ORBIT_CONFIG.elevenKey=e;
+  try{a?localStorage.setItem('orbit_anthropic_key',a):localStorage.removeItem('orbit_anthropic_key');e?localStorage.setItem('orbit_eleven_key',e):localStorage.removeItem('orbit_eleven_key');}catch(_){}
+  const s=document.getElementById('cfgStatus');if(s)s.textContent=a?'● Claude connected':'';
+}
+document.getElementById('cfgAnthropic').addEventListener('input',applyKeysFromFields);
+document.getElementById('cfgEleven').addEventListener('input',applyKeysFromFields);
+document.getElementById('cfgModel').addEventListener('change',()=>{window.ORBIT_CONFIG.anthropicModel=document.getElementById('cfgModel').value;try{localStorage.setItem('orbit_model',window.ORBIT_CONFIG.anthropicModel);}catch(_){}});
+
+/* ════════ Project deep-dive modal, filters & briefing ════════ */
+function openProject(pid){
+  const p=allProjects().find(x=>x.id===pid);if(!p)return;
+  const a=projAnalytics(p),c=COL[p.status],burn=a.budgetBurnPct,spark=sparkline(p);
+  const mcol=a.momentum==='declining'?'var(--red)':a.momentum==='improving'?'var(--green)':'var(--amber)';
+  let h=`<div class="pm-head"><button class="pm-close" onclick="closeProject()">&times;</button>`+
+    `<div class="pm-eyebrow"><span style="width:8px;height:8px;border-radius:50%;background:${c};display:inline-block"></span> ${esc(p.deptName)} · ${esc(p.priority||'medium')} priority</div>`+
+    `<div class="pm-title">${esc(p.name)}</div></div><div class="pm-body">`;
+  h+=`<div class="pm-grid">`+
+    `<div class="pm-stat"><div class="l">Status</div><div class="v" style="color:${c}">${p.status.replace('-',' ')}</div><div class="s">analytics read ${a.analyticalStatus.replace('-',' ')}${a.divergence>0.18?' — optimistic ⚠':''}</div></div>`+
+    `<div class="pm-stat"><div class="l">Schedule</div><div class="v">${a.scheduleVarPct==null?'—':(a.scheduleVarPct>=0?'+':'')+a.scheduleVarPct+'%'}</div><div class="s">${a.expectedPct==null?'no dates set':p.progress+'% done vs '+a.expectedPct+'% planned'}</div></div>`+
+    `<div class="pm-stat"><div class="l">Budget</div><div class="v">${burn==null?'—':burn+'%'}</div><div class="s">${p.budget?money(p.spend)+' of '+money(p.budget):'no budget set'}</div></div>`+
+    `<div class="pm-stat"><div class="l">Due</div><div class="v">${esc(p.due||'—')}</div><div class="s">${a.overdue?'<span style="color:var(--red)">overdue by '+Math.abs(a.daysToDue)+' days</span>':(a.daysToDue!=null?a.daysToDue+' days left':'')}</div></div>`+
+    `</div>`;
+  h+=`<div class="pm-section"><div class="h">Progress vs plan</div><div class="pm-dual"><i style="width:${p.progress}%;background:${c}"></i>${a.expectedPct!=null?`<span class="pm-plan" style="left:${a.expectedPct}%"></span>`:''}</div><div class="s">Coloured bar = actual (${p.progress}%). White marker = where the plan says it should be${a.expectedPct!=null?' ('+a.expectedPct+'%)':''}.</div></div>`;
+  if(p.budget){const bcol=burn>p.progress+10?'var(--red)':burn>p.progress?'var(--amber)':'var(--green)';h+=`<div class="pm-section"><div class="h">Budget burn</div><div class="pm-dual"><i style="width:${Math.min(100,burn)}%;background:${bcol}"></i><span class="pm-plan" style="left:${Math.min(100,p.progress)}%"></span></div><div class="s">${burn}% of budget spent; marker = ${p.progress}% delivered. Bar past the marker means spending faster than delivering.</div></div>`;}
+  h+=`<div class="pm-section"><div class="h">Momentum — ${a.momentum}</div><div class="spark">`+spark.map(v=>`<i style="height:${Math.round(6+v*18)}px;background:${mcol}"></i>`).join('')+`</div></div>`;
+  if((p.milestones||[]).length){h+=`<div class="pm-section"><div class="h">Milestones (${a.milestones.done}/${a.milestones.total})</div>`+p.milestones.map(m=>{const od=!m.done&&dnum(m.due)!=null&&Date.now()>dnum(m.due);const col=m.done?'var(--green)':od?'var(--red)':'var(--mut)';return `<div class="pm-ms"><span class="dot" style="background:${col}">${m.done?'✓':''}</span><div><div>${esc(m.name)}</div><div class="s" style="margin-top:1px;color:${od?'var(--red)':'var(--mut)'}">${m.done?'done':'due '+esc(m.due)+(od?' · overdue':'')}</div></div></div>`;}).join('')+`</div>`;}
+  if((p.deps||[]).length){h+=`<div class="pm-section"><div class="h">Depends on</div>`+p.deps.map(id=>{const x=allProjects().find(y=>y.id===id);return x?`<span class="pm-chip" style="cursor:pointer" onclick="openProject('${id}')">${esc(x.name)} · ${x.status.replace('-',' ')}</span>`:'';}).join('')+`</div>`;}
+  const deps=dependents(p.id);if(deps.length){h+=`<div class="pm-section"><div class="h">Blocks downstream</div>`+deps.map(x=>`<span class="pm-chip" style="cursor:pointer" onclick="openProject('${x.id}')">${esc(x.name)}</span>`).join('')+`</div>`;}
+  if(a.reasons.length){h+=`<div class="pm-section"><div class="h">Why it needs attention</div>`+a.reasons.map(r=>`<div class="pm-reason"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>${esc(r)}</span></div>`).join('')+`</div>`;}
+  if(p.concern)h+=`<div class="pm-section"><div class="h">Owner's note</div><div style="font-size:13px;color:var(--mut);line-height:1.55">${esc(p.concern)}</div></div>`;
+  h+=`<div class="pm-rec"><b>Recommended next step:</b> ${esc(a.recommendation)}</div>`;
+  h+=`<div class="pm-section"><span class="pm-chip">Owner: ${esc(p.owner||'—')}</span><span class="pm-chip">Team: ${esc(p.team||'—')}</span><span class="pm-chip">Started ${esc(p.start||'—')}</span><button class="pm-chip" style="cursor:pointer;border-color:var(--blue);color:var(--blue)" onclick="closeProject();openInspector('${p.deptId}','${p.id}')">Edit in division ▸</button></div></div>`;
+  document.getElementById('pmodalCard').innerHTML=h;
+  document.getElementById('pmodal').classList.add('on');
+  if(window.orbit3d){alertFocus=new Set([p.id]);window.orbit3d.setAlerts(alertFocus);window.orbit3d.focusDept(p.deptId);}
+}
+function closeProject(){document.getElementById('pmodal').classList.remove('on');}
+function showBriefing(){activeFilter=null;document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('on'));
+  const b=portfolio();alertFocus=new Set(b.ranked.slice(0,3).map(p=>p.id));if(window.orbit3d)window.orbit3d.setAlerts(alertFocus);
+  const txt=briefing().join('<br><br>');
+  showAnswer(`<span class="who"><span style="width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block"></span> Executive briefing</span>`+txt);
+  speak(stripHtml(txt));
+}
+(function(){const el=document.getElementById('filters');if(!el)return;let h=`<button class="fchip brief" onclick="showBriefing()">✦ Executive briefing</button>`;Object.keys(FILTERS).forEach(k=>{h+=`<button class="fchip" data-k="${k}" onclick="applyFilter('${k}')">${esc(FILTERS[k].label)}</button>`;});el.innerHTML=h;})();
+document.getElementById('pmodal').addEventListener('click',e=>{if(e.target.id==='pmodal')closeProject();});
+document.getElementById('cfgPanel').addEventListener('click',e=>{if(e.target.id==='cfgPanel')e.currentTarget.classList.remove('on');});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeProject();closeInspector();var cp=document.getElementById('cfgPanel');if(cp)cp.classList.remove('on');}});
+/* robust close — works even if inline onclick is ever blocked */
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;
+  if(t.closest('.insp-close')){closeInspector();}
+  if(t.closest('.pm-close')){closeProject();}
+},true);
+
+/* Bridge for the 3D module */
+window.OrbitData={get state(){return state;},deptScore,statusOf,colorOf,COL,orgScore,allProjects};
+window.getAlerts=()=>alertFocus;
+
+updateHUD();
+setTimeout(()=>{const s=orgScore();const f=allProjects().filter(p=>p.status==='failing').length;
+  showAnswer(`<span class="who"><span style="width:7px;height:7px;border-radius:50%;background:var(--violet);display:inline-block"></span> Analyst</span>Welcome to mission control for the <b>${esc(window.ORBIT_CONFIG.orgName)}</b>. Portfolio health is <b>${pct(s*100)}</b>${f?` with <span class="sev">${f} failing project${f>1?'s':''}</span>`:''}. Ask me anything, or tap a chip. For full real-time analysis, connect your Anthropic key with the ⚙ button.`);},900);
+</script>
+
+<!-- ════════ three.js 3D render — classic build so it works on file:// AND https ════════ -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/renderers/CSS2DRenderer.js"></script>
+<script>
+(function(){
+  var loaderEl=document.getElementById('loader');
+  function fail(m){loaderEl.classList.remove('gone');loaderEl.innerHTML='<div style="max-width:440px;text-align:center;padding:0 26px"><p style="color:#f87171;letter-spacing:1.5px;font-family:JetBrains Mono,monospace;font-size:11px">COULD NOT RENDER</p><p style="text-transform:none;letter-spacing:0;color:#c9d2e6;margin-top:12px;line-height:1.6;font-size:13px;font-family:Inter,sans-serif">'+m+'</p></div>';}
+  if(typeof THREE==='undefined'){fail('The 3D library (three.js) could not load from the CDN. Check the internet connection and reload the page.');return;}
+  var glok=false;try{var tc=document.createElement('canvas');glok=!!(tc.getContext('webgl2')||tc.getContext('webgl'));}catch(e){}
+  if(!glok){fail('This browser/GPU does not support WebGL, which the 3D view needs. Try Chrome or Edge with hardware acceleration enabled.');return;}
+  try{ main(); }catch(err){ console.error(err); fail('Error building the scene: '+((err&&err.message)?err.message:err)); }
+
+  function main(){
+const D=window.OrbitData;
+const sceneEl=document.getElementById('scene'),labelEl=document.getElementById('labels');
+let W=innerWidth,H=innerHeight;
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(W,H);
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+sceneEl.appendChild(renderer.domElement);
+
+const labelRenderer=new THREE.CSS2DRenderer();labelRenderer.setSize(W,H);
+labelRenderer.domElement.style.position='absolute';labelRenderer.domElement.style.top='0';
+labelEl.appendChild(labelRenderer.domElement);
+
+const scene=new THREE.Scene();scene.background=new THREE.Color('#04050d');
+const camera=new THREE.PerspectiveCamera(52,W/H,0.1,3000);camera.position.set(0,24,52);
+
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;controls.dampingFactor=0.06;controls.minDistance=6;controls.maxDistance=170;
+controls.autoRotate=true;controls.autoRotateSpeed=0.32;controls.enablePan=false;controls.maxPolarAngle=Math.PI*0.92;
+
+/* lights — sun is the key light (legacy lighting; distance 0 = even illumination) */
+const sunLight=new THREE.PointLight(0xfff2d6,2.4,0,1);scene.add(sunLight);
+scene.add(new THREE.AmbientLight(0x4a5880,0.85));
+
+/* starfield */
+(function(){const N=4200,g=new THREE.BufferGeometry(),pos=new Float32Array(N*3),col=new Float32Array(N*3);
+  const pal=[[1,1,1],[0.7,0.8,1],[1,0.9,0.75]];
+  for(let i=0;i<N;i++){const r=200+Math.random()*700,th=Math.random()*Math.PI*2,ph=Math.acos(2*Math.random()-1);
+    pos[i*3]=r*Math.sin(ph)*Math.cos(th);pos[i*3+1]=r*Math.cos(ph);pos[i*3+2]=r*Math.sin(ph)*Math.sin(th);
+    const c=pal[(Math.random()*pal.length)|0];col[i*3]=c[0];col[i*3+1]=c[1];col[i*3+2]=c[2];}
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  scene.add(new THREE.Points(g,new THREE.PointsMaterial({size:1.1,sizeAttenuation:true,vertexColors:true,transparent:true,opacity:0.9})));})();
+
+/* ── procedural planet textures (no external files) ── */
+function hx(c){const n=parseInt(c.slice(1),16);return [n>>16&255,n>>8&255,n&255];}
+function L3(a,b,t){return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];}
+function light(a,t){return L3(a,[255,255,255],t);}function dark(a,t){return L3(a,[0,0,0],t);}
+function hash(x,y,z){let n=(x*374761393+y*668265263+z*1274126177)|0;n=(n^(n>>13))*1274126177|0;return ((n^(n>>16))>>>0)/4294967295;}
+function vnoise(x,y,z){const xi=Math.floor(x),yi=Math.floor(y),zi=Math.floor(z),xf=x-xi,yf=y-yi,zf=z-zi;
+  const u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf),w=zf*zf*(3-2*zf),Lr=(a,b,t)=>a+(b-a)*t;
+  const c=(X,Y,Z)=>hash(xi+X,yi+Y,zi+Z);
+  const x00=Lr(c(0,0,0),c(1,0,0),u),x10=Lr(c(0,1,0),c(1,1,0),u),x01=Lr(c(0,0,1),c(1,0,1),u),x11=Lr(c(0,1,1),c(1,1,1),u);
+  return Lr(Lr(x00,x10,v),Lr(x01,x11,v),w);}
+function fbm(x,y,z,o){let a=0,amp=0.5,f=1;for(let i=0;i<o;i++){a+=amp*vnoise(x*f,y*f,z*f);f*=2;amp*=0.5;}return a;}
+function makeTexture(type,baseHex){
+  const w=512,h=256,cnv=document.createElement('canvas');cnv.width=w;cnv.height=h;
+  const c2=cnv.getContext('2d'),img=c2.createImageData(w,h),data=img.data,base=hx(baseHex),seed=Math.random()*50;
+  for(let y=0;y<h;y++){const lat=(y/h-0.5)*Math.PI;
+    for(let x=0;x<w;x++){const lon=(x/w)*2*Math.PI;
+      const dx=Math.cos(lat)*Math.cos(lon),dy=Math.sin(lat),dz=Math.cos(lat)*Math.sin(lon);
+      let e=fbm(dx*2.2+seed,dy*2.2+seed,dz*2.2+seed,5),col;
+      if(type==='gas'){const band=Math.sin(lat*9+(fbm(dx*3,dy*3,dz*3,3)-0.5)*5),t=band*0.5+0.5;col=L3(dark(base,0.35),light(base,0.5),t);}
+      else if(type==='ice'){col=e<0.5?[176,202,228]:e<0.7?[214,232,244]:[244,249,255];col=L3(col,base,0.16);}
+      else if(type==='rocky'){col=e<0.45?[84,66,58]:e<0.6?[136,98,70]:e<0.8?[168,138,102]:[202,182,150];col=L3(col,base,0.14);}
+      else{if(e<0.48)col=L3([18,46,104],[28,88,156],e/0.48);else if(e<0.52)col=[198,188,140];else if(e<0.7)col=L3([58,128,68],[92,150,82],(e-0.52)/0.18);else if(e<0.85)col=L3([112,94,68],[88,72,52],(e-0.7)/0.15);else col=[236,241,246];col=L3(col,base,0.12);}
+      const i=(y*w+x)*4;data[i]=col[0];data[i+1]=col[1];data[i+2]=col[2];data[i+3]=255;}}
+  c2.putImageData(img,0,0);const t=new THREE.CanvasTexture(cnv);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;}
+function makeClouds(){const w=512,h=256,cnv=document.createElement('canvas');cnv.width=w;cnv.height=h;
+  const c2=cnv.getContext('2d'),img=c2.createImageData(w,h),data=img.data,seed=Math.random()*40;
+  for(let y=0;y<h;y++){const lat=(y/h-0.5)*Math.PI;for(let x=0;x<w;x++){const lon=(x/w)*2*Math.PI;
+    const dx=Math.cos(lat)*Math.cos(lon),dy=Math.sin(lat),dz=Math.cos(lat)*Math.sin(lon);
+    let v=fbm(dx*3+seed,dy*3+seed,dz*3+seed,5);v=clampN((v-0.5)*2.4,0,1);
+    const i=(y*w+x)*4;data[i]=data[i+1]=data[i+2]=255;data[i+3]=v*200;}}
+  c2.putImageData(img,0,0);const t=new THREE.CanvasTexture(cnv);t.encoding=THREE.sRGBEncoding;return t;}
+function clampN(v,a,b){return Math.max(a,Math.min(b,v));}
+
+/* ── the system ── */
+const SUN_R=2.4;
+const sunMat=new THREE.MeshBasicMaterial({color:0xffe9b0});
+const sun=new THREE.Mesh(new THREE.SphereGeometry(SUN_R,48,48),sunMat);scene.add(sun);
+sun.add(new THREE.Mesh(new THREE.SphereGeometry(SUN_R*1.45,32,32),new THREE.MeshBasicMaterial({color:0xffcf7a,transparent:true,opacity:0.34,side:THREE.BackSide,blending:THREE.AdditiveBlending,depthWrite:false})));
+sun.add(new THREE.Mesh(new THREE.SphereGeometry(SUN_R*2.4,24,24),new THREE.MeshBasicMaterial({color:0xffb347,transparent:true,opacity:0.13,side:THREE.BackSide,blending:THREE.AdditiveBlending,depthWrite:false})));
+
+let planetReg={},focus={deptId:null,user:false};
+const sysGroup=new THREE.Group();scene.add(sysGroup);
+
+function buildSystem(){
+  // clear
+  Object.values(planetReg).forEach(p=>{sysGroup.remove(p.pivot);});
+  planetReg={};sysGroup.clear();
+  const depts=D.state.departments,n=depts.length;
+  depts.forEach((d,i)=>{
+    const orbR=8+i*3.4;
+    const pivot=new THREE.Group();sysGroup.add(pivot);
+    // orbit ring
+    const ring=new THREE.Mesh(new THREE.RingGeometry(orbR-0.015,orbR+0.015,128),new THREE.MeshBasicMaterial({color:0x4a5575,transparent:true,opacity:0.28,side:THREE.DoubleSide}));
+    ring.rotation.x=Math.PI/2;sysGroup.add(ring);
+    const pr=0.7+d.weight*0.22;
+    const planet=new THREE.Mesh(new THREE.SphereGeometry(pr,48,48),new THREE.MeshStandardMaterial({map:makeTexture(d.type||'rocky',d.color),roughness:0.95,metalness:0.05}));
+    planet.userData={type:'dept',id:d.id};
+    // atmosphere (health-coloured rim)
+    const atm=new THREE.Mesh(new THREE.SphereGeometry(pr*1.12,32,32),new THREE.MeshBasicMaterial({color:new THREE.Color(D.colorOf(D.deptScore(d))),transparent:true,opacity:0.22,side:THREE.BackSide,blending:THREE.AdditiveBlending}));
+    planet.add(atm);
+    // clouds for terran
+    let clouds=null;
+    if((d.type||'')==='terran'){clouds=new THREE.Mesh(new THREE.SphereGeometry(pr*1.02,40,40),new THREE.MeshStandardMaterial({map:makeClouds(),transparent:true,opacity:0.9,roughness:1}));planet.add(clouds);}
+    // label
+    const el=document.createElement('div');el.className='lbl';el.innerHTML=`<b>${esc(d.name.split(' (')[0])}</b><span>${Math.round(D.deptScore(d)*100)}%</span>`;
+    const label=new THREE.CSS2DObject(el);label.position.set(0,pr+0.7,0);planet.add(label);
+    const pgroup=new THREE.Group();pgroup.add(planet);
+    pgroup.position.set(orbR,0,0);
+    pivot.add(pgroup);
+    pivot.rotation.y=(i/n)*Math.PI*2;
+    // moons
+    const moons=[];
+    d.projects.forEach((p,j)=>{
+      const mPivot=new THREE.Group();
+      const mr=(0.14+(p.status==='on-track'?0.04:0.06))*(p.priority==='critical'?1.5:p.priority==='high'?1.22:p.priority==='low'?0.85:1);
+      const moon=new THREE.Mesh(new THREE.SphereGeometry(mr,20,20),new THREE.MeshBasicMaterial({color:new THREE.Color(COL_(p.status))}));
+      moon.position.set(pr+0.55+j*0.42,0,0);
+      moon.userData={type:'project',id:p.id,deptId:d.id};
+      const halo=new THREE.Mesh(new THREE.SphereGeometry(mr*2.7,16,16),new THREE.MeshBasicMaterial({color:new THREE.Color(COL_(p.status)),transparent:true,opacity:0.12,blending:THREE.AdditiveBlending,depthWrite:false}));
+      moon.add(halo);
+      mPivot.add(moon);mPivot.rotation.x=(Math.random()-0.5)*0.5;mPivot.userData.spin=0.4+j*0.16+Math.random()*0.2;mPivot.rotation.y=Math.random()*6.28;
+      planet.add(mPivot);
+      moons.push({p,mPivot,moon,halo,base:mr});
+    });
+    planetReg[d.id]={d,pivot,pgroup,planet,atm,clouds,label,el,moons,orbR,pr,spin:0.12+0.02*(i%3)};
+  });
+}
+function COL_(s){return D.COL[s];}
+function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ── raycast pick ── */
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();let hovered=null;
+function pick(ev){mouse.x=(ev.clientX/W)*2-1;mouse.y=-(ev.clientY/H)*2+1;ray.setFromCamera(mouse,camera);
+  const meshes=[];Object.values(planetReg).forEach(pr=>{meshes.push(pr.planet);pr.moons.forEach(m=>meshes.push(m.moon));});
+  const hit=ray.intersectObjects(meshes,false);return hit.length?hit[0].object:null;}
+renderer.domElement.addEventListener('pointermove',ev=>{
+  const o=pick(ev);const tip=document.getElementById('tip');
+  renderer.domElement.style.cursor=o?'pointer':'grab';
+  if(o){const ud=o.userData;tip.style.display='block';tip.style.left=(ev.clientX+14)+'px';tip.style.top=(ev.clientY+14)+'px';
+    if(ud.type==='dept'){const d=D.state.departments.find(x=>x.id===ud.id);tip.innerHTML=`<div class="t-name">${esc(d.name)}</div><div class="t-meta">${d.projects.length} projects · ${Math.round(D.deptScore(d)*100)}% health</div>`;}
+    else{const d=D.state.departments.find(x=>x.id===ud.deptId),p=d.projects.find(x=>x.id===ud.id);tip.innerHTML=`<div class="t-name">${esc(p.name)}</div><div class="t-meta">${p.status} · ${p.progress}% complete</div>`;}
+  }else tip.style.display='none';
+});
+let downXY=null;
+renderer.domElement.addEventListener('pointerdown',ev=>{downXY=[ev.clientX,ev.clientY];});
+renderer.domElement.addEventListener('pointerup',ev=>{
+  if(!downXY)return;const moved=Math.hypot(ev.clientX-downXY[0],ev.clientY-downXY[1]);downXY=null;if(moved>6)return;
+  const o=pick(ev);if(!o)return;const ud=o.userData;
+  if(ud.type==='project'&&window.openProject)window.openProject(ud.id);else window.openInspector(ud.deptId||ud.id,null);
+});
+controls.addEventListener('start',()=>{focus.user=true;focus.deptId=null;});
+
+/* ── focus camera on a planet (follows it) ── */
+const tmp=new THREE.Vector3(),desired=new THREE.Vector3();
+function applyFocus(){
+  if(!focus.deptId)return;const pr=planetReg[focus.deptId];if(!pr)return;
+  pr.planet.getWorldPosition(tmp);
+  controls.target.lerp(tmp,0.07);
+  const out=tmp.clone().normalize();
+  desired.copy(tmp).add(out.multiplyScalar(pr.pr*6+4)).add(new THREE.Vector3(0,pr.pr*2.4+2,0));
+  camera.position.lerp(desired,0.06);
+}
+
+/* ── 3D API exposed to the editor/analyst ── */
+window.orbit3d={
+  focusDept(id){focus.deptId=id;focus.user=false;controls.autoRotate=false;},
+  clearFocus(){focus.deptId=null;controls.autoRotate=true;},
+  refreshDept(id){const pr=planetReg[id];if(!pr)return;const d=pr.d;
+    pr.atm.material.color.set(D.colorOf(D.deptScore(d)));
+    pr.el.querySelector('span').textContent=Math.round(D.deptScore(d)*100)+'%';
+    pr.moons.forEach(m=>{const p=d.projects.find(x=>x.id===m.p.id);if(p){m.p=p;m.moon.material.color.set(COL_(p.status));m.halo.material.color.set(COL_(p.status));}});
+    updatePillsExternal();},
+  rebuild(){buildSystem();},
+  setAlerts(){/* read live each frame */}
+};
+function updatePillsExternal(){if(window.updateHUD)window.updateHUD();}
+
+/* ── animate ── */
+const clock=new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=clock.getDelta(),t=clock.elapsedTime;
+  // sun pulse + colour by org health
+  const os=D.orgScore();sun.material.color.set(new THREE.Color(D.colorOf(os)).lerp(new THREE.Color(0xffe9b0),0.5));
+  const pulse=1+0.04*Math.sin(t*1.5);sun.scale.setScalar(pulse);sunLight.color.set(sun.material.color);
+  const alerts=window.getAlerts?window.getAlerts():new Set();
+  Object.values(planetReg).forEach(pr=>{
+    pr.pivot.rotation.y+=pr.spin*dt*0.12;          // revolve around sun
+    pr.planet.rotation.y+=dt*0.08;                  // spin on axis
+    if(pr.clouds)pr.clouds.rotation.y+=dt*0.03;
+    pr.moons.forEach(m=>{
+      m.mPivot.rotation.y+=m.mPivot.userData.spin*dt;
+      const on=alerts.has(m.p.id);
+      const sc=on?1.6+0.5*Math.sin(t*7):(m.p.status!=='on-track'?1.15+0.12*Math.sin(t*3):1);
+      m.moon.scale.setScalar(sc);
+      m.moon.material.color.set(COL_(m.p.status));
+      const hb=m.p.status==='failing'?0.34:m.p.status==='at-risk'?0.22:0.1;
+      m.halo.material.color.set(COL_(m.p.status));
+      m.halo.material.opacity=on?(0.5+0.28*Math.sin(t*7)):hb;
+    });
+  });
+  applyFocus();
+  controls.update();
+  renderer.render(scene,camera);labelRenderer.render(scene,camera);
+}
+
+addEventListener('resize',()=>{W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();
+  renderer.setSize(W,H);labelRenderer.setSize(W,H);});
+
+/* build (defer a tick so the loader paints) */
+setTimeout(()=>{buildSystem();animate();document.getElementById('loader').classList.add('gone');setTimeout(()=>document.getElementById('loader').remove(),700);},60);
+  } // main
+})();
+</script>
+</body>
+</html>

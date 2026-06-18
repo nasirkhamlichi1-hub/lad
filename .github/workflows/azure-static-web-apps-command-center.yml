@@ -1,0 +1,42 @@
+name: Azure Static Web Apps CI/CD (Command Center)
+
+# Manual-only: this Azure deploy needs the AZURE_STATIC_WEB_APPS_API_TOKEN_COMMAND_CENTER
+# secret. Until that's configured, run it on demand from the Actions tab so it doesn't
+# fail automatically on every push. Switch back to a push trigger once the token is set.
+on:
+  workflow_dispatch:
+
+jobs:
+  build_and_deploy_job:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    name: Build and Deploy Job
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+          lfs: false
+      - name: Build And Deploy
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_COMMAND_CENTER }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
+          action: "upload"
+          ###### Repository/Build Configurations ######
+          app_location: "command-center"     # App source code path
+          api_location: "command-center/api"  # Api (analyst function) source path
+          output_location: ""                 # No build step
+          ###### End of Repository/Build Configurations ######
+
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    steps:
+      - name: Close Pull Request
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_COMMAND_CENTER }}
+          action: "close"

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex, nofollow"/>
+<title>AI Trainer — Course Builder · CLPD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--green:#006B3F;--green2:#008549;--green-d:#004d2e;--green-bg:#f0f9f4;--green-border:#b8d8c5;--gold:#C9913A;
+--ink:#0a0e14;--slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;--line:#e8ecf1;--line2:#d8dfe7;--paper:#f8fafb;--paper2:#f1f4f7;
+--red:#c0392b;--red-bg:#fdeae8;--blue:#1a4d80;--blue-bg:#eef4fb;--serif:'Instrument Serif',Georgia,serif;--sans:'Inter',system-ui,sans-serif;--r:12px}
+html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+.wrap{max-width:860px;margin:0 auto;padding:0 24px}
+.top{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.top-in{display:flex;align-items:center;gap:14px;height:62px}
+.emblem{width:36px;height:36px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:9px;display:grid;place-items:center}
+.emblem svg{width:18px;height:22px}.brand-t{font-family:var(--serif);font-size:18px}.brand-s{font-family:monospace;font-size:8.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600}
+.spacer{flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:14px;font-weight:600;padding:10px 16px;border-radius:9px;border:1px solid var(--line2);background:#fff;color:var(--slate);cursor:pointer}
+.btn-pri{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;border:0}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:0 2px 4px rgba(10,14,20,.05);padding:20px;margin-top:20px}
+label{display:block;font-size:12px;font-weight:650;color:var(--slate);margin:14px 0 6px}
+input,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:14px;font-family:var(--sans)}
+textarea{min-height:200px;resize:vertical;line-height:1.5}
+.gate{max-width:380px;margin:60px auto;padding:0 24px}
+.err{color:var(--red);font-size:13px;margin-top:10px;display:none}
+.ok{color:var(--green-d);font-size:13px;margin-top:10px;display:none}
+h1{font-family:var(--serif);font-size:30px;font-weight:400;margin:24px 0 4px}.sub{color:var(--slate2)}
+.hint{font-size:12px;color:var(--slate3);font-weight:400}
+.lesson{border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-top:10px;background:var(--paper)}
+.lesson-t{font-weight:650}.obj{font-size:12.5px;color:var(--slate);margin-top:4px;padding-left:16px;position:relative}
+.obj:before{content:"•";position:absolute;left:3px;color:var(--gold)}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line)}
+.tag{font-family:monospace;font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--paper2);color:var(--slate2);border:1px solid var(--line)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;animation:sp 0.7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.drop{border:1.5px dashed var(--line2);border-radius:10px;padding:16px;text-align:center;color:var(--slate2);font-size:13px;background:var(--paper);cursor:pointer}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap top-in">
+  <div class="emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="#fff" opacity=".95"/></svg></div>
+  <div><div class="brand-t">AI Trainer · Course Builder</div><div class="brand-s">Dubai Legal Affairs Department</div></div>
+  <div class="spacer"></div>
+  <a class="btn" href="lad-trainer-dashboard.html">Dashboard</a>
+  <a class="btn" href="ai-trainer-live.html">Trainer</a>
+</div></header>
+
+<div id="gate" class="gate"><div class="card" style="margin-top:0">
+  <label for="pw">Administrator password</label>
+  <input id="pw" type="password" placeholder="ADMIN_PASSWORD" autocomplete="off"/>
+  <button id="enterBtn" class="btn btn-pri" style="width:100%;margin-top:12px">Continue</button>
+  <div id="gateErr" class="err"></div>
+</div></div>
+
+<main id="app" class="wrap" style="display:none;padding-bottom:60px">
+  <h1>Build a course from a deck</h1>
+  <div class="sub">Upload a PowerPoint (or paste the text), and the AI designs a structured CLPD course — lessons, objectives and teaching briefs — taught strictly from your material.</div>
+
+  <div class="card">
+    <label for="title">Course title</label>
+    <input id="title" type="text" placeholder="e.g. Litigation & Arbitration in Aviation Law"/>
+    <label for="cid">Course ID <span class="hint">— auto-generated; edit if you like</span></label>
+    <input id="cid" type="text" placeholder="aviation-law"/>
+    <label>Source material</label>
+    <div id="drop" class="drop">📎 Click to upload a <b>.pptx</b> deck or a <b>.txt</b> file — its text fills the box below. (For PDF, copy-paste the text.)</div>
+    <input id="file" type="file" accept=".pptx,.txt,.md,.text" style="display:none"/>
+    <textarea id="src" placeholder="…or paste the deck / course text here" style="margin-top:10px"></textarea>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:14px">
+      <button id="genBtn" class="btn btn-pri">✨ Generate course</button>
+      <span class="hint" id="srcInfo"></span>
+    </div>
+    <div id="genErr" class="err"></div>
+    <div id="genOk" class="ok"></div>
+  </div>
+
+  <div id="preview" class="card" style="display:none">
+    <h2 style="font-size:16px;font-weight:700">Generated course</h2>
+    <div id="lessons"></div>
+    <p class="hint" style="margin-top:12px">Saved — it now appears in the trainer's lesson list for all signed-in learners.</p>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="font-size:16px;font-weight:700">Existing AI-built courses</h2><button id="refreshBtn" class="btn">↻ Refresh</button></div>
+    <div id="existing"><p class="hint" style="margin-top:10px">—</p></div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+(function(){
+  var el=function(i){return document.getElementById(i);};
+  var PASS='';
+  function tok(){try{return localStorage.getItem('tr_token')||'';}catch(e){return '';}}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function slug(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,50);}
+
+  el('enterBtn').onclick=enter;
+  el('pw').addEventListener('keydown',function(e){if(e.key==='Enter')enter();});
+  function enter(){
+    var pw=el('pw').value;
+    if(!pw && !tok()){return;}
+    if(pw){PASS=pw;try{localStorage.setItem('tr_admin_pw',pw);}catch(e){}}
+    el('gate').style.display='none';el('app').style.display='';loadExisting();
+  }
+  try{var s=localStorage.getItem('tr_admin_pw');if(s){el('pw').value=s;}}catch(e){}
+  // A signed-in super-admin gets straight in via their trainer token.
+  if(tok()){el('gate').style.display='none';el('app').style.display='';loadExisting();}
+
+  el('title').addEventListener('input',function(){ if(!el('cid').dataset.touched) el('cid').value=slug(el('title').value); });
+  el('cid').addEventListener('input',function(){ el('cid').dataset.touched='1'; });
+
+  el('drop').onclick=function(){el('file').click();};
+  el('file').onchange=function(){ var f=el('file').files[0]; if(f) readFile(f); };
+  function setInfo(t){el('srcInfo').textContent=t;}
+  async function readFile(f){
+    setInfo('Reading '+f.name+'…');
+    try{
+      if(/\.pptx$/i.test(f.name)){
+        var zip=await JSZip.loadAsync(f);
+        var names=Object.keys(zip.files).filter(function(n){return /^ppt\/slides\/slide\d+\.xml$/.test(n);})
+          .sort(function(a,b){return parseInt(a.match(/slide(\d+)/)[1])-parseInt(b.match(/slide(\d+)/)[1]);});
+        var out='';
+        for(var i=0;i<names.length;i++){
+          var xml=await zip.files[names[i]].async('string');
+          var ts=(xml.match(/<a:t>[\s\S]*?<\/a:t>/g)||[]).map(function(t){return t.replace(/<[^>]+>/g,'');});
+          var line=ts.join(' ').replace(/\s+/g,' ').trim();
+          if(line)out+=line+'\n\n';
+        }
+        el('src').value=out.trim();
+        setInfo(names.length+' slides extracted · '+el('src').value.length+' chars');
+      } else {
+        var txt=await f.text(); el('src').value=txt; setInfo(txt.length+' chars');
+      }
+    }catch(e){ setInfo(''); el('genErr').textContent='Could not read that file: '+(e.message||e); el('genErr').style.display='block'; }
+  }
+
+  el('genBtn').onclick=function(){
+    var title=el('title').value.trim(), cid=slug(el('cid').value||title), src=el('src').value.trim();
+    el('genErr').style.display='none';el('genOk').style.display='none';
+    if(!title){el('genErr').textContent='Enter a course title.';el('genErr').style.display='block';return;}
+    if(src.length<200){el('genErr').textContent='Add more source material (a few paragraphs minimum).';el('genErr').style.display='block';return;}
+    var btn=el('genBtn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Designing course…';
+    fetch('/api/course-build',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({adminPass:PASS,token:tok(),title:title,courseId:cid,sourceText:src})})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+      .then(function(o){
+        btn.disabled=false;btn.innerHTML='✨ Generate course';
+        if(!o.ok){el('genErr').textContent=(o.j&&o.j.error)||'Generation failed.';el('genErr').style.display='block';return;}
+        el('genOk').textContent='Created "'+o.j.title+'" — '+o.j.count+' lessons. It is now live in the trainer.';el('genOk').style.display='block';
+        showPreview(o.j.lessons||[]);
+        loadExisting();
+      }).catch(function(){btn.disabled=false;btn.innerHTML='✨ Generate course';el('genErr').textContent='Network error.';el('genErr').style.display='block';});
+  };
+
+  function showPreview(lessons){
+    el('preview').style.display='';
+    el('lessons').innerHTML=lessons.map(function(L){
+      return '<div class="lesson"><div class="lesson-t">'+esc(L.title)+'</div>'+
+        (L.summary?'<div class="hint">'+esc(L.summary)+'</div>':'')+
+        (L.objectives||[]).map(function(o){return '<div class="obj">'+esc(o)+'</div>';}).join('')+'</div>';
+    }).join('');
+  }
+
+  el('refreshBtn').onclick=loadExisting;
+  function loadExisting(){
+    fetch('/api/trainer-courses?pass='+encodeURIComponent(PASS)+'&token='+encodeURIComponent(tok())).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      var courses=(j&&j.courses)||[];
+      el('existing').innerHTML=courses.length?courses.map(function(c){
+        return '<div class="row"><div><b>'+esc(c.title||c.courseId)+'</b> <span class="tag">'+(c.lessons||[]).length+' lessons</span><div class="hint">'+esc(c.courseId)+'</div></div>'+
+          '<button class="btn" data-del="'+esc(c.courseId)+'" style="color:var(--red)">Delete</button></div>';
+      }).join(''):'<p class="hint" style="margin-top:10px">No AI-built courses yet.</p>';
+      Array.prototype.forEach.call(el('existing').querySelectorAll('[data-del]'),function(b){
+        b.onclick=function(){ if(!confirm('Delete this course?'))return;
+          fetch('/api/trainer-courses',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({adminPass:PASS,token:tok(),delete:b.getAttribute('data-del')})}).then(loadExisting);
+        };
+      });
+    }).catch(function(){});
+  }
+})();
+</script>
+</body>
+</html>

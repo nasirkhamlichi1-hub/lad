@@ -1,0 +1,30 @@
+{
+  "routes": [
+    { "route": "/", "redirect": "https://icy-mud-07d00dc03.7.azurestaticapps.net/clpd-portal.html", "statusCode": 302 },
+    { "route": "/portal", "redirect": "https://icy-mud-07d00dc03.7.azurestaticapps.net/clpd-portal.html", "statusCode": 302 },
+    { "route": "/staff", "rewrite": "/index.html" },
+    { "route": "/ladstaff", "rewrite": "/index.html" },
+    { "route": "/aviation", "rewrite": "/aviation.html" },
+    { "route": "/accreditation", "rewrite": "/accreditation.html" },
+    { "route": "/my-cpd", "rewrite": "/my-cpd.html" },
+    { "route": "/credits", "rewrite": "/credits.html" }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/img/*.{jpg,png,svg,ico}", "/*.{css,js}"]
+  },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
+  },
+  "mimeTypes": {
+    ".json": "application/json"
+  },
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/index.html",
+      "statusCode": 200
+    }
+  }
+}
