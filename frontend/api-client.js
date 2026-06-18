@@ -32,13 +32,35 @@
     } catch { /* ignore */ }
   }
 
+  // Fetch with cold-start resilience: the backend (Render free tier) can sleep
+  // and take ~30-60s to wake, during which the first request fails or returns
+  // 5xx. Retry a few times with backoff so sign-in/data calls self-heal instead
+  // of showing "cannot reach the server".
+  async function fetchResilient(url, opts, attempt) {
+    attempt = attempt || 1;
+    try {
+      const res = await fetch(url, opts);
+      if (res.status >= 502 && res.status <= 504 && attempt < 4) {
+        await new Promise(r => setTimeout(r, attempt * 2500));
+        return fetchResilient(url, opts, attempt + 1);
+      }
+      return res;
+    } catch (e) {
+      if (attempt < 4) {
+        await new Promise(r => setTimeout(r, attempt * 2500));
+        return fetchResilient(url, opts, attempt + 1);
+      }
+      throw e;
+    }
+  }
+
   async function call(method, path, body) {
     if (!ENABLED) throw new Error('LAD_API_BASE not configured');
     const headers = { 'Content-Type': 'application/json' };
     const t = getToken();
     if (t) headers.Authorization = 'Bearer ' + t;
 
-    const res = await fetch(BASE + path, {
+    const res = await fetchResilient(BASE + path, {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
