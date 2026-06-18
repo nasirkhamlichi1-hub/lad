@@ -3616,9 +3616,14 @@ function renderCatalogue(){
     if(lcCat==='internal') desc.textContent = items.length+' internally accredited course'+(items.length===1?'':'s')+' from your firm';
     else { var ns=items.reduce(function(n,c){return n+(c.sessions||[]).length;},0); desc.textContent = items.length+' course'+(items.length===1?'':'s')+' · '+ns+' upcoming sessions'; }
   }
-  if(lcMode==='calendar' && lcCat!=='internal'){
+  if(lcMode==='calendar'){
     if(grid) grid.style.display='none';
-    if(cal){ cal.style.display=''; cal.innerHTML=renderCatCalendar(items); }
+    if(cal){
+      cal.style.display='';
+      cal.innerHTML = (lcCat==='internal')
+        ? '<div style="padding:40px 20px;text-align:center;color:var(--slate2);background:var(--paper);border:1px dashed var(--line);border-radius:14px">Internal courses are delivered in-house by your firm — they don\'t have scheduled public sessions, so there\'s nothing to show on the calendar.</div>'
+        : renderCatCalendar(items);
+    }
     return;
   }
   if(cal) cal.style.display='none';
