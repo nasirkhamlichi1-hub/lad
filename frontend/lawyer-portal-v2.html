@@ -3525,8 +3525,22 @@ async function loadCatalogueLive() {
       };
       return { id:c.id, title:c.title, pts:pts, credits:credits, isMand:isMand, internal:false, provider:provider, sessions:c.sessions };
     });
-    renderCatalogue();
+    markAttendedCourses();
   } catch (e) { console.warn('[lawyer-portal] loadCatalogueLive:', e.message); }
+}
+
+// Flag courses the lawyer has already attended (from /me) so the catalogue can
+// grey them out and prevent a second booking.
+function markAttendedCourses(){
+  var A = window.__ATTENDED;
+  var nt = function(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); };
+  function mark(list){ (list||[]).forEach(function(c){
+    var done = A && (A.titles[nt(c.title)] || (c.code && A.codes[String(c.code).toUpperCase()]));
+    c.attended = !!done;
+    if (window.COURSES && window.COURSES[c.id]) { window.COURSES[c.id].attended = !!done; if (done) window.COURSES[c.id].booked = true; }
+  }); }
+  mark(CAT_LIVE); mark(CAT_INTERNAL);
+  if (typeof renderCatalogue==='function') renderCatalogue();
 }
 
 async function loadInternalCoursesLive(){
@@ -3542,7 +3556,7 @@ async function loadInternalCoursesLive(){
       return { id:c.id, title:c.title, pts:Number(c.points)||2, credits:0, isMand:false, internal:true, provider:c.provider, sessions:[] };
     });
     var btn=document.getElementById('lcInternalBtn'); if(btn) btn.style.display = CAT_INTERNAL.length ? '' : 'none';
-    if(lcCat==='internal') renderCatalogue();
+    markAttendedCourses();
   } catch(e){ console.warn('[lawyer-portal] loadInternalCoursesLive:', e.message); }
 }
 
@@ -3570,6 +3584,21 @@ function catCardHTML(c){
   var tagBg = c.internal?'#0d5a5e':(c.isMand?'#574a86':'#1e3a8a');
   var tag = c.internal?'INTERNAL':(c.isMand?'MANDATORY':'ACCREDITED');
   var meta, foot, click;
+  // Already attended → grey out, mark completed, no booking.
+  if(c.attended){
+    var ameta = c.internal
+      ? 'Internally accredited · '+c.pts+' pts'
+      : ((c.sessions&&c.sessions[0])?('Next: '+catFmtDate(c.sessions[0].scheduled_at)):'')+' · '+c.pts+' pts';
+    return '<div class="course-card" style="opacity:.5;filter:grayscale(.5);position:relative" title="You have already completed this course">'
+      + '<div class="course-art" style="background:'+artBg+'">'
+      +   '<span class="course-art-tag" style="background:#0d5a5e;color:#fff">✓ COMPLETED</span>'
+      +   '<div class="course-art-pts">+<em>'+c.pts+'</em>pts</div>'
+      + '</div>'
+      + '<div class="course-body"><div class="course-prov">'+c.provider+'</div><div class="course-title">'+c.title+'</div>'
+      +   '<div class="course-meta-row" style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-top:6px;letter-spacing:.4px">'+ameta+'</div></div>'
+      + '<div class="course-foot"><span class="course-fee" style="color:var(--green)">✓ ALREADY ATTENDED</span><span style="font-family:var(--mono);font-size:10px;color:var(--slate3)">In your history</span></div>'
+      + '</div>';
+  }
   if(c.internal){
     meta='<div class="course-meta-row" style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-top:6px;letter-spacing:.4px">Internally accredited · '+c.pts+' pts</div>';
     foot='<div class="course-foot"><span class="course-fee">IN-HOUSE</span><span style="font-family:var(--mono);font-size:10px;color:var(--slate3)">Delivered by your firm</span></div>';
@@ -3921,6 +3950,8 @@ async function loadAvailability() {
 async function openBooking(courseId) {
   const c = COURSES[courseId];
   if (!c) return;
+  // Block re-booking a course the lawyer has already attended/completed.
+  if (c.attended) { if (typeof showToast === 'function') showToast('You have already completed this course — it\'s in your history.'); return; }
   currentBookingId = courseId;
   selectedSessionIdx = null;
   // Refresh the live credit balance + seat counts before showing the modal.
@@ -4972,6 +5003,14 @@ async function loadMyAttendance() {
           provider: b.provider || b.venue || '', date_held: b.scheduled_at || b.booked_at,
           accreditation_code: b.accreditation_code || b.course_code || '', session_ref: b.session_id || '',
         })) : []);
+    // Record which courses the lawyer has already attended so the catalogue can
+    // grey them out and block re-booking.
+    try {
+      window.__ATTENDED = { titles:{}, codes:{} };
+      var _nt = function(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); };
+      att.forEach(function(a){ var t=_nt(a.course_title); if(t) window.__ATTENDED.titles[t]=1; var c=String(a.accreditation_code||'').toUpperCase().trim(); if(c) window.__ATTENDED.codes[c]=1; });
+      if (typeof markAttendedCourses==='function') markAttendedCourses();
+    } catch(_){}
     if (subEl) {
       const total = att.reduce((s, a) => s + (a.delta_points || 0), 0);
       subEl.textContent = `${att.length} completed ${att.length === 1 ? 'course' : 'courses'} · ${total} CPD ${total === 1 ? 'point' : 'points'} · recorded against LAD-accredited courses`;
