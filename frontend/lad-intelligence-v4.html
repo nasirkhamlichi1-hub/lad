@@ -1769,16 +1769,52 @@ function submitNewTask(btn){
 }
 
 
+// ═════════════ REGISTERED FIRMS — LIVE DATA ═════════════
+// Pulls the real firm directory from /api/v1/firms (≈540 firms). The backend
+// has no compliance % / trend, so those are left null and the render shows '—'.
+// Falls back to the hardcoded FIRMS demo array on any error.
+let firmsLive = null;
+async function loadFirmsLive(){
+  try{
+    const base = (window.LAD_API_BASE)
+      || (window.LAD_SYNC && window.LAD_SYNC.base)
+      || 'https://lad-clpd-backend.onrender.com';
+    const token = localStorage.getItem('lad_token') || '';
+    const r = await fetch(base.replace(/\/$/, '') + '/api/v1/firms', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (!r.ok) throw new Error('firms endpoint ' + r.status);
+    const arr = await r.json();
+    if (!Array.isArray(arr)) throw new Error('firms response not an array');
+    const mapped = arr.map(f => {
+      const name = f.name || f.full_name || '';
+      const abbr = (name.match(/\b[A-Za-z]/g) || []).slice(0,3).join('').toUpperCase() || '??';
+      return { name, abbr, size: f.size || 0, compliance: null, critical: 0, trend: [] };
+    });
+    mapped.sort((a,b) => (b.size||0) - (a.size||0));
+    firmsLive = mapped.slice(0, 40);
+    renderFirms();
+  } catch (e) {
+    console.warn('[firms] could not load /api/v1/firms, using demo data:', e.message);
+    firmsLive = null;
+  }
+}
+
 function renderFirms(){
-  const html=FIRMS.map((f,i)=>{
-    const status=f.compliance>=85?'compliant':f.compliance>=70?'at-risk':'critical';
+  const list=(firmsLive||FIRMS);
+  const html=list.map((f,i)=>{
+    const hasCompliance=(f.compliance!==null&&f.compliance!==undefined);
+    const compliance=hasCompliance?f.compliance:0;
+    const critical=f.critical||0;
+    const trend=f.trend||[];
+    const status=compliance>=85?'compliant':compliance>=70?'at-risk':'critical';
     const accent=status==='compliant'?'#006B3F':status==='at-risk'?'#92540a':'#c0392b';
-    const trendBars=f.trend.map((v,idx)=>{
-      const max=Math.max(...f.trend);const h=(v/max*100);const op=idx===f.trend.length-1?'1':'.5';
+    const trendBars=trend.map((v,idx)=>{
+      const max=Math.max(...trend);const h=(v/max*100);const op=idx===trend.length-1?'1':'.5';
       return `<div class="ft-trend-bar" style="height:${h}%;background:${accent};opacity:${op}"></div>`;
     }).join('');
     const avatarBg=`hsl(${(i*47)%360},45%,42%)`;
-    const ptsMissing=Math.round((100-f.compliance)/100*16*f.size);
+    const ptsMissing=hasCompliance?Math.round((100-compliance)/100*16*f.size):0;
     return `<div class="ft-row" style="grid-template-columns:auto 1fr 90px 110px 90px 90px 130px 100px;cursor:pointer" onclick="openFirmDeepDive('${f.name.replace(/'/g,"\\'")}')">
       <div class="ft-rank">${(i+1).toString().padStart(2,'0')}</div>
       <div style="display:flex;align-items:center;gap:10px;min-width:0">
@@ -1786,8 +1822,8 @@ function renderFirms(){
         <div style="min-width:0"><div class="ft-name">${f.name}</div><div class="ft-name-sub">${f.size>=100?'LARGE':f.size>=30?'MID':'SMALL'} · ${f.size>=50?'EST.2010s':'EST.2020s'}</div></div>
       </div>
       <div class="ft-num" style="text-align:center">${f.size}</div>
-      <div class="ft-num" style="text-align:center;color:${accent}">${f.compliance.toFixed(1)}<em>%</em></div>
-      <div class="ft-num" style="text-align:center;color:${f.critical>5?'#c0392b':f.critical>2?'#92540a':'#006B3F'}">${f.critical}</div>
+      <div class="ft-num" style="text-align:center;color:${accent}">${hasCompliance?compliance.toFixed(1)+'<em>%</em>':'—'}</div>
+      <div class="ft-num" style="text-align:center;color:${critical>5?'#c0392b':critical>2?'#92540a':'#006B3F'}">${critical}</div>
       <div class="ft-num" style="text-align:center;color:${ptsMissing>50?'#c0392b':ptsMissing>20?'#92540a':'#5a6878'}">${ptsMissing.toLocaleString()}</div>
       <div class="ft-trend">${trendBars}</div>
       <div onclick="event.stopPropagation()" style="display:flex;gap:5px;justify-content:flex-end;align-items:center">
@@ -2116,11 +2152,15 @@ const FIRM_MEMBERS={
 };
 
 function openFirmDeepDive(firmName){
-  const firm=FIRMS.find(f=>f.name===firmName);
+  const firm=((firmsLive||[]).find(f=>f.name===firmName))||FIRMS.find(f=>f.name===firmName);
   if(!firm)return;
-  const status=firm.compliance>=85?'compliant':firm.compliance>=70?'at-risk':'critical';
+  const hasCompliance=(firm.compliance!==null&&firm.compliance!==undefined);
+  const compliance=hasCompliance?firm.compliance:0;
+  const critical=firm.critical||0;
+  const complianceDisp=hasCompliance?compliance.toFixed(1)+'%':'—';
+  const status=compliance>=85?'compliant':compliance>=70?'at-risk':'critical';
   const accent=status==='compliant'?'#006B3F':status==='at-risk'?'#92540a':'#c0392b';
-  const ptsMissing=Math.round((100-firm.compliance)/100*16*firm.size);
+  const ptsMissing=hasCompliance?Math.round((100-compliance)/100*16*firm.size):0;
   const members=FIRM_MEMBERS[firmName]||[
     {name:'Contact 1',role:'Partner',pts:12,missing:4,email:`contact1@${firmName.toLowerCase().replace(/[^a-z]/g,'')}.ae`},
     {name:'Contact 2',role:'Associate',pts:8,missing:8,email:`contact2@${firmName.toLowerCase().replace(/[^a-z]/g,'')}.ae`},
@@ -2141,19 +2181,19 @@ function openFirmDeepDive(firmName){
     </div>`).join('');
   openSidePanel({
     title: firmName,
-    tag: `${firm.size} practitioners · ${firm.compliance.toFixed(1)}% compliance`,
+    tag: `${firm.size} practitioners · ${complianceDisp} compliance`,
     icon: '',
     iconBg: `linear-gradient(135deg,${accent},${accent}88)`,
     showOutreach: true,
-    aiContext: `Firm: ${firmName}. Compliance: ${firm.compliance.toFixed(1)}%. Critical practitioners: ${firm.critical}. Total points missing: ${ptsMissing}.`,
+    aiContext: `Firm: ${firmName}. Compliance: ${complianceDisp}. Critical practitioners: ${critical}. Total points missing: ${ptsMissing}.`,
     body: `
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
         <div style="background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-family:var(--serif);font-size:26px;color:${accent}">${firm.compliance.toFixed(1)}%</div>
+          <div style="font-family:var(--serif);font-size:26px;color:${accent}">${complianceDisp}</div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--slate3)">COMPLIANCE</div>
         </div>
         <div style="background:var(--red-bg);border:1px solid var(--red-border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-family:var(--serif);font-size:26px;color:var(--red)">${firm.critical}</div>
+          <div style="font-family:var(--serif);font-size:26px;color:var(--red)">${critical}</div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--slate3)">CRITICAL</div>
         </div>
         <div style="background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:10px;padding:12px;text-align:center">
@@ -2164,8 +2204,8 @@ function openFirmDeepDive(firmName){
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;font-weight:600">MEMBER BREAKDOWN</div>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-xs btn-ghost" onclick="openOutreach({recipients:'All critical practitioners at ${firmName}',context:'CLPD compliance reminder for ${firmName} — ${firm.critical} critical practitioners',channel:'email'})">✉ Email all</button>
-          <button class="btn btn-xs btn-ghost" onclick="openOutreach({recipients:'All critical practitioners at ${firmName}',context:'CLPD compliance reminder for ${firmName} — ${firm.critical} critical practitioners',channel:'app'})"> Notify all</button>
+          <button class="btn btn-xs btn-ghost" onclick="openOutreach({recipients:'All critical practitioners at ${firmName}',context:'CLPD compliance reminder for ${firmName} — ${critical} critical practitioners',channel:'email'})">✉ Email all</button>
+          <button class="btn btn-xs btn-ghost" onclick="openOutreach({recipients:'All critical practitioners at ${firmName}',context:'CLPD compliance reminder for ${firmName} — ${critical} critical practitioners',channel:'app'})"> Notify all</button>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:7px">${membersHtml}</div>`
@@ -2838,6 +2878,7 @@ function switchPerfView(view) {
 renderOpsFeed();
 renderOpsQueue();
 renderFirms();
+loadFirmsLive();
 runSim();
 updateTime();
 renderCourseComp();

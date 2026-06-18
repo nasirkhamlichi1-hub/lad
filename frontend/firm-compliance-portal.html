@@ -2153,6 +2153,9 @@ const BOOKINGS = [
   {lawyer:'Abdullah Karim',role:'Junior Associate',course:'Assignment of Debt under UAE Law',date:'15 Apr 2026 · 9:30–11:30',venue:'Galadari Bldg',pts:2,status:'confirmed'},
 ];
 
+// Live confirmed bookings from the backend (null = not loaded yet → use demo).
+let firmBookingsLive = null;
+
 const INSIGHTS = [
   {icon:'',tag:'CRITICAL · 1 LAWYER',title:'Lina Mansour at 0 pts — 234 days left',body:'Lina Mansour (L-06121, Family, Associate) has zero 2026 points and one stale booking. Book her onto Exclusion & Limitation Clauses (12 May, Al Hudaiba, 21 seats firmed) plus AI Governance e-learning today to clear 4 pts before end of May.',color:'var(--red)',actions:['Book Lina onto May sessions']},
   {icon:'',tag:'GAP · ETHICS COMPULSORY',title:'29 of 31 lawyers missing Ethics this year',body:'Ethics is a mandatory annual requirement and only Aisha Al Falasi and Layla Al Hashimi have booked it for 2026. The Ethics in Legal AI e-learning module is free and self-paced — Lex recommends mass-enrolling all 29 remaining lawyers this week.',color:'var(--amber)',actions:['Mass-enrol 29 onto Ethics']},
@@ -2733,10 +2736,15 @@ function renderCourseCards() {
 // RENDER BOOKINGS
 // ════════════════════════════════════════════
 function renderBookings() {
-  document.getElementById('bookingsList').innerHTML = BOOKINGS.map((b,i) => {
+  const list = (firmBookingsLive || BOOKINGS);
+  if (!list.length) {
+    document.getElementById('bookingsList').innerHTML = '<div style="padding:18px;color:var(--slate3);font-size:12.5px">No bookings yet.</div>';
+    return;
+  }
+  document.getElementById('bookingsList').innerHTML = list.map((b,i) => {
     const statusColor = b.status==='completed'?'var(--green)':b.status==='in-progress'?'var(--blue)':'var(--teal)';
     const statusLabel = b.status==='completed'?'COMPLETED':b.status==='in-progress'?'IN PROGRESS':'CONFIRMED';
-    return `<div style="display:grid;grid-template-columns:auto 2fr 1.5fr 1fr auto auto;gap:12px;align-items:center;padding:13px 18px;border-bottom:${i<BOOKINGS.length-1?'1px solid var(--line)':'none'}">
+    return `<div style="display:grid;grid-template-columns:auto 2fr 1.5fr 1fr auto auto;gap:12px;align-items:center;padding:13px 18px;border-bottom:${i<list.length-1?'1px solid var(--line)':'none'}">
       <div style="width:30px;height:30px;border-radius:7px;background:${statusColor}22;display:grid;place-items:center;font-size:13px"></div>
       <div><div style="font-weight:600;font-size:13px;color:var(--ink)">${b.lawyer}</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3);text-transform:uppercase">${b.role}</div></div>
       <div><div style="font-size:12.5px;color:var(--ink)">${b.course}</div><div style="font-size:11px;color:var(--slate2)">${b.venue}</div></div>
@@ -2745,6 +2753,40 @@ function renderBookings() {
       <div><span style="font-family:var(--mono);font-size:9.5px;font-weight:700;color:${statusColor};background:${statusColor}18;padding:3px 8px;border-radius:5px;border:1px solid ${statusColor}44">${statusLabel}</span></div>
     </div>`;
   }).join('');
+}
+
+// Wire CONFIRMED BOOKINGS to the live backend. 'F-GA' is resolved server-side
+// to the signed-in CO's own firm. On empty → empty state; on error → demo.
+async function loadFirmBookings() {
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
+  const token = localStorage.getItem('lad_token') || '';
+  if (!base || !token) return;
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const fmtDate = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+  };
+  try {
+    const r = await fetch(base + '/api/v1/firms/F-GA/bookings', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
+    if (!r.ok) return;
+    const rows = await r.json();
+    if (!Array.isArray(rows)) return;
+    firmBookingsLive = rows.map(row => ({
+      lawyer: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
+      role: row.role || '',
+      course: row.course_title || row.course_title_current || '',
+      date: fmtDate(row.scheduled_at),
+      venue: row.provider || '',
+      pts: row.points_earned,
+      credits: row.credits_used,
+      status: row.status,
+    }));
+    renderBookings();
+  } catch (e) {
+    console.warn('[firm] load bookings failed', e);
+  }
 }
 
 // ════════════════════════════════════════════
@@ -3400,6 +3442,11 @@ function showCalDay(d) {
 // ════════════════════════════════════════════
 // INTERNAL SESSIONS DATA & RENDER
 // ════════════════════════════════════════════
+// Set true once syncInternalSessionsFromBackend has successfully run. Until
+// then we show the demo cards; afterwards only real submissions (those with a
+// backend `ref`) are shown, falling back to an empty state when there are none.
+let internalSessionsLoaded = false;
+
 const INTERNAL_SESSIONS = [
   {id:1, title:'Corporate Governance Workshop', category:'Corporate Law', date:'8 Apr 2026', dateStr:'Tuesday 8 Apr 2026', time:'9:00–12:00', pts:2, trainer:'Faisal Al Tayer', attendees:['Ahmad Al Naqbi','Fatima Al Mansouri','Mohammed Al Suwaidi','Hamad Al Rashid','Pierre Dubois'], status:'approved', dateObj: new Date(2026,3,8)},
   {id:2, title:'AML Compliance Briefing', category:'Banking & Finance', date:'15 Apr 2026', dateStr:'Wednesday 15 Apr 2026', time:'14:00–16:00', pts:2, trainer:'Pierre Dubois', attendees:['Hamad Al Rashid','Sophie Marsh','Karim Hassan'], status:'approved', dateObj: new Date(2026,3,15)},
@@ -3407,7 +3454,17 @@ const INTERNAL_SESSIONS = [
 ];
 
 function renderInternalCards() {
-  document.getElementById('internalCards').innerHTML = INTERNAL_SESSIONS.map(s => {
+  // Once backend data has loaded, show only real submissions (those with a
+  // `ref`); the seeded demo entries have no `ref` and must not leak through.
+  const cards = internalSessionsLoaded ? INTERNAL_SESSIONS.filter(s => s.ref) : INTERNAL_SESSIONS;
+  if (internalSessionsLoaded && !cards.length) {
+    const cEl = document.getElementById('internalCards');
+    if (cEl) cEl.innerHTML = '<div style="grid-column:1/-1;padding:18px;color:var(--slate3);font-size:12.5px">No internal sessions submitted yet.</div>';
+    const hEl = document.getElementById('internalHistory');
+    if (hEl) hEl.innerHTML = '<div style="padding:18px;color:var(--slate3);font-size:12.5px">No internal sessions submitted yet.</div>';
+    return;
+  }
+  document.getElementById('internalCards').innerHTML = cards.map(s => {
     const isApproved = s.status==='approved';
     const isRejected = s.status==='rejected';
     const isReturned = s.status==='returned';
@@ -3445,11 +3502,11 @@ function renderInternalCards() {
   }).join('');
 
   // History table with workflow column
-  document.getElementById('internalHistory').innerHTML = INTERNAL_SESSIONS.map((s,i) => {
+  document.getElementById('internalHistory').innerHTML = cards.map((s,i) => {
     const isApproved = s.status==='approved';
     const statusColor = isApproved?'var(--green)':s.status==='pending'?'var(--amber)':'var(--teal)';
     const statusLabel = isApproved?'APPROVED':s.status==='pending'?'PENDING LAD REVIEW':'PENDING ACCREDITATION';
-    return `<div style="display:grid;grid-template-columns:2fr 90px 110px 90px 120px auto;gap:12px;align-items:center;padding:12px 18px;border-bottom:${i<INTERNAL_SESSIONS.length-1?'1px solid var(--line)':'none'}">
+    return `<div style="display:grid;grid-template-columns:2fr 90px 110px 90px 120px auto;gap:12px;align-items:center;padding:12px 18px;border-bottom:${i<cards.length-1?'1px solid var(--line)':'none'}">
       <div>
         <div style="font-weight:600;font-size:13px;color:var(--ink)">${s.title}</div>
         <div style="font-family:var(--mono);font-size:9px;color:var(--slate3)">${s.category}${s.ref?' · REF: '+s.ref:''}</div>
@@ -3779,6 +3836,8 @@ async function syncInternalSessionsFromBackend() {
         accreditationCode: b.accreditation_code || p.accreditationCode || null,
       });
     }
+    // Backend data is now the source of truth — drop the seeded demo cards.
+    internalSessionsLoaded = true;
   } catch (e) {
     console.warn('[firm] sync internal sessions failed', e);
   }
@@ -3874,6 +3933,7 @@ async function loadFirmIdentity() {
 async function bootAccreditationData() {
   loadFirmIdentity();
   loadCreditHistory();
+  loadFirmBookings();
   await loadFirmLawyersFromBackend();
   await syncInternalSessionsFromBackend();
   if (typeof renderInternalCards === 'function') renderInternalCards();
