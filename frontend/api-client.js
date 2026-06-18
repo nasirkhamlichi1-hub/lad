@@ -151,6 +151,8 @@
 
     // Catalog
     getCourses: () => ENABLED ? call('GET', '/api/v1/courses') : Promise.resolve(lsGet(STORE.COURSES, [])),
+    getAllBookings: () => ENABLED ? call('GET', '/api/v1/bookings?limit=500').then(r => (r && r.data) || []) : Promise.resolve([]),
+    getPurchases: () => ENABLED ? call('GET', '/api/v1/credits/transactions?limit=500').then(r => (r && r.data) || []) : Promise.resolve([]),
     getCourse: (id) => ENABLED ? call('GET', '/api/v1/courses/' + encodeURIComponent(id)) : Promise.resolve((lsGet(STORE.COURSES, []).find(c => c.id === id))),
     saveCourse: (c) => ENABLED ? call('PUT', '/api/v1/courses/' + encodeURIComponent(c.id), c)
                               : Promise.resolve(lsSet(STORE.COURSES, [...(lsGet(STORE.COURSES, []).filter(x => x.id !== c.id)), c])),

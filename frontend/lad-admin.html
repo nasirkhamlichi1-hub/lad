@@ -4064,7 +4064,9 @@ async function admPurchasesRender() {
   if (!el) return;
 
   let rows = ADM_DEMO_PURCHASES;
-  // Backend wiring would call window.LAD.getPurchases?.() here.
+  if (window.LAD && window.LAD.enabled) {
+    try { const apiRows = await window.LAD.getPurchases?.(); if (Array.isArray(apiRows) && apiRows.length) rows = apiRows; } catch (e) { /* fall back to demo */ }
+  }
 
   const q = (document.getElementById('admPurchSearch')?.value || '').toLowerCase().trim();
   const kind = document.getElementById('admPurchKind')?.value || 'all';
