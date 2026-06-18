@@ -2631,18 +2631,19 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 
 
       <!-- ═══ SIMILAR (BASED ON HISTORY) ═══ -->
-      <section class="section" id="similar">
+      <section class="section" id="similar" style="display:none">
         <div class="section-hd">
           <div>
             <div class="section-eyebrow purple" data-cfg="lawyer_sec_similar_eyebrow">BASED ON YOUR HISTORY</div>
-            <h2 class="section-title" data-cfg-html="lawyer_sec_similar_title">Because you completed <em>Ethics – AI</em></h2>
-            <div class="section-desc">Lex matched these against your 6 completed courses since 2024 · ranked by similarity score and CLPD value</div>
+            <h2 class="section-title" id="simTitle">Recommended <em>for you</em></h2>
+            <div class="section-desc" id="simDesc">Lex matches accredited courses to your record and what's left to reach 16 points.</div>
           </div>
           <div class="section-actions">
-            <button class="btn btn-ghost btn-sm">See all matches</button>
+            <button class="btn btn-ghost btn-sm" id="simPrev" onclick="scrollSim(-1)" title="Scroll left" style="width:34px;padding:6px 0">‹</button>
+            <button class="btn btn-ghost btn-sm" id="simNext" onclick="scrollSim(1)" title="Scroll right" style="width:34px;padding:6px 0">›</button>
           </div>
         </div>
-        <div class="similar-strip">
+        <div class="similar-strip" id="simStrip">
           <div class="similar-card" style="cursor:default">
             <div class="similar-art" style="background:linear-gradient(135deg,#2a1a3a,#0a0e14)">
               <span class="similar-art-because">96% match</span>
@@ -3339,7 +3340,9 @@ document.addEventListener('DOMContentLoaded', function () {
 // ════════════════════════════════════════════════════════════════
 (function hideDemoOnlyPanels() {
   // Sections to remove from the page until a backend source exists
-  var DEMO_PANEL_IDS = ['projection', 'coach', 'calendar', 'skills', 'peers', 'quiz', 'similar', 'trajectory'];
+  // 'similar' (Based on your history) is live-wired to the AI copilot, so it is
+  // NOT hidden — renderBasedOnHistory() shows it only when real recs exist.
+  var DEMO_PANEL_IDS = ['projection', 'coach', 'calendar', 'skills', 'peers', 'quiz', 'trajectory'];
   function applyHide() {
     DEMO_PANEL_IDS.forEach(function (id) {
       var sec = document.getElementById(id);
@@ -3506,6 +3509,57 @@ async function loadCatalogueLive() {
   }
 }
 document.addEventListener('DOMContentLoaded', loadCatalogueLive);
+
+// ── Shared, cached AI copilot call — one request powers the briefing, the
+// projection and the "Based on your history" carousel. ──
+window.copilotData = function () {
+  if (window.__copilotP) return window.__copilotP;
+  var base = (window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com').replace(/\/$/, '');
+  var tk = ''; try { tk = localStorage.getItem('lad_token') || ''; } catch (e) {}
+  if (!tk) { window.__copilotP = Promise.resolve(null); return window.__copilotP; }
+  window.__copilotP = fetch(base + '/api/v1/lawyers/copilot', { headers: { Authorization: 'Bearer ' + tk }, cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+  return window.__copilotP;
+};
+
+function scrollSim(dir) { var s = document.getElementById('simStrip'); if (s) s.scrollBy({ left: dir * 320, behavior: 'smooth' }); }
+
+// "Based on your history" — live AI recommendations (no demo). The section is
+// shown only when the copilot returns real recommendations; otherwise hidden.
+function renderBasedOnHistory() {
+  var strip = document.getElementById('simStrip');
+  var sec = document.getElementById('similar');
+  if (!strip || !sec) return;
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);}); }
+  window.copilotData().then(function (j) {
+    var recs = (j && j.recommendations) || [];
+    if (!recs.length) { sec.style.display = 'none'; return; }
+    var bgs = ['linear-gradient(135deg,#241a38,#463a66)','linear-gradient(135deg,#0a2040,#16386a)','linear-gradient(135deg,#0b3a3e,#0f5f63)','linear-gradient(135deg,#2a1a3a,#0a0e14)'];
+    strip.innerHTML = recs.map(function (rc, i) {
+      var pts = Number(rc.points) || 2;
+      var title = esc(rc.title || rc.code || 'Course');
+      var why = esc(rc.why || 'Recommended toward your 16-point target');
+      var tAttr = (rc.title || rc.code || 'Course').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      return '<div class="similar-card" style="cursor:default">'
+        + '<div class="similar-art" style="background:' + bgs[i % bgs.length] + '">'
+        +   '<span class="similar-art-because">For you</span>'
+        +   '<div class="similar-art-pts">' + pts + '<em>pts</em></div>'
+        + '</div>'
+        + '<div class="similar-body">'
+        +   '<div class="similar-prov">' + esc(rc.code || 'ACCREDITED') + '</div>'
+        +   '<div class="similar-title">' + title + '</div>'
+        +   '<div class="similar-link" style="text-transform:none;letter-spacing:0;color:var(--slate2);font-weight:500;line-height:1.4">' + why + '</div>'
+        +   '<button class="similar-book-btn" onclick="event.stopPropagation();bookSuggestedCourse(\'' + tAttr + '\',\'\',\'session\')">Book →</button>'
+        + '</div></div>';
+    }).join('');
+    if (j && j.firstName) {
+      var d = document.getElementById('simDesc');
+      if (d) d.textContent = 'Lex matched ' + recs.length + ' accredited course' + (recs.length===1?'':'s') + ' to your record and what’s left to reach 16 points.';
+    }
+    sec.style.display = '';
+  });
+}
+document.addEventListener('DOMContentLoaded', renderBasedOnHistory);
 
 function selQuiz(el){
   const wasSelected=el.classList.contains('selected');
