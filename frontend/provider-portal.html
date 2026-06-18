@@ -771,6 +771,10 @@ function downloadA1(){
     if (token && role === 'provider') {
       const name = localStorage.getItem('lad_name') || '';
       const email = localStorage.getItem('lad_user_email') || '';
+      // Expose provider identity so the attendance-alert banner can scope to
+      // sessions run against THIS provider's accredited courses.
+      window.__PROVIDER_NAME__ = name;
+      if (window.__attendanceAlertsReload) try { window.__attendanceAlertsReload(); } catch(_) {}
       // Defer so DOM is ready
       document.addEventListener('DOMContentLoaded', () => revealProviderDashboard({ name, email }));
     }
@@ -792,5 +796,6 @@ function toast(msg, kind=''){
 // ─────────────────────────────────────────────────────────────
 if (location.hash === '#login') switchTab('login');
 </script>
+<script src="attendance-alerts.js?v=1" data-aa-audience="provider"></script>
 </body>
 </html>

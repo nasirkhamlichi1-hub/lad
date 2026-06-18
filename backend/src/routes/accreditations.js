@@ -140,6 +140,133 @@ function awardSessionPoints(row) {
   return { awarded, unmatched, perLawyer: per, total: awarded.length * per };
 }
 
+// ─── Attendance-filing deadline alerts ───────────────────────────────
+// When an internal session is accredited the firm must file its attendees
+// within 30 DAYS. Escalating reminders fire at day 20, 25, 29 and a FINAL
+// alert on day 30 — surfaced to the firm, the training provider and LAD, with
+// an email logged (once) at each milestone so the same reminder never re-sends.
+const ATT_DEADLINE_DAYS = 30;
+const ATT_MILESTONES = [20, 25, 29, 30];
+
+function _daysSince(iso) {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return null;
+  return Math.floor((Date.now() - t) / 86400000);
+}
+// The highest milestone reached for a given elapsed-day count.
+function _levelFor(days) {
+  if (days >= 30) return 30;
+  if (days >= 29) return 29;
+  if (days >= 25) return 25;
+  if (days >= 20) return 20;
+  return 0;
+}
+function _alertCopy(level, daysLeft) {
+  switch (level) {
+    case 30: return { tone: 'final', title: 'FINAL DAY to file attendance',
+      message: 'Today is the last day of the 30-day window to file attendees for this accredited session. File now — LAD has been notified.' };
+    case 29: return { tone: 'urgent', title: '1 day left to file attendance',
+      message: 'Only 1 day remains in the 30-day filing window. Please file attendees immediately.' };
+    case 25: return { tone: 'warning', title: 'Second reminder — file attendance',
+      message: `${daysLeft} day${daysLeft === 1 ? '' : 's'} left to file attendees for this accredited session.` };
+    case 20: default: return { tone: 'notice', title: 'Attendance filing due',
+      message: `${daysLeft} day${daysLeft === 1 ? '' : 's'} left to file attendees within the 30-day window for this accredited session.` };
+  }
+}
+// Record the milestone email once per (ref, milestone). Idempotent: re-running
+// never re-sends. Returns true when a new email is logged (i.e. just "sent").
+function _logEmail(ref, milestone, recipient) {
+  try {
+    const info = db.prepare(
+      `INSERT OR IGNORE INTO attendance_alert_log (ref, milestone, channel, recipient)
+       VALUES (?,?,'email',?)`
+    ).run(ref, milestone, recipient || null);
+    if (info.changes > 0) { log.info('attendance_email_sent', { ref, milestone, recipient }); return true; }
+  } catch (e) { log.error('attendance_email_log_failed', { ref, error: e.message }); }
+  return false;
+}
+
+// Build the live attendance-alert list for an audience.
+//   audience = { scope:'lad'|'firm'|'provider', email, firmName, providerName }
+// LAD sees every overdue filing; a firm sees its own; a provider sees sessions
+// run against its accredited courses. Each surfaced alert also (idempotently)
+// fires the milestone email to the firm, the provider and LAD.
+function attendanceAlerts(audience) {
+  const a = audience || { scope: 'lad' };
+  const rows = db.prepare(
+    `SELECT * FROM accreditations
+     WHERE type = 'session_submission' AND status = 'approved' AND points_awarded_at IS NULL`
+  ).all();
+  const out = [];
+  for (const r of rows) {
+    const days = _daysSince(r.reviewed_at || r.submitted_at);
+    if (days == null || days < ATT_MILESTONES[0]) continue;
+    const level = _levelFor(days);
+    if (!level) continue;
+    const p = parse(r.payload, {});
+    const firmName = p.firm || p.firmName || '';
+    const providerName = p.providerName || p.firm || r.submitted_by || '';
+    const subEmail = (r.submitted_by_email || '').toLowerCase();
+
+    if (a.scope === 'firm') {
+      const match = (a.email && subEmail === a.email.toLowerCase())
+        || (a.firmName && firmName && firmName.toLowerCase() === a.firmName.toLowerCase());
+      if (!match) continue;
+    } else if (a.scope === 'provider') {
+      const want = (a.providerName || '').toLowerCase();
+      if (!want || !providerName || !providerName.toLowerCase().includes(want)) continue;
+    }
+
+    // Fire (once) the email for every milestone already passed.
+    for (const m of ATT_MILESTONES) { if (days >= m) _logEmail(r.ref, m, subEmail || firmName || null); }
+
+    const daysLeft = Math.max(0, ATT_DEADLINE_DAYS - days);
+    const copy = _alertCopy(level, daysLeft);
+    const accAt = r.reviewed_at || r.submitted_at;
+    out.push({
+      ref: r.ref,
+      code: r.accreditation_code || r.ref,
+      courseTitle: p.courseTitle || p.course || p.title || r.ref,
+      firm: firmName,
+      provider: providerName,
+      accreditedAt: accAt,
+      deadline: accAt ? new Date(new Date(accAt).getTime() + ATT_DEADLINE_DAYS * 86400000).toISOString() : null,
+      daysElapsed: days,
+      daysLeft,
+      level,
+      tone: copy.tone,
+      title: copy.title,
+      message: copy.message,
+      overdue: days >= ATT_DEADLINE_DAYS,
+      emailSentAt: new Date().toISOString(),
+    });
+  }
+  out.sort((x, y) => y.level - x.level || y.daysElapsed - x.daysElapsed);
+  return out;
+}
+
+// GET /accreditations/alerts — audience-aware attendance-filing alerts.
+router.get('/alerts', requireAuth, (req, res) => {
+  const u = req.user;
+  let audience;
+  if (isReviewer(u) || u.user_type === 'lad') {
+    audience = { scope: 'lad' };
+  } else if (u.role === 'provider_admin') {
+    audience = { scope: 'provider', providerName: req.query.provider || u.name || u.email || '' };
+  } else if (u.role === 'firm_compliance_officer') {
+    let firmName = req.query.firm || '';
+    try {
+      if (u.firm_id) { const f = db.prepare('SELECT name FROM firms WHERE id = ?').get(u.firm_id); if (f) firmName = f.name; }
+    } catch (_) {}
+    audience = { scope: 'firm', email: u.email || '', firmName };
+  } else {
+    audience = { scope: 'firm', email: u.email || '' };
+  }
+  const alerts = attendanceAlerts(audience);
+  res.json({ alerts, count: alerts.length, scope: audience.scope });
+});
+
 // ─── Submit ──────────────────────────────────────────────────────────
 router.post('/', optionalAuth, (req, res) => {
   const p = req.body || {};
