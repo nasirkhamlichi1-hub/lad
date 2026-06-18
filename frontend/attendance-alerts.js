@@ -17,8 +17,6 @@
   }
   function token() { try { return localStorage.getItem('lad_token') || ''; } catch (_) { return ''; } }
 
-  var TONE = {
-    final:   { bg: '#7f1d1d', bar: '#ef4444', ico: '⛔', label: 'FINAL DAY' },
   // Premium, restrained palette — soft tinted surfaces with a fine colour
   // accent rather than full-bleed saturated bars. Icons are clean line SVGs.
   var TONE = {
