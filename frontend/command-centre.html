@@ -276,7 +276,7 @@
     {key:'Sessions', n:null, color:0x6ab8ff},
     {key:'Regulator · LAD', n:1, color:0xff5e7e}
   ];
-  buildTwin(DEFAULT_CLUSTERS);
+  // (built at the end of this IIFE, once TW + buildTwin are initialised)
 
   // ════════════ LIVE DATA ════════════
   getJSON('/api/v1/admin/oversight').then(function(o){
@@ -497,6 +497,10 @@
     }
     loop();
   }
+
+  // Build the twin now that TW + buildTwin are initialised, so the centre is
+  // never blank. Live counts fill in via updateTwinCounts when data loads.
+  buildTwin(DEFAULT_CLUSTERS);
 })();
 </script>
 </body>
