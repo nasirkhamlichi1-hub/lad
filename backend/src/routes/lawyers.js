@@ -263,6 +263,32 @@ router.get('/insights', requireAuth, (req, res) => {
   });
 });
 
+// GET /api/v1/lawyers/internal-courses — the lawyer's OWN firm's accredited
+// in-house sessions (so a lawyer sees internal courses only from their firm).
+router.get('/internal-courses', requireAuth, (req, res) => {
+  const lawyer = req.user.user_type === 'lawyer' ? store.getLawyerById(req.user.sub)
+    : (req.user.email ? store.getLawyerByEmail(req.user.email) : null);
+  if (!lawyer) return res.status(404).json({ error: 'Lawyer record not found' });
+  let firmName = lawyer.firm_name || '';
+  try { if (!firmName && lawyer.firm_id) { const f = db.prepare('SELECT name FROM firms WHERE id = ?').get(lawyer.firm_id); if (f) firmName = f.name; } } catch (_) {}
+  const want = (firmName || '').toLowerCase().trim();
+  let rows = [];
+  try { rows = db.prepare("SELECT * FROM accreditations WHERE type='session_submission' AND status='approved'").all(); } catch (_) {}
+  const out = [];
+  for (const r of rows) {
+    let p = {}; try { p = JSON.parse(r.payload || '{}'); } catch (_) {}
+    const f = (p.firm || p.firmName || '').toLowerCase().trim();
+    if (!want || !f || f !== want) continue;
+    out.push({
+      id: 'INT-' + r.ref, ref: r.ref, code: r.accreditation_code || r.ref,
+      title: p.courseTitle || p.course || r.ref,
+      points: r.final_points != null ? r.final_points : (p.pointsPerLawyer || 2),
+      provider: (p.firm || 'Your firm') + ' · In-house', firm: p.firm || firmName, internal: true,
+    });
+  }
+  res.json({ courses: out, firm: firmName });
+});
+
 // GET /api/v1/lawyers/:id — staff lookup (LAD admin or own firm CO)
 router.get('/:id', requireAuth, (req, res) => {
   const lawyer = store.getLawyerById(req.params.id);
