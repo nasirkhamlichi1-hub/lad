@@ -1,11 +1,24 @@
 'use strict';
 
 const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
 const db = require('../db');
 const store = require('../services/store');
 const tagger = require('../services/coursetagger');
 const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth');
+
+const _nid = () => 'NT-' + crypto.randomBytes(6).toString('hex').toUpperCase().slice(0, 10);
+const _tid = () => 'TX-' + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8);
+// Notify every lawyer with an active booking on a session.
+function notifyBookedLawyers(sessionId, title, body, level, by) {
+  try {
+    const bks = db.prepare("SELECT lawyer_id FROM bookings WHERE session_id = ? AND status NOT IN ('cancelled','refunded')").all(sessionId);
+    const ins = db.prepare('INSERT INTO notifications (id, recipient_type, recipient_id, title, body, level, created_by) VALUES (?,?,?,?,?,?,?)');
+    for (const b of bks) if (b.lawyer_id) ins.run(_nid(), 'lawyer', b.lawyer_id, title, body, level || 'warning', by || 'LAD Admin');
+    return bks.length;
+  } catch (_) { return 0; }
+}
 
 // Current smart tags for a course (joined to taxonomy labels).
 function courseTopics(courseId) {
@@ -63,6 +76,71 @@ router.post('/sessions/:id/register-free', requireRole('lad_staff'), (req, res) 
   if (upd.changes !== 1) return res.status(409).json({ error: 'sold_out', message: 'This session just filled up.' });
   const seats = db.prepare('SELECT seats_remaining FROM course_sessions WHERE id = ?').get(id).seats_remaining;
   res.json({ ok: true, free: true, seats_remaining: Number(seats) || 0 });
+});
+
+// POST /api/v1/courses/sessions/:id/cancel — cancel a session: refund + free all
+// bookings and notify every affected lawyer.
+router.post('/sessions/:id/cancel', requireRole('lad_admin'), (req, res) => {
+  const id = req.params.id;
+  const s = db.prepare('SELECT * FROM course_sessions WHERE id = ?').get(id);
+  if (!s) return res.status(404).json({ error: 'Session not found' });
+  const course = store.getCourseById(s.course_id);
+  const cTitle = (course && course.title) || 'a course';
+  const bks = db.prepare("SELECT * FROM bookings WHERE session_id = ? AND status NOT IN ('cancelled','refunded')").all(id);
+  const tx = db.transaction(() => {
+    for (const bk of bks) {
+      db.prepare("UPDATE bookings SET status = 'cancelled' WHERE id = ?").run(bk.id);
+      const cost = Number(bk.credits_used) || 0;
+      if (cost > 0 && bk.lawyer_id) {
+        db.prepare('UPDATE lawyers SET credit_balance = COALESCE(credit_balance,0) + ? WHERE id = ?').run(cost, bk.lawyer_id);
+        try {
+          db.prepare("INSERT INTO credit_transactions (id, lawyer_id, type, amount, aed_amount, description, payment_method, status) VALUES (?,?,?,?,?,?,?, 'completed')")
+            .run(_tid(), bk.lawyer_id, 'refund', cost, cost * Number(process.env.CREDIT_PRICE_AED || 120), 'Session cancelled — credits refunded', 'admin');
+        } catch (_) {}
+      }
+    }
+    db.prepare("UPDATE course_sessions SET status = 'cancelled' WHERE id = ?").run(id);
+  });
+  tx();
+  const notified = notifyBookedLawyers(id, 'Session cancelled · ' + cTitle,
+    'Your booked session for "' + cTitle + '" has been cancelled and your credits refunded. Please book an alternative session.',
+    'urgent', req.user.email || 'LAD Admin');
+  res.json({ ok: true, cancelled: bks.length, refunded: bks.length, notified });
+});
+
+// POST /api/v1/courses/sessions/:id/reschedule — move a session; booked lawyers
+// keep their seat and are notified.
+router.post('/sessions/:id/reschedule', requireRole('lad_admin'), (req, res) => {
+  const id = req.params.id; const b = req.body || {};
+  const s = db.prepare('SELECT * FROM course_sessions WHERE id = ?').get(id);
+  if (!s) return res.status(404).json({ error: 'Session not found' });
+  const sets = [], args = [];
+  if (b.scheduled_at) { sets.push('scheduled_at = ?'); args.push(b.scheduled_at); }
+  if (b.end_at !== undefined) { sets.push('end_at = ?'); args.push(b.end_at || null); }
+  if (b.venue !== undefined) { sets.push('venue = ?'); args.push(b.venue || null); }
+  if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
+  args.push(id);
+  db.prepare(`UPDATE course_sessions SET ${sets.join(', ')} WHERE id = ?`).run(...args);
+  const course = store.getCourseById(s.course_id); const cTitle = (course && course.title) || 'a course';
+  const notified = notifyBookedLawyers(id, 'Session moved · ' + cTitle,
+    'Your booked session for "' + cTitle + '" has been rescheduled'
+    + (b.scheduled_at ? (' to ' + new Date(b.scheduled_at).toDateString()) : '')
+    + (b.venue ? (' at ' + b.venue) : '') + '. Your booking has moved with it — no action needed.',
+    'warning', req.user.email || 'LAD Admin');
+  res.json({ ok: true, notified });
+});
+
+// POST /api/v1/courses/:id/sessions — add a session to a course.
+router.post('/:id/sessions', requireRole('lad_admin', 'provider_admin'), (req, res) => {
+  const courseId = req.params.id; const b = req.body || {};
+  const course = store.getCourseById(courseId);
+  if (!course) return res.status(404).json({ error: 'Course not found' });
+  if (!b.scheduled_at) return res.status(400).json({ error: 'scheduled_at required' });
+  const sid = 'S-' + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8);
+  const cap = Math.max(1, Number(b.capacity) || 30);
+  db.prepare("INSERT INTO course_sessions (id, course_id, scheduled_at, end_at, capacity, seats_remaining, venue, language, status) VALUES (?,?,?,?,?,?,?,?, 'scheduled')")
+    .run(sid, courseId, b.scheduled_at, b.end_at || null, cap, cap, b.venue || course.location || 'Dubai', b.language || 'English');
+  res.status(201).json({ ok: true, id: sid, seats_remaining: cap });
 });
 
 // GET /api/v1/courses/:id
