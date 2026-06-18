@@ -134,11 +134,13 @@ router.get('/', requireAuth, (req, res) => {
     const status = (l.status || 'active').toLowerCase();
     const name = `${l.first_name || ''} ${l.last_name || ''}`.trim() || l.id;
     return {
-      id: l.id, name, first_name: l.first_name, last_name: l.last_name,
+      id: l.id, name, fullName: name, first_name: l.first_name, last_name: l.last_name,
+      firstName: l.first_name, lastName: l.last_name,
       email: l.email || '', phone: l.phone || '', role: l.role || '',
-      practice: l.practice_areas || '', firm_id: l.firm_id || '', firm_name: l.firm_name || '',
+      practice: l.practice_areas || '', firm_id: l.firm_id || '', firmId: l.firm_id || '', firm_name: l.firm_name || '',
       pts: Number(l.lifetime_points) || 0, points: Number(l.lifetime_points) || 0,
       credits: Number(l.credit_balance) || 0, status,
+      practicing: !['inactive', 'resigned', 'non-practising', 'struck off'].includes(status),
       nationality: l.nationality || '', admitted: l.admitted_year || null,
       last_login: l.last_login_at || null,
     };

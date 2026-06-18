@@ -596,7 +596,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
       <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       New course
     </button>
-    <button class="adm-btn" onclick="switchPage('sync')" title="Download config and push to Netlify" style="background:var(--gold);color:#fff;border-color:var(--gold)">
+    <button class="adm-btn" onclick="switchPage('sync')" title="Review the live config and publish settings" style="background:var(--gold);color:#fff;border-color:var(--gold)">
       <svg viewBox="0 0 24 24"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>
       Publish
     </button>
@@ -1389,7 +1389,7 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
         <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       </div>
       <h3 class="adm-sync-card-h">Download config</h3>
-      <p class="adm-sync-card-p">Exports everything (courses, schedules, content, FAQs) as a single <code>lad-config.json</code>. Drop it into the Netlify deploy folder, redeploy, and every visitor sees the new content within 5 minutes.</p>
+      <p class="adm-sync-card-p">Your content edits save live to the backend automatically and appear to visitors immediately. This export is an optional JSON backup of courses, schedules, content and FAQs.</p>
       <div class="adm-sync-card-cmd">→ lad-config.json (~ <span id="cfgSize">0</span> KB)</div>
       <div style="display:flex;gap:8px">
         <button class="adm-btn-green" onclick="cfgDownload()" style="flex:1">Download config</button>
@@ -1963,15 +1963,21 @@ function statSearch(){ _statPage = 0; loadStatus(); }
 
 async function loadStatusKpis() {
   const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
-  try {
-    const r = await fetch(base + '/api/v1/stats/aggregate');
-    if (!r.ok) return;
-    const d = (await r.json()).data || (await r.json());
-    const s = id => document.getElementById(id);
-    s('statKpiPract') && (s('statKpiPract').textContent = (d.lawyers || 0).toLocaleString());
-    s('statKpiNon')   && (s('statKpiNon').textContent   = (d.non_practising || 0).toLocaleString());
-    s('statKpiTotal') && (s('statKpiTotal').textContent = (d.total_on_roll || 0).toLocaleString());
-  } catch (_) {}
+  const token = localStorage.getItem('lad_token') || '';
+  if (!token) return;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = Number(v || 0).toLocaleString(); };
+  async function count(scope) {
+    try {
+      const r = await fetch(base + '/api/v1/lawyers?limit=1&practicing=' + scope, { headers: { Authorization: 'Bearer ' + token } });
+      if (!r.ok) return null;
+      const j = await r.json();
+      return (j.meta && j.meta.total) || 0;
+    } catch (_) { return null; }
+  }
+  const [p, n, t] = await Promise.all([count('1'), count('0'), count('all')]);
+  if (p != null) set('statKpiPract', p);
+  if (n != null) set('statKpiNon', n);
+  if (t != null) set('statKpiTotal', t);
 }
 
 async function loadStatus() {
@@ -3410,7 +3416,7 @@ let schXlsxByTitle = {};  // mangledTitle → { type, partner, lang, speaker, or
 // so the user gets a clear error rather than a silent "nothing happens"
 function schPickXlsxFile() {
   if (typeof XLSX === 'undefined') {
-    const msg = 'Excel parser (SheetJS) failed to load.\n\nLikely causes:\n  • The deployed site\'s Content-Security-Policy blocks https://cdn.jsdelivr.net — add it to script-src in netlify.toml and redeploy.\n  • Your network blocks jsdelivr.net.\n\nPaste CSV in the textarea below as a workaround.';
+    const msg = 'Excel parser (SheetJS) failed to load.\n\nLikely causes:\n  • The deployed site\'s Content-Security-Policy blocks https://cdn.jsdelivr.net — add cdn.jsdelivr.net to script-src.\n  • Your network blocks jsdelivr.net.\n\nPaste CSV in the textarea below as a workaround.';
     toast('Excel parser not loaded — see alert', 'error');
     alert(msg);
     return;
@@ -3928,7 +3934,7 @@ async function cfgDownload() {
   a.href = url; a.download = 'lad-config.json';
   document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 100);
-  toast('✓ Downloaded — drop lad-config.json into your Netlify deploy folder', 'success');
+  toast('✓ Config backup downloaded', 'success');
 }
 
 async function cfgPreview() {
