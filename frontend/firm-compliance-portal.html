@@ -2712,7 +2712,7 @@ function renderCourseCards() {
     return `<div class="course-card">
       <div class="c-art" style="background:${c.bg}">
         <span class="c-art-tag">${c.type.toUpperCase()}${c.elearning?' · E-LEARNING':''}</span>
-        <div class="c-art-ico">${c.icon}</div>
+        ${c.icon ? `<div class="c-art-ico">${c.icon}</div>` : ``}
         <div style="position:absolute;bottom:10px;left:12px;display:flex;gap:5px;align-items:center">
           <span style="background:rgba(255,255,255,.18);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.22);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:5px"> ${credits} credits</span>
           <span style="background:rgba(0,107,63,.85);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:5px">+${c.pts} pts</span>
@@ -3122,7 +3122,7 @@ function openBookModal(courseId, lawyerId) {
 
   // Populate header
   document.getElementById('bkHead').style.background = c.bg;
-  document.getElementById('bkIco').textContent = c.icon;
+  document.getElementById('bkIco').textContent = c.icon || '';
   document.getElementById('bkTag').textContent = `${c.type.toUpperCase()}${c.elearning?' · E-LEARNING':' · FACE-TO-FACE'} · ${credits} CREDITS`;
   document.getElementById('bkTitle').textContent = c.title;
   document.getElementById('bkPts').textContent = `+${c.pts} pts`;
