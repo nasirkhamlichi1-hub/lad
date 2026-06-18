@@ -1782,7 +1782,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
       </section>
 
       <!-- ═══ SKILL RADAR ═══ -->
-      <section class="section" id="skills">
+      <section class="section" id="skills" style="display:none">
         <div class="section-hd">
           <div>
             <div class="section-eyebrow teal" data-cfg="lawyer_sec_skills_eyebrow">SKILL GRAPH</div>
@@ -1896,9 +1896,9 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
                   <line x1="200" y1="200" x2="86.86" y2="141.21"/>
                 </g>
                 <!-- City median (filled grey polygon) -->
-                <polygon points="200,140 260.06,171.61 248.04,222.79 200,260 151.96,222.79 139.94,171.61" fill="#b8c4d2" fill-opacity="0.35" stroke="#8a98aa" stroke-width="1.5" stroke-dasharray="3,3"/>
+                <polygon id="skillsCityPoly" points="200,140 260.06,171.61 248.04,222.79 200,260 151.96,222.79 139.94,171.61" fill="#b8c4d2" fill-opacity="0.35" stroke="#8a98aa" stroke-width="1.5" stroke-dasharray="3,3"/>
                 <!-- Yousef's profile (teal polygon, peaks on commercial disputes, real estate, IT) -->
-                <polygon points="200,95 295.6,151.81 260.06,228.39 200,275 175.48,209.19 145.94,168.41" fill="url(#radarGrad)" stroke="#0d7377" stroke-width="2" stroke-linejoin="round"/>
+                <polygon id="skillsYouPoly" points="200,95 295.6,151.81 260.06,228.39 200,275 175.48,209.19 145.94,168.41" fill="url(#radarGrad)" stroke="#0d7377" stroke-width="2" stroke-linejoin="round"/>
                 <!-- Data points -->
                 <g fill="#0d7377" stroke="#fff" stroke-width="2">
                   <circle cx="200" cy="95" r="5"/>
@@ -3400,7 +3400,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // NOT hidden — renderBasedOnHistory() shows it only when real recs exist.
   // 'quiz' is an interactive diagnostic (user answers) that ends with live,
   // interest-matched course recommendations — kept visible.
-  var DEMO_PANEL_IDS = ['projection', 'coach', 'calendar', 'skills', 'trajectory'];
+  var DEMO_PANEL_IDS = ['projection', 'coach', 'calendar', 'trajectory'];
   function applyHide() {
     DEMO_PANEL_IDS.forEach(function (id) {
       var sec = document.getElementById(id);
@@ -4474,7 +4474,77 @@ function sqShowResults() {
   sqRenderPercentiles();
   // Course recommendations
   sqRenderRecommendations(weakest);
+
+  // Persist the self-assessment and repaint the main expertise radar (#skills)
+  // so it reflects the lawyer's own answers (+ real course history points).
+  try { localStorage.setItem('lad_skills_profile', JSON.stringify({ scores: sqLiveScores, city: (typeof SQ_CITY_MEDIAN!=='undefined'?SQ_CITY_MEDIAN:{}), at: Date.now() })); } catch (e) {}
+  if (typeof initSkillsRadar === 'function') initSkillsRadar();
 }
+
+// ── Expertise radar (#skills) — built from the skills questionnaire
+// (self-assessed proficiency) and the lawyer's real CLPD course history.
+// As 8 years of history migrate in, the POINTS column fills automatically. ──
+var SKILL_KW = {
+  'Arbitration': ['arbitr','dispute','mediation','adr','litigation','tribunal'],
+  'Construction': ['construction','infrastructure','fidic','engineering'],
+  'Corporate': ['corporate','m&a','merger','acquisition','governance','company','commercial','board'],
+  'Real Estate': ['real estate','property','rera','lease','land','tenancy'],
+  'Ethics·AI': ['ethic','artificial','data protection','privacy','technology','cyber','digital',' ai'],
+  'Regulatory': ['regulat','compliance','aml','anti-money','sanction','licens','tax','financial']
+};
+function skillPointsFromAttendance(att){
+  var by = {}; SQ_AXES.forEach(function(a){ by[a]=0; });
+  (att||[]).forEach(function(r){
+    var t = ((r.course_title||'') + '').toLowerCase(); var p = Number(r.delta_points)||0;
+    SQ_AXES.forEach(function(ax){ if ((SKILL_KW[ax]||[]).some(function(k){ return t.indexOf(k)!==-1; })) by[ax]+=p; });
+  });
+  return by;
+}
+function loadSkillsProfile(){ try { return JSON.parse(localStorage.getItem('lad_skills_profile')||'null'); } catch(e){ return null; } }
+function paintSkillsRadar(scores, ptsByAxis){
+  if (!scores) return;
+  var CITY = (typeof SQ_CITY_MEDIAN!=='undefined' ? SQ_CITY_MEDIAN : {});
+  var cx=200, cy=180, r=100;
+  function poly(valFn){ return SQ_AXES.map(function(ax,i){ var a=(-90+60*i)*Math.PI/180; var v=Math.max(0,Math.min(100,valFn(ax)))/100; return (cx+Math.cos(a)*r*v).toFixed(1)+','+(cy+Math.sin(a)*r*v).toFixed(1); }).join(' '); }
+  var you=document.getElementById('skillsYouPoly'); if(you) you.setAttribute('points', poly(function(ax){return scores[ax]||0;}));
+  var city=document.getElementById('skillsCityPoly'); if(city) city.setAttribute('points', poly(function(ax){return CITY[ax]||50;}));
+  var ord=function(n){var s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);};
+  document.querySelectorAll('#skills .radar-axis-row').forEach(function(row){
+    var name=((row.querySelector('.radar-axis-name')||{}).textContent||'').trim();
+    var ax = name==='Ethics · AI' ? 'Ethics·AI' : name;
+    if (scores[ax]===undefined) return;
+    var sc=Math.round(scores[ax]); var med=Math.round(CITY[ax]||50);
+    var pct = sc>=med ? 50+Math.round((sc-med)/((100-med)||1)*49) : Math.round(sc/((med)||1)*50); pct=Math.max(2,Math.min(99,pct));
+    var cls = pct>=65?'high':pct>=45?'med':'low';
+    var self=row.querySelector('.radar-axis-bar-self'); if(self){ self.style.width=sc+'%'; self.className='radar-axis-bar-self '+cls; }
+    var cityBar=row.querySelector('.radar-axis-bar-city'); if(cityBar) cityBar.style.width=med+'%';
+    var pe=row.querySelector('.radar-axis-pctile'); if(pe){ pe.textContent=ord(pct); pe.className='radar-axis-pctile '+cls; }
+    var pp=row.querySelector('.radar-axis-pts'); if(pp){ var pv=ptsByAxis?ptsByAxis[ax]:null; pp.textContent=(pv!=null?pv:0)+' pts'; }
+  });
+}
+function initSkillsRadar(){
+  var sec=document.getElementById('skills'); if(!sec) return;
+  var prof=loadSkillsProfile();
+  var base=(window.LAD_API_BASE||'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
+  var tk=''; try{ tk=localStorage.getItem('lad_token')||''; }catch(e){}
+  function scoreFromPoints(p){ return p>0 ? Math.min(100, 42 + p*8) : 18; }
+  function render(ptsByAxis){
+    var scores;
+    if (prof && prof.scores) scores = prof.scores;
+    else { scores={}; SQ_AXES.forEach(function(ax){ scores[ax]=scoreFromPoints((ptsByAxis||{})[ax]||0); }); }
+    paintSkillsRadar(scores, ptsByAxis);
+    var d=document.querySelector('#skills .section-desc');
+    if (d) d.textContent = prof ? 'Built from your skills assessment and your CLPD course history.' : 'Derived from your CLPD course history. Take the skills assessment to refine it.';
+    sec.style.display='';
+  }
+  if (tk) {
+    fetch(base+'/api/v1/lawyers/me',{headers:{Authorization:'Bearer '+tk}})
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(j){ var me=(j&&j.data)||j||{}; render(skillPointsFromAttendance(me.attendance||[])); })
+      .catch(function(){ render(null); });
+  } else { render(null); }
+}
+document.addEventListener('DOMContentLoaded', initSkillsRadar);
 
 function sqRenderResultsRadar() {
   const cx = 180, cy = 180, r = 140;
