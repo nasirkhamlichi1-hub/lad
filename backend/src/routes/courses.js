@@ -47,6 +47,24 @@ router.get('/upcoming', optionalAuth, (_req, res) => {
   res.json(out);
 });
 
+// POST /api/v1/courses/sessions/:id/register-free — LAD service staff book onto
+// any CLPD session free of charge (no credits). Decrements the live seat count.
+router.post('/sessions/:id/register-free', requireRole('lad_staff'), (req, res) => {
+  const id = req.params.id;
+  const s = db.prepare('SELECT id, seats_remaining, status, course_id FROM course_sessions WHERE id = ?').get(id);
+  if (!s) return res.status(404).json({ error: 'Session not found' });
+  if ((s.status || '') === 'cancelled') return res.status(409).json({ error: 'session_cancelled', message: 'This session has been cancelled.' });
+  if ((Number(s.seats_remaining) || 0) <= 0) return res.status(409).json({ error: 'sold_out', message: 'This session is full.' });
+  const upd = db.prepare(
+    "UPDATE course_sessions SET seats_remaining = seats_remaining - 1, " +
+    "status = CASE WHEN seats_remaining - 1 <= 0 THEN 'closed' ELSE status END " +
+    "WHERE id = ? AND seats_remaining > 0"
+  ).run(id);
+  if (upd.changes !== 1) return res.status(409).json({ error: 'sold_out', message: 'This session just filled up.' });
+  const seats = db.prepare('SELECT seats_remaining FROM course_sessions WHERE id = ?').get(id).seats_remaining;
+  res.json({ ok: true, free: true, seats_remaining: Number(seats) || 0 });
+});
+
 // GET /api/v1/courses/:id
 router.get('/:id', optionalAuth, (req, res) => {
   const c = store.getCourseById(req.params.id);

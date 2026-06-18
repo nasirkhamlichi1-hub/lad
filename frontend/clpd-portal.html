@@ -2255,19 +2255,19 @@ function dashboardFor(role) {
     case 'firm_compliance_officer':
     case 'firm':                      return '/firm';
     case 'lad_intelligence':
-    case 'lad_oversight':
-    case 'lad_staff':                 return '/oversight';                 // LAD Admin — full oversight
+    case 'lad_oversight':             return '/oversight';                 // LAD oversight / intelligence (super users)
     case 'clpd_admin':
     case 'lad_operations':
     case 'lad_admin':
     case 'super_admin':
     case 'lad_super_admin':
-    case 'dg':                        return '/admin';                     // CLPD Admin — admin team / operations
+    case 'dg':                        return '/admin';                     // CLPD Admin / super users — admin + everything
     case 'provider':
     case 'provider_admin':            return '/provider';
+    case 'lad_staff':
     case 'lad_staff_training':
     case 'staff_training':
-    case 'trainee':                   return '/ladtrain';                  // LAD Staff Training — courses (aviation, reception) + AI trainer
+    case 'trainee':                   return '/staff-training';            // LAD Staff — internal training site
     default:                          return '/lawyer';
   }
 }
