@@ -51,6 +51,39 @@ function configured() {
   return !!(s.endpoint && s.key);
 }
 
+// Build the request URL tolerant of whatever was pasted into the endpoint:
+//   • bare Azure base        https://x.openai.azure.com
+//   • Azure base + path      https://x.openai.azure.com/openai/deployments/gpt-4o
+//   • full Azure Target URI  https://x.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=...
+//   • OpenAI-compatible base https://host  or  https://host/v1
+//   • full OpenAI URL        https://host/v1/chat/completions
+function buildRequest(s) {
+  let ep = (s.endpoint || '').trim().replace(/\/+$/, '');
+  const isAzure = /openai\.azure\.com/i.test(ep) || /\/openai\/deployments\//i.test(ep);
+
+  if (isAzure) {
+    const headers = { 'api-key': s.key, 'Content-Type': 'application/json' };
+    let url;
+    if (/\/chat\/completions/i.test(ep)) {
+      url = ep; // full Target URI pasted — use as-is
+    } else if (/\/openai\/deployments\/[^/]+/i.test(ep)) {
+      url = ep.split('?')[0] + '/chat/completions'; // base + deployment path
+    } else {
+      url = `${ep}/openai/deployments/${encodeURIComponent(s.deployment)}/chat/completions`;
+    }
+    if (!/api-version=/i.test(url)) url += (url.includes('?') ? '&' : '?') + 'api-version=' + s.apiVersion;
+    return { url, headers, isAzure: true };
+  }
+
+  // OpenAI-compatible gateway
+  const headers = { authorization: 'Bearer ' + s.key, 'Content-Type': 'application/json' };
+  let url;
+  if (/\/chat\/completions/i.test(ep)) url = ep;
+  else if (/\/v1$/i.test(ep)) url = ep + '/chat/completions';
+  else url = ep + '/v1/chat/completions';
+  return { url, headers, isAzure: false };
+}
+
 // Returns the assistant's text reply, or throws.
 async function chat({ system, messages, maxTokens = 700, temperature = 0.2 }) {
   const s = settings();
@@ -64,15 +97,7 @@ async function chat({ system, messages, maxTokens = 700, temperature = 0.2 }) {
   if (system) msgs.push({ role: 'system', content: system });
   for (const m of (messages || [])) msgs.push(m);
 
-  const isAzure = /openai\.azure\.com/i.test(s.endpoint) || /\/openai\/deployments\//i.test(s.endpoint);
-  let url, headers;
-  if (isAzure) {
-    url = `${s.endpoint}/openai/deployments/${encodeURIComponent(s.deployment)}/chat/completions?api-version=${s.apiVersion}`;
-    headers = { 'api-key': s.key, 'Content-Type': 'application/json' };
-  } else {
-    url = `${s.endpoint}/v1/chat/completions`;
-    headers = { authorization: 'Bearer ' + s.key, 'Content-Type': 'application/json' };
-  }
+  const { url, headers, isAzure } = buildRequest(s);
 
   const body = { messages: msgs, max_tokens: maxTokens, temperature };
   if (!isAzure) body.model = s.deployment;
@@ -81,6 +106,7 @@ async function chat({ system, messages, maxTokens = 700, temperature = 0.2 }) {
   if (r.status < 200 || r.status >= 300) {
     const e = new Error('AiModel error ' + r.status);
     e.code = 'AIMODEL_ERROR';
+    e.status = r.status;
     e.detail = r.data;
     throw e;
   }
@@ -89,4 +115,4 @@ async function chat({ system, messages, maxTokens = 700, temperature = 0.2 }) {
   return (text || '').trim();
 }
 
-module.exports = { configured, chat, settings };
+module.exports = { configured, chat, settings, buildRequest };

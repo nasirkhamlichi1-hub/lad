@@ -89,9 +89,12 @@ router.get('/status', requireAuth, async (req, res) => {
   let host = '';
   try { host = s.endpoint ? new URL(s.endpoint).host : ''; } catch (_) { host = s.endpoint || ''; }
   const isAzure = /openai\.azure\.com/i.test(s.endpoint || '') || /\/openai\/deployments\//i.test(s.endpoint || '');
+  let resolvedPath = '';
+  try { resolvedPath = aimodel.configured() ? new URL(aimodel.buildRequest(s).url).pathname : ''; } catch (_) {}
   const out = {
     configured: aimodel.configured(),
     endpointHost: host,
+    resolvedPath,
     isTunnel: /trycloudflare\.com|ngrok|loca\.lt/i.test(host),
     isAzure,
     deployment: s.deployment,
