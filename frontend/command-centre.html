@@ -110,6 +110,28 @@
   .aibrief strong{color:#eaf4ff}
   .spark{width:100%;height:74px;margin-top:6px}
   .loading{color:var(--dim2);font-family:var(--mono);font-size:12px;letter-spacing:1px}
+
+  /* ── Dive / focus mode: data screens blur out, you drop into the 3D world ── */
+  .kstrip,.stage .card,.bottom{transition:filter .6s,opacity .6s,transform .6s}
+  body.focus .kstrip,body.focus .stage .card,body.focus .bottom{filter:blur(7px) brightness(.45);opacity:.22;transform:scale(.985);pointer-events:none}
+  body.focus .cs-h{opacity:.25;transition:opacity .5s}
+  #twin{transition:filter .6s}
+  #focusPanel{position:fixed;top:96px;right:26px;width:372px;max-height:80vh;overflow:auto;z-index:40;
+    background:rgba(7,12,26,.9);border:1px solid rgba(52,225,255,.3);border-radius:18px;padding:20px 21px;
+    backdrop-filter:blur(18px);box-shadow:0 0 60px rgba(0,0,0,.55),0 0 34px rgba(52,225,255,.14);
+    transform:translateX(440px);opacity:0;transition:transform .55s cubic-bezier(.25,1,.35,1),opacity .4s;pointer-events:none}
+  #focusPanel.on{transform:none;opacity:1;pointer-events:auto}
+  #focusPanel .fp-eye{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
+  #focusPanel .fp-title{font-family:var(--title);font-size:22px;font-weight:700;color:#eaf4ff;margin:4px 0 2px;letter-spacing:.5px}
+  #focusPanel .fp-sub{font-size:12px;color:var(--dim);margin-bottom:14px}
+  #focusPanel .fp-ai{margin-top:14px;border-top:1px solid var(--panel-b);padding-top:13px}
+  #focusPanel .fp-ans{font-size:12.5px;line-height:1.6;color:var(--ink);margin-top:10px;white-space:pre-wrap}
+  .fp-btn{display:block;width:100%;text-align:center;margin-top:10px;border:0;border-radius:10px;padding:11px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer}
+  .fp-btn.ai{background:linear-gradient(90deg,var(--cyan),var(--teal));color:#04101a}
+  .fp-btn.back{background:transparent;color:var(--dim);border:1px solid var(--panel-b)}
+  .fp-btn.back:hover{color:var(--cyan);border-color:var(--cyan)}
+  #diveHint{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);z-index:7;font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);background:rgba(7,12,26,.6);border:1px solid var(--panel-b);border-radius:20px;padding:7px 16px;backdrop-filter:blur(8px);pointer-events:none;transition:opacity .4s}
+  body.focus #diveHint{opacity:0}
   @media(max-width:1200px){.stage{grid-template-columns:1fr}.kstrip{grid-template-columns:repeat(3,1fr)}.bottom{grid-template-columns:1fr 1fr}.centerstage{min-height:440px}}
 </style>
 </head>
@@ -234,6 +256,20 @@
   </div>
 </div>
 
+<div id="diveHint">◎ Click any node to dive into that part of the programme</div>
+<div id="focusPanel">
+  <div class="fp-eye" id="fpEye">PROGRAMME NODE</div>
+  <div class="fp-title" id="fpTitle">—</div>
+  <div class="fp-sub" id="fpSub">Live facts</div>
+  <div id="fpFacts"></div>
+  <div class="fp-ai">
+    <div class="card-h" style="margin-bottom:0">Maryam · trends <span class="badge" style="color:var(--cyan);border-color:rgba(52,225,255,.35)">AI</span></div>
+    <div class="fp-ans" id="fpAnswer" style="display:none"></div>
+    <button class="fp-btn ai" id="fpAsk">✦ Analyse trends &amp; actions</button>
+  </div>
+  <button class="fp-btn back" onclick="exitFocus()">← Back to orbit</button>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
@@ -281,6 +317,8 @@
   // ════════════ LIVE DATA ════════════
   getJSON('/api/v1/admin/oversight').then(function(o){
     if(!o){ document.querySelectorAll('.loading').forEach(function(e){e.textContent='Live data unavailable — sign in as a LAD admin.';}); return; }
+    window.__OV = o;  // live snapshot for the dive-in focus panel
+    if(window.__refreshFocus) window.__refreshFocus();
     var L=o.lawyers||{}, B=o.bookings||{}, S=o.sessions||{}, A=o.accreditations||{}, F=o.firms||{}, C=o.courses||{};
     // KPIs
     countUp($('kTotal'), L.roll); $('kTotalM').textContent=nf((L.roll||0)-(L.practising||0))+' non-practising';
@@ -401,7 +439,7 @@
   }
 
   // ════════════ 3D DIGITAL TWIN (Three.js) ════════════
-  var TW={scene:null,renderer:null,camera:null,group:null,anchors:[],spin:true,raf:null};
+  var TW={scene:null,renderer:null,camera:null,group:null,anchors:[],cores:[],spin:true,raf:null,focusKey:null,camTarget:null,lookTarget:null};
   window.cmdRotate=function(){ TW.spin=!TW.spin; };
   // Update the count shown on each twin label once live data arrives.
   window.updateTwinCounts=function(map){
@@ -433,7 +471,8 @@
     var scene=new THREE.Scene();
     var camera=new THREE.PerspectiveCamera(55,W/H,0.1,2000); camera.position.set(0,40,250);
     var group=new THREE.Group(); scene.add(group);
-    TW.scene=scene;TW.renderer=renderer;TW.camera=camera;TW.group=group;TW.anchors=[];
+    TW.scene=scene;TW.renderer=renderer;TW.camera=camera;TW.group=group;TW.anchors=[];TW.cores=[];
+    TW.camTarget=new THREE.Vector3(0,40,250); TW.lookTarget=new THREE.Vector3(0,0,0);
 
     var known=clusters.map(function(c){return Number(c.n);}).filter(function(v){return Number.isFinite(v)&&v>0;});
     var maxN=known.length?Math.max.apply(null,known):1;
@@ -458,6 +497,10 @@
       core.position.copy(pos); group.add(core);
       var halo=new THREE.Mesh(new THREE.SphereGeometry(c.center?16:9,20,20),new THREE.MeshBasicMaterial({color:c.color,transparent:true,opacity:.12,blending:THREE.AdditiveBlending,depthWrite:false}));
       halo.position.copy(pos); group.add(halo);
+      // invisible, larger hit-sphere so the node is easy to click/hover
+      var hit=new THREE.Mesh(new THREE.SphereGeometry(c.center?32:19,12,12),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+      hit.position.copy(pos); hit.userData={key:c.key}; group.add(hit);
+      TW.cores.push({key:c.key, hit:hit, core:core, halo:halo, pos:pos, color:c.color});
       // link to centre
       if(!c.center){ var lg=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),pos]);
         group.add(new THREE.Line(lg,new THREE.LineBasicMaterial({color:c.color,transparent:true,opacity:.22,blending:THREE.AdditiveBlending}))); }
@@ -473,9 +516,94 @@
     sg.setAttribute('position',new THREE.BufferAttribute(sa,3));
     scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0x4a6aa0,size:.8,transparent:true,opacity:.5})));
 
-    var mx=0,my=0; window.addEventListener('mousemove',function(e){ mx=(e.clientX/W-.5); my=(e.clientY/H-.5); });
+    var mx=0,my=0, pointer=new THREE.Vector2(-2,-2);
+    window.addEventListener('mousemove',function(e){ mx=(e.clientX/W-.5); my=(e.clientY/H-.5); pointer.x=(e.clientX/W)*2-1; pointer.y=-(e.clientY/H)*2+1; });
     function resize(){ W=window.innerWidth;H=window.innerHeight; camera.aspect=W/H; camera.updateProjectionMatrix(); renderer.setSize(W,H); }
     window.addEventListener('resize',resize);
+
+    // ── Hover + click raycasting on the cluster nodes ──
+    var ray=new THREE.Raycaster(); var hovered=null; var curLook=new THREE.Vector3(0,0,0);
+    function pick(){
+      ray.setFromCamera(pointer,camera);
+      var hits=ray.intersectObjects(TW.cores.map(function(c){return c.hit;}),false);
+      var key=hits.length?hits[0].object.userData.key:null;
+      hovered=key?TW.cores.filter(function(c){return c.key===key;})[0]:null;
+      document.body.style.cursor=hovered?'pointer':'';
+    }
+    window.addEventListener('click',function(e){
+      var t=e.target;
+      // Don't hijack real controls; otherwise a click anywhere a node sits is fair game.
+      if(t.closest('#focusPanel')||t.closest('header')||t.closest('button')||t.closest('a')) return;
+      pick();
+      if(hovered) window.focusCluster(hovered.key);
+      else if(TW.focusKey && (t.id==='twin'||t.closest('#centerstage'))) window.exitFocus();
+    });
+    window.addEventListener('keydown',function(e){ if(e.key==='Escape') window.exitFocus(); });
+
+    // ── Dive in / out ──
+    var CLUSTER_META={
+      'Lawyers':{eye:'PEOPLE',sub:'The practising profession under the 16-point obligation'},
+      'Law Firms':{eye:'PRACTICE',sub:'Firms ranked by live compliance'},
+      'Courses':{eye:'LEARNING',sub:'Active catalogue and upcoming delivery'},
+      'Providers':{eye:'PRACTICE',sub:'Accredited training providers'},
+      'Accreds':{eye:'REGULATION',sub:'The accreditation pipeline'},
+      'Sessions':{eye:'LEARNING',sub:'Upcoming sessions and capacity'},
+      'Regulator · LAD':{eye:'REGULATION',sub:'Programme-wide oversight'}
+    };
+    var AI_PROMPTS={
+      'Lawyers':'Analyse trends in lawyer CLPD compliance this cycle — the band split, momentum versus the 31 December deadline, and the two highest-impact actions.',
+      'Law Firms':'Which firms are trending worst on compliance and what concrete steps should we take with them?',
+      'Courses':'Are our courses and sessions meeting demand? Identify under- or over-subscribed patterns and what to change.',
+      'Providers':'How are accredited providers performing and how healthy is the accreditation pipeline? Give next steps.',
+      'Accreds':'Summarise the accreditation pipeline, any review bottlenecks, and the next actions.',
+      'Sessions':'Analyse upcoming session capacity and attendance trends — where should we add or cut seats?',
+      'Regulator · LAD':'Give an overall programme-health readout and the three most important actions right now.'
+    };
+    function factRow(l,v,c){ return '<div class="hx"><div class="hxl">'+l+'</div><div class="hxv" style="color:'+(c||'var(--cyan)')+'">'+v+'</div></div>'; }
+    function clusterFacts(key){
+      var o=window.__OV;
+      if(!o) return '<div class="loading">Sign in as a LAD admin to load live facts for this node.</div>';
+      var L=o.lawyers||{},F=o.firms||{},C=o.courses||{},S=o.sessions||{},A=o.accreditations||{},B=o.bookings||{},P=o.providers||{};
+      if(key==='Lawyers') return factRow('On the roll',nf(L.roll))+factRow('Practising',nf(L.practising))+factRow('Compliant · 16+',nf(L.compliant),'var(--green)')+factRow('At risk · 8–15',nf(L.atRisk),'var(--amber)')+factRow('Critical · &lt;8',nf(L.critical),'var(--red)')+factRow('Compliance rate',(L.complianceRate||0)+'%','var(--green)');
+      if(key==='Law Firms'){ var tp=(o.firmRankings&&o.firmRankings.top)||[],bt=(o.firmRankings&&o.firmRankings.bottom)||[]; var h=factRow('Total firms',nf(F.total));
+        if(tp.length) h+='<div class="fp-eye" style="margin-top:12px">TOP BY COMPLIANCE</div>'+tp.slice(0,3).map(function(f){return factRow(esc(f.name),(f.compliancePct||0)+'%','var(--green)');}).join('');
+        if(bt.length) h+='<div class="fp-eye" style="margin-top:12px">NEEDS ATTENTION</div>'+bt.slice(0,3).map(function(f){return factRow(esc(f.name),(f.compliancePct||0)+'%','var(--red)');}).join(''); return h; }
+      if(key==='Courses') return factRow('Active courses',nf(C.active))+factRow('Upcoming sessions',nf(S.upcoming))+factRow('Open seats',nf(S.openSeats))+factRow('Low-seat · ≤5',nf(S.lowSeat),'var(--amber)');
+      if(key==='Providers') return factRow('Accredited providers',nf(P.total))+factRow('Approved accreditations',nf(A.approved),'var(--green)')+factRow('Pending review',nf(A.pending),'var(--amber)');
+      if(key==='Accreds') return factRow('Pending',nf(A.pending),'var(--amber)')+factRow('Approved',nf(A.approved),'var(--green)')+factRow('Rejected',nf(A.rejected),'var(--red)')+factRow('Returned',nf(A.returned));
+      if(key==='Sessions') return factRow('Upcoming sessions',nf(S.upcoming))+factRow('Open seats',nf(S.openSeats))+factRow('Low-seat sessions',nf(S.lowSeat),'var(--amber)')+factRow('Attendance rate',(B.attendanceRate!=null?B.attendanceRate+'%':'—'),'var(--teal)');
+      if(key==='Regulator · LAD') return factRow('Cycle year',o.cycleYear)+factRow('Days to deadline',nf(o.daysToDeadline),'var(--amber)')+factRow('Compliance rate',(L.complianceRate||0)+'%','var(--green)')+factRow('Critical lawyers',nf(L.critical),'var(--red)');
+      return '<div class="loading">No facts.</div>';
+    }
+    function countFor(key){ var o=window.__OV; if(!o) return null; var L=o.lawyers||{},m={'Lawyers':L.practising,'Law Firms':(o.firms||{}).total,'Courses':(o.courses||{}).active,'Providers':(o.providers||{}).total,'Accreds':((o.accreditations||{}).approved||0)+((o.accreditations||{}).pending||0),'Sessions':(o.sessions||{}).upcoming,'Regulator · LAD':1}; return m[key]; }
+    function showFocusPanel(key){
+      var meta=CLUSTER_META[key]||{eye:'PROGRAMME NODE',sub:''}; var cnt=countFor(key);
+      $('fpEye').textContent=meta.eye;
+      $('fpTitle').textContent=key.replace('Accreds','Accreditations').replace('Regulator · LAD','Regulator (LAD)')+(cnt!=null?(' · '+nf(cnt)):'');
+      $('fpSub').textContent=meta.sub;
+      $('fpFacts').innerHTML=clusterFacts(key);
+      var ans=$('fpAnswer'); ans.style.display='none'; ans.textContent='';
+      var btn=$('fpAsk'); btn.disabled=false; btn.textContent='✦ Analyse trends & actions'; btn.onclick=function(){ focusAsk(key); };
+      $('focusPanel').classList.add('on');
+    }
+    function focusAsk(key){
+      var ans=$('fpAnswer'), btn=$('fpAsk'); ans.style.display='block'; ans.textContent='Analysing…'; btn.disabled=true; btn.textContent='Analysing…';
+      fetch(base+'/api/v1/admin/command',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({prompt:AI_PROMPTS[key]||('Analyse '+key)})})
+        .then(function(r){return r.json();}).then(function(d){ ans.textContent=(d&&(d.answer||d.summary))||'No response.'; btn.disabled=false; btn.textContent='✦ Re-analyse'; })
+        .catch(function(){ ans.textContent='Network error — try again.'; btn.disabled=false; btn.textContent='✦ Analyse trends & actions'; });
+    }
+    window.__refreshFocus=function(){ if(TW.focusKey) showFocusPanel(TW.focusKey); };
+    window.focusCluster=function(key){
+      var c=TW.cores.filter(function(x){return x.key===key;})[0]; if(!c) return;
+      TW.focusKey=key;
+      var wp=c.pos.clone().applyMatrix4(group.matrixWorld);
+      TW.camTarget.set(wp.x*0.55, wp.y+16, wp.z*0.55+110); TW.lookTarget.copy(wp);
+      document.body.classList.add('focus'); showFocusPanel(key);
+    };
+    window.exitFocus=function(){
+      TW.focusKey=null; TW.camTarget.set(mx*60,40,250); TW.lookTarget.set(0,0,0);
+      document.body.classList.remove('focus'); var fp=$('focusPanel'); if(fp) fp.classList.remove('on');
+    };
 
     var stage=$('centerstage');
     function project(){
@@ -483,16 +611,18 @@
       TW.anchors.forEach(function(a){
         var v=a.pos.clone(); v.applyMatrix4(group.matrixWorld); v.project(camera);
         var sx=(v.x*0.5+0.5)*W, sy=(-v.y*0.5+0.5)*H;
-        // position relative to stage; hide if outside/behind
         var inStage = sx>rect.left-40 && sx<rect.right+40 && sy>rect.top-20 && sy<rect.bottom+20 && v.z<1;
         a.el.style.opacity = inStage?'1':'0';
         a.el.style.left=(sx-rect.left)+'px'; a.el.style.top=(sy-rect.top)+'px';
       });
     }
     function loop(){ TW.raf=requestAnimationFrame(loop);
-      if(TW.spin) group.rotation.y+=0.0016;
-      group.rotation.x += ((my*0.3)-group.rotation.x)*0.04;
-      camera.position.x += ((mx*60)-camera.position.x)*0.03; camera.lookAt(0,0,0);
+      if(TW.spin && !TW.focusKey) group.rotation.y+=0.0016;
+      group.rotation.x += (((TW.focusKey?0:my*0.3))-group.rotation.x)*0.04;
+      if(!TW.focusKey){ TW.camTarget.set(mx*60,40,250); TW.lookTarget.set(0,0,0); }
+      camera.position.lerp(TW.camTarget,0.06); curLook.lerp(TW.lookTarget,0.08); camera.lookAt(curLook);
+      pick();
+      TW.cores.forEach(function(c){ var want=(hovered&&hovered.key===c.key)||(TW.focusKey===c.key)?2.0:1; c.halo.scale.setScalar(c.halo.scale.x+(want-c.halo.scale.x)*0.16); });
       group.updateMatrixWorld(); renderer.render(scene,camera); project();
     }
     loop();
