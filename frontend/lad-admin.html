@@ -2059,7 +2059,7 @@ async function reclassifyAll() {
     <!-- Left pane: search + list -->
     <div class="sup-list-pane">
       <div class="sup-list-hd">
-        <input type="text" class="sup-search" id="supSearchInput" placeholder="Search name, DBA, email or firm..." oninput="supRender()"/>
+        <input type="text" class="sup-search" id="supSearchInput" placeholder="Search all 5,700+ lawyers by name, DBA, email or firm..." oninput="supSearchDebounced()"/>
         <div class="sup-filters">
           <button class="sup-filter-pill active" data-sup-filter="all" onclick="supSetFilter('all')">All</button>
           <button class="sup-filter-pill" data-sup-filter="critical" onclick="supSetFilter('critical')">Critical</button>
@@ -3268,7 +3268,7 @@ function switchPage(page) {
   if (realPage === 'content') cntLoad();
   else if (realPage === 'schedules') schStatusUpdate();
   else if (realPage === 'sync') cfgRefreshStatus();
-  else if (realPage === 'support' && typeof supRender === 'function') supRender();
+  else if (realPage === 'support' && typeof supEnsureLoaded === 'function') supEnsureLoaded();
   else if (realPage === 'bookings' && typeof admBookingsRender === 'function') admBookingsRender();
   else if (realPage === 'purchases' && typeof admPurchasesRender === 'function') admPurchasesRender();
 
@@ -3890,6 +3890,39 @@ let supSelectedId = null;
 let supFilter = 'all';
 let supActiveTab = 'compliance';
 
+// ── Live directory: the Support list is fed from the backend so it browses
+// the WHOLE profession (server-side search / band filter / pagination). ──
+let supTotal = 0, supLoadedOnce = false, supFetchTimer = null, supFetchSeq = 0;
+function supMapRow(l) {
+  const parts = (l.name || '').trim().split(/\s+/);
+  const initials = ((((parts[0] || '')[0]) || '') + (((parts[1] || '')[0]) || '')).toUpperCase() || 'L';
+  return { id: l.id, name: l.name || l.id, dba: l.id, initials, firm_id: l.firm_id || '',
+    firm_name: l.firm_name || '\u2014', role: l.role || '', practice: l.practice || '',
+    email: l.email || '', phone: l.phone || '', pts: Number(l.pts) || 0, credits: Number(l.credits) || 0,
+    status: l.status || 'active', admitted: l.admitted || null, nationality: l.nationality || '',
+    last_login: l.last_login || null, transactions: [], bookings: [], notes: [] };
+}
+async function supFetch() {
+  const base = _admBase().replace(/\/$/, ''), token = _admToken();
+  if (!token) return;
+  const q = (document.getElementById('supSearchInput')?.value || '').trim();
+  const band = (supFilter && supFilter !== 'all') ? '&band=' + encodeURIComponent(supFilter) : '';
+  const seq = ++supFetchSeq;
+  try {
+    const r = await fetch(base + '/api/v1/lawyers?limit=400&offset=0' + (q ? '&search=' + encodeURIComponent(q) : '') + band,
+      { headers: { Authorization: 'Bearer ' + token } });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (seq !== supFetchSeq) return; // a newer search superseded this one
+    supTotal = (j.meta && j.meta.total) || (j.data || []).length;
+    supLawyers = (j.data || []).map(supMapRow);
+    supLoadedOnce = true;
+    supRender();
+  } catch (_) {}
+}
+function supSearchDebounced() { clearTimeout(supFetchTimer); supFetchTimer = setTimeout(supFetch, 280); }
+function supEnsureLoaded() { if (!supLoadedOnce) supFetch(); else supRender(); }
+
 // Compliance band for a lawyer based on points
 function supBand(pts) {
   if (pts >= 13) return 'compliant';
@@ -3909,7 +3942,7 @@ function supAvatarColor(firmId) {
 function supSetFilter(f) {
   supFilter = f;
   document.querySelectorAll('.sup-filter-pill').forEach(b => b.classList.toggle('active', b.dataset.supFilter === f));
-  supRender();
+  supFetch();
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -4098,7 +4131,7 @@ function admPurchasesExport() {
 
 function supRender() {
   // Update summary tiles
-  const total = supLawyers.length;
+  const total = supTotal || supLawyers.length;
   const crit = supLawyers.filter(l => l.pts < 8).length;
   const risk = supLawyers.filter(l => l.pts >= 8 && l.pts < 13).length;
   const ok = supLawyers.filter(l => l.pts >= 13).length;
@@ -4146,11 +4179,34 @@ function supRender() {
   }).join('');
 }
 
-function supSelectLawyer(id) {
+async function supSelectLawyer(id) {
   supSelectedId = id;
   supActiveTab = 'compliance';
   supRender();
   supRenderDetail();
+  // Enrich with the full backend record (real bookings/attendance) for the report.
+  try {
+    const base = _admBase().replace(/\/$/, ''), token = _admToken();
+    if (!token) return;
+    const r = await fetch(base + '/api/v1/lawyers/' + encodeURIComponent(id), { headers: { Authorization: 'Bearer ' + token } });
+    if (!r.ok) return;
+    const me = await r.json();
+    const l = supLawyers.find(x => x.id === id);
+    if (!l) return;
+    if (me.points != null) l.pts = Number(me.points) || l.pts;
+    if (me.credits != null) l.credits = Number(me.credits) || l.credits;
+    const bks = Array.isArray(me.bookings) ? me.bookings : [];
+    const att = Array.isArray(me.attendance) ? me.attendance : [];
+    const src = bks.length ? bks : att;
+    l.bookings = src.map(b => ({
+      course_id: b.course_id || b.course_code || '',
+      course_title: b.course_title || b.course_title_current || 'CLPD activity',
+      date: b.scheduled_at || b.date_held || b.booked_at || '', time: '', lang: b.language || '',
+      pts_earned: Number(b.points_earned != null ? b.points_earned : (b.delta_points != null ? b.delta_points : b.course_points)) || 0,
+      credits_used: Number(b.credits_used) || 0, status: b.status || 'attended',
+    }));
+    if (supSelectedId === id) { supRender(); supRenderDetail(); }
+  } catch (_) {}
 }
 
 function supRenderDetail() {

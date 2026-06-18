@@ -113,6 +113,10 @@ router.get('/', requireAuth, (req, res) => {
     where.push("(LOWER(l.id) LIKE ? OR LOWER(l.first_name) LIKE ? OR LOWER(l.last_name) LIKE ? OR LOWER(l.first_name || ' ' || l.last_name) LIKE ? OR LOWER(COALESCE(l.email,'')) LIKE ? OR LOWER(COALESCE(f.name,'')) LIKE ?)");
     args.push(q, q, q, q, q, q);
   }
+  const band = (req.query.band || '').toString();
+  if (band === 'critical') where.push('COALESCE(l.lifetime_points,0) < 8');
+  else if (band === 'at-risk') where.push('COALESCE(l.lifetime_points,0) >= 8 AND COALESCE(l.lifetime_points,0) < 13');
+  else if (band === 'compliant') where.push('COALESCE(l.lifetime_points,0) >= 13');
   const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
   let total = 0, rows = [];
   try {
