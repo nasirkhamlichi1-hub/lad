@@ -2679,7 +2679,7 @@ async function doPurchase() {
   if(selectedPkg===null) return;
   if(!currentUser) { closeBuyModal(); openAuth('login'); return; }
   const p = PACKAGES[selectedPkg];
-  const base = (window.LAD_API_BASE || '').replace(/\/$/,'');
+  const base = (window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
   let token = ''; try { token = localStorage.getItem('lad_token') || ''; } catch(_) {}
   const btn = document.getElementById('buyPayBtn');
   if (btn) { btn.style.pointerEvents='none'; btn.style.opacity='.6'; }

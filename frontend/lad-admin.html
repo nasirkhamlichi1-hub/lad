@@ -1744,7 +1744,7 @@ function auditDebounce() {
 function auditPage(dir) { _audPage = Math.max(0, _audPage + dir); loadAuditTable(); }
 
 async function loadAuditDashboard() {
-  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
   const token = localStorage.getItem('lad_token') || '';
   if (!base || !token) return;
   try {
@@ -1780,7 +1780,7 @@ async function loadAuditDashboard() {
 }
 
 async function loadAuditTable() {
-  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
   const token = localStorage.getItem('lad_token') || '';
   if (!base || !token) return;
   const q = encodeURIComponent(document.getElementById('audSearch')?.value || '');
@@ -1897,7 +1897,7 @@ function statPage(dir){ _statPage = Math.max(0, _statPage + dir); loadStatus(); 
 function statSearch(){ _statPage = 0; loadStatus(); }
 
 async function loadStatusKpis() {
-  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
   try {
     const r = await fetch(base + '/api/v1/stats/aggregate');
     if (!r.ok) return;
@@ -1911,7 +1911,7 @@ async function loadStatusKpis() {
 
 async function loadStatus() {
   loadStatusKpis();
-  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
   const token = localStorage.getItem('lad_token') || '';
   if (!base || !token) return;
   const q = (document.getElementById('statSearch')?.value || '').trim();
@@ -1951,7 +1951,7 @@ async function loadStatus() {
 async function togglePractising(id, name, newVal) {
   const label = newVal === 1 ? 'practising' : 'non-practising';
   if (!confirm(`Move ${name} (${id}) to ${label}?\n\n` + (newVal === 0 ? 'They will be excluded from the 16-point CLPD obligation and the firm compliance %.' : 'They will be included in the 16-point CLPD obligation and start counting toward compliance %.'))) return;
-  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
   const token = localStorage.getItem('lad_token') || '';
   try {
     const r = await fetch(base + '/api/v1/lawyers/' + encodeURIComponent(id), {
@@ -1966,7 +1966,7 @@ async function togglePractising(id, name, newVal) {
 
 async function reclassifyAll() {
   if (!confirm('Re-run the automatic classifier?\n\nThis applies the standard rules:\n  • Firm = "Non-Lawyer" → non-practising\n  • ID prefix D-NNNN → non-practising\n  • IDs CWTEAM / LAD / TEAM / ADMIN / STAFF → non-practising\n  • Everyone else → practising\n\nAny manual overrides via this page will be reset.')) return;
-  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
   const token = localStorage.getItem('lad_token') || '';
   try {
     const r = await fetch(base + '/api/v1/admin/reclassify-practising', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
@@ -5213,7 +5213,7 @@ function renderMigratePreview() {
 // each transaction completes within the rate-limited request window.
 async function callMigrate(dryRun) {
   if (!_migrateRows.length || !_migrateEntity) return null;
-  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
   if (!base) { alert('Backend not configured'); return null; }
   const token = localStorage.getItem('lad_token') || '';
   if (!token) { alert('Sign in as LAD admin first'); return null; }

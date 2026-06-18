@@ -376,7 +376,7 @@ let REVIEWERS = [
 
 async function refreshReviewersFromBackend(){
   try {
-    const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+    const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
     if (!base) return;
     const token = localStorage.getItem('lad_token') || '';
     if (!token) return;
@@ -755,7 +755,7 @@ async function decide(action){
 
   let backendResp = null;
   if (isReal && newStatus) {
-    const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+    const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
     const token = (window.LAD && window.LAD.getToken && window.LAD.getToken()) || localStorage.getItem('lad_token') || '';
     try {
       const r = await fetch(base + '/api/v1/accreditations/' + encodeURIComponent(a.ref), {
@@ -807,7 +807,7 @@ async function decide(action){
 }
 
 // ── Helpers shared between fetch + map ──
-function _apiBase(){ return (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || ''; }
+function _apiBase(){ return (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com'; }
 function _authHeaders(){
   const token = (window.LAD && window.LAD.getToken && window.LAD.getToken()) || localStorage.getItem('lad_token') || '';
   return token ? { 'Authorization': 'Bearer ' + token } : {};

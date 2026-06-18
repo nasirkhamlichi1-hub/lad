@@ -3604,7 +3604,7 @@ function showSubmitConfirmation(ref, title, email) {
 // the seeded backend don't agree on who L-01496 is, and point awards
 // land on the wrong lawyer record.
 async function loadFirmLawyersFromBackend() {
-  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
   if (!base) return false;
   const token = localStorage.getItem('lad_token') || '';
   if (!token) return false;  // firm-CO or super_admin must be signed in
@@ -3665,7 +3665,7 @@ async function refreshAccreditationSection() {
 // session approved by LAD still shows as 'pending' here because the local
 // array never re-reads its source of truth.
 async function syncInternalSessionsFromBackend() {
-  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
   if (!base) return;
   try {
     // Try admin endpoint (full firm history). If no admin token, fall back
@@ -3744,7 +3744,7 @@ async function syncInternalSessionsFromBackend() {
 async function loadMyApplications() {
   const container = document.getElementById('myApplications');
   if (!container) return; // panel not on this page
-  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
   if (!base) { container.innerHTML = '<div style="padding:14px;color:var(--slate3);font-size:12px">Backend not configured.</div>'; return; }
   // The firm name is hardcoded in this portal as 'Galadari Advocates'. Use the
   // /accreditations search filter (no auth required — public listing of own
@@ -3852,7 +3852,7 @@ function openUploadSession() {
 async function loadApprovedCoursesIntoDropdown() {
   const sel = document.getElementById('ss-course');
   if (!sel) return;
-  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || '';
+  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
   if (!base) {
     sel.innerHTML = '<option value="">Backend not configured — enter accreditation code manually below ↓</option>';
     return;
@@ -4617,7 +4617,7 @@ Please try again in a moment.`;
 
   // Maryam runs on the backend AiModel (server holds the key; no client key).
   async function respondViaAiModel(prompt, targetEl) {
-    const base = (window.LAD_API_BASE || '').replace(/\/$/, '');
+    const base = (window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com').replace(/\/$/, '');
     let token = ''; try { token = localStorage.getItem('lad_token') || ''; } catch (_) {}
     const systemPrompt = `You are Maryam, an AI assistant inside the Dubai Legal Affairs Department's CLPD platform. You are speaking to ${_lex.portalContext}. The 2026 CLPD year requires 16 points (8 mandatory + 8 accredited) by 31 December 2026; 1 credit = AED 120; a standard course costs 5 credits. Be concise, practical and warm; use markdown sparingly; give specific course names and point values where possible.`;
     const r = await fetch(base + '/api/v1/lex/chat', {

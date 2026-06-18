@@ -3471,7 +3471,7 @@ Please try again in a moment.`;
 
   // Maryam runs on the backend AiModel (server holds the key; no client key).
   async function respondViaAiModel(prompt, targetEl) {
-    const base = (window.LAD_API_BASE || '').replace(/\/$/, '');
+    const base = (window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com').replace(/\/$/, '');
     let token = ''; try { token = localStorage.getItem('lad_token') || ''; } catch (_) {}
     const systemPrompt = `You are Maryam, an AI assistant inside the Dubai Legal Affairs Department's CLPD platform. You are speaking to ${_lex.portalContext}. The 2026 CLPD year requires 16 points (8 mandatory + 8 accredited) by 31 December 2026; 1 credit = AED 120; a standard course costs 5 credits. Be concise, practical and warm; use markdown sparingly; give specific course names and point values where possible.`;
     const r = await fetch(base + '/api/v1/lex/chat', {
