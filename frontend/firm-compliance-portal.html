@@ -2925,9 +2925,32 @@ function computeInsights() {
   return insights;
 }
 
-function renderInsights() {
-  const insights = computeInsights();
-  document.getElementById('insightCards').innerHTML = insights.map(ins => `
+async function renderInsights() {
+  const host = document.getElementById('insightCards');
+  if (!host) return;
+  const base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
+  const token = localStorage.getItem('lad_token') || '';
+  const colorOf = (k) => k === 'urgent' ? 'var(--red,#c0392b)' : k === 'opportunity' ? 'var(--teal)' : 'var(--purple)';
+  let cards = null, summary = '', engine = '';
+  if (token) {
+    for (let attempt = 1; attempt <= 3 && !cards; attempt++) {
+      try {
+        const r = await fetch(base + '/api/v1/firms/F-GA/insights', { headers: { Authorization: 'Bearer ' + token } });
+        if (r.ok) {
+          const j = await r.json();
+          if (Array.isArray(j.cards) && j.cards.length) {
+            cards = j.cards.map(c => ({ tag: c.eyebrow, title: c.title, body: c.body, color: colorOf(c.kind), actions: [c.actionLabel], meta: { courseId: c.courseId } }));
+            summary = j.summary || ''; engine = j.engine || '';
+          }
+        } else if (r.status < 502 || r.status > 504) break;
+      } catch (e) { /* retry */ }
+      if (!cards && attempt < 3) await new Promise(res => setTimeout(res, attempt * 2000));
+    }
+  }
+  if (!cards) cards = computeInsights(); // client-side fallback on failure
+  const badge = engine === 'aimodel' ? '<span style="font-family:var(--mono);font-size:8px;font-weight:700;color:#7c3aed;background:#f3e8ff;border:1px solid #e9d5ff;border-radius:5px;padding:2px 7px;letter-spacing:.6px;white-space:nowrap">\u2726 LIVE AI</span>' : (engine ? '<span style="font-family:var(--mono);font-size:8px;font-weight:700;color:var(--slate3);letter-spacing:.6px;white-space:nowrap">LIVE ANALYSIS</span>' : '');
+  const sumHtml = summary ? `<div style="grid-column:1/-1;display:flex;align-items:center;gap:11px;padding:13px 16px;background:linear-gradient(135deg,#faf5ff,#f0fdfa);border:1px solid #e9d5ff;border-radius:12px;margin-bottom:6px"><div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#7c3aed,#14b8a6);display:grid;place-items:center;color:#fff;font-family:var(--serif);font-size:15px;flex-shrink:0">M</div><div style="flex:1;font-size:13px;color:var(--ink);line-height:1.5">${summary}</div>${badge}</div>` : '';
+  host.innerHTML = sumHtml + cards.map(ins => `
     <div style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:17px;box-shadow:var(--sh-sm);border-top:3px solid ${ins.color}">
       <div style="display:flex;align-items:center;gap:9px;margin-bottom:11px">
         <div style="width:32px;height:32px;border-radius:8px;background:${ins.color}18;display:grid;place-items:center;flex-shrink:0">
