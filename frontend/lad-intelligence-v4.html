@@ -2441,16 +2441,16 @@ const DIFC_LAWYERS = [
 function openInsightDive(insightId) {
   const configs = {
     'solo':{
-      title:'Solo Practitioner Compliance Gap',tag:'PATTERN INSIGHT · 97% CONFIDENCE · IMPACT +2.1pp',icon:'',iconBg:'linear-gradient(135deg,#7c3aed,#a855f7)',
-      summary:'142 solo practitioners lag 17.9pp behind large firms. Concentrated in Tax (38%), Immigration (29%), and Criminal (18%). Targeted outreach to this cohort would lift city-wide compliance by 2.1pp.',
+      title:'Solo Practitioner Compliance Gap',tag:'PATTERN INSIGHT',icon:'',iconBg:'linear-gradient(135deg,#7c3aed,#a855f7)',
+      summary:'Smaller firms and solo practitioners tend to lag larger firms on compliance. Use the live firm league to target the lowest-ranked firms for outreach.',
       lawyers: SOLO_LAWYERS, label:'SOLO PRACTITIONERS BELOW THRESHOLD',
-      aiContext:'142 solo practitioners averaging 17.9pp below large firms. Tax 38%, Immigration 29%, Criminal 18%. Highest-leverage single intervention available.'
+      aiContext:'Solo and small-firm practitioners typically lag larger firms; prioritise outreach using the live firm compliance ranking.'
     },
     'difc':{
-      title:'DIFC Day 28 May — 112 Unfilled Seats',tag:'OPPORTUNITY · 91% CONFIDENCE · 89 LAWYERS',icon:'',iconBg:'linear-gradient(135deg,#0d7377,#14b8a6)',
-      summary:'112 seats remain unfilled at the DIFC Day on 28 May. If filled, this single session resolves compliance for 89 at-risk practitioners across 23 firms simultaneously, lifting compliance by 0.8pp.',
-      lawyers: DIFC_LAWYERS, label:'AT-RISK PRACTITIONERS — DIFC ELIGIBLE',
-      aiContext:'112 unfilled seats at DIFC Day 28 May. 89 at-risk practitioners eligible. 0.8pp compliance lift if filled. 23 firms affected.'
+      title:'Capacity Opportunity',tag:'OPPORTUNITY',icon:'',iconBg:'linear-gradient(135deg,#0d7377,#14b8a6)',
+      summary:'Under-subscribed upcoming sessions are high-leverage capacity — filling them moves at-risk practitioners toward compliance. See live low-seat sessions in the anomaly feed.',
+      lawyers: DIFC_LAWYERS, label:'AT-RISK PRACTITIONERS',
+      aiContext:'Under-subscribed upcoming sessions are the highest-leverage capacity to fill; check the live low-seat sessions.'
     }
   };
   const cfg = configs[insightId]; if(!cfg) return;
