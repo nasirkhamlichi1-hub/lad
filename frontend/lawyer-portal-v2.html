@@ -1974,21 +1974,21 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
       </section>
 
       <!-- ═══ PEER BENCHMARK ═══ -->
-      <section class="section" id="peers">
+      <section class="section" id="peers" style="display:none">
         <div class="section-hd">
           <div>
             <div class="section-eyebrow purple" data-cfg="lawyer_sec_peers_eyebrow">PEER BENCHMARK</div>
             <h2 class="section-title" data-cfg-html="lawyer_sec_peers_title">Where you stand in your <em class="purple">cohort</em></h2>
-            <div class="section-desc">Compared to <strong>312 other 2018-cohort senior associates</strong> in arbitration practice across Dubai</div>
+            <div class="section-desc" id="peerDesc">Compared to practising lawyers across Dubai.</div>
           </div>
         </div>
         <div class="peer-card">
           <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px">
             <div>
-              <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:3px">DISTRIBUTION OF POINTS · 2018 COHORT · ARBITRATION</div>
-              <div style="font-family:var(--serif);font-size:17px;color:var(--ink);letter-spacing:-.014em">312 peers · median <em style="color:var(--purple);font-style:italic">9 pts</em></div>
+              <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:3px" id="peerDistroLbl">DISTRIBUTION OF CPD POINTS · DUBAI COHORT</div>
+              <div style="font-family:var(--serif);font-size:17px;color:var(--ink);letter-spacing:-.014em" id="peerMedianLine">— peers · median <em style="color:var(--purple);font-style:italic">—</em></div>
             </div>
-            <span class="pill pill-amber">YOU · 38th PERCENTILE</span>
+            <span class="pill pill-amber" id="peerPctPill">YOU · —</span>
           </div>
           <div class="peer-distro" id="peerDistro"></div>
           <div class="peer-distro-axis"><span>0</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10</span><span>12</span><span>14</span><span>16</span></div>
@@ -1996,18 +1996,18 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
           <div class="peer-stats-grid">
             <div class="peer-stat">
               <div class="peer-stat-lbl">YOUR POINTS</div>
-              <div class="peer-stat-num">4<em>/16</em></div>
-              <div class="peer-stat-meta">Behind cohort median by 3 points</div>
+              <div class="peer-stat-num"><span id="peerYouNum">—</span><em>/16</em></div>
+              <div class="peer-stat-meta" id="peerYouMeta">&nbsp;</div>
             </div>
             <div class="peer-stat">
               <div class="peer-stat-lbl">COHORT MEDIAN</div>
-              <div class="peer-stat-num" style="color:var(--purple)">9<em style="color:var(--purple)">pts</em></div>
-              <div class="peer-stat-meta">312 peers · 50% earned ≥9 pts YTD</div>
+              <div class="peer-stat-num" style="color:var(--purple)"><span id="peerMedianNum">—</span><em style="color:var(--purple)">pts</em></div>
+              <div class="peer-stat-meta" id="peerMedianMeta">&nbsp;</div>
             </div>
             <div class="peer-stat">
               <div class="peer-stat-lbl">TOP 10% AT</div>
-              <div class="peer-stat-num" style="color:var(--green)">14<em style="color:var(--green)">pts</em></div>
-              <div class="peer-stat-meta">31 peers already at 14+ points</div>
+              <div class="peer-stat-num" style="color:var(--green)"><span id="peerTop10Num">—</span><em style="color:var(--green)">pts</em></div>
+              <div class="peer-stat-meta" id="peerTop10Meta">&nbsp;</div>
             </div>
           </div>
         </div>
@@ -3342,7 +3342,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Sections to remove from the page until a backend source exists
   // 'similar' (Based on your history) is live-wired to the AI copilot, so it is
   // NOT hidden — renderBasedOnHistory() shows it only when real recs exist.
-  var DEMO_PANEL_IDS = ['projection', 'coach', 'calendar', 'skills', 'peers', 'quiz', 'trajectory'];
+  var DEMO_PANEL_IDS = ['projection', 'coach', 'calendar', 'skills', 'quiz', 'trajectory'];
   function applyHide() {
     DEMO_PANEL_IDS.forEach(function (id) {
       var sec = document.getElementById(id);
@@ -3592,20 +3592,48 @@ function buildCalendar(){
 }
 
 // ═══ PEER DISTRIBUTION (gaussian-ish around median 9) ═══
+// Peer benchmark — live from /api/v1/lawyers/insights (real cohort, no demo).
+// The section stays hidden until real cohort data loads.
 function buildPeerDistro(){
-  // Bars from 0 to 16 points, distribution centred around 9
-  const counts=[3,5,8,12,18,28,42,58,72,80,68,52,38,22,12,5,2];
-  const max=Math.max(...counts);
-  const yourBucket=6; // Yousef is at 6 pts
-  let html='<div class="peer-distro-bars">';
-  counts.forEach((c,i)=>{
-    const h=(c/max*100);
-    const isYou=i===yourBucket;
-    html+=`<div class="peer-distro-bar ${isYou?'you':''}" style="height:${h}%;animation-delay:${i*30}ms" data-pts="${i}" data-count="${c}"></div>`;
-  });
-  html+='</div>';
-  document.getElementById('peerDistro').innerHTML=html;
+  var sec = document.getElementById('peers');
+  var base = (window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
+  var tk = ''; try { tk = localStorage.getItem('lad_token') || ''; } catch(e){}
+  if (!tk) return;
+  fetch(base + '/api/v1/lawyers/insights', { headers:{ Authorization:'Bearer '+tk }, cache:'no-store' })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(j){
+      var b = j && j.benchmark;
+      if (!b || !b.cohort) { if (sec) sec.style.display='none'; return; }
+      var counts = b.buckets || [];
+      var max = Math.max.apply(null, counts.concat([1]));
+      var html = '<div class="peer-distro-bars">';
+      counts.forEach(function(c,i){
+        var h = (c/max*100);
+        var isYou = i === b.yourBucket;
+        html += '<div class="peer-distro-bar '+(isYou?'you':'')+'" style="height:'+h+'%;animation-delay:'+(i*30)+'ms" data-pts="'+i+'" data-count="'+c+'"></div>';
+      });
+      html += '</div>';
+      var distro = document.getElementById('peerDistro'); if (distro) distro.innerHTML = html;
+      var ord = function(n){ var s=['th','st','nd','rd'], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); };
+      var set = function(id,v){ var el=document.getElementById(id); if(el) el.textContent=v; };
+      set('peerMedianLine', '');
+      var ml = document.getElementById('peerMedianLine');
+      if (ml) ml.innerHTML = b.cohort.toLocaleString() + ' peers · median <em style="color:var(--purple);font-style:italic">' + b.median + ' pts</em>';
+      set('peerPctPill', 'YOU · ' + ord(b.percentile) + ' PERCENTILE');
+      set('peerYouNum', b.you);
+      var diff = b.median - b.you;
+      set('peerYouMeta', diff > 0 ? ('Behind cohort median by ' + diff + ' point' + (diff===1?'':'s'))
+        : diff < 0 ? ('Ahead of cohort median by ' + (-diff) + ' point' + (diff===-1?'':'s')) : 'At the cohort median');
+      set('peerMedianNum', b.median);
+      set('peerMedianMeta', b.cohort.toLocaleString() + ' practising lawyers in the cohort');
+      set('peerTop10Num', b.top10At);
+      set('peerTop10Meta', b.topCount.toLocaleString() + ' peers at ' + b.top10At + '+ points');
+      if (j.practice) { var d=document.getElementById('peerDesc'); if(d) d.textContent = 'Compared to ' + b.cohort.toLocaleString() + ' practising lawyers across Dubai' + (j.practice ? ' · your area: ' + j.practice : '') + '.'; }
+      if (sec) sec.style.display = '';
+    })
+    .catch(function(){ if (sec) sec.style.display='none'; });
 }
+document.addEventListener('DOMContentLoaded', buildPeerDistro);
 
 // ═══ COMMAND PALETTE ═══
 function openCmd(){ /* command palette disabled */ return; }

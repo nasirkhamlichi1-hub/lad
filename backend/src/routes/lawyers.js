@@ -228,6 +228,41 @@ router.get('/copilot', requireAuth, async (req, res, next) => {
   }, meta));
 });
 
+// GET /api/v1/lawyers/insights — real cohort benchmark for the signed-in lawyer,
+// computed from the live lawyers table (no demo numbers).
+router.get('/insights', requireAuth, (req, res) => {
+  const lawyer = req.user.user_type === 'lawyer' ? store.getLawyerById(req.user.sub)
+    : (req.user.email ? store.getLawyerByEmail(req.user.email) : null);
+  if (!lawyer) return res.status(404).json({ error: 'Lawyer record not found' });
+  const you = Number(lawyer.lifetime_points) || 0;
+  let pts = [];
+  try {
+    pts = db.prepare(
+      "SELECT lifetime_points p FROM lawyers WHERE lifetime_points IS NOT NULL AND COALESCE(LOWER(status),'active') NOT IN ('inactive','resigned','non-practising','struck off')"
+    ).all().map((r) => Number(r.p) || 0);
+  } catch (_) {}
+  pts.sort((a, b) => a - b);
+  const n = pts.length;
+  const valAt = (q) => (n ? pts[Math.min(n - 1, Math.max(0, Math.floor(q * (n - 1))))] : 0);
+  const median = n ? (n % 2 ? pts[(n - 1) / 2] : Math.round((pts[n / 2 - 1] + pts[n / 2]) / 2)) : 0;
+  const below = pts.filter((p) => p < you).length;
+  const equal = pts.filter((p) => p === you).length;
+  const percentile = n ? Math.round((below / n) * 100) : 0;
+  const p90 = valAt(0.9);
+  const topCount = pts.filter((p) => p >= p90).length;
+  const buckets = new Array(17).fill(0);
+  pts.forEach((p) => { buckets[Math.max(0, Math.min(16, Math.round(p)))]++; });
+  res.json({
+    benchmark: {
+      cohort: n, you, median, percentile, top10At: p90, topCount, buckets,
+      yourBucket: Math.max(0, Math.min(16, Math.round(you))),
+      aheadOf: below, behind: Math.max(0, n - below - equal),
+    },
+    practice: (lawyer.practice_areas || '').split(',')[0].trim(),
+    cohortYear: lawyer.admitted_year || null,
+  });
+});
+
 // GET /api/v1/lawyers/:id — staff lookup (LAD admin or own firm CO)
 router.get('/:id', requireAuth, (req, res) => {
   const lawyer = store.getLawyerById(req.params.id);
