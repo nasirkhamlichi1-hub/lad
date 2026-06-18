@@ -146,29 +146,29 @@ em{font-style:italic}
   <div class="icards">
     <div class="icard">
       <div class="icard-art" style="background:linear-gradient(135deg,#0a3a28,#0d5a4a)">
-        <span class="tag">E-LEARNING · ARTICULATE</span><span class="emoji">🎓</span>
+        <span class="tag">E-LEARNING · RECEPTION</span><span class="emoji">🛎️</span>
       </div>
       <div class="icard-body">
         <div class="icard-prov">LAD Academy · Self-paced</div>
-        <div class="icard-title">Articulate Training Course</div>
-        <div class="icard-desc">An interactive onboarding module delivered through Articulate — covering LAD systems, service standards, and the essentials every staff member needs to get started.</div>
+        <div class="icard-title">Reception Training Course</div>
+        <div class="icard-desc">The full reception &amp; front-of-house training hub — greeting visitors, service standards, and guiding people to the right Legal Affairs Department service.</div>
         <div class="icard-foot">
-          <span class="meta">~45 min · Interactive</span>
-          <button class="btn btn-g" onclick="launchCourse('articulate')">▶ Launch course</button>
+          <span class="meta">Interactive · Training hub</span>
+          <button class="btn btn-g" onclick="launchCourse('reception')">▶ Launch course</button>
         </div>
       </div>
     </div>
     <div class="icard">
-      <div class="icard-art" style="background:linear-gradient(135deg,#1a1a40,#3a2a6e)">
-        <span class="tag">E-LEARNING · DISCOVERY</span><span class="emoji">🪐</span>
+      <div class="icard-art" style="background:linear-gradient(135deg,#16263f,#22466e)">
+        <span class="tag">E-LEARNING · AVIATION</span><span class="emoji">✈️</span>
       </div>
       <div class="icard-body">
         <div class="icard-prov">LAD Academy · Self-paced</div>
-        <div class="icard-title">The Solar System</div>
-        <div class="icard-desc">A guided discovery course exploring the planets, moons and wonders of our solar system — a light, engaging module to enjoy and learn from.</div>
+        <div class="icard-title">Aviation Arbitration &amp; Mediation</div>
+        <div class="icard-desc">The international aviation arbitration &amp; mediation hub — a guided 1-2-1 on carrier liability, unfair competition and arbitration in international aviation disputes.</div>
         <div class="icard-foot">
-          <span class="meta">~30 min · Interactive</span>
-          <button class="btn btn-gold" onclick="launchCourse('solar')">▶ Launch course</button>
+          <span class="meta">Interactive · AI-guided</span>
+          <button class="btn btn-gold" onclick="launchCourse('aviation')">▶ Launch course</button>
         </div>
       </div>
     </div>
@@ -182,13 +182,6 @@ em{font-style:italic}
   <div class="cgrid" id="clpdGrid"></div>
 </div>
 
-<!-- Internal course launch modal -->
-<div class="modal" id="courseModal">
-  <div class="modal-card">
-    <div class="modal-hd" id="cmHd"><h3 id="cmTitle"></h3><div class="sub" id="cmSub"></div><button class="modal-x" onclick="closeCourseModal()">✕</button></div>
-    <div class="modal-bd" id="cmBody"></div>
-  </div>
-</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -208,26 +201,18 @@ em{font-style:italic}
   })();
 
   // ── Internal course launch ──
-  var COURSE_CONTENT={
-    articulate:{ title:'Articulate Training Course', sub:'LAD Academy · Interactive module', color:'linear-gradient(135deg,#0a3a28,#0d5a4a)',
-      body:'<p style="font-size:13.5px;color:var(--slate);line-height:1.7">This interactive module is delivered through <strong>Articulate Storyline</strong>. When your training team uploads the published package, it will play right here in the browser.</p>'
-        +'<ul><li>LAD systems &amp; tools orientation</li><li>Service standards &amp; professional conduct</li><li>Knowledge checks &amp; completion certificate</li></ul>'
-        +'<div style="margin-top:18px;padding:14px 16px;background:var(--green-bg);border:1px solid #b8d8c4;border-radius:10px;font-size:12.5px;color:var(--green-d)">▶ Module ready — press <strong>Begin</strong> to start. Your progress is saved automatically.</div>' },
-    solar:{ title:'The Solar System', sub:'LAD Academy · Discovery module', color:'linear-gradient(135deg,#1a1a40,#3a2a6e)',
-      body:'<p style="font-size:13.5px;color:var(--slate);line-height:1.7">A guided journey through our solar system — the Sun, the eight planets, and the moons and wonders in between.</p>'
-        +'<ul><li>The Sun &amp; the inner rocky planets</li><li>The gas giants &amp; ice giants</li><li>Moons, asteroids &amp; comets</li></ul>'
-        +'<div style="margin-top:18px;padding:14px 16px;background:var(--gold-bg);border:1px solid #f0d9a8;border-radius:10px;font-size:12.5px;color:#8a5a12">🪐 Module ready — press <strong>Begin</strong> to start exploring.</div>' }
+  // Each LAD Academy module opens its own training hub. The hubs live in the
+  // LAD reception/training app; we open them in a new tab so the staff member
+  // keeps their LAD Academy session.
+  var COURSE_HUBS={
+    reception:{ title:'Reception Training Course', url:'https://nice-ocean-0a45eff10.7.azurestaticapps.net/' },
+    aviation:{ title:'Aviation Arbitration & Mediation', url:'https://nice-ocean-0a45eff10.7.azurestaticapps.net/ai-trainer-live.html' }
   };
   window.launchCourse=function(key){
-    var c=COURSE_CONTENT[key]; if(!c) return;
-    document.getElementById('cmHd').style.background=c.color;
-    document.getElementById('cmTitle').textContent=c.title;
-    document.getElementById('cmSub').textContent=c.sub;
-    document.getElementById('cmBody').innerHTML=c.body+'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px"><button class="btn btn-gh" onclick="closeCourseModal()">Close</button><button class="btn btn-g" onclick="beginCourse(\''+key+'\')">Begin module →</button></div>';
-    document.getElementById('courseModal').classList.add('on');
+    var c=COURSE_HUBS[key]; if(!c) return;
+    toast('▶ Opening "'+c.title+'" training hub…');
+    try{ window.open(c.url,'_blank','noopener'); }catch(e){ location.href=c.url; }
   };
-  window.closeCourseModal=function(){ document.getElementById('courseModal').classList.remove('on'); };
-  window.beginCourse=function(key){ closeCourseModal(); toast('▶ Launching "'+COURSE_CONTENT[key].title+'" — enjoy your training.'); };
 
   // ── CLPD catalogue (free for staff) ──
   var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
