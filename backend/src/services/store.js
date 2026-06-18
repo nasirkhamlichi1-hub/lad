@@ -253,10 +253,17 @@ function getAggregateStats() {
   const totalCourses = db.prepare(`SELECT COUNT(*) AS n FROM courses WHERE active = 1`).get().n;
   const totalProviders = db.prepare(`SELECT COUNT(*) AS n FROM providers WHERE accredited = 1`).get().n;
 
-  // 2026 compliance — lawyers with 16+ points from completed bookings this year
+  // Compliance — each active lawyer's CPD points for the cycle. Uses the
+  // greater of (a) attended-booking points this year and (b) the lawyer's
+  // lifetime_points total, so dashboards stay consistent whether points come
+  // from live bookings or from a loaded points dataset.
   const year = new Date().getFullYear();
   const lawyer2026 = db.prepare(`
-    SELECT l.id, COALESCE(SUM(CASE WHEN b.status = 'attended' THEN b.points_earned ELSE 0 END), 0) AS pts
+    SELECT l.id,
+      MAX(
+        COALESCE(l.lifetime_points, 0),
+        COALESCE(SUM(CASE WHEN b.status = 'attended' THEN b.points_earned ELSE 0 END), 0)
+      ) AS pts
     FROM lawyers l
     LEFT JOIN bookings b ON b.lawyer_id = l.id
       AND strftime('%Y', b.scheduled_at) = ?
