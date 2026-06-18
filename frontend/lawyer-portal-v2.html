@@ -1189,22 +1189,22 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
           </div>
         </div>
 
-        <!-- Three calm KPIs -->
+        <!-- Three calm KPIs — wired to the lawyer's live record -->
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
           <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px">
-            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px">Mandatory courses</div>
-            <div style="font-family:var(--serif);font-size:36px;line-height:1;letter-spacing:-.02em;font-weight:500">4<em style="color:var(--slate3);font-size:20px;font-style:italic">/8</em></div>
-            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px">4 mandatory courses remaining</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px">Activities completed</div>
+            <div style="font-family:var(--serif);font-size:36px;line-height:1;letter-spacing:-.02em;font-weight:500" id="kpiCompletedNum">—</div>
+            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px" id="kpiCompletedSub">CPD activities on your record</div>
           </div>
           <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px">
-            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px">Ethics requirement</div>
-            <div style="font-family:var(--serif);font-size:36px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--amber)">0<em style="color:var(--slate3);font-size:20px;font-style:italic">/2</em></div>
-            <div style="font-size:12.5px;color:var(--amber);margin-top:8px;font-weight:500">Not started — needs attention</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px">Credit balance</div>
+            <div style="font-family:var(--serif);font-size:36px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--green)" id="kpiCreditsNum">—</div>
+            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px" id="kpiCreditsSub">credits available to book</div>
           </div>
           <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px">
             <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px">Next session</div>
-            <div style="font-family:var(--serif);font-size:24px;line-height:1.15;letter-spacing:-.014em;font-weight:500;color:var(--ink)">28 May · DIFC</div>
-            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px">Exclusion clauses · 2 pts</div>
+            <div style="font-family:var(--serif);font-size:24px;line-height:1.15;letter-spacing:-.014em;font-weight:500;color:var(--ink)" id="kpiNextNum">—</div>
+            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px" id="kpiNextSub">no upcoming sessions booked</div>
           </div>
         </div>
       </section>
@@ -3276,6 +3276,33 @@ function paintMyRecord(me) {
     dl.textContent = days + ' days to 31 Dec';
     dl.style.color = days < 60 ? 'var(--red)' : days < 120 ? 'var(--amber)' : 'var(--green)';
   }
+  // ─── Live hero KPIs (completed activities · credits · next session) ───
+  try {
+    const att = Array.isArray(me.attendance) ? me.attendance
+      : (Array.isArray(me.bookings) ? me.bookings.map(b => ({ course_title: b.course_title, date_held: b.scheduled_at || b.booked_at || b.created_at, delta_points: b.points_earned, status: (b.status||'').toLowerCase() })) : []);
+    const done = att.filter(a => !['cancelled','refunded'].includes((a.status||'').toLowerCase()));
+    set('kpiCompletedNum', done.length);
+    const dpts = done.reduce((n,a)=>n + (Number(a.delta_points)||0), 0);
+    set('kpiCompletedSub', dpts ? (dpts + ' point' + (dpts===1?'':'s') + ' earned so far') : 'CPD activities on your record');
+    set('kpiCreditsNum', credits);
+    set('kpiCreditsSub', credits === 1 ? 'credit available to book' : 'credits available to book');
+    // Next session = soonest future booking that isn't cancelled.
+    const now = Date.now();
+    const future = (me.bookings || [])
+      .map(b => ({ when: new Date(b.scheduled_at || b.booked_at || 0).getTime(), title: b.course_title || 'Session', venue: b.venue || b.provider || '', status: (b.status||'').toLowerCase() }))
+      .filter(b => b.when > now && !['cancelled','refunded','completed','attended'].includes(b.status))
+      .sort((a,b)=>a.when-b.when);
+    const MM=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    if (future.length) {
+      const d = new Date(future[0].when);
+      set('kpiNextNum', d.getUTCDate()+' '+MM[d.getUTCMonth()]+(future[0].venue?' · '+future[0].venue:''));
+      set('kpiNextSub', future[0].title);
+    } else {
+      set('kpiNextNum', 'None booked');
+      set('kpiNextSub', 'Browse courses to book your next session');
+    }
+  } catch (_) {}
+
   // Sidebar foot — name + L-ID
   const sbName = document.querySelector('.sb-user-name');
   const sbRole = document.querySelector('.sb-user-role');
