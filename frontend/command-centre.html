@@ -358,7 +358,11 @@
     {key:'Providers',n:null, color:0xffb84d},
     {key:'Accreds',  n:null, color:0x3df0a0},
     {key:'Sessions', n:null, color:0x6ab8ff},
-    {key:'Regulator · LAD', n:1, color:0xff5e7e}
+    {key:'Regulator · LAD', n:1, color:0xff5e7e},
+    // ── Intelligence tier (thematic nodes — grouped by meaning, not structure) ──
+    {key:'Winners',  theme:true, glyph:'★', posv:[-86, 84, -16], color:0xffd24a},
+    {key:'At Risk',  theme:true, glyph:'⚠', posv:[ 86, 84, -16], color:0xff5e7e},
+    {key:'Feedback', theme:true, glyph:'✦', posv:[  0, 96, 54],  color:0x9a6cff}
   ];
   // (built at the end of this IIFE, once TW + buildTwin are initialised)
 
@@ -525,10 +529,12 @@
     var known=clusters.map(function(c){return Number(c.n);}).filter(function(v){return Number.isFinite(v)&&v>0;});
     var maxN=known.length?Math.max.apply(null,known):1;
     var ring=120;
+    var structCount=clusters.filter(function(c){return !c.center&&!c.theme;}).length, structIdx=0;
     clusters.forEach(function(c,ci){
-      var ang=ci*2*Math.PI/Math.max(1,clusters.length-1);
-      var pos = c.center? new THREE.Vector3(0,0,0)
-        : new THREE.Vector3(Math.cos(ang)*ring, (ci%2?28:-26), Math.sin(ang)*ring);
+      var pos;
+      if(c.center) pos=new THREE.Vector3(0,0,0);
+      else if(c.theme && c.posv) pos=new THREE.Vector3(c.posv[0],c.posv[1],c.posv[2]);
+      else { var ang=structIdx*2*Math.PI/Math.max(1,structCount); pos=new THREE.Vector3(Math.cos(ang)*ring,(structIdx%2?28:-26),Math.sin(ang)*ring); structIdx++; }
       // Nominal swarm size when the count isn't known yet, so it always looks full.
       var cn=Number(c.n); var n = Number.isFinite(cn)&&cn>0
         ? Math.max(60, Math.min(900, Math.round(cn/maxN*900)))
@@ -554,7 +560,8 @@
         group.add(new THREE.Line(lg,new THREE.LineBasicMaterial({color:c.color,transparent:true,opacity:.22,blending:THREE.AdditiveBlending}))); }
       // HTML label
       var el=document.createElement('div'); el.className='twin-label'+(c.center?'':' dim');
-      el.innerHTML='<b>'+(c.n==null?'—':nf(c.n))+'</b>'+esc(c.key);
+      var hex2='#'+('000000'+c.color.toString(16)).slice(-6);
+      el.innerHTML='<b'+(c.theme?(' style="color:'+hex2+';text-shadow:0 0 16px '+hex2+'"'):'')+'>'+(c.theme?c.glyph:(c.n==null?'—':nf(c.n)))+'</b>'+esc(c.key);
       $('centerstage').appendChild(el);
       TW.anchors.push({key:c.key, count:c.n, pos:pos, el:el});
     });
@@ -642,12 +649,15 @@
         .catch(function(){ ans.textContent='Network error — try again.'; btn.disabled=false; btn.textContent='✦ Analyse trends & actions'; });
     }
     window.__refreshFocus=function(){ if(TW.focusKey) showFocusPanel(TW.focusKey); };
+    var THEME_VIEW={'Winners':'winners','At Risk':'risk','Feedback':'feedback'};
     window.focusCluster=function(key){
       var c=TW.cores.filter(function(x){return x.key===key;})[0]; if(!c) return;
       TW.focusKey=key;
       var wp=c.pos.clone().applyMatrix4(group.matrixWorld);
       TW.camTarget.set(wp.x*0.55, wp.y+16, wp.z*0.55+110); TW.lookTarget.copy(wp);
-      document.body.classList.add('focus'); showFocusPanel(key);
+      document.body.classList.add('focus');
+      if(THEME_VIEW[key]){ if(window.openLayer) window.openLayer(THEME_VIEW[key]); }
+      else showFocusPanel(key);
     };
     window.exitFocus=function(){
       TW.focusKey=null; TW.camTarget.set(mx*60,40,250); TW.lookTarget.set(0,0,0);
@@ -692,7 +702,17 @@
   function $(id){return document.getElementById(id);}
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);});}
   function nf(x){var v=Number(x);return Number.isFinite(v)?v.toLocaleString():'—';}
-  var DATA=null;
+  var DATA=null, OVc=null, ANOMc=null, CUR=[];
+  function gj(p){ return fetch(base+p,{headers:{Authorization:'Bearer '+tok()}}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}); }
+  function needAnalytics(){ return DATA?Promise.resolve(DATA):gj('/api/v1/admin/course-analytics').then(function(d){DATA=d;return d;}); }
+  function needOV(){ return OVc?Promise.resolve(OVc):gj('/api/v1/admin/oversight').then(function(d){OVc=d;return d;}); }
+  function needAnom(){ return ANOMc?Promise.resolve(ANOMc):gj('/api/v1/admin/anomalies').then(function(d){ANOMc=d;return d;}); }
+  function pct(a,b){ return b?Math.round(100*(a||0)/b):0; }
+  function noData(){ $('dlMarket').innerHTML=''; $('dlGrid').innerHTML='<div class="loading">Sign in as a LAD admin to load live intelligence.</div>'; }
+  function aiInto(elId,btnId,prompt,label){ var ans=$(elId),btn=$(btnId); if(!ans)return; ans.style.display='block'; ans.textContent='Analysing…'; if(btn){btn.disabled=true;btn.textContent='Analysing…';}
+    fetch(base+'/api/v1/admin/command',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({prompt:prompt})}).then(function(r){return r.json();})
+      .then(function(d){ ans.textContent=(d&&(d.answer||d.summary))||'No response.'; if(btn){btn.disabled=false;btn.textContent=label||'✦ Re-analyse';} })
+      .catch(function(){ ans.textContent='Network error.'; if(btn){btn.disabled=false;btn.textContent=label||'✦ Analyse';} }); }
 
   function spark(weekly,w,h,color){ w=w||240;h=h||34;color=color||'#34e1ff';
     var max=Math.max(1,Math.max.apply(null,weekly)),pad=2,n=weekly.length,id='sg'+color.replace('#','');
@@ -710,17 +730,28 @@
     return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'"><circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="rgba(120,150,210,.18)" stroke-width="4"/><circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="4" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'" transform="rotate(-90 '+size/2+' '+size/2+')"/><text x="'+size/2+'" y="'+(size/2+3)+'" fill="#eaf4ff" font-family="Rajdhani" font-size="11" font-weight="700" text-anchor="middle">'+pct+'%</text></svg>'; }
   function typeColor(t){ t=(t||'').toLowerCase(); return t==='mandatory'?'#9a6cff':t.indexOf('internal')>=0?'#ffb84d':'#1fe0b4'; }
 
-  window.openCoursesLayer=function(){
-    $('deepLayer').classList.add('on');
-    if(DATA){ render(); return; }
-    $('dlGrid').innerHTML='<div class="loading">Loading market intelligence…</div>';
-    fetch(base+'/api/v1/admin/course-analytics',{headers:{Authorization:'Bearer '+tok()}})
-      .then(function(r){return r.ok?r.json():null;}).then(function(d){ if(!d){ $('dlGrid').innerHTML='<div class="loading">Sign in as a LAD admin to load market intelligence.</div>'; return; } DATA=d; render(); })
-      .catch(function(){ $('dlGrid').innerHTML='<div class="loading">Could not load — try again.</div>'; });
+  // Generic deep-layer dispatcher — market + the three intelligence themes.
+  window.openLayer=function(view){
+    $('deepLayer').classList.add('on'); closeCourseDetail();
+    $('dlMarket').innerHTML=''; $('dlGrid').innerHTML='<div class="loading">Loading intelligence…</div>'; $('dlCount').textContent='';
+    if(view==='winners'){ $('dlTitle').textContent='WINNERS · EXCELLENCE & MOMENTUM'; needAnalytics().then(renderWinners); }
+    else if(view==='risk'){ $('dlTitle').textContent='AT RISK · NON-COMPLIANCE WAR ROOM'; Promise.all([needOV(),needAnom()]).then(function(a){ renderRisk(a[0],a[1]); }); }
+    else if(view==='feedback'){ $('dlTitle').textContent='FEEDBACK · VOICE OF THE PROFESSION'; Promise.all([needOV(),needAnalytics()]).then(function(a){ renderFeedback(a[0],a[1]); }); }
+    else { $('dlTitle').textContent='COURSE & MARKET DEEP-DIVE'; needAnalytics().then(function(d){ if(!d){noData();return;} render(); }); }
   };
+  window.openCoursesLayer=function(){ openLayer('market'); };
   function closeCourseDetail(){ $('ccDetail').classList.remove('on'); }
   window.closeCourseDetail=closeCourseDetail;
-  window.closeDeepLayer=function(){ $('deepLayer').classList.remove('on'); closeCourseDetail(); };
+  window.closeDeepLayer=function(){ $('deepLayer').classList.remove('on'); closeCourseDetail(); if(window.exitFocus) window.exitFocus(); };
+
+  // Shared course-card renderer (market + winners) + click binding.
+  function courseCard(c,idx){ var tc=typeColor(c.type),mom=c.momentum||0;
+    return '<div class="cc-card" data-i="'+idx+'"><div style="display:flex;justify-content:space-between;align-items:flex-start"><span class="cc-type" style="color:'+tc+'">'+esc((c.type||'course').toUpperCase())+'</span>'+(c.fillPct!=null?ring(c.fillPct,44,tc):'')+'</div>'
+      +'<div class="cc-title">'+esc(c.title)+'</div>'+spark(c.weekly||[],240,34,tc)
+      +'<div class="cc-row"><span>'+nf(c.totalBookings)+' booked · 12w</span><span class="cc-mom" style="color:'+(mom>0?'var(--green)':mom<0?'var(--red)':'var(--dim)')+'">'+(mom>0?'▲ +'+mom:mom<0?'▼ '+mom:'– flat')+'</span></div>'
+      +'<div class="cc-row"><span>'+(c.points||0)+' pts · '+(c.credits||0)+' cr</span><span>'+nf(c.upcomingSessions)+' sessions</span></div></div>'; }
+  function bindCards(grid){ grid.querySelectorAll('.cc-card').forEach(function(el){ el.onclick=function(){ openCourseDetail(CUR[+el.getAttribute('data-i')]); }; }); }
+  function rowMini(label,val,col){ return '<div class="cc-row" style="color:var(--ink)"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:165px">'+label+'</span><span class="cc-mom" style="color:'+(col||'var(--cyan)')+'">'+val+'</span></div>'; }
 
   function render(){
     var d=DATA,m=d.market||{},acc=m.accredited||0,man=m.mandatory||0,tot2=Math.max(1,acc+man);
@@ -737,12 +768,66 @@
     $('dlCount').textContent=(d.courses||[]).length+' courses';
     var grid=$('dlGrid');
     if(!(d.courses||[]).length){ grid.innerHTML='<div class="loading">No course demand recorded in the last 12 weeks yet — cards appear as bookings flow.</div>'; return; }
-    grid.innerHTML=d.courses.map(function(c,idx){ var tc=typeColor(c.type),mom=c.momentum||0;
-      return '<div class="cc-card" data-i="'+idx+'"><div style="display:flex;justify-content:space-between;align-items:flex-start"><span class="cc-type" style="color:'+tc+'">'+esc((c.type||'course').toUpperCase())+'</span>'+(c.fillPct!=null?ring(c.fillPct,44,tc):'')+'</div>'
-        +'<div class="cc-title">'+esc(c.title)+'</div>'+spark(c.weekly||[],240,34,tc)
-        +'<div class="cc-row"><span>'+nf(c.totalBookings)+' booked · 12w</span><span class="cc-mom" style="color:'+(mom>0?'var(--green)':mom<0?'var(--red)':'var(--dim)')+'">'+(mom>0?'▲ +'+mom:mom<0?'▼ '+mom:'– flat')+'</span></div>'
-        +'<div class="cc-row"><span>'+(c.points||0)+' pts · '+(c.credits||0)+' cr</span><span>'+nf(c.upcomingSessions)+' sessions</span></div></div>'; }).join('');
-    grid.querySelectorAll('.cc-card').forEach(function(el){ el.onclick=function(){ openCourseDetail(d.courses[+el.getAttribute('data-i')]); }; });
+    CUR=d.courses; grid.innerHTML=d.courses.map(courseCard).join(''); bindCards(grid);
+  }
+
+  // ── WINNERS: best courses, hot topics, top trainers ──
+  function renderWinners(d){
+    if(!d){ noData(); return; }
+    var topics={}; (d.courses||[]).forEach(function(c){ var t=c.topic||'Uncategorised'; (topics[t]=topics[t]||{n:0,m:0}).n+=c.totalBookings||0; topics[t].m+=c.momentum||0; });
+    var tArr=Object.keys(topics).map(function(k){return {topic:k,n:topics[k].n};}).sort(function(a,b){return b.n-a.n;}).slice(0,6);
+    var maxT=Math.max(1,tArr.length?tArr[0].n:1);
+    var best=(d.courses||[]).slice().sort(function(a,b){return b.totalBookings-a.totalBookings;}).slice(0,8);
+    var grow=((d.market||{}).topGrowing)||[];
+    $('dlMarket').innerHTML=
+      '<div class="card"><div class="card-h">🔥 Hot topics <span class="badge">by demand</span></div>'+(tArr.length?tArr.map(function(t){return '<div class="hx"><div class="hxl">'+esc(t.topic)+'</div><div class="hxbar"><div class="hxf" style="width:'+Math.round(100*t.n/maxT)+'%;background:var(--amber)"></div></div><div class="hxv" style="color:var(--amber)">'+nf(t.n)+'</div></div>';}).join(''):'<div class="loading">Topics emerge as bookings flow.</div>')+'</div>'
+     +'<div class="card"><div class="card-h">🚀 Fastest rising</div>'+(grow.length?grow.slice(0,5).map(function(c){return rowMini('▲ '+esc(c.title),'+'+c.momentum,'var(--green)');}).join(''):'<div class="loading">Momentum builds over weeks.</div>')+'</div>'
+     +'<div class="card"><div class="card-h">⭐ Top trainers</div><div class="cd-fb" style="border-color:var(--panel-b)"><div class="cc-row" style="justify-content:center;color:var(--dim)">TRAINER LEAGUE</div><div class="v" style="font-family:var(--title);font-size:24px;color:var(--dim2);text-align:center">—</div><div style="text-align:center"><span class="soon">live at go-live</span></div></div></div>';
+    $('dlCount').textContent=best.length+' winning courses';
+    var grid=$('dlGrid'); CUR=best; grid.innerHTML=best.map(courseCard).join('')||'<div class="loading">Winners appear as demand builds.</div>'; bindCards(grid);
+  }
+
+  // ── AT RISK: non-compliance war room + AI plan ──
+  function renderRisk(ov,an){
+    if(!ov){ noData(); return; }
+    var L=ov.lawyers||{}, bottom=(ov.firmRankings||{}).bottom||[]; var A=(an&&an.anomalies)||[], counts=(an&&an.counts)||{};
+    $('dlMarket').innerHTML=
+      '<div class="card"><div class="card-h">Compliance bands</div>'
+        +'<div class="hx"><div class="hxl">Critical · &lt;8</div><div class="hxbar"><div class="hxf" style="width:'+pct(L.critical,L.practising)+'%;background:var(--red)"></div></div><div class="hxv" style="color:var(--red)">'+nf(L.critical)+'</div></div>'
+        +'<div class="hx"><div class="hxl">At risk · 8–15</div><div class="hxbar"><div class="hxf" style="width:'+pct(L.atRisk,L.practising)+'%;background:var(--amber)"></div></div><div class="hxv" style="color:var(--amber)">'+nf(L.atRisk)+'</div></div>'
+        +'<div class="hx"><div class="hxl">Compliant · 16+</div><div class="hxbar"><div class="hxf" style="width:'+pct(L.compliant,L.practising)+'%;background:var(--green)"></div></div><div class="hxv" style="color:var(--green)">'+nf(L.compliant)+'</div></div></div>'
+     +'<div class="card"><div class="card-h">Lowest-compliance firms</div>'+(bottom.length?bottom.slice(0,5).map(function(f){return rowMini(esc(f.name),(f.compliancePct||0)+'%','var(--red)');}).join(''):'<div class="loading">Awaiting firm data.</div>')+'</div>'
+     +'<div class="card"><div class="card-h">Signals</div>'+rowMini('High-priority anomalies',nf(counts.high||0),'var(--red)')+rowMini('Medium',nf(counts.medium||0),'var(--amber)')+rowMini('Days to deadline',nf(ov.daysToDeadline),'var(--amber)')+'</div>';
+    $('dlCount').textContent='live signals + AI plan';
+    var grid=$('dlGrid');
+    grid.innerHTML=
+      '<div class="card" style="grid-column:1/-1"><div class="card-h">⚠ Live anomalies</div>'+(A.length?A.slice(0,5).map(function(a){var col=a.level==='high'?'var(--red)':a.level==='medium'?'var(--amber)':'var(--dim)';return '<div class="ins" style="--c:'+col+'"><div class="it" style="color:'+col+'">'+esc((a.kind||'signal').toUpperCase())+'<span class="pill">'+esc((a.level||'').toUpperCase())+'</span></div><div class="id">'+esc(a.detail||a.title)+'</div></div>';}).join(''):'<div class="ins" style="--c:var(--green)"><div class="it" style="color:var(--green)">ALL CLEAR</div><div class="id">No anomalies detected across attendance, capacity or compliance.</div></div>')+'</div>'
+     +'<div class="card" style="grid-column:1/-1"><div class="card-h">✦ Maryam · suggested intervention plan</div><div class="fp-ans" id="riskAns" style="display:none"></div><button class="fp-btn ai" id="riskAsk" style="margin-top:10px">Build the prioritised non-compliance plan</button></div>';
+    $('riskAsk').onclick=function(){ aiInto('riskAns','riskAsk','Build a prioritised non-compliance intervention plan for this cycle. Focus on the '+nf(L.critical)+' critical and '+nf(L.atRisk)+' at-risk lawyers and the lowest-compliance firms. Give specific, ordered actions with the expected impact of each.','Re-plan'); };
+  }
+
+  // ── FEEDBACK: good vs bad signals, lessons learned ──
+  function renderFeedback(ov,an){
+    if(!ov){ noData(); return; }
+    var B=ov.bookings||{}; var att=B.attendanceRate!=null?B.attendanceRate:null;
+    var noShow=((B.attended||0)+(B.noShow||0))?Math.round(1000*(B.noShow||0)/((B.attended||0)+(B.noShow||0)))/10:0;
+    var courses=(an&&an.courses)||[];
+    var loved=courses.filter(function(c){return c.fillPct!=null;}).slice().sort(function(a,b){return b.fillPct-a.fillPct;}).slice(0,4);
+    var quiet=courses.filter(function(c){return c.fillPct!=null&&c.upcomingSessions>0;}).slice().sort(function(a,b){return a.fillPct-b.fillPct;}).slice(0,4);
+    $('dlMarket').innerHTML=
+      '<div class="card"><div class="card-h">Engagement signals <span class="badge">live</span></div>'
+        +'<div class="hx"><div class="hxl">Attendance rate</div><div class="hxbar"><div class="hxf" style="width:'+(att||0)+'%;background:var(--teal)"></div></div><div class="hxv" style="color:var(--teal)">'+(att!=null?att+'%':'—')+'</div></div>'
+        +'<div class="hx"><div class="hxl">No-show rate</div><div class="hxbar"><div class="hxf" style="width:'+noShow+'%;background:var(--red)"></div></div><div class="hxv" style="color:var(--red)">'+noShow+'%</div></div>'
+        +'<div class="cc-row" style="color:var(--dim2);margin-top:8px">Behavioural signal until sentiment capture is live</div></div>'
+     +'<div class="card"><div class="card-h">😊 Sentiment</div><div class="cd-fb"><div class="cc-row" style="justify-content:center;color:var(--dim)">NPS · CSAT</div><div class="v">—</div><span class="soon">live at go-live</span></div></div>'
+     +'<div class="card"><div class="card-h">🧠 Lessons learned</div><div class="fp-ans" id="fbAns" style="display:none"></div><button class="fp-btn ai" id="fbAsk" style="margin-top:8px">Ask Maryam what the data is telling us</button></div>';
+    $('dlCount').textContent='good vs quiet';
+    var grid=$('dlGrid');
+    grid.innerHTML=
+      '<div class="card"><div class="card-h" style="color:var(--green)">👍 Most in-demand · filling fast</div>'+(loved.length?loved.map(function(c){return rowMini(esc(c.title),(c.fillPct!=null?c.fillPct+'%':'—'),'var(--green)');}).join(''):'<div class="loading">Awaiting sessions.</div>')+'</div>'
+     +'<div class="card"><div class="card-h" style="color:var(--amber)">👀 Needs a push · low fill</div>'+(quiet.length?quiet.map(function(c){return rowMini(esc(c.title),(c.fillPct!=null?c.fillPct+'%':'—'),'var(--amber)');}).join(''):'<div class="loading">Awaiting sessions.</div>')+'</div>'
+     +'<div class="card"><div class="card-h">📣 Arriving at go-live</div>'+rowMini('Course ratings','★','var(--dim)')+rowMini('Trainer ratings','★','var(--dim)')+rowMini('Free-text → AI themes','✦','var(--dim)')+'<div style="margin-top:8px"><span class="soon">wired &amp; waiting</span></div></div>';
+    $('fbAsk').onclick=function(){ aiInto('fbAns','fbAsk','From the live engagement signals — attendance rate '+(att!=null?att+'%':'n/a')+', no-show rate '+noShow+'% — and the course fill patterns, what are the three most important lessons we should learn and act on now?','Re-analyse'); };
   }
 
   function openCourseDetail(c){ if(!c)return; var tc=typeColor(c.type),mom=c.momentum||0,det=$('ccDetail');
