@@ -3254,34 +3254,58 @@ document.addEventListener('DOMContentLoaded', loadMyAttendance);
 async function loadCatalogueLive() {
   try {
     var base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
-    var r = await fetch(base.replace(/\/$/,'') + '/api/v1/accreditations/_/catalog');
+    var r = await fetch(base.replace(/\/$/,'') + '/api/v1/courses/upcoming');
     if (!r.ok) return;
-    var j = await r.json();
-    var courses = (j && j.courses) || [];
+    var list = await r.json();
+    if (!Array.isArray(list)) list = [];
+    // Keep only courses that have at least one upcoming session (bookable).
+    var live = list.filter(function (c) { return (c.sessions || []).length; });
     var grid = document.querySelector('#courses .course-grid');
     var desc = document.getElementById('catalogueDesc');
-    if (desc) desc.textContent = courses.length
-      ? courses.length + ' accredited course(s) available'
-      : 'No accredited courses yet.';
+    if (desc) desc.textContent = live.length
+      ? live.length + ' courses · ' + live.reduce(function (n, c) { return n + (c.sessions || []).length; }, 0) + ' upcoming sessions'
+      : 'No upcoming sessions scheduled.';
     if (!grid) return;
-    if (!courses.length) {
-      grid.innerHTML = '<div style="grid-column:1/-1;padding:48px 28px;text-align:center;background:var(--paper);border:1px dashed var(--line);border-radius:14px;color:var(--slate2);font-size:14px;line-height:1.6">No accredited courses available yet.<br><span style="font-size:12.5px;color:var(--slate3)">Courses appear here once LAD has approved them. Check back soon.</span></div>';
+    if (!live.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;padding:48px 28px;text-align:center;background:var(--paper);border:1px dashed var(--line);border-radius:14px;color:var(--slate2);font-size:14px">No upcoming sessions scheduled yet — check back soon.</div>';
       return;
     }
-    grid.innerHTML = courses.map(function (c) {
-      var pts = Number(c.points) || 2;
-      var credits = Number(c.credits) || 5;
-      return '<div class="course-card">'
-        +   '<div class="course-art" style="background:linear-gradient(135deg,#0a2040,#1c3a5e)">'
-        +     '<span class="course-art-tag">ACCREDITED' + (c.format ? ' · ' + String(c.format).toUpperCase() : '') + '</span>'
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    function fmtDate(iso){ var d=new Date(iso); return d.getUTCDate()+' '+months[d.getUTCMonth()]+' '+d.getUTCFullYear(); }
+    function fmtTime(iso){ var d=new Date(iso); var h=d.getUTCHours(),m=d.getUTCMinutes(); var ap=h<12?'am':'pm'; var hh=h%12||12; return hh+':'+(m<10?'0':'')+m+ap; }
+    grid.innerHTML = live.map(function (c) {
+      var pts = Number(c.pts) || 2, credits = Number(c.credits) || 5;
+      var isMand = (c.type || '').toLowerCase() === 'mandatory';
+      var s0 = c.sessions[0];
+      var seats = Number(s0.seats_remaining) || 0;
+      // Register for the booking modal (real backend session ids + live seats).
+      COURSES[c.id] = {
+        title: c.title, icon: '', bg: c.bg || 'linear-gradient(135deg,#0a2040,#1c3a5e)',
+        type: (isMand ? 'MANDATORY' : 'ACCREDITED') + ' · ' + ((c.format||'face-to-face').toUpperCase()),
+        points: pts, provider: c.provider_id || 'LAD Academy', location: c.location || 'Dubai',
+        credits: credits, cost: credits + ' credits',
+        description: c.title + ' — a ' + (isMand ? 'mandatory' : 'accredited') + ' CLPD course. Seats are limited per session.',
+        elearning: false,
+        skillsImpact: (c.tags || []).slice(0,2).map(function(t){ return {label:(t.label||'').slice(0,14), gain:Math.round((t.weight||0.5)*30), from:50}; }),
+        matchScore: '', matchReason: '',
+        sessions: c.sessions.map(function (s) {
+          return { date: fmtDate(s.scheduled_at), start: fmtTime(s.scheduled_at), end: s.end_at?fmtTime(s.end_at):'',
+            seats: Number(s.seats_remaining)||0, partner: c.provider_id||'LAD', lang: s.language||'English',
+            low: (Number(s.seats_remaining)||0)<=5, sid: s.id };
+        }),
+      };
+      return '<div class="course-card" onclick="openBooking(\'' + c.id + '\')">'
+        +   '<div class="course-art" style="background:' + (COURSES[c.id].bg) + '">'
+        +     '<span class="course-art-tag">' + (isMand ? 'MANDATORY' : 'ACCREDITED') + '</span>'
         +     '<div class="course-art-pts">+<em>' + pts + '</em>pts</div>'
         +   '</div>'
         +   '<div class="course-body">'
-        +     '<div class="course-prov">' + (c.provider || 'Accredited provider') + '</div>'
-        +     '<div class="course-title">' + c.courseTitle + '</div>'
-        +     '<div class="course-meta-row" style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-top:6px;letter-spacing:.4px">' + (c.accreditation_code || '') + (c.duration ? ' · ' + c.duration : '') + '</div>'
+        +     '<div class="course-prov">' + (c.provider_id || 'LAD Academy') + '</div>'
+        +     '<div class="course-title">' + c.title + '</div>'
+        +     '<div class="course-meta-row" style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-top:6px;letter-spacing:.4px">Next: ' + fmtDate(s0.scheduled_at) + ' · ' + (seats<=5?('⚠ '+seats+' seats'):(seats+' seats')) + ' · ' + (c.sessions.length) + ' session(s)</div>'
         +   '</div>'
-        +   '<div class="course-foot"><span class="course-fee">' + credits + ' CREDITS</span></div>'
+        +   '<div class="course-foot"><span class="course-fee">' + credits + ' CREDITS</span>'
+        +     '<button class="btn btn-green btn-xs" onclick="event.stopPropagation();openBooking(\'' + c.id + '\')">Book →</button></div>'
         + '</div>';
     }).join('');
   } catch (e) {
@@ -3539,8 +3563,9 @@ async function openBooking(courseId) {
   document.getElementById('bookingOverlay').classList.add('on');
 }
 
-// Live seats for a session = backend count if known, else the seed value.
+// Live seats for a session = backend availability if known, else seed value.
 function seatsFor(idx, s) {
+  if (s && s.sid) return (SEAT_AVAIL && SEAT_AVAIL[s.sid] != null) ? Number(SEAT_AVAIL[s.sid]) : Number(s.seats);
   const sid = currentBookingId + '#' + idx;
   return (SEAT_AVAIL && SEAT_AVAIL[sid] != null) ? Number(SEAT_AVAIL[sid]) : Number(s.seats);
 }
@@ -3596,7 +3621,7 @@ async function confirmBooking(isElearn) {
   const payload = {
     course_id: currentBookingId,
     course_title: c.title,
-    session_id: isF2F && sIdx != null ? currentBookingId + '#' + sIdx : null,
+    session_id: sess && sess.sid ? sess.sid : (isF2F && sIdx != null ? currentBookingId + '#' + sIdx : null),
     scheduled_at: sess ? sess.date : new Date().toISOString(),
     language: sess ? sess.lang : (c.language || 'English'),
     credits_used: c.credits || 5,
