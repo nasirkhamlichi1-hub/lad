@@ -416,6 +416,34 @@ router.post('/query', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// GET /api/v1/admin/firm/:id — rich firm profile (lawyers, bands, courses,
+// compliance) computed server-side, so a firm dives into its whole world.
+router.get('/firm/:id', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
+  const id = req.params.id, year = String(cycleYear());
+  const one = (sql, ...a) => { try { return db.prepare(sql).get(...a) || null; } catch (_) { return null; } };
+  const all = (sql, ...a) => { try { return db.prepare(sql).all(...a); } catch (_) { return []; } };
+  const firm = one('SELECT id, name FROM firms WHERE id = ?', id);
+  if (!firm) return res.status(404).json({ error: 'Firm not found' });
+  const lawyers = all(`SELECT l.id, l.first_name, l.last_name, l.status,
+      COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y',b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts
+    FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id=l.id WHERE l.firm_id=? AND ${_PRACT} GROUP BY l.id`, year, id);
+  let crit = 0, risk = 0, comp = 0;
+  lawyers.forEach((l) => { if (l.pts < 8) crit++; else if (l.pts < 16) risk++; else comp++; });
+  const courses = all(`SELECT COALESCE(NULLIF(b.course_title,''), c.title) title, COUNT(*) n,
+      SUM(CASE WHEN b.status='attended' THEN 1 ELSE 0 END) attended
+    FROM bookings b LEFT JOIN courses c ON c.id=b.course_id JOIN lawyers l ON l.id=b.lawyer_id
+    WHERE l.firm_id=? GROUP BY title ORDER BY n DESC LIMIT 24`, id);
+  const total = lawyers.length;
+  res.json({
+    id: firm.id, name: firm.name, total,
+    counts: { critical: crit, atRisk: risk, compliant: comp },
+    compliancePct: total ? Math.round(100 * comp / total) : 0,
+    lawyers: lawyers.map((l) => ({ id: l.id, name: ((l.first_name || '') + ' ' + (l.last_name || '')).trim() || l.id, points: l.pts, status: l.status })),
+    courses: courses.map((c) => ({ title: c.title || 'Course', count: c.n, attended: c.attended })),
+  });
+});
+
 // POST /api/v1/admin/reclassify-practising — apply the standard practising rules.
 router.post('/reclassify-practising', requireAuth, (req, res) => {
   if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
