@@ -89,7 +89,7 @@
   .twin-label{position:absolute;transform:translate(-50%,-50%);font-family:var(--mono);font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink);pointer-events:none;text-align:center;text-shadow:0 0 10px #000;z-index:6;transition:opacity .4s}
   .twin-label b{display:block;font-family:var(--title);font-size:15px;font-weight:700;color:#eaf4ff;letter-spacing:.5px}
   .twin-label.dim{color:var(--dim)}
-  .centerstage{position:relative;min-height:560px;border:1px solid var(--panel-b);border-radius:18px;background:linear-gradient(180deg,rgba(10,18,38,.30),rgba(6,10,22,.10));overflow:hidden}
+  .centerstage{position:relative;min-height:64vh;border:none;border-radius:18px;background:transparent;overflow:visible}
   .cs-h{position:absolute;top:14px;left:0;right:0;text-align:center;z-index:6;pointer-events:none}
   .cs-h .t{font-family:var(--title);font-size:16px;letter-spacing:3px;color:#eaf4ff}
   .cs-h .s{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--dim);margin-top:3px}
@@ -976,12 +976,12 @@
       TW.anchors.forEach(function(a){
         var v=a.pos.clone(); v.applyMatrix4(group.matrixWorld); v.project(camera);
         var sx=(v.x*0.5+0.5)*W, sy=(-v.y*0.5+0.5)*H;
-        var inStage = sx>rect.left-40 && sx<rect.right+40 && sy>rect.top-20 && sy<rect.bottom+20 && v.z<1;
+        var inStage = sx>-80 && sx<W+80 && sy>56 && sy<H-8 && v.z<1;
         a.el.style.opacity = inStage?'1':'0';
         a.el.style.left=(sx-rect.left)+'px'; a.el.style.top=(sy-rect.top)+'px';
       });
       if(TW.web){ TW.web.anchors.forEach(function(a){ var v=a.pos.clone(); v.project(camera); var sx=(v.x*.5+.5)*W, sy=(-v.y*.5+.5)*H;
-        var inb=sx>rect.left-60&&sx<rect.right+60&&sy>rect.top-30&&sy<rect.bottom+30&&v.z<1;
+        var inb=sx>-80&&sx<W+80&&sy>56&&sy<H-8&&v.z<1;
         a.el.style.opacity=inb?String(0.9*(TW.web.grow||0)):'0'; a.el.style.left=(sx-rect.left)+'px'; a.el.style.top=(sy-rect.top)+'px'; }); }
     }
     function loop(){ TW.raf=requestAnimationFrame(loop);
