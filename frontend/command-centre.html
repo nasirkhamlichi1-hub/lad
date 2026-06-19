@@ -325,7 +325,7 @@
 
 <div id="warp"></div>
 <div id="crumbs"></div>
-<div id="diveHint">◎ Drag to fly · scroll to zoom · shift-drag to pan · click a node to dive in</div>
+<div id="diveHint">◎ Drag to fly · hover to reveal connections · click to dive in · scroll to zoom</div>
 <div id="tourCap"><div class="tc-t" id="tcT"></div><div class="tc-s" id="tcS"></div></div>
 <div id="focusPanel">
   <div class="fp-eye" id="fpEye">PROGRAMME NODE</div>
@@ -702,6 +702,36 @@
     };
     function childrenOf(node){ var fn=DRILL[node.type]; return fn?fn(node):Promise.resolve(null); }
 
+    // ── Connection web: hover a node and faint beams bloom out to the REAL
+    //    things it connects to, revealing the interdependencies live. ──
+    var REL={
+      lawyer:function(node){ return getJSON('/api/v1/lawyers/'+encodeURIComponent(node.id)).then(function(d){ var att=(d&&(d.attendance||d.bookings))||[]; return att.slice(0,9).map(function(a){ return {label:(a.course_title||a.title||a.course_code||'Course'),color:0x1fe0b4}; }); }); },
+      course:function(node){ return needUpcoming().then(function(map){ var ss=map[node.id]||[]; return ss.slice(0,9).map(function(s){ return {label:fdate(s.scheduled_at),color:0x6ab8ff}; }); }); },
+      provider:function(node){ return needAnalytics().then(function(d){ var cs=((d&&d.courses)||[]).filter(function(c){return (c.provider||'LAD')===node.id;}); return cs.slice(0,9).map(function(c){ return {label:c.title,color:typeHex(c.type)}; }); }); },
+      firm:function(node){ return getJSON('/api/v1/firms/'+encodeURIComponent(node.id)+'/lawyers').then(function(rows){ rows=Array.isArray(rows)?rows:((rows&&rows.data)||[]); var c=0,a=0,co=0; rows.forEach(function(l){var p=lawPts(l); if(p<8)c++;else if(p<16)a++;else co++;}); var o=[]; if(c)o.push({label:c+' critical',color:0xff5e7e}); if(a)o.push({label:a+' at risk',color:0xffb84d}); if(co)o.push({label:co+' compliant',color:0x3df0a0}); return o; }); }
+    };
+    var relCache={}, webTimer=null;
+    function relations(node){ if(!node) return Promise.resolve(null); var k=node.type+':'+(node.id||''); if(relCache[k]) return Promise.resolve(relCache[k]); var fn=REL[node.type]; if(!fn) return Promise.resolve(null); return fn(node).then(function(arr){ relCache[k]=arr||[]; return relCache[k]; }).catch(function(){ return null; }); }
+    function clearWeb(){ if(TW.web){ try{ scene.remove(TW.web.group); }catch(e){} TW.web.anchors.forEach(function(a){ if(a.el&&a.el.parentNode) a.el.parentNode.removeChild(a.el); }); } TW.web=null; TW.webKey=null; }
+    function buildWeb(core){
+      relations(core.node).then(function(arr){ if(hovered!==core||!arr||!arr.length) return;
+        var base=core.pos, n=arr.length, R=core.node&&core.node.type==='center'?52:26;
+        var grp=new THREE.Group(); grp.position.copy(base); scene.add(grp); var flows=[], anchors=[];
+        arr.forEach(function(rel,i){ var ang=i*2*Math.PI/n, lift=(i%2?1:-1)*R*0.5+Math.sin(i)*4;
+          var p=new THREE.Vector3(Math.cos(ang)*R, lift, Math.sin(ang)*R);
+          var c2=new THREE.Mesh(new THREE.SphereGeometry(2.3,12,12),new THREE.MeshBasicMaterial({color:rel.color,transparent:true,opacity:.95})); c2.position.copy(p); grp.add(c2);
+          var h2=new THREE.Mesh(new THREE.SphereGeometry(5,12,12),new THREE.MeshBasicMaterial({color:rel.color,transparent:true,opacity:.16,blending:THREE.AdditiveBlending,depthWrite:false})); h2.position.copy(p); grp.add(h2);
+          grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),p]),new THREE.LineBasicMaterial({color:rel.color,transparent:true,opacity:.4,blending:THREE.AdditiveBlending})));
+          var N=6,fa=new Float32Array(N*3),t=[]; for(var k=0;k<N;k++)t.push(Math.random()); var fg=new THREE.BufferGeometry(); fg.setAttribute('position',new THREE.BufferAttribute(fa,3)); grp.add(new THREE.Points(fg,new THREE.PointsMaterial({color:rel.color,size:2.3,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false}))); flows.push({a:new THREE.Vector3(0,0,0),b:p.clone(),t:t,geo:fg});
+          var hex='#'+('000000'+rel.color.toString(16)).slice(-6);
+          var el=document.createElement('div'); el.className='twin-label dim'; el.style.cssText='font-size:8px'; el.innerHTML='<b style="font-size:1px;opacity:0"> </b>'+esc(rel.label); el.style.color=hex; stage.appendChild(el);
+          anchors.push({el:el,pos:base.clone().add(p)});
+        });
+        grp.scale.setScalar(0.02);
+        TW.web={group:grp,flows:flows,anchors:anchors,grow:0}; TW.webKey=core.key;
+      });
+    }
+
     // Build one ball (swarm + glowing core + halo + hit-sphere + floating label).
     function addBall(grp,opt,coresArr,anchorsArr){
       var pos=opt.pos,color=opt.color,isC=opt.isCenter,count=opt.count;
@@ -739,11 +769,11 @@
     function disposeEco(eco){ if(!eco)return; eco.anchors.forEach(function(a){ if(a.el&&a.el.parentNode)a.el.parentNode.removeChild(a.el); }); try{ scene.remove(eco.group); }catch(e){} }
     function warpFlash(cb){ var w=$('warp'); if(!w){ cb(); return; } w.classList.add('on'); setTimeout(function(){ try{cb();}catch(e){} setTimeout(function(){ w.classList.remove('on'); },300); },240); }
     function frameReset(r){ TW.orb.cx=0;TW.orb.cy=0;TW.orb.cz=0;TW.orb.tr=r||265; }
-    window.diveInto=function(node){ if(TW.busy||!node) return; TW.busy=true; warpFlash(function(){
+    window.diveInto=function(node){ if(TW.busy||!node) return; clearWeb(); TW.busy=true; warpFlash(function(){
       childrenOf(node).then(function(spec){ if(!spec||!spec.children||!spec.children.length){ TW.busy=false; showNodeDetail(node); return; }
         hideEco(TW.active); TW.stack.push(TW.active); var eco=buildSubEco(spec); setActive(eco); frameReset(eco.radius); document.body.classList.add('focus'); renderCrumbs(); TW.busy=false;
       }).catch(function(){ TW.busy=false; }); }); };
-    window.diveBack=function(){ if(TW.busy||!TW.stack.length) return; TW.busy=true; warpFlash(function(){ var cur=TW.active; var prev=TW.stack.pop(); disposeEco(cur); setActive(prev); frameReset(prev.radius); renderCrumbs(); if(!TW.stack.length){ document.body.classList.remove('focus'); var fp=$('focusPanel'); if(fp) fp.classList.remove('on'); } TW.busy=false; }); };
+    window.diveBack=function(){ if(TW.busy||!TW.stack.length) return; clearWeb(); TW.busy=true; warpFlash(function(){ var cur=TW.active; var prev=TW.stack.pop(); disposeEco(cur); setActive(prev); frameReset(prev.radius); renderCrumbs(); if(!TW.stack.length){ document.body.classList.remove('focus'); var fp=$('focusPanel'); if(fp) fp.classList.remove('on'); } TW.busy=false; }); };
     function goToLevel(i){ if(TW.busy) return; while(TW.stack.length>i){ var cur=TW.active; disposeEco(cur); TW.active=TW.stack.pop(); } setActive(TW.active); frameReset(TW.active.radius); renderCrumbs(); if(!TW.stack.length){ document.body.classList.remove('focus'); var fp=$('focusPanel'); if(fp) fp.classList.remove('on'); } }
     window.goToLevel=goToLevel;
     function renderCrumbs(){ var c=$('crumbs'); if(!c) return; var st=TW.stack||[]; if(!st.length){ c.classList.remove('on'); c.innerHTML=''; return; }
@@ -771,7 +801,7 @@
 
     // The home twin is the base of the dive stack.
     TW.active={cores:TW.cores,anchors:TW.anchors,flows:TW.flows,group:group,radius:265,spec:{title:'Home',type:'home'}};
-    TW.stack=[]; TW.busy=false;
+    TW.stack=[]; TW.busy=false; TW.web=null; TW.webKey=null;
 
     var pointer=new THREE.Vector2(-2,-2);
     window.addEventListener('mousemove',function(e){ pointer.x=(e.clientX/W)*2-1; pointer.y=-(e.clientY/H)*2+1; });
@@ -881,7 +911,7 @@
       else showFocusPanel(key);
     };
     window.exitFocus=function(){
-      TW.focusKey=null;
+      TW.focusKey=null; if(typeof clearWeb==='function') clearWeb();
       // unwind any dive levels back to the home ecosystem
       if(TW.stack&&TW.stack.length){ while(TW.stack.length){ var cur=TW.active; disposeEco(cur); TW.active=TW.stack.pop(); } setActive(TW.active); renderCrumbs(); }
       frameHome();
@@ -924,6 +954,9 @@
         a.el.style.opacity = inStage?'1':'0';
         a.el.style.left=(sx-rect.left)+'px'; a.el.style.top=(sy-rect.top)+'px';
       });
+      if(TW.web){ TW.web.anchors.forEach(function(a){ var v=a.pos.clone(); v.project(camera); var sx=(v.x*.5+.5)*W, sy=(-v.y*.5+.5)*H;
+        var inb=sx>rect.left-60&&sx<rect.right+60&&sy>rect.top-30&&sy<rect.bottom+30&&v.z<1;
+        a.el.style.opacity=inb?String(0.9*(TW.web.grow||0)):'0'; a.el.style.left=(sx-rect.left)+'px'; a.el.style.top=(sy-rect.top)+'px'; }); }
     }
     function loop(){ TW.raf=requestAnimationFrame(loop);
       // free-fly orbit camera (damped); gentle idle auto-spin when untouched
@@ -937,6 +970,11 @@
       if(TW.flows){ var sp=0.0055+(TW.health!=null?(1-TW.health/100)*0.004:0); TW.flows.forEach(function(f){ var p=f.geo.attributes.position.array;
         for(var i=0;i<f.t.length;i++){ f.t[i]+=sp; if(f.t[i]>1) f.t[i]-=1; var tt=f.t[i]; p[i*3]=f.a.x+(f.b.x-f.a.x)*tt; p[i*3+1]=f.a.y+(f.b.y-f.a.y)*tt; p[i*3+2]=f.a.z+(f.b.z-f.a.z)*tt; }
         f.geo.attributes.position.needsUpdate=true; }); }
+      // connection web — bloom out to the things this node touches
+      if(TW.web){ if(TW.web.grow<1){ TW.web.grow=Math.min(1,TW.web.grow+0.12); TW.web.group.scale.setScalar(TW.web.grow); }
+        TW.web.flows.forEach(function(f){ var p=f.geo.attributes.position.array; for(var i=0;i<f.t.length;i++){ f.t[i]+=0.013; if(f.t[i]>1)f.t[i]-=1; var tt=f.t[i]; p[i*3]=f.a.x+(f.b.x-f.a.x)*tt;p[i*3+1]=f.a.y+(f.b.y-f.a.y)*tt;p[i*3+2]=f.a.z+(f.b.z-f.a.z)*tt; } f.geo.attributes.position.needsUpdate=true; }); }
+      var hk=hovered?hovered.key:null;
+      if(hk!==TW.webKey){ if(TW.web) clearWeb(); clearTimeout(webTimer); if(hk&&hovered.node&&REL[hovered.node.type]&&!TW.busy&&!TW.focusKey){ var hc=hovered; webTimer=setTimeout(function(){ if(hovered===hc) buildWeb(hc); },200); } }
       // health heartbeat — the central node breathes at the programme's tempo
       var hb=0.5+0.5*Math.sin(performance.now()/1000*(TW.pulseFreq||1.2)*Math.PI);
       TW.cores.forEach(function(c){ var foc=(hovered&&hovered.key===c.key)||(TW.focusKey===c.key); var want=foc?2.0:(c.key==='Lawyers'?(1.15+0.5*hb):1); c.halo.scale.setScalar(c.halo.scale.x+(want-c.halo.scale.x)*0.16); if(c.key==='Lawyers'&&!foc) c.halo.material.opacity=0.10+0.12*hb; });
