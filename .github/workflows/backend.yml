@@ -111,8 +111,14 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # The image is pushed to GHCR above; the App Service pulls :latest itself
+      # via its own container continuous-deployment. This explicit push is a
+      # secondary path that depends on a valid publish profile — if it can't
+      # reach the app ("Failed to get app runtime OS"), don't fail the whole
+      # run, since the real deploy still happens from GHCR.
       - name: Deploy container image to the Web App
         if: steps.cfg.outputs.ready == 'true'
+        continue-on-error: true
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ vars.AZURE_WEBAPP_NAME || 'clpd-lad-api-0878' }}

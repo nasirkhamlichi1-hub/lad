@@ -54,4 +54,4 @@ ENTRYPOINT ["/sbin/tini", "--"]
 # it can't block the event loop); the app also self-heals feedback/accredited
 # data lazily. SQLite WAL + busy_timeout lets the seed and the live server share
 # the file safely.
-CMD ["sh", "-c", "node scripts/migrate.js || true; { node scripts/seed-if-needed.js; node scripts/seed-feedback.js; node scripts/seed-accredited.js; } & exec node src/server.js"]
+CMD ["sh", "-c", "node scripts/migrate.js || true; { node scripts/seed-if-needed.js; node scripts/seed-feedback.js; node scripts/seed-accredited.js; node scripts/dedupe-firms.js; } & exec node src/server.js"]
