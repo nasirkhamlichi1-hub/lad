@@ -357,7 +357,7 @@
     <button id="tmPlay">▶ Play</button><button id="tmClose">✕</button></div>
   <div id="tmTrack"><div id="tmLine"></div><div id="tmProj"></div><div id="tmFill"></div><div id="tmHandle"></div></div>
 </div>
-<div id="diveHint">◎ Drag to fly · hover to reveal connections · click to dive in · scroll to zoom</div>
+<div id="diveHint">◎ Drag to fly · click to dive in · zoom out to fly back up · hover to reveal connections</div>
 <div id="queryBar">
   <span class="qmark">✦</span>
   <input id="qbInput" autocomplete="off" placeholder="Ask the data…  e.g. firms with over 30 lawyers · this week's courses · critical lawyers"/>
@@ -874,7 +874,16 @@
       else { var k=TW.orbR.r*0.0016; var right=new THREE.Vector3().setFromMatrixColumn(camera.matrix,0); var up=new THREE.Vector3().setFromMatrixColumn(camera.matrix,1);
         var mv=right.multiplyScalar(-dx*k).add(up.multiplyScalar(dy*k)); TW.orb.cx+=mv.x; TW.orb.cy+=mv.y; TW.orb.cz+=mv.z; } });
     // Zoom over the open 3D area; let real panels keep their native scroll.
-    window.addEventListener('wheel',function(e){ if(e.target.closest&&e.target.closest('.card,#focusPanel,#deepLayer,#crumbs,#timeMachine,#queryBar,header')) return; e.preventDefault(); TW.orb.tr=Math.max(28,Math.min(1300,TW.orb.tr*(e.deltaY>0?1.1:0.9))); },{passive:false});
+    window.addEventListener('wheel',function(e){ if(e.target.closest&&e.target.closest('.card,#focusPanel,#deepLayer,#crumbs,#timeMachine,#queryBar,header')) return; e.preventDefault();
+      var nr=Math.max(28,Math.min(1300,TW.orb.tr*(e.deltaY>0?1.1:0.9)));
+      // Zoom out past the edge of a sub-ecosystem and you fly back up a level —
+      // keep scrolling out to keep climbing, so you move in and out of nodes.
+      if(e.deltaY>0 && TW.stack && TW.stack.length && !TW.busy){
+        var lim=((TW.active&&TW.active.radius)||265)*1.6;
+        if(nr>=lim){ window.diveBack(); return; }
+      }
+      TW.orb.tr=nr;
+    },{passive:false});
     window.addEventListener('contextmenu',function(e){ if(!(e.target.closest&&e.target.closest(SKIP))) e.preventDefault(); });
     function resize(){ W=window.innerWidth;H=window.innerHeight; camera.aspect=W/H; camera.updateProjectionMatrix(); renderer.setSize(W,H); }
     window.addEventListener('resize',resize);
