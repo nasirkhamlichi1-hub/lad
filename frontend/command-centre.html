@@ -1612,8 +1612,8 @@
   }
   window.fbToggle=function(id){ var e=document.getElementById('exp_'+id); if(e) e.style.display = e.style.display==='block'?'none':'block'; };
 
-  // Satisfaction-star for metric m: 5 × proportion rated Good or better (3+).
-  function satStar(dist){ if(!dist) return null; var t=(dist[1]||0)+(dist[2]||0)+(dist[3]||0)+(dist[4]||0)+(dist[5]||0); if(!t) return null; return Math.round(((dist[3]||0)+(dist[4]||0)+(dist[5]||0))/t*5*100)/100; }
+  // Satisfaction-star for metric m: 5 × proportion rated Very Good or Excellent (4+).
+  function satStar(dist){ if(!dist) return null; var t=(dist[1]||0)+(dist[2]||0)+(dist[3]||0)+(dist[4]||0)+(dist[5]||0); if(!t) return null; return Math.round(((dist[4]||0)+(dist[5]||0))/t*5*100)/100; }
   function metricStar(x){ if(!x) return null; if(x.dist){ var v=satStar(x.dist); if(v!=null) return v; } return x.avg!=null?x.avg:null; }
   // Combine metric m across per-year rows by pooling their distributions.
   function avgM(rows,m){ var d={1:0,2:0,3:0,4:0,5:0},any=false; rows.forEach(function(r){ var x=r.metrics&&r.metrics[m]; if(x&&x.dist){ any=true; for(var k in x.dist) d[k]+=x.dist[k]; } }); if(any){ var v=satStar(d); return v==null?null:{avg:v}; }

@@ -29,14 +29,14 @@ function loadFeedback(db) {
 
   const a = (m, k) => (m && m[k] ? satStar(m[k].dist, m[k].avg) : null);
 
-  // Displayed score = 5 × proportion who rated Good or better (3+), i.e. the
-  // satisfaction % mapped onto 5 stars (100%→5, 80%→4, 60%→3 …). Falls back to
-  // the raw mean if no distribution is available.
+  // Displayed score = 5 × proportion who rated Very Good or Excellent (4+) — the
+  // satisfaction % (top-2 box) mapped onto 5 stars (100%→5, 80%→4, 60%→3 …).
+  // Falls back to the raw mean if no distribution is available.
   function satStar(dist, mean) {
     if (!dist) return mean == null ? null : mean;
     const tot = (dist[1] || 0) + (dist[2] || 0) + (dist[3] || 0) + (dist[4] || 0) + (dist[5] || 0);
     if (!tot) return null;
-    return Math.round(((dist[3] || 0) + (dist[4] || 0) + (dist[5] || 0)) / tot * 5 * 100) / 100;
+    return Math.round(((dist[4] || 0) + (dist[5] || 0)) / tot * 5 * 100) / 100;
   }
 
   const tx = db.transaction(() => {
