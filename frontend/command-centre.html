@@ -179,6 +179,11 @@
   #bandLegend{position:absolute;left:16px;bottom:16px;z-index:7;display:none;gap:14px;font-family:var(--mono);font-size:10px;letter-spacing:.5px;color:var(--dim);background:rgba(7,12,26,.55);border:1px solid var(--panel-b);border-radius:12px;padding:8px 13px;backdrop-filter:blur(8px)}
   #bandLegend span{display:flex;align-items:center;gap:5px}
   #bandLegend i{width:8px;height:8px;border-radius:2px;display:inline-block}
+  /* cinematic tour caption */
+  #tourCap{position:fixed;left:50%;bottom:104px;transform:translateX(-50%) translateY(18px);z-index:35;text-align:center;opacity:0;transition:opacity .6s,transform .6s;pointer-events:none;max-width:640px;padding:0 20px}
+  #tourCap.on{opacity:1;transform:translateX(-50%)}
+  #tourCap .tc-t{font-family:var(--title);font-size:26px;letter-spacing:1px;color:#eaf4ff;text-shadow:0 0 26px rgba(52,225,255,.45)}
+  #tourCap .tc-s{font-family:var(--mono);font-size:12px;letter-spacing:1.8px;color:var(--cyan);margin-top:7px;text-transform:uppercase}
   @media(max-width:1200px){.stage{grid-template-columns:1fr}.kstrip{grid-template-columns:repeat(3,1fr)}.bottom{grid-template-columns:1fr 1fr}.centerstage{min-height:440px}}
 </style>
 </head>
@@ -234,6 +239,7 @@
         <div class="cs-foot">
           <button class="prim" onclick="cmdAsk('Give me a full executive readout of programme health and the three most important actions this week.')">✦ Ask the AI</button>
           <button onclick="location.href='lad-intelligence-v4.html'">Open dashboard</button>
+          <button onclick="startTour()">▶ Tour</button>
           <button onclick="cmdRotate()">⟲ Orbit</button>
         </div>
       </div>
@@ -305,7 +311,8 @@
   </div>
 </div>
 
-<div id="diveHint">◎ Click any node to dive into that part of the programme</div>
+<div id="diveHint">◎ Click any node to dive in · ▶ Tour for the cinematic fly-through</div>
+<div id="tourCap"><div class="tc-t" id="tcT"></div><div class="tc-s" id="tcS"></div></div>
 <div id="focusPanel">
   <div class="fp-eye" id="fpEye">PROGRAMME NODE</div>
   <div class="fp-title" id="fpTitle">—</div>
@@ -647,6 +654,7 @@
       var t=e.target;
       // Don't hijack real controls; otherwise a click anywhere a node sits is fair game.
       if(t.closest('#focusPanel')||t.closest('header')||t.closest('button')||t.closest('a')) return;
+      if(TW.tourActive){ window.exitFocus(); return; }   // any click ends the cinematic tour
       pick();
       if(hovered) window.focusCluster(hovered.key);
       else if(TW.focusKey && (t.id==='twin'||t.closest('#centerstage'))) window.exitFocus();
@@ -720,7 +728,33 @@
     window.exitFocus=function(){
       TW.focusKey=null; TW.camTarget.set(mx*60,40,250); TW.lookTarget.set(0,0,0);
       document.body.classList.remove('focus'); var fp=$('focusPanel'); if(fp) fp.classList.remove('on');
+      if(TW.tourActive){ TW.tourActive=false; clearTimeout(tourTimer); var tc=$('tourCap'); if(tc) tc.classList.remove('on'); }
     };
+
+    // ── Cinematic presentation mode: a narrated camera fly-through ──
+    var TOUR=[
+      {key:null,t:'Legal Ecosystem Digital Twin',s:'The living model of the CLPD programme'},
+      {key:'Lawyers',t:'The Profession',s:function(o){return o?nf((o.lawyers||{}).practising)+' practising · '+((o.lawyers||{}).complianceRate||0)+'% compliant':'People';}},
+      {key:'Law Firms',t:'The Firms',s:function(o){return o?nf((o.firms||{}).total)+' firms · ranked by live compliance':'Practice';}},
+      {key:'Courses',t:'The Catalogue',s:function(o){return o?nf((o.courses||{}).active)+' active courses · live demand':'Learning';}},
+      {key:'Sessions',t:'Delivery',s:function(o){return o?nf((o.sessions||{}).upcoming)+' sessions · '+nf((o.sessions||{}).openSeats)+' seats open':'Capacity';}},
+      {key:'Accreds',t:'Accreditation',s:function(o){return o?nf((o.accreditations||{}).pending)+' applications in the pipeline':'Regulation';}},
+      {key:'Winners',t:"What's Working",s:function(){return 'Hot topics · momentum · the winners';}},
+      {key:'At Risk',t:'The War Room',s:function(o){return o?nf((o.lawyers||{}).critical)+' critical · AI intervention plan':'Non-compliance';}},
+      {key:'Feedback',t:'The Voice of the Profession',s:function(){return 'Engagement signals · lessons learned';}},
+      {key:null,t:'Real today. Exponential at go-live.',s:'CLPD Command Centre'}
+    ];
+    var tourTimer=null;
+    window.startTour=function(){ if(TW.tourActive){ window.exitFocus(); return; } TW.tourActive=true; TW.spin=false; document.body.classList.add('focus'); tourStep(0); };
+    function tourStep(i){ if(!TW.tourActive) return; if(i>=TOUR.length){ window.exitFocus(); return; }
+      var step=TOUR[i], o=window.__OV, tc=$('tourCap'); tc.classList.remove('on');
+      setTimeout(function(){ if(!TW.tourActive) return;
+        $('tcT').textContent=step.t; $('tcS').textContent=(typeof step.s==='function'?step.s(o):step.s)||''; tc.classList.add('on');
+        if(step.key){ var c=TW.cores.filter(function(x){return x.key===step.key;})[0]; if(c){ var wp=c.pos.clone().applyMatrix4(group.matrixWorld); TW.camTarget.set(wp.x*0.5, wp.y+14, wp.z*0.5+120); TW.lookTarget.copy(wp); } }
+        else { TW.camTarget.set(0,40,250); TW.lookTarget.set(0,0,0); }
+      },350);
+      tourTimer=setTimeout(function(){ tourStep(i+1); }, 4200);
+    }
 
     var stage=$('centerstage');
     function project(){
