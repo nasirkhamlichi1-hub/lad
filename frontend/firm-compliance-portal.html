@@ -2162,7 +2162,7 @@ async function saveAssign() {
 // the firm portal's L-01496 ≠ the backend's L-01496 and point awards land
 // on the wrong lawyer record.
 // Fabricated demo lawyers (invented names + emails) removed. The real cohort is
-// loaded from /api/v1/firms/F-GA/lawyers at boot by loadFirmLawyersFromBackend().
+// loaded from /api/v1/firms/me/lawyers at boot by loadFirmLawyersFromBackend().
 // Empty fallback renders a neutral "No lawyers" state instead of fake people.
 let LAWYERS = [];
 
@@ -2173,14 +2173,14 @@ let COURSES = [];
 window.COURSES = COURSES;  // expose so the config loader can replace the contents
 
 // Fabricated demo bookings (invented lawyer names + dates) removed. Real confirmed
-// bookings load from /api/v1/firms/F-GA/bookings into firmBookingsLive.
+// bookings load from /api/v1/firms/me/bookings into firmBookingsLive.
 const BOOKINGS = [];
 
 // Live confirmed bookings from the backend (null = not loaded yet → use empty).
 let firmBookingsLive = null;
 
 // Fabricated demo insights removed. Insights are computed live from real lawyer
-// data (computeInsights) or loaded from /api/v1/firms/F-GA/insights; this seed
+// data (computeInsights) or loaded from /api/v1/firms/me/insights; this seed
 // array is unused. Kept empty so nothing invented can leak.
 const INSIGHTS = [];
 
@@ -2908,7 +2908,7 @@ async function loadFirmBookings() {
   let rows = null;
   for (let attempt = 1; attempt <= 4 && rows === null; attempt++) {
     try {
-      const r = await fetch(base + '/api/v1/firms/F-GA/bookings', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
+      const r = await fetch(base + '/api/v1/firms/me/bookings', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
       if (r.ok) { const j = await r.json(); if (Array.isArray(j)) rows = j; }
     } catch (e) { /* retry */ }
     if (rows === null && attempt < 4) await new Promise(res => setTimeout(res, attempt * 2000));
@@ -3062,7 +3062,7 @@ async function renderInsights() {
   if (token) {
     for (let attempt = 1; attempt <= 3 && !cards; attempt++) {
       try {
-        const r = await fetch(base + '/api/v1/firms/F-GA/insights', { headers: { Authorization: 'Bearer ' + token } });
+        const r = await fetch(base + '/api/v1/firms/me/insights', { headers: { Authorization: 'Bearer ' + token } });
         if (r.ok) {
           const j = await r.json();
           if (Array.isArray(j.cards) && j.cards.length) {
@@ -3922,7 +3922,7 @@ async function loadFirmLawyersFromBackend() {
   const token = localStorage.getItem('lad_token') || '';
   if (!token) return false;  // firm-CO or super_admin must be signed in
   try {
-    const r = await fetch(base + '/api/v1/firms/F-GA/lawyers', {
+    const r = await fetch(base + '/api/v1/firms/me/lawyers', {
       headers: { Authorization: 'Bearer ' + token },
       cache: 'no-store',
     });
@@ -4135,7 +4135,7 @@ async function loadFirmIdentity() {
   const token = localStorage.getItem('lad_token') || '';
   if (!base || !token) return;
   try {
-    const r = await fetch(base + '/api/v1/firms/F-GA', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
+    const r = await fetch(base + '/api/v1/firms/me', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' });
     if (!r.ok) return;
     const firm = await r.json();
     const name = (firm && (firm.name || firm.full_name) || '').toString().trim();
