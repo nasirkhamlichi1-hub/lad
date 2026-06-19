@@ -50,7 +50,20 @@ function alreadyApplied(id) {
 
 function applyOne(m) {
   const tx = db.transaction(() => {
-    db.exec(m.sql);
+    try {
+      db.exec(m.sql);
+    } catch (e) {
+      // SQLite has no "ADD COLUMN IF NOT EXISTS". If a column was already added
+      // out-of-band (e.g. by the app's self-heal path), the bare ALTER throws
+      // "duplicate column name". Re-run statement-by-statement, skipping only
+      // those duplicate-column errors, so ALTER-based migrations are idempotent
+      // and a later migration can never be permanently blocked by this.
+      if (!/duplicate column name/i.test(e.message)) throw e;
+      for (const stmt of m.sql.split(';').map((s) => s.trim()).filter(Boolean)) {
+        try { db.exec(stmt); }
+        catch (e2) { if (!/duplicate column name/i.test(e2.message)) throw e2; }
+      }
+    }
     db.prepare('INSERT INTO _migrations (id, checksum) VALUES (?, ?)').run(m.id, m.checksum);
   });
   tx();

@@ -2711,62 +2711,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
             <button class="btn btn-ghost btn-sm" id="simNext" onclick="scrollSim(1)" title="Scroll right" style="width:34px;padding:6px 0">›</button>
           </div>
         </div>
-        <div class="similar-strip" id="simStrip">
-          <div class="similar-card" style="cursor:default">
-            <div class="similar-art" style="background:linear-gradient(135deg,#2a1a3a,#0a0e14)">
-              <span class="similar-art-because">96% match</span>
-              <div class="similar-art-pts">2<em>pts</em></div>
-            </div>
-            <div class="similar-body">
-              <div class="similar-prov">LAD ACADEMY</div>
-              <div class="similar-title">Generative AI · Hands-On with Copilot</div>
-              <div class="similar-link">EXTENDS YOUR ETHICS TRACK →</div><button class="similar-book-btn" onclick="event.stopPropagation();bookSuggestedCourse('Generative AI · Copilot','View sessions','session')">Book →</button></div></div>
-          <div class="similar-card" style="cursor:default">
-            <div class="similar-art" style="background:linear-gradient(135deg,#3b0764,#1e1b4b)">
-              <span class="similar-art-because">94% match</span>
-              <div class="similar-art-pts">2<em>pts</em></div>
-            </div>
-            <div class="similar-body">
-              <div class="similar-prov">LAD ACADEMY · FREE</div>
-              <div class="similar-title">AI Governance: Legal Risk & Compliance</div>
-              <div class="similar-link">PEERS WHO TOOK ETHICS-AI ALSO BOOKED →</div><button class="similar-book-btn similar-book-free" onclick="event.stopPropagation();bookSuggestedCourse('AI Governance','Self-paced · Start anytime','elearning')">Enrol free →</button></div></div>
-          <div class="similar-card" style="cursor:default">
-            <div class="similar-art" style="background:linear-gradient(135deg,#3a2a1a,#1a1208)">
-              <span class="similar-art-because">89% match</span>
-              <div class="similar-art-pts">4<em>pts</em></div>
-            </div>
-            <div class="similar-body">
-              <div class="similar-prov">DUBAI ADR CENTRE</div>
-              <div class="similar-title">Mediation Advocacy for Lawyers</div>
-              <div class="similar-link">ALIGNS WITH ARBITRATION FOCUS →</div><button class="similar-book-btn" onclick="event.stopPropagation();bookSuggestedCourse('Mediation Advocacy','View sessions','session')">Book →</button></div></div>
-          <div class="similar-card" style="cursor:default">
-            <div class="similar-art" style="background:linear-gradient(135deg,#0a2040,#020817)">
-              <span class="similar-art-because">87% match</span>
-              <div class="similar-art-pts">2<em>pts</em></div>
-            </div>
-            <div class="similar-body">
-              <div class="similar-prov">DIFC ACADEMY</div>
-              <div class="similar-title">International Arbitration & the Courts</div>
-              <div class="similar-link">DIFC DAY · 28 MAY · BOOKED ✓ →</div><button class="similar-book-btn similar-book-booked" disabled>✓ Booked</button></div></div>
-          <div class="similar-card" style="cursor:default">
-            <div class="similar-art" style="background:linear-gradient(135deg,#0c1a4a,#020817)">
-              <span class="similar-art-because">82% match</span>
-              <div class="similar-art-pts">2<em>pts</em></div>
-            </div>
-            <div class="similar-body">
-              <div class="similar-prov">LAD ACADEMY · FREE</div>
-              <div class="similar-title">Insolvency · Federal Decree-Law 19</div>
-              <div class="similar-link">YOUR PEERS RATED 4.9/5 →</div><button class="similar-book-btn similar-book-free" onclick="event.stopPropagation();bookSuggestedCourse('Insolvency','Self-paced · Start anytime','elearning')">Enrol free →</button></div></div>
-          <div class="similar-card" style="cursor:default">
-            <div class="similar-art" style="background:linear-gradient(135deg,#3a1a2a,#1a0810)">
-              <span class="similar-art-because">79% match</span>
-              <div class="similar-art-pts">4<em>pts</em></div>
-            </div>
-            <div class="similar-body">
-              <div class="similar-prov">DUBAI ADR CENTRE</div>
-              <div class="similar-title">Business Negotiation to Close Deals</div>
-              <div class="similar-link">PARTNER-LEVEL CONTENT →</div><button class="similar-book-btn" onclick="event.stopPropagation();bookSuggestedCourse('Business Negotiation','View sessions','session')">Book →</button></div></div>
-        </div>
+        <div class="similar-strip" id="simStrip"><!-- populated by renderBasedOnHistory() from live CAT_LIVE courses --></div>
       </section>
 
       <!-- ═══ COURSE CATALOGUE ═══ -->
@@ -3170,6 +3115,10 @@ const scrollToById = (id) => goToSection(id);
 // stay stuck on a blank page after the deploy.
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('.section[style*="display"]').forEach(s => {
+    // Leave #similar and #file hidden: #similar is only revealed once
+    // renderBasedOnHistory has real picks, and #file stays out of the
+    // lawyer flow — blanket-unhiding them would surface stale/dead UI.
+    if (s.id === 'similar' || s.id === 'file') return;
     s.style.display = '';
   });
 });
@@ -3229,12 +3178,12 @@ function paintMyRecord(me) {
   // they're failing a target they don't have.
   const isPractising = me.practicing !== false && me.practicing !== 0;
   if (!isPractising) {
+    const first = (me.firstName || '').trim();
+    const last  = (me.lastName  || '').trim();
+    const fullName = me.fullName || (first + ' ' + last).trim();
+    const initials = ((first[0] || '') + (last[0] || '')).toUpperCase() || 'L';
     const overview = document.getElementById('overview');
     if (overview) {
-      const first = (me.firstName || '').trim();
-      const last  = (me.lastName  || '').trim();
-      const fullName = me.fullName || (first + ' ' + last).trim();
-      const initials = ((first[0] || '') + (last[0] || '')).toUpperCase() || 'L';
       overview.innerHTML = `
         <div style="background:#fff;border-radius:18px;padding:32px 36px;border:1px solid var(--line);max-width:760px">
           <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap">
@@ -3531,7 +3480,7 @@ async function loadCatalogueLive() {
         skillsImpact:(c.tags||[]).slice(0,2).map(function(t){return {label:(t.label||'').slice(0,14),gain:Math.round((t.weight||0.5)*30),from:50};}),
         matchScore:'', matchReason:'',
         rating:c.rating||null, provider_rating:c.provider_rating||null,
-        sessions:sess.map(function(s){ return {date:catFmtDate(s.scheduled_at),start:catFmtTime(s.scheduled_at),end:s.end_at?catFmtTime(s.end_at):'',seats:Number(s.seats_remaining)||0,partner:provider,lang:s.language||'English',low:(Number(s.seats_remaining)||0)<=5,sid:s.id}; }),
+        sessions:sess.map(function(s){ return {date:catFmtDate(s.scheduled_at),iso:s.scheduled_at,start:catFmtTime(s.scheduled_at),end:s.end_at?catFmtTime(s.end_at):'',seats:Number(s.seats_remaining)||0,partner:provider,lang:s.language||'English',low:(Number(s.seats_remaining)||0)<=5,sid:s.id}; }),
       };
       return { id:c.id, title:c.title, pts:pts, credits:credits, isMand:isMand, internal:isPriv, provider:provider, sessions:sess, rating:c.rating||null };
     });
@@ -4023,6 +3972,7 @@ function ratingRow(label, val){
 function renderBookingRatings(c, courseId){
   var host = document.getElementById('bkRatings');
   if (!host) return;
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(ch){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]);}); }
   host.style.display = 'none'; host.innerHTML = '';
   function paint(rating, prov){
     if ((!rating || !rating.responses) && (!prov || !prov.responses)) return;
@@ -4186,7 +4136,7 @@ async function confirmBooking(isElearn) {
     course_id: currentBookingId,
     course_title: c.title,
     session_id: sess && sess.sid ? sess.sid : (isF2F && sIdx != null ? currentBookingId + '#' + sIdx : null),
-    scheduled_at: sess ? sess.date : new Date().toISOString(),
+    scheduled_at: (sess && sess.iso) ? sess.iso : new Date().toISOString(),
     language: sess ? sess.lang : (c.language || 'English'),
     credits_used: c.credits || 5,
   };

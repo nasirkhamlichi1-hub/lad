@@ -114,9 +114,10 @@ router.get('/', requireAuth, (req, res) => {
     args.push(q, q, q, q, q, q);
   }
   const band = (req.query.band || '').toString();
+  // Bands must match the rest of the platform: critical <8, at-risk 8–15, compliant 16+.
   if (band === 'critical') where.push('COALESCE(l.lifetime_points,0) < 8');
-  else if (band === 'at-risk') where.push('COALESCE(l.lifetime_points,0) >= 8 AND COALESCE(l.lifetime_points,0) < 13');
-  else if (band === 'compliant') where.push('COALESCE(l.lifetime_points,0) >= 13');
+  else if (band === 'at-risk') where.push('COALESCE(l.lifetime_points,0) >= 8 AND COALESCE(l.lifetime_points,0) < 16');
+  else if (band === 'compliant') where.push('COALESCE(l.lifetime_points,0) >= 16');
   const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
   let total = 0, rows = [];
   try {
