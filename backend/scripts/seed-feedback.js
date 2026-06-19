@@ -2,56 +2,67 @@
 
 // Loads the trainer-free feedback aggregates (seed-data/feedback-aggregates.json,
 // produced by build-feedback.js) into course_feedback / provider_feedback.
-// Idempotent — INSERT OR REPLACE. Safe to run on every deploy.
+// Idempotent — INSERT OR REPLACE. Safe to run on every deploy, and also called
+// lazily by the feedback service if the tables are ever found empty.
 
 const fs = require('fs');
 const path = require('path');
-const db = require('../src/db');
 
 const SRC = path.join(__dirname, '..', 'seed-data', 'feedback-aggregates.json');
-if (!fs.existsSync(SRC)) {
-  console.error(`✗ ${SRC} not found. Run: node scripts/build-feedback.js <2025.xlsx> <2026.xlsx>`);
-  process.exit(1);
+const MIGRATION = path.join(__dirname, '..', 'migrations', '022-course-feedback.sql');
+
+// Load the committed aggregates into the given db handle. Returns counts, or
+// null if the source file is missing. Throws only on a hard DB error.
+function loadFeedback(db) {
+  if (!fs.existsSync(SRC)) return null;
+  const data = JSON.parse(fs.readFileSync(SRC, 'utf8'));
+
+  // Ensure tables exist even if migrations haven't been applied yet.
+  db.exec(fs.readFileSync(MIGRATION, 'utf8'));
+
+  const insC = db.prepare(`INSERT OR REPLACE INTO course_feedback
+    (course_key, year, course_id, course_name, provider_id, provider_name, responses, content, benefits, practical, overall, metrics_json)
+    VALUES (@course_key, @year, @course_id, @course_name, @provider_id, @provider_name, @responses, @content, @benefits, @practical, @overall, @metrics_json)`);
+  const insP = db.prepare(`INSERT OR REPLACE INTO provider_feedback
+    (provider_key, year, provider_id, provider_name, responses, knowledge, clarity, interaction, metrics_json)
+    VALUES (@provider_key, @year, @provider_id, @provider_name, @responses, @knowledge, @clarity, @interaction, @metrics_json)`);
+
+  const a = (m, k) => (m && m[k] ? m[k].avg : null);
+
+  const tx = db.transaction(() => {
+    db.prepare('DELETE FROM course_feedback').run();
+    for (const c of data.courses) {
+      insC.run({
+        course_key: c.course_key, year: c.year, course_id: c.course_id, course_name: c.course_name,
+        provider_id: c.provider_id, provider_name: c.provider_name, responses: c.responses,
+        content: a(c.metrics, 'content'), benefits: a(c.metrics, 'benefits'),
+        practical: a(c.metrics, 'practical'), overall: a(c.metrics, 'overall'),
+        metrics_json: JSON.stringify(c.metrics),
+      });
+    }
+    db.prepare('DELETE FROM provider_feedback').run();
+    for (const p of data.providers) {
+      insP.run({
+        provider_key: p.provider_id || ('unmapped:' + (p.provider_name || '').toLowerCase()),
+        year: p.year, provider_id: p.provider_id, provider_name: p.provider_name, responses: p.responses,
+        knowledge: a(p.metrics, 'knowledge'), clarity: a(p.metrics, 'clarity'), interaction: a(p.metrics, 'interaction'),
+        metrics_json: JSON.stringify(p.metrics),
+      });
+    }
+  });
+  tx();
+  return { courses: data.courses.length, providers: data.providers.length, generated_at: data.generated_at };
 }
-const data = JSON.parse(fs.readFileSync(SRC, 'utf8'));
 
-// Ensure tables exist even if migrations haven't been applied (e.g. local init-db).
-db.exec(fs.readFileSync(path.join(__dirname, '..', 'migrations', '022-course-feedback.sql'), 'utf8'));
+module.exports = { loadFeedback };
 
-const insC = db.prepare(`INSERT OR REPLACE INTO course_feedback
-  (course_key, year, course_id, course_name, provider_id, provider_name, responses, content, benefits, practical, overall, metrics_json)
-  VALUES (@course_key, @year, @course_id, @course_name, @provider_id, @provider_name, @responses, @content, @benefits, @practical, @overall, @metrics_json)`);
-
-const insP = db.prepare(`INSERT OR REPLACE INTO provider_feedback
-  (provider_key, year, provider_id, provider_name, responses, knowledge, clarity, interaction, metrics_json)
-  VALUES (@provider_key, @year, @provider_id, @provider_name, @responses, @knowledge, @clarity, @interaction, @metrics_json)`);
-
-const a = (m, k) => (m && m[k] ? m[k].avg : null);
-
-const loadCourses = db.transaction(() => {
-  db.prepare('DELETE FROM course_feedback').run();
-  for (const c of data.courses) {
-    insC.run({
-      course_key: c.course_key, year: c.year, course_id: c.course_id, course_name: c.course_name,
-      provider_id: c.provider_id, provider_name: c.provider_name, responses: c.responses,
-      content: a(c.metrics, 'content'), benefits: a(c.metrics, 'benefits'),
-      practical: a(c.metrics, 'practical'), overall: a(c.metrics, 'overall'),
-      metrics_json: JSON.stringify(c.metrics),
-    });
+// CLI entry point: node scripts/seed-feedback.js
+if (require.main === module) {
+  const db = require('../src/db');
+  if (!fs.existsSync(SRC)) {
+    console.error(`✗ ${SRC} not found. Run: node scripts/build-feedback.js <2025.xlsx> <2026.xlsx>`);
+    process.exit(1);
   }
-});
-const loadProviders = db.transaction(() => {
-  db.prepare('DELETE FROM provider_feedback').run();
-  for (const p of data.providers) {
-    insP.run({
-      provider_key: p.provider_id || ('unmapped:' + (p.provider_name || '').toLowerCase()),
-      year: p.year, provider_id: p.provider_id, provider_name: p.provider_name, responses: p.responses,
-      knowledge: a(p.metrics, 'knowledge'), clarity: a(p.metrics, 'clarity'), interaction: a(p.metrics, 'interaction'),
-      metrics_json: JSON.stringify(p.metrics),
-    });
-  }
-});
-
-loadCourses();
-loadProviders();
-console.log(`✓ Feedback loaded: ${data.courses.length} course-year rows, ${data.providers.length} provider-year rows (generated ${data.generated_at}).`);
+  const r = loadFeedback(db);
+  console.log(`✓ Feedback loaded: ${r.courses} course-year rows, ${r.providers} provider-year rows (generated ${r.generated_at}).`);
+}

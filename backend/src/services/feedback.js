@@ -7,6 +7,23 @@
 
 const db = require('../db');
 
+// Self-heal: if the feedback tables are missing/empty (e.g. the deploy seed step
+// didn't run), load them from the committed aggregates on first access. Runs at
+// most once per process; never throws into callers.
+let _ensured = false;
+function ensureLoaded() {
+  if (_ensured) return;
+  _ensured = true;
+  try {
+    let n = 0;
+    try { n = db.prepare('SELECT COUNT(*) AS n FROM course_feedback').get().n; } catch (_) { n = 0; }
+    if (n > 0) return;
+    require('../../scripts/seed-feedback').loadFeedback(db);
+  } catch (e) {
+    try { require('../logger').warn('[feedback] lazy load failed: ' + e.message); } catch (_) {}
+  }
+}
+
 function tableExists(name) {
   try { return !!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(name); }
   catch (_) { return false; }
@@ -41,6 +58,7 @@ function wmean(rows, key) {
 
 // ── Course rating (the 4 headline course metrics) ──────────────────────────
 function courseRating(courseId) {
+  ensureLoaded();
   if (!courseId || !tableExists('course_feedback')) return null;
   let rows = db.prepare(
     'SELECT year, responses, content, benefits, practical, overall, provider_id FROM course_feedback WHERE course_id = ? ORDER BY year'
@@ -72,6 +90,7 @@ function courseRating(courseId) {
 
 // ── Provider rating (the 3 headline trainer-delivery metrics) ──────────────
 function providerRating(providerId) {
+  ensureLoaded();
   if (!providerId || !tableExists('provider_feedback')) return null;
   let rows = db.prepare(
     'SELECT year, responses, knowledge, clarity, interaction, provider_name FROM provider_feedback WHERE provider_id = ? ORDER BY year'
@@ -103,6 +122,7 @@ function providerRating(providerId) {
 
 // Map of course_id → headline rating, for cheaply decorating course lists.
 function courseRatingMap() {
+  ensureLoaded();
   if (!tableExists('course_feedback')) return {};
   const rows = db.prepare('SELECT course_id, year, responses, content, benefits, practical, overall, provider_id FROM course_feedback WHERE course_id IS NOT NULL').all();
   const byId = {};
@@ -123,11 +143,13 @@ function courseRatingMap() {
 function parse(j) { try { return JSON.parse(j); } catch (_) { return null; } }
 
 function allCourseFeedback() {
+  ensureLoaded();
   if (!tableExists('course_feedback')) return [];
   const rows = db.prepare('SELECT * FROM course_feedback ORDER BY course_name, year').all();
   return rows.map((r) => ({ ...r, metrics: parse(r.metrics_json), metrics_json: undefined }));
 }
 function allProviderFeedback() {
+  ensureLoaded();
   if (!tableExists('provider_feedback')) return [];
   const rows = db.prepare('SELECT * FROM provider_feedback ORDER BY provider_name, year').all();
   return rows.map((r) => ({ ...r, metrics: parse(r.metrics_json), metrics_json: undefined }));
