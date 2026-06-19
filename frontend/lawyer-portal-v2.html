@@ -1032,7 +1032,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
       <div class="sb-section">My Year</div>
       <a class="sb-link active" onclick="goToSection('overview',event)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Overview<span class="sb-link-dot"></span></a>
       <a class="sb-link" onclick="goToSection('coach',event)"><svg viewBox="0 0 24 24"><path d="M12 2a8 8 0 0 0-8 8c0 1.5.4 3 1 4l-1 4 4-1c1.2.6 2.6 1 4 1a8 8 0 0 0 0-16z"/><path d="M9 11h6M12 8v6"/></svg>Maryam coach<span class="sb-link-badge">3</span></a>
-      <a class="sb-link" onclick="goToSection('calendar',event)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>Smart calendar<span class="sb-link-badge amber">!</span></a>
+      <a class="sb-link" style="display:none" onclick="goToSection('calendar',event)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>Smart calendar<span class="sb-link-badge amber">!</span></a>
       <a class="sb-link" onclick="goToSection('skills',event)"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Skill graph</a>
       <a class="sb-link" onclick="goToSection('peers',event)"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>Peer benchmark</a>
 
@@ -1581,7 +1581,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         })();
         </script>
 
-        <div class="lex-coach">
+        <div class="lex-coach" style="display:none"><!-- hidden: fabricated AI-coach persona with invented dates/percentiles; no real per-lawyer model behind it -->
           <div class="lex-hd">
             <div class="lex-avatar">✦</div>
             <div>
@@ -1633,7 +1633,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         </div>
 
         <!-- Lex Insights (3 cards) -->
-        <div class="lex-insights" style="margin-top:14px">
+        <div class="lex-insights" style="margin-top:14px;display:none"><!-- hidden: fabricated insight cards with invented session dates -->
           <div class="lex-insight lex-i-1">
             <div class="lex-insight-hd">
               <div class="lex-insight-icon">⚠</div>
@@ -1720,14 +1720,14 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
                 </div>
               </div>
               <div class="cal-grid" id="calGrid"></div>
-              <div class="cal-conflict">
+              <div class="cal-conflict" style="display:none">
                 <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" class="cal-conflict-ico"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 <div class="cal-conflict-text"><strong>Conflict on 14 May:</strong> Real Estate course overlaps with your firm's quarterly review. Lex suggests swapping to 21 May Data Protection course.</div>
               </div>
             </div>
             <div>
               <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:11px">UPCOMING ACTIVITIES</div>
-              <div class="cal-events-list">
+              <div class="cal-events-list" style="display:none"><!-- hidden: fabricated schedule events with invented dates -->
                 <div class="cal-event scheduled" onclick="showToast('Opening AML Update…')">
                   <div class="cal-event-date"><span class="cal-event-day">12</span><span class="cal-event-mo">MAY</span></div>
                   <div class="cal-event-info">
@@ -3736,23 +3736,15 @@ function selQuiz(el){
 // ═══ CALENDAR GRID ═══
 function buildCalendar(){
   const dows=['SUN','MON','TUE','WED','THU','FRI','SAT'];
-  const events={
-    12:{type:'scheduled',title:'AML Update'},
-    14:{type:'deadline',title:'Conflict · Real Estate'},
-    21:{type:'scheduled',title:'Data Protection'},
-    28:{type:'scheduled',title:'DIFC Day'}
-  };
-  // May 2026 starts on Friday; 31 days; April 26-30 spillover at start
+  // No fabricated events — real booked sessions live in 'My bookings'. Render a
+  // plain current-month grid with no invented markers.
+  const events={};
   let html=dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
-  // Empty cells for April spillover (May 1 = Fri, so 5 empty: Sun-Thu)
   for(let i=26;i<=30;i++){html+=`<div class="cal-day muted">${i}</div>`;}
-  // May 1-31
   for(let d=1;d<=31;d++){
     const ev=events[d];
-    const isToday=d===10;
-    const cls=isToday?'today':(ev?ev.type:'');
-    const dots=ev?`<div class="cal-day-dots"><div class="cal-day-dot" style="background:${ev.type==='deadline'?'var(--red)':ev.type==='scheduled'?'var(--green)':'var(--purple)'}"></div></div>`:'';
-    html+=`<div class="cal-day ${cls}">${d}${dots}</div>`;
+    const cls=(ev?ev.type:'');
+    html+=`<div class="cal-day ${cls}">${d}</div>`;
   }
   document.getElementById('calGrid').innerHTML=html;
 }
@@ -5483,7 +5475,7 @@ async function completeLawyerPurchase() {
 <nav class="mob-nav" id="mobNav">
   <button class="mob-nav-btn on" onclick="goToSection('overview',event);setMobNav(this)"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7" width="20" height="20"><circle cx="12" cy="8" r="4"/><path d="M6 21v-1a6 6 0 0 1 12 0v1"/></svg><span>Me</span></button>
   <button class="mob-nav-btn" onclick="goToSection('coach',event);setMobNav(this)"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7" width="20" height="20"><path d="M12 2a8 8 0 0 0-8 8c0 1.5.4 3 1 4l-1 4 4-1c1.2.6 2.6 1 4 1a8 8 0 0 0 0-16z"/></svg><span>Maryam</span></button>
-  <button class="mob-nav-btn" onclick="goToSection('calendar',event);setMobNav(this)"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7" width="20" height="20"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></button>
+  <button class="mob-nav-btn" style="display:none" onclick="goToSection('calendar',event);setMobNav(this)"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7" width="20" height="20"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></button>
   <button class="mob-nav-btn" onclick="goToSection('skills',event);setMobNav(this)"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7" width="20" height="20"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>Skills</span></button>
   <button class="mob-nav-btn" onclick="openBuyCredits();setMobNav(this)"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7" width="20" height="20"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><span>Credits</span></button>
 </nav>
