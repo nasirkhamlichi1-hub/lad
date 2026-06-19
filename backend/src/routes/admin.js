@@ -416,6 +416,24 @@ router.post('/query', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// GET /api/v1/admin/firms — every firm with its practising-lawyer count and
+// compliance, sorted largest-first (powers the size-ranked firm galaxy).
+router.get('/firms', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
+  const year = String(cycleYear());
+  let firms = [];
+  try {
+    firms = db.prepare(`WITH lp AS (
+        SELECT l.firm_id, l.id, COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y',b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts
+        FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id=l.id WHERE ${_PRACT} AND l.firm_id IS NOT NULL GROUP BY l.id)
+      SELECT f.id, f.name, COUNT(lp.id) lawyers,
+        ROUND(100.0*SUM(CASE WHEN lp.pts>=16 THEN 1 ELSE 0 END)/COUNT(lp.id),1) compliancePct,
+        SUM(CASE WHEN lp.pts<8 THEN 1 ELSE 0 END) critical
+      FROM firms f JOIN lp ON lp.firm_id=f.id GROUP BY f.id HAVING lawyers>=1 ORDER BY lawyers DESC`).all(year);
+  } catch (_) {}
+  res.json({ firms, total: firms.length });
+});
+
 // GET /api/v1/admin/firm/:id — rich firm profile (lawyers, bands, courses,
 // compliance) computed server-side, so a firm dives into its whole world.
 router.get('/firm/:id', requireAuth, (req, res) => {

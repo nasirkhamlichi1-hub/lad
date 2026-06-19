@@ -725,8 +725,16 @@
     function lawName(l){ return ((l.first_name||l.firstName||'')+' '+(l.last_name||l.lastName||'')).trim()||l.name||l.fullName||l.id; }
     function lawyerNode(l){ var p=lawPts(l); return {label:lawName(l), sub:p+' pts', count:Math.max(p,1), color:bandColor(p), type:'lawyer', id:l.id, drill:true, meta:{points:p,status:l.status,credits:(l.credits!=null?l.credits:l.credit_balance)}}; }
     var DRILL={
-      firmsRoot:function(){ return needOVp().then(function(ov){ var fr=(ov&&ov.firmRankings)||{}; var seen={},list=[]; (fr.top||[]).concat(fr.bottom||[]).forEach(function(f){ if(f&&f.id&&!seen[f.id]){seen[f.id]=1;list.push(f);} });
-        return {title:'Law Firms',center:{label:'Firms',color:0x9a6cff},radius:150,children:list.slice(0,14).map(function(f){return {label:f.name,sub:(f.compliancePct||0)+'% · '+nf(f.lawyers),count:f.lawyers,color:bandPctColor(f.compliancePct),type:'firm',id:f.id,drill:true,meta:f};})}; }); },
+      firmsRoot:function(){ return getJSON('/api/v1/admin/firms').then(function(d){ var list=(d&&d.firms)||[]; if(!list.length) return null;
+        var n=list.length, maxL=list[0].lawyers||1, minL=list[n-1].lawyers||0, closeR=46, farR=340, GA=Math.PI*(3-Math.sqrt(5));
+        var kids=list.map(function(f,i){
+          var frac=maxL>minL?(f.lawyers-minL)/(maxL-minL):0.5;          // 1 = biggest firm
+          var r=farR-Math.pow(frac,0.55)*(farR-closeR);                // biggest -> closest to centre
+          var k=i+0.5, phi=Math.acos(1-2*k/n), th=GA*k;                // fibonacci sphere direction
+          var pos=[Math.sin(phi)*Math.cos(th)*r, Math.cos(phi)*r*0.7, Math.sin(phi)*Math.sin(th)*r];
+          return {label:f.name,sub:(f.compliancePct||0)+'% · '+nf(f.lawyers),count:f.lawyers,color:bandPctColor(f.compliancePct),type:'firm',id:f.id,drill:true,meta:f,pos:pos,noLabel:(i>=70)};
+        });
+        return {title:'All Law Firms',center:{label:'Firms · '+nf(n),color:0x9a6cff},children:kids,dense:true,spread:farR}; }); },
       firm:function(node){ return getJSON('/api/v1/admin/firm/'+encodeURIComponent(node.id)).then(function(d){ if(!d) return null; var L=d.lawyers||[], c=d.counts||{};
         var kids=[
           {label:'Lawyers',sub:d.total+' total',count:Math.max(d.total,1),color:0x34e1ff,type:'firmLawyers',id:node.id,drill:true,meta:{firm:d.name,lawyers:L}},
@@ -797,34 +805,44 @@
     // Build one ball (swarm + glowing core + halo + hit-sphere + floating label).
     function addBall(grp,opt,coresArr,anchorsArr){
       var pos=opt.pos,color=opt.color,isC=opt.isCenter,count=opt.count;
+      var key='n'+Math.random().toString(36).slice(2,9);
+      function label(){ if(opt.noLabel) return; var hex='#'+('000000'+color.toString(16)).slice(-6);
+        var el=document.createElement('div'); el.className='twin-label'+(isC?'':' dim');
+        el.innerHTML='<b>'+(count!=null?nf(count):'')+'</b>'+esc(opt.label||'')+(opt.sub?'<div style="font-family:var(--mono);font-size:8.5px;color:'+hex+';letter-spacing:.4px;margin-top:1px">'+esc(opt.sub)+'</div>':'');
+        stage.appendChild(el); anchorsArr.push({key:key,el:el,pos:pos}); }
+      // Dense mode (e.g. hundreds of firms): a single glowing core sized by the
+      // metric, raycastable directly — no swarm/halo/hit, so it scales to 500+.
+      if(opt.dense && !isC){
+        var cr=Math.max(1.8,Math.min(8.5, 1.6+Math.sqrt(Number(count)||1)*0.55));
+        var core=new THREE.Mesh(new THREE.SphereGeometry(cr,10,10),new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:.9})); core.position.copy(pos); core.userData={key:key}; grp.add(core);
+        coresArr.push({key:key,hit:core,core:core,halo:core,pos:pos,color:color,node:opt.node}); label(); return;
+      }
       var nP=isC?420:Math.max(50,Math.min(380, Number(count)>0?(70+Math.round(Math.min(300,Number(count)*5))):130));
       var geo=new THREE.BufferGeometry(),arr=new Float32Array(nP*3),rad=isC?40:15;
       for(var i=0;i<nP;i++){ var u=Math.random(),v=Math.random(),th=2*Math.PI*u,ph=Math.acos(2*v-1),rr=rad*Math.cbrt(Math.random()); arr[i*3]=pos.x+rr*Math.sin(ph)*Math.cos(th);arr[i*3+1]=pos.y+rr*Math.sin(ph)*Math.sin(th);arr[i*3+2]=pos.z+rr*Math.cos(ph); }
       geo.setAttribute('position',new THREE.BufferAttribute(arr,3));
       grp.add(new THREE.Points(geo,new THREE.PointsMaterial({color:color,size:isC?2.4:1.9,map:SPRITE,transparent:true,opacity:.7,blending:THREE.AdditiveBlending,depthWrite:false})));
-      var core=new THREE.Mesh(new THREE.SphereGeometry(isC?6:3.4,16,16),new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:.92})); core.position.copy(pos); grp.add(core);
+      var core2=new THREE.Mesh(new THREE.SphereGeometry(isC?6:3.4,16,16),new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:.92})); core2.position.copy(pos); grp.add(core2);
       var halo=new THREE.Mesh(new THREE.SphereGeometry(isC?13:7.5,16,16),new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:.12,blending:THREE.AdditiveBlending,depthWrite:false})); halo.position.copy(pos); grp.add(halo);
-      var hit=new THREE.Mesh(new THREE.SphereGeometry(isC?26:13,10,10),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false})); hit.position.copy(pos);
-      var key='n'+Math.random().toString(36).slice(2,9); hit.userData={key:key}; grp.add(hit);
-      var hex='#'+('000000'+color.toString(16)).slice(-6);
-      var el=document.createElement('div'); el.className='twin-label'+(isC?'':' dim');
-      el.innerHTML='<b>'+(count!=null?nf(count):'')+'</b>'+esc(opt.label||'')+(opt.sub?'<div style="font-family:var(--mono);font-size:8.5px;color:'+hex+';letter-spacing:.4px;margin-top:1px">'+esc(opt.sub)+'</div>':'');
-      stage.appendChild(el);
-      coresArr.push({key:key,hit:hit,core:core,halo:halo,pos:pos,color:color,node:opt.node});
-      anchorsArr.push({key:key,el:el,pos:pos});
+      var hit=new THREE.Mesh(new THREE.SphereGeometry(isC?26:13,10,10),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false})); hit.position.copy(pos); hit.userData={key:key}; grp.add(hit);
+      coresArr.push({key:key,hit:hit,core:core2,halo:halo,pos:pos,color:color,node:opt.node}); label();
     }
     // Build a whole sub-ecosystem group from a spec.
     function buildSubEco(spec){
       var grp=new THREE.Group(); scene.add(grp); var cores=[],anchors=[],flows=[];
+      var dense=!!spec.dense;
       addBall(grp,{pos:new THREE.Vector3(0,0,0),color:spec.center.color,label:spec.center.label,count:null,isCenter:true,node:{type:'center'}},cores,anchors);
       var n=spec.children.length, R=spec.radius||150;
-      spec.children.forEach(function(ch,i){ var ang=i*2*Math.PI/Math.max(1,n); var y=(i%2?24:-24)+Math.sin(i*1.7)*12;
-        var pos=new THREE.Vector3(Math.cos(ang)*R,y,Math.sin(ang)*R);
-        addBall(grp,{pos:pos,color:ch.color,label:ch.label,sub:ch.sub,count:ch.count,node:ch},cores,anchors);
-        var lg=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),pos]); grp.add(new THREE.Line(lg,new THREE.LineBasicMaterial({color:ch.color,transparent:true,opacity:.2,blending:THREE.AdditiveBlending})));
-        var N=10,fa=new Float32Array(N*3),t=[]; for(var k=0;k<N;k++)t.push(Math.random()); var fgeo=new THREE.BufferGeometry(); fgeo.setAttribute('position',new THREE.BufferAttribute(fa,3)); grp.add(new THREE.Points(fgeo,new THREE.PointsMaterial({color:ch.color,size:4.4,map:SPRITE,transparent:true,opacity:.92,blending:THREE.AdditiveBlending,depthWrite:false}))); flows.push({a:new THREE.Vector3(0,0,0),b:pos.clone(),t:t,geo:fgeo});
+      spec.children.forEach(function(ch,i){
+        var pos = ch.pos ? new THREE.Vector3(ch.pos[0],ch.pos[1],ch.pos[2])
+          : (function(){ var ang=i*2*Math.PI/Math.max(1,n), y=(i%2?24:-24)+Math.sin(i*1.7)*12; return new THREE.Vector3(Math.cos(ang)*R,y,Math.sin(ang)*R); })();
+        addBall(grp,{pos:pos,color:ch.color,label:ch.label,sub:ch.sub,count:ch.count,node:ch,noLabel:ch.noLabel,dense:dense},cores,anchors);
+        if(!dense){
+          grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),pos]),new THREE.LineBasicMaterial({color:ch.color,transparent:true,opacity:.2,blending:THREE.AdditiveBlending})));
+          var N=10,fa=new Float32Array(N*3),t=[]; for(var k=0;k<N;k++)t.push(Math.random()); var fgeo=new THREE.BufferGeometry(); fgeo.setAttribute('position',new THREE.BufferAttribute(fa,3)); grp.add(new THREE.Points(fgeo,new THREE.PointsMaterial({color:ch.color,size:4.4,map:SPRITE,transparent:true,opacity:.92,blending:THREE.AdditiveBlending,depthWrite:false}))); flows.push({a:new THREE.Vector3(0,0,0),b:pos.clone(),t:t,geo:fgeo});
+        }
       });
-      return {cores:cores,anchors:anchors,flows:flows,group:grp,radius:Math.round(R*1.9+70),spec:spec};
+      return {cores:cores,anchors:anchors,flows:flows,group:grp,radius: dense ? Math.round((spec.spread||340)+60) : Math.round(R*1.9+70),spec:spec};
     }
     function setActive(eco){ TW.active=eco; TW.cores=eco.cores; TW.anchors=eco.anchors; TW.flows=eco.flows; eco.group.visible=true; eco.anchors.forEach(function(a){a.el.style.display='';}); }
     function hideEco(eco){ if(!eco)return; eco.group.visible=false; eco.anchors.forEach(function(a){a.el.style.display='none';}); }
