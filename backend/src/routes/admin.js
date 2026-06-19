@@ -326,6 +326,96 @@ router.get('/course-analytics', requireAuth, (req, res) => {
   });
 });
 
+// POST /api/v1/admin/query — natural-language → real query over the dataset.
+// Returns "orbs" (matching firms / courses / lawyers / sessions) that the
+// command centre renders as a live, explorable constellation.
+function heuristicSpec(q, hint) {
+  q = (q || '').toLowerCase();
+  const spec = { filters: {}, limit: 30 };
+  spec.entity = /firm/.test(q) ? 'firms' : /course/.test(q) ? 'courses' : /session/.test(q) ? 'sessions'
+    : /(lawyer|practitioner|critical|at.?risk|compliant)/.test(q) ? 'lawyers' : (hint || 'firms');
+  let m;
+  if ((m = q.match(/(?:over|more than|above|>|at least|with)\s*(\d+)\s*\+?\s*lawyer/))) spec.filters.minLawyers = +m[1];
+  if ((m = q.match(/(?:under|less than|below|fewer than|<)\s*(\d+)\s*lawyer/))) spec.filters.maxLawyers = +m[1];
+  if ((m = q.match(/(?:under|less than|below|<)\s*(\d+)\s*%/))) spec.filters.maxCompliance = +m[1];
+  if ((m = q.match(/(?:over|more than|above|>|at least)\s*(\d+)\s*%/))) spec.filters.minCompliance = +m[1];
+  if (/mandatory/.test(q)) spec.filters.type = 'mandatory';
+  if (/accredited/.test(q)) spec.filters.type = 'accredited';
+  if (/this week/.test(q)) { spec.filters.upcomingWithinDays = 7; spec.filters.withinDays = 7; }
+  if (/today/.test(q)) { spec.filters.upcomingWithinDays = 1; spec.filters.withinDays = 1; }
+  if (/this month|next 30/.test(q)) { spec.filters.upcomingWithinDays = 30; spec.filters.withinDays = 30; }
+  if (/critical/.test(q)) spec.filters.band = 'critical';
+  if (/at.?risk/.test(q)) spec.filters.band = 'at-risk';
+  if (/compliant/.test(q)) spec.filters.band = 'compliant';
+  if (/low.?seat|under.?subscribed|empty/.test(q)) spec.filters.lowSeats = true;
+  spec.title = (q ? q.charAt(0).toUpperCase() + q.slice(1) : 'Results').slice(0, 60);
+  return spec;
+}
+const _PRACT = "COALESCE(LOWER(l.status),'active') NOT IN ('inactive','resigned','non-practising','struck off','left')";
+function _fmtD(iso) { const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; const d = new Date(iso); return isNaN(d) ? '—' : d.getUTCDate() + ' ' + M[d.getUTCMonth()]; }
+function runQuery(spec) {
+  const all = (sql, ...a) => { try { return db.prepare(sql).all(...a); } catch (_) { return []; } };
+  const f = spec.filters || {}, lim = Math.min(60, Math.max(1, spec.limit || 30)), year = String(cycleYear());
+  if (spec.entity === 'firms') {
+    let r = all(`WITH lp AS (SELECT l.firm_id, l.id, COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y',b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id=l.id WHERE ${_PRACT} AND l.firm_id IS NOT NULL GROUP BY l.id)
+      SELECT f.id, f.name, COUNT(lp.id) lawyers, ROUND(100.0*SUM(CASE WHEN lp.pts>=16 THEN 1 ELSE 0 END)/COUNT(lp.id),1) compliancePct, SUM(CASE WHEN lp.pts<8 THEN 1 ELSE 0 END) critical FROM firms f JOIN lp ON lp.firm_id=f.id GROUP BY f.id`, year);
+    if (f.minLawyers != null) r = r.filter((x) => x.lawyers >= f.minLawyers);
+    if (f.maxLawyers != null) r = r.filter((x) => x.lawyers <= f.maxLawyers);
+    if (f.minCompliance != null) r = r.filter((x) => (x.compliancePct || 0) >= f.minCompliance);
+    if (f.maxCompliance != null) r = r.filter((x) => (x.compliancePct || 0) <= f.maxCompliance);
+    r.sort((a, b) => b.lawyers - a.lawyers);
+    return r.slice(0, lim).map((x) => ({ id: x.id, label: x.name, sub: x.lawyers + ' lawyers · ' + (x.compliancePct || 0) + '%', count: x.lawyers, kind: 'firm', meta: { lawyers: x.lawyers, compliancePct: x.compliancePct, critical: x.critical } }));
+  }
+  if (spec.entity === 'courses') {
+    let where = 'WHERE c.active=1'; const p = [];
+    if (f.type) { where += ' AND LOWER(COALESCE(c.type,\'\'))=?'; p.push(String(f.type).toLowerCase()); }
+    let r = all(`SELECT c.id, c.title, c.type, c.pts, c.credits,
+      (SELECT COUNT(*) FROM bookings b WHERE b.course_id=c.id) bookings,
+      (SELECT COUNT(*) FROM course_sessions s WHERE s.course_id=c.id AND s.scheduled_at>=datetime('now') AND COALESCE(s.status,'open') NOT IN ('cancelled','closed')) upcoming,
+      (SELECT MIN(s.scheduled_at) FROM course_sessions s WHERE s.course_id=c.id AND s.scheduled_at>=datetime('now')) nextAt
+      FROM courses c ${where}`, ...p);
+    if (f.upcomingWithinDays != null) { const cut = Date.now() + f.upcomingWithinDays * 86400000; r = r.filter((x) => x.nextAt && Date.parse(x.nextAt) <= cut); }
+    if (f.minBookings != null) r = r.filter((x) => x.bookings >= f.minBookings);
+    r.sort((a, b) => (b.upcoming - a.upcoming) || (b.bookings - a.bookings));
+    return r.slice(0, lim).map((x) => ({ id: x.id, label: x.title, sub: (x.upcoming || 0) + ' upcoming · ' + x.bookings + ' booked', count: Math.max(x.bookings, 1), kind: 'course', meta: { type: x.type, bookings: x.bookings, upcoming: x.upcoming, points: x.pts, credits: x.credits, nextAt: x.nextAt } }));
+  }
+  if (spec.entity === 'lawyers') {
+    let r = all(`SELECT l.id, l.first_name, l.last_name, COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y',b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts, fr.name firm FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id=l.id LEFT JOIN firms fr ON fr.id=l.firm_id WHERE ${_PRACT} GROUP BY l.id`, year);
+    if (f.band === 'critical') r = r.filter((x) => x.pts < 8); else if (f.band === 'at-risk') r = r.filter((x) => x.pts >= 8 && x.pts < 16); else if (f.band === 'compliant') r = r.filter((x) => x.pts >= 16);
+    if (f.minPoints != null) r = r.filter((x) => x.pts >= f.minPoints);
+    if (f.maxPoints != null) r = r.filter((x) => x.pts <= f.maxPoints);
+    r.sort((a, b) => a.pts - b.pts);
+    return r.slice(0, 42).map((x) => ({ id: x.id, label: ((x.first_name || '') + ' ' + (x.last_name || '')).trim() || x.id, sub: x.pts + ' pts · ' + (x.firm || '—'), count: Math.max(x.pts, 1), kind: 'lawyer', meta: { points: x.pts, firm: x.firm } }));
+  }
+  if (spec.entity === 'sessions') {
+    const days = f.withinDays != null ? f.withinDays : 14;
+    let r = all(`SELECT s.id, c.title, s.scheduled_at, s.capacity, s.seats_remaining, s.venue FROM course_sessions s JOIN courses c ON c.id=s.course_id WHERE COALESCE(s.status,'open') NOT IN ('cancelled','closed') AND s.scheduled_at BETWEEN datetime('now') AND datetime('now', ?) ORDER BY s.scheduled_at`, '+' + days + ' day');
+    if (f.lowSeats) r = r.filter((x) => x.capacity > 0 && (x.seats_remaining / x.capacity) > 0.8);
+    return r.slice(0, 42).map((x) => ({ id: x.id, label: x.title, sub: _fmtD(x.scheduled_at) + ' · ' + x.seats_remaining + '/' + x.capacity + ' seats', count: Math.max((x.capacity || 0) - (x.seats_remaining || 0), 1), kind: 'session', meta: { scheduled_at: x.scheduled_at, capacity: x.capacity, seats_remaining: x.seats_remaining, venue: x.venue } }));
+  }
+  return [];
+}
+router.post('/query', requireAuth, async (req, res, next) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
+  const prompt = (req.body && req.body.prompt || '').toString().trim();
+  if (!prompt) return res.status(400).json({ error: 'Ask a question about the data.' });
+  let spec = heuristicSpec(prompt, req.body && req.body.entity);
+  if (aimodel.configured()) {
+    try {
+      const sys = 'Convert the question about a Dubai legal CPD dataset into a JSON query spec. Reply with ONLY JSON: {"entity":"firms"|"courses"|"lawyers"|"sessions","filters":{...},"limit":number,"title":string}. '
+        + 'Allowed filters by entity — firms:{minLawyers,maxLawyers,minCompliance,maxCompliance}; courses:{type:"mandatory"|"accredited",upcomingWithinDays,minBookings}; lawyers:{band:"critical"|"at-risk"|"compliant",minPoints,maxPoints}; sessions:{withinDays,lowSeats(boolean)}. '
+        + 'Only include filters you need. "this week"=7 days, "today"=1, "this month"=30. limit default 30. title = a short human label for the result. Output JSON only.';
+      const text = await aimodel.chat({ system: sys, messages: [{ role: 'user', content: prompt }], maxTokens: 300, temperature: 0 });
+      const m = text.match(/\{[\s\S]*\}/); const p = m ? JSON.parse(m[0]) : null;
+      if (p && p.entity) spec = { entity: p.entity, filters: p.filters || {}, limit: p.limit || 30, title: p.title || spec.title };
+    } catch (_) { /* keep heuristic */ }
+  }
+  try {
+    const orbs = runQuery(spec);
+    res.json({ title: spec.title, entity: spec.entity, count: orbs.length, orbs });
+  } catch (e) { next(e); }
+});
+
 // POST /api/v1/admin/reclassify-practising — apply the standard practising rules.
 router.post('/reclassify-practising', requireAuth, (req, res) => {
   if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });

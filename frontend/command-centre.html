@@ -133,8 +133,15 @@
   .fp-btn.ai{background:linear-gradient(90deg,var(--cyan),var(--teal));color:#04101a}
   .fp-btn.back{background:transparent;color:var(--dim);border:1px solid var(--panel-b)}
   .fp-btn.back:hover{color:var(--cyan);border-color:var(--cyan)}
-  #diveHint{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);z-index:7;font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);background:rgba(7,12,26,.6);border:1px solid var(--panel-b);border-radius:20px;padding:7px 16px;backdrop-filter:blur(8px);pointer-events:none;transition:opacity .4s}
+  #diveHint{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:7;font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);background:rgba(7,12,26,.6);border:1px solid var(--panel-b);border-radius:20px;padding:7px 16px;backdrop-filter:blur(8px);pointer-events:none;transition:opacity .4s}
   body.focus #diveHint{opacity:0}
+  /* natural-language query bar */
+  #queryBar{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);z-index:44;width:min(660px,92vw);display:flex;gap:8px;align-items:center;background:rgba(7,12,26,.86);border:1px solid rgba(52,225,255,.32);border-radius:26px;padding:7px 8px 7px 18px;backdrop-filter:blur(16px);box-shadow:0 0 46px rgba(0,0,0,.5),0 0 26px rgba(52,225,255,.14)}
+  #queryBar .qmark{font-size:15px;color:var(--cyan)}
+  #queryBar input{flex:1;background:none;border:0;outline:0;color:#eaf4ff;font-family:'Inter',sans-serif;font-size:13.5px}
+  #queryBar input::placeholder{color:var(--dim2)}
+  #queryBar .qspin{font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--cyan)}
+  #queryBar button{background:linear-gradient(90deg,var(--cyan),var(--teal));color:#04101a;border:0;border-radius:20px;padding:9px 18px;font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit}
 
   /* ── Deep layer: dive a level deeper into market/course intelligence ── */
   #deepLayer{position:fixed;inset:0;z-index:60;display:none;overflow:auto;
@@ -351,6 +358,12 @@
   <div id="tmTrack"><div id="tmLine"></div><div id="tmProj"></div><div id="tmFill"></div><div id="tmHandle"></div></div>
 </div>
 <div id="diveHint">◎ Drag to fly · hover to reveal connections · click to dive in · scroll to zoom</div>
+<div id="queryBar">
+  <span class="qmark">✦</span>
+  <input id="qbInput" autocomplete="off" placeholder="Ask the data…  e.g. firms with over 30 lawyers · this week's courses · critical lawyers"/>
+  <span class="qspin" id="qbStatus"></span>
+  <button id="qbGo">Ask</button>
+</div>
 <div id="tourCap"><div class="tc-t" id="tcT"></div><div class="tc-s" id="tcS"></div></div>
 <div id="focusPanel">
   <div class="fp-eye" id="fpEye">PROGRAMME NODE</div>
@@ -801,6 +814,20 @@
         hideEco(TW.active); TW.stack.push(TW.active); var eco=buildSubEco(spec); setActive(eco); frameReset(eco.radius); document.body.classList.add('focus'); renderCrumbs(); TW.busy=false;
       }).catch(function(){ TW.busy=false; }); }); };
     window.diveBack=function(){ if(TW.busy||!TW.stack.length) return; clearWeb(); TW.busy=true; warpFlash(function(){ var cur=TW.active; var prev=TW.stack.pop(); disposeEco(cur); setActive(prev); frameReset(prev.radius); renderCrumbs(); if(!TW.stack.length){ document.body.classList.remove('focus'); var fp=$('focusPanel'); if(fp) fp.classList.remove('on'); } TW.busy=false; }); };
+    // Turn query "orbs" into a drillable ecosystem spec (colours/types/drill).
+    window.__orbSpec=function(title,orbs){
+      var children=(orbs||[]).map(function(o){ var t='node',col=0x34e1ff,drill=false;
+        if(o.kind==='firm'){ t='firm'; col=(o.meta&&o.meta.compliancePct!=null)?bandPctColor(o.meta.compliancePct):0x9a6cff; drill=true; }
+        else if(o.kind==='course'){ t='course'; col=typeHex(o.meta&&o.meta.type); drill=true; }
+        else if(o.kind==='lawyer'){ t='lawyer'; col=bandColor(o.meta&&o.meta.points); drill=true; }
+        else if(o.kind==='session'){ t='session'; col=0x6ab8ff; drill=false; }
+        return {label:o.label,sub:o.sub,count:o.count,color:col,type:t,id:o.id,drill:drill,meta:o.meta}; });
+      return {title:title, center:{label:(title||'Results').slice(0,16),color:0x34e1ff}, radius:Math.min(240,100+children.length*5), children:children};
+    };
+    // Enter an ecosystem from a ready spec (query results) — reuses the dive plumbing.
+    window.enterEcoSpec=function(spec){ if(TW.busy||!spec) return; clearWeb(); TW.busy=true; warpFlash(function(){
+      if(!spec.children||!spec.children.length){ TW.busy=false; return; }
+      hideEco(TW.active); TW.stack.push(TW.active); var eco=buildSubEco(spec); setActive(eco); frameReset(eco.radius); document.body.classList.add('focus'); renderCrumbs(); TW.busy=false; }); };
     function goToLevel(i){ if(TW.busy) return; while(TW.stack.length>i){ var cur=TW.active; disposeEco(cur); TW.active=TW.stack.pop(); } setActive(TW.active); frameReset(TW.active.radius); renderCrumbs(); if(!TW.stack.length){ document.body.classList.remove('focus'); var fp=$('focusPanel'); if(fp) fp.classList.remove('on'); } }
     window.goToLevel=goToLevel;
     function renderCrumbs(){ var c=$('crumbs'); if(!c) return; var st=TW.stack||[]; if(!st.length){ c.classList.remove('on'); c.innerHTML=''; return; }
@@ -834,7 +861,7 @@
     window.addEventListener('mousemove',function(e){ pointer.x=(e.clientX/W)*2-1; pointer.y=-(e.clientY/H)*2+1; });
     // ── Free-fly navigation: drag to orbit, right/shift-drag to pan, wheel to zoom ──
     var lx=0,ly=0,downX=0,downY=0;
-    var SKIP='header,button,a,input,select,textarea,#focusPanel,#deepLayer,#crumbs,#timeMachine,#bandLegend';
+    var SKIP='header,button,a,input,select,textarea,#focusPanel,#deepLayer,#crumbs,#timeMachine,#bandLegend,#queryBar';
     window.addEventListener('pointerdown',function(e){ if(e.target.closest&&e.target.closest(SKIP)) return; if(e.button===2||e.shiftKey){TW.pan=true;}else{TW.drag=true;} lx=e.clientX;ly=e.clientY;downX=e.clientX;downY=e.clientY;TW.moved=false; });
     window.addEventListener('pointerup',function(){ TW.drag=false; TW.pan=false; });
     window.addEventListener('pointermove',function(e){ if(!TW.drag&&!TW.pan) return; var dx=e.clientX-lx,dy=e.clientY-ly; lx=e.clientX;ly=e.clientY;
@@ -843,7 +870,7 @@
       else { var k=TW.orbR.r*0.0016; var right=new THREE.Vector3().setFromMatrixColumn(camera.matrix,0); var up=new THREE.Vector3().setFromMatrixColumn(camera.matrix,1);
         var mv=right.multiplyScalar(-dx*k).add(up.multiplyScalar(dy*k)); TW.orb.cx+=mv.x; TW.orb.cy+=mv.y; TW.orb.cz+=mv.z; } });
     // Zoom over the open 3D area; let real panels keep their native scroll.
-    window.addEventListener('wheel',function(e){ if(e.target.closest&&e.target.closest('.card,#focusPanel,#deepLayer,#crumbs,#timeMachine,header')) return; e.preventDefault(); TW.orb.tr=Math.max(28,Math.min(1300,TW.orb.tr*(e.deltaY>0?1.1:0.9))); },{passive:false});
+    window.addEventListener('wheel',function(e){ if(e.target.closest&&e.target.closest('.card,#focusPanel,#deepLayer,#crumbs,#timeMachine,#queryBar,header')) return; e.preventDefault(); TW.orb.tr=Math.max(28,Math.min(1300,TW.orb.tr*(e.deltaY>0?1.1:0.9))); },{passive:false});
     window.addEventListener('contextmenu',function(e){ if(!(e.target.closest&&e.target.closest(SKIP))) e.preventDefault(); });
     function resize(){ W=window.innerWidth;H=window.innerHeight; camera.aspect=W/H; camera.updateProjectionMatrix(); renderer.setSize(W,H); }
     window.addEventListener('resize',resize);
@@ -1224,6 +1251,28 @@
     window.addEventListener('pointerup',function(){ dragging=false; });
     var pb=$('tmPlay'); if(pb) pb.onclick=play; var cb=$('tmClose'); if(cb) cb.onclick=closeTM;
   }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind); else bind();
+})();
+</script>
+
+<!-- ── Natural-language query bar: ask the dataset, get a live constellation ── -->
+<script>
+(function(){
+  'use strict';
+  function $(id){return document.getElementById(id);}
+  var base=((window.LAD_API_BASE)||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
+  function tok(){try{return localStorage.getItem('lad_token')||'';}catch(e){return '';}}
+  function run(){ var inp=$('qbInput'); if(!inp)return; var q=(inp.value||'').trim(); if(!q) return; var st=$('qbStatus'); if(st)st.textContent='Thinking…';
+    fetch(base+'/api/v1/admin/query',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({prompt:q})})
+      .then(function(r){return r.json();}).then(function(d){
+        if(!d||!d.orbs){ if(st)st.textContent=(d&&d.error)?'—':'no results'; return; }
+        if(!d.orbs.length){ if(st)st.textContent='0 results'; setTimeout(function(){if(st)st.textContent='';},1800); return; }
+        if(st)st.textContent=d.count+' found';
+        if(window.enterEcoSpec&&window.__orbSpec){ window.enterEcoSpec(window.__orbSpec(d.title||q,d.orbs)); }
+        inp.blur(); setTimeout(function(){if(st)st.textContent='';},1800);
+      }).catch(function(){ if(st)st.textContent='error'; });
+  }
+  function bind(){ var inp=$('qbInput'),btn=$('qbGo'); if(!inp||!btn)return; btn.onclick=run; inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); run(); } }); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind); else bind();
 })();
 </script>
