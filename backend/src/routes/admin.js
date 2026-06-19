@@ -579,4 +579,75 @@ router.get('/feedback', requireAuth, (req, res) => {
   }
 });
 
+// ─── CRM: 360° lawyer profile ────────────────────────────────────────
+// Everything an administrator needs about one lawyer on a single screen:
+// identity + compliance, their bookings (upcoming & past), credit wallet +
+// ledger, CPD history, the conversations they've had with CLPD, and a merged
+// recent-activity timeline. Admins see anyone; a firm CO sees only their firm.
+router.get('/lawyer/:id', requireAuth, (req, res) => {
+  const u = req.user;
+  const lawyer = db.prepare(
+    `SELECT l.*, f.name AS firm_name FROM lawyers l LEFT JOIN firms f ON f.id = l.firm_id WHERE l.id = ?`
+  ).get(req.params.id);
+  if (!lawyer) return res.status(404).json({ error: 'Lawyer not found' });
+  const allowed = isAdmin(u) || (u.role === 'firm_compliance_officer' && u.firm_id === lawyer.firm_id);
+  if (!allowed) return res.status(403).json({ error: 'Forbidden' });
+
+  const all = (sql, ...a) => { try { return db.prepare(sql).all(...a); } catch (_) { return []; } };
+  const one = (sql, ...a) => { try { return db.prepare(sql).get(...a); } catch (_) { return null; } };
+  const email = (lawyer.email || '').toLowerCase();
+  const pts = Number(lawyer.lifetime_points) || 0;
+  const band = pts >= 16 ? 'compliant' : pts >= 8 ? 'at-risk' : 'critical';
+
+  const bookings = all(
+    `SELECT b.id, b.status, b.credits_used, b.points_earned, b.scheduled_at, b.booked_at, b.booked_by,
+            COALESCE(b.course_title, c.title) AS course_title, c.type AS course_type, b.session_id, b.admin_notes
+     FROM bookings b LEFT JOIN courses c ON c.id = b.course_id
+     WHERE b.lawyer_id = ? ORDER BY COALESCE(b.scheduled_at, b.booked_at, b.created_at) DESC LIMIT 200`, lawyer.id);
+  const nowIso = new Date().toISOString();
+  const upcoming = bookings.filter((b) => b.scheduled_at && b.scheduled_at >= nowIso && !['cancelled', 'refunded'].includes((b.status || '').toLowerCase()));
+  const past = bookings.filter((b) => !upcoming.includes(b));
+  const attended = bookings.filter((b) => (b.status || '').toLowerCase() === 'attended').length;
+
+  const transactions = all(
+    `SELECT id, type, amount, aed_amount, description, status, created_at FROM credit_transactions
+     WHERE lawyer_id = ? ORDER BY created_at DESC LIMIT 25`, lawyer.id);
+  const cpd = all(
+    `SELECT course_title, course_code, provider, points, created_at FROM cpd_records
+     WHERE lawyer_id = ? OR LOWER(attendee_email) = ? ORDER BY created_at DESC LIMIT 50`, lawyer.id, email);
+
+  const conversations = all(
+    `SELECT c.id, c.subject, c.status, c.assigned_name, c.last_message_at, c.last_sender, c.created_at,
+            (SELECT body FROM conversation_messages m WHERE m.conversation_id = c.id ORDER BY m.created_at DESC LIMIT 1) preview,
+            (SELECT COUNT(*) FROM conversation_messages m WHERE m.conversation_id = c.id) msg_count
+     FROM conversations c WHERE c.requester_type = 'lawyer' AND c.requester_id = ?
+     ORDER BY c.last_message_at DESC LIMIT 50`, lawyer.id);
+  const lastContact = conversations.length ? conversations[0].last_message_at : null;
+  const openConvos = conversations.filter((c) => c.status === 'open' || c.status === 'pending').length;
+
+  // Merged recent-activity timeline (newest first).
+  const timeline = [];
+  bookings.slice(0, 30).forEach((b) => timeline.push({ at: b.booked_at || b.scheduled_at, kind: 'booking', label: (b.status === 'attended' ? 'Attended' : 'Booked') + ' · ' + (b.course_title || 'course'), meta: { status: b.status, points: b.points_earned } }));
+  transactions.slice(0, 30).forEach((t) => timeline.push({ at: t.created_at, kind: 'credit', label: (Number(t.amount) >= 0 ? 'Credited ' : 'Spent ') + Math.abs(Number(t.amount) || 0) + ' credits' + (t.description ? ' · ' + t.description : ''), meta: { aed: t.aed_amount } }));
+  cpd.slice(0, 30).forEach((r) => timeline.push({ at: r.created_at, kind: 'cpd', label: '+' + (r.points || 0) + ' CPD · ' + (r.course_title || r.course_code), meta: { provider: r.provider } }));
+  conversations.slice(0, 30).forEach((c) => timeline.push({ at: c.last_message_at, kind: 'message', label: 'Message · ' + (c.subject || 'conversation'), meta: { status: c.status } }));
+  timeline.sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+
+  res.json({
+    lawyer: {
+      id: lawyer.id, name: `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || lawyer.id,
+      first_name: lawyer.first_name, last_name: lawyer.last_name, email: lawyer.email, phone: lawyer.phone || '',
+      role: lawyer.role || '', firm_id: lawyer.firm_id, firm_name: lawyer.firm_name || '',
+      status: (lawyer.status || 'active'), unified_id: lawyer.unified_id || '', practice_areas: lawyer.practice_areas || '',
+      joined: lawyer.created_at || null,
+    },
+    compliance: { points: pts, band, target: 16, remaining: Math.max(0, 16 - pts), year: new Date().getUTCFullYear() },
+    credits: { balance: Number(lawyer.credit_balance) || 0, total_purchased: Number(lawyer.total_purchased) || 0, transactions },
+    bookings: { total: bookings.length, attended, upcoming, past },
+    cpd,
+    messaging: { conversations, lastContact, open: openConvos },
+    timeline: timeline.slice(0, 60),
+  });
+});
+
 module.exports = router;
