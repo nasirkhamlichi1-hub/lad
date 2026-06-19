@@ -188,10 +188,20 @@ router.patch('/:id', requireAuth, (req, res) => {
     return res.status(400).json({ error: `status must be one of ${allowed.join(', ')}` });
   }
 
+  // Only LAD / firm officers may award CPD points or edit notes. A booking's
+  // owner (the lawyer) can change status (e.g. cancel) but must NOT be able to
+  // self-award compliance points. points_earned is validated and bounded.
+  const canAwardPoints = isLAD || isFirmCO;
   const fields = [];
   const values = [];
-  for (const k of ['status', 'points_earned', 'admin_notes']) {
-    if (req.body[k] !== undefined) { fields.push(`${k} = ?`); values.push(req.body[k]); }
+  if (req.body.status !== undefined) { fields.push('status = ?'); values.push(req.body.status); }
+  if (canAwardPoints && req.body.points_earned !== undefined) {
+    const p = Math.round(Number(req.body.points_earned));
+    if (!Number.isFinite(p) || p < 0 || p > 50) return res.status(400).json({ error: 'points_earned must be 0–50' });
+    fields.push('points_earned = ?'); values.push(p);
+  }
+  if (canAwardPoints && req.body.admin_notes !== undefined) {
+    fields.push('admin_notes = ?'); values.push(String(req.body.admin_notes).slice(0, 2000));
   }
   if (!fields.length) return res.status(400).json({ error: 'No updates supplied' });
   values.push(req.params.id);

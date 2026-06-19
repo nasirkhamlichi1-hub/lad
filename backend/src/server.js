@@ -132,6 +132,20 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+// Tight, dedicated limiter on credential endpoints to throttle brute-force /
+// password-spray attacks (keyed per IP+email), independent of the general budget.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req.ip || '') + '|' + String((req.body && req.body.email) || '').toLowerCase(),
+  message: { error: 'Too many attempts. Please wait a few minutes and try again.', code: 'RATE_LIMITED' },
+});
+for (const p of ['/api/v1/auth/login', '/api/v1/auth/staff/login', '/api/v1/auth/lawyer/login', '/api/v1/auth/change-password', '/api/v1/auth/request-reset', '/api/v1/auth/reset-password']) {
+  app.use(p, authLimiter);
+}
+
 // ─── Health & info ──────────────────────────────────────────────────────
 // `/api/v1/health` is the canonical health check — used by Docker, Render,
 // Azure, and the GitHub Actions deploy-success gate. Must respond fast and

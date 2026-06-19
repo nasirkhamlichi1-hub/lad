@@ -10,6 +10,7 @@ function sign(payload) {
   const token = jwt.sign({ ...payload, jti }, config.jwt.secret, {
     expiresIn: config.jwt.expiresIn,
     issuer:    'lad-clpd-backend',
+    algorithm: 'HS256',
   });
   // Track the session for revocation
   const decoded = jwt.decode(token);
@@ -25,7 +26,9 @@ function sign(payload) {
 }
 
 function verify(token) {
-  const decoded = jwt.verify(token, config.jwt.secret, { issuer: 'lad-clpd-backend' });
+  // Pin the algorithm explicitly — never let the token header choose it
+  // (prevents algorithm-confusion / alg:none attacks).
+  const decoded = jwt.verify(token, config.jwt.secret, { issuer: 'lad-clpd-backend', algorithms: ['HS256'] });
   // Check revocation
   const row = db.prepare('SELECT revoked FROM auth_sessions WHERE id = ?').get(decoded.jti);
   if (!row || row.revoked) {

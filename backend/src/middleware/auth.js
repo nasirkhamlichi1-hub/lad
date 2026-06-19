@@ -2,11 +2,14 @@
 
 const jwtService = require('../services/jwt');
 
-// Extract JWT from `Authorization: Bearer …` or `?token=` (used during OAuth redirect)
+// Extract the JWT from the `Authorization: Bearer …` header ONLY. Tokens are
+// never read from the query string — a token in a URL leaks into access logs,
+// browser history, Referer headers and proxies. The OAuth redirect returns the
+// token in the URL *fragment* (#token=), which the browser reads client-side
+// and then sends as a Bearer header; it never reaches the server as a query param.
 function getToken(req) {
   const h = req.headers.authorization || '';
   if (h.startsWith('Bearer ')) return h.slice(7);
-  if (req.query.token) return String(req.query.token);
   return null;
 }
 

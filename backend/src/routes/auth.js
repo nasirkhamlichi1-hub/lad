@@ -63,12 +63,17 @@ router.get('/uaepass/callback', async (req, res, next) => {
   }
 
   // Look up & invalidate the state (one-time use)
-  const row = db.prepare('SELECT redirect FROM oauth_state WHERE state = ?').get(state);
+  const row = db.prepare('SELECT redirect, created_at FROM oauth_state WHERE state = ?').get(state);
   if (!row) return res.status(400).json({ error: 'Unknown or expired state — CSRF protection' });
   db.prepare('DELETE FROM oauth_state WHERE state = ?').run(state);
 
-  // Reject anything older than 10 minutes
-  // (we deleted the row already, so reuse-protected; this check is for sanity)
+  // Reject states older than 10 minutes (enforced, not just one-time-use). Also
+  // prune any other stale states so the table can't grow unbounded.
+  const ageMs = Date.now() - new Date(row.created_at).getTime();
+  if (!Number.isFinite(ageMs) || ageMs > 10 * 60 * 1000) {
+    return res.status(400).json({ error: 'Login request expired — please try again.' });
+  }
+  try { db.prepare("DELETE FROM oauth_state WHERE created_at < datetime('now','-1 hour')").run(); } catch (_) {}
 
   let parsedRedirect = {};
   try { parsedRedirect = JSON.parse(row.redirect || '{}'); } catch { /* ignore */ }
@@ -128,7 +133,7 @@ router.get('/uaepass/callback', async (req, res, next) => {
         store.linkLawyerToUaePass({ lawyerId: user.id, uaepass_uuid, unified_id, ip: req.ip });
       } else {
         // Staff lookup
-        user = db.prepare('SELECT * FROM staff WHERE LOWER(email) = LOWER(?) AND status = "active"').get(email);
+        user = db.prepare("SELECT * FROM staff WHERE LOWER(email) = LOWER(?) AND status = 'active'").get(email);
         if (user) {
           userType = 'staff';
           role = user.role; // lad_admin / firm_compliance_officer / etc.

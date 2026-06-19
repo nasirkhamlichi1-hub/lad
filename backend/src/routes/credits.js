@@ -95,8 +95,8 @@ router.post('/checkout', requireAuth, (req, res) => {
   const lawyer = lawyerOf(req);
   if (!lawyer) return res.status(404).json({ error: 'No lawyer account for this user.' });
   const credits = Math.round(Number((req.body && (req.body.credits || req.body.amount)) || 0));
-  if (credits <= 0) return res.status(400).json({ error: 'A positive credit amount is required.' });
-  const aed = (req.body && req.body.aed != null) ? Math.round(Number(req.body.aed)) : credits * PRICE;
+  if (!Number.isFinite(credits) || credits <= 0 || credits > 100000) return res.status(400).json({ error: 'A valid credit amount is required.' });
+  const aed = credits * PRICE; // never trust a client-supplied amount
   const balance = grant(lawyer, credits, {
     type: 'purchase', aed, method: 'card', reference: rid('PAY-'),
     description: `Card purchase — ${credits} credits`,
@@ -204,10 +204,12 @@ router.post('/assign', requireAuth, (req, res) => {
 
 // ─── Firm credit pool ─────────────────────────────────────────────────────
 const canFirm = (u) => !!u && (u.role === 'firm_compliance_officer' || isAdmin(u));
+// Non-LAD users (e.g. a firm compliance officer) are ALWAYS scoped to their own
+// firm — an explicit firmId from the request is ignored for them, preventing
+// cross-firm wallet access (IDOR). Only LAD admins may target another firm.
 function firmIdOf(req, explicit) {
-  if (explicit) return explicit.toString();
-  if (req.user.firm_id) return req.user.firm_id;
-  return null;
+  if (isAdmin(req.user) && explicit) return explicit.toString();
+  return (req.user && req.user.firm_id) || null;
 }
 // Build the live firm wallet: pool, assigned-to-lawyers, used-this-cycle,
 // total purchased, and the firm-level ledger.
@@ -252,8 +254,8 @@ router.post('/firm/checkout', requireAuth, (req, res) => {
   const firm = db.prepare('SELECT id FROM firms WHERE id = ?').get(firmId);
   if (!firm) return res.status(404).json({ error: 'Firm not found' });
   const credits = Math.round(Number((req.body && (req.body.credits || req.body.amount)) || 0));
-  if (credits <= 0) return res.status(400).json({ error: 'A positive credit amount is required.' });
-  const aed = (req.body && req.body.aed != null) ? Math.round(Number(req.body.aed)) : credits * PRICE;
+  if (!Number.isFinite(credits) || credits <= 0 || credits > 1000000) return res.status(400).json({ error: 'A valid credit amount is required.' });
+  const aed = credits * PRICE; // never trust a client-supplied amount
   db.prepare('UPDATE firms SET credit_pool = COALESCE(credit_pool,0) + ?, total_purchased = COALESCE(total_purchased,0) + ? WHERE id = ?').run(credits, credits, firmId);
   db.prepare(
     `INSERT INTO firm_credit_transactions (id, firm_id, type, amount, aed_amount, description, payment_method, reference)
