@@ -726,13 +726,13 @@
     function lawyerNode(l){ var p=lawPts(l); return {label:lawName(l), sub:p+' pts', count:Math.max(p,1), color:bandColor(p), type:'lawyer', id:l.id, drill:true, meta:{points:p,status:l.status,credits:(l.credits!=null?l.credits:l.credit_balance)}}; }
     var DRILL={
       firmsRoot:function(){ return getJSON('/api/v1/admin/firms').then(function(d){ var list=(d&&d.firms)||[]; if(!list.length) return null;
-        var n=list.length, maxL=list[0].lawyers||1, minL=list[n-1].lawyers||0, closeR=46, farR=340, GA=Math.PI*(3-Math.sqrt(5));
+        var n=list.length, maxL=list[0].lawyers||1, minL=list[n-1].lawyers||0, closeR=120, farR=470, GA=Math.PI*(3-Math.sqrt(5));
         var kids=list.map(function(f,i){
           var frac=maxL>minL?(f.lawyers-minL)/(maxL-minL):0.5;          // 1 = biggest firm
-          var r=farR-Math.pow(frac,0.55)*(farR-closeR);                // biggest -> closest to centre
-          var k=i+0.5, phi=Math.acos(1-2*k/n), th=GA*k;                // fibonacci sphere direction
-          var pos=[Math.sin(phi)*Math.cos(th)*r, Math.cos(phi)*r*0.7, Math.sin(phi)*Math.sin(th)*r];
-          return {label:f.name,sub:(f.compliancePct||0)+'% · '+nf(f.lawyers),count:f.lawyers,color:bandPctColor(f.compliancePct),type:'firm',id:f.id,drill:true,meta:f,pos:pos,noLabel:(i>=70)};
+          var r=farR-Math.pow(frac,0.75)*(farR-closeR);                // biggest -> a planet orbit (clear of the sun), smallest -> far dust
+          var k=i+0.5, phi=Math.acos(1-2*k/n), th=GA*k;                // fibonacci direction
+          var pos=[Math.sin(phi)*Math.cos(th)*r, Math.cos(phi)*r*0.32, Math.sin(phi)*Math.sin(th)*r]; // flattened like a solar system
+          return {label:f.name,sub:(f.compliancePct||0)+'% · '+nf(f.lawyers),count:f.lawyers,color:bandPctColor(f.compliancePct),type:'firm',id:f.id,drill:true,meta:f,pos:pos,noLabel:(i>=36)};
         });
         return {title:'All Law Firms',center:{label:'Firms · '+nf(n),color:0x9a6cff},children:kids,dense:true,spread:farR}; }); },
       firm:function(node){ return getJSON('/api/v1/admin/firm/'+encodeURIComponent(node.id)).then(function(d){ if(!d) return null; var L=d.lawyers||[], c=d.counts||{};
@@ -813,7 +813,7 @@
       // Dense mode (e.g. hundreds of firms): a single glowing core sized by the
       // metric, raycastable directly — no swarm/halo/hit, so it scales to 500+.
       if(opt.dense && !isC){
-        var cr=Math.max(1.8,Math.min(8.5, 1.6+Math.sqrt(Number(count)||1)*0.55));
+        var cr=Math.max(2,Math.min(12, 1.6+Math.sqrt(Number(count)||1)*0.72));
         var core=new THREE.Mesh(new THREE.SphereGeometry(cr,10,10),new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:.9})); core.position.copy(pos); core.userData={key:key}; grp.add(core);
         coresArr.push({key:key,hit:core,core:core,halo:core,pos:pos,color:color,node:opt.node}); label(); return;
       }
