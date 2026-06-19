@@ -1031,7 +1031,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
     <nav class="sb-nav">
       <div class="sb-section">My Year</div>
       <a class="sb-link active" onclick="goToSection('overview',event)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Overview<span class="sb-link-dot"></span></a>
-      <a class="sb-link" onclick="goToSection('coach',event)"><svg viewBox="0 0 24 24"><path d="M12 2a8 8 0 0 0-8 8c0 1.5.4 3 1 4l-1 4 4-1c1.2.6 2.6 1 4 1a8 8 0 0 0 0-16z"/><path d="M9 11h6M12 8v6"/></svg>Maryam coach<span class="sb-link-badge">3</span></a>
+      <a class="sb-link" onclick="goToSection('coach',event)"><svg viewBox="0 0 24 24"><path d="M12 2a8 8 0 0 0-8 8c0 1.5.4 3 1 4l-1 4 4-1c1.2.6 2.6 1 4 1a8 8 0 0 0 0-16z"/><path d="M9 11h6M12 8v6"/></svg>Maryam coach</a>
       <a class="sb-link" style="display:none" onclick="goToSection('calendar',event)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>Smart calendar<span class="sb-link-badge amber">!</span></a>
       <a class="sb-link" onclick="goToSection('skills',event)"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Skill graph</a>
       <a class="sb-link" onclick="goToSection('peers',event)"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>Peer benchmark</a>
@@ -1041,7 +1041,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
       <a class="sb-link" onclick="goToSection('similar',event)"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Based on history</a>
 
       <div class="sb-section">Records</div>
-      <a class="sb-link" onclick="goToSection('completed',event)"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Completed<span class="sb-link-badge green">3</span></a>
+      <a class="sb-link" onclick="goToSection('completed',event)"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Completed<span class="sb-link-badge green" id="navCompletedBadge" style="display:none">0</span></a>
       <a class="sb-link" onclick="goToSection('trajectory',event)"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Career trajectory</a>
       <a class="sb-link" onclick="goToSection('completed',event)"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Course history</a>
     </nav>
@@ -3091,8 +3091,8 @@ const CMD_ITEMS=[
   {ico:'⭐',name:'Skill graph',desc:'8-axis radar vs city',sec:'Section',action:()=>scrollToById('skills')},
   {ico:'',name:'Peer benchmark',desc:'Your 2018 cohort',sec:'Section',action:()=>scrollToById('peers')},
   {ico:'',name:'Interest quiz',desc:'5-question personalisation',sec:'Section',action:()=>scrollToById('quiz')},
-  {ico:'',name:'Browse courses',desc:'47 active courses',sec:'Section',action:()=>scrollToById('courses')},
-  {ico:'',name:'Completed',desc:'3 activities · 6 pts',sec:'Section',action:()=>scrollToById('completed')},
+  {ico:'',name:'Browse courses',desc:'Course catalogue',sec:'Section',action:()=>scrollToById('courses')},
+  {ico:'',name:'Completed',desc:'Your completed courses',sec:'Section',action:()=>scrollToById('completed')},
   {ico:'',name:'Career trajectory',desc:'7-year story',sec:'Section',action:()=>scrollToById('trajectory')},
   {ico:'',name:'Course history',desc:'Your completed courses',sec:'Section',action:()=>scrollToById('completed')},
   {ico:'',name:'Apply The Fast Lane',desc:'Recommended path · 5 credits',sec:'Action',action:()=>showToast('Auto-scheduling The Fast Lane…')},
@@ -3335,6 +3335,8 @@ function paintMyRecord(me) {
       : (Array.isArray(me.bookings) ? me.bookings.map(b => ({ course_title: b.course_title, date_held: b.scheduled_at || b.booked_at || b.created_at, delta_points: b.points_earned, status: (b.status||'').toLowerCase() })) : []);
     const done = att.filter(a => !['cancelled','refunded'].includes((a.status||'').toLowerCase()));
     set('kpiCompletedNum', done.length);
+    // Sidebar badge reflects the real completed count (hidden when zero).
+    try { const _cb = document.getElementById('navCompletedBadge'); if (_cb) { _cb.textContent = done.length; _cb.style.display = done.length ? '' : 'none'; } } catch (_) {}
     const dpts = done.reduce((n,a)=>n + (Number(a.delta_points)||0), 0);
     set('kpiCompletedSub', dpts ? (dpts + ' point' + (dpts===1?'':'s') + ' earned so far') : 'CPD activities on your record');
     set('kpiCreditsNum', credits);
@@ -3611,10 +3613,16 @@ function catCardHTML(c){
     meta='<div class="course-meta-row" style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-top:6px;letter-spacing:.4px">Internally accredited · '+c.pts+' pts</div>';
     foot='<div class="course-foot"><span class="course-fee">IN-HOUSE</span><span style="font-family:var(--mono);font-size:10px;color:var(--slate3)">Delivered by your firm</span></div>';
     click='';
-  } else {
+  } else if (c.sessions && c.sessions.length) {
     var s0=c.sessions[0]; var seats=Number(s0.seats_remaining)||0;
     meta='<div class="course-meta-row" style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-top:6px;letter-spacing:.4px">Next: '+catFmtDate(s0.scheduled_at)+' · '+(seats<=5?('⚠ '+seats+' seats'):(seats+' seats'))+' · '+c.sessions.length+' session(s)</div>';
     foot='<div class="course-foot"><span class="course-fee">'+c.credits+' CREDITS</span><button class="btn btn-green btn-xs" onclick="event.stopPropagation();openBooking(\''+c.id+'\')">Book →</button></div>';
+    click=' onclick="openBooking(\''+c.id+'\')"';
+  } else {
+    // Accredited course with no scheduled session yet (e.g. a firm course the
+    // firm delivers internally). Listed, but not yet bookable.
+    meta='<div class="course-meta-row" style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-top:6px;letter-spacing:.4px">'+c.pts+' pts · no scheduled session yet</div>';
+    foot='<div class="course-foot"><span class="course-fee">'+(c.credits||5)+' CREDITS</span><span style="font-family:var(--mono);font-size:10px;color:var(--slate3)">Dates to be announced</span></div>';
     click=' onclick="openBooking(\''+c.id+'\')"';
   }
   return '<div class="course-card"'+click+'>'
