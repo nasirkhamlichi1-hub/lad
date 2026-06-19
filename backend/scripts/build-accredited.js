@@ -55,7 +55,8 @@ function resolveFirm(provider) {
 // Public accredited providers (the only exceptions to the private rule).
 function isPublicProvider(provider) {
   const p = String(provider || '').toLowerCase();
-  return /difc\s*academy/.test(p) || /kwintessential/.test(p) || /lexis\s*nexis/.test(p);
+  return /difc\s*academy/.test(p) || /kwintessential/.test(p) || /lexis\s*nexis/.test(p)
+    || /adgm\s*academy/.test(p) || /middlesex/.test(p) || /knowledge\s*nexus/.test(p);
 }
 
 const slug = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
