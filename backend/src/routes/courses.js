@@ -33,17 +33,19 @@ function courseTopics(courseId) {
 }
 
 // GET /api/v1/courses — public (used by the public CLPD portal)
-router.get('/', optionalAuth, (_req, res) => res.json(store.getCourses()));
+router.get('/', optionalAuth, (req, res) => res.json(store.getCourses(req.user)));
 
 // GET /api/v1/courses/upcoming — "Upcoming activities" feed: active courses
 // with their next session, live seat counts and smart tags. (Before /:id.)
-router.get('/upcoming', optionalAuth, (_req, res) => {
+// Private accredited courses are only included for their owning firm / LAD.
+router.get('/upcoming', optionalAuth, (req, res) => {
   const now = new Date().toISOString();
   let courses = [];
   try {
+    const vis = store.courseVisibility(req.user);
     courses = db.prepare(
-      'SELECT c.*, p.name AS provider_name FROM courses c LEFT JOIN providers p ON p.id = c.provider_id WHERE c.active = 1'
-    ).all();
+      `SELECT c.*, p.name AS provider_name FROM courses c LEFT JOIN providers p ON p.id = c.provider_id WHERE c.active = 1${vis.sql}`
+    ).all(...vis.params);
   } catch (_) {}
   const out = courses.map((c) => {
     let sessions = [];
@@ -192,6 +194,8 @@ router.post('/:id/feedback', optionalAuth, (req, res) => {
 router.get('/:id', optionalAuth, (req, res) => {
   const c = store.getCourseById(req.params.id);
   if (!c) return res.status(404).json({ error: 'Course not found' });
+  // A private accredited course is only visible to its owning firm / LAD.
+  if (!store.canAccessCourse(c, req.user)) return res.status(404).json({ error: 'Course not found' });
   res.json(Object.assign({}, c, { tags: courseTopics(c.id) }));
 });
 

@@ -7,14 +7,50 @@ const db = require('../db');
 
 // ─── Courses ─────────────────────────────────────────────────────────
 
-function getCourses() {
+// LAD-side roles that may see every course (the "LAD backend").
+const LAD_ROLES = new Set(['lad_admin', 'lad_super_admin', 'super_admin', 'dg', 'lad_intelligence', 'lad_staff']);
+
+// Self-heal: make sure the private/owner columns exist and the accredited
+// catalogue is loaded before any course query runs. Runs at most once.
+let _accEnsured = false;
+function ensureAccredited() {
+  if (_accEnsured) return;
+  _accEnsured = true;
+  try {
+    const acc = require('../../scripts/seed-accredited');
+    acc.ensureColumns(db);
+    const n = db.prepare("SELECT COUNT(*) AS n FROM courses WHERE id LIKE 'acc-%'").get().n;
+    if (!n) acc.loadAccredited(db);
+  } catch (e) { try { require('../logger').warn('[accredited] lazy load failed: ' + e.message); } catch (_) {} }
+}
+
+// Visibility filter for the courses table. Private accredited courses are only
+// returned to their owning firm or to LAD roles — never publicly or to another
+// firm. Returns a SQL fragment (on alias `c`) + params.
+function courseVisibility(user) {
+  ensureAccredited();
+  if (user && LAD_ROLES.has(user.role)) return { sql: '', params: [] };
+  if (user && user.firm_id) return { sql: ' AND (COALESCE(c.private,0) = 0 OR c.owner_firm_id = ?)', params: [user.firm_id] };
+  return { sql: ' AND COALESCE(c.private,0) = 0', params: [] };
+}
+
+// True if `user` may see / book a specific course row.
+function canAccessCourse(course, user) {
+  if (!course) return false;
+  if (!Number(course.private)) return true;
+  if (user && LAD_ROLES.has(user.role)) return true;
+  return !!(user && user.firm_id && course.owner_firm_id && user.firm_id === course.owner_firm_id);
+}
+
+function getCourses(user) {
+  const vis = courseVisibility(user);
   const rows = db.prepare(`
     SELECT c.*, p.name AS provider_name
     FROM courses c
     LEFT JOIN providers p ON p.id = c.provider_id
-    WHERE c.active = 1
+    WHERE c.active = 1${vis.sql}
     ORDER BY c.title
-  `).all();
+  `).all(...vis.params);
   let ratings = {};
   try { ratings = require('./feedback').courseRatingMap(); } catch (_) {}
   return rows.map((c) => ({ ...c, rating: ratings[c.id] || null }));
@@ -315,6 +351,7 @@ function getAggregateStats() {
 module.exports = {
   // courses
   getCourses, getCourseById, upsertCourse, deleteCourse,
+  courseVisibility, canAccessCourse, ensureAccredited,
   getSessions, bulkUpsertSessions,
   // cms
   getContent, saveContent, getFAQ, saveFAQ,

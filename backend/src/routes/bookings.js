@@ -94,6 +94,10 @@ router.post('/', requireAuth, (req, res) => {
 
   const session_id = req.body.session_id || null;
   const course = req.body.course_id ? store.getCourseById(req.body.course_id) : null;
+  // Block booking a private accredited course that isn't the lawyer's own firm.
+  if (course && Number(course.private) && !store.canAccessCourse(course, req.user)) {
+    return res.status(403).json({ error: 'course_private', message: 'This course is restricted to its firm.' });
+  }
   const cost = Math.max(0, Math.round(Number(
     req.body.credits_used != null ? req.body.credits_used
       : (course && course.credits != null ? course.credits : DEFAULT_CREDIT_COST))));
