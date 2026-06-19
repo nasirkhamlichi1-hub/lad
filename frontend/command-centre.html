@@ -87,9 +87,9 @@
   .ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
   .ring .num b{font-family:var(--title);font-size:42px;font-weight:800;color:#eaf4ff;line-height:1;text-shadow:0 0 20px rgba(52,225,255,.5)}
   .ring .num span{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--green);margin-top:4px}
-  .twin-label{position:absolute;transform:translate(-50%,-50%);font-family:var(--mono);font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink);pointer-events:none;text-align:center;text-shadow:0 0 10px #000;z-index:6;transition:opacity .4s}
-  .twin-label b{display:block;font-family:var(--title);font-size:15px;font-weight:700;color:#eaf4ff;letter-spacing:.5px}
-  .twin-label.dim{color:var(--dim)}
+  .twin-label{position:absolute;transform:translate(-50%,-50%);font-family:var(--mono);font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:#ffffff;pointer-events:none;text-align:center;text-shadow:0 0 6px #000,0 0 12px #000;z-index:6;transition:opacity .4s}
+  .twin-label b{display:block;font-family:var(--title);font-size:15px;font-weight:700;color:#ffffff;letter-spacing:.5px}
+  .twin-label.dim{color:#ffffff}
   .centerstage{position:relative;min-height:64vh;border:none;border-radius:18px;background:transparent;overflow:visible}
   .cs-h{display:none}
   .cs-h .t{font-family:var(--title);font-size:16px;letter-spacing:3px;color:#eaf4ff}
@@ -882,7 +882,7 @@
         else { var r = vary ? (R*1.7 - Math.pow((Number(ch.count)-minC)/(maxC-minC||1),0.7)*(R*1.1)) : R;
           var dk=dir[i]+0.5, phi=Math.acos(1-2*dk/n), th=GA*dk;
           pos=new THREE.Vector3(Math.sin(phi)*Math.cos(th)*r, Math.cos(phi)*r, Math.sin(phi)*Math.sin(th)*r); }
-        addBall(grp,{pos:pos,color:ch.color,label:ch.label,sub:ch.sub,count:ch.count,node:ch,noLabel:ch.noLabel,dense:dense},cores,anchors);
+        addBall(grp,{pos:pos,color:ch.color,label:ch.label,sub:ch.sub,count:ch.count,node:ch,noLabel:(ch.noLabel||(!dense&&i>=10)),dense:dense},cores,anchors);
         if(!dense){
           grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),pos]),new THREE.LineBasicMaterial({color:ch.color,transparent:true,opacity:.2,blending:THREE.AdditiveBlending})));
           var N=10,fa=new Float32Array(N*3),t=[]; for(var k=0;k<N;k++)t.push(Math.random()); var fgeo=new THREE.BufferGeometry(); fgeo.setAttribute('position',new THREE.BufferAttribute(fa,3)); grp.add(new THREE.Points(fgeo,new THREE.PointsMaterial({color:ch.color,size:4.4,map:SPRITE,transparent:true,opacity:.92,blending:THREE.AdditiveBlending,depthWrite:false}))); flows.push({a:new THREE.Vector3(0,0,0),b:pos.clone(),t:t,geo:fgeo});
@@ -1150,9 +1150,9 @@
       if(TW.web){ TW.web.anchors.forEach(function(a){ var v=a.pos.clone(); v.project(camera); var sx=(v.x*.5+.5)*W, sy=(-v.y*.5+.5)*H;
         var inb=sx>-80&&sx<W+80&&sy>56&&sy<H-8&&v.z<1;
         a.el.style.opacity=inb?String(0.9*(TW.web.grow||0)):'0'; a.el.style.left=(sx-rect.left)+'px'; a.el.style.top=(sy-rect.top)+'px'; }); }
-      // Dense systems (e.g. firms): a pool of transient labels latches onto the
-      // unlabelled cores nearest screen-centre and fades in/out as you move.
-      if(TW.active && TW.active.dense){
+      // Every system: a pool of transient labels latches onto the unlabelled
+      // cores you fly closest to and fades in/out (top 10 stay always-on).
+      if(TW.active){
         if(!labelPool.length) buildLabelPool();
         // Label only the moons you are physically CLOSEST to (3D distance to the
         // camera), not the far ones that merely line up near screen-centre. The
