@@ -195,6 +195,23 @@
   #crumbs span:last-child{color:var(--cyan)}
   #crumbs span:hover{color:var(--cyan)}
   #crumbs i{color:var(--dim2);font-style:normal}
+  /* time machine */
+  #timeMachine{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(34px);z-index:38;width:min(760px,92vw);background:rgba(7,12,26,.85);border:1px solid var(--panel-b);border-radius:16px;padding:14px 20px 16px;backdrop-filter:blur(16px);box-shadow:0 0 54px rgba(0,0,0,.5),0 0 30px rgba(52,225,255,.1);opacity:0;transition:opacity .5s,transform .5s;pointer-events:none}
+  #timeMachine.on{opacity:1;transform:translateX(-50%);pointer-events:auto}
+  #tmHead{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  #tmTitle{font-family:var(--title);font-size:12px;letter-spacing:2.5px;color:#eaf4ff}
+  #tmRead{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--dim)}
+  #tmRead b{font-family:var(--title);font-size:19px;color:#eaf4ff;margin-right:3px}
+  #tmPlay{background:linear-gradient(90deg,var(--cyan),var(--teal));color:#04101a;border:0;border-radius:9px;padding:7px 15px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit}
+  #tmClose{background:transparent;border:1px solid var(--panel-b);color:var(--dim);border-radius:8px;padding:6px 11px;cursor:pointer;font-size:11px;font-family:inherit}
+  #tmTrack{position:relative;height:42px;cursor:pointer;margin-top:6px}
+  #tmLine{position:absolute;top:20px;left:0;right:0;height:3px;background:rgba(120,150,210,.2);border-radius:3px}
+  #tmFill{position:absolute;top:20px;left:0;height:3px;background:linear-gradient(90deg,var(--teal),var(--cyan));border-radius:3px;width:0}
+  #tmHandle{position:absolute;top:12px;width:18px;height:18px;border-radius:50%;background:#eaf4ff;box-shadow:0 0 16px var(--cyan);transform:translateX(-50%);left:0;cursor:grab}
+  .tmMark{position:absolute;top:30px;font-family:var(--mono);font-size:8px;color:var(--dim2);transform:translateX(-50%);white-space:nowrap}
+  .tmNow{position:absolute;top:8px;width:2px;height:24px;background:var(--amber);transform:translateX(-50%)}
+  .tmNow:after{content:'NOW';position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:7px;color:var(--amber);letter-spacing:1px}
+  #tmProj{position:absolute;top:20px;height:3px;background:repeating-linear-gradient(90deg,rgba(154,108,255,.6) 0 4px,transparent 4px 8px);border-radius:3px}
   @media(max-width:1200px){.stage{grid-template-columns:1fr}.kstrip{grid-template-columns:repeat(3,1fr)}.bottom{grid-template-columns:1fr 1fr}.centerstage{min-height:440px}}
 </style>
 </head>
@@ -252,6 +269,7 @@
           <button class="prim" onclick="cmdAsk('Give me a full executive readout of programme health and the three most important actions this week.')">✦ Ask the AI</button>
           <button onclick="location.href='lad-intelligence-v4.html'">Open dashboard</button>
           <button onclick="startTour()">▶ Tour</button>
+          <button onclick="openTimeMachine()">⏱ Time</button>
           <button onclick="cmdRotate()">⟲ Orbit</button>
         </div>
       </div>
@@ -325,6 +343,12 @@
 
 <div id="warp"></div>
 <div id="crumbs"></div>
+<div id="timeMachine">
+  <div id="tmHead"><span id="tmTitle">⏱ TIME MACHINE</span>
+    <span id="tmRead"><b id="tmPct">—</b>compliant · <span id="tmMonth">—</span></span>
+    <button id="tmPlay">▶ Play</button><button id="tmClose">✕</button></div>
+  <div id="tmTrack"><div id="tmLine"></div><div id="tmProj"></div><div id="tmFill"></div><div id="tmHandle"></div></div>
+</div>
 <div id="diveHint">◎ Drag to fly · hover to reveal connections · click to dive in · scroll to zoom</div>
 <div id="tourCap"><div class="tc-t" id="tcT"></div><div class="tc-s" id="tcS"></div></div>
 <div id="focusPanel">
@@ -438,7 +462,7 @@
     ];
     $('hxRows').innerHTML=idx.map(function(r){ return '<div class="hx"><div class="hxl">'+r.l+'</div><div class="hxbar"><div class="hxf" data-w="'+r.v+'" style="background:'+r.c+'"></div></div><div class="hxv" style="color:'+r.c+'">'+r.v+'</div></div>'; }).join('');
     setTimeout(function(){ document.querySelectorAll('#hxRows .hxf').forEach(function(f){ f.style.width=Math.min(100,f.getAttribute('data-w'))+'%'; }); },80);
-    var health=Math.round(idx.reduce(function(s,r){return s+r.v;},0)/idx.length);
+    var health=Math.round(idx.reduce(function(s,r){return s+r.v;},0)/idx.length); window.__health=health;
     var arc=$('hsArc'), C2=2*Math.PI*64; arc.style.strokeDasharray=C2;
     setTimeout(function(){ arc.style.transition='stroke-dashoffset 1.6s cubic-bezier(.3,1,.4,1)'; arc.style.strokeDashoffset=C2*(1-health/100); },120);
     countUp($('hsNum'), health);
@@ -510,6 +534,7 @@
   // Forecast trajectory
   getJSON('/api/v1/admin/forecast').then(function(f){
     if(!f||!f.series||!f.series.length)return;
+    window.__FC=f; if(window.__tmReady) window.__tmReady();
     $('fcEngine').textContent='pace-based';
     $('fcNow').textContent=(f.currentRate||0)+'%'; $('fcProj').textContent=(f.projectedRate||0)+'%';
     var s=f.series, W=300,H=74,pad=6, max=Math.max(10,f.projectedRate||0,Math.max.apply(null,s.map(function(p){return p.rate;})));
@@ -646,9 +671,10 @@
       var c=TW.cores.filter(function(x){return x.key==='Lawyers';})[0]; if(!c||!c.geo) return;
       var n=c.geo.attributes.position.count, col=new Float32Array(n*3);
       var total=Math.max(1,(crit||0)+(risk||0)+(comp||0));
-      var nC=Math.round(n*(crit||0)/total), nR=Math.round(n*(risk||0)/total), order=[];
-      for(var i=0;i<n;i++) order.push(i); // interleave so bands are visually mixed, not stacked
-      for(var k=order.length-1;k>0;k--){ var j=Math.floor(Math.random()*(k+1)); var tmp=order[k];order[k]=order[j];order[j]=tmp; }
+      var nC=Math.round(n*(crit||0)/total), nR=Math.round(n*(risk||0)/total);
+      // Cache one shuffled ordering so repeated recolours (e.g. the Time Machine
+      // scrubbing) only move the band thresholds — smooth, never flickering.
+      var order=c._order; if(!order||order.length!==n){ order=[]; for(var i=0;i<n;i++) order.push(i); for(var k=n-1;k>0;k--){ var j=Math.floor(Math.random()*(k+1)); var tmp=order[k];order[k]=order[j];order[j]=tmp; } c._order=order; }
       order.forEach(function(idx,rank){ var r,g,b; if(rank<nC){r=1;g=.37;b=.49;} else if(rank<nC+nR){r=1;g=.72;b=.30;} else {r=.24;g=.94;b=.63;} col[idx*3]=r;col[idx*3+1]=g;col[idx*3+2]=b; });
       c.geo.setAttribute('color',new THREE.BufferAttribute(col,3));
       c.mat.vertexColors=true; c.mat.color.set(0xffffff); c.mat.size=2.3; c.mat.needsUpdate=true;
@@ -1147,6 +1173,55 @@
   }
   window.openCourseDetail=openCourseDetail;
   document.addEventListener('keydown',function(e){ if(e.key==='Escape' && $('deepLayer').classList.contains('on')){ if($('ccDetail').classList.contains('on')) closeCourseDetail(); else closeDeepLayer(); } });
+})();
+</script>
+
+<!-- ── TIME MACHINE: scrub the whole organism through the year ── -->
+<script>
+(function(){
+  'use strict';
+  function $(id){return document.getElementById(id);}
+  var playing=false, dragging=false, curFrac=null, RAF=null;
+  function series(){ return (window.__FC&&window.__FC.series)||null; }
+  function practising(){ return (window.__FC&&window.__FC.practising)||((window.__OV&&window.__OV.lawyers&&window.__OV.lawyers.practising))||0; }
+  function critRatio(){ var L=(window.__OV&&window.__OV.lawyers)||{}; var d=(L.critical||0)+(L.atRisk||0); return d?(L.critical||0)/d:0.5; }
+  function nowIndex(){ var s=series(); if(!s)return 0; var idx=0; for(var i=0;i<s.length;i++){ if(!s[i].projected) idx=i; } return idx; }
+  function frac(i){ var s=series(); return s&&s.length>1? i/(s.length-1):0; }
+  function rateAt(f){ var s=series(); if(!s)return 0; var x=f*(s.length-1); var i0=Math.floor(x), i1=Math.min(s.length-1,i0+1), t=x-i0; return s[i0].rate+(s[i1].rate-s[i0].rate)*t; }
+  function monthAt(f){ var s=series(); if(!s)return''; var i=Math.round(f*(s.length-1)); return (s[i]&&s[i].month)||''; }
+  function renderTrack(){ var s=series(), tr=$('tmTrack'); if(!s||!tr) return;
+    Array.prototype.forEach.call(tr.querySelectorAll('.tmMark,.tmNow'),function(e){e.remove();});
+    s.forEach(function(p,i){ if(i%2===0||i===s.length-1){ var m=document.createElement('div'); m.className='tmMark'; m.style.left=(frac(i)*100)+'%'; m.textContent=p.month; tr.appendChild(m); } });
+    var ni=nowIndex(); var nowEl=document.createElement('div'); nowEl.className='tmNow'; nowEl.style.left=(frac(ni)*100)+'%'; tr.appendChild(nowEl);
+    var proj=$('tmProj'); if(proj){ proj.style.left=(frac(ni)*100)+'%'; proj.style.width=((1-frac(ni))*100)+'%'; }
+  }
+  function apply(f){ curFrac=f; var s=series(); if(!s)return; var rate=Math.max(0,Math.min(100,rateAt(f))); var prac=practising();
+    var comp=Math.round(prac*rate/100), non=Math.max(0,prac-comp), cr=critRatio(), crit=Math.round(non*cr), risk=non-crit;
+    if(window.recolorLawyers) window.recolorLawyers(crit,risk,comp);
+    if(window.__setPulse) window.__setPulse(rate);
+    var pe=$('tmPct'); if(pe) pe.textContent=Math.round(rate)+'% ';
+    var me=$('tmMonth'); if(me) me.textContent=monthAt(f)+(f>frac(nowIndex())+0.001?' · projected':'');
+    var fl=$('tmFill'); if(fl) fl.style.width=(f*100)+'%'; var hd=$('tmHandle'); if(hd) hd.style.left=(f*100)+'%';
+  }
+  window.__tmReady=function(){ if($('timeMachine').classList.contains('on')){ $('tmRead').innerHTML='<b id="tmPct">—</b>compliant · <span id="tmMonth">—</span>'; renderTrack(); apply(frac(nowIndex())); } };
+  window.openTimeMachine=function(){ if(window.exitFocus) window.exitFocus(); var tm=$('timeMachine'); tm.classList.add('on');
+    if(!series()){ $('tmRead').innerHTML='<span style="color:var(--dim2)">Forecast loading — sign in as a LAD admin</span>'; return; }
+    renderTrack(); apply(curFrac!=null?curFrac:frac(nowIndex())); };
+  function closeTM(){ playing=false; if(RAF)cancelAnimationFrame(RAF); $('timeMachine').classList.remove('on');
+    var L=(window.__OV&&window.__OV.lawyers)||null; if(L&&window.recolorLawyers) window.recolorLawyers(L.critical||0,L.atRisk||0,L.compliant||0);
+    if(window.__setPulse&&window.__health!=null) window.__setPulse(window.__health); }
+  function play(){ if(playing){ playing=false; $('tmPlay').textContent='▶ Play'; if(RAF)cancelAnimationFrame(RAF); return; } if(!series())return; playing=true; $('tmPlay').textContent='⏸ Pause';
+    var from=(curFrac!=null&&curFrac<0.999?curFrac:0), start=performance.now();
+    function step(t){ if(!playing)return; var p=Math.min(1,from+(t-start)/6500*(1-from)); apply(p); if(p<1){ RAF=requestAnimationFrame(step); } else { playing=false; $('tmPlay').textContent='▶ Play'; } }
+    RAF=requestAnimationFrame(step); }
+  function bind(){ var tr=$('tmTrack'); if(!tr) return;
+    function fx(e){ var r=tr.getBoundingClientRect(); return Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)); }
+    tr.addEventListener('pointerdown',function(e){ dragging=true; playing=false; $('tmPlay').textContent='▶ Play'; apply(fx(e)); });
+    window.addEventListener('pointermove',function(e){ if(dragging) apply(fx(e)); });
+    window.addEventListener('pointerup',function(){ dragging=false; });
+    var pb=$('tmPlay'); if(pb) pb.onclick=play; var cb=$('tmClose'); if(cb) cb.onclick=closeTM;
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind); else bind();
 })();
 </script>
 </body>
