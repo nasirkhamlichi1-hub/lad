@@ -726,12 +726,16 @@
     function lawyerNode(l){ var p=lawPts(l); return {label:lawName(l), sub:p+' pts', count:Math.max(p,1), color:bandColor(p), type:'lawyer', id:l.id, drill:true, meta:{points:p,status:l.status,credits:(l.credits!=null?l.credits:l.credit_balance)}}; }
     var DRILL={
       firmsRoot:function(){ return getJSON('/api/v1/admin/firms').then(function(d){ var list=(d&&d.firms)||[]; if(!list.length) return null;
-        var n=list.length, maxL=list[0].lawyers||1, minL=list[n-1].lawyers||0, closeR=120, farR=470, GA=Math.PI*(3-Math.sqrt(5));
+        var n=list.length, maxL=list[0].lawyers||1, minL=list[n-1].lawyers||0, closeR=120, farR=490, GA=Math.PI*(3-Math.sqrt(5));
+        // Even directions over a FULL sphere, shuffled so firm SIZE doesn't bias
+        // direction — the big firms orbit all around the sun, not stacked on top.
+        var dir=[]; for(var j=0;j<n;j++) dir.push(j);
+        for(var j2=n-1;j2>0;j2--){ var m=Math.floor(Math.random()*(j2+1)); var tt=dir[j2]; dir[j2]=dir[m]; dir[m]=tt; }
         var kids=list.map(function(f,i){
           var frac=maxL>minL?(f.lawyers-minL)/(maxL-minL):0.5;          // 1 = biggest firm
-          var r=farR-Math.pow(frac,0.75)*(farR-closeR);                // biggest -> a planet orbit (clear of the sun), smallest -> far dust
-          var k=i+0.5, phi=Math.acos(1-2*k/n), th=GA*k;                // fibonacci direction
-          var pos=[Math.sin(phi)*Math.cos(th)*r, Math.cos(phi)*r*0.32, Math.sin(phi)*Math.sin(th)*r]; // flattened like a solar system
+          var r=farR-Math.pow(frac,0.75)*(farR-closeR);                // biggest -> inner orbit (clear of the sun), smallest -> far dust
+          var dk=dir[i]+0.5, phi=Math.acos(1-2*dk/n), th=GA*dk;        // shuffled fibonacci direction (all around)
+          var pos=[Math.sin(phi)*Math.cos(th)*r, Math.cos(phi)*r, Math.sin(phi)*Math.sin(th)*r];
           return {label:f.name,sub:(f.compliancePct||0)+'% · '+nf(f.lawyers),count:f.lawyers,color:bandPctColor(f.compliancePct),type:'firm',id:f.id,drill:true,meta:f,pos:pos,noLabel:(i>=36)};
         });
         return {title:'All Law Firms',center:{label:'Firms · '+nf(n),color:0x9a6cff},children:kids,dense:true,spread:farR}; }); },
