@@ -609,6 +609,10 @@
     var camera=new THREE.PerspectiveCamera(55,W/H,0.1,2000); camera.position.set(0,40,250);
     var group=new THREE.Group(); scene.add(group);
     TW.scene=scene;TW.renderer=renderer;TW.camera=camera;TW.group=group;TW.anchors=[];TW.cores=[];
+    // Soft radial sprite so every particle reads as a proton of light, not a square.
+    var SPRITE=(function(){ var cv=document.createElement('canvas'); cv.width=cv.height=64; var g=cv.getContext('2d');
+      var gr=g.createRadialGradient(32,32,0,32,32,32); gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.25,'rgba(255,255,255,.9)'); gr.addColorStop(.55,'rgba(255,255,255,.35)'); gr.addColorStop(1,'rgba(255,255,255,0)');
+      g.fillStyle=gr; g.beginPath(); g.arc(32,32,32,0,Math.PI*2); g.fill(); var t=new THREE.CanvasTexture(cv); return t; })();
     // Free-fly orbit state (spherical around a movable target) + framing helpers.
     TW.orb={tt:0.7,tp:1.0,tr:265,cx:0,cy:0,cz:0}; TW.orbR={t:0.7,p:1.0,r:265,x:0,y:0,z:0};
     function frameOn(p,radius){ TW.orb.cx=p.x;TW.orb.cy=p.y;TW.orb.cz=p.z; if(radius)TW.orb.tr=radius; }
@@ -632,7 +636,7 @@
       for(var i=0;i<n;i++){ var u=Math.random(),v=Math.random(); var th=2*Math.PI*u, ph=Math.acos(2*v-1); var rr=rad*Math.cbrt(Math.random());
         arr[i*3]=pos.x+rr*Math.sin(ph)*Math.cos(th); arr[i*3+1]=pos.y+rr*Math.sin(ph)*Math.sin(th); arr[i*3+2]=pos.z+rr*Math.cos(ph); }
       geo.setAttribute('position',new THREE.BufferAttribute(arr,3));
-      var mat=new THREE.PointsMaterial({color:c.color,size:c.center?2.0:1.7,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false});
+      var mat=new THREE.PointsMaterial({color:c.color,size:c.center?2.4:2.0,map:SPRITE,transparent:true,opacity:.7,blending:THREE.AdditiveBlending,depthWrite:false});
       var swarm=new THREE.Points(geo,mat); group.add(swarm);
       // glowing core
       var core=new THREE.Mesh(new THREE.SphereGeometry(c.center?7:4,20,20),new THREE.MeshBasicMaterial({color:c.color,transparent:true,opacity:.9}));
@@ -667,7 +671,7 @@
       var N=16, arr=new Float32Array(N*3), t=[];
       for(var i=0;i<N;i++) t.push(Math.random());
       var fgeo=new THREE.BufferGeometry(); fgeo.setAttribute('position',new THREE.BufferAttribute(arr,3));
-      var fmat=new THREE.PointsMaterial({color:c.color,size:2.7,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false});
+      var fmat=new THREE.PointsMaterial({color:c.color,size:5,map:SPRITE,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false});
       group.add(new THREE.Points(fgeo,fmat));
       TW.flows.push({a:new THREE.Vector3(0,0,0), b:c.pos.clone(), t:t, geo:fgeo});
     });
@@ -762,7 +766,7 @@
           var c2=new THREE.Mesh(new THREE.SphereGeometry(2.3,12,12),new THREE.MeshBasicMaterial({color:rel.color,transparent:true,opacity:.95})); c2.position.copy(p); grp.add(c2);
           var h2=new THREE.Mesh(new THREE.SphereGeometry(5,12,12),new THREE.MeshBasicMaterial({color:rel.color,transparent:true,opacity:.16,blending:THREE.AdditiveBlending,depthWrite:false})); h2.position.copy(p); grp.add(h2);
           grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),p]),new THREE.LineBasicMaterial({color:rel.color,transparent:true,opacity:.4,blending:THREE.AdditiveBlending})));
-          var N=6,fa=new Float32Array(N*3),t=[]; for(var k=0;k<N;k++)t.push(Math.random()); var fg=new THREE.BufferGeometry(); fg.setAttribute('position',new THREE.BufferAttribute(fa,3)); grp.add(new THREE.Points(fg,new THREE.PointsMaterial({color:rel.color,size:2.3,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false}))); flows.push({a:new THREE.Vector3(0,0,0),b:p.clone(),t:t,geo:fg});
+          var N=6,fa=new Float32Array(N*3),t=[]; for(var k=0;k<N;k++)t.push(Math.random()); var fg=new THREE.BufferGeometry(); fg.setAttribute('position',new THREE.BufferAttribute(fa,3)); grp.add(new THREE.Points(fg,new THREE.PointsMaterial({color:rel.color,size:4.4,map:SPRITE,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false}))); flows.push({a:new THREE.Vector3(0,0,0),b:p.clone(),t:t,geo:fg});
           var hex='#'+('000000'+rel.color.toString(16)).slice(-6);
           var el=document.createElement('div'); el.className='twin-label dim'; el.style.cssText='font-size:8px'; el.innerHTML='<b style="font-size:1px;opacity:0"> </b>'+esc(rel.label); el.style.color=hex; stage.appendChild(el);
           anchors.push({el:el,pos:base.clone().add(p)});
@@ -779,7 +783,7 @@
       var geo=new THREE.BufferGeometry(),arr=new Float32Array(nP*3),rad=isC?40:15;
       for(var i=0;i<nP;i++){ var u=Math.random(),v=Math.random(),th=2*Math.PI*u,ph=Math.acos(2*v-1),rr=rad*Math.cbrt(Math.random()); arr[i*3]=pos.x+rr*Math.sin(ph)*Math.cos(th);arr[i*3+1]=pos.y+rr*Math.sin(ph)*Math.sin(th);arr[i*3+2]=pos.z+rr*Math.cos(ph); }
       geo.setAttribute('position',new THREE.BufferAttribute(arr,3));
-      grp.add(new THREE.Points(geo,new THREE.PointsMaterial({color:color,size:isC?2:1.6,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false})));
+      grp.add(new THREE.Points(geo,new THREE.PointsMaterial({color:color,size:isC?2.4:1.9,map:SPRITE,transparent:true,opacity:.7,blending:THREE.AdditiveBlending,depthWrite:false})));
       var core=new THREE.Mesh(new THREE.SphereGeometry(isC?6:3.4,16,16),new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:.92})); core.position.copy(pos); grp.add(core);
       var halo=new THREE.Mesh(new THREE.SphereGeometry(isC?13:7.5,16,16),new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:.12,blending:THREE.AdditiveBlending,depthWrite:false})); halo.position.copy(pos); grp.add(halo);
       var hit=new THREE.Mesh(new THREE.SphereGeometry(isC?26:13,10,10),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false})); hit.position.copy(pos);
@@ -800,7 +804,7 @@
         var pos=new THREE.Vector3(Math.cos(ang)*R,y,Math.sin(ang)*R);
         addBall(grp,{pos:pos,color:ch.color,label:ch.label,sub:ch.sub,count:ch.count,node:ch},cores,anchors);
         var lg=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),pos]); grp.add(new THREE.Line(lg,new THREE.LineBasicMaterial({color:ch.color,transparent:true,opacity:.2,blending:THREE.AdditiveBlending})));
-        var N=10,fa=new Float32Array(N*3),t=[]; for(var k=0;k<N;k++)t.push(Math.random()); var fgeo=new THREE.BufferGeometry(); fgeo.setAttribute('position',new THREE.BufferAttribute(fa,3)); grp.add(new THREE.Points(fgeo,new THREE.PointsMaterial({color:ch.color,size:2.3,transparent:true,opacity:.9,blending:THREE.AdditiveBlending,depthWrite:false}))); flows.push({a:new THREE.Vector3(0,0,0),b:pos.clone(),t:t,geo:fgeo});
+        var N=10,fa=new Float32Array(N*3),t=[]; for(var k=0;k<N;k++)t.push(Math.random()); var fgeo=new THREE.BufferGeometry(); fgeo.setAttribute('position',new THREE.BufferAttribute(fa,3)); grp.add(new THREE.Points(fgeo,new THREE.PointsMaterial({color:ch.color,size:4.4,map:SPRITE,transparent:true,opacity:.92,blending:THREE.AdditiveBlending,depthWrite:false}))); flows.push({a:new THREE.Vector3(0,0,0),b:pos.clone(),t:t,geo:fgeo});
       });
       return {cores:cores,anchors:anchors,flows:flows,group:grp,radius:Math.round(R*1.9+70),spec:spec};
     }
@@ -1023,12 +1027,12 @@
       camera.lookAt(r.x,r.y,r.z);
       pick();
       // living booking-flow beams
-      if(TW.flows){ var sp=0.0055+(TW.health!=null?(1-TW.health/100)*0.004:0); TW.flows.forEach(function(f){ var p=f.geo.attributes.position.array;
+      if(TW.flows){ var sp=0.0024+(TW.health!=null?(1-TW.health/100)*0.0016:0); TW.flows.forEach(function(f){ var p=f.geo.attributes.position.array;
         for(var i=0;i<f.t.length;i++){ f.t[i]+=sp; if(f.t[i]>1) f.t[i]-=1; var tt=f.t[i]; p[i*3]=f.a.x+(f.b.x-f.a.x)*tt; p[i*3+1]=f.a.y+(f.b.y-f.a.y)*tt; p[i*3+2]=f.a.z+(f.b.z-f.a.z)*tt; }
         f.geo.attributes.position.needsUpdate=true; }); }
       // connection web — bloom out to the things this node touches
       if(TW.web){ if(TW.web.grow<1){ TW.web.grow=Math.min(1,TW.web.grow+0.12); TW.web.group.scale.setScalar(TW.web.grow); }
-        TW.web.flows.forEach(function(f){ var p=f.geo.attributes.position.array; for(var i=0;i<f.t.length;i++){ f.t[i]+=0.013; if(f.t[i]>1)f.t[i]-=1; var tt=f.t[i]; p[i*3]=f.a.x+(f.b.x-f.a.x)*tt;p[i*3+1]=f.a.y+(f.b.y-f.a.y)*tt;p[i*3+2]=f.a.z+(f.b.z-f.a.z)*tt; } f.geo.attributes.position.needsUpdate=true; }); }
+        TW.web.flows.forEach(function(f){ var p=f.geo.attributes.position.array; for(var i=0;i<f.t.length;i++){ f.t[i]+=0.006; if(f.t[i]>1)f.t[i]-=1; var tt=f.t[i]; p[i*3]=f.a.x+(f.b.x-f.a.x)*tt;p[i*3+1]=f.a.y+(f.b.y-f.a.y)*tt;p[i*3+2]=f.a.z+(f.b.z-f.a.z)*tt; } f.geo.attributes.position.needsUpdate=true; }); }
       var hk=hovered?hovered.key:null;
       if(hk!==TW.webKey){ if(TW.web) clearWeb(); clearTimeout(webTimer); if(hk&&hovered.node&&REL[hovered.node.type]&&!TW.busy&&!TW.focusKey){ var hc=hovered; webTimer=setTimeout(function(){ if(hovered===hc) buildWeb(hc); },200); } }
       // health heartbeat — the central node breathes at the programme's tempo
