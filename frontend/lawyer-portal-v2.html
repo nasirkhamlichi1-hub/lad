@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>My CLPD · Yousef Al Mansouri — Government of Dubai</title>
+<title>My CLPD — Government of Dubai</title>
 <!-- LAD CLPD — live API sync shim (multi-user persistence) -->
 <script src="runtime-config.js?v=render2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1048,7 +1048,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
     <div class="sb-foot" onclick="openProfileModal()" style="cursor:pointer" title="My profile">
       <div class="sb-user-av">YM</div>
       <div class="sb-user-info">
-        <div class="sb-user-name">Yousef Al Mansouri</div>
+        <div class="sb-user-name">—</div>
         <div class="sb-user-role">L-01494</div>
       </div>
     </div>
@@ -1213,7 +1213,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
       </section>
 
       <!-- ═══ AI COMPLIANCE PROJECTION ═══ -->
-      <section class="section" id="projection">
+      <section class="section" id="projection" style="display:none"><!-- hidden: fabricated 'path to 16 points' projection (hardcoded paths/courses/dates); no real per-lawyer model -->
         <div class="section-hd">
           <div>
             <div class="section-eyebrow" style="color:var(--teal)">MARYAM · COMPLIANCE PROJECTION · LIVE</div>
@@ -3096,11 +3096,7 @@ const CMD_ITEMS=[
   {ico:'',name:'Career trajectory',desc:'7-year story',sec:'Section',action:()=>scrollToById('trajectory')},
   {ico:'',name:'Course history',desc:'Your completed courses',sec:'Section',action:()=>scrollToById('completed')},
   {ico:'',name:'Apply The Fast Lane',desc:'Recommended path · 5 credits',sec:'Action',action:()=>showToast('Auto-scheduling The Fast Lane…')},
-  {ico:'',name:'Start AI Governance',desc:'Free e-learning · 2 pts',sec:'Course',action:()=>showToast('Starting AI Governance…')},
-  {ico:'',name:'DIFC Day · 28 May',desc:'International Arbitration · BOOKED',sec:'Course',action:()=>showToast('Opening DIFC Day…')},
-  {ico:'',name:'Mediation Advocacy',desc:'4 pts · 18 Jun · 10 credits',sec:'Course',action:()=>showToast('Opening Mediation…')},
-  {ico:'₿',name:'Crypto Tax (CARF)',desc:'2 pts · 8 Jun · webinar',sec:'Course',action:()=>showToast('Opening Crypto Tax…')},
-  {ico:'',name:'Ask Maryam anything',desc:'Open AI chat',sec:'Action',action:()=>showToast('Maryam chat opening…')}
+  {ico:'',name:'Ask the assistant',desc:'Open AI chat',sec:'Action',action:()=>showToast('Assistant opening…')}
 ];
 
 function showToast(m){const t=document.getElementById('toast');document.getElementById('tmsg').textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2800);}
@@ -3902,6 +3898,16 @@ const COURSES = {
     ]
   }
 };
+
+// Strip the fallback's hardcoded session dates — never show fabricated dates.
+// Real sessions are loaded from /api/v1/courses/upcoming by loadCatalogueLive().
+try { Object.keys(COURSES).forEach(function(k){ if (COURSES[k]) COURSES[k].sessions = []; }); } catch (e) {}
+// Blank the skill-radar's hardcoded demo points/percentiles — the Skills
+// Diagnostic quiz fills real values; until then show no fabricated numbers.
+try {
+  document.querySelectorAll('.radar-axis-pctile').forEach(function(p){ p.textContent='—'; p.className='radar-axis-pctile'; });
+  document.querySelectorAll('.radar-axis-pts').forEach(function(p){ p.textContent='—'; });
+} catch (e) {}
 
 let currentBookingId = null;
 let selectedSessionIdx = null;
