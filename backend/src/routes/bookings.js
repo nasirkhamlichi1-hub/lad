@@ -6,6 +6,8 @@ const router = express.Router();
 const db = require('../db');
 const store = require('../services/store');
 const skills = require('../services/skills');
+const email = require('../services/email');
+const tpl = require('../services/email-templates');
 const { requireAuth, requireRole, optionalAuth, isSuper } = require('../middleware/auth');
 
 const DEFAULT_CREDIT_COST = 5;
@@ -162,6 +164,21 @@ router.post('/', requireAuth, (req, res) => {
       const newBal = db.prepare('SELECT credit_balance FROM lawyers WHERE id = ?').get(lawyer_id).credit_balance;
       return { booking, balance: Number(newBal) || 0, credits_used: cost, seats_remaining: seatsRemaining };
     })();
+
+    // Confirmation email (best-effort, queued — never blocks the response).
+    if (lawyer.email) {
+      const courseTitle = req.body.course_title || (course && course.title) || 'your CLPD course';
+      email.send('booking', tpl.bookingConfirmation({
+        name: tpl.fullName(lawyer.first_name, lawyer.last_name),
+        courseTitle,
+        sessionWhen: fmtSession(req.body.scheduled_at),
+        venue: req.body.venue || (course && course.venue) || null,
+        language: req.body.language || 'English',
+        credits: cost,
+        balance: result.balance,
+      }), { to: lawyer.email, toName: tpl.fullName(lawyer.first_name, lawyer.last_name), ref: result.booking && result.booking.id, dedupeKey: 'booking:' + (result.booking && result.booking.id) });
+    }
+
     res.status(201).json(result);
   } catch (e) {
     if (e.code === 'sold_out') return res.status(409).json({ error: 'sold_out', message: 'This session is sold out — please choose another date.' });
@@ -213,9 +230,11 @@ router.patch('/:id', requireAuth, (req, res) => {
   // the seat. Idempotent: only fires on the transition out of an active state.
   const wasActive = !['cancelled', 'refunded'].includes((booking.status || '').toLowerCase());
   const nowCancelled = ['cancelled', 'refunded'].includes((req.body.status || '').toLowerCase());
+  let refundedCredits = 0;
   if (nowCancelled && wasActive) {
     try {
       const cost = Number(booking.credits_used) || 0;
+      refundedCredits = cost > 0 && booking.lawyer_id ? cost : 0;
       if (cost > 0 && booking.lawyer_id) {
         db.prepare('UPDATE lawyers SET credit_balance = COALESCE(credit_balance,0) + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(cost, booking.lawyer_id);
         try {
@@ -232,6 +251,17 @@ router.patch('/:id', requireAuth, (req, res) => {
         db.prepare("UPDATE course_sessions SET seats_remaining = MIN(COALESCE(seats_remaining,0) + 1, COALESCE(capacity, seats_remaining + 1)), status = CASE WHEN status = 'closed' THEN 'scheduled' ELSE status END WHERE id = ?").run(booking.session_id);
       }
     } catch (_) {}
+    // Cancellation/refund confirmation email (best-effort, queued).
+    if (lawyer && lawyer.email) {
+      let bal = null;
+      try { bal = db.prepare('SELECT credit_balance FROM lawyers WHERE id = ?').get(booking.lawyer_id).credit_balance; } catch (_) {}
+      email.send('cancellation', tpl.bookingCancellation({
+        name: tpl.fullName(lawyer.first_name, lawyer.last_name),
+        courseTitle: booking.course_title || 'your CLPD course',
+        refundCredits: refundedCredits,
+        balance: bal != null ? Number(bal) : null,
+      }), { to: lawyer.email, toName: tpl.fullName(lawyer.first_name, lawyer.last_name), ref: booking.id, dedupeKey: 'cancellation:' + booking.id });
+    }
   }
 
   // ─── Skill graph propagation ────────────────────────────────────

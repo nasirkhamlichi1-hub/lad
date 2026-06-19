@@ -243,6 +243,11 @@ const server = app.listen(port, () => {
 server.keepAliveTimeout = 65000;
 server.headersTimeout = 66000;
 
+// ─── Transactional email worker ─────────────────────────────────────────
+// Drains the email_outbox over SMTP with retry/backoff. Starts regardless of
+// SMTP config — when unconfigured it simply logs and leaves mail queued.
+try { require('./services/email').startWorker(); } catch (e) { log.error('email_worker_start_failed', { error: e.message }); }
+
 let shuttingDown = false;
 function shutdown(signal) {
   if (shuttingDown) return;

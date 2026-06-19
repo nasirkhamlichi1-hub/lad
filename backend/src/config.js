@@ -97,4 +97,16 @@ module.exports = {
 
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10),
   rateLimitMax:      parseInt(process.env.RATE_LIMIT_MAX || '120', 10),
+
+  // Transactional email (SMTP relay). When host is unset the email service
+  // queues mail in email_outbox but never transmits — see services/email.js.
+  mail: {
+    host:     process.env.SMTP_HOST || '',
+    port:     parseInt(process.env.SMTP_PORT || '587', 10),
+    secure:   String(process.env.SMTP_SECURE || '').toLowerCase() === 'true',
+    user:     process.env.SMTP_USER || '',
+    from:     process.env.MAIL_FROM || '',
+    fromName: process.env.MAIL_FROM_NAME || 'LAD CLPD',
+    configured: !!(process.env.SMTP_HOST || '').trim(),
+  },
 };
