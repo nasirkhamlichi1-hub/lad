@@ -803,8 +803,22 @@
         return {title:'Accreditation',center:{label:'Pipeline',color:0x3df0a0},radius:110,children:defs.map(function(x){return {label:x[1],sub:nf(cnt[x[0]]||0)+' applications',count:Math.max(cnt[x[0]]||0,1),color:x[2],type:'accStatus',id:x[0],drill:true};})}; }); },
       accStatus:function(node){ return getJSON('/api/v1/accreditations').then(function(d){ var rows=(d&&d.rows)||[]; var f=rows.filter(function(r){return (r.status||'')===node.id;});
         return {title:node.label+' accreditations',center:{label:node.label,color:0x3df0a0},radius:140,children:f.slice(0,40).map(function(r){ var title=(r.payload&&(r.payload.courseTitle||r.payload.title))||r.ref; return {label:title,sub:r.ref,count:1,color:0x3df0a0,type:'accreditation',id:r.ref,drill:false,meta:r};})}; }); },
-      sessionsRoot:function(){ return needUpcoming().then(function(map){ var out=[]; Object.keys(map).forEach(function(cid){ (map[cid]||[]).forEach(function(s){ out.push(s); }); }); out.sort(function(a,b){return (a.scheduled_at||'')<(b.scheduled_at||'')?-1:1;});
-        return {title:'Upcoming Sessions',center:{label:'Sessions',color:0x6ab8ff},radius:160,children:out.slice(0,40).map(function(s){var cap=Number(s.capacity)||0,seats=Number(s.seats_remaining)||0;return {label:fdate(s.scheduled_at),sub:seats+'/'+cap+' seats',count:Math.max(cap-seats,1),color:0x6ab8ff,type:'session',id:s.id,drill:false,meta:s};})}; }); }
+      sessionsRoot:function(){ return needUpcoming().then(function(map){ var out=[]; Object.keys(map).forEach(function(cid){ (map[cid]||[]).forEach(function(s){ out.push(s); }); });
+        if(!out.length) return null;
+        // EXACTLY the firm-planet methodology: size = seats booked (popularity);
+        // bigger sessions sit closer to the sun, the rest spiral outward; the
+        // direction is a shuffled fibonacci sphere so all 381 sit ALL around.
+        out.forEach(function(s){ var cap=Number(s.capacity)||0, seats=Number(s.seats_remaining)||0; s._cap=cap; s._booked=Math.max(cap-seats,0); });
+        var maxB=Math.max.apply(null,out.map(function(s){return s._booked;})); if(!maxB) out.forEach(function(s){ s._booked=s._cap; });
+        out.sort(function(a,b){ return b._booked-a._booked; });
+        var n=out.length, maxL=out[0]._booked||1, minL=out[n-1]._booked||0, closeR=120, farR=490, GA=Math.PI*(3-Math.sqrt(5));
+        var dir=[]; for(var j=0;j<n;j++) dir.push(j);
+        for(var j2=n-1;j2>0;j2--){ var m=Math.floor(Math.random()*(j2+1)); var tt=dir[j2]; dir[j2]=dir[m]; dir[m]=tt; }
+        var kids=out.map(function(s,i){ var frac=maxL>minL?(s._booked-minL)/(maxL-minL):0.5; var r=farR-Math.pow(frac,0.75)*(farR-closeR);
+          var dk=dir[i]+0.5, phi=Math.acos(1-2*dk/n), th=GA*dk; var pos=[Math.sin(phi)*Math.cos(th)*r, Math.cos(phi)*r, Math.sin(phi)*Math.sin(th)*r];
+          var cap=s._cap, seats=Number(s.seats_remaining)||0, ratio=cap?s._booked/cap:0, col=ratio>=0.8?0x3df0a0:ratio>=0.4?0x6ab8ff:0xffb84d;
+          return {label:fdate(s.scheduled_at),sub:seats+'/'+cap+' seats',count:Math.max(s._booked,1),color:col,type:'session',id:s.id,drill:false,meta:s,pos:pos,noLabel:(i>=10)}; });
+        return {title:'Upcoming Sessions',center:{label:'Sessions · '+nf(n),color:0x6ab8ff,data:{cohort:'upcoming sessions',inBand:n,showing:n}},children:kids,dense:true,spread:farR}; }); }
     };
     function childrenOf(node){ var fn=DRILL[node.type]; return fn?fn(node):Promise.resolve(null); }
 
