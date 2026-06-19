@@ -65,6 +65,14 @@ const SCALE = { excellent: EXCELLENT, agree: AGREE };
 const db = new Database(path.resolve(config.databaseUrl), { readonly: true });
 const catalogue = db.prepare('SELECT id, title, provider_id FROM courses').all();
 const providers = db.prepare('SELECT id, name FROM providers').all();
+// Courses that actually have scheduled (future) sessions — the bookable ones.
+// When the same course exists under two ids (report seed vs schedule migration),
+// we attach the rating to the SCHEDULED id so the booking card shows stars.
+let sessioned = new Set();
+try {
+  sessioned = new Set(db.prepare("SELECT DISTINCT course_id FROM course_sessions WHERE scheduled_at >= datetime('now')").all().map((r) => r.course_id));
+} catch (_) {}
+const hasSession = (c) => sessioned.has(c.id);
 
 function courseKey(name) {
   let s = String(name || '').toLowerCase();
@@ -79,26 +87,34 @@ function courseKey(name) {
   return s.replace(/\s+/g, ' ').trim();
 }
 const byKey = new Map();
-for (const c of catalogue) { const k = courseKey(c.title); if (k && !byKey.has(k)) byKey.set(k, c); }
+for (const c of catalogue) {
+  const k = courseKey(c.title); if (!k) continue;
+  const existing = byKey.get(k);
+  // Prefer the bookable (scheduled) course id when a key resolves to several.
+  if (!existing || (hasSession(c) && !hasSession(existing))) byKey.set(k, c);
+}
 const catById = new Map(catalogue.map((c) => [c.id, c]));
 // Manual aliases for feedback names that don't normalise onto a catalogue title
 // (renamed year-to-year, Arabic-only, or shortened). Maps raw feedback name → course_id.
 const ALIAS = {
   'التقاضي والتحكيم في القانون الجوي': 'litigation-and-arbitration-in-aviation-l',
-  'Anti Money Laundering': 'anti-money-laundering-for-law-firms',
+  'Anti Money Laundering': 'aml-update',
   'Data Protection Law (E-learning)': 'data-protection',
-  'Common law contract principles': 'common-law',
 };
 function resolveCourse(name) {
   const alias = ALIAS[String(name || '').trim()];
   if (alias && catById.has(alias)) return catById.get(alias);
   const k = courseKey(name);
   if (byKey.has(k)) return byKey.get(k);
+  // contains fallback — prefer a bookable (scheduled) match over an unscheduled one
+  let best = null;
   for (const c of catalogue) {
     const ck = courseKey(c.title);
-    if (ck && (ck.includes(k) || k.includes(ck)) && Math.min(ck.length, k.length) > 6) return c;
+    if (ck && (ck.includes(k) || k.includes(ck)) && Math.min(ck.length, k.length) > 6) {
+      if (!best || (hasSession(c) && !hasSession(best))) best = c;
+    }
   }
-  return null;
+  return best;
 }
 function resolveProvider(name) {
   const t = String(name || '').toLowerCase().replace(/[^a-z]/g, ' ').trim().split(' ')[0];

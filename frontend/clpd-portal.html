@@ -2652,11 +2652,13 @@ function loadRealCourses(){
       .then(function(r){return r.ok?r.json():null;})
       .then(function(list){
         if(!Array.isArray(list)||!list.length) return; // keep fallback only if API unreachable/empty
-        // Real catalogue: hide internal-only courses. Show every real course,
-        // with whatever real sessions exist (we never fabricate dates).
+        // Real bookable catalogue: hide internal-only courses; show e-learning
+        // (book anytime) and any course with a real scheduled session. Sessions
+        // are never fabricated.
         var mapped = list
           .filter(function(c){ return c && c.id && !/^\*/.test(c.title||'') && !/only for internal/i.test(c.title||''); })
-          .map(mapApiCourse);
+          .map(mapApiCourse)
+          .filter(function(c){ return c.format==='elearning' || c.sessions.length>0; });
         if(!mapped.length) return;
         ALL_COURSES = mapped;
         mapped.forEach(function(c){ if(c.rating) COURSE_RATINGS[c.id]={rating:c.rating,provider_rating:c.provider_rating}; });

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-19T05:57:06.035Z",
+  "generated_at": "2026-06-19T06:21:34.166Z",
   "note": "Aggregated mandatory-course feedback. Trainer identities intentionally excluded.",
   "scale": "Excellent=5, Very Good=4, Good=3, Average=2, Poor=1 (Agree-scale: Strongly Agree=5 … Strongly Disagree=1)",
   "headline": {
@@ -216,7 +216,7 @@
     },
     {
       "course_key": "overview financial landscape",
-      "course_id": "an-overview-of-financial-landscape-in-th",
+      "course_id": "overview-of-financial-landscape-in-the-uae",
       "course_name": "An overview of Financial Landscape",
       "provider_id": "galadari-advocates-and-legal-consultants",
       "provider_name": "Galadari Advocates",
@@ -414,7 +414,7 @@
     },
     {
       "course_key": "anti money laundering",
-      "course_id": "anti-money-laundering-for-law-firms",
+      "course_id": "aml-update",
       "course_name": "Anti Money Laundering",
       "provider_id": "galadari-advocates-and-legal-consultants",
       "provider_name": "Galadari",
@@ -810,7 +810,7 @@
     },
     {
       "course_key": "challenging enforcing arbitral award",
-      "course_id": "challenging-and-enforcing-the-arbitral-a",
+      "course_id": "challenging-enforcing-the-arbitral-award",
       "course_name": "Challenging & Enforcing the Arbitral Award",
       "provider_id": "kwintessential",
       "provider_name": "Kwintessential",
@@ -1008,7 +1008,7 @@
     },
     {
       "course_key": "challenging enforcing arbitral award",
-      "course_id": "challenging-and-enforcing-the-arbitral-a",
+      "course_id": "challenging-enforcing-the-arbitral-award",
       "course_name": "Challenging & Enforcing the Arbitral Award",
       "provider_id": "kwintessential",
       "provider_name": "Kwintessential",
@@ -1602,7 +1602,7 @@
     },
     {
       "course_key": "common law contract principles",
-      "course_id": "common-law",
+      "course_id": "common-law-contract-principles",
       "course_name": "Common law contract principles",
       "provider_id": "clyde-and-co-llp",
       "provider_name": "Clyde & Co",
@@ -1998,7 +1998,7 @@
     },
     {
       "course_key": "common law principles tort commercial context",
-      "course_id": "common-law-principles-of-tort-in-a-comme",
+      "course_id": "common-law-principles-of-tort-in-a-commercial-",
       "course_name": "Common law principles of tort in a commercial context",
       "provider_id": "clyde-and-co-llp",
       "provider_name": "Clyde & Co",
@@ -2196,7 +2196,7 @@
     },
     {
       "course_key": "common law principles tort commercial context",
-      "course_id": "common-law-principles-of-tort-in-a-comme",
+      "course_id": "common-law-principles-of-tort-in-a-commercial-",
       "course_name": "Common law principles of tort in a commercial context",
       "provider_id": "adr-center",
       "provider_name": "ADR Center",
@@ -2394,7 +2394,7 @@
     },
     {
       "course_key": "competition anti",
-      "course_id": null,
+      "course_id": "competition-and-anti-dumping-laws-in-uae",
       "course_name": "Competition and Anti-Dumping Laws in UAE",
       "provider_id": "galadari-advocates-and-legal-consultants",
       "provider_name": "Galadari Advocates",
@@ -2988,7 +2988,7 @@
     },
     {
       "course_key": "consumer protection electronic transactions",
-      "course_id": "consumer-protection-in-electronic-transa",
+      "course_id": "consumer-protection-in-electronic-transactions",
       "course_name": "Consumer Protection in Electronic Transactions",
       "provider_id": "kwintessential",
       "provider_name": "Kwintessential",
@@ -3186,7 +3186,7 @@
     },
     {
       "course_key": "consumer protection electronic transactions",
-      "course_id": "consumer-protection-in-electronic-transa",
+      "course_id": "consumer-protection-in-electronic-transactions",
       "course_name": "Consumer Protection in Electronic Transactions حماية المستهلك في المعاملات الإلكترونية",
       "provider_id": "adr-center",
       "provider_name": "ADR Center",
@@ -4176,7 +4176,7 @@
     },
     {
       "course_key": "defamation",
-      "course_id": "defamation-in-the-uae-what-we-all-need-t",
+      "course_id": "defamation-in-the-uae-what-we-all-need-to-know",
       "course_name": "Defamation in the UAE",
       "provider_id": "hadef-and-partners",
       "provider_name": "Hadef & Partners",
@@ -4374,7 +4374,7 @@
     },
     {
       "course_key": "defamation",
-      "course_id": "defamation-in-the-uae-what-we-all-need-t",
+      "course_id": "defamation-in-the-uae-what-we-all-need-to-know",
       "course_name": "Defamation in the UAE – What we all need to know",
       "provider_id": "adr-center",
       "provider_name": "ADR Center",
@@ -5364,7 +5364,7 @@
     },
     {
       "course_key": "exploration production sharing",
-      "course_id": "exploration-and-production-sharing-agree",
+      "course_id": "exploration-and-production-sharing-agreements-",
       "course_name": "Exploration and Production Sharing",
       "provider_id": "galadari-advocates-and-legal-consultants",
       "provider_name": "Galadari Advocates",
@@ -5562,7 +5562,7 @@
     },
     {
       "course_key": "exploration production sharing agreements law",
-      "course_id": "exploration-and-production-sharing-agree",
+      "course_id": "exploration-and-production-sharing-agreements-",
       "course_name": "Exploration and Production Sharing Agreements under UAE Law – Part I",
       "provider_id": "galadari-advocates-and-legal-consultants",
       "provider_name": "Galadari",
@@ -7146,7 +7146,7 @@
     },
     {
       "course_key": "mediation advocacy",
-      "course_id": "mediation-advocacy-elevating-legal-pract",
+      "course_id": "mediation-advocacy-elevating-legal-practice-in",
       "course_name": "Mediation Advocacy: Elevating Legal Practice in Mediation",
       "provider_id": "adr-center",
       "provider_name": "ADR Center",
@@ -7344,7 +7344,7 @@
     },
     {
       "course_key": "mediation advocacy",
-      "course_id": "mediation-advocacy-elevating-legal-pract",
+      "course_id": "mediation-advocacy-elevating-legal-practice-in",
       "course_name": "Mediation Advocacy: Elevating Legal Practice in Mediation",
       "provider_id": "adr-center",
       "provider_name": "ADR Center",
@@ -7938,7 +7938,7 @@
     },
     {
       "course_key": "navigating civil commercial",
-      "course_id": "navigating-civil-and-commercial-court-ca",
+      "course_id": "navigating-civil-and-commercial-court-cases",
       "course_name": "Navigating Civil and Commercial",
       "provider_id": "kwintessential",
       "provider_name": "Kwintessential",
@@ -8136,7 +8136,7 @@
     },
     {
       "course_key": "navigating civil commercial court cases",
-      "course_id": "navigating-civil-and-commercial-court-ca",
+      "course_id": "navigating-civil-and-commercial-court-cases",
       "course_name": "Navigating Civil and Commercial Court Cases",
       "provider_id": "kwintessential",
       "provider_name": "Kwintessential",
@@ -8532,7 +8532,7 @@
     },
     {
       "course_key": "onshore offshore arbitration framework",
-      "course_id": "onshore-and-offshore-arbitration-framewo",
+      "course_id": "onshore-and-offshore-arbitration-framework-and",
       "course_name": "Onshore and Offshore Arbitration Framework",
       "provider_id": "kwintessential",
       "provider_name": "Kwintessential",
@@ -8730,7 +8730,7 @@
     },
     {
       "course_key": "onshore offshore arbitration framework its recent updates",
-      "course_id": "onshore-and-offshore-arbitration-framewo",
+      "course_id": "onshore-and-offshore-arbitration-framework-and",
       "course_name": "Onshore and Offshore Arbitration Framework and its Recent Updates",
       "provider_id": "kwintessential",
       "provider_name": "Kwintessential",
@@ -8928,7 +8928,7 @@
     },
     {
       "course_key": "overview financial landscape",
-      "course_id": "an-overview-of-financial-landscape-in-th",
+      "course_id": "overview-of-financial-landscape-in-the-uae",
       "course_name": "Overview of Financial Landscape in the UAE",
       "provider_id": "galadari-advocates-and-legal-consultants",
       "provider_name": "Galadari",
@@ -9126,7 +9126,7 @@
     },
     {
       "course_key": "overview competition law",
-      "course_id": "overview-of-the-competition-law-in-the-u",
+      "course_id": "overview-of-the-competition-law-in-the-uae",
       "course_name": "Overview of the Competition Law in the UAE",
       "provider_id": "galadari-advocates-and-legal-consultants",
       "provider_name": "Galadari Advocates",
@@ -10908,7 +10908,7 @@
     },
     {
       "course_key": "bankruptcy law practice trends",
-      "course_id": "uae-bankruptcy-law-practice-and-trends-a",
+      "course_id": "uae-bankruptcy-law-practice-and-trends-a-maste",
       "course_name": "UAE Bankruptcy Law, Practice and Trends",
       "provider_id": "hadef-and-partners",
       "provider_name": "Hadef & Partners",
@@ -11106,7 +11106,7 @@
     },
     {
       "course_key": "bankruptcy law practice trends",
-      "course_id": "uae-bankruptcy-law-practice-and-trends-a",
+      "course_id": "uae-bankruptcy-law-practice-and-trends-a-maste",
       "course_name": "UAE Bankruptcy Law, Practice and Trends – a Masterclass",
       "provider_id": "hadef-and-partners",
       "provider_name": "Hadef",

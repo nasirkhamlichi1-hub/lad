@@ -13,6 +13,25 @@ function tableExists(name) {
 }
 const r2 = (x) => (x == null ? null : Math.round(x * 100) / 100);
 
+// Normalised course-title key — MUST match scripts/build-feedback.js. Lets a
+// rating resolve to a course even when the catalogue holds the same course
+// under two ids (report seed vs schedule migration).
+function courseKey(name) {
+  let s = String(name || '').toLowerCase();
+  s = s.replace(/[؀-ۿ]/g, ' ');
+  s = s.replace(/&#0?38;|&amp;/g, 'and').replace(/&/g, 'and');
+  s = s.replace(/[‘’′`]/g, '');
+  s = s.replace(/\([^)]*\)/g, ' ');
+  s = s.split(/[–—:-]/)[0];
+  s = s.replace(/\b(updated content|e ?learning|masterclass|part\s*[i1]|aa\d+|bb\d+)\b/g, ' ');
+  s = s.replace(/[^a-z0-9]+/g, ' ');
+  s = s.replace(/\b(the|a|an|of|in|and|for|to|under|uae|course|only|internal|employees)\b/g, ' ');
+  return s.replace(/\s+/g, ' ').trim();
+}
+function provToken(name) {
+  return String(name || '').toLowerCase().replace(/[^a-z]/g, ' ').trim().split(' ')[0] || '';
+}
+
 // Response-weighted mean of a set of {avg, n} year rows.
 function wmean(rows, key) {
   let s = 0, n = 0;
@@ -23,9 +42,20 @@ function wmean(rows, key) {
 // ── Course rating (the 4 headline course metrics) ──────────────────────────
 function courseRating(courseId) {
   if (!courseId || !tableExists('course_feedback')) return null;
-  const rows = db.prepare(
+  let rows = db.prepare(
     'SELECT year, responses, content, benefits, practical, overall, provider_id FROM course_feedback WHERE course_id = ? ORDER BY year'
   ).all(courseId);
+  // Fallback: same course under a different id — match by normalised title key.
+  if (!rows.length) {
+    let title = null;
+    try { title = (db.prepare('SELECT title FROM courses WHERE id = ?').get(courseId) || {}).title; } catch (_) {}
+    const key = courseKey(title);
+    if (key) {
+      rows = db.prepare(
+        'SELECT year, responses, content, benefits, practical, overall, provider_id FROM course_feedback WHERE course_key = ? ORDER BY year'
+      ).all(key);
+    }
+  }
   if (!rows.length) return null;
   const responses = rows.reduce((a, r) => a + (r.responses || 0), 0);
   const content = wmean(rows, 'content'), benefits = wmean(rows, 'benefits');
@@ -43,9 +73,21 @@ function courseRating(courseId) {
 // ── Provider rating (the 3 headline trainer-delivery metrics) ──────────────
 function providerRating(providerId) {
   if (!providerId || !tableExists('provider_feedback')) return null;
-  const rows = db.prepare(
+  let rows = db.prepare(
     'SELECT year, responses, knowledge, clarity, interaction, provider_name FROM provider_feedback WHERE provider_id = ? ORDER BY year'
   ).all(providerId);
+  // Fallback: same provider under a different id (schedule vs report namespace)
+  // — match by the provider's leading name token.
+  if (!rows.length) {
+    let name = null;
+    try { name = (db.prepare('SELECT name FROM providers WHERE id = ?').get(providerId) || {}).name; } catch (_) {}
+    const tok = provToken(name);
+    if (tok && tok.length >= 3) {
+      rows = db.prepare(
+        "SELECT year, responses, knowledge, clarity, interaction, provider_name FROM provider_feedback WHERE lower(provider_name) LIKE ? ORDER BY year"
+      ).all(tok + '%');
+    }
+  }
   if (!rows.length) return null;
   const responses = rows.reduce((a, r) => a + (r.responses || 0), 0);
   const knowledge = wmean(rows, 'knowledge'), clarity = wmean(rows, 'clarity'), interaction = wmean(rows, 'interaction');
