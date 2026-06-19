@@ -744,7 +744,7 @@
           var r=farR-Math.pow(frac,0.75)*(farR-closeR);                // biggest -> inner orbit (clear of the sun), smallest -> far dust
           var dk=dir[i]+0.5, phi=Math.acos(1-2*dk/n), th=GA*dk;        // shuffled fibonacci direction (all around)
           var pos=[Math.sin(phi)*Math.cos(th)*r, Math.cos(phi)*r, Math.sin(phi)*Math.sin(th)*r];
-          return {label:f.name,sub:(f.compliancePct||0)+'% · '+nf(f.lawyers),count:f.lawyers,color:bandPctColor(f.compliancePct),type:'firm',id:f.id,drill:true,meta:f,pos:pos,noLabel:(i>=36)};
+          return {label:f.name,sub:(f.compliancePct||0)+'% · '+nf(f.lawyers),count:f.lawyers,color:bandPctColor(f.compliancePct),type:'firm',id:f.id,drill:true,meta:f,pos:pos,noLabel:(i>=10)};
         });
         return {title:'All Law Firms',center:{label:'Firms · '+nf(n),color:0x9a6cff},children:kids,dense:true,spread:farR}; }); },
       firm:function(node){ return getJSON('/api/v1/admin/firm/'+encodeURIComponent(node.id)).then(function(d){ if(!d) return null; var L=d.lawyers||[], c=d.counts||{};
@@ -827,7 +827,7 @@
       if(opt.dense && !isC){
         var cr=Math.max(2,Math.min(12, 1.6+Math.sqrt(Number(count)||1)*0.72));
         var core=new THREE.Mesh(new THREE.SphereGeometry(cr,10,10),new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:.9})); core.position.copy(pos); core.userData={key:key}; grp.add(core);
-        coresArr.push({key:key,hit:core,core:core,halo:core,pos:pos,color:color,node:opt.node}); label(); return;
+        coresArr.push({key:key,hit:core,core:core,halo:core,pos:pos,color:color,node:opt.node,hasLabel:!opt.noLabel}); label(); return;
       }
       var nP=isC?420:Math.max(50,Math.min(380, Number(count)>0?(70+Math.round(Math.min(300,Number(count)*5))):130));
       var geo=new THREE.BufferGeometry(),arr=new Float32Array(nP*3),rad=isC?40:15;
@@ -1123,7 +1123,25 @@
       if(TW.web){ TW.web.anchors.forEach(function(a){ var v=a.pos.clone(); v.project(camera); var sx=(v.x*.5+.5)*W, sy=(-v.y*.5+.5)*H;
         var inb=sx>-80&&sx<W+80&&sy>56&&sy<H-8&&v.z<1;
         a.el.style.opacity=inb?String(0.9*(TW.web.grow||0)):'0'; a.el.style.left=(sx-rect.left)+'px'; a.el.style.top=(sy-rect.top)+'px'; }); }
+      // Dense systems (e.g. firms): a pool of transient labels latches onto the
+      // unlabelled cores nearest screen-centre and fades in/out as you move.
+      if(TW.active && TW.active.dense){
+        if(!labelPool.length) buildLabelPool();
+        var cx=W/2, cy=H*0.5, RAD=300, cand=[];
+        TW.cores.forEach(function(c){ if(c.hasLabel||!c.node||!c.node.label) return;
+          var v=c.pos.clone(); v.project(camera); if(v.z>=1) return;
+          var sx=(v.x*.5+.5)*W, sy=(-v.y*.5+.5)*H, dd=Math.hypot(sx-cx,sy-cy);
+          if(dd<RAD) cand.push({c:c,sx:sx,sy:sy,dd:dd}); });
+        cand.sort(function(a,b){return a.dd-b.dd;});
+        for(var pi=0;pi<labelPool.length;pi++){ var el=labelPool[pi];
+          if(pi<cand.length){ var it=cand[pi]; if(el._key!==it.c.key){ el.innerHTML='<b>'+nf(it.c.node.count)+'</b>'+esc(it.c.node.label); el._key=it.c.key; }
+            el.style.left=(it.sx-rect.left)+'px'; el.style.top=(it.sy-rect.top)+'px'; el.style.opacity=String(Math.max(0,Math.min(.95,1-it.dd/RAD)));
+          } else { el.style.opacity='0'; el._key=null; }
+        }
+      } else if(labelPool.length){ labelPool.forEach(function(el){ el.style.opacity='0'; el._key=null; }); }
     }
+    var labelPool=[];
+    function buildLabelPool(){ for(var i=0;i<18;i++){ var el=document.createElement('div'); el.className='twin-label dim'; el.style.transition='opacity .25s'; el.style.opacity='0'; stage.appendChild(el); labelPool.push(el); } }
     function loop(){ TW.raf=requestAnimationFrame(loop);
       // free-fly orbit camera (damped); gentle idle auto-spin when untouched
       if(!TW.drag&&!TW.pan&&!TW.focusKey&&!TW.tourActive&&TW.spin) TW.orb.tt+=0.0012;
