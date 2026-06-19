@@ -163,6 +163,31 @@ router.get('/:id/feedback', optionalAuth, (req, res) => {
   res.json({ course_id: req.params.id, rating: rating || null, provider: rating ? rating.provider : null });
 });
 
+// POST /api/v1/courses/:id/feedback — a participant submits their rating after a
+// session. Records the response and refreshes the live aggregates so the cards
+// and command centre update automatically. Anonymous allowed (e.g. in-room QR);
+// attributed to the lawyer when signed in.
+router.post('/:id/feedback', optionalAuth, (req, res) => {
+  const b = req.body || {};
+  const r = b.ratings || b;
+  const has = ['knowledge', 'clarity', 'interaction', 'content', 'benefits', 'practical', 'overall']
+    .some((k) => Number(r[k]) >= 1 && Number(r[k]) <= 5);
+  if (!has) return res.status(400).json({ error: 'no_ratings', message: 'Provide at least one rating (1–5).' });
+  const course = db.prepare('SELECT id FROM courses WHERE id = ?').get(req.params.id);
+  if (!course) return res.status(404).json({ error: 'Course not found' });
+  try {
+    const store = require('../../scripts/seed-feedback');
+    const result = store.submitResponse(db, {
+      courseId: req.params.id, ratings: r, comment: b.comment,
+      sessionId: b.session_id || b.sessionId || null,
+      lawyerId: (req.user && (req.user.lawyer_id || req.user.id)) || null,
+    });
+    res.json({ ok: true, submission: result, rating: feedback.courseRating(req.params.id) });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET /api/v1/courses/:id
 router.get('/:id', optionalAuth, (req, res) => {
   const c = store.getCourseById(req.params.id);

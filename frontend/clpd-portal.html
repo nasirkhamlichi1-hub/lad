@@ -1711,6 +1711,7 @@ ladCarInit();
 
       <!-- Participant feedback ratings (from past attendees) -->
       <div id="cdRatings" style="display:none;margin-bottom:20px"></div>
+      <a id="cdRateLink" href="#" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--green);text-decoration:none;font-weight:600;margin-bottom:18px">★ Attended this course? Rate it →</a>
 
       <!-- Low credit warning -->
       <div id="cdLowCredit" style="display:none;background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:10px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
@@ -2709,6 +2710,7 @@ function openCourse(id) {
   document.getElementById('cdProv').textContent = c.provider;
   document.getElementById('cdLoc').textContent = c.location;
   document.getElementById('cdDesc').textContent = c.desc;
+  var rl = document.getElementById('cdRateLink'); if (rl) rl.href = 'rate-course.html?course=' + encodeURIComponent(c.id);
   renderCourseRatings(c);
   // Credit balance
   const balEl = document.getElementById('cdBalAmt');

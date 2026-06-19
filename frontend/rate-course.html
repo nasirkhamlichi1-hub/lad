@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rate your CLPD course — Legal Affairs Department</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="runtime-config.js"></script>
+<style>
+  :root{--ink:#0f1722;--slate:#475569;--slate2:#64748b;--slate3:#94a3b8;--line:#e7ebf0;--line2:#d4dae2;--green:#0f7a5a;--green-bg:#eafaf3;--gold:#b88a2e;--paper:#f7f9fb;--white:#fff;--serif:'Cormorant Garamond',Georgia,serif;--mono:'JetBrains Mono',monospace;--sans:'Inter',system-ui,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);background:linear-gradient(180deg,#0a2040,#020817);min-height:100vh;color:var(--ink);padding:24px 16px}
+  .card{max-width:680px;margin:0 auto;background:var(--white);border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.35);overflow:hidden}
+  .hd{background:linear-gradient(135deg,#0f7a5a,#0a5a42);color:#fff;padding:26px 28px}
+  .hd .ey{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;opacity:.8}
+  .hd h1{font-family:var(--serif);font-size:30px;margin:6px 0 4px;font-weight:600;letter-spacing:-.01em}
+  .hd p{margin:0;font-size:13px;opacity:.9}
+  .bd{padding:24px 28px 28px}
+  label.fld{display:block;font-size:12px;font-weight:600;color:var(--slate);margin:0 0 6px;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono)}
+  select,textarea{width:100%;padding:11px 13px;border:1.5px solid var(--line2);border-radius:10px;font-size:14px;font-family:var(--sans);color:var(--ink);outline:none}
+  select:focus,textarea:focus{border-color:var(--green)}
+  .grp{margin-bottom:18px}
+  .sec{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--slate3);font-weight:700;margin:22px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .q{margin-bottom:14px}
+  .q .qt{font-size:14px;color:var(--ink);font-weight:500;margin-bottom:7px}
+  .scale{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  .scale button{padding:9px 4px;border:1.5px solid var(--line2);background:var(--white);border-radius:9px;cursor:pointer;font-family:var(--sans);font-size:11px;font-weight:600;color:var(--slate2);transition:all .12s;line-height:1.3}
+  .scale button:hover{border-color:var(--green)}
+  .scale button.on{background:var(--green);border-color:var(--green);color:#fff}
+  .scale button .v{display:block;font-size:9px;opacity:.7;margin-top:2px;font-family:var(--mono)}
+  .submit{width:100%;margin-top:18px;padding:14px;background:var(--green);color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+  .submit:disabled{opacity:.5;cursor:not-allowed}
+  .note{font-size:11.5px;color:var(--slate3);margin-top:10px;text-align:center}
+  .done{text-align:center;padding:40px 28px}
+  .done .big{font-family:var(--serif);font-size:54px;color:var(--green);line-height:1}
+  .done h2{font-family:var(--serif);font-size:26px;margin:14px 0 6px}
+  .done p{color:var(--slate);font-size:14px}
+  .err{background:#fdecec;border:1px solid #f5c2c2;color:#b3261e;border-radius:10px;padding:10px 13px;font-size:13px;margin-top:12px;display:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="hd">
+    <div class="ey">CLPD · Participant Feedback</div>
+    <h1>Rate your course</h1>
+    <p>Your feedback updates the course &amp; provider ratings other lawyers see. Takes under a minute · anonymous.</p>
+  </div>
+  <div class="bd" id="form">
+    <div class="grp">
+      <label class="fld" for="course">Which course did you attend?</label>
+      <select id="course"><option value="">Loading courses…</option></select>
+    </div>
+
+    <div class="sec">The course</div>
+    <div id="courseQs"></div>
+
+    <div class="sec">The training provider <span id="provName" style="color:var(--slate2)"></span></div>
+    <div id="providerQs"></div>
+
+    <div class="grp" style="margin-top:18px">
+      <label class="fld" for="comment">Anything to add? (optional)</label>
+      <textarea id="comment" rows="3" placeholder="What worked well, what could improve…"></textarea>
+    </div>
+
+    <button class="submit" id="submitBtn" onclick="submitFeedback()">Submit feedback</button>
+    <div class="err" id="err"></div>
+    <div class="note">No personal data is collected. Trainer names are never published — only the company's aggregate score.</div>
+  </div>
+  <div class="bd done" id="thanks" style="display:none">
+    <div class="big">★</div>
+    <h2>Thank you</h2>
+    <p id="thanksMsg">Your rating has been recorded.</p>
+    <button class="submit" style="max-width:240px;margin:22px auto 0" onclick="resetForm()">Rate another course</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var base=((window.LAD_API_BASE)||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
+  function tok(){ try{return localStorage.getItem('lad_token')||'';}catch(e){return '';} }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);}); }
+  var SCALE=[['Excellent',5],['Very Good',4],['Good',3],['Average',2],['Poor',1]];
+  var COURSE_Q=[['content','Training course content'],['benefits','Benefits of the course'],['practical','Practical & interesting content'],['overall','Overall evaluation of the course']];
+  var PROV_Q=[['knowledge','Knowledge of the trainer'],['clarity','Ability to convey information clearly'],['interaction','Ability to stimulate participant interaction']];
+  var answers={};
+  var COURSES={};
+
+  function qHTML(key,label){
+    return '<div class="q"><div class="qt">'+esc(label)+'</div><div class="scale" data-k="'+key+'">'+
+      SCALE.map(function(s){return '<button type="button" onclick="pick(\''+key+'\','+s[1]+',this)">'+s[0]+'<span class="v">'+s[1]+'</span></button>';}).join('')+
+      '</div></div>';
+  }
+  document.getElementById('courseQs').innerHTML=COURSE_Q.map(function(q){return qHTML(q[0],q[1]);}).join('');
+  document.getElementById('providerQs').innerHTML=PROV_Q.map(function(q){return qHTML(q[0],q[1]);}).join('');
+
+  window.pick=function(key,val,btn){
+    answers[key]=val;
+    var row=btn.parentNode; Array.prototype.forEach.call(row.children,function(b){b.classList.remove('on');});
+    btn.classList.add('on');
+    if(key==='__provider__'){} // no-op
+  };
+
+  // Load real courses (those with sessions or e-learning), populate dropdown.
+  fetch(base+'/api/v1/courses/upcoming').then(function(r){return r.ok?r.json():[];}).then(function(list){
+    if(!Array.isArray(list)) list=[];
+    var opts=list.filter(function(c){return c&&c.id&&!/^\*/.test(c.title||'');})
+      .sort(function(a,b){return (a.title||'').localeCompare(b.title||'');});
+    opts.forEach(function(c){ COURSES[c.id]=c; });
+    var sel=document.getElementById('course');
+    sel.innerHTML='<option value="">Select your course…</option>'+opts.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.title)+(c.provider_name?(' — '+esc(c.provider_name)):'')+'</option>';}).join('');
+    // Pre-select from ?course= param (e.g. a session QR link)
+    var pre=new URLSearchParams(location.search).get('course');
+    if(pre && COURSES[pre]){ sel.value=pre; onCourse(); }
+  }).catch(function(){ document.getElementById('course').innerHTML='<option value="">Could not load courses</option>'; });
+
+  function onCourse(){
+    var c=COURSES[document.getElementById('course').value];
+    document.getElementById('provName').textContent=c&&c.provider_name?('· '+c.provider_name):'';
+  }
+  document.getElementById('course').addEventListener('change',onCourse);
+
+  window.submitFeedback=function(){
+    var courseId=document.getElementById('course').value;
+    var err=document.getElementById('err'); err.style.display='none';
+    if(!courseId){ err.textContent='Please choose which course you attended.'; err.style.display='block'; return; }
+    var answered=Object.keys(answers).length;
+    if(answered<3){ err.textContent='Please rate at least the first few questions.'; err.style.display='block'; return; }
+    var btn=document.getElementById('submitBtn'); btn.disabled=true; btn.textContent='Submitting…';
+    fetch(base+'/api/v1/courses/'+encodeURIComponent(courseId)+'/feedback',{
+      method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},
+      body:JSON.stringify({ratings:answers,comment:document.getElementById('comment').value})
+    }).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});}).then(function(res){
+      if(!res.ok){ throw new Error((res.j&&res.j.message)||'Submission failed'); }
+      var rt=res.j&&res.j.rating;
+      document.getElementById('form').style.display='none';
+      document.getElementById('thanks').style.display='block';
+      if(rt&&rt.overall!=null) document.getElementById('thanksMsg').innerHTML='Your rating has been recorded. This course now sits at <strong>'+rt.overall.toFixed(1)+'★</strong> from '+rt.responses.toLocaleString()+' ratings.';
+    }).catch(function(e){ err.textContent=e.message||'Could not submit. Please try again.'; err.style.display='block'; btn.disabled=false; btn.textContent='Submit feedback'; });
+  };
+
+  window.resetForm=function(){
+    answers={};
+    Array.prototype.forEach.call(document.querySelectorAll('.scale button'),function(b){b.classList.remove('on');});
+    document.getElementById('comment').value='';
+    document.getElementById('thanks').style.display='none';
+    document.getElementById('form').style.display='block';
+    var btn=document.getElementById('submitBtn'); btn.disabled=false; btn.textContent='Submit feedback';
+  };
+})();
+</script>
+</body>
+</html>
