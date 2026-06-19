@@ -667,16 +667,40 @@
     function needUpcoming(){ return _up?Promise.resolve(_up):getJSON('/api/v1/courses/upcoming').then(function(list){ var m={}; (Array.isArray(list)?list:[]).forEach(function(c){ m[c.id]=c.sessions||[]; }); _up=m; return m; }); }
     function needOVp(){ return window.__OV?Promise.resolve(window.__OV):getJSON('/api/v1/admin/oversight').then(function(d){ if(d) window.__OV=d; return d; }); }
 
-    // For a node, fetch the spec of its child ecosystem (or null if it's a leaf).
-    function childrenOf(node){
-      if(node.type==='firmsRoot') return needOVp().then(function(ov){ var fr=(ov&&ov.firmRankings)||{}; var seen={},list=[]; (fr.top||[]).concat(fr.bottom||[]).forEach(function(f){ if(f&&f.id&&!seen[f.id]){seen[f.id]=1;list.push(f);} });
-        return {title:'Law Firms', center:{label:'Firms',color:0x9a6cff}, radius:150, children:list.slice(0,14).map(function(f){ return {label:f.name, sub:(f.compliancePct||0)+'% · '+nf(f.lawyers)+' lawyers', count:f.lawyers, color:bandPctColor(f.compliancePct), type:'firm', id:f.id, drill:true, meta:f}; }) }; });
-      if(node.type==='firm') return getJSON('/api/v1/firms/'+encodeURIComponent(node.id)+'/lawyers').then(function(rows){ rows=Array.isArray(rows)?rows:((rows&&rows.data)||[]);
-        return {title:node.label, center:{label:node.label,color:0x9a6cff}, radius:160, children:rows.slice(0,42).map(function(l){ var pts=Number(l.points!=null?l.points:l.pts)||0; var nm=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.name||l.id; return {label:nm, sub:pts+' pts', count:Math.max(pts,1), color:bandColor(pts), type:'lawyer', id:l.id, drill:false, meta:{points:pts,status:l.status,credits:(l.credits!=null?l.credits:l.credit_balance)}}; }) }; });
-      if(node.type==='coursesRoot') return needAnalytics().then(function(d){ var cs=(d&&d.courses)||[]; return {title:'Courses', center:{label:'Courses',color:0x1fe0b4}, radius:155, children:cs.slice(0,24).map(function(c){ return {label:c.title, sub:nf(c.totalBookings)+' booked · 12w', count:Math.max(c.totalBookings,1), color:typeHex(c.type), type:'course', id:c.id, drill:true, meta:c}; }) }; });
-      if(node.type==='course') return needUpcoming().then(function(map){ var ss=map[node.id]||[]; if(!ss.length) return null; return {title:node.label, center:{label:node.label,color:0x1fe0b4}, radius:120, children:ss.slice(0,20).map(function(s){ var cap=Number(s.capacity)||0,seats=Number(s.seats_remaining)||0; return {label:fdate(s.scheduled_at), sub:seats+'/'+cap+' seats', count:Math.max(cap-seats,1), color:0x6ab8ff, type:'session', id:s.id, drill:false, meta:s}; }) }; });
-      return Promise.resolve(null);
-    }
+    // ── Drill registry: every node type maps to a function returning the spec
+    //    of its child ecosystem. Add a type here and it becomes drillable. ──
+    var _law=null;
+    function needLawyers(){ return _law?Promise.resolve(_law):getJSON('/api/v1/lawyers?practicing=1&limit=600').then(function(d){ _law=(d&&d.data)||[]; return _law; }); }
+    function lawPts(l){ return Number(l.points!=null?l.points:l.pts)||0; }
+    function lawName(l){ return ((l.first_name||l.firstName||'')+' '+(l.last_name||l.lastName||'')).trim()||l.name||l.fullName||l.id; }
+    function lawyerNode(l){ var p=lawPts(l); return {label:lawName(l), sub:p+' pts', count:Math.max(p,1), color:bandColor(p), type:'lawyer', id:l.id, drill:true, meta:{points:p,status:l.status,credits:(l.credits!=null?l.credits:l.credit_balance)}}; }
+    var DRILL={
+      firmsRoot:function(){ return needOVp().then(function(ov){ var fr=(ov&&ov.firmRankings)||{}; var seen={},list=[]; (fr.top||[]).concat(fr.bottom||[]).forEach(function(f){ if(f&&f.id&&!seen[f.id]){seen[f.id]=1;list.push(f);} });
+        return {title:'Law Firms',center:{label:'Firms',color:0x9a6cff},radius:150,children:list.slice(0,14).map(function(f){return {label:f.name,sub:(f.compliancePct||0)+'% · '+nf(f.lawyers),count:f.lawyers,color:bandPctColor(f.compliancePct),type:'firm',id:f.id,drill:true,meta:f};})}; }); },
+      firm:function(node){ return getJSON('/api/v1/firms/'+encodeURIComponent(node.id)+'/lawyers').then(function(rows){ rows=Array.isArray(rows)?rows:((rows&&rows.data)||[]); return {title:node.label,center:{label:node.label,color:0x9a6cff},radius:160,children:rows.slice(0,42).map(lawyerNode)}; }); },
+      lawyersRoot:function(){ return needOVp().then(function(ov){ var L=(ov&&ov.lawyers)||{}; return {title:'The Profession',center:{label:'Lawyers',color:0x34e1ff},radius:115,children:[
+        {label:'Critical',sub:'below 8 pts',count:L.critical,color:0xff5e7e,type:'band',id:'critical',drill:true},
+        {label:'At Risk',sub:'8–15 pts',count:L.atRisk,color:0xffb84d,type:'band',id:'atrisk',drill:true},
+        {label:'Compliant',sub:'16+ pts',count:L.compliant,color:0x3df0a0,type:'band',id:'compliant',drill:true}
+      ]}; }); },
+      band:function(node){ return needLawyers().then(function(list){ var f=list.filter(function(l){var p=lawPts(l);return node.id==='critical'?p<8:node.id==='atrisk'?(p>=8&&p<16):p>=16;});
+        return {title:node.label+' lawyers',center:{label:node.label,color:node.id==='critical'?0xff5e7e:node.id==='atrisk'?0xffb84d:0x3df0a0},radius:155,children:f.slice(0,40).map(lawyerNode)}; }); },
+      lawyer:function(node){ return getJSON('/api/v1/lawyers/'+encodeURIComponent(node.id)).then(function(d){ var att=(d&&(d.attendance||d.bookings))||[]; if(!att.length) return null;
+        return {title:node.label,center:{label:node.label,color:bandColor(node.meta&&node.meta.points)},radius:110,children:att.slice(0,24).map(function(a){ var p=Number(a.points||a.points_earned||a.cpd_points)||0; return {label:a.course_title||a.title||a.course_code||'Course',sub:(p?('+'+p+' pts'):(a.created_at?fdate(a.created_at):'')),count:Math.max(p,1),color:0x1fe0b4,type:'attcourse',id:a.course_code||a.course_id||'',drill:false,meta:a};})}; }); },
+      coursesRoot:function(){ return needAnalytics().then(function(d){ var cs=(d&&d.courses)||[]; return {title:'Courses',center:{label:'Courses',color:0x1fe0b4},radius:155,children:cs.slice(0,24).map(function(c){return {label:c.title,sub:nf(c.totalBookings)+' booked',count:Math.max(c.totalBookings,1),color:typeHex(c.type),type:'course',id:c.id,drill:true,meta:c};})}; }); },
+      course:function(node){ return needUpcoming().then(function(map){ var ss=map[node.id]||[]; if(!ss.length) return null; return {title:node.label,center:{label:node.label,color:0x1fe0b4},radius:120,children:ss.slice(0,20).map(function(s){var cap=Number(s.capacity)||0,seats=Number(s.seats_remaining)||0;return {label:fdate(s.scheduled_at),sub:seats+'/'+cap+' seats',count:Math.max(cap-seats,1),color:0x6ab8ff,type:'session',id:s.id,drill:false,meta:s};})}; }); },
+      providersRoot:function(){ return needAnalytics().then(function(d){ var cs=(d&&d.courses)||[]; var g={}; cs.forEach(function(c){ var p=c.provider||'LAD'; (g[p]=g[p]||{n:0,b:0}); g[p].n++; g[p].b+=c.totalBookings||0; });
+        var arr=Object.keys(g).map(function(k){return {k:k,n:g[k].n,b:g[k].b};}).sort(function(a,b){return b.b-a.b;});
+        return {title:'Providers',center:{label:'Providers',color:0xffb84d},radius:150,children:arr.slice(0,18).map(function(p){return {label:p.k,sub:p.n+' courses · '+nf(p.b)+' booked',count:Math.max(p.n,1),color:0xffb84d,type:'provider',id:p.k,drill:true};})}; }); },
+      provider:function(node){ return needAnalytics().then(function(d){ var cs=((d&&d.courses)||[]).filter(function(c){return (c.provider||'LAD')===node.id;}); return {title:node.label,center:{label:node.label,color:0xffb84d},radius:140,children:cs.slice(0,24).map(function(c){return {label:c.title,sub:nf(c.totalBookings)+' booked',count:Math.max(c.totalBookings,1),color:typeHex(c.type),type:'course',id:c.id,drill:true,meta:c};})}; }); },
+      accredsRoot:function(){ return getJSON('/api/v1/accreditations').then(function(d){ var cnt=(d&&d.counts)||{}; var defs=[['pending','Pending',0xffb84d],['approved','Approved',0x3df0a0],['rejected','Rejected',0xff5e7e],['returned','Returned',0x6ab8ff]];
+        return {title:'Accreditation',center:{label:'Pipeline',color:0x3df0a0},radius:110,children:defs.map(function(x){return {label:x[1],sub:nf(cnt[x[0]]||0)+' applications',count:Math.max(cnt[x[0]]||0,1),color:x[2],type:'accStatus',id:x[0],drill:true};})}; }); },
+      accStatus:function(node){ return getJSON('/api/v1/accreditations').then(function(d){ var rows=(d&&d.rows)||[]; var f=rows.filter(function(r){return (r.status||'')===node.id;});
+        return {title:node.label+' accreditations',center:{label:node.label,color:0x3df0a0},radius:140,children:f.slice(0,40).map(function(r){ var title=(r.payload&&(r.payload.courseTitle||r.payload.title))||r.ref; return {label:title,sub:r.ref,count:1,color:0x3df0a0,type:'accreditation',id:r.ref,drill:false,meta:r};})}; }); },
+      sessionsRoot:function(){ return needUpcoming().then(function(map){ var out=[]; Object.keys(map).forEach(function(cid){ (map[cid]||[]).forEach(function(s){ out.push(s); }); }); out.sort(function(a,b){return (a.scheduled_at||'')<(b.scheduled_at||'')?-1:1;});
+        return {title:'Upcoming Sessions',center:{label:'Sessions',color:0x6ab8ff},radius:160,children:out.slice(0,40).map(function(s){var cap=Number(s.capacity)||0,seats=Number(s.seats_remaining)||0;return {label:fdate(s.scheduled_at),sub:seats+'/'+cap+' seats',count:Math.max(cap-seats,1),color:0x6ab8ff,type:'session',id:s.id,drill:false,meta:s};})}; }); }
+    };
+    function childrenOf(node){ var fn=DRILL[node.type]; return fn?fn(node):Promise.resolve(null); }
 
     // Build one ball (swarm + glowing core + halo + hit-sphere + floating label).
     function addBall(grp,opt,coresArr,anchorsArr){
@@ -732,6 +756,8 @@
       var html='';
       if(node.type==='lawyer'&&node.meta){ html=factRow('CPD points',nf(node.meta.points),bandCss(node.meta.points))+factRow('Status',esc(node.meta.status||'active'))+factRow('Credits',nf(node.meta.credits)); }
       else if(node.type==='session'&&node.meta){ var s=node.meta; html=factRow('Date',fdate(s.scheduled_at))+factRow('Seats open',nf(s.seats_remaining),'var(--amber)')+factRow('Capacity',nf(s.capacity))+factRow('Venue',esc(s.venue||'—')); }
+      else if(node.type==='accreditation'&&node.meta){ var r=node.meta; html=factRow('Reference',esc(r.ref))+factRow('Status',esc(r.status||'—'))+factRow('Type',esc(r.type||'—'))+factRow('Submitted',r.submitted_at?fdate(r.submitted_at):'—'); }
+      else if(node.type==='attcourse'&&node.meta){ var a=node.meta; html=factRow('Course',esc(a.course_title||a.title||a.course_code||'—'))+factRow('Points',nf(a.points||a.points_earned||a.cpd_points))+factRow('When',a.created_at?fdate(a.created_at):'—'); }
       else { html='<div class="loading">Leaf node — the deepest layer here.</div>'; }
       $('fpFacts').innerHTML=html;
       var ans=$('fpAnswer'); ans.style.display='none'; ans.textContent='';
@@ -848,6 +874,10 @@
       if(THEME_VIEW[key]){ if(window.openLayer) window.openLayer(THEME_VIEW[key]); }
       else if(key==='Law Firms'){ window.diveInto({type:'firmsRoot',label:'Law Firms'}); }
       else if(key==='Courses'){ window.diveInto({type:'coursesRoot',label:'Courses'}); }
+      else if(key==='Lawyers'){ window.diveInto({type:'lawyersRoot',label:'Lawyers'}); }
+      else if(key==='Providers'){ window.diveInto({type:'providersRoot',label:'Providers'}); }
+      else if(key==='Accreds'){ window.diveInto({type:'accredsRoot',label:'Accreditations'}); }
+      else if(key==='Sessions'){ window.diveInto({type:'sessionsRoot',label:'Sessions'}); }
       else showFocusPanel(key);
     };
     window.exitFocus=function(){
