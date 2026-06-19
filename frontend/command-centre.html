@@ -630,6 +630,10 @@
       g.fillStyle=gr; g.beginPath(); g.arc(32,32,32,0,Math.PI*2); g.fill(); var t=new THREE.CanvasTexture(cv); return t; })();
     // Free-fly orbit state (spherical around a movable target) + framing helpers.
     TW.orb={tt:0.7,tp:1.0,tr:265,cx:0,cy:0,cz:0}; TW.orbR={t:0.7,p:1.0,r:265,x:0,y:0,z:0};
+    // Trackball orientation (quaternion) so you can orbit ANY sun a full 360° on
+    // every axis with no pole/clamp — local-frame drag = true free flight.
+    (function(){ var _m=new THREE.Matrix4(); _m.lookAt(new THREE.Vector3(Math.sin(1.0)*Math.cos(0.7),Math.cos(1.0),Math.sin(1.0)*Math.sin(0.7)),new THREE.Vector3(0,0,0),new THREE.Vector3(0,1,0));
+      TW.qT=new THREE.Quaternion().setFromRotationMatrix(_m); TW.q=TW.qT.clone(); })();
     function frameOn(p,radius){ TW.orb.cx=p.x;TW.orb.cy=p.y;TW.orb.cz=p.z; if(radius)TW.orb.tr=radius; }
     function frameHome(){ TW.orb.cx=0;TW.orb.cy=0;TW.orb.cz=0;TW.orb.tr=265; }
 
@@ -983,7 +987,7 @@
     window.addEventListener('pointermove',function(e){ if(!TW.pending&&!TW.drag&&!TW.pan) return;
       if(TW.pending && Math.hypot(e.clientX-downX,e.clientY-downY)>5){ TW.moved=true; if(TW.pending==='pan')TW.pan=true; else TW.drag=true; TW.pending=null; lx=e.clientX;ly=e.clientY; }
       if(!TW.drag&&!TW.pan) return; var dx=e.clientX-lx,dy=e.clientY-ly; lx=e.clientX;ly=e.clientY;
-      if(TW.drag){ TW.orb.tt-=dx*0.006; TW.orb.tp=Math.max(0.08,Math.min(3.06,TW.orb.tp-dy*0.006)); }
+      if(TW.drag){ var qy=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),-dx*0.006), qx=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),-dy*0.006); TW.qT.multiply(qy).multiply(qx); }
       else { var k=TW.orbR.r*0.0016; var right=new THREE.Vector3().setFromMatrixColumn(camera.matrix,0); var up=new THREE.Vector3().setFromMatrixColumn(camera.matrix,1);
         var mv=right.multiplyScalar(-dx*k).add(up.multiplyScalar(dy*k)); TW.orb.cx+=mv.x; TW.orb.cy+=mv.y; TW.orb.cz+=mv.z; } });
     // Zoom over the open 3D area; let real panels keep their native scroll.
@@ -1172,10 +1176,13 @@
     function buildLabelPool(){ for(var i=0;i<18;i++){ var el=document.createElement('div'); el.className='twin-label dim'; el.style.transition='opacity .25s'; el.style.opacity='0'; stage.appendChild(el); labelPool.push(el); } }
     function loop(){ TW.raf=requestAnimationFrame(loop);
       // free-fly orbit camera (damped); gentle idle auto-spin when untouched
-      if(!TW.drag&&!TW.pan&&!TW.focusKey&&!TW.tourActive&&TW.spin) TW.orb.tt+=0.0012;
+      if(!TW.drag&&!TW.pan&&!TW.focusKey&&!TW.tourActive&&TW.spin){ var qs=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),0.0012); TW.qT.premultiply(qs); }
       var o=TW.orb,r=TW.orbR;
-      r.t+=(o.tt-r.t)*0.09; r.p+=(o.tp-r.p)*0.09; r.r+=(o.tr-r.r)*0.09; r.x+=(o.cx-r.x)*0.09; r.y+=(o.cy-r.y)*0.09; r.z+=(o.cz-r.z)*0.09;
-      camera.position.set(r.x+r.r*Math.sin(r.p)*Math.cos(r.t), r.y+r.r*Math.cos(r.p), r.z+r.r*Math.sin(r.p)*Math.sin(r.t));
+      r.r+=(o.tr-r.r)*0.09; r.x+=(o.cx-r.x)*0.09; r.y+=(o.cy-r.y)*0.09; r.z+=(o.cz-r.z)*0.09;
+      TW.q.slerp(TW.qT,0.12);
+      var off=new THREE.Vector3(0,0,1).applyQuaternion(TW.q).multiplyScalar(r.r);
+      camera.position.set(r.x+off.x, r.y+off.y, r.z+off.z);
+      camera.up.set(0,1,0).applyQuaternion(TW.q);
       camera.lookAt(r.x,r.y,r.z);
       pick();
       // living booking-flow beams
