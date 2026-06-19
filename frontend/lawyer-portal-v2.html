@@ -3533,7 +3533,7 @@ async function loadCatalogueLive() {
         rating:c.rating||null, provider_rating:c.provider_rating||null,
         sessions:sess.map(function(s){ return {date:catFmtDate(s.scheduled_at),start:catFmtTime(s.scheduled_at),end:s.end_at?catFmtTime(s.end_at):'',seats:Number(s.seats_remaining)||0,partner:provider,lang:s.language||'English',low:(Number(s.seats_remaining)||0)<=5,sid:s.id}; }),
       };
-      return { id:c.id, title:c.title, pts:pts, credits:credits, isMand:isMand, internal:isPriv, provider:provider, sessions:sess };
+      return { id:c.id, title:c.title, pts:pts, credits:credits, isMand:isMand, internal:isPriv, provider:provider, sessions:sess, rating:c.rating||null };
     });
     markAttendedCourses();
   } catch (e) { console.warn('[lawyer-portal] loadCatalogueLive:', e.message); }
@@ -3625,12 +3625,15 @@ function catCardHTML(c){
     foot='<div class="course-foot"><span class="course-fee">'+(c.credits||5)+' CREDITS</span><span style="font-family:var(--mono);font-size:10px;color:var(--slate3)">Dates to be announced</span></div>';
     click=' onclick="openBooking(\''+c.id+'\')"';
   }
+  var rat = (c.rating && c.rating.responses && typeof starsHTML==='function')
+    ? '<div style="display:flex;align-items:center;gap:6px;margin-top:7px">'+starsHTML(c.rating.overall||c.rating.stars,12)+'<span style="font-family:var(--mono);font-size:10px;color:var(--slate3)">'+(c.rating.overall||c.rating.stars||0).toFixed(1)+' · from '+c.rating.responses.toLocaleString()+' rating'+(c.rating.responses===1?'':'s')+'</span></div>'
+    : '';
   return '<div class="course-card"'+click+'>'
     + '<div class="course-art" style="background:'+artBg+'">'
     +   '<span class="course-art-tag" style="background:'+tagBg+';color:#fff">'+tag+'</span>'
     +   '<div class="course-art-pts">+<em>'+c.pts+'</em>pts</div>'
     + '</div>'
-    + '<div class="course-body"><div class="course-prov">'+c.provider+'</div><div class="course-title">'+c.title+'</div>'+meta+'</div>'
+    + '<div class="course-body"><div class="course-prov">'+c.provider+'</div><div class="course-title">'+c.title+'</div>'+meta+rat+'</div>'
     + foot + '</div>';
 }
 function renderCatalogue(){
@@ -3702,40 +3705,52 @@ window.copilotData = function () {
 
 function scrollSim(dir) { var s = document.getElementById('simStrip'); if (s) s.scrollBy({ left: dir * 320, behavior: 'smooth' }); }
 
-// "Based on your history" — live AI recommendations (no demo). The section is
-// shown only when the copilot returns real recommendations; otherwise hidden.
+// "Recommended for you" — real, bookable courses from the live catalogue (so
+// every "Book →" actually opens the booking modal). Prefers accredited courses
+// with a scheduled session that the lawyer hasn't already attended.
 function renderBasedOnHistory() {
   var strip = document.getElementById('simStrip');
   var sec = document.getElementById('similar');
   if (!strip || !sec) return;
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);}); }
-  window.copilotData().then(function (j) {
-    var recs = (j && j.recommendations) || [];
-    if (!recs.length) { sec.style.display = 'none'; return; }
-    var bgs = ['linear-gradient(135deg,#241a38,#463a66)','linear-gradient(135deg,#0a2040,#16386a)','linear-gradient(135deg,#0b3a3e,#0f5f63)','linear-gradient(135deg,#2a1a3a,#0a0e14)'];
-    strip.innerHTML = recs.map(function (rc, i) {
-      var pts = Number(rc.points) || 2;
-      var title = esc(rc.title || rc.code || 'Course');
-      var why = esc(rc.why || 'Recommended toward your 16-point target');
-      var tAttr = (rc.title || rc.code || 'Course').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-      return '<div class="similar-card" style="cursor:default">'
-        + '<div class="similar-art" style="background:' + bgs[i % bgs.length] + '">'
-        +   '<span class="similar-art-because">For you</span>'
-        +   '<div class="similar-art-pts">' + pts + '<em>pts</em></div>'
-        + '</div>'
-        + '<div class="similar-body">'
-        +   '<div class="similar-prov">' + esc(rc.code || 'ACCREDITED') + '</div>'
-        +   '<div class="similar-title">' + title + '</div>'
-        +   '<div class="similar-link" style="text-transform:none;letter-spacing:0;color:var(--slate2);font-weight:500;line-height:1.4">' + why + '</div>'
-        +   '<button class="similar-book-btn" onclick="event.stopPropagation();bookSuggestedCourse(\'' + tAttr + '\',\'\',\'session\')">Book →</button>'
-        + '</div></div>';
-    }).join('');
-    if (j && j.firstName) {
-      var d = document.getElementById('simDesc');
-      if (d) d.textContent = 'Lex matched ' + recs.length + ' accredited course' + (recs.length===1?'':'s') + ' to your record and what’s left to reach 16 points.';
-    }
-    sec.style.display = '';
+  var pool = (window.CAT_LIVE || []).filter(function (c) { return !c.attended; });
+  if (!pool.length) {
+    // Catalogue not loaded yet — retry briefly, then hide if still nothing.
+    renderBasedOnHistory._t = (renderBasedOnHistory._t || 0) + 1;
+    if (renderBasedOnHistory._t <= 8) { setTimeout(renderBasedOnHistory, 700); }
+    else { sec.style.display = 'none'; }
+    return;
+  }
+  // Accredited (and those with a scheduled session) first.
+  pool = pool.slice().sort(function (a, b) {
+    var as = (a.sessions||[]).length > 0, bs = (b.sessions||[]).length > 0;
+    if (as !== bs) return as ? -1 : 1;
+    return (a.isMand === b.isMand) ? 0 : (a.isMand ? 1 : -1);
   });
+  var picks = pool.slice(0, 6);
+  var bgs = ['linear-gradient(135deg,#241a38,#463a66)','linear-gradient(135deg,#0a2040,#16386a)','linear-gradient(135deg,#0b3a3e,#0f5f63)','linear-gradient(135deg,#2a1a3a,#0a0e14)'];
+  strip.innerHTML = picks.map(function (c, i) {
+    var pts = Number(c.pts) || 2;
+    var hasSess = (c.sessions||[]).length > 0;
+    var why = c.isMand
+      ? 'Mandatory — counts toward your 16-point requirement.'
+      : (hasSess ? 'Accredited course you can book toward your 16 points.' : 'Accredited by your firm — dates to be announced.');
+    var tag = c.isMand ? 'MANDATORY' : 'ACCREDITED';
+    return '<div class="similar-card" onclick="openBooking(\'' + c.id + '\')" style="cursor:pointer">'
+      + '<div class="similar-art" style="background:' + bgs[i % bgs.length] + '">'
+      +   '<span class="similar-art-because">For you</span>'
+      +   '<div class="similar-art-pts">' + pts + '<em>pts</em></div>'
+      + '</div>'
+      + '<div class="similar-body">'
+      +   '<div class="similar-prov">' + esc(tag) + '</div>'
+      +   '<div class="similar-title">' + esc(c.title) + '</div>'
+      +   '<div class="similar-link" style="text-transform:none;letter-spacing:0;color:var(--slate2);font-weight:500;line-height:1.4">' + esc(why) + '</div>'
+      +   '<button class="similar-book-btn" onclick="event.stopPropagation();openBooking(\'' + c.id + '\')">Book →</button>'
+      + '</div></div>';
+  }).join('');
+  var d = document.getElementById('simDesc');
+  if (d) d.textContent = picks.length + ' course' + (picks.length===1?'':'s') + ' from the catalogue you can book toward your 16 points.';
+  sec.style.display = '';
 }
 document.addEventListener('DOMContentLoaded', renderBasedOnHistory);
 
