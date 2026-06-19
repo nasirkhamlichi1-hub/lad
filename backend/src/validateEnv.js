@@ -87,6 +87,13 @@ function validateEnv() {
     if (!env.ANTHROPIC_API_KEY) {
       warnings.push('ANTHROPIC_API_KEY is not set — the Lex AI panel will return 503 to clients');
     }
+
+    // SMTP relay — warn only (mail queues in email_outbox until configured)
+    if (!env.SMTP_HOST) {
+      warnings.push('SMTP_HOST is not set — transactional emails (bookings, receipts, accreditation decisions) will queue in email_outbox but not send. Set SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS/MAIL_FROM to enable.');
+    } else if (!env.MAIL_FROM && !env.SMTP_USER) {
+      warnings.push('SMTP_HOST is set but neither MAIL_FROM nor SMTP_USER is — outgoing mail has no From address.');
+    }
   }
 
   // Always print warnings

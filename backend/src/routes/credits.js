@@ -17,6 +17,8 @@ const crypto = require('crypto');
 const router = express.Router();
 const db = require('../db');
 const store = require('../services/store');
+const mailer = require('../services/email');
+const tpl = require('../services/email-templates');
 const { requireAuth } = require('../middleware/auth');
 
 const ADMIN_ROLES = ['lad_admin', 'lad_intelligence', 'lad_super_admin', 'super_admin', 'dg'];
@@ -97,10 +99,16 @@ router.post('/checkout', requireAuth, (req, res) => {
   const credits = Math.round(Number((req.body && (req.body.credits || req.body.amount)) || 0));
   if (!Number.isFinite(credits) || credits <= 0 || credits > 100000) return res.status(400).json({ error: 'A valid credit amount is required.' });
   const aed = credits * PRICE; // never trust a client-supplied amount
+  const reference = rid('PAY-');
   const balance = grant(lawyer, credits, {
-    type: 'purchase', aed, method: 'card', reference: rid('PAY-'),
+    type: 'purchase', aed, method: 'card', reference,
     description: `Card purchase — ${credits} credits`,
   });
+  if (lawyer.email) {
+    mailer.send('credit_purchase', tpl.creditPurchase({
+      name: tpl.fullName(lawyer.first_name, lawyer.last_name), credits, aed, balance, reference, scope: 'lawyer',
+    }), { to: lawyer.email, toName: tpl.fullName(lawyer.first_name, lawyer.last_name), ref: reference, dedupeKey: 'credit:' + reference });
+  }
   res.status(201).json({ ok: true, credited: true, credits, aed, balance });
 });
 
@@ -127,9 +135,9 @@ router.get('/transactions', requireAuth, (req, res) => {
     ).all(limit);
   } catch (_) {}
   const kindOf = (type, amount) => {
-    if (type === 'refund' || amount < 0 && type !== 'use') return 'refund';
+    if (type === 'transfer') return 'adjustment';   // pool ↔ lawyer move, not a refund
     if (type === 'use') return 'booking';
-    if (type === 'transfer') return 'adjustment';
+    if (type === 'refund' || amount < 0) return 'refund';
     return 'lawyer';
   };
   const data = rows.map((t) => ({
@@ -161,6 +169,14 @@ router.post('/confirm', requireAuth, (req, res) => {
   if (lawyer) balance = grant(lawyer, r.credits, { type: 'purchase', aed: r.aed_amount, description: 'Credit purchase confirmed', method: 'admin' });
   db.prepare("UPDATE credit_requests SET status='confirmed', confirmed_by=?, confirmed_at=CURRENT_TIMESTAMP, lawyer_id=COALESCE(lawyer_id,?) WHERE id=?")
     .run(req.user.email || req.user.sub || 'admin', lawyer ? lawyer.id : null, id);
+  // Receipt to the buyer once the admin confirms the purchase.
+  const buyerEmail = (lawyer && lawyer.email) || r.email;
+  if (buyerEmail) {
+    mailer.send('credit_purchase', tpl.creditPurchase({
+      name: lawyer ? tpl.fullName(lawyer.first_name, lawyer.last_name) : null,
+      credits: r.credits, aed: r.aed_amount, balance, reference: r.id, scope: 'lawyer',
+    }), { to: buyerEmail, ref: r.id, dedupeKey: 'credit:' + r.id });
+  }
   res.json({ ok: true, credited: !!lawyer, balance, note: lawyer ? undefined : 'Confirmed, but no lawyer account matched the email — no balance updated.' });
 });
 
@@ -256,12 +272,20 @@ router.post('/firm/checkout', requireAuth, (req, res) => {
   const credits = Math.round(Number((req.body && (req.body.credits || req.body.amount)) || 0));
   if (!Number.isFinite(credits) || credits <= 0 || credits > 1000000) return res.status(400).json({ error: 'A valid credit amount is required.' });
   const aed = credits * PRICE; // never trust a client-supplied amount
+  const reference = rid('PAY-');
   db.prepare('UPDATE firms SET credit_pool = COALESCE(credit_pool,0) + ?, total_purchased = COALESCE(total_purchased,0) + ? WHERE id = ?').run(credits, credits, firmId);
   db.prepare(
     `INSERT INTO firm_credit_transactions (id, firm_id, type, amount, aed_amount, description, payment_method, reference)
      VALUES (?,?,?,?,?,?,?,?)`
-  ).run(rid('FTX-'), firmId, 'purchase', credits, aed, `Card purchase — ${credits} credits`, 'card', rid('PAY-'));
-  res.status(201).json({ ok: true, credited: true, credits, aed, wallet: firmWallet(firmId) });
+  ).run(rid('FTX-'), firmId, 'purchase', credits, aed, `Card purchase — ${credits} credits`, 'card', reference);
+  const wallet = firmWallet(firmId);
+  // Receipt to the purchasing firm officer.
+  if (req.user.email) {
+    mailer.send('credit_purchase', tpl.creditPurchase({
+      name: req.user.name || null, credits, aed, balance: wallet ? wallet.pool : null, reference, scope: 'firm',
+    }), { to: req.user.email, ref: reference, dedupeKey: 'credit:' + reference });
+  }
+  res.status(201).json({ ok: true, credited: true, credits, aed, wallet });
 });
 
 module.exports = router;

@@ -3775,7 +3775,8 @@ async function cntLoad() {
   });
   cntDirty = false;
   cntUpdateDirty();
-  // FAQ list re-renders separately
+  // FAQ list loads from the backend and re-renders separately
+  try { faqItems = (await api.getFAQ()) || []; } catch (_) { faqItems = []; }
   const faqEl = document.getElementById('faqList');
   if (faqEl && typeof faqRender === 'function') faqRender();
   cntRenderAdvanced();
@@ -3844,9 +3845,16 @@ async function cntSave() {
   });
   const merged = {...(await api.getContent()), ...updated};
   await api.saveContent(merged);
+  // Harvest the FAQ rows and persist them via the FAQ endpoint.
+  const faqRows = [...document.querySelectorAll('.adm-cnt-faq-row')].map(row => ({
+    q: (row.querySelector('[data-k=q]')?.value || '').trim(),
+    a: (row.querySelector('[data-k=a]')?.value || '').trim(),
+  })).filter(it => it.q || it.a);
+  faqItems = faqRows;
+  await api.saveFAQ(faqRows);
   cntDirty = false;
   cntUpdateDirty();
-  toast('✓ Content saved · ' + Object.keys(updated).length + ' fields written', 'success');
+  toast('✓ Content saved · ' + Object.keys(updated).length + ' fields + ' + faqRows.length + ' FAQ written', 'success');
 }
 
 function faqRender() {
@@ -4448,7 +4456,7 @@ function supRenderDetail() {
           <span>&middot;</span>
           <span>${escape(l.practice)}</span>
           <span>&middot;</span>
-          <span>Admitted ${l.admitted}</span>
+          <span>Admitted ${l.admitted || '—'}</span>
         </div>
         <div class="sup-detail-contact">
           <span>${escape(l.firm_name)}</span>
@@ -4481,7 +4489,7 @@ function supRenderDetail() {
       </div>
       <div class="sup-stat">
         <div class="sup-stat-label">Last activity</div>
-        <div class="sup-stat-val" style="font-size:14px;font-family:var(--mono);font-weight:600">${l.last_login}</div>
+        <div class="sup-stat-val" style="font-size:14px;font-family:var(--mono);font-weight:600">${l.last_login || '—'}</div>
         <div class="sup-stat-sub">${escape(l.status === 'active' ? 'Active account' : 'Suspended')}</div>
       </div>
     </div>
@@ -4799,19 +4807,17 @@ function supSubtab(name) {
 let supFirmFilter = '';
 
 function supRenderFirms() {
-  // ─── SELF-HEALING DATA LOAD ────────────────────────────────────
-  // If supLawyers is missing, empty, or doesn't contain valid firm
-  // records, reseed from defaults BEFORE rendering. This catches the
-  // case where any earlier bug, stale cache, or partial save has left
-  // the page with unrenderable data.
+  // ─── LIVE DATA LOAD ────────────────────────────────────────────
+  // The directory is loaded from the backend (supFetch → /lawyers).
+  // If nothing has loaded yet, kick off a live fetch and let it
+  // re-render. Never reseed from defaults (now []) and never persist
+  // an empty list over loaded data — that would wipe real records.
   const hasValidFirmRecords =
     Array.isArray(supLawyers) &&
     supLawyers.length > 0 &&
     supLawyers.some(l => l && l.firm_id && l.firm_name);
-  if (!hasValidFirmRecords) {
-    console.warn('[LAD admin] supLawyers has no valid firm records — reseeding from SUPPORT_LAWYERS_DEFAULT');
-    supLawyers = JSON.parse(JSON.stringify(SUPPORT_LAWYERS_DEFAULT));
-    supSaveLawyers();
+  if (!hasValidFirmRecords && !supLoadedOnce) {
+    if (typeof supFetch === 'function') supFetch();
   }
 
   // Aggregate lawyers by firm

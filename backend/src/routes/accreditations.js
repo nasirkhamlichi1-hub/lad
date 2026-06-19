@@ -24,6 +24,8 @@ const router = express.Router();
 const db = require('../db');
 const store = require('../services/store');
 const aimodel = require('../services/aimodel');
+const mailer = require('../services/email');
+const tpl = require('../services/email-templates');
 const log = require('../logger');
 const { requireAuth, optionalAuth } = require('../middleware/auth');
 
@@ -129,10 +131,21 @@ function awardSessionPoints(row) {
       const lawyer = matchLawyer(item);
       const email = ((item && item.email) || (lawyer && lawyer.email) || '').toString().toLowerCase();
       if (!lawyer) { unmatched.push((item && (item.email || item.name)) || String(item)); continue; }
-      insert.run(rid('CPD-'), email || (lawyer.id + '@lad'), (item && item.name) || `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || null,
+      // ON CONFLICT DO NOTHING → changes === 0 when this attendee already has a
+      // record for this course. Only award the running points balance when a
+      // record was actually inserted, so re-running the award is idempotent.
+      const info = insert.run(rid('CPD-'), email || (lawyer.id + '@lad'), (item && item.name) || `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || null,
         lawyer.id, code, title, provider, per, row.reviewed_by || row.submitted_by || null, (row.submitted_by_email || '').toLowerCase() || null);
-      store.awardCpdPoints({ lawyerId: lawyer.id, points: per, source: 'accreditation', refId: row.ref });
-      awarded.push(email || lawyer.id);
+      if (info.changes > 0) {
+        store.awardCpdPoints({ lawyerId: lawyer.id, points: per, source: 'accreditation', refId: row.ref });
+        awarded.push(email || lawyer.id);
+        // Notify the lawyer their CPD record was credited (best-effort, queued).
+        if (lawyer.email) {
+          mailer.send('points_awarded', tpl.pointsAwarded({
+            name: tpl.fullName(lawyer.first_name, lawyer.last_name), points: per, courseTitle: title, provider,
+          }), { to: lawyer.email, toName: tpl.fullName(lawyer.first_name, lawyer.last_name), ref: row.ref, dedupeKey: 'points:' + row.ref + ':' + lawyer.id });
+        }
+      }
     }
     db.prepare('UPDATE accreditations SET points_awarded_at = ? WHERE ref = ?').run(new Date().toISOString(), row.ref);
   });
@@ -308,6 +321,18 @@ router.post('/', optionalAuth, (req, res) => {
     try { pointsAwarded = awardSessionPoints(db.prepare('SELECT * FROM accreditations WHERE ref = ?').get(ref)); }
     catch (e) { log.error('award_failed', { ref, error: e.message }); }
   }
+
+  // Acknowledgement email to the submitter (best-effort, queued).
+  const ackEmail = (u && u.email && u.email.toLowerCase()) || emailOf(p);
+  if (ackEmail && !autoApprove) {
+    mailer.send('accreditation_submitted', tpl.accreditationSubmitted({
+      contactName: p.contactName || p.applicantName || (u && u.name) || null,
+      providerName: p.providerName || p.firm || p.orgName || null,
+      courseTitle: p.courseTitle || p.course || p.title || null,
+      ref,
+    }), { to: ackEmail, ref, dedupeKey: 'accred_ack:' + ref });
+  }
+
   res.status(201).json({ ok: true, ref, data: { ref, status, accreditationCode: autoApprove ? linkedCode : undefined }, pointsAwarded });
 });
 
@@ -426,6 +451,23 @@ router.patch('/:ref', requireAuth, (req, res) => {
   const updated = db.prepare('SELECT * FROM accreditations WHERE ref = ?').get(row.ref);
   if (b.status === 'approved' && updated.type === 'session_submission') {
     try { pointsAwarded = awardSessionPoints(updated); } catch (e) { log.error('award_failed', { ref: row.ref, error: e.message }); }
+  }
+
+  // Decision email to the applicant on a terminal decision (approved/rejected/returned).
+  if (b.status !== undefined && ['approved', 'rejected', 'returned'].includes(b.status)) {
+    const pp = parse(updated.payload, {});
+    const decEmail = (updated.submitted_by_email || '').toLowerCase() || emailOf(pp);
+    if (decEmail) {
+      mailer.send('accreditation_decision', tpl.accreditationDecision({
+        contactName: pp.contactName || pp.applicantName || updated.submitted_by || null,
+        ref: updated.ref,
+        status: b.status,
+        courseTitle: pp.courseTitle || pp.course || pp.title || null,
+        providerName: pp.providerName || pp.firm || pp.orgName || null,
+        points: updated.final_points,
+        code: courseCode,
+      }), { to: decEmail, ref: updated.ref, dedupeKey: 'accred_decision:' + updated.ref + ':' + b.status });
+    }
   }
   res.json(Object.assign({ ok: true }, rowOut(db.prepare('SELECT * FROM accreditations WHERE ref = ?').get(row.ref)),
     pointsAwarded ? { pointsAwarded } : {}, courseCode ? { courseCode } : {}));

@@ -286,7 +286,7 @@
         <div class="cs-foot">
           <button class="prim" onclick="cmdAsk('Give me a full executive readout of programme health and the three most important actions this week.')">✦ Ask the AI</button>
           <button onclick="location.href='lad-intelligence-v4.html'">Open dashboard</button>
-          <button onclick="openFeedback()">★ Feedback</button>
+          <button onclick="diveInto({type:'feedbackRoot',label:'Feedback'})">★ Feedback</button>
           <button onclick="startTour()">▶ Tour</button>
           <button onclick="openTimeMachine()">⏱ Time</button>
           <button onclick="cmdRotate()">⟲ Orbit</button>
@@ -726,10 +726,19 @@
     function fdate(iso){ var d=new Date(iso); return isNaN(d)?'—':d.getUTCDate()+' '+MO[d.getUTCMonth()]; }
     function bandColor(p){ p=Number(p)||0; return p>=16?0x3df0a0:p>=8?0xffb84d:0xff5e7e; }
     function bandPctColor(p){ p=Number(p)||0; return p>=70?0x3df0a0:p>=40?0xffb84d:0xff5e7e; }
+    // Star rating (out of 5) → colour: 4.5+ green, 4+ teal, 3+ amber, else red.
+    function ratingHex(r){ r=Number(r)||0; return r>=4.5?0x3df0a0:r>=4?0x1fe0b4:r>=3?0xffb84d:0xff5e7e; }
     function bandCss(p){ p=Number(p)||0; return p>=16?'var(--green)':p>=8?'var(--amber)':'var(--red)'; }
     function typeHex(t){ t=(t||'').toLowerCase(); return t==='mandatory'?0x9a6cff:t.indexOf('internal')>=0?0xffb84d:0x1fe0b4; }
-    var _an=null,_up=null;
+    var _an=null,_up=null,_fb=null;
     function needAnalytics(){ return _an?Promise.resolve(_an):getJSON('/api/v1/admin/course-analytics').then(function(d){_an=d;return d;}); }
+    // Real participant-feedback dataset (same source as the 2D ratings panel),
+    // with the static feedback.json as a fallback when the API has none yet.
+    function _loadStaticFb(){ return fetch('feedback.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;})
+        .then(function(s){ _fb=(s&&s.summary)?s.summary:{courses:[],providers:[],totals:{}}; return _fb; })
+        .catch(function(){ _fb={courses:[],providers:[],totals:{}}; return _fb; }); }
+    function needFeedback(){ if(_fb) return Promise.resolve(_fb);
+      return getJSON('/api/v1/admin/feedback').then(function(d){ if(d&&d.courses&&d.courses.length){ _fb=d; return d; } return _loadStaticFb(); }).catch(_loadStaticFb); }
     function needUpcoming(){ return _up?Promise.resolve(_up):getJSON('/api/v1/courses/upcoming').then(function(list){ var m={}; (Array.isArray(list)?list:[]).forEach(function(c){ m[c.id]=(c.sessions||[]).map(function(s){ if(!s.course_title) s.course_title=c.title; return s; }); }); _up=m; return m; }); }
     function needOVp(){ return window.__OV?Promise.resolve(window.__OV):getJSON('/api/v1/admin/oversight').then(function(d){ if(d) window.__OV=d; return d; }); }
 
@@ -771,11 +780,34 @@
       var cdata={kind:'courses',courses:n,booked:totalB}; if(centerData){ for(var k in centerData) cdata[k]=centerData[k]; }
       return {title:title,center:{label:centerLabel,color:centerColor,data:cdata},children:kids,dense:true,spread:farR};
     }
+    // The Feedback world: a galaxy of RATED courses — size = number of ratings,
+    // colour = rating band, ranked best-first. Built from real feedback data.
+    function feedbackGalaxy(courses){
+      var cs=(courses||[]).filter(function(c){return c.overall!=null && (Number(c.responses)||0)>0;})
+        .slice().sort(function(a,b){return (b.overall||0)-(a.overall||0);});
+      var n=cs.length; if(!n) return null;
+      var GA=Math.PI*(3-Math.sqrt(5)), closeR=120, farR=460;
+      var vals=cs.map(function(c){return Number(c.responses)||0;});
+      var maxB=Math.max.apply(null,vals)||1, minB=Math.min.apply(null,vals)||0;
+      var dir=[]; for(var j=0;j<n;j++) dir.push(j);
+      for(var j2=n-1;j2>0;j2--){ var m=Math.floor(Math.random()*(j2+1)); var tt=dir[j2]; dir[j2]=dir[m]; dir[m]=tt; }
+      var kids=cs.map(function(c,i){ var b=Number(c.responses)||0, frac=maxB>minB?(b-minB)/(maxB-minB):0.5, r=farR-Math.pow(frac,0.75)*(farR-closeR);
+        var dk=dir[i]+0.5, phi=Math.acos(1-2*dk/n), th=GA*dk; var pos=[Math.sin(phi)*Math.cos(th)*r, Math.cos(phi)*r, Math.sin(phi)*Math.sin(th)*r];
+        var ov=Math.round((c.overall||0)*100)/100;
+        return {label:c.course_name||'Course',sub:'★ '+ov+' · '+nf(b)+' ratings',count:Math.max(b,1),color:ratingHex(c.overall),type:'course',id:c.course_id||c.key,drill:false,
+          meta:{type:'mandatory',rating:ov,overall:ov,responses:b,provider:c.provider_name,years:c.years},pos:pos,noLabel:(i>=10)}; });
+      var totalResp=vals.reduce(function(a,x){return a+x;},0);
+      var top=cs.slice(0,6).map(function(c){return {name:c.course_name,overall:Math.round((c.overall||0)*100)/100,responses:c.responses,provider:c.provider_name};});
+      var cdata={kind:'feedback',coursesRated:n,responses:totalResp,top:top,worst:false};
+      return {title:'Feedback · Voice of the Profession',center:{label:'Feedback',color:0x9a6cff,data:cdata},children:kids,dense:true,spread:farR};
+    }
     var DRILL={
       winnersRoot:function(){ return needAnalytics().then(function(d){ var cs=((d&&d.courses)||[]).slice().sort(function(a,b){return (b.totalBookings||0)-(a.totalBookings||0);}); if(!cs.length) return null;
         return courseGalaxy('Winners · Excellence & Momentum','Winners',0xffd24a,cs,function(c){return (c.momentum||0)>0?0x3df0a0:typeHex(c.type);},{view:'winners',topName:cs[0]&&cs[0].title}); }); },
-      feedbackRoot:function(){ return needAnalytics().then(function(d){ var cs=((d&&d.courses)||[]).slice().sort(function(a,b){return (b.totalBookings||0)-(a.totalBookings||0);}); if(!cs.length) return null;
-        return courseGalaxy('Feedback · Voice of the Profession','Feedback',0x9a6cff,cs,function(c){return typeHex(c.type);},{view:'feedback',note:'Course & trainer ratings arrive at go-live'}); }); },
+      feedbackRoot:function(){ return needFeedback().then(function(d){ var g=feedbackGalaxy((d&&d.courses)||[]); if(g) return g;
+        // No ratings captured yet → fall back to the booking-demand galaxy.
+        return needAnalytics().then(function(an){ var cs=((an&&an.courses)||[]).slice().sort(function(a,b){return (b.totalBookings||0)-(a.totalBookings||0);}); if(!cs.length) return null;
+          return courseGalaxy('Feedback · Voice of the Profession','Feedback',0x9a6cff,cs,function(c){return typeHex(c.type);},{view:'feedback',coursesRated:0}); }); }); },
       firmsRoot:function(){ return getJSON('/api/v1/admin/firms').then(function(d){ var list=(d&&d.firms)||[]; if(!list.length) return null;
         var n=list.length, maxL=list[0].lawyers||1, minL=list[n-1].lawyers||0, closeR=120, farR=490, GA=Math.PI*(3-Math.sqrt(5));
         // Even directions over a FULL sphere, shuffled so firm SIZE doesn't bias
@@ -952,14 +984,14 @@
       }).catch(function(){ TW.busy=false; }); }); };
     window.diveBack=function(){ if(TW.busy||!TW.stack.length) return; clearWeb(); TW.busy=true; warpFlash(function(){ var cur=TW.active; var prev=TW.stack.pop(); disposeEco(cur); setActive(prev); frameReset(prev.radius); renderCrumbs(); var fp=$('focusPanel'); if(fp) fp.classList.remove('on'); if(!TW.stack.length){ document.body.classList.remove('focus'); } TW.busy=false; }); };
     // Turn query "orbs" into a drillable ecosystem spec (colours/types/drill).
-    window.__orbSpec=function(title,orbs){
+    window.__orbSpec=function(title,orbs,centerData){
       var children=(orbs||[]).map(function(o){ var t='node',col=0x34e1ff,drill=false;
         if(o.kind==='firm'){ t='firm'; col=(o.meta&&o.meta.compliancePct!=null)?bandPctColor(o.meta.compliancePct):0x9a6cff; drill=true; }
-        else if(o.kind==='course'){ t='course'; col=typeHex(o.meta&&o.meta.type); drill=true; }
+        else if(o.kind==='course'){ t='course'; col=(o.meta&&o.meta.rating!=null)?ratingHex(o.meta.rating):typeHex(o.meta&&o.meta.type); drill=true; }
         else if(o.kind==='lawyer'){ t='lawyer'; col=bandColor(o.meta&&o.meta.points); drill=true; }
         else if(o.kind==='session'){ t='session'; col=0x6ab8ff; drill=false; }
         return {label:o.label,sub:o.sub,count:o.count,color:col,type:t,id:o.id,drill:drill,meta:o.meta}; });
-      return {title:title, center:{label:(title||'Results').slice(0,16),color:0x34e1ff}, radius:Math.min(240,100+children.length*5), children:children};
+      return {title:title, center:{label:(title||'Results').slice(0,16),color:0x34e1ff,data:centerData||null}, radius:Math.min(240,100+children.length*5), children:children};
     };
     // Enter an ecosystem from a ready spec (query results) — reuses the dive plumbing.
     window.enterEcoSpec=function(spec){ if(TW.busy||!spec) return; clearWeb(); TW.busy=true; warpFlash(function(){
@@ -982,7 +1014,10 @@
       if(t==='accreditation') return 'In two short sentences, summarise this accreditation application ('+l+') and any action it needs.';
       if(t==='stat') return 'In one sentence, interpret what '+(node.meta&&node.meta.label||l)+' = '+(node.meta&&node.meta.value||s)+' tells us about the firm.';
       if(t==='center'){ var D=node.data; if(D&&D.firm) return 'Give an executive read on the law firm "'+D.firm+'": '+nf(D.total)+' practising lawyers, '+nf(D.compliant)+' compliant, '+nf(D.atRisk)+' at risk, '+nf(D.critical)+' critical (<8 CPD points), '+(D.compliancePct!=null?D.compliancePct+'%':'?')+' compliance, '+nf(D.courses)+' accredited activities. In two sentences give the key takeaway and the single most important action. Use these exact numbers; never say there is no data.';
-        if(D&&D.kind==='courses'){ if(D.view==='feedback') return 'Give an executive read on training FEEDBACK & ENGAGEMENT across the catalogue (not lawyer compliance): '+nf(D.courses)+' courses, '+nf(D.booked)+' total bookings. Structured course and trainer ratings go live shortly; for now read engagement from booking demand. In two sentences say which themes the profession is voting for with their bookings and the single most important action to capture richer feedback. Talk about courses/feedback only; use these numbers; never say there is no data.';
+        if(D&&D.kind==='feedback'){ var fbTop=(D.top||[]).map(function(c){return '"'+c.name+'" '+c.overall+'★ ('+nf(c.responses)+' responses'+(c.provider?(', '+c.provider):'')+')';}).join('; ');
+          return 'Give an executive read on real participant FEEDBACK across the training catalogue: '+nf(D.coursesRated)+' courses rated from '+nf(D.responses)+' responses. Ranked '+(D.worst?'WORST':'BEST')+'-rated courses (overall evaluation out of 5): '+fbTop+'. In two sentences name the '+(D.worst?'lowest':'highest')+'-rated courses and the single most important action. These are real ratings — never say feedback data is unavailable; use these exact figures.'; }
+        if(D&&D.kind==='courses'){ if(D.view==='feedback'){ var gTop=(D.top||[]).map(function(c){return '"'+c.name+'" '+c.overall+'★';}).join('; ');
+            return 'Give an executive read on real participant FEEDBACK across the catalogue (not lawyer compliance): '+nf(D.coursesRated||D.courses)+' courses rated'+(D.responses?(' from '+nf(D.responses)+' responses'):'')+'. Highest-rated: '+(gTop||'—')+'. In two sentences say which courses the profession rates most highly and the single most important action. These are real ratings; never say feedback is unavailable; use these figures.'; }
           return 'Give an executive read on the WINNING COURSES by demand and momentum (not lawyer compliance): '+nf(D.courses)+' courses, '+nf(D.booked)+' total bookings'+(D.topName?(', led by "'+D.topName+'"'):'')+'. In two sentences say what is driving demand and the single most important scheduling or promotion action. Talk about the course catalogue only; use these numbers; never say there is no data.'; }
         if(D&&D.kind==='sessions') return 'Give an executive read on the UPCOMING TRAINING SESSIONS, not on lawyer compliance: '+nf(D.sessions)+' upcoming sessions, '+nf(D.booked)+' of '+nf(D.seats)+' seats booked ('+D.fillPct+'% filled), '+nf(D.wellBooked)+' well-booked (80%+) and '+nf(D.underBooked)+' under-booked (<40%). In two sentences comment on demand and seat utilisation across the upcoming catalogue and the single most important scheduling action (where to add seats, which under-booked sessions to promote or cut). Talk about the sessions/catalogue only. Use these exact numbers; never say there is no data.';
         if(D&&D.cohort) return 'Give an executive read on the "'+D.cohort+'" cohort of practising lawyers: '+nf(D.inBand)+' lawyers in this band'+(D.showing&&D.showing<D.inBand?(' ('+nf(D.showing)+' shown in the galaxy)'):'')+'. In two sentences explain what this cohort means for CLPD compliance across the profession and the single most important action to move them up. Use these exact numbers; never say there is no data.';
@@ -997,7 +1032,7 @@
     function showNodeDetail(node){ if(!node) return; document.body.classList.add('focus');
       $('fpEye').textContent=TYPE_LABEL[node.type]||(node.type||'NODE').toUpperCase();
       $('fpTitle').textContent=(node.type==='center'?(node.ctx||node.label):(node.label||node.id))||'Node';
-      $('fpSub').textContent=(node.type==='center'?((node.data&&node.data.firm)?'Firm overview':(node.data&&node.data.kind==='courses')?(nf(node.data.courses)+' courses'):(node.data&&node.data.kind==='sessions')?(nf(node.data.sessions)+' upcoming sessions'):(node.data&&node.data.cohort)?(nf(node.data.inBand)+' lawyers in this cohort'):'Current view of the profession'):(node.sub||''));
+      $('fpSub').textContent=(node.type==='center'?((node.data&&node.data.firm)?'Firm overview':(node.data&&node.data.kind==='feedback')?(nf(node.data.coursesRated)+' courses rated · '+nf(node.data.responses)+' responses'):(node.data&&node.data.kind==='courses')?(nf(node.data.courses)+' courses'):(node.data&&node.data.kind==='sessions')?(nf(node.data.sessions)+' upcoming sessions'):(node.data&&node.data.cohort)?(nf(node.data.inBand)+' lawyers in this cohort'):'Current view of the profession'):(node.sub||''));
       var html='';
       if(node.type==='lawyer'&&node.meta){ html=factRow('CPD points',nf(node.meta.points),bandCss(node.meta.points))+factRow('Status',esc(node.meta.status||'active'))+factRow('Credits',nf(node.meta.credits)); }
       else if(node.type==='session'&&node.meta){ var s=node.meta; html=factRow('Date',fdate(s.scheduled_at))+factRow('Seats open',nf(s.seats_remaining),'var(--amber)')+factRow('Capacity',nf(s.capacity))+factRow('Venue',esc(s.venue||'—')); }
@@ -1005,8 +1040,9 @@
       else if(node.type==='attcourse'&&node.meta){ var a=node.meta; html=factRow('Course',esc(a.course_title||a.title||a.course_code||'—'))+factRow('Points',nf(a.points||a.points_earned||a.cpd_points))+factRow('When',a.created_at?fdate(a.created_at):'—'); }
       else if(node.type==='stat'&&node.meta){ html=factRow(esc(node.meta.label||'Value'),esc(node.meta.value||'—'),'var(--cyan)'); }
       else if(node.type==='firmCourse'&&node.meta){ html=factRow('Course',esc(node.label))+factRow('Bookings',nf(node.meta.count))+factRow('Attended',nf(node.meta.attended)); }
+      else if(node.type==='course'&&node.meta&&node.meta.rating!=null){ var cm=node.meta; html=factRow('Overall rating','★ '+cm.rating,(cm.rating>=4?'var(--green)':cm.rating>=3?'var(--amber)':'var(--red)'))+factRow('Responses',nf(cm.responses||cm.feedbackCount||0))+(cm.provider?factRow('Provider',esc(cm.provider)):'')+((cm.years&&cm.years.length)?factRow('Years',esc(cm.years.join(' · '))):''); }
       else if(node.type==='firm'&&node.meta){ html=factRow('Lawyers',nf(node.meta.lawyers))+factRow('Compliance',(node.meta.compliancePct!=null?node.meta.compliancePct+'%':'—'))+factRow('Critical',nf(node.meta.critical)); }
-      else if(node.type==='center'){ var D=node.data; if(D&&D.firm){ html=factRow('Lawyers',nf(D.total))+factRow('Compliant',nf(D.compliant),'var(--green)')+factRow('At risk',nf(D.atRisk),'var(--amber)')+factRow('Critical',nf(D.critical),'var(--red)')+factRow('Compliance',(D.compliancePct!=null?D.compliancePct+'%':'—'))+factRow('Accredited activities',nf(D.courses),'var(--teal)'); } else if(D&&D.kind==='courses'){ html=factRow('Courses',nf(D.courses),'var(--cyan)')+factRow('Total bookings',nf(D.booked))+(D.topName?factRow('Top course',esc(D.topName),'var(--green)'):'')+(D.note?factRow('Note',esc(D.note),'var(--dim)'):''); } else if(D&&D.kind==='sessions'){ html=factRow('Upcoming sessions',nf(D.sessions),'var(--cyan)')+factRow('Seats booked',nf(D.booked)+' / '+nf(D.seats))+factRow('Fill rate',D.fillPct+'%',D.fillPct>=60?'var(--green)':'var(--amber)')+factRow('Well booked · 80%+',nf(D.wellBooked),'var(--green)')+factRow('Under-booked · <40%',nf(D.underBooked),'var(--amber)'); } else if(D&&D.cohort){ html=factRow('Cohort',esc(D.cohort))+factRow('Lawyers in band',nf(D.inBand),'var(--cyan)')+(D.showing&&D.showing<D.inBand?factRow('Shown in galaxy',nf(D.showing)):''); } else { var o=window.__OV,L=(o&&o.lawyers)||{}; html=L.practising!=null?(factRow('Practising',nf(L.practising))+factRow('Compliant',nf(L.compliant),'var(--green)')+factRow('At risk',nf(L.atRisk),'var(--amber)')+factRow('Critical',nf(L.critical),'var(--red)')):'<div class="loading">Live overview</div>'; } }
+      else if(node.type==='center'){ var D=node.data; if(D&&D.firm){ html=factRow('Lawyers',nf(D.total))+factRow('Compliant',nf(D.compliant),'var(--green)')+factRow('At risk',nf(D.atRisk),'var(--amber)')+factRow('Critical',nf(D.critical),'var(--red)')+factRow('Compliance',(D.compliancePct!=null?D.compliancePct+'%':'—'))+factRow('Accredited activities',nf(D.courses),'var(--teal)'); } else if(D&&D.kind==='feedback'){ html=factRow('Courses rated',nf(D.coursesRated),'var(--cyan)')+factRow('Total responses',nf(D.responses))+((D.top&&D.top[0])?factRow(D.worst?'Lowest rated':'Top rated',esc(D.top[0].name)+' · ★'+D.top[0].overall,D.worst?'var(--amber)':'var(--green)'):'')+'<button class="fp-btn" style="margin-top:12px" onclick="openFeedback()">⤢ Open full ratings table</button>'; } else if(D&&D.kind==='courses'){ html=factRow('Courses',nf(D.courses),'var(--cyan)')+factRow('Total bookings',nf(D.booked))+(D.topName?factRow('Top course',esc(D.topName),'var(--green)'):'')+(D.note?factRow('Note',esc(D.note),'var(--dim)'):''); } else if(D&&D.kind==='sessions'){ html=factRow('Upcoming sessions',nf(D.sessions),'var(--cyan)')+factRow('Seats booked',nf(D.booked)+' / '+nf(D.seats))+factRow('Fill rate',D.fillPct+'%',D.fillPct>=60?'var(--green)':'var(--amber)')+factRow('Well booked · 80%+',nf(D.wellBooked),'var(--green)')+factRow('Under-booked · <40%',nf(D.underBooked),'var(--amber)'); } else if(D&&D.cohort){ html=factRow('Cohort',esc(D.cohort))+factRow('Lawyers in band',nf(D.inBand),'var(--cyan)')+(D.showing&&D.showing<D.inBand?factRow('Shown in galaxy',nf(D.showing)):''); } else { var o=window.__OV,L=(o&&o.lawyers)||{}; html=L.practising!=null?(factRow('Practising',nf(L.practising))+factRow('Compliant',nf(L.compliant),'var(--green)')+factRow('At risk',nf(L.atRisk),'var(--amber)')+factRow('Critical',nf(L.critical),'var(--red)')):'<div class="loading">Live overview</div>'; } }
       else { html='<div class="loading">The deepest layer here.</div>'; }
       $('fpFacts').innerHTML=html;
       var btn=$('fpAsk'); if(btn){ btn.style.display=''; btn.onclick=function(){ maryamInto(node); }; }
@@ -1017,6 +1053,7 @@
     // Typed follow-up about the current node, with its live context attached.
     function nodeCtx(node){ var D=node.data; var c=(node.type||'node')+' "'+(node.label||node.ctx||'')+'"'+(node.sub?(' ('+node.sub+')'):'');
       if(D&&D.firm) c+=' — '+nf(D.total)+' lawyers, '+nf(D.compliant)+' compliant, '+nf(D.atRisk)+' at risk, '+nf(D.critical)+' critical, '+(D.compliancePct!=null?D.compliancePct+'%':'?')+' compliance, '+nf(D.courses)+' accredited activities';
+      else if(D&&D.kind==='feedback') c+=' — real participant feedback: '+nf(D.coursesRated)+' courses rated from '+nf(D.responses)+' responses; ranked courses: '+(D.top||[]).slice(0,6).map(function(t){return '"'+t.name+'" '+t.overall+'★';}).join(', ');
       else if(node.meta){ try{ c+=' [data: '+JSON.stringify(node.meta).slice(0,260)+']'; }catch(e){} } return c; }
     function bindFollowup(node){ var inp=$('fpInput'),send=$('fpSend'); if(!inp||!send) return; inp.value='';
       var ask=function(){ var q=(inp.value||'').trim(); if(!q) return; inp.value=''; var a=$('fpAnswer'); if(a){ a.style.display='block'; a.textContent='Maryam is thinking…'; }
@@ -1156,7 +1193,7 @@
       else if(key==='Accreds'){ window.diveInto({type:'accredsRoot',label:'Accreditations'}); }
       else if(key==='Sessions'){ window.diveInto({type:'sessionsRoot',label:'Sessions'}); }
       else if(key==='Winners'){ window.diveInto({type:'winnersRoot',label:'Winners'}); }
-      else if(key==='Feedback'){ if(typeof window.openFeedback==='function'){ window.openFeedback(); } else { window.diveInto({type:'feedbackRoot',label:'Feedback'}); } }
+      else if(key==='Feedback'){ window.diveInto({type:'feedbackRoot',label:'Feedback'}); }
       else showFocusPanel(key);
     };
     window.exitFocus=function(){
@@ -1487,7 +1524,7 @@
         if(!d||!d.orbs){ if(st)st.textContent=(d&&d.error)?'—':'no results'; return; }
         if(!d.orbs.length){ if(st)st.textContent='0 results'; setTimeout(function(){if(st)st.textContent='';},1800); return; }
         if(st)st.textContent=d.count+' found';
-        if(window.enterEcoSpec&&window.__orbSpec){ window.enterEcoSpec(window.__orbSpec(d.title||q,d.orbs)); }
+        if(window.enterEcoSpec&&window.__orbSpec){ window.enterEcoSpec(window.__orbSpec(d.title||q,d.orbs,d.summary||null)); }
         setTimeout(function(){if(st)st.textContent='';},1800);
       }).catch(function(){ if(st)st.textContent='error'; });
   }
@@ -1574,8 +1611,9 @@
     var host=document.getElementById('fbBody');
     if(TAB==='courses'){
       var rows=(DATA.courses||[]).filter(function(c){ return !q || (c.course_name||'').toLowerCase().indexOf(q)>-1 || (c.provider_name||'').toLowerCase().indexOf(q)>-1; });
-      host.innerHTML='<div class="fbcard" style="background:none;border:none"><div class="fbrow" style="cursor:default;color:#7e8baa;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding-bottom:4px"><span>Course · Provider</span><span>Overall</span><span style="text-align:right">Responses</span><span style="text-align:right">Yrs</span></div></div>'+
-        rows.map(courseCard).join('') || '<div style="color:#7b88a0;padding:30px">No matches.</div>';
+      var header='<div class="fbcard" style="background:none;border:none"><div class="fbrow" style="cursor:default;color:#7e8baa;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding-bottom:4px"><span>Course · Provider</span><span>Overall</span><span style="text-align:right">Responses</span><span style="text-align:right">Yrs</span></div></div>';
+      var body=rows.map(courseCard).join('') || '<div style="color:#7b88a0;padding:30px">No matches.</div>';
+      host.innerHTML=header+body;
     } else {
       var prs=(DATA.providers||[]).filter(function(p){ return !q || (p.provider_name||'').toLowerCase().indexOf(q)>-1; });
       host.innerHTML=prs.map(providerCard).join('') || '<div style="color:#7b88a0;padding:30px">No matches.</div>';
