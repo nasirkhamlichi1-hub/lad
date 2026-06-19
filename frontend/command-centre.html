@@ -256,10 +256,10 @@
 
   <!-- KPI strip -->
   <div class="kstrip">
-    <div class="kpi" style="--c:var(--cyan)"><div class="kl">Total Lawyers</div><div class="kv" id="kTotal">—</div><div class="km" id="kTotalM">on the roll</div></div>
+    <div class="kpi" style="--c:var(--cyan);display:none"><div class="kl">Total Lawyers</div><div class="kv" id="kTotal">—</div><div class="km" id="kTotalM">on the roll</div></div>
     <div class="kpi" style="--c:var(--violet)"><div class="kl">Practising</div><div class="kv" id="kPract">—</div><div class="km">16-pt obligation</div></div>
-    <div class="kpi" style="--c:var(--green)"><div class="kl">Compliance Rate</div><div class="kv" id="kComp">—</div><div class="km" id="kCompM">at or above 16 pts</div></div>
-    <div class="kpi" style="--c:var(--red)"><div class="kl">Critical</div><div class="kv" id="kCrit">—</div><div class="km" id="kCritM">below 8 pts</div></div>
+    <div class="kpi" style="--c:var(--green);display:none"><div class="kl">Compliance Rate</div><div class="kv" id="kComp">—</div><div class="km" id="kCompM">at or above 16 pts</div></div>
+    <div class="kpi" style="--c:var(--red);display:none"><div class="kl">Critical</div><div class="kv" id="kCrit">—</div><div class="km" id="kCritM">below 8 pts</div></div>
     <div class="kpi" style="--c:var(--amber)"><div class="kl">Days to Deadline</div><div class="kv" id="kDays">—</div><div class="km" id="kDaysM">31 Dec cycle end</div></div>
     <div class="kpi" style="--c:var(--teal)"><div class="kl">Accreditations</div><div class="kv" id="kAcc">—</div><div class="km">in pipeline</div></div>
   </div>
@@ -310,7 +310,7 @@
 
     <!-- RIGHT -->
     <div class="col">
-      <div class="card">
+      <div class="card" style="display:none">
         <div class="card-h">Firm Performance League <span class="badge">by compliance</span></div>
         <div id="leagueRows"><div class="loading">Ranking firms…</div></div>
       </div>
@@ -345,7 +345,7 @@
       <svg class="spark" id="spark" viewBox="0 0 300 74" preserveAspectRatio="none"></svg>
       <div class="leg" style="margin-top:8px"><div><span>Now</span><span id="fcNow">—</span></div><div><span>Projected · 31 Dec</span><span id="fcProj" style="color:var(--cyan)">—</span></div></div>
     </div>
-    <div class="card">
+    <div class="card" style="display:none">
       <div class="card-h">Engagement</div>
       <div class="hx"><div class="hxl">Attendance rate</div><div class="hxbar"><div class="hxf" id="egAtt" style="background:var(--teal)"></div></div><div class="hxv" id="egAttV">—</div></div>
       <div class="hx"><div class="hxl">No-show rate</div><div class="hxbar"><div class="hxf" id="egNo" style="background:var(--red)"></div></div><div class="hxv" id="egNoV">—</div></div>
@@ -450,7 +450,6 @@
     {key:'Lawyers',  n:null, color:0x34e1ff, center:true},
     {key:'Law Firms',n:null, color:0x9a6cff},
     {key:'Courses',  n:null, color:0x1fe0b4},
-    {key:'Providers',n:null, color:0xffb84d},
     {key:'Accreds',  n:null, color:0x3df0a0},
     {key:'Sessions', n:null, color:0x6ab8ff},
     {key:'Regulator · LAD', n:1, color:0xff5e7e},
@@ -487,7 +486,6 @@
     var idx=[
       {l:'Compliance Readiness', v:Math.round(L.complianceRate||0), c:'var(--green)'},
       {l:'Cohort Resilience',    v:resilience,                      c:'var(--teal)'},
-      {l:'Engagement (attendance)',v:Math.round(att),               c:'var(--cyan)'},
       {l:'Accreditation Throughput',v:thr,                          c:'var(--violet)'},
       {l:'Deadline Runway',      v:runway,                          c:'var(--amber)'},
       {l:'Catalogue Strength',   v:catalogue,                       c:'var(--cyan)'}
