@@ -4562,6 +4562,45 @@ async function supSelectLawyer(id) {
     }));
     if (supSelectedId === id) { supRender(); supRenderDetail(); }
   } catch (_) {}
+  // CRM 360: messages, full ledger, bookings split, and an activity timeline.
+  try {
+    const base = _admBase().replace(/\/$/, ''), token = _admToken();
+    if (!token) return;
+    const r = await fetch(base + '/api/v1/admin/lawyer/' + encodeURIComponent(id), { headers: { Authorization: 'Bearer ' + token } });
+    if (!r.ok) return;
+    const crm = await r.json();
+    const l = supLawyers.find(x => x.id === id);
+    if (l) { l.crm = crm; if (supSelectedId === id) supRenderDetail(); }
+  } catch (_) {}
+}
+
+// Relative "time ago" for the CRM last-contact / activity displays.
+function supAgo(iso) {
+  if (!iso) return '—';
+  const t = Date.parse((iso || '').replace(' ', 'T')); if (isNaN(t)) return '—';
+  const s = Math.max(0, (Date.now() - t) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  const d = Math.floor(s / 86400);
+  if (d < 30) return d + 'd ago';
+  if (d < 365) return Math.floor(d / 30) + 'mo ago';
+  return Math.floor(d / 365) + 'y ago';
+}
+
+// Reply to a lawyer's conversation straight from the CRM (admin side).
+async function supReplyConvo(convId) {
+  const body = prompt('Reply to this conversation:'); if (body == null) return;
+  const txt = body.trim(); if (!txt) return;
+  try {
+    const r = await fetch(_admBase().replace(/\/$/, '') + '/api/v1/messages/conversations/' + encodeURIComponent(convId) + '/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + _admToken() },
+      body: JSON.stringify({ body: txt }),
+    });
+    if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || 'Failed'); }
+    toast('Reply sent', 'success');
+    if (supSelectedId) supSelectLawyer(supSelectedId); // refresh the 360
+  } catch (e) { toast(e.message || 'Reply failed', 'error'); }
 }
 
 function supRenderDetail() {
@@ -4636,9 +4675,9 @@ function supRenderDetail() {
         <div class="sup-stat-sub">31 Dec 2026</div>
       </div>
       <div class="sup-stat">
-        <div class="sup-stat-label">Last activity</div>
-        <div class="sup-stat-val" style="font-size:14px;font-family:var(--mono);font-weight:600">${l.last_login || '—'}</div>
-        <div class="sup-stat-sub">${escape(l.status === 'active' ? 'Active account' : 'Suspended')}</div>
+        <div class="sup-stat-label">${(l.crm && l.crm.timeline && l.crm.timeline.length) ? 'Last activity' : 'Last contact'}</div>
+        <div class="sup-stat-val" style="font-size:15px;font-family:var(--mono);font-weight:600">${(l.crm && l.crm.timeline && l.crm.timeline[0]) ? supAgo(l.crm.timeline[0].at) : (l.crm && l.crm.messaging && l.crm.messaging.lastContact ? supAgo(l.crm.messaging.lastContact) : (l.last_login || '—'))}</div>
+        <div class="sup-stat-sub">${(l.crm && l.crm.timeline && l.crm.timeline[0]) ? escape(String(l.crm.timeline[0].label || '').slice(0, 34)) : escape(l.status === 'active' ? 'Active account' : 'Suspended')}</div>
       </div>
     </div>
 
@@ -4661,7 +4700,9 @@ function supRenderDetail() {
     <div class="sup-detail-tabs">
       <button class="sup-detail-tab ${supActiveTab==='compliance'?'active':''}" onclick="supTab('compliance')">Compliance</button>
       <button class="sup-detail-tab ${supActiveTab==='transactions'?'active':''}" onclick="supTab('transactions')">Transactions <span class="sup-pill muted" style="margin-left:5px">${l.transactions.length}</span></button>
-      <button class="sup-detail-tab ${supActiveTab==='bookings'?'active':''}" onclick="supTab('bookings')">Bookings <span class="sup-pill muted" style="margin-left:5px">${l.bookings.length}</span></button>
+      <button class="sup-detail-tab ${supActiveTab==='bookings'?'active':''}" onclick="supTab('bookings')">Bookings <span class="sup-pill muted" style="margin-left:5px">${(l.crm && l.crm.bookings ? l.crm.bookings.total : l.bookings.length)}</span></button>
+      <button class="sup-detail-tab ${supActiveTab==='messages'?'active':''}" onclick="supTab('messages')">Messages <span class="sup-pill ${(l.crm && l.crm.messaging && l.crm.messaging.open)?'warn':'muted'}" style="margin-left:5px">${(l.crm && l.crm.messaging ? l.crm.messaging.conversations.length : 0)}</span></button>
+      <button class="sup-detail-tab ${supActiveTab==='activity'?'active':''}" onclick="supTab('activity')">Activity</button>
       <button class="sup-detail-tab ${supActiveTab==='notes'?'active':''}" onclick="supTab('notes')">Notes <span class="sup-pill muted" style="margin-left:5px">${l.notes.length}</span></button>
     </div>
 
@@ -4747,6 +4788,49 @@ function supRenderDetail() {
             </tbody>
           </table>
         `}
+      </div>
+
+      <!-- Messages section (CRM 360) -->
+      <div class="sup-section ${supActiveTab==='messages'?'active':''}" data-sup-sec="messages">
+        ${!l.crm ? '<div style="text-align:center;padding:30px;color:var(--slate3)">Loading…</div>'
+          : !(l.crm.messaging && l.crm.messaging.conversations.length)
+            ? `<div style="text-align:center;padding:30px;color:var(--slate3)">No conversations with this lawyer yet.<div style="font-size:12px;margin-top:6px">They can start one from their portal; replies you send here reach them by email too.</div></div>`
+            : `<div style="font-size:12px;color:var(--slate2);margin-bottom:12px">Last contact <strong>${supAgo(l.crm.messaging.lastContact)}</strong> · ${l.crm.messaging.open} open</div>` +
+              l.crm.messaging.conversations.map(c => `
+                <div style="border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:10px;background:var(--white)">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+                    <span style="font-weight:700;font-size:13.5px;color:var(--ink)">${escape(c.subject || '(no subject)')}</span>
+                    <span class="sup-pill ${c.status==='open'?'warn':c.status==='resolved'||c.status==='closed'?'ok':'muted'}">${escape((c.status||'').toUpperCase())}</span>
+                    ${c.assigned_name ? `<span class="sup-pill muted">→ ${escape(c.assigned_name)}</span>` : ''}
+                    <span style="flex:1"></span>
+                    <span style="font-family:var(--mono);font-size:10.5px;color:var(--slate3)">${supAgo(c.last_message_at)}</span>
+                  </div>
+                  <div style="font-size:12.5px;color:var(--slate);line-height:1.5">${escape((c.preview||'').slice(0,180))}</div>
+                  <div style="margin-top:9px;display:flex;gap:8px;align-items:center">
+                    <span style="font-family:var(--mono);font-size:10px;color:var(--slate3)">${c.msg_count||0} message${c.msg_count===1?'':'s'} · ${c.last_sender==='requester'?'awaiting reply':'last reply from CLPD'}</span>
+                    <span style="flex:1"></span>
+                    <button class="adm-btn-green" style="padding:4px 12px;font-size:11.5px" onclick="supReplyConvo('${c.id}')">Reply</button>
+                  </div>
+                </div>`).join('')}
+      </div>
+
+      <!-- Activity timeline (CRM 360) -->
+      <div class="sup-section ${supActiveTab==='activity'?'active':''}" data-sup-sec="activity">
+        ${!l.crm ? '<div style="text-align:center;padding:30px;color:var(--slate3)">Loading…</div>'
+          : !(l.crm.timeline && l.crm.timeline.length)
+            ? '<div style="text-align:center;padding:30px;color:var(--slate3)">No recorded activity yet.</div>'
+            : '<div style="position:relative;padding-left:6px">' + l.crm.timeline.map(t => {
+                const ic = { booking: '📅', credit: '💳', cpd: '⭐', message: '✉️' }[t.kind] || '•';
+                const col = { booking: 'var(--blue)', credit: 'var(--gold)', cpd: 'var(--green)', message: 'var(--teal,#0d7377)' }[t.kind] || 'var(--slate3)';
+                return `<div style="display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)">
+                  <div style="font-size:14px;width:22px;text-align:center">${ic}</div>
+                  <div style="flex:1">
+                    <div style="font-size:13px;color:var(--ink)">${escape(t.label || '')}</div>
+                    <div style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-top:2px">${supAgo(t.at)} · ${escape(String(t.at||'').slice(0,10))}</div>
+                  </div>
+                  <div style="width:4px;border-radius:2px;background:${col};flex-shrink:0"></div>
+                </div>`;
+              }).join('') + '</div>'}
       </div>
 
       <!-- Notes section -->
