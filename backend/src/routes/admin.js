@@ -285,6 +285,9 @@ router.get('/course-analytics', requireAuth, (req, res) => {
   const fillRows = all("SELECT course_id, SUM(capacity) cap, SUM(seats_remaining) seats, COUNT(*) sessions FROM course_sessions WHERE COALESCE(status,'open') NOT IN ('cancelled','closed') AND scheduled_at >= datetime('now') GROUP BY course_id");
   const fill = {}; fillRows.forEach((r) => { fill[r.course_id] = r; });
   const bk = all("SELECT course_id, created_at, status FROM bookings WHERE created_at >= datetime('now', ?)", '-' + (WEEKS * 7) + ' day');
+  // Real participant feedback (headline rating + response count per course),
+  // so the digital-twin worlds and the AI read live ratings — not placeholders.
+  let ratingMap = {}; try { ratingMap = require('../services/feedback').courseRatingMap() || {}; } catch (_) { ratingMap = {}; }
 
   const perCourse = {}; courses.forEach((c) => { perCourse[c.id] = new Array(WEEKS).fill(0); });
   const marketWeekly = new Array(WEEKS).fill(0);
@@ -299,13 +302,17 @@ router.get('/course-analytics', requireAuth, (req, res) => {
     const total = w.reduce((s, x) => s + x, 0);
     const recent = w.slice(WEEKS - 4).reduce((s, x) => s + x, 0);
     const prior = w.slice(WEEKS - 8, WEEKS - 4).reduce((s, x) => s + x, 0);
+    const fr = ratingMap[c.id] || null;
     return {
       id: c.id, title: c.title, type: c.type, points: c.pts, credits: c.credits,
       topic: c.category || null, provider: c.provider_id || null,
       capacity: cap, seatsRemaining: seats, fillPct: cap ? Math.round(100 * (cap - seats) / cap) : null,
       upcomingSessions: Number(f.sessions) || 0,
       totalBookings: total, weekly: w, momentum: recent - prior,
-      rating: null, trainerRating: null, feedbackCount: 0, // awaiting go-live capture
+      // Real participant feedback (null when a course has no responses yet).
+      rating: fr && fr.stars != null ? fr.stars : null,
+      trainerRating: null, // trainer identities/ratings are never surfaced
+      feedbackCount: fr ? (fr.responses || 0) : 0,
     };
   }).sort((a, b) => b.totalBookings - a.totalBookings);
 
@@ -320,7 +327,7 @@ router.get('/course-analytics', requireAuth, (req, res) => {
       cooling: ranked.slice(-3).reverse().map((c) => ({ id: c.id, title: c.title, momentum: c.momentum, total: c.totalBookings })),
     },
     courses: out.slice(0, 40),
-    feedbackLive: false, // flips true once course/trainer feedback capture goes live
+    feedbackLive: out.some((c) => c.rating != null), // true once any course carries real ratings
   });
 });
 
@@ -397,6 +404,37 @@ router.post('/query', requireAuth, async (req, res, next) => {
   if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
   const prompt = (req.body && req.body.prompt || '').toString().trim();
   if (!prompt) return res.status(400).json({ error: 'Ask a question about the data.' });
+
+  // ── Feedback / rating questions answer DIRECTLY from the real ratings
+  // dataset (which courses are best/worst rated), not the generic entity query.
+  if (/\b(feedback|rating|ratings|rated|satisfaction|satisfied|reviews?|best course|worst course|highest[ -]?rated|lowest[ -]?rated|top[ -]?rated|well[ -]?received)\b/i.test(prompt)) {
+    try {
+      const sum = require('../services/feedback').summary();
+      const worst = /\b(worst|lowest|poor(?:est)?|bad|least|weak)\b/i.test(prompt);
+      const list = (sum.courses || [])
+        .filter((c) => c.overall != null && (c.responses || 0) > 0)
+        .sort((a, b) => worst ? (a.overall - b.overall) : (b.overall - a.overall));
+      if (list.length) {
+        const r2v = (n) => Math.round(n * 100) / 100;
+        const orbs = list.slice(0, 24).map((c) => ({
+          label: c.course_name,
+          sub: '★ ' + r2v(c.overall) + ' · ' + (c.responses || 0).toLocaleString() + ' ratings',
+          count: Math.max(c.responses || 1, 1), kind: 'course', id: c.course_id || c.key,
+          meta: { type: 'mandatory', rating: r2v(c.overall), overall: r2v(c.overall), responses: c.responses, provider: c.provider_name, years: c.years },
+        }));
+        return res.json({
+          title: worst ? 'Lowest-rated courses' : 'Best-rated courses',
+          entity: 'courses', count: orbs.length, orbs, feedback: true,
+          summary: {
+            kind: 'feedback', worst,
+            coursesRated: sum.totals.courses_rated, responses: sum.totals.responses,
+            top: list.slice(0, 6).map((c) => ({ name: c.course_name, overall: r2v(c.overall), responses: c.responses, provider: c.provider_name })),
+          },
+        });
+      }
+    } catch (_) { /* fall through to the generic entity query */ }
+  }
+
   let spec = heuristicSpec(prompt, req.body && req.body.entity);
   if (aimodel.configured()) {
     try {
