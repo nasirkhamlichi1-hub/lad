@@ -1311,10 +1311,10 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
           <div>
             <div class="section-eyebrow teal" data-cfg="intel_sec_coursefeedback_eyebrow">PERFORMANCE INTELLIGENCE</div>
             <h2 class="section-title" data-cfg-html="intel_sec_coursefeedback_title">Course <em style="color:var(--teal)">performance</em></h2>
-            <div class="section-desc" id="perfDesc">Real attendance behaviour across every booking in the system — attended, no-show and cancelled. Structured trainer feedback capture is coming soon.</div>
+            <div class="section-desc" id="perfDesc">Real attendance behaviour across every booking in the system — attended, no-show and cancelled. Course &amp; provider star ratings from participant feedback are in the Command Centre ★ Feedback layer.</div>
           </div>
           <div class="section-actions">
-            <span class="pill" id="perfFeedbackPill" style="background:var(--paper2);color:var(--slate3);border:1px solid var(--line)">FEEDBACK · COMING SOON</span>
+            <a class="pill" href="command-centre.html" style="background:var(--paper2);color:var(--teal);border:1px solid var(--line);text-decoration:none">★ FEEDBACK · LIVE</a>
           </div>
         </div>
 
@@ -1638,30 +1638,10 @@ const FIRMS=[
   {name:'Clyde & Co',abbr:'CC',size:133,compliance:9.0,critical:109,trend:[1,3,5,6,7,8,9,9]}
 ];
 
-const OPS_EVENTS=[
-  {type:'alert',ico:'⚠',title:'Curtis Mallet-Prevost flagged: 0% compliance · 20 lawyers',meta:'Anomaly · zero 2026 activity',time:'4m ago'},
-  {type:'new',ico:'✓',title:'Galadari mass-booking · 8 lawyers onto 12 May Exclusion Clauses',meta:'Kwintessential · 2pts each',time:'18m ago'},
-  {type:'warn',ico:'⏱',title:'ACC-2026-0128 SLA breached (18 days)',meta:'Kwintessential · Construction Law',time:'1h ago'},
-  {type:'new',ico:'',title:'AI Governance e-learning hit 1,247 enrolments',meta:'Free · mandatory · 2pts each',time:'2h ago'},
-  {type:'new',ico:'',title:'89 lawyers completed Data Protection module',meta:'25 Mar Galadari session · auto-verified',time:'3h ago'},
-  {type:'warn',ico:'',title:'Clyde & Co at 9.0% with 109 critical · escalation required',meta:'133 lawyers · 234 days to deadline',time:'5h ago'},
-  {type:'new',ico:'',title:'Hadef & Partners filed attendance for AI & Copyright',meta:'13 Apr session · 8 attendees pending review',time:'8h ago'},
-  {type:'alert',ico:'⚠',title:'12 firms below 10% compliance with <15 lawyers each',meta:'Cluster anomaly · review',time:'14h ago'},
-];
-
-const OPS_QUEUE=[
-  {pri:'high',id:'TASK-2914',title:'Audit Al Suwaidi & Co. certificate pattern',meta:'Lex flagged · 2h ago · Compliance'},
-  {pri:'high',id:'TASK-2913',title:'SLA escalation: KTL Training (18 days)',meta:'Provider · accreditation · breach'},
-  {pri:'high',id:'TASK-2912',title:'Outreach: Innovation Law Firm · 60% compliance',meta:'15 lawyers · escalate to director'},
-  {pri:'high',id:'TASK-2911',title:'Investigate Tax practice cohort drop',meta:'14 senior lawyers postponed'},
-  {pri:'med',id:'TASK-2910',title:'Review Q2 accreditation backlog',meta:'14 pending · 3 SLA breach'},
-  {pri:'med',id:'TASK-2909',title:'Investigate DIFC Day cancellations',meta:'32 cancellations · scheduling conflict'},
-  {pri:'med',id:'TASK-2908',title:'Approve ACC-2026-0141 · Green Law',meta:'ESG course · 2pts proposed'},
-  {pri:'med',id:'TASK-2907',title:'Schedule Q3 strategy review',meta:'Director sync · all department heads'},
-  {pri:'low',id:'TASK-2906',title:'Update FAQ: pro bono evidence rules',meta:'Public portal content review'},
-  {pri:'low',id:'TASK-2905',title:'Annual provider performance reviews',meta:'28 providers · routine'},
-  {pri:'low',id:'TASK-2904',title:'Refresh DIFC Day promotional materials',meta:'Content team · social channels'}
-];
+// Live operational feed + task queue. Populated from real anomalies/oversight
+// (loadOpsLive); empty until real signals exist — no fabricated activity.
+let OPS_EVENTS=[];
+let OPS_QUEUE=[];
 
 const CMD_ITEMS=[
   {ico:'',name:'Overview',desc:'Dashboard summary',sec:'Section',action:()=>scrollTo('overview')},
@@ -1690,8 +1670,23 @@ function showToast(m){const t=document.getElementById('toast');document.getEleme
 function scrollTo(id){const el=document.getElementById(id);if(el){el.scrollIntoView({behavior:'smooth',block:'start'});document.querySelectorAll('.sb-link').forEach(l=>l.classList.remove('active'));event&&event.target.closest('.sb-link')&&event.target.closest('.sb-link').classList.add('active');}closeCmd();}
 
 function renderOpsFeed(){
-  const html=OPS_EVENTS.map(e=>`<div class="ops-event ${e.type}"><div class="ops-event-icon">${e.ico}</div><div class="ops-event-body"><div class="ops-event-title">${e.title}</div><div class="ops-event-meta">${e.meta}</div></div><div class="ops-event-time">${e.time}</div></div>`).join('');
-  document.getElementById('opsFeed').innerHTML=html;
+  const host=document.getElementById('opsFeed'); if(!host) return;
+  if(!OPS_EVENTS.length){ host.innerHTML='<div style="padding:20px;color:var(--slate3);font-family:var(--mono);font-size:11px">No operational alerts right now.</div>'; return; }
+  host.innerHTML=OPS_EVENTS.map(e=>`<div class="ops-event ${e.type}"><div class="ops-event-icon">${e.ico||''}</div><div class="ops-event-body"><div class="ops-event-title">${e.title}</div><div class="ops-event-meta">${e.meta||''}</div></div><div class="ops-event-time">${e.time||''}</div></div>`).join('');
+}
+
+// Real operational alerts from /api/v1/admin/anomalies (no fabricated activity).
+function loadOpsLive(){
+  try{
+    var base=(window.LAD_API_BASE)||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com';
+    var tk=(function(){try{return localStorage.getItem('lad_token')||'';}catch(e){return '';}})();
+    fetch(base.replace(/\/$/,'')+'/api/v1/admin/anomalies',{headers:{Authorization:'Bearer '+tk}})
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(d){ var a=(d&&d.anomalies)||[]; if(!a.length) return;
+        OPS_EVENTS=a.slice(0,10).map(function(x){ return {type:x.level==='high'?'alert':x.level==='medium'?'warn':'new',ico:x.level==='high'?'⚠':'',title:x.title||'Signal',meta:x.detail||'',time:''}; });
+        renderOpsFeed();
+      }).catch(function(){});
+  }catch(e){}
 }
 
 function renderOpsQueue(){
@@ -2085,16 +2080,9 @@ function switchHeatmap(view){
 }
 
 // ═════════════ DEEP DIVE MODAL ═════════════
-const DEEP_DIVE_DATA={
-  'course':{
-    'AML Update 2026':{icon:'',color:'#006B3F',tag:'TOP PERFORMER',body:`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px"><div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:10px;padding:14px;text-align:center"><div style="font-family:var(--serif);font-size:28px;color:var(--green)">4.8★</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px">AVG FEEDBACK</div></div><div style="background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center"><div style="font-family:var(--serif);font-size:28px;color:var(--ink)">1,247</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px">TOTAL ENROLLED</div></div><div style="background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center"><div style="font-family:var(--serif);font-size:28px;color:var(--ink)">94%</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px">ATTENDANCE RATE</div></div></div><div style="font-size:13px;color:var(--slate);line-height:1.6;margin-bottom:14px">Top feedback themes: "Highly relevant to practice", "Excellent real-world examples", "Best structured course in the programme". 28 sessions run across 5 venues. Trainer Layla Najjar accounts for 71% of sessions.</div><div style="background:var(--paper2);border-radius:10px;padding:14px"><div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1px;margin-bottom:10px">SESSION BREAKDOWN BY VENUE</div><div style="display:flex;flex-direction:column;gap:7px"><div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>DIFC Conference Centre</span><strong>12 sessions · 94% att.</strong></div><div style="height:5px;background:var(--line);border-radius:3px"><div style="height:100%;width:94%;background:var(--green);border-radius:3px"></div></div></div><div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Al Hudaiba Centre</span><strong>8 sessions · 91% att.</strong></div><div style="height:5px;background:var(--line);border-radius:3px"><div style="height:100%;width:91%;background:var(--green);border-radius:3px"></div></div></div><div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Online (E-learning)</span><strong>8 sessions · 97% att.</strong></div><div style="height:5px;background:var(--line);border-radius:3px"><div style="height:100%;width:97%;background:var(--green);border-radius:3px"></div></div></div></div></div>`},
-    'Immigration Practice':{icon:'⚠',color:'#c0392b',tag:'CRITICAL — ACTION NEEDED',body:`<div style="background:var(--red-bg);border:1px solid var(--red-border);border-radius:10px;padding:14px;margin-bottom:14px"><strong style="color:var(--red)">⚠ This course requires immediate intervention.</strong> Only 4 sessions have run this year, with 54% average attendance and a 3.4★ feedback score. The Immigration cohort has the lowest compliance rate in the programme at 64%.</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px"><div style="background:var(--red-bg);border:1px solid var(--red-border);border-radius:10px;padding:14px;text-align:center"><div style="font-family:var(--serif);font-size:28px;color:var(--red)">3.4★</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px">AVG FEEDBACK</div></div><div style="background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center"><div style="font-family:var(--serif);font-size:28px;color:var(--red)">198</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px">ENROLLED (LOW)</div></div><div style="background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center"><div style="font-family:var(--serif);font-size:28px;color:var(--red)">54%</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px">ATTENDANCE RATE</div></div></div><div style="font-size:13px;color:var(--slate);line-height:1.6">Key complaints: "Content not updated since 2024", "Trainer was unprepared", "Scheduling clash with UAE immigration authority deadlines". Recommend: (1) Update course materials, (2) Replace trainer, (3) Add 6 sessions in Jul–Sep.</div>`},
-  },
-  'trainer':{
-    'Layla Najjar':{icon:'‍',color:'#006B3F',tag:'TOP RATED TRAINER',body:`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:18px"><div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:10px;padding:14px;text-align:center"><div style="font-family:var(--serif);font-size:28px;color:var(--green)">4.9★</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px">AVG SCORE</div></div><div style="background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center"><div style="font-family:var(--serif);font-size:28px;color:var(--ink)">42</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px">SESSIONS</div></div><div style="background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center"><div style="font-family:var(--serif);font-size:28px;color:var(--ink)">1,890</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px">ATTENDEES</div></div><div style="background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center"><div style="font-family:var(--serif);font-size:28px;color:var(--ink)">87%</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px">REPEAT RATE</div></div></div><div style="font-size:13px;color:var(--slate);line-height:1.6;margin-bottom:14px">Consistently rated the best trainer in the programme. Specialises in AML, Financial Crime, and DIFC regulations. Her sessions have a 94% completion rate and generate the highest compliance lift per session of any trainer. Recommend allocating her to Tax Law sessions given the current shortage.</div>`},
-    'Tariq Al-Rashid':{icon:'⚠',color:'#c0392b',tag:'PERFORMANCE REVIEW REQUIRED',body:`<div style="background:var(--red-bg);border:1px solid var(--red-border);border-radius:10px;padding:14px;margin-bottom:14px"><strong style="color:var(--red)">⚠ This trainer requires immediate review.</strong> Score of 2.9★ across 8 sessions, with 28% repeat attendance. Multiple structured complaints have been received.</div><div style="font-size:13px;color:var(--slate);line-height:1.6;margin-bottom:14px">Complaint themes: "Content clearly outdated — references 2022 regulations", "Trainer seemed unprepared and read directly from slides", "Session ran 40 mins short with no Q&A". Recommend: suspend further sessions pending a performance review. Offer retraining or replacement for the ESG & Climate programme.</div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-sm" style="background:var(--red);color:#fff" onclick="showToast('Initiating review process for Tariq Al-Rashid…')">Initiate review</button><button class="btn btn-sm btn-ghost" onclick="showToast('Sending notification to provider…')">Notify provider</button></div>`},
-  }
-};
+// (Removed fabricated course/trainer deep-dive content. Real course & provider
+// feedback now lives in the Command Centre ★ Feedback layer.)
+const DEEP_DIVE_DATA = { course: {}, trainer: {} };
 
 // ════════ SIDE PANEL — unified opener ════════
 let _spContext = {}; // current panel context for AI analysis & outreach
@@ -2847,24 +2835,12 @@ function updateTime(){
 setInterval(updateTime,30000);
 
 // ════════ PERFORMANCE COMPARISON CHARTS ════════
-const COURSE_PERF = [
-  {name:'AML Update 2026',feedback:4.8,attendance:94,sessions:28,compImpact:3.1,status:'top',responses:1247},
-  {name:'AI Governance & Responsible Use',feedback:4.7,attendance:91,sessions:21,compImpact:2.8,status:'top',responses:1104},
-  {name:'DIFC Day (face-to-face)',feedback:4.5,attendance:82,sessions:8,compImpact:2.2,status:'good',responses:843},
-  {name:'Common Law Contract',feedback:4.3,attendance:79,sessions:14,compImpact:1.8,status:'good',responses:712},
-  {name:'Insolvency Fundamentals',feedback:4.2,attendance:76,sessions:11,compImpact:1.5,status:'good',responses:589},
-  {name:'ESG & Climate Law',feedback:4.0,attendance:68,sessions:7,compImpact:1.1,status:'ok',responses:421},
-  {name:'Tax Law Update 2026',feedback:3.8,attendance:61,sessions:5,compImpact:0.7,status:'warn',responses:312},
-  {name:'Immigration Practice Update',feedback:3.4,attendance:54,sessions:4,compImpact:0.4,status:'critical',responses:198},
-];
-const TRAINER_PERF = [
-  {name:'Layla Najjar',org:'Kwintessential',score:4.9,repeatRate:87,sessions:42,attendees:1890,status:'top'},
-  {name:'James Whitmore',org:'DIFC Legal',score:4.7,repeatRate:79,sessions:31,attendees:1420,status:'top'},
-  {name:'Dr Fatima Hassan',org:'LAD Academy',score:4.6,repeatRate:75,sessions:28,attendees:1203,status:'good'},
-  {name:'Omar Khalid',org:'Green Law',score:4.2,repeatRate:64,sessions:19,attendees:876,status:'good'},
-  {name:'Linda Park',org:'BDO Tax',score:3.9,repeatRate:52,sessions:14,attendees:612,status:'ok'},
-  {name:'Tariq Al-Rashid',org:'Green Law',score:2.9,repeatRate:28,sessions:8,attendees:298,status:'critical'},
-];
+// (Removed fabricated COURSE_PERF / TRAINER_PERF demo tables and their invented
+//  trainer names + scores. Real course and provider ratings are in the Command
+//  Centre ★ Feedback layer; real per-course attendance is in the Performance
+//  section below, sourced live from /api/v1/bookings.)
+const COURSE_PERF = [];
+const TRAINER_PERF = [];
 
 function barHtml(val, max, color) {
   const pct = Math.round(val/max*100);
@@ -2925,6 +2901,7 @@ function switchPerfView(view) {
 
 // ════════ INIT ════════
 renderOpsFeed();
+loadOpsLive();
 renderOpsQueue();
 renderFirms();
 loadFirmsLive();
