@@ -1612,13 +1612,17 @@
   }
   window.fbToggle=function(id){ var e=document.getElementById('exp_'+id); if(e) e.style.display = e.style.display==='block'?'none':'block'; };
 
-  // weighted mean of metric m across per-year rows (each row.metrics[m]={avg,n})
-  function avgM(rows,m){ var s=0,n=0; rows.forEach(function(r){ var x=r.metrics&&r.metrics[m]; if(x&&x.avg!=null&&x.responses){ s+=x.avg*x.responses; n+=x.responses; } }); return n?{avg:Math.round(s/n*100)/100}:null; }
+  // Satisfaction-star for metric m: 5 × proportion rated Good or better (3+).
+  function satStar(dist){ if(!dist) return null; var t=(dist[1]||0)+(dist[2]||0)+(dist[3]||0)+(dist[4]||0)+(dist[5]||0); if(!t) return null; return Math.round(((dist[3]||0)+(dist[4]||0)+(dist[5]||0))/t*5*100)/100; }
+  function metricStar(x){ if(!x) return null; if(x.dist){ var v=satStar(x.dist); if(v!=null) return v; } return x.avg!=null?x.avg:null; }
+  // Combine metric m across per-year rows by pooling their distributions.
+  function avgM(rows,m){ var d={1:0,2:0,3:0,4:0,5:0},any=false; rows.forEach(function(r){ var x=r.metrics&&r.metrics[m]; if(x&&x.dist){ any=true; for(var k in x.dist) d[k]+=x.dist[k]; } }); if(any){ var v=satStar(d); return v==null?null:{avg:v}; }
+    var s=0,n=0; rows.forEach(function(r){ var x=r.metrics&&r.metrics[m]; if(x&&x.avg!=null&&x.responses){ s+=x.avg*x.responses; n+=x.responses; } }); return n?{avg:Math.round(s/n*100)/100}:null; }
   function mean(a){ a=a.filter(function(x){return x!=null;}); return a.length?Math.round(a.reduce(function(p,c){return p+Number(c);},0)/a.length*100)/100:null; }
   function perYear(rows,keys){ if(rows.length<2) return '';
     var hdr='<div style="margin-top:10px;font-size:10px;color:#7e8baa;text-transform:uppercase;letter-spacing:1px">By year</div>';
     return hdr+rows.sort(function(a,b){return a.year-b.year;}).map(function(r){
-      var cells=keys.map(function(k){ var x=r.metrics&&r.metrics[k]; return '<span style="font-family:monospace;color:#cdd6e6;margin-right:12px">'+k.slice(0,4)+' '+(x&&x.avg!=null?x.avg.toFixed(2):'—')+'</span>'; }).join('');
+      var cells=keys.map(function(k){ var v=metricStar(r.metrics&&r.metrics[k]); return '<span style="font-family:monospace;color:#cdd6e6;margin-right:12px">'+k.slice(0,4)+' '+(v!=null?v.toFixed(2):'—')+'</span>'; }).join('');
       return '<div style="font-size:11px;color:#9aa6c0;padding:3px 0"><b style="color:#bdf3ee">'+r.year+'</b> · '+(Number(r.responses)||0).toLocaleString()+' responses · '+cells+'</div>';
     }).join('');
   }

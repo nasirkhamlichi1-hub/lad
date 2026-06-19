@@ -27,7 +27,17 @@ function loadFeedback(db) {
     (provider_key, year, provider_id, provider_name, responses, knowledge, clarity, interaction, metrics_json)
     VALUES (@provider_key, @year, @provider_id, @provider_name, @responses, @knowledge, @clarity, @interaction, @metrics_json)`);
 
-  const a = (m, k) => (m && m[k] ? m[k].avg : null);
+  const a = (m, k) => (m && m[k] ? satStar(m[k].dist, m[k].avg) : null);
+
+  // Displayed score = 5 × proportion who rated Good or better (3+), i.e. the
+  // satisfaction % mapped onto 5 stars (100%→5, 80%→4, 60%→3 …). Falls back to
+  // the raw mean if no distribution is available.
+  function satStar(dist, mean) {
+    if (!dist) return mean == null ? null : mean;
+    const tot = (dist[1] || 0) + (dist[2] || 0) + (dist[3] || 0) + (dist[4] || 0) + (dist[5] || 0);
+    if (!tot) return null;
+    return Math.round(((dist[3] || 0) + (dist[4] || 0) + (dist[5] || 0)) / tot * 5 * 100) / 100;
+  }
 
   const tx = db.transaction(() => {
     db.prepare('DELETE FROM course_feedback').run();

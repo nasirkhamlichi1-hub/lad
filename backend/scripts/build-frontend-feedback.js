@@ -16,7 +16,15 @@ const OUT = path.join(__dirname, '..', '..', 'frontend', 'feedback.json');
 const data = JSON.parse(fs.readFileSync(SRC, 'utf8'));
 
 const r2 = (x) => (x == null ? null : Math.round(x * 100) / 100);
+// Displayed score = 5 × proportion rated Good or better (3+), combined across
+// the metric's distribution. Falls back to response-weighted mean if no dist.
 function wmean(rows, key) {
+  let pos = 0, tot = 0, haveDist = false;
+  for (const r of rows) {
+    const m = r.metrics && r.metrics[key];
+    if (m && m.dist) { haveDist = true; pos += (m.dist[3] || 0) + (m.dist[4] || 0) + (m.dist[5] || 0); tot += (m.dist[1] || 0) + (m.dist[2] || 0) + (m.dist[3] || 0) + (m.dist[4] || 0) + (m.dist[5] || 0); }
+  }
+  if (haveDist) return tot ? r2(pos / tot * 5) : null;
   let s = 0, n = 0;
   for (const r of rows) { const v = r.metrics && r.metrics[key] ? r.metrics[key].avg : r[key]; if (v != null && r.responses) { s += v * r.responses; n += r.responses; } }
   return n ? r2(s / n) : null;
