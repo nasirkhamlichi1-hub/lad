@@ -4247,9 +4247,13 @@ function admBookEdit(id) {
 function admBkClose(){ const m = document.getElementById('admBkModal'); if (m) m.remove(); }
 async function admBookAction(id, status){
   try {
-    if (window.LAD && window.LAD.updateBooking) { await window.LAD.updateBooking(id, { status }); }
+    let resp = null;
+    if (window.LAD && window.LAD.updateBooking) { resp = await window.LAD.updateBooking(id, { status }); }
     else { throw new Error('offline'); }
-    const label = status === 'attended' ? 'marked attended' : status === 'no-show' ? 'marked no-show' : 'cancelled & refunded';
+    let label = status === 'attended' ? 'marked attended' : status === 'no-show' ? 'marked no-show' : 'cancelled';
+    if (status === 'cancelled' && resp && resp.refunded_credits) {
+      label = 'cancelled · ' + resp.refunded_credits + ' credit' + (resp.refunded_credits === 1 ? '' : 's') + ' returned to ' + (resp.refund_to === 'firm' ? 'the firm pool' : 'the lawyer');
+    }
     if (typeof toast === 'function') toast('Booking ' + id + ' ' + label + '.');
     admBkClose();
     admBookingsRender();

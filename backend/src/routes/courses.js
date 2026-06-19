@@ -106,11 +106,22 @@ router.post('/sessions/:id/cancel', requireRole('lad_admin'), (req, res) => {
       db.prepare("UPDATE bookings SET status = 'cancelled' WHERE id = ?").run(bk.id);
       const cost = Number(bk.credits_used) || 0;
       if (cost > 0 && bk.lawyer_id) {
-        db.prepare('UPDATE lawyers SET credit_balance = COALESCE(credit_balance,0) + ? WHERE id = ?').run(cost, bk.lawyer_id);
-        try {
-          db.prepare("INSERT INTO credit_transactions (id, lawyer_id, type, amount, aed_amount, description, payment_method, status) VALUES (?,?,?,?,?,?,?, 'completed')")
-            .run(_tid(), bk.lawyer_id, 'refund', cost, cost * Number(process.env.CREDIT_PRICE_AED || 120), 'Session cancelled — credits refunded', 'admin');
-        } catch (_) {}
+        const PRICE = Number(process.env.CREDIT_PRICE_AED || 120);
+        const lw = db.prepare('SELECT firm_id FROM lawyers WHERE id = ?').get(bk.lawyer_id) || {};
+        // Firm-funded bookings return to the firm pool; self-funded to the lawyer.
+        if (lw.firm_id && bk.booked_by !== 'self') {
+          db.prepare('UPDATE firms SET credit_pool = COALESCE(credit_pool,0) + ? WHERE id = ?').run(cost, lw.firm_id);
+          try {
+            db.prepare("INSERT INTO firm_credit_transactions (id, firm_id, type, amount, aed_amount, description, lawyer_id) VALUES (?,?,?,?,?,?,?)")
+              .run('FTX-' + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8), lw.firm_id, 'refund', cost, cost * PRICE, 'Session cancelled — credits returned to firm pool', bk.lawyer_id);
+          } catch (_) {}
+        } else {
+          db.prepare('UPDATE lawyers SET credit_balance = COALESCE(credit_balance,0) + ? WHERE id = ?').run(cost, bk.lawyer_id);
+          try {
+            db.prepare("INSERT INTO credit_transactions (id, lawyer_id, type, amount, aed_amount, description, payment_method, status) VALUES (?,?,?,?,?,?,?, 'completed')")
+              .run(_tid(), bk.lawyer_id, 'refund', cost, cost * PRICE, 'Session cancelled — credits refunded', 'admin');
+          } catch (_) {}
+        }
       }
     }
     db.prepare("UPDATE course_sessions SET status = 'cancelled' WHERE id = ?").run(id);
