@@ -186,6 +186,15 @@
   #tourCap.on{opacity:1;transform:translateX(-50%)}
   #tourCap .tc-t{font-family:var(--title);font-size:26px;letter-spacing:1px;color:#eaf4ff;text-shadow:0 0 26px rgba(52,225,255,.45)}
   #tourCap .tc-s{font-family:var(--mono);font-size:12px;letter-spacing:1.8px;color:var(--cyan);margin-top:7px;text-transform:uppercase}
+  /* recursive-dive warp flash + breadcrumb */
+  #warp{position:fixed;inset:0;z-index:55;pointer-events:none;opacity:0;transition:opacity .25s;background:radial-gradient(circle at 50% 50%,rgba(52,225,255,.25),rgba(4,6,15,.85) 70%)}
+  #warp.on{opacity:1}
+  #crumbs{position:fixed;top:84px;left:50%;transform:translateX(-50%);z-index:36;display:none;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--dim);background:rgba(7,12,26,.6);border:1px solid var(--panel-b);border-radius:20px;padding:8px 16px;backdrop-filter:blur(10px);max-width:80vw;overflow:hidden;white-space:nowrap}
+  #crumbs.on{display:flex}
+  #crumbs span{color:var(--ink);cursor:pointer}
+  #crumbs span:last-child{color:var(--cyan)}
+  #crumbs span:hover{color:var(--cyan)}
+  #crumbs i{color:var(--dim2);font-style:normal}
   @media(max-width:1200px){.stage{grid-template-columns:1fr}.kstrip{grid-template-columns:repeat(3,1fr)}.bottom{grid-template-columns:1fr 1fr}.centerstage{min-height:440px}}
 </style>
 </head>
@@ -314,6 +323,8 @@
   </div>
 </div>
 
+<div id="warp"></div>
+<div id="crumbs"></div>
 <div id="diveHint">◎ Drag to fly · scroll to zoom · shift-drag to pan · click a node to dive in</div>
 <div id="tourCap"><div class="tc-t" id="tcT"></div><div class="tc-s" id="tcS"></div></div>
 <div id="focusPanel">
@@ -644,6 +655,98 @@
       var lg=$('bandLegend'); if(lg) lg.style.display='flex';
     };
 
+    // ════════════ RECURSIVE DIVE — descend into living sub-ecosystems ════════════
+    var MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    function fdate(iso){ var d=new Date(iso); return isNaN(d)?'—':d.getUTCDate()+' '+MO[d.getUTCMonth()]; }
+    function bandColor(p){ p=Number(p)||0; return p>=16?0x3df0a0:p>=8?0xffb84d:0xff5e7e; }
+    function bandPctColor(p){ p=Number(p)||0; return p>=70?0x3df0a0:p>=40?0xffb84d:0xff5e7e; }
+    function bandCss(p){ p=Number(p)||0; return p>=16?'var(--green)':p>=8?'var(--amber)':'var(--red)'; }
+    function typeHex(t){ t=(t||'').toLowerCase(); return t==='mandatory'?0x9a6cff:t.indexOf('internal')>=0?0xffb84d:0x1fe0b4; }
+    var _an=null,_up=null;
+    function needAnalytics(){ return _an?Promise.resolve(_an):getJSON('/api/v1/admin/course-analytics').then(function(d){_an=d;return d;}); }
+    function needUpcoming(){ return _up?Promise.resolve(_up):getJSON('/api/v1/courses/upcoming').then(function(list){ var m={}; (Array.isArray(list)?list:[]).forEach(function(c){ m[c.id]=c.sessions||[]; }); _up=m; return m; }); }
+    function needOVp(){ return window.__OV?Promise.resolve(window.__OV):getJSON('/api/v1/admin/oversight').then(function(d){ if(d) window.__OV=d; return d; }); }
+
+    // For a node, fetch the spec of its child ecosystem (or null if it's a leaf).
+    function childrenOf(node){
+      if(node.type==='firmsRoot') return needOVp().then(function(ov){ var fr=(ov&&ov.firmRankings)||{}; var seen={},list=[]; (fr.top||[]).concat(fr.bottom||[]).forEach(function(f){ if(f&&f.id&&!seen[f.id]){seen[f.id]=1;list.push(f);} });
+        return {title:'Law Firms', center:{label:'Firms',color:0x9a6cff}, radius:150, children:list.slice(0,14).map(function(f){ return {label:f.name, sub:(f.compliancePct||0)+'% · '+nf(f.lawyers)+' lawyers', count:f.lawyers, color:bandPctColor(f.compliancePct), type:'firm', id:f.id, drill:true, meta:f}; }) }; });
+      if(node.type==='firm') return getJSON('/api/v1/firms/'+encodeURIComponent(node.id)+'/lawyers').then(function(rows){ rows=Array.isArray(rows)?rows:((rows&&rows.data)||[]);
+        return {title:node.label, center:{label:node.label,color:0x9a6cff}, radius:160, children:rows.slice(0,42).map(function(l){ var pts=Number(l.points!=null?l.points:l.pts)||0; var nm=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.name||l.id; return {label:nm, sub:pts+' pts', count:Math.max(pts,1), color:bandColor(pts), type:'lawyer', id:l.id, drill:false, meta:{points:pts,status:l.status,credits:(l.credits!=null?l.credits:l.credit_balance)}}; }) }; });
+      if(node.type==='coursesRoot') return needAnalytics().then(function(d){ var cs=(d&&d.courses)||[]; return {title:'Courses', center:{label:'Courses',color:0x1fe0b4}, radius:155, children:cs.slice(0,24).map(function(c){ return {label:c.title, sub:nf(c.totalBookings)+' booked · 12w', count:Math.max(c.totalBookings,1), color:typeHex(c.type), type:'course', id:c.id, drill:true, meta:c}; }) }; });
+      if(node.type==='course') return needUpcoming().then(function(map){ var ss=map[node.id]||[]; if(!ss.length) return null; return {title:node.label, center:{label:node.label,color:0x1fe0b4}, radius:120, children:ss.slice(0,20).map(function(s){ var cap=Number(s.capacity)||0,seats=Number(s.seats_remaining)||0; return {label:fdate(s.scheduled_at), sub:seats+'/'+cap+' seats', count:Math.max(cap-seats,1), color:0x6ab8ff, type:'session', id:s.id, drill:false, meta:s}; }) }; });
+      return Promise.resolve(null);
+    }
+
+    // Build one ball (swarm + glowing core + halo + hit-sphere + floating label).
+    function addBall(grp,opt,coresArr,anchorsArr){
+      var pos=opt.pos,color=opt.color,isC=opt.isCenter,count=opt.count;
+      var nP=isC?420:Math.max(50,Math.min(380, Number(count)>0?(70+Math.round(Math.min(300,Number(count)*5))):130));
+      var geo=new THREE.BufferGeometry(),arr=new Float32Array(nP*3),rad=isC?40:15;
+      for(var i=0;i<nP;i++){ var u=Math.random(),v=Math.random(),th=2*Math.PI*u,ph=Math.acos(2*v-1),rr=rad*Math.cbrt(Math.random()); arr[i*3]=pos.x+rr*Math.sin(ph)*Math.cos(th);arr[i*3+1]=pos.y+rr*Math.sin(ph)*Math.sin(th);arr[i*3+2]=pos.z+rr*Math.cos(ph); }
+      geo.setAttribute('position',new THREE.BufferAttribute(arr,3));
+      grp.add(new THREE.Points(geo,new THREE.PointsMaterial({color:color,size:isC?2:1.6,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false})));
+      var core=new THREE.Mesh(new THREE.SphereGeometry(isC?6:3.4,16,16),new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:.92})); core.position.copy(pos); grp.add(core);
+      var halo=new THREE.Mesh(new THREE.SphereGeometry(isC?13:7.5,16,16),new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:.12,blending:THREE.AdditiveBlending,depthWrite:false})); halo.position.copy(pos); grp.add(halo);
+      var hit=new THREE.Mesh(new THREE.SphereGeometry(isC?26:13,10,10),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false})); hit.position.copy(pos);
+      var key='n'+Math.random().toString(36).slice(2,9); hit.userData={key:key}; grp.add(hit);
+      var hex='#'+('000000'+color.toString(16)).slice(-6);
+      var el=document.createElement('div'); el.className='twin-label'+(isC?'':' dim');
+      el.innerHTML='<b>'+(count!=null?nf(count):'')+'</b>'+esc(opt.label||'')+(opt.sub?'<div style="font-family:var(--mono);font-size:8.5px;color:'+hex+';letter-spacing:.4px;margin-top:1px">'+esc(opt.sub)+'</div>':'');
+      stage.appendChild(el);
+      coresArr.push({key:key,hit:hit,core:core,halo:halo,pos:pos,color:color,node:opt.node});
+      anchorsArr.push({key:key,el:el,pos:pos});
+    }
+    // Build a whole sub-ecosystem group from a spec.
+    function buildSubEco(spec){
+      var grp=new THREE.Group(); scene.add(grp); var cores=[],anchors=[],flows=[];
+      addBall(grp,{pos:new THREE.Vector3(0,0,0),color:spec.center.color,label:spec.center.label,count:null,isCenter:true,node:{type:'center'}},cores,anchors);
+      var n=spec.children.length, R=spec.radius||150;
+      spec.children.forEach(function(ch,i){ var ang=i*2*Math.PI/Math.max(1,n); var y=(i%2?24:-24)+Math.sin(i*1.7)*12;
+        var pos=new THREE.Vector3(Math.cos(ang)*R,y,Math.sin(ang)*R);
+        addBall(grp,{pos:pos,color:ch.color,label:ch.label,sub:ch.sub,count:ch.count,node:ch},cores,anchors);
+        var lg=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),pos]); grp.add(new THREE.Line(lg,new THREE.LineBasicMaterial({color:ch.color,transparent:true,opacity:.2,blending:THREE.AdditiveBlending})));
+        var N=10,fa=new Float32Array(N*3),t=[]; for(var k=0;k<N;k++)t.push(Math.random()); var fgeo=new THREE.BufferGeometry(); fgeo.setAttribute('position',new THREE.BufferAttribute(fa,3)); grp.add(new THREE.Points(fgeo,new THREE.PointsMaterial({color:ch.color,size:2.3,transparent:true,opacity:.9,blending:THREE.AdditiveBlending,depthWrite:false}))); flows.push({a:new THREE.Vector3(0,0,0),b:pos.clone(),t:t,geo:fgeo});
+      });
+      return {cores:cores,anchors:anchors,flows:flows,group:grp,radius:Math.round(R*1.9+70),spec:spec};
+    }
+    function setActive(eco){ TW.active=eco; TW.cores=eco.cores; TW.anchors=eco.anchors; TW.flows=eco.flows; eco.group.visible=true; eco.anchors.forEach(function(a){a.el.style.display='';}); }
+    function hideEco(eco){ if(!eco)return; eco.group.visible=false; eco.anchors.forEach(function(a){a.el.style.display='none';}); }
+    function disposeEco(eco){ if(!eco)return; eco.anchors.forEach(function(a){ if(a.el&&a.el.parentNode)a.el.parentNode.removeChild(a.el); }); try{ scene.remove(eco.group); }catch(e){} }
+    function warpFlash(cb){ var w=$('warp'); if(!w){ cb(); return; } w.classList.add('on'); setTimeout(function(){ try{cb();}catch(e){} setTimeout(function(){ w.classList.remove('on'); },300); },240); }
+    function frameReset(r){ TW.orb.cx=0;TW.orb.cy=0;TW.orb.cz=0;TW.orb.tr=r||265; }
+    window.diveInto=function(node){ if(TW.busy||!node) return; TW.busy=true; warpFlash(function(){
+      childrenOf(node).then(function(spec){ if(!spec||!spec.children||!spec.children.length){ TW.busy=false; showNodeDetail(node); return; }
+        hideEco(TW.active); TW.stack.push(TW.active); var eco=buildSubEco(spec); setActive(eco); frameReset(eco.radius); document.body.classList.add('focus'); renderCrumbs(); TW.busy=false;
+      }).catch(function(){ TW.busy=false; }); }); };
+    window.diveBack=function(){ if(TW.busy||!TW.stack.length) return; TW.busy=true; warpFlash(function(){ var cur=TW.active; var prev=TW.stack.pop(); disposeEco(cur); setActive(prev); frameReset(prev.radius); renderCrumbs(); if(!TW.stack.length){ document.body.classList.remove('focus'); var fp=$('focusPanel'); if(fp) fp.classList.remove('on'); } TW.busy=false; }); };
+    function goToLevel(i){ if(TW.busy) return; while(TW.stack.length>i){ var cur=TW.active; disposeEco(cur); TW.active=TW.stack.pop(); } setActive(TW.active); frameReset(TW.active.radius); renderCrumbs(); if(!TW.stack.length){ document.body.classList.remove('focus'); var fp=$('focusPanel'); if(fp) fp.classList.remove('on'); } }
+    window.goToLevel=goToLevel;
+    function renderCrumbs(){ var c=$('crumbs'); if(!c) return; var st=TW.stack||[]; if(!st.length){ c.classList.remove('on'); c.innerHTML=''; return; }
+      var parts=st.map(function(e){return (e.spec&&e.spec.title)||'Home';}).concat([(TW.active.spec&&TW.active.spec.title)||'']);
+      c.classList.add('on'); c.innerHTML='<span data-i="0">⌂ Home</span><i>›</i>'+parts.slice(1).map(function(t,k){return '<span data-i="'+(k+1)+'">'+esc(t)+'</span>';}).join('<i>›</i>');
+      c.querySelectorAll('span').forEach(function(s){ s.onclick=function(){ goToLevel(+s.getAttribute('data-i')); }; }); }
+    function subClick(core){ if(!core) return; frameOn(core.pos.clone(), 70); if(core.node&&core.node.drill){ window.diveInto(core.node); } else { showNodeDetail(core.node); } }
+    function showNodeDetail(node){ if(!node) return; document.body.classList.add('focus');
+      $('fpEye').textContent=(node.type||'NODE').toUpperCase(); $('fpTitle').textContent=node.label||node.id||'Node'; $('fpSub').textContent=node.sub||'';
+      var html='';
+      if(node.type==='lawyer'&&node.meta){ html=factRow('CPD points',nf(node.meta.points),bandCss(node.meta.points))+factRow('Status',esc(node.meta.status||'active'))+factRow('Credits',nf(node.meta.credits)); }
+      else if(node.type==='session'&&node.meta){ var s=node.meta; html=factRow('Date',fdate(s.scheduled_at))+factRow('Seats open',nf(s.seats_remaining),'var(--amber)')+factRow('Capacity',nf(s.capacity))+factRow('Venue',esc(s.venue||'—')); }
+      else { html='<div class="loading">Leaf node — the deepest layer here.</div>'; }
+      $('fpFacts').innerHTML=html;
+      var ans=$('fpAnswer'); ans.style.display='none'; ans.textContent='';
+      var btn=$('fpAsk'); btn.style.display=''; btn.disabled=false; btn.textContent='✦ Ask Maryam about this';
+      btn.onclick=function(){ var a=$('fpAnswer'); a.style.display='block'; a.textContent='Analysing…'; btn.disabled=true;
+        fetch(base+'/api/v1/admin/command',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({prompt:'Tell me about '+(node.type||'')+' "'+(node.label||'')+'" ('+(node.sub||'')+') and what action it suggests.'})})
+          .then(function(r){return r.json();}).then(function(d){ a.textContent=(d&&(d.answer||d.summary))||'No response.'; btn.disabled=false; btn.textContent='✦ Re-analyse'; })
+          .catch(function(){ a.textContent='Network error.'; btn.disabled=false; btn.textContent='✦ Ask Maryam about this'; }); };
+      $('focusPanel').classList.add('on');
+    }
+
+    // The home twin is the base of the dive stack.
+    TW.active={cores:TW.cores,anchors:TW.anchors,flows:TW.flows,group:group,radius:265,spec:{title:'Home',type:'home'}};
+    TW.stack=[]; TW.busy=false;
+
     var pointer=new THREE.Vector2(-2,-2);
     window.addEventListener('mousemove',function(e){ pointer.x=(e.clientX/W)*2-1; pointer.y=-(e.clientY/H)*2+1; });
     // ── Free-fly navigation: drag to orbit, right/shift-drag to pan, wheel to zoom ──
@@ -676,10 +779,11 @@
       if(TW.tourActive){ window.exitFocus(); return; }   // any click ends the cinematic tour
       if(TW.moved){ TW.moved=false; return; }            // it was a drag-to-fly, not a click
       pick();
-      if(hovered) window.focusCluster(hovered.key);
+      if(hovered){ if(TW.stack&&TW.stack.length) subClick(hovered); else window.focusCluster(hovered.key); }
+      else if((TW.stack&&TW.stack.length)&&(t.id==='twin'||t.closest('#centerstage'))) window.diveBack();
       else if(TW.focusKey && (t.id==='twin'||t.closest('#centerstage'))) window.exitFocus();
     });
-    window.addEventListener('keydown',function(e){ if(e.key==='Escape') window.exitFocus(); });
+    window.addEventListener('keydown',function(e){ if(e.key==='Escape'){ if(TW.stack&&TW.stack.length) window.diveBack(); else window.exitFocus(); } });
 
     // ── Dive in / out ──
     var CLUSTER_META={
@@ -742,10 +846,15 @@
       frameOn(c.pos.clone(), c.theme?150:95);
       document.body.classList.add('focus');
       if(THEME_VIEW[key]){ if(window.openLayer) window.openLayer(THEME_VIEW[key]); }
+      else if(key==='Law Firms'){ window.diveInto({type:'firmsRoot',label:'Law Firms'}); }
+      else if(key==='Courses'){ window.diveInto({type:'coursesRoot',label:'Courses'}); }
       else showFocusPanel(key);
     };
     window.exitFocus=function(){
-      TW.focusKey=null; frameHome();
+      TW.focusKey=null;
+      // unwind any dive levels back to the home ecosystem
+      if(TW.stack&&TW.stack.length){ while(TW.stack.length){ var cur=TW.active; disposeEco(cur); TW.active=TW.stack.pop(); } setActive(TW.active); renderCrumbs(); }
+      frameHome();
       document.body.classList.remove('focus'); var fp=$('focusPanel'); if(fp) fp.classList.remove('on');
       if(TW.tourActive){ TW.tourActive=false; clearTimeout(tourTimer); var tc=$('tourCap'); if(tc) tc.classList.remove('on'); }
     };
