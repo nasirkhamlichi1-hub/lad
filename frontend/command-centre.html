@@ -1574,8 +1574,9 @@
     var host=document.getElementById('fbBody');
     if(TAB==='courses'){
       var rows=(DATA.courses||[]).filter(function(c){ return !q || (c.course_name||'').toLowerCase().indexOf(q)>-1 || (c.provider_name||'').toLowerCase().indexOf(q)>-1; });
-      host.innerHTML='<div class="fbcard" style="background:none;border:none"><div class="fbrow" style="cursor:default;color:#7e8baa;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding-bottom:4px"><span>Course · Provider</span><span>Overall</span><span style="text-align:right">Responses</span><span style="text-align:right">Yrs</span></div></div>'+
-        rows.map(courseCard).join('') || '<div style="color:#7b88a0;padding:30px">No matches.</div>';
+      var header='<div class="fbcard" style="background:none;border:none"><div class="fbrow" style="cursor:default;color:#7e8baa;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding-bottom:4px"><span>Course · Provider</span><span>Overall</span><span style="text-align:right">Responses</span><span style="text-align:right">Yrs</span></div></div>';
+      var body=rows.map(courseCard).join('') || '<div style="color:#7b88a0;padding:30px">No matches.</div>';
+      host.innerHTML=header+body;
     } else {
       var prs=(DATA.providers||[]).filter(function(p){ return !q || (p.provider_name||'').toLowerCase().indexOf(q)>-1; });
       host.innerHTML=prs.map(providerCard).join('') || '<div style="color:#7b88a0;padding:30px">No matches.</div>';
