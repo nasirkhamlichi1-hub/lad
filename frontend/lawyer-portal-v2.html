@@ -3986,7 +3986,7 @@ function renderBookingRatings(c, courseId){
         '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">'+
           '<span style="font-family:var(--serif);font-size:26px;color:var(--ink);letter-spacing:-.02em">'+(rating.overall||rating.stars||0).toFixed(1)+'</span>'+
           '<span>'+starsHTML(rating.overall||rating.stars,16)+'</span>'+
-          '<span style="font-size:11px;color:var(--slate2)">'+rating.responses.toLocaleString()+' participant'+(rating.responses===1?'':'s')+'</span>'+
+          '<span style="font-size:11px;color:var(--slate2)">from '+rating.responses.toLocaleString()+' rating'+(rating.responses===1?'':'s')+'</span>'+
         '</div>'+
         '<div style="background:var(--white);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:10px">'+
           ratingRow('Training course content', rating.content)+

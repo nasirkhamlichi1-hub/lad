@@ -2446,7 +2446,7 @@ function courseCardHTML(c) {
         : `<div class="cc-meta"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${location}</div>`}
       ${(sessInfo && seats !== null && sessInfo.date) ? `<div class="cc-meta" style="color:${seats<=5?'var(--red)':seats<=15?'var(--amber)':'var(--green)'}"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${seats<=5?` ${seats} seats left`:seats+' seats'} · ${sessInfo.date.split(' ').slice(0,3).join(' ')}</div>`:''}
       <div class="cc-desc">${desc}</div>
-      ${(c.rating && c.rating.responses) ? `<div style="display:flex;align-items:center;gap:6px;margin-top:8px">${starSVG(c.rating.overall||c.rating.stars,12)}<span style="font-family:var(--mono);font-size:10.5px;color:var(--slate2)">${(c.rating.overall||c.rating.stars||0).toFixed(1)} · ${c.rating.responses.toLocaleString()} reviews</span></div>` : ''}
+      ${(c.rating && c.rating.responses) ? `<div style="display:flex;align-items:center;gap:6px;margin-top:8px">${starSVG(c.rating.overall||c.rating.stars,12)}<span style="font-family:var(--mono);font-size:10.5px;color:var(--slate2)">${(c.rating.overall||c.rating.stars||0).toFixed(1)} · from ${c.rating.responses.toLocaleString()} rating${c.rating.responses===1?'':'s'}</span></div>` : ''}
     </div>
     <div class="cc-foot">
       <div>
@@ -2613,7 +2613,7 @@ function renderCourseRatings(c){
         '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">'+
           '<span style="font-family:var(--serif);font-size:26px;color:var(--ink)">'+(rt.overall||rt.stars||0).toFixed(1)+'</span>'+
           '<span>'+starSVG(rt.overall||rt.stars,16)+'</span>'+
-          '<span style="font-size:11px;color:var(--slate2)">'+rt.responses.toLocaleString()+' participant'+(rt.responses===1?'':'s')+'</span></div>'+
+          '<span style="font-size:11px;color:var(--slate2)">from '+rt.responses.toLocaleString()+' rating'+(rt.responses===1?'':'s')+'</span></div>'+
         '<div style="background:var(--white);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:10px">'+
           cdRow('Training course content', rt.content)+cdRow('Benefits of the course', rt.benefits)+
           cdRow('Practical &amp; interesting content', rt.practical)+cdRow('Overall evaluation', rt.overall)+'</div>';
