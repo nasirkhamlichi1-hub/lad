@@ -1156,7 +1156,7 @@
       else if(key==='Accreds'){ window.diveInto({type:'accredsRoot',label:'Accreditations'}); }
       else if(key==='Sessions'){ window.diveInto({type:'sessionsRoot',label:'Sessions'}); }
       else if(key==='Winners'){ window.diveInto({type:'winnersRoot',label:'Winners'}); }
-      else if(key==='Feedback'){ window.diveInto({type:'feedbackRoot',label:'Feedback'}); }
+      else if(key==='Feedback'){ if(typeof window.openFeedback==='function'){ window.openFeedback(); } else { window.diveInto({type:'feedbackRoot',label:'Feedback'}); } }
       else showFocusPanel(key);
     };
     window.exitFocus=function(){
