@@ -40,7 +40,11 @@ router.get('/', optionalAuth, (_req, res) => res.json(store.getCourses()));
 router.get('/upcoming', optionalAuth, (_req, res) => {
   const now = new Date().toISOString();
   let courses = [];
-  try { courses = db.prepare('SELECT * FROM courses WHERE active = 1').all(); } catch (_) {}
+  try {
+    courses = db.prepare(
+      'SELECT c.*, p.name AS provider_name FROM courses c LEFT JOIN providers p ON p.id = c.provider_id WHERE c.active = 1'
+    ).all();
+  } catch (_) {}
   const out = courses.map((c) => {
     let sessions = [];
     try {
@@ -54,6 +58,9 @@ router.get('/upcoming', optionalAuth, (_req, res) => {
     return {
       id: c.id, title: c.title, type: c.type, format: c.format,
       pts: c.pts, credits: c.credits, provider_id: c.provider_id,
+      provider_name: c.provider_name || null,
+      description: c.description || null, language: c.language || null,
+      category: c.category || null,
       location: c.location, bg: c.bg, icon: c.icon,
       elearning: /e-?learning/i.test(c.format || ''),
       next_session: sessions.length ? sessions[0].scheduled_at : null,

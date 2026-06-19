@@ -1946,7 +1946,9 @@ const PACKAGES = [
   {credits:500, price:45000, per:90,  save:25, label:'Enterprise'},
 ];
 
-const ALL_COURSES = [
+// Fallback catalogue, used ONLY if the live API can't be reached. The real
+// catalogue is loaded from /api/v1/courses/upcoming by loadRealCourses().
+let ALL_COURSES = [
   {id:'ai-gov-en',title:'AI Governance: Legal Risk & Compliance',icon:'',bg:'linear-gradient(135deg,#3b0764,#1e1b4b)',type:'mandatory',format:'elearning',pts:2,credits:5,provider:'LAD Academy',location:'Online · Self-paced',desc:'Comprehensive understanding of AI governance, legal risk frameworks, and compliance obligations under UAE law. Covers the Significance of AI Governance, UK and International Legal Landscape, and practical compliance tools.',lang:'English',sessions:[],seats:null},
   {id:'ai-gov-ar',title:'AI Governance: Legal Risk & Compliance (Arabic)',icon:'',bg:'linear-gradient(135deg,#3b0764,#1e1b4b)',type:'mandatory',format:'elearning',pts:2,credits:5,provider:'LAD Academy',location:'Online · Self-paced',desc:'Comprehensive understanding of AI governance, legal risk frameworks, and compliance obligations under UAE law. Available in Arabic.',lang:'Arabic',sessions:[],seats:null},
   {id:'aml',title:'Anti Money Laundering (Update 2026)',icon:'',bg:'linear-gradient(135deg,#1a0a30,#2d1b69)',type:'mandatory',format:'face',pts:2,credits:5,provider:'Kwintessential',location:'Al Hudaiba Awards Bldg, Block C, M Floor',desc:'In-depth exploration of UAE AML architecture, Federal Decree-Law No.10 of 2025, goAML platform, and targeted financial sanctions. FATF Grey List context.',lang:'English / Arabic',sessions:[{date:'Wed 20 May 2026',time:'12:00–14:00',seats:15,lang:'English'},{date:'Tue 2 Jun 2026',time:'9:30–11:30',seats:23,lang:'English'},{date:'Mon 29 Jun 2026',time:'12:00–14:00',seats:24,lang:'Arabic'},{date:'Tue 30 Jun 2026',time:'12:00–14:00',seats:23,lang:'Arabic'}]},
@@ -2613,24 +2615,56 @@ function renderCourseRatings(c){
       .catch(function(){});
   }catch(e){}
 }
-// Fetch ratings for the whole catalogue once and merge onto ALL_COURSES so the
-// cards can show a star line; then re-render the grid.
-function loadRealRatings(){
+// ── Load the REAL catalogue from the backend (no hardcoded course data) ─────
+var CC_DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], CC_MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function ccDate(iso){ var d=new Date(iso); if(isNaN(d))return ''; return CC_DAYS[d.getUTCDay()]+' '+d.getUTCDate()+' '+CC_MONS[d.getUTCMonth()]+' '+d.getUTCFullYear(); }
+function ccTime(iso){ var d=new Date(iso); if(isNaN(d))return ''; var h=d.getUTCHours(),m=d.getUTCMinutes(); return h+':'+(m<10?'0':'')+m; }
+var CC_BGS=['linear-gradient(135deg,#0a2040,#020817)','linear-gradient(135deg,#1a0a30,#2d1b69)','linear-gradient(135deg,#1a3a1a,#0a1a08)','linear-gradient(135deg,#2a1a3a,#1a0a2a)','linear-gradient(135deg,#0a2a1a,#042214)','linear-gradient(135deg,#2a1a0a,#1a0a04)','linear-gradient(135deg,#1a2a3a,#0a1a2a)'];
+function ccBg(id){ var h=0; id=String(id||''); for(var i=0;i<id.length;i++)h=(h*31+id.charCodeAt(i))>>>0; return CC_BGS[h%CC_BGS.length]; }
+function mapApiCourse(c){
+  var isEl = c.elearning || /e-?learning/i.test(c.format||'') || /e-?lear|elearning|e-learning/i.test(c.title||'');
+  var sessions = (c.sessions||[]).filter(function(s){return s&&s.scheduled_at;}).map(function(s){
+    return { date:ccDate(s.scheduled_at), time:ccTime(s.scheduled_at)+(s.end_at?('–'+ccTime(s.end_at)):''), seats:Number(s.seats_remaining)||0, lang:s.language||c.language||'English', sid:s.id };
+  });
+  var typ = (c.type||'').toLowerCase();
+  return {
+    id:c.id, title:c.title, icon:'', bg:c.bg||ccBg(c.id),
+    type: typ==='mandatory'?'mandatory':'accredited',
+    format: isEl?'elearning':'face',
+    pts: Number(c.pts)||2, credits: Number(c.credits)||5,
+    provider: c.provider_name || c.provider_id || 'CLPD-accredited provider',
+    location: c.location || (isEl?'Online · Self-paced':'Venue to be confirmed'),
+    desc: c.description || (c.title+' — a '+(typ==='mandatory'?'mandatory':'CLPD-accredited')+' course.'),
+    lang: c.language || (sessions[0]&&sessions[0].lang) || 'English',
+    sessions: sessions, seats:null,
+    rating: (c.rating&&c.rating.responses)?c.rating:null,
+    provider_rating: (c.provider_rating&&c.provider_rating.responses)?c.provider_rating:null,
+  };
+}
+function rerenderCatalogue(){
+  ['renderCourseGrid','renderMandatoryGrid','renderAccreditedGrid','renderElearningGrid','renderHomeGrid','renderCal']
+    .forEach(function(fn){ try{ if(typeof window[fn]==='function') window[fn](); }catch(e){} });
+}
+function loadRealCourses(){
   try{
     var base=(window.LAD_API_BASE)||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com';
     fetch(base.replace(/\/$/,'')+'/api/v1/courses/upcoming')
-      .then(function(r){return r.ok?r.json():[];})
+      .then(function(r){return r.ok?r.json():null;})
       .then(function(list){
-        if(!Array.isArray(list)) return;
-        list.forEach(function(c){ if(c&&c.id&&(c.rating||c.provider_rating)) COURSE_RATINGS[c.id]={rating:c.rating,provider_rating:c.provider_rating}; });
-        ALL_COURSES.forEach(function(c){ var r=COURSE_RATINGS[c.id]; if(r&&r.rating){ c.rating=r.rating; } });
-        if(typeof renderCourseGrid==='function') renderCourseGrid();
-        if(typeof renderMandatoryGrid==='function') renderMandatoryGrid();
-        if(typeof renderAccreditedGrid==='function') renderAccreditedGrid();
+        if(!Array.isArray(list)||!list.length) return; // keep fallback only if API unreachable/empty
+        // Real catalogue: hide internal-only courses. Show every real course,
+        // with whatever real sessions exist (we never fabricate dates).
+        var mapped = list
+          .filter(function(c){ return c && c.id && !/^\*/.test(c.title||'') && !/only for internal/i.test(c.title||''); })
+          .map(mapApiCourse);
+        if(!mapped.length) return;
+        ALL_COURSES = mapped;
+        mapped.forEach(function(c){ if(c.rating) COURSE_RATINGS[c.id]={rating:c.rating,provider_rating:c.provider_rating}; });
+        rerenderCatalogue();
       }).catch(function(){});
   }catch(e){}
 }
-try{ if(document.readyState!=='loading') loadRealRatings(); else document.addEventListener('DOMContentLoaded', loadRealRatings); }catch(e){}
+try{ if(document.readyState!=='loading') loadRealCourses(); else document.addEventListener('DOMContentLoaded', loadRealCourses); }catch(e){}
 
 function openCourse(id) {
   const c = ALL_COURSES.find(x=>x.id===id);
@@ -2671,7 +2705,10 @@ function openCourse(id) {
   const isEl = c.format==='elearning';
   document.getElementById('cdElearn').style.display = isEl?'':'none';
   document.getElementById('cdSessionsWrap').style.display = isEl?'none':'';
-  if(!isEl && c.sessions.length>0) {
+  if(!isEl && c.sessions.length===0) {
+    document.getElementById('cdSessions').innerHTML =
+      '<div style="border:1.5px dashed var(--line2);border-radius:10px;padding:18px 16px;text-align:center;color:var(--slate2);font-size:13px">No sessions are currently scheduled for this course. Please check back soon — new dates are published here as providers confirm them.</div>';
+  } else if(!isEl && c.sessions.length>0) {
     document.getElementById('cdSessions').innerHTML = c.sessions.map((s,i)=>`
       <div id="sess-${i}" style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:10px;align-items:center;padding:11px 14px;border:1.5px solid var(--line2);border-radius:10px;cursor:pointer;transition:all .15s" onclick="selectSess(${i},this)">
         <div>
