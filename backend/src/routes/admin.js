@@ -111,17 +111,17 @@ function oversight() {
   const all = (sql, ...a) => { try { return db.prepare(sql).all(...a); } catch (_) { return []; } };
   // Practising = anyone not explicitly out of the profession.
   const PRACT = "COALESCE(LOWER(l.status),'active') NOT IN ('inactive','resigned','non-practising','struck off','left')";
-  // Bands by this-cycle attended-booking points: <8 critical, 8–15 at risk, 16+ compliant.
+  // Bands by lifetime CPD points (the platform-wide source of truth, same as
+  // the lawyer/firm portals): <8 critical, 8–15 at risk, 16+ compliant.
   const bands = one(
     `WITH lp AS (
-       SELECT l.id, COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y', b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts
-       FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id = l.id
-       WHERE ${PRACT} GROUP BY l.id)
+       SELECT l.id, COALESCE(l.lifetime_points,0) pts
+       FROM lawyers l WHERE ${PRACT})
      SELECT COUNT(*) practising,
        SUM(CASE WHEN pts>=16 THEN 1 ELSE 0 END) compliant,
        SUM(CASE WHEN pts>=8 AND pts<16 THEN 1 ELSE 0 END) atRisk,
        SUM(CASE WHEN pts<8 THEN 1 ELSE 0 END) critical
-     FROM lp`, year);
+     FROM lp`);
   const roll = one('SELECT COUNT(*) n FROM lawyers').n || 0;
   const firms = one('SELECT COUNT(*) n FROM firms').n || 0;
   const providers = one('SELECT COUNT(*) n FROM providers').n || 0;
@@ -132,15 +132,14 @@ function oversight() {
   const acc = one("SELECT SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) pending, SUM(CASE WHEN status='approved' THEN 1 ELSE 0 END) approved, SUM(CASE WHEN status='rejected' THEN 1 ELSE 0 END) rejected, SUM(CASE WHEN status='returned' THEN 1 ELSE 0 END) returned FROM accreditations");
   const firmRows = all(
     `WITH lp AS (
-       SELECT l.firm_id, l.id, COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y', b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts
-       FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id = l.id
-       WHERE ${PRACT} AND l.firm_id IS NOT NULL GROUP BY l.id)
+       SELECT l.firm_id, l.id, COALESCE(l.lifetime_points,0) pts
+       FROM lawyers l WHERE ${PRACT} AND l.firm_id IS NOT NULL)
      SELECT f.id, f.name, COUNT(lp.id) lawyers, ROUND(AVG(lp.pts),1) avgPts,
        ROUND(100.0*SUM(CASE WHEN lp.pts>=16 THEN 1 ELSE 0 END)/COUNT(lp.id),1) compliancePct,
        SUM(CASE WHEN lp.pts<8 THEN 1 ELSE 0 END) critical
      FROM firms f JOIN lp ON lp.firm_id = f.id
      GROUP BY f.id HAVING lawyers >= 5
-     ORDER BY compliancePct DESC, avgPts DESC`, year);
+     ORDER BY compliancePct DESC, avgPts DESC`);
   const practising = bands.practising || 0, compliant = bands.compliant || 0;
   const attended = bk.attended || 0, noShow = bk.noShow || 0;
   return {
@@ -209,12 +208,11 @@ function detectAnomalies() {
   const cx = (all("SELECT COUNT(*) n FROM bookings WHERE status='cancelled' AND created_at>=datetime('now','-7 day')")[0] || {}).n || 0;
   if (cx >= 10) out.push({ level: cx >= 25 ? 'high' : 'medium', kind: 'demand', title: 'Cancellation spike', detail: cx + ' bookings cancelled in the last 7 days — review whether sessions are mistimed.', metric: cx });
   // 4. Firms where >60% of lawyers are critical (and >=5 lawyers).
-  const year = String(cycleYear());
-  all(`WITH lp AS (SELECT l.firm_id, l.id, COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y',b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts
-        FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id=l.id
-        WHERE COALESCE(LOWER(l.status),'active') NOT IN ('inactive','resigned','non-practising','struck off','left') AND l.firm_id IS NOT NULL GROUP BY l.id)
+  all(`WITH lp AS (SELECT l.firm_id, l.id, COALESCE(l.lifetime_points,0) pts
+        FROM lawyers l
+        WHERE COALESCE(LOWER(l.status),'active') NOT IN ('inactive','resigned','non-practising','struck off','left') AND l.firm_id IS NOT NULL)
       SELECT f.id, f.name, COUNT(lp.id) lawyers, SUM(CASE WHEN lp.pts<8 THEN 1 ELSE 0 END) crit
-      FROM firms f JOIN lp ON lp.firm_id=f.id GROUP BY f.id HAVING lawyers>=5 AND crit*1.0/lawyers>0.6 ORDER BY crit*1.0/lawyers DESC LIMIT 5`, year)
+      FROM firms f JOIN lp ON lp.firm_id=f.id GROUP BY f.id HAVING lawyers>=5 AND crit*1.0/lawyers>0.6 ORDER BY crit*1.0/lawyers DESC LIMIT 5`)
     .forEach((r) => out.push({ level: 'high', kind: 'compliance', title: r.name + ' — compliance cluster',
       detail: r.crit + ' of ' + r.lawyers + ' lawyers are critical (' + Math.round(100 * r.crit / r.lawyers) + '%). Prioritise firm-wide outreach.', metric: r.crit, firmId: r.id }));
   const order = { high: 0, medium: 1, low: 2 };
@@ -357,8 +355,8 @@ function runQuery(spec) {
   const all = (sql, ...a) => { try { return db.prepare(sql).all(...a); } catch (_) { return []; } };
   const f = spec.filters || {}, lim = Math.min(60, Math.max(1, spec.limit || 30)), year = String(cycleYear());
   if (spec.entity === 'firms') {
-    let r = all(`WITH lp AS (SELECT l.firm_id, l.id, COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y',b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id=l.id WHERE ${_PRACT} AND l.firm_id IS NOT NULL GROUP BY l.id)
-      SELECT f.id, f.name, COUNT(lp.id) lawyers, ROUND(100.0*SUM(CASE WHEN lp.pts>=16 THEN 1 ELSE 0 END)/COUNT(lp.id),1) compliancePct, SUM(CASE WHEN lp.pts<8 THEN 1 ELSE 0 END) critical FROM firms f JOIN lp ON lp.firm_id=f.id GROUP BY f.id`, year);
+    let r = all(`WITH lp AS (SELECT l.firm_id, l.id, COALESCE(l.lifetime_points,0) pts FROM lawyers l WHERE ${_PRACT} AND l.firm_id IS NOT NULL)
+      SELECT f.id, f.name, COUNT(lp.id) lawyers, ROUND(100.0*SUM(CASE WHEN lp.pts>=16 THEN 1 ELSE 0 END)/COUNT(lp.id),1) compliancePct, SUM(CASE WHEN lp.pts<8 THEN 1 ELSE 0 END) critical FROM firms f JOIN lp ON lp.firm_id=f.id GROUP BY f.id`);
     if (f.minLawyers != null) r = r.filter((x) => x.lawyers >= f.minLawyers);
     if (f.maxLawyers != null) r = r.filter((x) => x.lawyers <= f.maxLawyers);
     if (f.minCompliance != null) r = r.filter((x) => (x.compliancePct || 0) >= f.minCompliance);
@@ -380,7 +378,7 @@ function runQuery(spec) {
     return r.slice(0, lim).map((x) => ({ id: x.id, label: x.title, sub: (x.upcoming || 0) + ' upcoming · ' + x.bookings + ' booked', count: Math.max(x.bookings, 1), kind: 'course', meta: { type: x.type, bookings: x.bookings, upcoming: x.upcoming, points: x.pts, credits: x.credits, nextAt: x.nextAt } }));
   }
   if (spec.entity === 'lawyers') {
-    let r = all(`SELECT l.id, l.first_name, l.last_name, COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y',b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts, fr.name firm FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id=l.id LEFT JOIN firms fr ON fr.id=l.firm_id WHERE ${_PRACT} GROUP BY l.id`, year);
+    let r = all(`SELECT l.id, l.first_name, l.last_name, COALESCE(l.lifetime_points,0) pts, fr.name firm FROM lawyers l LEFT JOIN firms fr ON fr.id=l.firm_id WHERE ${_PRACT}`);
     if (f.band === 'critical') r = r.filter((x) => x.pts < 8); else if (f.band === 'at-risk') r = r.filter((x) => x.pts >= 8 && x.pts < 16); else if (f.band === 'compliant') r = r.filter((x) => x.pts >= 16);
     if (f.minPoints != null) r = r.filter((x) => x.pts >= f.minPoints);
     if (f.maxPoints != null) r = r.filter((x) => x.pts <= f.maxPoints);
@@ -424,12 +422,12 @@ router.get('/firms', requireAuth, (req, res) => {
   let firms = [];
   try {
     firms = db.prepare(`WITH lp AS (
-        SELECT l.firm_id, l.id, COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y',b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts
-        FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id=l.id WHERE ${_PRACT} AND l.firm_id IS NOT NULL GROUP BY l.id)
+        SELECT l.firm_id, l.id, COALESCE(l.lifetime_points,0) pts
+        FROM lawyers l WHERE ${_PRACT} AND l.firm_id IS NOT NULL)
       SELECT f.id, f.name, COUNT(lp.id) lawyers,
         ROUND(100.0*SUM(CASE WHEN lp.pts>=16 THEN 1 ELSE 0 END)/COUNT(lp.id),1) compliancePct,
         SUM(CASE WHEN lp.pts<8 THEN 1 ELSE 0 END) critical
-      FROM firms f JOIN lp ON lp.firm_id=f.id GROUP BY f.id HAVING lawyers>=1 ORDER BY lawyers DESC`).all(year);
+      FROM firms f JOIN lp ON lp.firm_id=f.id GROUP BY f.id HAVING lawyers>=1 ORDER BY lawyers DESC`).all();
   } catch (_) {}
   res.json({ firms, total: firms.length });
 });
@@ -444,8 +442,8 @@ router.get('/lawyers', requireAuth, (req, res) => {
   let rows = [];
   try {
     rows = db.prepare(`SELECT l.id, l.first_name, l.last_name, fr.name firm,
-      COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y',b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts
-      FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id=l.id LEFT JOIN firms fr ON fr.id=l.firm_id WHERE ${_PRACT} GROUP BY l.id`).all(year);
+      COALESCE(l.lifetime_points,0) pts
+      FROM lawyers l LEFT JOIN firms fr ON fr.id=l.firm_id WHERE ${_PRACT}`).all();
   } catch (_) {}
   if (band === 'critical') rows = rows.filter((r) => r.pts < 8);
   else if (band === 'atrisk' || band === 'at-risk') rows = rows.filter((r) => r.pts >= 8 && r.pts < 16);
@@ -465,8 +463,7 @@ router.get('/points-distribution', requireAuth, (req, res) => {
   const year = String(cycleYear());
   let rows = [];
   try {
-    rows = db.prepare(`SELECT COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y',b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts
-      FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id=l.id WHERE ${_PRACT} GROUP BY l.id`).all(year);
+    rows = db.prepare(`SELECT COALESCE(l.lifetime_points,0) pts FROM lawyers l WHERE ${_PRACT}`).all();
   } catch (_) {}
   const buckets = [
     { key: 'lt4', label: 'Critical', sub: 'below 4 pts', min: 0, max: 3, count: 0 },
@@ -492,8 +489,8 @@ router.get('/firm/:id', requireAuth, (req, res) => {
   const firm = one('SELECT id, name FROM firms WHERE id = ?', id);
   if (!firm) return res.status(404).json({ error: 'Firm not found' });
   const lawyers = all(`SELECT l.id, l.first_name, l.last_name, l.status,
-      COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y',b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts
-    FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id=l.id WHERE l.firm_id=? AND ${_PRACT} GROUP BY l.id`, year, id);
+      COALESCE(l.lifetime_points,0) pts
+    FROM lawyers l WHERE l.firm_id=? AND ${_PRACT}`, id);
   let crit = 0, risk = 0, comp = 0;
   lawyers.forEach((l) => { if (l.pts < 8) crit++; else if (l.pts < 16) risk++; else comp++; });
   const courses = all(`SELECT COALESCE(NULLIF(b.course_title,''), c.title) title, COUNT(*) n,
