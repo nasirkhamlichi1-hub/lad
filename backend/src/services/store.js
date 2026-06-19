@@ -8,13 +8,16 @@ const db = require('../db');
 // ─── Courses ─────────────────────────────────────────────────────────
 
 function getCourses() {
-  return db.prepare(`
+  const rows = db.prepare(`
     SELECT c.*, p.name AS provider_name
     FROM courses c
     LEFT JOIN providers p ON p.id = c.provider_id
     WHERE c.active = 1
     ORDER BY c.title
   `).all();
+  let ratings = {};
+  try { ratings = require('./feedback').courseRatingMap(); } catch (_) {}
+  return rows.map((c) => ({ ...c, rating: ratings[c.id] || null }));
 }
 
 function getCourseById(id) {
@@ -24,6 +27,11 @@ function getCourseById(id) {
     SELECT * FROM course_sessions WHERE course_id = ?
     ORDER BY scheduled_at
   `).all(id);
+  try {
+    const fb = require('./feedback');
+    course.rating = fb.courseRating(id);
+    if (course.provider_id) course.provider_rating = fb.providerRating(course.provider_id);
+  } catch (_) {}
   return course;
 }
 

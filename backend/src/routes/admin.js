@@ -529,4 +529,16 @@ router.post('/reclassify-practising', requireAuth, (req, res) => {
   res.json({ data: { practising, non_practising: nonPractising, total } });
 });
 
+// GET /api/v1/admin/feedback — full mandatory-course feedback dataset for the
+// command centre: per-course and per-provider star ratings (combined + per
+// year), with full per-metric distributions for drill-down. Trainer-free.
+router.get('/feedback', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
+  try {
+    res.json(require('../services/feedback').summary());
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;

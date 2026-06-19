@@ -324,6 +324,13 @@ const skillsService = require('../src/services/skills');
 const rebuilt = skillsService.rebuildAllSkillEvents();
 console.log(`  → ${rebuilt.events.toLocaleString()} skill events created across ${rebuilt.matched.toLocaleString()} bookings`);
 
+// ─── Course & provider feedback ratings (2025 + 2026) ────────────────
+try {
+  require('child_process').execSync('node ' + path.join(__dirname, 'seed-feedback.js'), { stdio: 'inherit' });
+} catch (e) {
+  console.warn('  ⚠ feedback seed skipped:', e.message);
+}
+
 // ─── Summary ─────────────────────────────────────────────────────────
 console.log('\n────────────────────────────────────────');
 console.log('  Seed complete.');

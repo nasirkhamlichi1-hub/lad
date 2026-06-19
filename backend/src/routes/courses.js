@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const router = express.Router();
 const db = require('../db');
 const store = require('../services/store');
+const feedback = require('../services/feedback');
 const tagger = require('../services/coursetagger');
 const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth');
 
@@ -47,6 +48,9 @@ router.get('/upcoming', optionalAuth, (_req, res) => {
         "SELECT id, scheduled_at, end_at, seats_remaining, capacity, venue, language, status FROM course_sessions WHERE course_id = ? AND scheduled_at >= ? AND status != 'cancelled' ORDER BY scheduled_at ASC"
       ).all(c.id, now);
     } catch (_) {}
+    let rating = null, provider_rating = null;
+    try { rating = feedback.courseRating(c.id); } catch (_) {}
+    try { if (c.provider_id) provider_rating = feedback.providerRating(c.provider_id); } catch (_) {}
     return {
       id: c.id, title: c.title, type: c.type, format: c.format,
       pts: c.pts, credits: c.credits, provider_id: c.provider_id,
@@ -54,6 +58,7 @@ router.get('/upcoming', optionalAuth, (_req, res) => {
       elearning: /e-?learning/i.test(c.format || ''),
       next_session: sessions.length ? sessions[0].scheduled_at : null,
       sessions, tags: courseTopics(c.id),
+      rating, provider_rating,
     };
   });
   out.sort((a, b) => (a.next_session || '9999').localeCompare(b.next_session || '9999'));
@@ -141,6 +146,14 @@ router.post('/:id/sessions', requireRole('lad_admin', 'provider_admin'), (req, r
   db.prepare("INSERT INTO course_sessions (id, course_id, scheduled_at, end_at, capacity, seats_remaining, venue, language, status) VALUES (?,?,?,?,?,?,?,?, 'scheduled')")
     .run(sid, courseId, b.scheduled_at, b.end_at || null, cap, cap, b.venue || course.location || 'Dubai', b.language || 'English');
   res.status(201).json({ ok: true, id: sid, seats_remaining: cap });
+});
+
+// GET /api/v1/courses/:id/feedback — star ratings (out of 5) for the booking
+// view: the 4 course metrics + the 3 provider/trainer metrics, with per-year
+// breakdown. Public (shown before a lawyer commits to booking).
+router.get('/:id/feedback', optionalAuth, (req, res) => {
+  const rating = feedback.courseRating(req.params.id);
+  res.json({ course_id: req.params.id, rating: rating || null, provider: rating ? rating.provider : null });
 });
 
 // GET /api/v1/courses/:id
