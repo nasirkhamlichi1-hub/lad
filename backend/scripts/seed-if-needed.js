@@ -14,7 +14,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const db = require('../src/db');
 
-const SEED_VERSION = '2025-26-report-v1';
+const SEED_VERSION = '2025-26-report-v2-feedback';
 
 function getMarker() {
   try {

@@ -286,6 +286,7 @@
         <div class="cs-foot">
           <button class="prim" onclick="cmdAsk('Give me a full executive readout of programme health and the three most important actions this week.')">✦ Ask the AI</button>
           <button onclick="location.href='lad-intelligence-v4.html'">Open dashboard</button>
+          <button onclick="openFeedback()">★ Feedback</button>
           <button onclick="startTour()">▶ Tour</button>
           <button onclick="openTimeMachine()">⏱ Time</button>
           <button onclick="cmdRotate()">⟲ Orbit</button>
@@ -1492,6 +1493,129 @@
   }
   function bind(){ var inp=$('qbInput'),btn=$('qbGo'); if(!inp||!btn)return; btn.onclick=run; inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); run(); } }); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind); else bind();
+})();
+</script>
+<!-- ═══ Course & Provider Feedback drill-down ═══════════════════════════════ -->
+<div id="fbLayer" style="display:none;position:fixed;inset:0;z-index:200;background:#070b14;color:#e7ecf5;overflow-y:auto;font-family:Inter,system-ui,sans-serif">
+  <div style="max-width:1180px;margin:0 auto;padding:26px 22px 80px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:6px">
+      <div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;color:#5fd0c8;text-transform:uppercase">Layer 03 · Participant Feedback</div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;letter-spacing:1px">COURSE &amp; PROVIDER RATINGS</div>
+      </div>
+      <button onclick="closeFeedback()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:#e7ecf5;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px">✕ Close</button>
+    </div>
+    <div id="fbTotals" style="display:flex;gap:14px;flex-wrap:wrap;margin:14px 0 18px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="fbtab" data-tab="courses" onclick="fbTab('courses')">Courses</button>
+      <button class="fbtab" data-tab="providers" onclick="fbTab('providers')">Training Providers</button>
+    </div>
+    <input id="fbSearch" placeholder="Filter…" oninput="fbRender()" style="width:100%;max-width:340px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:#e7ecf5;border-radius:8px;padding:9px 12px;font-size:13px;margin-bottom:14px">
+    <div id="fbBody"><div style="color:#7b88a0;padding:40px;text-align:center">Loading feedback…</div></div>
+  </div>
+</div>
+<style>
+  .fbtab{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:#aab6cc;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600}
+  .fbtab.on{background:rgba(95,208,200,.16);border-color:rgba(95,208,200,.5);color:#bdf3ee}
+  .fbcard{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.1);border-radius:12px;margin-bottom:8px;overflow:hidden}
+  .fbrow{display:grid;grid-template-columns:1fr 120px 96px 60px;gap:12px;align-items:center;padding:12px 16px;cursor:pointer}
+  .fbrow:hover{background:rgba(255,255,255,.04)}
+  .fbexp{padding:4px 16px 16px;border-top:1px solid rgba(255,255,255,.08);display:none}
+  .fbmetric{display:grid;grid-template-columns:200px 1fr 44px;gap:10px;align-items:center;padding:4px 0;font-size:12px}
+  .fbbar{height:8px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}
+  .fbbar>i{display:block;height:100%;background:linear-gradient(90deg,#f5a623,#ffd27a)}
+  .fbkv{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 16px;min-width:120px}
+  .fbkv b{font-family:'Orbitron',sans-serif;font-size:22px;color:#fff;display:block}
+  .fbkv span{font-size:10px;color:#8392ad;text-transform:uppercase;letter-spacing:1px}
+</style>
+<script>
+(function(){
+  'use strict';
+  var base=((window.LAD_API_BASE)||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
+  function tok(){ try{return localStorage.getItem('lad_token')||'';}catch(e){return '';} }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);}); }
+  var DATA=null, TAB='courses';
+  // Star glyphs + numeric for a 1–5 value.
+  function starline(v){ if(v==null) return '<span style="color:#5b6884">—</span>'; v=Number(v); var full=Math.round(v); var s=''; for(var i=1;i<=5;i++) s+='<span style="color:'+(i<=full?'#f5a623':'#39455e')+'">★</span>'; return s+' <span style="font-family:monospace;color:#aeb9cf;font-size:11px">'+v.toFixed(1)+'</span>'; }
+  function metricRow(label,m){ if(!m||m.avg==null) return ''; var pct=(m.avg/5*100).toFixed(0);
+    return '<div class="fbmetric"><span style="color:#c3cde0">'+esc(label)+'</span><div class="fbbar"><i style="width:'+pct+'%"></i></div><span style="font-family:monospace;color:#f5c87a;text-align:right">'+Number(m.avg).toFixed(2)+'</span></div>'; }
+
+  window.openFeedback=function(){
+    if(window.exitFocus) try{window.exitFocus();}catch(e){}
+    document.getElementById('fbLayer').style.display='block';
+    fbSetTabBtns();
+    if(DATA){ fbPaint(); return; }
+    fetch(base+'/api/v1/admin/feedback',{headers:{Authorization:'Bearer '+tok()}})
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(j){ DATA=j||{courses:[],providers:[],totals:{}}; fbPaint(); })
+      .catch(function(){ document.getElementById('fbBody').innerHTML='<div style="color:#ff8095;padding:40px;text-align:center">Could not load feedback (sign in as an admin).</div>'; });
+  };
+  window.closeFeedback=function(){ document.getElementById('fbLayer').style.display='none'; };
+  window.fbTab=function(t){ TAB=t; fbSetTabBtns(); fbRender(); };
+  function fbSetTabBtns(){ Array.prototype.forEach.call(document.querySelectorAll('.fbtab'),function(b){ b.classList.toggle('on', b.getAttribute('data-tab')===TAB); }); }
+
+  function fbPaint(){
+    var t=(DATA&&DATA.totals)||{};
+    document.getElementById('fbTotals').innerHTML=
+      kv(t.responses,'feedback responses')+kv(t.courses_rated,'courses rated')+kv(t.providers_rated,'providers rated')+kv((t.years||[]).join(' · '),'years');
+    fbRender();
+  }
+  function kv(v,l){ return '<div class="fbkv"><b>'+(typeof v==='number'?v.toLocaleString():esc(v||'—'))+'</b><span>'+esc(l)+'</span></div>'; }
+
+  window.fbRender=function(){
+    if(!DATA) return;
+    var q=(document.getElementById('fbSearch').value||'').toLowerCase();
+    var host=document.getElementById('fbBody');
+    if(TAB==='courses'){
+      var rows=(DATA.courses||[]).filter(function(c){ return !q || (c.course_name||'').toLowerCase().indexOf(q)>-1 || (c.provider_name||'').toLowerCase().indexOf(q)>-1; });
+      host.innerHTML='<div class="fbcard" style="background:none;border:none"><div class="fbrow" style="cursor:default;color:#7e8baa;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding-bottom:4px"><span>Course · Provider</span><span>Overall</span><span style="text-align:right">Responses</span><span style="text-align:right">Yrs</span></div></div>'+
+        rows.map(courseCard).join('') || '<div style="color:#7b88a0;padding:30px">No matches.</div>';
+    } else {
+      var prs=(DATA.providers||[]).filter(function(p){ return !q || (p.provider_name||'').toLowerCase().indexOf(q)>-1; });
+      host.innerHTML=prs.map(providerCard).join('') || '<div style="color:#7b88a0;padding:30px">No matches.</div>';
+    }
+  };
+
+  function courseCard(c,i){
+    var yrs=(DATA.course_years||[]).filter(function(r){ return (r.course_id&&r.course_id===c.course_id)||r.course_key===c.key; });
+    var det='<div style="color:#8b97b0;font-size:11px;margin:6px 0 10px">The four course rating areas (out of 5), response-weighted across '+esc((c.years||[]).join(' & '))+':</div>'+
+      metricRow('Training course content', avgM(yrs,'content'))+
+      metricRow('Benefits of the training course', avgM(yrs,'benefits'))+
+      metricRow('Practical / interesting content', avgM(yrs,'practical'))+
+      metricRow('Overall evaluation', avgM(yrs,'overall'))+
+      perYear(yrs,['content','benefits','practical','overall']);
+    return card('c'+i, esc(c.course_name), esc(c.provider_name||''), c.overall, c.responses, (c.years||[]).length, det);
+  }
+  function providerCard(p,i){
+    var yrs=(DATA.provider_years||[]).filter(function(r){ return (p.provider_id&&r.provider_id===p.provider_id)||r.provider_key===p.key; });
+    var overall=mean([p.knowledge,p.clarity,p.interaction]);
+    var det='<div style="color:#8b97b0;font-size:11px;margin:6px 0 10px">The three provider rating areas (out of 5), response-weighted across '+esc((p.years||[]).join(' & '))+'. Individual trainer identities are not shown.</div>'+
+      metricRow('Knowledge of trainer', avgM(yrs,'knowledge'))+
+      metricRow('Ability to convey information clearly', avgM(yrs,'clarity'))+
+      metricRow('Ability to stimulate participant interaction', avgM(yrs,'interaction'))+
+      perYear(yrs,['knowledge','clarity','interaction']);
+    return card('p'+i, esc(p.provider_name||''), '', overall, p.responses, (p.years||[]).length, det);
+  }
+  function card(id,title,sub,overall,resp,nyears,det){
+    return '<div class="fbcard"><div class="fbrow" onclick="fbToggle(\''+id+'\')">'+
+      '<div><div style="font-weight:600;font-size:13.5px;color:#eef2fa">'+title+'</div>'+(sub?'<div style="font-size:11px;color:#8493ae;margin-top:2px">'+sub+'</div>':'')+'</div>'+
+      '<div>'+starline(overall)+'</div>'+
+      '<div style="text-align:right;font-family:monospace;color:#aeb9cf;font-size:12px">'+(Number(resp)||0).toLocaleString()+'</div>'+
+      '<div style="text-align:right;color:#7e8baa;font-size:12px">'+nyears+'</div></div>'+
+      '<div class="fbexp" id="exp_'+id+'">'+det+'</div></div>';
+  }
+  window.fbToggle=function(id){ var e=document.getElementById('exp_'+id); if(e) e.style.display = e.style.display==='block'?'none':'block'; };
+
+  // weighted mean of metric m across per-year rows (each row.metrics[m]={avg,n})
+  function avgM(rows,m){ var s=0,n=0; rows.forEach(function(r){ var x=r.metrics&&r.metrics[m]; if(x&&x.avg!=null&&x.responses){ s+=x.avg*x.responses; n+=x.responses; } }); return n?{avg:Math.round(s/n*100)/100}:null; }
+  function mean(a){ a=a.filter(function(x){return x!=null;}); return a.length?Math.round(a.reduce(function(p,c){return p+Number(c);},0)/a.length*100)/100:null; }
+  function perYear(rows,keys){ if(rows.length<2) return '';
+    var hdr='<div style="margin-top:10px;font-size:10px;color:#7e8baa;text-transform:uppercase;letter-spacing:1px">By year</div>';
+    return hdr+rows.sort(function(a,b){return a.year-b.year;}).map(function(r){
+      var cells=keys.map(function(k){ var x=r.metrics&&r.metrics[k]; return '<span style="font-family:monospace;color:#cdd6e6;margin-right:12px">'+k.slice(0,4)+' '+(x&&x.avg!=null?x.avg.toFixed(2):'—')+'</span>'; }).join('');
+      return '<div style="font-size:11px;color:#9aa6c0;padding:3px 0"><b style="color:#bdf3ee">'+r.year+'</b> · '+(Number(r.responses)||0).toLocaleString()+' responses · '+cells+'</div>';
+    }).join('');
+  }
 })();
 </script>
 </body>

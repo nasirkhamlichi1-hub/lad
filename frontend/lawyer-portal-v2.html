@@ -634,6 +634,9 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
           <div id="bkDescription" style="font-size:13px;color:var(--slate);line-height:1.65;letter-spacing:-.005em"></div>
         </div>
 
+        <!-- Participant feedback ratings (populated from past attendees) -->
+        <div id="bkRatings" style="display:none;margin-bottom:20px"></div>
+
         <!-- E-learning: start now -->
         <div id="bkElearning" style="display:none">
           <div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--r);padding:16px;text-align:center">
@@ -3521,6 +3524,7 @@ async function loadCatalogueLive() {
         description:c.title+' — a '+(isMand?'mandatory':'accredited')+' CLPD course. Seats are limited per session.',
         elearning:false, skillsImpact:(c.tags||[]).slice(0,2).map(function(t){return {label:(t.label||'').slice(0,14),gain:Math.round((t.weight||0.5)*30),from:50};}),
         matchScore:'', matchReason:'',
+        rating:c.rating||null, provider_rating:c.provider_rating||null,
         sessions:c.sessions.map(function(s){ return {date:catFmtDate(s.scheduled_at),start:catFmtTime(s.scheduled_at),end:s.end_at?catFmtTime(s.end_at):'',seats:Number(s.seats_remaining)||0,partner:provider,lang:s.language||'English',low:(Number(s.seats_remaining)||0)<=5,sid:s.id}; }),
       };
       return { id:c.id, title:c.title, pts:pts, credits:credits, isMand:isMand, internal:false, provider:provider, sessions:c.sessions };
@@ -3947,6 +3951,71 @@ async function loadAvailability() {
 // ═══════════════════════════════════════════════
 // BOOKING MODAL
 // ═══════════════════════════════════════════════
+// ── Feedback star ratings (from past attendees) ─────────────────────────────
+// Render N filled / half / empty stars for a 1–5 value.
+function starsHTML(val, size){
+  size = size || 13;
+  var v = Math.max(0, Math.min(5, Number(val)||0));
+  var full = Math.floor(v), half = (v-full) >= 0.25 && (v-full) < 0.75, almost = (v-full) >= 0.75;
+  if (almost) { full += 1; half = false; }
+  var out = '';
+  for (var i=0;i<5;i++){
+    var fill = i < full ? '#f5a623' : (i===full && half ? 'url(#half'+size+')' : '#dfe3ea');
+    out += '<svg width="'+size+'" height="'+size+'" viewBox="0 0 20 20" style="display:inline-block;vertical-align:-2px">'+
+      (i===full && half ? '<defs><linearGradient id="half'+size+'"><stop offset="50%" stop-color="#f5a623"/><stop offset="50%" stop-color="#dfe3ea"/></linearGradient></defs>':'')+
+      '<path fill="'+fill+'" d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.79L10 14.77l-5.2 2.73.99-5.79L1.58 7.62l5.82-.85z"/></svg>';
+  }
+  return out;
+}
+function ratingRow(label, val){
+  if (val == null) return '';
+  return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 0">'+
+    '<span style="font-size:12px;color:var(--slate)">'+label+'</span>'+
+    '<span style="white-space:nowrap">'+starsHTML(val,12)+' <span style="font-family:var(--mono);font-size:11px;color:var(--slate2);margin-left:4px">'+Number(val).toFixed(1)+'</span></span>'+
+  '</div>';
+}
+function renderBookingRatings(c, courseId){
+  var host = document.getElementById('bkRatings');
+  if (!host) return;
+  host.style.display = 'none'; host.innerHTML = '';
+  function paint(rating, prov){
+    if ((!rating || !rating.responses) && (!prov || !prov.responses)) return;
+    var html = '';
+    if (rating && rating.responses){
+      html += '<div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:4px">COURSE RATING</div>'+
+        '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">'+
+          '<span style="font-family:var(--serif);font-size:26px;color:var(--ink);letter-spacing:-.02em">'+(rating.overall||rating.stars||0).toFixed(1)+'</span>'+
+          '<span>'+starsHTML(rating.overall||rating.stars,16)+'</span>'+
+          '<span style="font-size:11px;color:var(--slate2)">'+rating.responses.toLocaleString()+' participant'+(rating.responses===1?'':'s')+'</span>'+
+        '</div>'+
+        '<div style="background:var(--white);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:10px">'+
+          ratingRow('Training course content', rating.content)+
+          ratingRow('Benefits of the course', rating.benefits)+
+          ratingRow('Practical &amp; interesting content', rating.practical)+
+          ratingRow('Overall evaluation', rating.overall)+
+        '</div>';
+    }
+    if (prov && prov.responses){
+      html += '<div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin:4px 0">TRAINING PROVIDER · '+esc(prov.provider_name||c.provider||'')+'</div>'+
+        '<div style="background:var(--white);border:1px solid var(--line);border-radius:12px;padding:10px 14px">'+
+          ratingRow('Knowledge of trainer', prov.knowledge)+
+          ratingRow('Conveys information clearly', prov.clarity)+
+          ratingRow('Stimulates participant interaction', prov.interaction)+
+        '</div>';
+    }
+    host.innerHTML = html; host.style.display = '';
+  }
+  // Use cached rating if present, else fetch the dedicated endpoint.
+  if (c.rating || c.provider_rating){ paint(c.rating, c.provider_rating || (c.rating && c.rating.provider)); return; }
+  try {
+    var base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
+    fetch(base.replace(/\/$/,'')+'/api/v1/courses/'+encodeURIComponent(courseId)+'/feedback')
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(j){ if(j&&j.rating){ c.rating=j.rating; c.provider_rating=j.provider||j.rating.provider; paint(j.rating, c.provider_rating); } })
+      .catch(function(){});
+  } catch(e){}
+}
+
 async function openBooking(courseId) {
   const c = COURSES[courseId];
   if (!c) return;
@@ -3987,6 +4056,9 @@ async function openBooking(courseId) {
   // Match score
   document.getElementById('bkMatchScore').textContent = c.matchScore;
   document.getElementById('bkMatchReason').textContent = c.matchReason;
+
+  // Participant feedback ratings
+  renderBookingRatings(c, courseId);
 
   // E-learning vs face-to-face
   if (c.elearning) {
