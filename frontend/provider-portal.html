@@ -456,14 +456,27 @@ function switchTab(tab){
 // ─────────────────────────────────────────────────────────────
 // File upload UI
 // ─────────────────────────────────────────────────────────────
+var ACCRED_FILES = {}; // key → { label, name, type, size, dataUrl }
+var FILE_LABELS = { aoa: 'Articles of Association', a1: 'A1 form', profile: 'Company profile' };
 function handleUpload(key, input){
   const el = document.getElementById('up-' + key);
   const file = input.files[0];
   if (!file) return;
-  el.classList.add('uploaded');
-  el.querySelector('.file-upload-ico').textContent = '✓ UPLOADED';
-  el.querySelector('.file-upload-name').textContent = file.name;
-  el.querySelector('.file-upload-meta').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+  if (file.size > 8 * 1024 * 1024) {
+    el.querySelector('.file-upload-meta').textContent = '⚠ File too large (max 8 MB)';
+    input.value = ''; delete ACCRED_FILES[key]; return;
+  }
+  // Read the file so it's actually submitted with the application (base64).
+  const reader = new FileReader();
+  reader.onload = function(){
+    ACCRED_FILES[key] = { key, label: FILE_LABELS[key] || key, name: file.name, type: file.type, size: file.size, dataUrl: reader.result };
+    el.classList.add('uploaded');
+    el.querySelector('.file-upload-ico').textContent = '✓ UPLOADED';
+    el.querySelector('.file-upload-name').textContent = file.name;
+    el.querySelector('.file-upload-meta').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+  };
+  reader.onerror = function(){ el.querySelector('.file-upload-meta').textContent = '⚠ Could not read file'; };
+  reader.readAsDataURL(file);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -502,6 +515,7 @@ async function submitRegistration(e){
     contactPhone: obj.contactPhone,
     submittedBy: obj.contactName || obj.entityName,
     submittedVia: 'provider-portal',
+    attachments: Object.values(ACCRED_FILES),
   };
   try {
     const r = await fetch(apiBase().replace(/\/$/,'') + '/api/v1/accreditations', {

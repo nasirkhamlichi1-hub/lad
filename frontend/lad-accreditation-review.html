@@ -492,6 +492,40 @@ function renderDetail(){
   updateDecisionFooter(a);
 }
 
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(ch){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]);}); }
+
+// Render every detail the applicant actually submitted, so nothing is hidden —
+// institution details for a provider registration, course details otherwise.
+function applicationDetailsHTML(a){
+  const p = a._payload || {};
+  const rows = [];
+  const add = (label, val) => { if (val !== undefined && val !== null && String(val).trim() !== '') rows.push([label, val]); };
+  if (a.isProviderReg) {
+    add('Entity', p.providerName || p.entityName);
+    add('Legal form', p.legalForm);
+    add('Licence no.', p.licenceNumber || p.licence);
+    add('Country', p.country);
+    add('Years operating', p.yearsInOperation);
+    add('Contact', p.contactName);
+    add('Role', p.contactRole);
+    add('Email', p.contactEmail || p.applicantEmail);
+    add('Phone', p.contactPhone);
+    add('Address', p.address);
+  } else {
+    add('Course', p.courseTitle || p.course || p.title);
+    add('Provider', p.providerName || p.firm);
+    add('Topics', Array.isArray(p.topics) ? p.topics.join(', ') : p.topics);
+  }
+  const desc = p.description || p.summary || '';
+  if (!rows.length && !desc) return '';
+  const grid = rows.map(([l, v]) => `<div class="c-fact"><div class="c-fact-lbl">${esc(l)}</div><div class="c-fact-val" style="font-size:14px;line-height:1.4">${esc(String(v))}</div></div>`).join('');
+  return `<div class="c-section">
+      <div class="c-eyebrow">${a.isProviderReg ? 'INSTITUTION DETAILS' : 'APPLICATION DETAILS'}</div>
+      <div class="c-grid">${grid}</div>
+      ${desc ? `<div style="margin-top:14px"><div class="c-fact-lbl" style="margin-bottom:5px">DESCRIPTION</div><div style="font-size:13.5px;color:var(--slate);line-height:1.65;white-space:pre-wrap">${esc(desc)}</div></div>` : ''}
+    </div>`;
+}
+
 function renderCenter(a){
   const c = document.getElementById('centerPane');
   c.innerHTML = `
@@ -500,11 +534,11 @@ function renderCenter(a){
       <div class="c-h">${a.title}</div>
       <div class="c-sub">Submitted by <strong>${a.provider}</strong> · ${a.providerType} · ${a.submitted}</div>
       <div class="c-grid">
-        <div class="c-fact"><div class="c-fact-lbl">FORMAT</div><div class="c-fact-val">${a.format}</div></div>
-        <div class="c-fact"><div class="c-fact-lbl">DURATION</div><div class="c-fact-val">${a.duration}</div></div>
+        ${a.isProviderReg ? '' : `<div class="c-fact"><div class="c-fact-lbl">FORMAT</div><div class="c-fact-val">${a.format}</div></div>
+        <div class="c-fact"><div class="c-fact-lbl">DURATION</div><div class="c-fact-val">${a.duration}</div></div>`}
         <div class="c-fact"><div class="c-fact-lbl">${a._real ? 'CLPD POINTS (editable)' : 'PROPOSED POINTS'}</div><div class="c-fact-val">${a._real ? `<input type="number" min="0" max="40" step="1" value="${a.proposedPts === '' ? '' : a.proposedPts}" oninput="onPointsInput('${a.ref}','pts',this.value)" onblur="onPointsBlur('${a.ref}')" style="width:72px;padding:4px 8px;border:1.5px solid var(--line2);border-radius:6px;font-family:var(--serif);font-size:18px;color:var(--teal);background:#fff;outline:none" onfocus="this.style.borderColor='var(--teal)'" placeholder="—"/> CLPD points` : `<span class="em">${a.proposedPts}</span> CLPD points`}</div></div>
         <div class="c-fact"><div class="c-fact-lbl">${a._real ? 'CREDITS (editable)' : 'PROPOSED CREDITS'}</div><div class="c-fact-val">${a._real ? `<input type="number" min="0" max="100" step="1" value="${a.proposedCredits === '' ? '' : a.proposedCredits}" oninput="onPointsInput('${a.ref}','credits',this.value)" onblur="onPointsBlur('${a.ref}')" style="width:72px;padding:4px 8px;border:1.5px solid var(--line2);border-radius:6px;font-family:var(--serif);font-size:18px;color:var(--teal);background:#fff;outline:none" onfocus="this.style.borderColor='var(--teal)'" placeholder="—"/> credits` : `<span class="em">${a.proposedCredits}</span> credits`}</div></div>
-        <div class="c-fact" style="grid-column:1/-1"><div class="c-fact-lbl">AUDIENCE</div><div class="c-fact-val">${a.audience}</div></div>
+        ${a.isProviderReg ? '' : `<div class="c-fact" style="grid-column:1/-1"><div class="c-fact-lbl">AUDIENCE</div><div class="c-fact-val">${a.audience}</div></div>`}
         <div class="c-fact" style="grid-column:1/-1"><div class="c-fact-lbl">REVIEWERS · LAD STAFF</div><div class="c-fact-val" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <div style="display:flex;align-items:center;gap:4px">
           <span style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase">R1</span>
@@ -530,15 +564,23 @@ function renderCenter(a){
       </div>
     </div>
 
+    ${applicationDetailsHTML(a)}
+
     <div class="c-section">
       <div class="c-eyebrow">SUBMITTED MATERIALS</div>
-      <div class="c-files">
-        ${a.files.map(f => `<div class="c-file" onclick="toast('Opening ${f.n}…')">
-          <div class="c-file-ico ${f.t}">${f.t.toUpperCase()}</div>
-          <div class="c-file-name">${f.n}</div>
-          <div class="c-file-size">${f.sz}</div>
-        </div>`).join('')}
-      </div>
+      ${a.attachments && a.attachments.length ? `<div class="c-files">
+        ${a.attachments.map(f => {
+          const name = f.name || f.n || 'Attachment';
+          const ext = (name.split('.').pop() || 'doc').toLowerCase();
+          const bytes = Number(f.size) || 0;
+          const size = f.sz || (bytes ? (bytes/1024/1024).toFixed(2) + ' MB' : '');
+          const label = f.label ? `<div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:3px">${esc(f.label)}</div>` : '';
+          const inner = `${label}<div class="c-file-ico ${ext}">${ext.toUpperCase()}</div><div class="c-file-name">${esc(name)}</div><div class="c-file-size">${esc(size)}</div>`;
+          return f.dataUrl
+            ? `<a class="c-file" href="${f.dataUrl}" download="${esc(name)}" target="_blank" style="text-decoration:none;color:inherit">${inner}</a>`
+            : `<div class="c-file" title="File content not available">${inner}</div>`;
+        }).join('')}
+      </div>` : `<div style="font-size:13px;color:var(--slate2);padding:10px 0">No files were attached to this application.</div>`}
     </div>
 
     <div class="c-section">
@@ -824,10 +866,17 @@ function _mapRow(row){
       parsedScores = { r1: s.r1 || {}, r2: s.r2 || {}, ai: s.ai || {} };
     } catch { /* ignore */ }
   }
+  const _kind = row.type === 'session_submission' ? 'session'
+    : (p.type === 'session_submission' ? 'session'
+    : (p.type === 'provider_registration' || row.type === 'provider_registration' ? 'provider registration'
+    : 'new'));
   return {
     _real: true,
+    _payload: p,
     ref: row.ref,
-    kind: row.type === 'session_submission' ? 'session' : (p.type === 'session_submission' ? 'session' : 'new'),
+    kind: _kind,
+    isProviderReg: _kind === 'provider registration',
+    attachments: Array.isArray(p.attachments) ? p.attachments : (Array.isArray(p.files) ? p.files : []),
     priority: _priorityFor(d),
     days: d,
     title: p.courseTitle || p.course || p.title || row.ref,
