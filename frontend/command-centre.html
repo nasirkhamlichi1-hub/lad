@@ -1545,10 +1545,16 @@
     document.getElementById('fbLayer').style.display='block';
     fbSetTabBtns();
     if(DATA){ fbPaint(); return; }
+    // Static fallback served by the frontend — used if the API has no data yet.
+    function loadStatic(){
+      fetch('feedback.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;})
+        .then(function(s){ DATA=(s&&s.summary)?s.summary:{courses:[],providers:[],totals:{}}; fbPaint(); })
+        .catch(function(){ document.getElementById('fbBody').innerHTML='<div style="color:#ff8095;padding:40px;text-align:center">Could not load feedback.</div>'; });
+    }
     fetch(base+'/api/v1/admin/feedback',{headers:{Authorization:'Bearer '+tok()}})
       .then(function(r){return r.ok?r.json():null;})
-      .then(function(j){ DATA=j||{courses:[],providers:[],totals:{}}; fbPaint(); })
-      .catch(function(){ document.getElementById('fbBody').innerHTML='<div style="color:#ff8095;padding:40px;text-align:center">Could not load feedback (sign in as an admin).</div>'; });
+      .then(function(j){ if(j&&j.courses&&j.courses.length){ DATA=j; fbPaint(); } else { loadStatic(); } })
+      .catch(function(){ loadStatic(); });
   };
   window.closeFeedback=function(){ document.getElementById('fbLayer').style.display='none'; };
   window.fbTab=function(t){ TAB=t; fbSetTabBtns(); fbRender(); };

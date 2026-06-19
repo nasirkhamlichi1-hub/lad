@@ -2562,6 +2562,27 @@ function showCalDay(d) {
 // ════════════════════════════════════════════
 // ── Real participant-feedback star ratings (from the backend) ───────────────
 var COURSE_RATINGS = {}; // id → { rating, provider_rating }
+var FB_STATIC = null;    // static feedback.json fallback (frontend-served)
+function fbCourseKey(name){
+  var s=String(name||'').toLowerCase();
+  s=s.replace(/[؀-ۿ]/g,' ').replace(/&#0?38;|&amp;/g,'and').replace(/&/g,'and').replace(/[‘’′`]/g,'');
+  s=s.replace(/\([^)]*\)/g,' ').split(/[–—:-]/)[0];
+  s=s.replace(/\b(updated content|e ?learning|masterclass|part\s*[i1]|aa\d+|bb\d+)\b/g,' ').replace(/[^a-z0-9]+/g,' ');
+  s=s.replace(/\b(the|a|an|of|in|and|for|to|under|uae|course|only|internal|employees)\b/g,' ');
+  return s.replace(/\s+/g,' ').trim();
+}
+function staticRatingFor(c){
+  if(!FB_STATIC) return null;
+  return (c.id && FB_STATIC.byCourseId[c.id]) || FB_STATIC.byCourseKey[fbCourseKey(c.title)] || null;
+}
+function loadStaticFeedback(){
+  fetch('feedback.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(s){
+    if(!s) return; FB_STATIC=s;
+    (ALL_COURSES||[]).forEach(function(c){ if(!c.rating){ var r=staticRatingFor(c); if(r){ c.rating=r; COURSE_RATINGS[c.id]={rating:r,provider_rating:r.provider}; } } });
+    if(typeof rerenderCatalogue==='function') rerenderCatalogue();
+  }).catch(function(){});
+}
+try{ if(document.readyState!=='loading') loadStaticFeedback(); else document.addEventListener('DOMContentLoaded', loadStaticFeedback); }catch(e){}
 function starSVG(val, size){
   size = size || 13; var v = Math.max(0, Math.min(5, Number(val)||0));
   var full = Math.floor(v), half = (v-full) >= 0.25 && (v-full) < 0.75;
@@ -2607,6 +2628,9 @@ function renderCourseRatings(c){
   }
   var cached = COURSE_RATINGS[c.id];
   if(cached){ paint(cached.rating, cached.provider_rating || (cached.rating&&cached.rating.provider)); return; }
+  // Static frontend fallback first (always available); API can refine later.
+  var stat = staticRatingFor(c);
+  if(stat){ COURSE_RATINGS[c.id]={rating:stat,provider_rating:stat.provider}; paint(stat, stat.provider); }
   try{
     var base=(window.LAD_API_BASE)||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com';
     fetch(base.replace(/\/$/,'')+'/api/v1/courses/'+encodeURIComponent(c.id)+'/feedback')
@@ -2661,7 +2685,10 @@ function loadRealCourses(){
           .filter(function(c){ return c.format==='elearning' || c.sessions.length>0; });
         if(!mapped.length) return;
         ALL_COURSES = mapped;
-        mapped.forEach(function(c){ if(c.rating) COURSE_RATINGS[c.id]={rating:c.rating,provider_rating:c.provider_rating}; });
+        mapped.forEach(function(c){
+          if(!c.rating){ var s=staticRatingFor(c); if(s){ c.rating=s; c.provider_rating=s.provider; } }
+          if(c.rating) COURSE_RATINGS[c.id]={rating:c.rating,provider_rating:c.provider_rating||(c.rating&&c.rating.provider)};
+        });
         rerenderCatalogue();
       }).catch(function(){});
   }catch(e){}
