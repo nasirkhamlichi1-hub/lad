@@ -314,7 +314,7 @@
   </div>
 </div>
 
-<div id="diveHint">◎ Click any node to dive in · ▶ Tour for the cinematic fly-through</div>
+<div id="diveHint">◎ Drag to fly · scroll to zoom · shift-drag to pan · click a node to dive in</div>
 <div id="tourCap"><div class="tc-t" id="tcT"></div><div class="tc-s" id="tcS"></div></div>
 <div id="focusPanel">
   <div class="fp-eye" id="fpEye">PROGRAMME NODE</div>
@@ -559,7 +559,10 @@
     var camera=new THREE.PerspectiveCamera(55,W/H,0.1,2000); camera.position.set(0,40,250);
     var group=new THREE.Group(); scene.add(group);
     TW.scene=scene;TW.renderer=renderer;TW.camera=camera;TW.group=group;TW.anchors=[];TW.cores=[];
-    TW.camTarget=new THREE.Vector3(0,40,250); TW.lookTarget=new THREE.Vector3(0,0,0);
+    // Free-fly orbit state (spherical around a movable target) + framing helpers.
+    TW.orb={tt:0.7,tp:1.0,tr:265,cx:0,cy:0,cz:0}; TW.orbR={t:0.7,p:1.0,r:265,x:0,y:0,z:0};
+    function frameOn(p,radius){ TW.orb.cx=p.x;TW.orb.cy=p.y;TW.orb.cz=p.z; if(radius)TW.orb.tr=radius; }
+    function frameHome(){ TW.orb.cx=0;TW.orb.cy=0;TW.orb.cz=0;TW.orb.tr=265; }
 
     var known=clusters.map(function(c){return Number(c.n);}).filter(function(v){return Number.isFinite(v)&&v>0;});
     var maxN=known.length?Math.max.apply(null,known):1;
@@ -641,8 +644,19 @@
       var lg=$('bandLegend'); if(lg) lg.style.display='flex';
     };
 
-    var mx=0,my=0, pointer=new THREE.Vector2(-2,-2);
-    window.addEventListener('mousemove',function(e){ mx=(e.clientX/W-.5); my=(e.clientY/H-.5); pointer.x=(e.clientX/W)*2-1; pointer.y=-(e.clientY/H)*2+1; });
+    var pointer=new THREE.Vector2(-2,-2);
+    window.addEventListener('mousemove',function(e){ pointer.x=(e.clientX/W)*2-1; pointer.y=-(e.clientY/H)*2+1; });
+    // ── Free-fly navigation: drag to orbit, right/shift-drag to pan, wheel to zoom ──
+    var lx=0,ly=0,downX=0,downY=0;
+    canvas.addEventListener('pointerdown',function(e){ if(e.button===2||e.shiftKey){TW.pan=true;}else{TW.drag=true;} lx=e.clientX;ly=e.clientY;downX=e.clientX;downY=e.clientY;TW.moved=false; });
+    window.addEventListener('pointerup',function(){ TW.drag=false; TW.pan=false; });
+    window.addEventListener('pointermove',function(e){ if(!TW.drag&&!TW.pan) return; var dx=e.clientX-lx,dy=e.clientY-ly; lx=e.clientX;ly=e.clientY;
+      if(Math.abs(e.clientX-downX)+Math.abs(e.clientY-downY)>6) TW.moved=true;
+      if(TW.drag){ TW.orb.tt-=dx*0.005; TW.orb.tp=Math.max(0.18,Math.min(2.95,TW.orb.tp-dy*0.005)); }
+      else { var k=TW.orbR.r*0.0016; var right=new THREE.Vector3().setFromMatrixColumn(camera.matrix,0); var up=new THREE.Vector3().setFromMatrixColumn(camera.matrix,1);
+        var mv=right.multiplyScalar(-dx*k).add(up.multiplyScalar(dy*k)); TW.orb.cx+=mv.x; TW.orb.cy+=mv.y; TW.orb.cz+=mv.z; } });
+    canvas.addEventListener('wheel',function(e){ e.preventDefault(); TW.orb.tr=Math.max(45,Math.min(900,TW.orb.tr*(e.deltaY>0?1.1:0.9))); },{passive:false});
+    canvas.addEventListener('contextmenu',function(e){ e.preventDefault(); });
     function resize(){ W=window.innerWidth;H=window.innerHeight; camera.aspect=W/H; camera.updateProjectionMatrix(); renderer.setSize(W,H); }
     window.addEventListener('resize',resize);
 
@@ -660,6 +674,7 @@
       // Don't hijack real controls; otherwise a click anywhere a node sits is fair game.
       if(t.closest('#focusPanel')||t.closest('header')||t.closest('button')||t.closest('a')) return;
       if(TW.tourActive){ window.exitFocus(); return; }   // any click ends the cinematic tour
+      if(TW.moved){ TW.moved=false; return; }            // it was a drag-to-fly, not a click
       pick();
       if(hovered) window.focusCluster(hovered.key);
       else if(TW.focusKey && (t.id==='twin'||t.closest('#centerstage'))) window.exitFocus();
@@ -724,14 +739,13 @@
     window.focusCluster=function(key){
       var c=TW.cores.filter(function(x){return x.key===key;})[0]; if(!c) return;
       TW.focusKey=key;
-      var wp=c.pos.clone().applyMatrix4(group.matrixWorld);
-      TW.camTarget.set(wp.x*0.55, wp.y+16, wp.z*0.55+110); TW.lookTarget.copy(wp);
+      frameOn(c.pos.clone(), c.theme?150:95);
       document.body.classList.add('focus');
       if(THEME_VIEW[key]){ if(window.openLayer) window.openLayer(THEME_VIEW[key]); }
       else showFocusPanel(key);
     };
     window.exitFocus=function(){
-      TW.focusKey=null; TW.camTarget.set(mx*60,40,250); TW.lookTarget.set(0,0,0);
+      TW.focusKey=null; frameHome();
       document.body.classList.remove('focus'); var fp=$('focusPanel'); if(fp) fp.classList.remove('on');
       if(TW.tourActive){ TW.tourActive=false; clearTimeout(tourTimer); var tc=$('tourCap'); if(tc) tc.classList.remove('on'); }
     };
@@ -755,8 +769,8 @@
       var step=TOUR[i], o=window.__OV, tc=$('tourCap'); tc.classList.remove('on');
       setTimeout(function(){ if(!TW.tourActive) return;
         $('tcT').textContent=step.t; $('tcS').textContent=(typeof step.s==='function'?step.s(o):step.s)||''; tc.classList.add('on');
-        if(step.key){ var c=TW.cores.filter(function(x){return x.key===step.key;})[0]; if(c){ var wp=c.pos.clone().applyMatrix4(group.matrixWorld); TW.camTarget.set(wp.x*0.5, wp.y+14, wp.z*0.5+120); TW.lookTarget.copy(wp); } }
-        else { TW.camTarget.set(0,40,250); TW.lookTarget.set(0,0,0); }
+        if(step.key){ var c=TW.cores.filter(function(x){return x.key===step.key;})[0]; if(c){ frameOn(c.pos.clone(), 130); } }
+        else { frameHome(); }
       },350);
       tourTimer=setTimeout(function(){ tourStep(i+1); }, 4200);
     }
@@ -773,10 +787,12 @@
       });
     }
     function loop(){ TW.raf=requestAnimationFrame(loop);
-      if(TW.spin && !TW.focusKey) group.rotation.y+=0.0016;
-      group.rotation.x += (((TW.focusKey?0:my*0.3))-group.rotation.x)*0.04;
-      if(!TW.focusKey){ TW.camTarget.set(mx*60,40,250); TW.lookTarget.set(0,0,0); }
-      camera.position.lerp(TW.camTarget,0.06); curLook.lerp(TW.lookTarget,0.08); camera.lookAt(curLook);
+      // free-fly orbit camera (damped); gentle idle auto-spin when untouched
+      if(!TW.drag&&!TW.pan&&!TW.focusKey&&!TW.tourActive&&TW.spin) TW.orb.tt+=0.0012;
+      var o=TW.orb,r=TW.orbR;
+      r.t+=(o.tt-r.t)*0.09; r.p+=(o.tp-r.p)*0.09; r.r+=(o.tr-r.r)*0.09; r.x+=(o.cx-r.x)*0.09; r.y+=(o.cy-r.y)*0.09; r.z+=(o.cz-r.z)*0.09;
+      camera.position.set(r.x+r.r*Math.sin(r.p)*Math.cos(r.t), r.y+r.r*Math.cos(r.p), r.z+r.r*Math.sin(r.p)*Math.sin(r.t));
+      camera.lookAt(r.x,r.y,r.z);
       pick();
       // living booking-flow beams
       if(TW.flows){ var sp=0.0055+(TW.health!=null?(1-TW.health/100)*0.004:0); TW.flows.forEach(function(f){ var p=f.geo.attributes.position.array;
