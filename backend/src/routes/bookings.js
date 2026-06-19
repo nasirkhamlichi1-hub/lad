@@ -227,7 +227,9 @@ router.patch('/:id', requireAuth, (req, res) => {
         } catch (_) {}
       }
       if (booking.session_id) {
-        db.prepare("UPDATE course_sessions SET seats_remaining = seats_remaining + 1, status = CASE WHEN status = 'closed' THEN 'scheduled' ELSE status END WHERE id = ?").run(booking.session_id);
+        // Refund the seat but never let seats_remaining exceed the session
+        // capacity (guards against double-cancel races inflating availability).
+        db.prepare("UPDATE course_sessions SET seats_remaining = MIN(COALESCE(seats_remaining,0) + 1, COALESCE(capacity, seats_remaining + 1)), status = CASE WHEN status = 'closed' THEN 'scheduled' ELSE status END WHERE id = ?").run(booking.session_id);
       }
     } catch (_) {}
   }

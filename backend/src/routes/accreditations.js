@@ -129,10 +129,15 @@ function awardSessionPoints(row) {
       const lawyer = matchLawyer(item);
       const email = ((item && item.email) || (lawyer && lawyer.email) || '').toString().toLowerCase();
       if (!lawyer) { unmatched.push((item && (item.email || item.name)) || String(item)); continue; }
-      insert.run(rid('CPD-'), email || (lawyer.id + '@lad'), (item && item.name) || `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || null,
+      // ON CONFLICT DO NOTHING → changes === 0 when this attendee already has a
+      // record for this course. Only award the running points balance when a
+      // record was actually inserted, so re-running the award is idempotent.
+      const info = insert.run(rid('CPD-'), email || (lawyer.id + '@lad'), (item && item.name) || `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || null,
         lawyer.id, code, title, provider, per, row.reviewed_by || row.submitted_by || null, (row.submitted_by_email || '').toLowerCase() || null);
-      store.awardCpdPoints({ lawyerId: lawyer.id, points: per, source: 'accreditation', refId: row.ref });
-      awarded.push(email || lawyer.id);
+      if (info.changes > 0) {
+        store.awardCpdPoints({ lawyerId: lawyer.id, points: per, source: 'accreditation', refId: row.ref });
+        awarded.push(email || lawyer.id);
+      }
     }
     db.prepare('UPDATE accreditations SET points_awarded_at = ? WHERE ref = ?').run(new Date().toISOString(), row.ref);
   });

@@ -127,9 +127,9 @@ router.get('/transactions', requireAuth, (req, res) => {
     ).all(limit);
   } catch (_) {}
   const kindOf = (type, amount) => {
-    if (type === 'refund' || amount < 0 && type !== 'use') return 'refund';
+    if (type === 'transfer') return 'adjustment';   // pool ↔ lawyer move, not a refund
     if (type === 'use') return 'booking';
-    if (type === 'transfer') return 'adjustment';
+    if (type === 'refund' || amount < 0) return 'refund';
     return 'lawyer';
   };
   const data = rows.map((t) => ({
