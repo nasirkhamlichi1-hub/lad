@@ -3507,23 +3507,31 @@ function catFmtTime(iso){ var d=new Date(iso); var h=d.getUTCHours(),m=d.getUTCM
 async function loadCatalogueLive() {
   try {
     var base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
-    var r = await fetch(base.replace(/\/$/,'') + '/api/v1/courses/upcoming');
+    var tk=''; try{ tk=localStorage.getItem('lad_token')||''; }catch(e){}
+    // Authenticated so the lawyer also receives their OWN firm's private
+    // accredited courses (never another firm's — enforced server-side).
+    var r = await fetch(base.replace(/\/$/,'') + '/api/v1/courses/upcoming', tk?{headers:{Authorization:'Bearer '+tk}}:{});
     if (!r.ok) return;
     var list = await r.json(); if (!Array.isArray(list)) list = [];
-    CAT_LIVE = list.filter(function (c) { return (c.sessions || []).length; }).map(function (c) {
+    // Show courses with a scheduled session, plus accredited courses (incl. the
+    // firm's own private ones) which the firm schedules / delivers internally.
+    CAT_LIVE = list.filter(function (c) { return (c.sessions || []).length || (c.type||'').toLowerCase()==='accredited'; }).map(function (c) {
       var pts=Number(c.pts)||2, credits=Number(c.credits)||5, isMand=(c.type||'').toLowerCase()==='mandatory';
-      var provider=c.provider_id||'LAD Academy';
+      var isPriv=!!c.private, provider=c.provider_name||c.accredited_provider||c.provider_id||'LAD Academy';
+      var tag=isMand?'MANDATORY':(isPriv?'FIRM · ACCREDITED':'ACCREDITED');
+      var sess=(c.sessions||[]);
       COURSES[c.id] = {
-        title:c.title, icon:'', bg: isMand?'linear-gradient(135deg,#241a38,#463a66)':'linear-gradient(135deg,#0a2040,#16386a)',
-        type:(isMand?'MANDATORY':'ACCREDITED')+' · '+((c.format||'face-to-face').toUpperCase()),
+        title:c.title, icon:'', bg: isMand?'linear-gradient(135deg,#241a38,#463a66)':(isPriv?'linear-gradient(135deg,#0b2e2a,#0f4a40)':'linear-gradient(135deg,#0a2040,#16386a)'),
+        type:tag+' · '+((c.format||'face-to-face').toUpperCase()),
         points:pts, provider:provider, location:c.location||'Dubai', credits:credits, cost:credits+' credits',
-        description:c.title+' — a '+(isMand?'mandatory':'accredited')+' CLPD course. Seats are limited per session.',
-        elearning:false, skillsImpact:(c.tags||[]).slice(0,2).map(function(t){return {label:(t.label||'').slice(0,14),gain:Math.round((t.weight||0.5)*30),from:50};}),
+        description:c.description||(c.title+' — a '+(isMand?'mandatory':'accredited')+' CLPD course.'),
+        elearning:false, private:isPriv, ownerFirm:c.owner_firm_id||null,
+        skillsImpact:(c.tags||[]).slice(0,2).map(function(t){return {label:(t.label||'').slice(0,14),gain:Math.round((t.weight||0.5)*30),from:50};}),
         matchScore:'', matchReason:'',
         rating:c.rating||null, provider_rating:c.provider_rating||null,
-        sessions:c.sessions.map(function(s){ return {date:catFmtDate(s.scheduled_at),start:catFmtTime(s.scheduled_at),end:s.end_at?catFmtTime(s.end_at):'',seats:Number(s.seats_remaining)||0,partner:provider,lang:s.language||'English',low:(Number(s.seats_remaining)||0)<=5,sid:s.id}; }),
+        sessions:sess.map(function(s){ return {date:catFmtDate(s.scheduled_at),start:catFmtTime(s.scheduled_at),end:s.end_at?catFmtTime(s.end_at):'',seats:Number(s.seats_remaining)||0,partner:provider,lang:s.language||'English',low:(Number(s.seats_remaining)||0)<=5,sid:s.id}; }),
       };
-      return { id:c.id, title:c.title, pts:pts, credits:credits, isMand:isMand, internal:false, provider:provider, sessions:c.sessions };
+      return { id:c.id, title:c.title, pts:pts, credits:credits, isMand:isMand, internal:isPriv, provider:provider, sessions:sess };
     });
     markAttendedCourses();
   } catch (e) { console.warn('[lawyer-portal] loadCatalogueLive:', e.message); }
@@ -4100,7 +4108,8 @@ function renderSessions(sessions, booked) {
       <span class="bk-session-provider">${s.partner}</span>
     </div>`;
   }).join('');
-  document.getElementById('bkSessionList').innerHTML = html;
+  document.getElementById('bkSessionList').innerHTML = html ||
+    '<div style="border:1.5px dashed var(--line2);border-radius:10px;padding:16px;text-align:center;color:var(--slate2);font-size:13px">No scheduled session yet. This accredited course is delivered by your firm — your firm will publish dates here.</div>';
 }
 
 function selectSession(idx, row) {
