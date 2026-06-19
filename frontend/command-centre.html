@@ -125,7 +125,8 @@
     backdrop-filter:blur(18px);box-shadow:0 0 60px rgba(0,0,0,.55),0 0 34px rgba(52,225,255,.14);
     transform:translateX(440px);opacity:0;transition:transform .55s cubic-bezier(.25,1,.35,1),opacity .4s;pointer-events:none}
   #focusPanel.on{transform:none;opacity:1;pointer-events:auto}
-  #fpClose{position:fixed;top:14px;right:14px;width:27px;height:27px;border-radius:8px;background:rgba(7,12,26,.92);border:1px solid var(--panel-b);color:var(--dim);cursor:pointer;font-size:13px;z-index:42;display:grid;place-items:center;box-shadow:0 0 10px rgba(0,0,0,.5)}
+  #fpClose{position:fixed;top:104px;right:40px;width:30px;height:30px;border-radius:9px;background:rgba(10,16,32,.96);border:1px solid var(--panel-b);color:#fff;cursor:pointer;font-size:14px;z-index:60;display:none;place-items:center;box-shadow:0 0 14px rgba(0,0,0,.6)}
+  #focusPanel.on ~ #fpClose{display:grid}
   #fpClose:hover{color:#fff;border-color:var(--dim)}
   #focusPanel .fp-eye{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
   #focusPanel .fp-title{font-family:var(--title);font-size:22px;font-weight:700;color:#eaf4ff;margin:4px 0 2px;letter-spacing:.5px}
@@ -376,7 +377,6 @@
 </div>
 <div id="tourCap"><div class="tc-t" id="tcT"></div><div class="tc-s" id="tcS"></div></div>
 <div id="focusPanel">
-  <button id="fpClose" title="Close" onclick="document.getElementById('focusPanel').classList.remove('on')">✕</button>
   <div class="fp-eye" id="fpEye">PROGRAMME NODE</div>
   <div class="fp-title" id="fpTitle">—</div>
   <div class="fp-sub" id="fpSub">Live facts</div>
@@ -389,6 +389,8 @@
   </div>
   <button class="fp-btn back" onclick="exitFocus()">← Back to orbit</button>
 </div>
+<!-- Close X lives OUTSIDE the scrolling panel so it floats fixed at the top and never scrolls away. Shown only while the panel is open. -->
+<button id="fpClose" title="Close" onclick="document.getElementById('focusPanel').classList.remove('on')">✕</button>
 
 <!-- Deep layer: market & course intelligence -->
 <div id="deepLayer">
@@ -727,7 +729,7 @@
     function typeHex(t){ t=(t||'').toLowerCase(); return t==='mandatory'?0x9a6cff:t.indexOf('internal')>=0?0xffb84d:0x1fe0b4; }
     var _an=null,_up=null;
     function needAnalytics(){ return _an?Promise.resolve(_an):getJSON('/api/v1/admin/course-analytics').then(function(d){_an=d;return d;}); }
-    function needUpcoming(){ return _up?Promise.resolve(_up):getJSON('/api/v1/courses/upcoming').then(function(list){ var m={}; (Array.isArray(list)?list:[]).forEach(function(c){ m[c.id]=c.sessions||[]; }); _up=m; return m; }); }
+    function needUpcoming(){ return _up?Promise.resolve(_up):getJSON('/api/v1/courses/upcoming').then(function(list){ var m={}; (Array.isArray(list)?list:[]).forEach(function(c){ m[c.id]=(c.sessions||[]).map(function(s){ if(!s.course_title) s.course_title=c.title; return s; }); }); _up=m; return m; }); }
     function needOVp(){ return window.__OV?Promise.resolve(window.__OV):getJSON('/api/v1/admin/oversight').then(function(d){ if(d) window.__OV=d; return d; }); }
 
     // ── Drill registry: every node type maps to a function returning the spec
@@ -800,20 +802,29 @@
       firmLawyers:function(node){ var L=(node.meta&&node.meta.lawyers)||[]; var fn=node.meta.firm||'Firm'; return Promise.resolve(denseLawyerGalaxy(fn+' · lawyers','Lawyers',0x34e1ff,L,fn+' lawyers')); },
       firmBand:function(node){ var L=(node.meta&&node.meta.lawyers)||[], b=node.meta.band, fn=node.meta.firm||'Firm'; var f=L.filter(function(l){var p=l.points;return b==='critical'?p<8:b==='atrisk'?(p>=8&&p<16):p>=16;}); var col=b==='critical'?0xff5e7e:b==='atrisk'?0xffb84d:0x3df0a0; return Promise.resolve(denseLawyerGalaxy(node.label,b,col,f,fn+' · '+b)); },
       firmCourses:function(node){ var C=(node.meta&&node.meta.courses)||[]; return Promise.resolve({title:(node.meta.firm||'Firm')+' · courses',center:{label:'Courses',color:0x1fe0b4},radius:150,children:C.slice(0,24).map(function(c){return {label:c.title,sub:c.count+' bookings',count:Math.max(c.count,1),color:0x1fe0b4,type:'firmCourse',id:c.title,drill:false,meta:c};})}); },
-      lawyersRoot:function(){ return needOVp().then(function(ov){ var L=(ov&&ov.lawyers)||{}; return {title:'The Profession',center:{label:'Lawyers',color:0x34e1ff},radius:115,children:[
-        {label:'Critical',sub:'below 8 pts',count:L.critical,color:0xff5e7e,type:'band',id:'critical',drill:true},
-        {label:'At Risk',sub:'8–15 pts',count:L.atRisk,color:0xffb84d,type:'band',id:'atrisk',drill:true},
-        {label:'Compliant',sub:'16+ pts',count:L.compliant,color:0x3df0a0,type:'band',id:'compliant',drill:true}
-      ]}; }); },
-      band:function(node){ return getJSON('/api/v1/admin/lawyers?band='+encodeURIComponent(node.id)+'&limit=800').then(function(d){ var L=(d&&d.lawyers)||[]; if(!L.length) return null;
-        var n=L.length, GA=Math.PI*(3-Math.sqrt(5)), R=340, col=node.id==='critical'?0xff5e7e:node.id==='atrisk'?0xffb84d:0x3df0a0;
-        var dir=[]; for(var j=0;j<n;j++) dir.push(j); for(var j2=n-1;j2>0;j2--){ var m=Math.floor(Math.random()*(j2+1)); var tt=dir[j2]; dir[j2]=dir[m]; dir[m]=tt; }
+      lawyersRoot:function(){ return getJSON('/api/v1/admin/points-distribution').then(function(d){ var bs=(d&&d.buckets)||[]; if(!bs.length) return null;
+        // A moon per CPD points tier: Critical (<4) → Completed (16). Colour runs
+        // red → amber → green along the journey to the 16-point obligation.
+        function bcol(b){ if(b.key==='lt4') return 0xff5e7e; if(b.key==='done') return 0x3df0a0; var mid=(b.min+b.max)/2; return mid<8?0xff8a5e:mid<12?0xffb84d:0xa6e85e; }
+        var kids=bs.map(function(b){ return {label:b.label,sub:b.sub,count:Math.max(b.count,1),color:bcol(b),type:'band',id:b.key,drill:true,meta:{min:b.min,max:b.max,label:b.label,count:b.count}}; });
+        return {title:'The Profession',center:{label:'Lawyers',color:0x34e1ff},radius:195,children:kids}; }); },
+      band:function(node){ var m=node.meta||{}; var q=(m.min!=null||m.max!=null)?('min='+(m.min!=null?m.min:0)+'&max='+(m.max!=null?m.max:99999)):('band='+encodeURIComponent(node.id));
+        return getJSON('/api/v1/admin/lawyers?'+q+'&limit=800').then(function(d){ var L=(d&&d.lawyers)||[]; if(!L.length) return null;
+        var n=L.length, GA=Math.PI*(3-Math.sqrt(5)), R=340, col=node.color||(node.id==='critical'?0xff5e7e:node.id==='atrisk'?0xffb84d:0x3df0a0), lbl=m.label||node.label||'Cohort';
+        var dir=[]; for(var j=0;j<n;j++) dir.push(j); for(var j2=n-1;j2>0;j2--){ var mm=Math.floor(Math.random()*(j2+1)); var tt=dir[j2]; dir[j2]=dir[mm]; dir[mm]=tt; }
         var kids=L.map(function(l,i){ var dk=dir[i]+0.5, phi=Math.acos(1-2*dk/n), th=GA*dk; var pos=[Math.sin(phi)*Math.cos(th)*R, Math.cos(phi)*R, Math.sin(phi)*Math.sin(th)*R];
           return {label:l.name,sub:l.points+' pts · '+(l.firm||'—'),count:Math.max(l.points,1),color:bandColor(l.points),type:'lawyer',id:l.id,drill:true,meta:{points:l.points,firm:l.firm},pos:pos,noLabel:(i>=10)}; });
-        return {title:node.label+' lawyers',center:{label:node.label,color:col,data:{cohort:node.label,inBand:d.total,showing:n}},children:kids,dense:true,spread:R}; }); },
+        return {title:lbl+' lawyers',center:{label:lbl,color:col,data:{cohort:lbl,inBand:d.total,showing:n}},children:kids,dense:true,spread:R}; }); },
       lawyer:function(node){ return getJSON('/api/v1/lawyers/'+encodeURIComponent(node.id)).then(function(d){ var att=(d&&(d.attendance||d.bookings))||[]; if(!att.length) return null;
         return {title:node.label,center:{label:node.label,color:bandColor(node.meta&&node.meta.points)},radius:110,children:att.slice(0,24).map(function(a){ var p=Number(a.points||a.points_earned||a.cpd_points)||0; return {label:a.course_title||a.title||a.course_code||'Course',sub:(p?('+'+p+' pts'):(a.created_at?fdate(a.created_at):'')),count:Math.max(p,1),color:0x1fe0b4,type:'attcourse',id:a.course_code||a.course_id||'',drill:false,meta:a};})}; }); },
-      coursesRoot:function(){ return needAnalytics().then(function(d){ var cs=(d&&d.courses)||[]; return {title:'Courses',center:{label:'Courses',color:0x1fe0b4},radius:155,children:cs.slice(0,24).map(function(c){return {label:c.title,sub:nf(c.totalBookings)+' booked',count:Math.max(c.totalBookings,1),color:typeHex(c.type),type:'course',id:c.id,drill:true,meta:c};})}; }); },
+      coursesRoot:function(){ return Promise.all([needAnalytics(),needUpcoming()]).then(function(r){ var d=r[0], up=r[1]||{};
+        // Live catalogue only: a course appears if it has an upcoming session OR
+        // real bookings — dormant entries with neither (no session, 0 booked)
+        // are not shown, so what's here matches what's actually happening.
+        var all=(d&&d.courses)||[]; var cs=all.filter(function(c){ var hasSess=(up[c.id]&&up[c.id].length)>0; return hasSess || (Number(c.totalBookings)||0)>0; });
+        if(!cs.length) cs=all;
+        cs=cs.slice().sort(function(a,b){return (b.totalBookings||0)-(a.totalBookings||0);});
+        return courseGalaxy('Courses · Live Catalogue','Courses',0x1fe0b4,cs,function(c){return typeHex(c.type);},{view:'courses'}); }); },
       course:function(node){ return needUpcoming().then(function(map){ var ss=map[node.id]||[]; if(!ss.length) return null; return {title:node.label,center:{label:node.label,color:0x1fe0b4},radius:120,children:ss.slice(0,20).map(function(s){var cap=Number(s.capacity)||0,seats=Number(s.seats_remaining)||0;return {label:fdate(s.scheduled_at),sub:seats+'/'+cap+' seats',count:Math.max(cap-seats,1),color:0x6ab8ff,type:'session',id:s.id,drill:false,meta:s};})}; }); },
       providersRoot:function(){ return needAnalytics().then(function(d){ var cs=(d&&d.courses)||[]; var g={}; cs.forEach(function(c){ var p=c.provider||'LAD'; (g[p]=g[p]||{n:0,b:0}); g[p].n++; g[p].b+=c.totalBookings||0; });
         var arr=Object.keys(g).map(function(k){return {k:k,n:g[k].n,b:g[k].b};}).sort(function(a,b){return b.b-a.b;});
@@ -837,7 +848,7 @@
         var kids=out.map(function(s,i){ var frac=maxL>minL?(s._booked-minL)/(maxL-minL):0.5; var r=farR-Math.pow(frac,0.75)*(farR-closeR);
           var dk=dir[i]+0.5, phi=Math.acos(1-2*dk/n), th=GA*dk; var pos=[Math.sin(phi)*Math.cos(th)*r, Math.cos(phi)*r, Math.sin(phi)*Math.sin(th)*r];
           var cap=s._cap, seats=Number(s.seats_remaining)||0, ratio=cap?s._booked/cap:0, col=ratio>=0.8?0x3df0a0:ratio>=0.4?0x6ab8ff:0xffb84d;
-          return {label:fdate(s.scheduled_at),sub:seats+'/'+cap+' seats',count:Math.max(s._booked,1),color:col,type:'session',id:s.id,drill:false,meta:s,pos:pos,noLabel:(i>=10)}; });
+          return {label:(s.course_title||fdate(s.scheduled_at)),sub:fdate(s.scheduled_at)+' · '+seats+'/'+cap+' seats',count:Math.max(s._booked,1),color:col,type:'session',id:s.id,drill:false,meta:s,pos:pos,noLabel:(i>=10)}; });
         var totCap=0,totBk=0,ub=0,wb=0; out.forEach(function(s){ totCap+=s._cap; totBk+=s._booked; var rr=s._cap?s._booked/s._cap:0; if(rr<0.4)ub++; else if(rr>=0.8)wb++; });
         return {title:'Upcoming Sessions',center:{label:'Sessions · '+nf(n),color:0x6ab8ff,data:{kind:'sessions',sessions:n,seats:totCap,booked:totBk,fillPct:totCap?Math.round(100*totBk/totCap):0,underBooked:ub,wellBooked:wb}},children:kids,dense:true,spread:farR}; }); }
     };
@@ -879,7 +890,7 @@
       var key='n'+Math.random().toString(36).slice(2,9);
       function label(){ if(opt.noLabel) return; var hex='#'+('000000'+color.toString(16)).slice(-6);
         var el=document.createElement('div'); el.className='twin-label'+(isC?'':' dim');
-        el.innerHTML='<b>'+(count!=null?nf(count):'')+'</b>'+esc(opt.label||'')+(opt.sub?'<div style="font-family:var(--mono);font-size:8.5px;color:'+hex+';letter-spacing:.4px;margin-top:1px">'+esc(opt.sub)+'</div>':'');
+        el.innerHTML='<b>'+(count!=null?nf(count):'')+'</b>'+esc(opt.label||'')+(opt.sub?'<div style="font-family:var(--mono);font-size:8.5px;color:rgba(235,242,255,.92);letter-spacing:.4px;margin-top:1px">'+esc(opt.sub)+'</div>':'');
         stage.appendChild(el); anchorsArr.push({key:key,el:el,pos:pos}); }
       // Dense mode (e.g. hundreds of firms): a single glowing core sized by the
       // metric, raycastable directly — no swarm/halo/hit, so it scales to 500+.
@@ -911,13 +922,17 @@
       var maxC=Math.max.apply(null,cnts), minC=Math.min.apply(null,cnts), vary=(maxC>minC && n>=12);
       var dir=[]; for(var j=0;j<n;j++) dir.push(j);
       for(var j2=n-1;j2>0;j2--){ var m=Math.floor(Math.random()*(j2+1)); var tt=dir[j2]; dir[j2]=dir[m]; dir[m]=tt; }
+      // First place every child, then keep persistent labels ONLY for the moons
+      // closest to the sun (smallest radius); the rest reveal as you fly near.
+      var poss=spec.children.map(function(ch,i){ if(ch.pos) return new THREE.Vector3(ch.pos[0],ch.pos[1],ch.pos[2]);
+        var r = vary ? (R*1.7 - Math.pow((Number(ch.count)-minC)/(maxC-minC||1),0.7)*(R*1.1)) : R;
+        var dk=dir[i]+0.5, phi=Math.acos(1-2*dk/n), th=GA*dk;
+        return new THREE.Vector3(Math.sin(phi)*Math.cos(th)*r, Math.cos(phi)*r, Math.sin(phi)*Math.sin(th)*r); });
+      var keepN=(n<=12)?n:6, byDist=poss.map(function(p,i){return {i:i,d:p.length()};}).sort(function(a,b){return a.d-b.d;}), keep={};
+      for(var k2=0;k2<keepN && k2<byDist.length;k2++) keep[byDist[k2].i]=1;
       spec.children.forEach(function(ch,i){
-        var pos;
-        if(ch.pos) pos=new THREE.Vector3(ch.pos[0],ch.pos[1],ch.pos[2]);
-        else { var r = vary ? (R*1.7 - Math.pow((Number(ch.count)-minC)/(maxC-minC||1),0.7)*(R*1.1)) : R;
-          var dk=dir[i]+0.5, phi=Math.acos(1-2*dk/n), th=GA*dk;
-          pos=new THREE.Vector3(Math.sin(phi)*Math.cos(th)*r, Math.cos(phi)*r, Math.sin(phi)*Math.sin(th)*r); }
-        addBall(grp,{pos:pos,color:ch.color,label:ch.label,sub:ch.sub,count:ch.count,node:ch,noLabel:(ch.noLabel||(!dense&&i>=10)),dense:dense},cores,anchors);
+        var pos=poss[i];
+        addBall(grp,{pos:pos,color:ch.color,label:ch.label,sub:ch.sub,count:ch.count,node:ch,noLabel:!keep[i],dense:dense},cores,anchors);
         if(!dense){
           grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),pos]),new THREE.LineBasicMaterial({color:ch.color,transparent:true,opacity:.2,blending:THREE.AdditiveBlending})));
           var N=10,fa=new Float32Array(N*3),t=[]; for(var k=0;k<N;k++)t.push(Math.random()); var fgeo=new THREE.BufferGeometry(); fgeo.setAttribute('position',new THREE.BufferAttribute(fa,3)); grp.add(new THREE.Points(fgeo,new THREE.PointsMaterial({color:ch.color,size:4.4,map:SPRITE,transparent:true,opacity:.92,blending:THREE.AdditiveBlending,depthWrite:false}))); flows.push({a:new THREE.Vector3(0,0,0),b:pos.clone(),t:t,geo:fgeo});

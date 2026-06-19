@@ -450,8 +450,36 @@ router.get('/lawyers', requireAuth, (req, res) => {
   if (band === 'critical') rows = rows.filter((r) => r.pts < 8);
   else if (band === 'atrisk' || band === 'at-risk') rows = rows.filter((r) => r.pts >= 8 && r.pts < 16);
   else if (band === 'compliant') rows = rows.filter((r) => r.pts >= 16);
+  const min = req.query.min != null && req.query.min !== '' ? parseInt(req.query.min, 10) : null;
+  const max = req.query.max != null && req.query.max !== '' ? parseInt(req.query.max, 10) : null;
+  if (min != null && !isNaN(min)) rows = rows.filter((r) => r.pts >= min);
+  if (max != null && !isNaN(max)) rows = rows.filter((r) => r.pts <= max);
   const total = rows.length;
   res.json({ total, lawyers: rows.slice(0, limit).map((r) => ({ id: r.id, name: ((r.first_name || '') + ' ' + (r.last_name || '')).trim() || r.id, points: r.pts, firm: r.firm })) });
+});
+
+// GET /api/v1/admin/points-distribution — counts of practising lawyers in each
+// CPD points tier, so the Lawyers world can show a moon per tier (critical → full).
+router.get('/points-distribution', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
+  const year = String(cycleYear());
+  let rows = [];
+  try {
+    rows = db.prepare(`SELECT COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y',b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts
+      FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id=l.id WHERE ${_PRACT} GROUP BY l.id`).all(year);
+  } catch (_) {}
+  const buckets = [
+    { key: 'lt4', label: 'Critical', sub: 'below 4 pts', min: 0, max: 3, count: 0 },
+    { key: 'b4', label: '4–5 pts', sub: 'building', min: 4, max: 5, count: 0 },
+    { key: 'b6', label: '6–7 pts', sub: 'building', min: 6, max: 7, count: 0 },
+    { key: 'b8', label: '8–9 pts', sub: 'halfway', min: 8, max: 9, count: 0 },
+    { key: 'b10', label: '10–11 pts', sub: 'on track', min: 10, max: 11, count: 0 },
+    { key: 'b12', label: '12–13 pts', sub: 'nearly there', min: 12, max: 13, count: 0 },
+    { key: 'b14', label: '14–15 pts', sub: 'almost done', min: 14, max: 15, count: 0 },
+    { key: 'done', label: 'Completed', sub: '16 pts · full', min: 16, max: 99999, count: 0 },
+  ];
+  rows.forEach((r) => { const p = r.pts || 0; for (const b of buckets) { if (p >= b.min && p <= b.max) { b.count++; break; } } });
+  res.json({ total: rows.length, buckets });
 });
 
 // GET /api/v1/admin/firm/:id — rich firm profile (lawyers, bands, courses,
