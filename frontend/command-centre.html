@@ -735,7 +735,7 @@
           {label:'Critical',sub:(c.critical||0)+' lawyers',count:Math.max(c.critical||0,1),color:0xff5e7e,type:'firmBand',id:node.id,drill:true,meta:{firm:d.name,band:'critical',lawyers:L}},
           {label:'Compliance',sub:d.compliancePct+'%',count:Math.max(d.compliancePct,1),color:0x6ab8ff,type:'stat',id:node.id,drill:false,meta:{label:'Firm compliance rate',value:d.compliancePct+'%'}}
         ];
-        if((d.courses||[]).length) kids.push({label:'Courses taken',sub:d.courses.length+' courses',count:d.courses.length,color:0x1fe0b4,type:'firmCourses',id:node.id,drill:true,meta:{firm:d.name,courses:d.courses}});
+        if((d.courses||[]).length) kids.push({label:'Accredited activities',sub:d.courses.length+' courses',count:d.courses.length,color:0x1fe0b4,type:'firmCourses',id:node.id,drill:true,meta:{firm:d.name,courses:d.courses}});
         return {title:d.name,center:{label:(d.name||'Firm').slice(0,16),color:0x9a6cff},radius:120,children:kids}; }); },
       firmLawyers:function(node){ var L=(node.meta&&node.meta.lawyers)||[]; return Promise.resolve({title:(node.meta.firm||'Firm')+' · lawyers',center:{label:'Lawyers',color:0x34e1ff},radius:165,children:L.slice(0,48).map(function(l){return {label:l.name,sub:l.points+' pts',count:Math.max(l.points,1),color:bandColor(l.points),type:'lawyer',id:l.id,drill:true,meta:{points:l.points,status:l.status}};})}); },
       firmBand:function(node){ var L=(node.meta&&node.meta.lawyers)||[], b=node.meta.band; var f=L.filter(function(l){var p=l.points;return b==='critical'?p<8:b==='atrisk'?(p>=8&&p<16):p>=16;}); return Promise.resolve({title:node.label,center:{label:b,color:b==='critical'?0xff5e7e:b==='atrisk'?0xffb84d:0x3df0a0},radius:155,children:f.slice(0,48).map(function(l){return {label:l.name,sub:l.points+' pts',count:Math.max(l.points,1),color:bandColor(l.points),type:'lawyer',id:l.id,drill:true,meta:{points:l.points,status:l.status}};})}); },
@@ -887,10 +887,13 @@
     // ── Free-fly navigation: drag to orbit, right/shift-drag to pan, wheel to zoom ──
     var lx=0,ly=0,downX=0,downY=0;
     var SKIP='header,button,a,input,select,textarea,#focusPanel,#deepLayer,#crumbs,#timeMachine,#bandLegend,#queryBar';
-    window.addEventListener('pointerdown',function(e){ if(e.target.closest&&e.target.closest(SKIP)) return; if(e.button===2||e.shiftKey){TW.pan=true;}else{TW.drag=true;} lx=e.clientX;ly=e.clientY;downX=e.clientX;downY=e.clientY;TW.moved=false; });
-    window.addEventListener('pointerup',function(){ TW.drag=false; TW.pan=false; });
-    window.addEventListener('pointermove',function(e){ if(!TW.drag&&!TW.pan) return; var dx=e.clientX-lx,dy=e.clientY-ly; lx=e.clientX;ly=e.clientY;
-      if(Math.hypot(e.clientX-downX,e.clientY-downY)>9) TW.moved=true;
+    // A drag only BEGINS once the pointer actually moves past a threshold, so a
+    // plain click is always treated as a click (never swallowed as a drag).
+    window.addEventListener('pointerdown',function(e){ if(e.target.closest&&e.target.closest(SKIP)) return; TW.pending=(e.button===2||e.shiftKey)?'pan':'drag'; TW.drag=false; TW.pan=false; TW.moved=false; lx=e.clientX;ly=e.clientY;downX=e.clientX;downY=e.clientY; });
+    window.addEventListener('pointerup',function(){ TW.drag=false; TW.pan=false; TW.pending=null; });
+    window.addEventListener('pointermove',function(e){ if(!TW.pending&&!TW.drag&&!TW.pan) return;
+      if(TW.pending && Math.hypot(e.clientX-downX,e.clientY-downY)>5){ TW.moved=true; if(TW.pending==='pan')TW.pan=true; else TW.drag=true; TW.pending=null; lx=e.clientX;ly=e.clientY; }
+      if(!TW.drag&&!TW.pan) return; var dx=e.clientX-lx,dy=e.clientY-ly; lx=e.clientX;ly=e.clientY;
       if(TW.drag){ TW.orb.tt-=dx*0.006; TW.orb.tp=Math.max(0.08,Math.min(3.06,TW.orb.tp-dy*0.006)); }
       else { var k=TW.orbR.r*0.0016; var right=new THREE.Vector3().setFromMatrixColumn(camera.matrix,0); var up=new THREE.Vector3().setFromMatrixColumn(camera.matrix,1);
         var mv=right.multiplyScalar(-dx*k).add(up.multiplyScalar(dy*k)); TW.orb.cx+=mv.x; TW.orb.cy+=mv.y; TW.orb.cz+=mv.z; } });
