@@ -25,6 +25,7 @@ const router = express.Router();
 const db = require('../db');
 const store = require('../services/store');
 const log = require('../logger');
+const aimodel = require('../services/aimodel');
 const { requireAuth } = require('../middleware/auth');
 
 let mailer = null, tpl = null;
@@ -42,15 +43,20 @@ const clip = (s, n) => String(s == null ? '' : s).slice(0, n);
 // providers).
 function requesterCtx(u) {
   if (!u) return null;
-  if (u.user_type === 'lawyer') {
-    const l = store.getLawyerById(u.sub) || {};
+  if (u.user_type === 'lawyer' || u.role === 'lawyer') {
+    const l = store.getLawyerById(u.sub) || (u.email ? store.getLawyerByEmail(u.email) : null) || {};
     const name = `${l.first_name || ''} ${l.last_name || ''}`.trim() || u.name || u.email || 'Lawyer';
     return { type: 'lawyer', id: u.sub, name, email: l.email || u.email || null, firm_id: l.firm_id || u.firm_id || null };
   }
-  if (u.role === 'firm_compliance_officer' && u.firm_id) {
-    let firmName = u.firm_id;
-    try { const f = db.prepare('SELECT name FROM firms WHERE id = ?').get(u.firm_id); if (f && f.name) firmName = f.name; } catch (_) {}
-    return { type: 'firm', id: u.firm_id, name: firmName, email: u.email || null, firm_id: u.firm_id };
+  if (u.role === 'firm_compliance_officer' || u.user_type === 'firm') {
+    // The firm_id usually rides in the token, but fall back to the staff record
+    // so a CO whose token predates that claim can still message CLPD.
+    let firmId = u.firm_id || null;
+    if (!firmId) { try { const s = db.prepare('SELECT firm_id FROM staff WHERE id = ?').get(u.sub); if (s && s.firm_id) firmId = s.firm_id; } catch (_) {} }
+    if (!firmId) return null;
+    let firmName = firmId;
+    try { const f = db.prepare('SELECT name FROM firms WHERE id = ?').get(firmId); if (f && f.name) firmName = f.name; } catch (_) {}
+    return { type: 'firm', id: firmId, name: firmName, email: u.email || null, firm_id: firmId };
   }
   return null;
 }
@@ -83,6 +89,118 @@ function adminEmails() {
   } catch (_) { return []; }
 }
 
+// ─── Maryam — AI first responder ─────────────────────────────────────
+// When a lawyer or firm opens a conversation (or replies while it's still
+// AI-handled and unassigned), Maryam attempts to help using their live CLPD
+// context. If she can't, she escalates to a human and the admin team is paged.
+const MARYAM = { id: 'maryam', name: 'Maryam · CLPD Assistant', role: 'assistant' };
+
+function daysToDec31() {
+  const t = new Date(); const d = new Date(Date.UTC(t.getUTCFullYear(), 11, 31));
+  return Math.max(0, Math.ceil((d - t) / 86400000));
+}
+
+// Live grounding for the requester behind a conversation.
+function requesterContext(conv) {
+  try {
+    if (conv.requester_type === 'lawyer') {
+      const l = store.getLawyerById(conv.requester_id) || {};
+      const points = Number(l.lifetime_points) || 0;
+      let completed = [];
+      try { completed = db.prepare('SELECT course_title FROM cpd_records WHERE lawyer_id = ? LIMIT 12').all(l.id || conv.requester_id).map((r) => r.course_title).filter(Boolean); } catch (_) {}
+      return { who: 'a Dubai lawyer', name: conv.requester_name,
+        firstName: l.first_name || 'there', points, needed: Math.max(0, 16 - points),
+        creditBalance: Number(l.credit_balance) || 0, firm: l.firm_name || '', daysToDeadline: daysToDec31(), completedCourses: completed };
+    }
+    if (conv.requester_type === 'firm') {
+      let agg = {};
+      try {
+        agg = db.prepare("SELECT COUNT(*) lawyers, SUM(CASE WHEN COALESCE(lifetime_points,0)<8 THEN 1 ELSE 0 END) critical, SUM(CASE WHEN COALESCE(lifetime_points,0)>=8 AND COALESCE(lifetime_points,0)<16 THEN 1 ELSE 0 END) atRisk, SUM(CASE WHEN COALESCE(lifetime_points,0)>=16 THEN 1 ELSE 0 END) compliant, COALESCE(SUM(credit_balance),0) pooledCredits FROM lawyers WHERE firm_id = ?").get(conv.requester_id) || {};
+      } catch (_) {}
+      return Object.assign({ who: 'a law-firm compliance officer', name: conv.requester_name, firm: conv.requester_name, daysToDeadline: daysToDec31() }, agg);
+    }
+  } catch (_) {}
+  return { who: 'a CLPD user', name: conv.requester_name, daysToDeadline: daysToDec31() };
+}
+
+function maryamSystem(who) {
+  return 'You are Maryam, the Dubai Legal Affairs Department (LAD) CLPD team\'s AI assistant and the FIRST responder in the support inbox. '
+    + 'A ' + who + ' has messaged the CLPD team. Use ONLY the live context (JSON) with the real numbers — never invent figures. '
+    + 'CLPD rules: practising lawyers need 16 CPD points by 31 December (<8 critical, 8–15 at risk, 16+ compliant); a course books with 5 credits. '
+    + 'Answer warmly, directly and concisely in plain text (no markdown headings, no sign-off). '
+    + 'Decide whether a human CLPD officer is needed. Set needsHuman=true when the request needs an action or decision you cannot take or verify — '
+    + 'refunds, payments, credit adjustments, record/account changes, exemptions or extensions, complaints, accreditation decisions, or anything needing human judgement or data you do not have. '
+    + 'Otherwise answer it fully yourself with needsHuman=false. '
+    + 'Reply with ONLY JSON: {"answer": string, "needsHuman": boolean}. '
+    + 'When needsHuman is true, make "answer" a short, reassuring note that you are bringing in a CLPD colleague who will follow up — do not promise specifics or timeframes.';
+}
+
+function pageAdmins(conv, body) {
+  if (!mailer) return;
+  try {
+    const subj = `CLPD message needs a human — ${conv.requester_name}`;
+    const text = `${conv.requester_name} (${conv.requester_type}) messaged CLPD and Maryam couldn't fully resolve it:\n\nSubject: ${conv.subject || '(no subject)'}\n\n${body}\n\nOpen the CLPD admin inbox to take over.`;
+    for (const to of adminEmails()) mailer.enqueue({ to, subject: subj, text, category: 'message', ref: conv.id, dedupeKey: 'msg_escalate:' + conv.id + ':' + to + ':' + Date.now() });
+  } catch (_) {}
+}
+
+// Run Maryam against a conversation in the background. Safe to call fire-and-forget.
+async function runMaryam(convId, latestText) {
+  let conv;
+  try { conv = db.prepare('SELECT * FROM conversations WHERE id = ?').get(convId); } catch (_) { return; }
+  if (!conv) return;
+  // A human has taken over (assigned), or we've already handed off — stay quiet.
+  if (conv.assigned_to || conv.escalated) return;
+
+  const escalate = (note) => {
+    try {
+      const ts = now();
+      if (note) db.prepare("INSERT INTO conversation_messages (id, conversation_id, sender_side, sender_id, sender_name, sender_role, body, created_at) VALUES (?,?,'admin',?,?,?,?,?)")
+        .run(mid(), convId, MARYAM.id, MARYAM.name, MARYAM.role, note, ts);
+      db.prepare('UPDATE conversations SET escalated = 1, ai_handled = 1, status = ?, updated_at = ?, ' + (note ? 'last_sender = ?, last_message_at = ? ' : 'last_sender = last_sender ') + 'WHERE id = ?')
+        .run(...(note ? ['open', ts, 'admin', ts, convId] : ['open', ts, convId]));
+    } catch (e) { log.error('maryam_escalate_failed', { error: e.message }); }
+    pageAdmins(conv, latestText || conv.subject || '');
+  };
+
+  if (!aimodel.configured()) { escalate(null); return; }
+
+  let parsed = null;
+  try {
+    const ctx = requesterContext(conv);
+    let history = [];
+    try { history = db.prepare('SELECT sender_side, sender_name, body FROM conversation_messages WHERE conversation_id = ? ORDER BY created_at ASC').all(convId).slice(-6); } catch (_) {}
+    const convo = history.map((m) => (m.sender_side === 'admin' ? 'CLPD' : (m.sender_name || 'User')) + ': ' + m.body).join('\n');
+    const text = await aimodel.chat({
+      system: maryamSystem(ctx.who),
+      messages: [{ role: 'user', content: 'Live context:\n' + JSON.stringify(ctx) + '\n\nConversation so far:\n' + (convo || '(none)') + '\n\nRespond to the latest message.' }],
+      maxTokens: 480, temperature: 0.3,
+    });
+    try { const m = text.match(/\{[\s\S]*\}/); parsed = JSON.parse(m ? m[0] : text); } catch (_) { parsed = { answer: text, needsHuman: false }; }
+  } catch (e) {
+    log.error('maryam_call_failed', { error: e.message });
+    escalate(null); // AI unreachable → hand to a human so nothing is dropped
+    return;
+  }
+
+  const answer = (parsed && (parsed.answer || parsed.reply) || '').toString().trim();
+  const needsHuman = !!(parsed && parsed.needsHuman);
+  if (!answer) { escalate(null); return; }
+
+  try {
+    const ts = now();
+    db.prepare("INSERT INTO conversation_messages (id, conversation_id, sender_side, sender_id, sender_name, sender_role, body, created_at) VALUES (?,?,'admin',?,?,?,?,?)")
+      .run(mid(), convId, MARYAM.id, MARYAM.name, MARYAM.role, answer, ts);
+    db.prepare('UPDATE conversations SET ai_handled = 1, escalated = ?, status = ?, last_sender = ?, last_message_at = ?, updated_at = ? WHERE id = ?')
+      .run(needsHuman ? 1 : 0, needsHuman ? 'open' : 'pending', 'admin', ts, ts, convId);
+  } catch (e) { log.error('maryam_reply_failed', { error: e.message }); }
+  if (needsHuman) pageAdmins(conv, latestText || conv.subject || '');
+}
+
+function scheduleMaryam(convId, latestText) {
+  setImmediate(() => { runMaryam(convId, latestText).catch((e) => log.error('maryam_bg_failed', { error: e.message })); });
+}
+
 // ─── Create a conversation (lawyer / firm) ───────────────────────────
 router.post('/conversations', requireAuth, (req, res) => {
   const ctx = requesterCtx(req.user);
@@ -107,8 +225,12 @@ router.post('/conversations', requireAuth, (req, res) => {
   tx();
   markRead(id, req.user.sub);
 
-  // Notify the admin team by email (best-effort, queued).
-  if (mailer) {
+  // Maryam answers first; if she can't, she escalates and pages the team. When
+  // the AI isn't configured, fall back to paging the admins straight away so a
+  // human always gets it.
+  if (aimodel.configured()) {
+    scheduleMaryam(id, body);
+  } else if (mailer) {
     try {
       const subj = `New CLPD message from ${ctx.name}`;
       const text = `${ctx.name} (${ctx.type}) opened a conversation:\n\nSubject: ${subject || '(no subject)'}\n\n${body}\n\nReply from the CLPD admin inbox.`;
@@ -161,6 +283,7 @@ router.get('/conversations', requireAuth, (req, res) => {
       firm_id: c.firm_id, assigned_to: c.assigned_to, assigned_name: c.assigned_name,
       last_message_at: c.last_message_at, last_sender: c.last_sender,
       preview: clip(c.last_body, 140), unread: isUnread,
+      ai_handled: !!c.ai_handled, escalated: !!c.escalated,
     };
   });
   res.json({ conversations, unread, admin });
@@ -177,6 +300,7 @@ function getConversation(id, u) {
     id: c.id, subject: c.subject, status: c.status,
     requester_type: c.requester_type, requester_id: c.requester_id, requester_name: c.requester_name, requester_email: c.requester_email,
     firm_id: c.firm_id, assigned_to: c.assigned_to, assigned_name: c.assigned_name,
+    ai_handled: !!c.ai_handled, escalated: !!c.escalated,
     created_at: c.created_at, last_message_at: c.last_message_at, last_sender: c.last_sender,
     messages,
   };
@@ -214,6 +338,11 @@ router.post('/conversations/:id/messages', requireAuth, (req, res) => {
   tx();
   markRead(c.id, req.user.sub);
 
+  // While a thread is still Maryam's (unassigned, not yet escalated) she fields
+  // the requester's replies too; the admins are only paged if she escalates.
+  const maryamWillHandle = side === 'requester' && aimodel.configured() && !c.assigned_to && !c.escalated;
+  if (maryamWillHandle) scheduleMaryam(c.id, body);
+
   // Email the other party (best-effort, queued).
   if (mailer) {
     try {
@@ -221,7 +350,7 @@ router.post('/conversations/:id/messages', requireAuth, (req, res) => {
         const subj = `Reply from CLPD Admin — ${c.subject || c.id}`;
         const text = `CLPD Admin replied to your conversation "${c.subject || c.id}":\n\n${body}\n\nSign in to the CLPD portal to reply.`;
         mailer.enqueue({ to: c.requester_email, toName: c.requester_name, subject: subj, text, category: 'message', ref: c.id, dedupeKey: 'msg_reply:' + c.id + ':' + ts });
-      } else if (side === 'requester') {
+      } else if (side === 'requester' && !maryamWillHandle) {
         const subj = `New reply on CLPD conversation from ${c.requester_name}`;
         const text = `${c.requester_name} replied on "${c.subject || c.id}":\n\n${body}\n\nOpen the CLPD admin inbox to respond.`;
         const targets = c.assigned_to ? (db.prepare('SELECT email FROM staff WHERE id = ?').get(c.assigned_to) || {}).email : null;

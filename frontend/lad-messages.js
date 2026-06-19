@@ -149,6 +149,7 @@
         <div class="ladmsg-prev">${esc(c.preview || '')}</div>
         <div class="ladmsg-row-top" style="margin-top:5px">
           <span class="ladmsg-pill ${c.status}">${esc(c.status)}</span>
+          ${ST.admin && c.escalated ? '<span class="ladmsg-pill" style="background:rgba(255,77,109,.18);color:#ff7a93">needs human</span>' : (ST.admin && c.ai_handled ? '<span class="ladmsg-pill" style="background:rgba(95,208,200,.16);color:#5fd0c8">Maryam</span>' : '')}
           ${ST.admin ? `<span class="ladmsg-meta">${esc(c.requester_name || '')}${c.assigned_name ? ' · → ' + esc(c.assigned_name) : ''}</span>` : (c.assigned_name ? `<span class="ladmsg-meta">CLPD · ${esc(c.assigned_name)}</span>` : '<span class="ladmsg-meta">CLPD Admin</span>')}
         </div>
       </div>`).join('') : `<div class="ladmsg-empty">${ST.admin ? 'No conversations in this view.' : 'No messages yet.<br>Start a conversation with CLPD Admin.'}</div>`;
