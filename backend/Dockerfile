@@ -48,4 +48,10 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
 
 # tini reaps zombies and forwards SIGTERM cleanly — required for graceful shutdown
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["sh", "-c", "node scripts/migrate.js && node scripts/seed-if-needed.js && { node scripts/seed-feedback.js || true; } && { node scripts/seed-accredited.js || true; } && node src/server.js"]
+# Zero-downtime boot: apply schema migrations (fast), then START THE SERVER
+# IMMEDIATELY so the health check passes within ~2s and Render's rolling deploy
+# never drops traffic. All data seeding runs in the BACKGROUND (own process, so
+# it can't block the event loop); the app also self-heals feedback/accredited
+# data lazily. SQLite WAL + busy_timeout lets the seed and the live server share
+# the file safely.
+CMD ["sh", "-c", "node scripts/migrate.js || true; { node scripts/seed-if-needed.js; node scripts/seed-feedback.js; node scripts/seed-accredited.js; } & exec node src/server.js"]

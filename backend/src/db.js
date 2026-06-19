@@ -16,6 +16,9 @@ const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');     // faster concurrent reads, atomic crash recovery
 db.pragma('foreign_keys = ON');
 db.pragma('synchronous = NORMAL');   // good safety/perf balance for WAL
+// Wait (don't error) for a lock — lets the background seed process and the live
+// server write to the same file without SQLITE_BUSY during boot-time seeding.
+db.pragma('busy_timeout = 10000');
 
 function ping() {
   try {
