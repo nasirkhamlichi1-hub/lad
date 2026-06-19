@@ -925,9 +925,13 @@
       if(TW.tourActive){ window.exitFocus(); return; }   // any click ends the cinematic tour
       if(TW.moved){ TW.moved=false; return; }            // it was a drag-to-fly, not a click
       pick();
+      var inMain=(t.id==='twin'||t.closest('#centerstage')||t.closest('#diveHint')||t.closest('#bandLegend'));
       if(hovered){ if(TW.stack&&TW.stack.length) subClick(hovered); else window.focusCluster(hovered.key); }
-      else if((TW.stack&&TW.stack.length)&&(t.id==='twin'||t.closest('#centerstage'))) window.diveBack();
-      else if(TW.focusKey && (t.id==='twin'||t.closest('#centerstage'))) window.exitFocus();
+      else if(inMain){
+        if(TW.stack&&TW.stack.length) window.diveBack();                       // in a dive → climb up
+        else if(document.body.classList.contains('focus')) window.exitFocus(); // immersed → bring panels back
+        else document.body.classList.add('focus');                            // home → go immersive
+      }
     });
     window.addEventListener('keydown',function(e){ if(e.key==='Escape'){ if(TW.stack&&TW.stack.length) window.diveBack(); else window.exitFocus(); } });
 
