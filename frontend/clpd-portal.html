@@ -1709,6 +1709,9 @@ ladCarInit();
       <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:8px">COURSE OVERVIEW</div>
       <div id="cdDesc" style="font-size:13.5px;color:var(--slate);line-height:1.7;margin-bottom:20px"></div>
 
+      <!-- Participant feedback ratings (from past attendees) -->
+      <div id="cdRatings" style="display:none;margin-bottom:20px"></div>
+
       <!-- Low credit warning -->
       <div id="cdLowCredit" style="display:none;background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:10px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
         <div style="flex:1;font-size:13px;color:var(--amber)">You need <strong id="cdNeedCr"></strong> credits to book this course. <span id="cdHaveCr"></span></div>
@@ -1947,7 +1950,7 @@ const ALL_COURSES = [
   {id:'ai-gov-en',title:'AI Governance: Legal Risk & Compliance',icon:'',bg:'linear-gradient(135deg,#3b0764,#1e1b4b)',type:'mandatory',format:'elearning',pts:2,credits:5,provider:'LAD Academy',location:'Online · Self-paced',desc:'Comprehensive understanding of AI governance, legal risk frameworks, and compliance obligations under UAE law. Covers the Significance of AI Governance, UK and International Legal Landscape, and practical compliance tools.',lang:'English',sessions:[],seats:null},
   {id:'ai-gov-ar',title:'AI Governance: Legal Risk & Compliance (Arabic)',icon:'',bg:'linear-gradient(135deg,#3b0764,#1e1b4b)',type:'mandatory',format:'elearning',pts:2,credits:5,provider:'LAD Academy',location:'Online · Self-paced',desc:'Comprehensive understanding of AI governance, legal risk frameworks, and compliance obligations under UAE law. Available in Arabic.',lang:'Arabic',sessions:[],seats:null},
   {id:'aml',title:'Anti Money Laundering (Update 2026)',icon:'',bg:'linear-gradient(135deg,#1a0a30,#2d1b69)',type:'mandatory',format:'face',pts:2,credits:5,provider:'Kwintessential',location:'Al Hudaiba Awards Bldg, Block C, M Floor',desc:'In-depth exploration of UAE AML architecture, Federal Decree-Law No.10 of 2025, goAML platform, and targeted financial sanctions. FATF Grey List context.',lang:'English / Arabic',sessions:[{date:'Wed 20 May 2026',time:'12:00–14:00',seats:15,lang:'English'},{date:'Tue 2 Jun 2026',time:'9:30–11:30',seats:23,lang:'English'},{date:'Mon 29 Jun 2026',time:'12:00–14:00',seats:24,lang:'Arabic'},{date:'Tue 30 Jun 2026',time:'12:00–14:00',seats:23,lang:'Arabic'}]},
-  {id:'difc-arb',title:'International Arbitration & the Courts',icon:'',bg:'linear-gradient(135deg,#0a2040,#020817)',type:'mandatory',format:'face',pts:2,credits:5,provider:'DIFC Academy',location:'Gate Village Bldg 02 · DIFC',desc:'Examines how the DIFC and ADGM Courts interact with arbitration at every stage. Uses UNCITRAL Model Law as a guide. Rated 4.9 by 743 previous attendees.',lang:'English',sessions:[{date:'Wed 28 May 2026',time:'9:00–15:00',seats:3,lang:'English'},{date:'Tue 16 Jun 2026',time:'9:00–15:00',seats:18,lang:'English'}]},
+  {id:'difc-arb',title:'International Arbitration & the Courts',icon:'',bg:'linear-gradient(135deg,#0a2040,#020817)',type:'mandatory',format:'face',pts:2,credits:5,provider:'DIFC Academy',location:'Gate Village Bldg 02 · DIFC',desc:'Examines how the DIFC and ADGM Courts interact with arbitration at every stage. Uses UNCITRAL Model Law as a guide.',lang:'English',sessions:[{date:'Wed 28 May 2026',time:'9:00–15:00',seats:3,lang:'English'},{date:'Tue 16 Jun 2026',time:'9:00–15:00',seats:18,lang:'English'}]},
   {id:'tax',title:'Tax Law Update 2026',icon:'',bg:'linear-gradient(135deg,#1a3a1a,#0a1a08)',type:'mandatory',format:'face',pts:2,credits:5,provider:'Kwintessential',location:'Al Hudaiba Awards Bldg',desc:'Corporate tax law developments, CIT framework, transfer pricing, and economic substance requirements. Critical for all Tax practice lawyers.',lang:'English / Arabic',sessions:[{date:'Thu 22 May 2026',time:'9:00–11:00',seats:8,lang:'English'},{date:'Mon 9 Jun 2026',time:'14:00–16:00',seats:20,lang:'English'},{date:'Tue 1 Jul 2026',time:'9:30–11:30',seats:30,lang:'Arabic'}]},
   {id:'construction',title:'Real Estate & Construction Laws · Case Trends',icon:'',bg:'linear-gradient(135deg,#2a3a1a,#0a1a08)',type:'mandatory',format:'face',pts:2,credits:5,provider:'Kwintessential',location:'Al Hudaiba Awards Bldg',desc:'Comprehensive analysis of UAE construction law with emphasis on recent judicial decisions and FIDIC in UAE context.',lang:'English',sessions:[{date:'Thu 21 May 2026',time:'9:00–11:00',seats:31,lang:'English'},{date:'Wed 4 Jun 2026',time:'12:00–14:00',seats:28,lang:'English'}]},
   {id:'ethics-ai-en',title:'Ethics — AI in the Legal Sector (English)',icon:'',bg:'linear-gradient(135deg,#2a1a3a,#1a0a2a)',type:'mandatory',format:'elearning',pts:2,credits:5,provider:'LAD Academy',location:'Online · Self-paced',desc:'International comparison on the use of AI in the legal sector. Positive impacts, risks, and ethical frameworks. Required for all practitioners.',lang:'English',sessions:[]},
@@ -2441,6 +2444,7 @@ function courseCardHTML(c) {
         : `<div class="cc-meta"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${location}</div>`}
       ${(sessInfo && seats !== null && sessInfo.date) ? `<div class="cc-meta" style="color:${seats<=5?'var(--red)':seats<=15?'var(--amber)':'var(--green)'}"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${seats<=5?` ${seats} seats left`:seats+' seats'} · ${sessInfo.date.split(' ').slice(0,3).join(' ')}</div>`:''}
       <div class="cc-desc">${desc}</div>
+      ${(c.rating && c.rating.responses) ? `<div style="display:flex;align-items:center;gap:6px;margin-top:8px">${starSVG(c.rating.overall||c.rating.stars,12)}<span style="font-family:var(--mono);font-size:10.5px;color:var(--slate2)">${(c.rating.overall||c.rating.stars||0).toFixed(1)} · ${c.rating.responses.toLocaleString()} reviews</span></div>` : ''}
     </div>
     <div class="cc-foot">
       <div>
@@ -2554,6 +2558,80 @@ function showCalDay(d) {
 // ════════════════════════════════════════════
 // COURSE DETAIL
 // ════════════════════════════════════════════
+// ── Real participant-feedback star ratings (from the backend) ───────────────
+var COURSE_RATINGS = {}; // id → { rating, provider_rating }
+function starSVG(val, size){
+  size = size || 13; var v = Math.max(0, Math.min(5, Number(val)||0));
+  var full = Math.floor(v), half = (v-full) >= 0.25 && (v-full) < 0.75;
+  if ((v-full) >= 0.75){ full += 1; half = false; }
+  var out = '';
+  for (var i=0;i<5;i++){
+    var fill = i < full ? '#f5a623' : (i===full && half ? 'url(#cdh'+size+')' : '#dfe3ea');
+    out += '<svg width="'+size+'" height="'+size+'" viewBox="0 0 20 20" style="display:inline-block;vertical-align:-2px">'+
+      (i===full && half ? '<defs><linearGradient id="cdh'+size+'"><stop offset="50%" stop-color="#f5a623"/><stop offset="50%" stop-color="#dfe3ea"/></linearGradient></defs>':'')+
+      '<path fill="'+fill+'" d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.79L10 14.77l-5.2 2.73.99-5.79L1.58 7.62l5.82-.85z"/></svg>';
+  }
+  return out;
+}
+function cdRow(label, val){
+  if (val == null) return '';
+  return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 0">'+
+    '<span style="font-size:12px;color:var(--slate)">'+label+'</span>'+
+    '<span style="white-space:nowrap">'+starSVG(val,12)+' <span style="font-family:var(--mono);font-size:11px;color:var(--slate2);margin-left:4px">'+Number(val).toFixed(1)+'</span></span></div>';
+}
+function renderCourseRatings(c){
+  var host = document.getElementById('cdRatings'); if(!host) return;
+  host.style.display='none'; host.innerHTML='';
+  function paint(rt, pr){
+    if((!rt||!rt.responses) && (!pr||!pr.responses)) return;
+    var html='';
+    if(rt && rt.responses){
+      html += '<div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:4px">COURSE RATING</div>'+
+        '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">'+
+          '<span style="font-family:var(--serif);font-size:26px;color:var(--ink)">'+(rt.overall||rt.stars||0).toFixed(1)+'</span>'+
+          '<span>'+starSVG(rt.overall||rt.stars,16)+'</span>'+
+          '<span style="font-size:11px;color:var(--slate2)">'+rt.responses.toLocaleString()+' participant'+(rt.responses===1?'':'s')+'</span></div>'+
+        '<div style="background:var(--white);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:10px">'+
+          cdRow('Training course content', rt.content)+cdRow('Benefits of the course', rt.benefits)+
+          cdRow('Practical &amp; interesting content', rt.practical)+cdRow('Overall evaluation', rt.overall)+'</div>';
+    }
+    if(pr && pr.responses){
+      html += '<div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin:4px 0">TRAINING PROVIDER · '+(pr.provider_name||c.provider||'')+'</div>'+
+        '<div style="background:var(--white);border:1px solid var(--line);border-radius:12px;padding:10px 14px">'+
+          cdRow('Knowledge of trainer', pr.knowledge)+cdRow('Conveys information clearly', pr.clarity)+
+          cdRow('Stimulates participant interaction', pr.interaction)+'</div>';
+    }
+    host.innerHTML=html; host.style.display='';
+  }
+  var cached = COURSE_RATINGS[c.id];
+  if(cached){ paint(cached.rating, cached.provider_rating || (cached.rating&&cached.rating.provider)); return; }
+  try{
+    var base=(window.LAD_API_BASE)||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com';
+    fetch(base.replace(/\/$/,'')+'/api/v1/courses/'+encodeURIComponent(c.id)+'/feedback')
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(j){ if(j&&j.rating){ COURSE_RATINGS[c.id]={rating:j.rating,provider_rating:j.provider||j.rating.provider}; paint(j.rating, COURSE_RATINGS[c.id].provider_rating); } })
+      .catch(function(){});
+  }catch(e){}
+}
+// Fetch ratings for the whole catalogue once and merge onto ALL_COURSES so the
+// cards can show a star line; then re-render the grid.
+function loadRealRatings(){
+  try{
+    var base=(window.LAD_API_BASE)||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com';
+    fetch(base.replace(/\/$/,'')+'/api/v1/courses/upcoming')
+      .then(function(r){return r.ok?r.json():[];})
+      .then(function(list){
+        if(!Array.isArray(list)) return;
+        list.forEach(function(c){ if(c&&c.id&&(c.rating||c.provider_rating)) COURSE_RATINGS[c.id]={rating:c.rating,provider_rating:c.provider_rating}; });
+        ALL_COURSES.forEach(function(c){ var r=COURSE_RATINGS[c.id]; if(r&&r.rating){ c.rating=r.rating; } });
+        if(typeof renderCourseGrid==='function') renderCourseGrid();
+        if(typeof renderMandatoryGrid==='function') renderMandatoryGrid();
+        if(typeof renderAccreditedGrid==='function') renderAccreditedGrid();
+      }).catch(function(){});
+  }catch(e){}
+}
+try{ if(document.readyState!=='loading') loadRealRatings(); else document.addEventListener('DOMContentLoaded', loadRealRatings); }catch(e){}
+
 function openCourse(id) {
   const c = ALL_COURSES.find(x=>x.id===id);
   if(!c) return;
@@ -2568,6 +2646,7 @@ function openCourse(id) {
   document.getElementById('cdProv').textContent = c.provider;
   document.getElementById('cdLoc').textContent = c.location;
   document.getElementById('cdDesc').textContent = c.desc;
+  renderCourseRatings(c);
   // Credit balance
   const balEl = document.getElementById('cdBalAmt');
   if(currentUser) {
