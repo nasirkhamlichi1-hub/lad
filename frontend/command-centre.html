@@ -142,6 +142,8 @@
   #queryBar input::placeholder{color:var(--dim2)}
   #queryBar .qspin{font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--cyan)}
   #queryBar button{background:linear-gradient(90deg,var(--cyan),var(--teal));color:#04101a;border:0;border-radius:20px;padding:9px 18px;font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit}
+  #signinBanner{position:fixed;top:68px;left:50%;transform:translateX(-50%);z-index:52;display:none;align-items:center;gap:12px;background:rgba(255,94,126,.12);border:1px solid rgba(255,94,126,.42);color:#ffd9e0;font-family:var(--mono);font-size:12px;letter-spacing:.5px;padding:9px 16px;border-radius:22px;backdrop-filter:blur(10px)}
+  #signinBanner a{color:#04101a;background:linear-gradient(90deg,var(--cyan),var(--teal));text-decoration:none;font-weight:700;border-radius:14px;padding:5px 13px}
 
   /* ── Deep layer: dive a level deeper into market/course intelligence ── */
   #deepLayer{position:fixed;inset:0;z-index:60;display:none;overflow:auto;
@@ -350,6 +352,7 @@
 </div>
 
 <div id="warp"></div>
+<div id="signinBanner">Not signed in — live data needs a LAD admin session <a href="/clpd-portal.html">Sign in →</a></div>
 <div id="crumbs"></div>
 <div id="timeMachine">
   <div id="tmHead"><span id="tmTitle">⏱ TIME MACHINE</span>
@@ -447,8 +450,11 @@
   // (built at the end of this IIFE, once TW + buildTwin are initialised)
 
   // ════════════ LIVE DATA ════════════
+  // Surface a clear sign-in prompt when there's no session on this browser.
+  function showSignin(){ var b=document.getElementById('signinBanner'); if(b) b.style.display='flex'; }
+  if(!tok()) showSignin();
   getJSON('/api/v1/admin/oversight').then(function(o){
-    if(!o){ document.querySelectorAll('.loading').forEach(function(e){e.textContent='Live data unavailable — sign in as a LAD admin.';}); return; }
+    if(!o){ showSignin(); document.querySelectorAll('.loading').forEach(function(e){e.textContent='Live data unavailable — sign in as a LAD admin.';}); return; }
     window.__OV = o;  // live snapshot for the dive-in focus panel
     if(window.__refreshFocus) window.__refreshFocus();
     var L=o.lawyers||{}, B=o.bookings||{}, S=o.sessions||{}, A=o.accreditations||{}, F=o.firms||{}, C=o.courses||{};
