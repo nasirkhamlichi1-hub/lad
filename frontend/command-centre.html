@@ -733,6 +733,21 @@
     function lawPts(l){ return Number(l.points!=null?l.points:l.pts)||0; }
     function lawName(l){ return ((l.first_name||l.firstName||'')+' '+(l.last_name||l.lastName||'')).trim()||l.name||l.fullName||l.id; }
     function lawyerNode(l){ var p=lawPts(l); return {label:lawName(l), sub:p+' pts', count:Math.max(p,1), color:bandColor(p), type:'lawyer', id:l.id, drill:true, meta:{points:p,status:l.status,credits:(l.credits!=null?l.credits:l.credit_balance)}}; }
+    // Plot EVERY lawyer in a list as a dense galaxy (one glowing core each on a
+    // shuffled fibonacci shell) — the same treatment as the firm planets, so all
+    // 24 (or 240) are visible and countable instead of a few overlapping balls.
+    function denseLawyerGalaxy(title,centerLabel,col,L,cohort){
+      var n=L.length;
+      var cdata={cohort:cohort||centerLabel,inBand:n,showing:n};
+      if(!n) return {title:title,center:{label:centerLabel,color:col,data:cdata},children:[],dense:true,spread:140};
+      var GA=Math.PI*(3-Math.sqrt(5)), R=Math.max(130,Math.min(360,90+n*5));
+      var dir=[]; for(var j=0;j<n;j++) dir.push(j);
+      for(var j2=n-1;j2>0;j2--){ var m=Math.floor(Math.random()*(j2+1)); var tt=dir[j2]; dir[j2]=dir[m]; dir[m]=tt; }
+      var kids=L.map(function(l,i){ var p=(l.points!=null?l.points:lawPts(l)); var dk=dir[i]+0.5, phi=Math.acos(1-2*dk/n), th=GA*dk;
+        var pos=[Math.sin(phi)*Math.cos(th)*R, Math.cos(phi)*R, Math.sin(phi)*Math.sin(th)*R];
+        return {label:(l.name||lawName(l)),sub:p+' pts',count:Math.max(p,1),color:bandColor(p),type:'lawyer',id:l.id,drill:true,meta:{points:p,status:l.status},pos:pos,noLabel:(i>=10)}; });
+      return {title:title,center:{label:centerLabel,color:col,data:cdata},children:kids,dense:true,spread:R};
+    }
     var DRILL={
       firmsRoot:function(){ return getJSON('/api/v1/admin/firms').then(function(d){ var list=(d&&d.firms)||[]; if(!list.length) return null;
         var n=list.length, maxL=list[0].lawyers||1, minL=list[n-1].lawyers||0, closeR=120, farR=490, GA=Math.PI*(3-Math.sqrt(5));
@@ -758,8 +773,8 @@
         ];
         if((d.courses||[]).length) kids.push({label:'Accredited activities',sub:d.courses.length+' courses',count:d.courses.length,color:0x1fe0b4,type:'firmCourses',id:node.id,drill:true,meta:{firm:d.name,courses:d.courses}});
         return {title:d.name,center:{label:(d.name||'Firm').slice(0,16),color:0x9a6cff,data:{firm:d.name,total:d.total,compliant:c.compliant,atRisk:c.atRisk,critical:c.critical,compliancePct:d.compliancePct,courses:(d.courses||[]).length}},radius:120,children:kids}; }); },
-      firmLawyers:function(node){ var L=(node.meta&&node.meta.lawyers)||[]; return Promise.resolve({title:(node.meta.firm||'Firm')+' · lawyers',center:{label:'Lawyers',color:0x34e1ff},radius:165,children:L.slice(0,48).map(function(l){return {label:l.name,sub:l.points+' pts',count:Math.max(l.points,1),color:bandColor(l.points),type:'lawyer',id:l.id,drill:true,meta:{points:l.points,status:l.status}};})}); },
-      firmBand:function(node){ var L=(node.meta&&node.meta.lawyers)||[], b=node.meta.band; var f=L.filter(function(l){var p=l.points;return b==='critical'?p<8:b==='atrisk'?(p>=8&&p<16):p>=16;}); return Promise.resolve({title:node.label,center:{label:b,color:b==='critical'?0xff5e7e:b==='atrisk'?0xffb84d:0x3df0a0},radius:155,children:f.slice(0,48).map(function(l){return {label:l.name,sub:l.points+' pts',count:Math.max(l.points,1),color:bandColor(l.points),type:'lawyer',id:l.id,drill:true,meta:{points:l.points,status:l.status}};})}); },
+      firmLawyers:function(node){ var L=(node.meta&&node.meta.lawyers)||[]; var fn=node.meta.firm||'Firm'; return Promise.resolve(denseLawyerGalaxy(fn+' · lawyers','Lawyers',0x34e1ff,L,fn+' lawyers')); },
+      firmBand:function(node){ var L=(node.meta&&node.meta.lawyers)||[], b=node.meta.band, fn=node.meta.firm||'Firm'; var f=L.filter(function(l){var p=l.points;return b==='critical'?p<8:b==='atrisk'?(p>=8&&p<16):p>=16;}); var col=b==='critical'?0xff5e7e:b==='atrisk'?0xffb84d:0x3df0a0; return Promise.resolve(denseLawyerGalaxy(node.label,b,col,f,fn+' · '+b)); },
       firmCourses:function(node){ var C=(node.meta&&node.meta.courses)||[]; return Promise.resolve({title:(node.meta.firm||'Firm')+' · courses',center:{label:'Courses',color:0x1fe0b4},radius:150,children:C.slice(0,24).map(function(c){return {label:c.title,sub:c.count+' bookings',count:Math.max(c.count,1),color:0x1fe0b4,type:'firmCourse',id:c.title,drill:false,meta:c};})}); },
       lawyersRoot:function(){ return needOVp().then(function(ov){ var L=(ov&&ov.lawyers)||{}; return {title:'The Profession',center:{label:'Lawyers',color:0x34e1ff},radius:115,children:[
         {label:'Critical',sub:'below 8 pts',count:L.critical,color:0xff5e7e,type:'band',id:'critical',drill:true},
@@ -1135,15 +1150,20 @@
       // unlabelled cores nearest screen-centre and fades in/out as you move.
       if(TW.active && TW.active.dense){
         if(!labelPool.length) buildLabelPool();
-        var cx=W/2, cy=H*0.5, RAD=300, cand=[];
+        // Label only the moons you are physically CLOSEST to (3D distance to the
+        // camera), not the far ones that merely line up near screen-centre. The
+        // nearest few light up as you fly past; distant moons stay dark.
+        var camPos=camera.position, nearLimit=Math.max(70,TW.orbR.r*0.42), SHOW=6, cand=[];
         TW.cores.forEach(function(c){ if(c.hasLabel||!c.node||!c.node.label) return;
-          var v=c.pos.clone(); v.project(camera); if(v.z>=1) return;
-          var sx=(v.x*.5+.5)*W, sy=(-v.y*.5+.5)*H, dd=Math.hypot(sx-cx,sy-cy);
-          if(dd<RAD) cand.push({c:c,sx:sx,sy:sy,dd:dd}); });
-        cand.sort(function(a,b){return a.dd-b.dd;});
+          var cd=c.pos.distanceTo(camPos); if(cd>nearLimit) return;          // only nearby moons
+          var v=c.pos.clone(); v.project(camera); if(v.z>=1) return;          // in front of camera
+          var sx=(v.x*.5+.5)*W, sy=(-v.y*.5+.5)*H;
+          if(sx<-40||sx>W+40||sy<48||sy>H-40) return;                         // on screen
+          cand.push({c:c,sx:sx,sy:sy,cd:cd}); });
+        cand.sort(function(a,b){return a.cd-b.cd;});
         for(var pi=0;pi<labelPool.length;pi++){ var el=labelPool[pi];
-          if(pi<cand.length){ var it=cand[pi]; if(el._key!==it.c.key){ el.innerHTML='<b>'+nf(it.c.node.count)+'</b>'+esc(it.c.node.label); el._key=it.c.key; }
-            el.style.left=(it.sx-rect.left)+'px'; el.style.top=(it.sy-rect.top)+'px'; el.style.opacity=String(Math.max(0,Math.min(.95,1-it.dd/RAD)));
+          if(pi<cand.length && pi<SHOW){ var it=cand[pi]; if(el._key!==it.c.key){ el.innerHTML='<b>'+nf(it.c.node.count)+'</b>'+esc(it.c.node.label); el._key=it.c.key; }
+            el.style.left=(it.sx-rect.left)+'px'; el.style.top=(it.sy-rect.top)+'px'; el.style.opacity=String(Math.max(0,Math.min(.95,1-it.cd/nearLimit)));
           } else { el.style.opacity='0'; el._key=null; }
         }
       } else if(labelPool.length){ labelPool.forEach(function(el){ el.style.opacity='0'; el._key=null; }); }
