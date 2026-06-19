@@ -188,6 +188,85 @@ router.post('/', requireAuth, (req, res) => {
   }
 });
 
+// POST /api/v1/bookings/bulk — book MANY lawyers onto one course/session at once
+// (admin or firm CO). Each lawyer is processed independently: one failing
+// (insufficient credits, already booked, sold out) skips just that lawyer and
+// the rest still go through. Returns a per-lawyer result summary.
+router.post('/bulk', requireAuth, (req, res) => {
+  const u = req.user;
+  const isLADBulk = isSuper(u.role) || u.role === 'lad_admin' || u.role === 'provider_admin';
+  const isCO = u.role === 'firm_compliance_officer';
+  if (!isLADBulk && !isCO) return res.status(403).json({ error: 'Admins or firm officers only' });
+
+  const ids = Array.isArray(req.body.lawyer_ids) ? req.body.lawyer_ids.map(String).filter(Boolean) : [];
+  if (!ids.length) return res.status(400).json({ error: 'lawyer_ids is required' });
+  if (ids.length > 200) return res.status(400).json({ error: 'Too many lawyers in one batch (max 200).' });
+
+  const session_id = req.body.session_id || null;
+  const course = req.body.course_id ? store.getCourseById(req.body.course_id) : null;
+  if (course && Number(course.private) && isCO) {
+    // A firm CO may only bulk-book their own firm's private course.
+    if (!store.canAccessCourse(course, u)) return res.status(403).json({ error: 'course_private' });
+  }
+  const baseCost = Math.max(0, Math.round(Number(
+    req.body.credits_used != null ? req.body.credits_used
+      : (course && course.credits != null ? course.credits : DEFAULT_CREDIT_COST))));
+
+  const results = [];
+  let booked = 0;
+  const bookOne = (lawyer_id) => {
+    const lawyer = store.getLawyerById(lawyer_id);
+    if (!lawyer) return { lawyer_id, ok: false, reason: 'not_found' };
+    if (isCO && lawyer.firm_id !== u.firm_id) return { lawyer_id, ok: false, reason: 'other_firm' };
+    const balance = Number(lawyer.credit_balance) || 0;
+    if (balance < baseCost) return { lawyer_id, ok: false, reason: 'insufficient_credits', name: `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() };
+    try {
+      return db.transaction(() => {
+        if (session_id) {
+          const dup = db.prepare("SELECT id FROM bookings WHERE lawyer_id = ? AND session_id = ? AND status IN ('booked','attended')").get(lawyer_id, session_id);
+          if (dup) { const e = new Error('already_booked'); e.code = 'already_booked'; throw e; }
+          const s = db.prepare('SELECT seats_remaining, status FROM course_sessions WHERE id = ?').get(session_id);
+          if (s) {
+            if (s.status === 'cancelled') { const e = new Error('cancelled'); e.code = 'session_cancelled'; throw e; }
+            const upd = db.prepare("UPDATE course_sessions SET seats_remaining = seats_remaining - 1, status = CASE WHEN seats_remaining - 1 <= 0 THEN 'closed' ELSE status END WHERE id = ? AND seats_remaining > 0").run(session_id);
+            if (upd.changes !== 1) { const e = new Error('sold_out'); e.code = 'sold_out'; throw e; }
+          }
+        }
+        if (baseCost > 0) {
+          db.prepare('UPDATE lawyers SET credit_balance = credit_balance - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(baseCost, lawyer_id);
+          try {
+            db.prepare(`INSERT INTO credit_transactions (id, lawyer_id, type, amount, aed_amount, description, payment_method, status) VALUES (?,?,?,?,?,?,?, 'completed')`)
+              .run(txId(), lawyer_id, 'use', -baseCost, 0, 'Course booking (bulk): ' + (req.body.course_title || (course && course.title) || ''), 'credits');
+          } catch (_) {}
+        }
+        const bk = store.createBooking({
+          lawyer_id, course_id: req.body.course_id, session_id,
+          course_title: req.body.course_title || (course && course.title) || null,
+          provider_id: req.body.provider_id || null, scheduled_at: req.body.scheduled_at,
+          language: req.body.language || 'English', credits_used: baseCost, booked_by: 'admin',
+        });
+        // Confirmation email (best-effort).
+        if (lawyer.email) {
+          try {
+            email.send('booking', tpl.bookingConfirmation({
+              name: tpl.fullName(lawyer.first_name, lawyer.last_name),
+              courseTitle: req.body.course_title || (course && course.title) || 'your CLPD course',
+              sessionWhen: fmtSession(req.body.scheduled_at), venue: req.body.venue || null,
+              language: req.body.language || 'English', credits: baseCost,
+              balance: (db.prepare('SELECT credit_balance FROM lawyers WHERE id = ?').get(lawyer_id) || {}).credit_balance,
+            }), { to: lawyer.email, toName: tpl.fullName(lawyer.first_name, lawyer.last_name), ref: bk && bk.id, dedupeKey: 'booking:' + (bk && bk.id) });
+          } catch (_) {}
+        }
+        return { lawyer_id, ok: true, booking_id: bk && bk.id };
+      })();
+    } catch (e) { return { lawyer_id, ok: false, reason: e.code || 'error' }; }
+  };
+
+  for (const id of ids) { const r = bookOne(id); if (r.ok) booked++; results.push(r); }
+  const skipped = results.filter((r) => !r.ok);
+  res.status(201).json({ ok: true, requested: ids.length, booked, skipped_count: skipped.length, results });
+});
+
 // PATCH /api/v1/bookings/:id — change status (cancel, mark attended, etc.)
 router.patch('/:id', requireAuth, (req, res) => {
   const u = req.user;

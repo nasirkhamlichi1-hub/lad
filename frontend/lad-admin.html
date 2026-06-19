@@ -34,12 +34,14 @@ button{font-family:inherit;cursor:pointer}
 input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 
 /* ─── TOP BAR ─── */
-.adm-topbar{background:linear-gradient(135deg,#0a2040 0%,#1c3a5e 100%);color:#fff;padding:20px 28px;display:grid;grid-template-columns:auto 1fr auto;gap:32px;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2)}
-.adm-brand{display:flex;align-items:center;gap:14px}
-.adm-brand-logo{width:44px;height:44px;background:linear-gradient(135deg,var(--gold),var(--gold-l));border-radius:10px;display:grid;place-items:center;font-family:var(--mono);font-size:14px;font-weight:700;color:#0a2040}
-.adm-brand-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:1.8px;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:600;margin-bottom:2px}
-.adm-brand-title{font-family:var(--serif);font-size:22px;letter-spacing:-.014em;line-height:1}
-.adm-stats{display:flex;gap:24px;justify-content:center}
+.adm-topbar{background:linear-gradient(135deg,#0a2040 0%,#1c3a5e 100%);color:#fff;padding:9px 24px;display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.adm-brand{display:flex;align-items:center;gap:11px}
+.adm-brand-logo{width:34px;height:34px;background:linear-gradient(135deg,var(--gold),var(--gold-l));border-radius:9px;display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:700;color:#0a2040}
+.adm-brand-eyebrow{font-family:var(--mono);font-size:8.5px;letter-spacing:1.6px;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:600;margin-bottom:1px}
+.adm-brand-title{font-family:var(--serif);font-size:16px;letter-spacing:-.014em;line-height:1}
+/* The big course-stat row is decorative chrome (the same numbers live on the
+   course pages) — hidden so the working area starts higher up the screen. */
+.adm-stats{display:none}
 .adm-stat{text-align:center}
 .adm-stat-num{font-family:var(--serif);font-size:26px;color:#fff;line-height:1;letter-spacing:-.012em}
 .adm-stat-lbl{font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;margin-top:4px;font-weight:600}
@@ -65,10 +67,10 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-page{display:none}
 .adm-page.active{display:block}
 .adm-page-head{padding:20px 28px 4px;background:var(--paper)}
-.adm-page-eyebrow{font-family:var(--mono);font-size:10.5px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:6px}
-.adm-page-title{font-family:var(--serif);font-size:32px;color:var(--ink);letter-spacing:-.02em;margin:0 0 8px;font-weight:500;line-height:1.1}
-.adm-page-desc{font-size:13.5px;color:var(--slate);line-height:1.6;max-width:780px}
-.adm-page-head{padding:30px 0 24px;margin-bottom:18px;border-bottom:1px solid var(--line)}
+.adm-page-eyebrow{font-family:var(--mono);font-size:9.5px;color:var(--gold);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:3px}
+.adm-page-title{font-family:var(--serif);font-size:21px;color:var(--ink);letter-spacing:-.02em;margin:0 0 4px;font-weight:500;line-height:1.1}
+.adm-page-desc{font-size:12.5px;color:var(--slate);line-height:1.5;max-width:780px}
+.adm-page-head{padding:14px 0 10px;margin-bottom:10px;border-bottom:1px solid var(--line)}
 
 /* ─── SCHEDULES PAGE ─── */
 .adm-sch-grid{display:grid;grid-template-columns:1fr;gap:14px;padding:18px 28px 28px}
@@ -113,7 +115,12 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-sync-card-h{font-family:var(--serif);font-size:19px;color:var(--ink);letter-spacing:-.014em;margin:0}
 .adm-sync-card-p{font-size:12.5px;color:var(--slate);line-height:1.55;margin:0;flex:1}
 .adm-sync-card-cmd{font-family:var(--mono);font-size:11px;background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:8px 11px;color:var(--ink);letter-spacing:.2px}
-.adm-azure-banner{margin:18px 28px 0;padding:14px 18px;background:linear-gradient(135deg,#0078D4 0%,#0a4d8c 100%);color:#fff;border-radius:12px;display:flex;align-items:center;gap:14px;box-shadow:var(--sh-md)}
+.adm-azure-banner{margin:8px 24px 0;padding:5px 14px;background:linear-gradient(135deg,#0a6b46 0%,#064d31 100%);color:#fff;border-radius:8px;display:flex;align-items:center;gap:10px;box-shadow:none}
+.adm-azure-banner .adm-azure-sub{display:none}
+.adm-azure-banner .adm-azure-icon{display:flex}
+.adm-azure-banner .adm-azure-icon svg{width:15px;height:15px}
+.adm-azure-banner .adm-azure-title{font-size:11.5px;font-weight:600}
+.adm-azure-banner .adm-azure-status{margin-left:auto;font-family:var(--mono);font-size:9px;letter-spacing:.5px;opacity:.85}
 .adm-azure-icon{width:38px;height:38px;background:rgba(255,255,255,.2);border-radius:9px;display:grid;place-items:center;flex-shrink:0}
 .adm-azure-text{flex:1}
 .adm-azure-title{font-weight:700;font-size:13.5px;letter-spacing:.1px}
@@ -437,10 +444,11 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .sup-note { padding: 12px 14px; border: 1px solid var(--line); border-radius: 9px; margin-bottom: 10px; background: var(--paper); }
 .sup-note-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 11px; color: var(--slate3); font-family: var(--mono); letter-spacing: .3px; }
 .sup-note-text { font-size: 13px; color: var(--ink); line-height: 1.5; }
-.sup-summary-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 18px 24px; background: var(--paper); border-bottom: 1px solid var(--line); }
-.sup-tile { background: var(--white); padding: 14px 16px; border-radius: 9px; border: 1px solid var(--line); }
-.sup-tile-label { font-family: var(--mono); font-size: 9.5px; color: var(--slate3); letter-spacing: .6px; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
-.sup-tile-num { font-family: var(--serif); font-size: 26px; color: var(--ink); letter-spacing: -.012em; line-height: 1; }
+.sup-summary-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px 24px; background: var(--paper); border-bottom: 1px solid var(--line); }
+.sup-tile { background: var(--white); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; }
+.sup-tile-label { font-family: var(--mono); font-size: 9px; color: var(--slate3); letter-spacing: .6px; text-transform: uppercase; font-weight: 700; margin-bottom: 0; order:2; }
+.sup-tile-num { font-family: var(--serif); font-size: 21px; color: var(--ink); letter-spacing: -.012em; line-height: 1; order:1; }
+.sup-tile-sub { display:none; }
 .sup-tile-num.red { color: var(--red); }
 .sup-tile-num.amber { color: var(--amber); }
 .sup-tile-num.green { color: var(--green); }
@@ -2070,7 +2078,7 @@ async function reclassifyAll() {
   <div class="adm-page-head">
     <div class="adm-page-eyebrow">CUSTOMER SUPPORT &middot; ACCOUNT MANAGEMENT</div>
     <h2 class="adm-page-title">Lawyer support</h2>
-    <p class="adm-page-desc">Lookup any lawyer to review their compliance, transactions, bookings, and notes. Use the quick actions to add credits, refund bookings, send password resets, or grant extensions.</p>
+    <p class="adm-page-desc">Look up any lawyer — or select several to message or book them as a group.</p>
   </div>
 
   <!-- Summary tiles -->
@@ -2132,12 +2140,24 @@ async function reclassifyAll() {
     <div class="sup-list-pane">
       <div class="sup-list-hd">
         <input type="text" class="sup-search" id="supSearchInput" placeholder="Search all 5,700+ lawyers by name, DBA, email or firm..." oninput="supSearchDebounced()"/>
-        <div class="sup-filters">
+        <div class="sup-filters" style="display:flex;align-items:center;gap:6px">
           <button class="sup-filter-pill active" data-sup-filter="all" onclick="supSetFilter('all')">All</button>
           <button class="sup-filter-pill" data-sup-filter="critical" onclick="supSetFilter('critical')">Critical</button>
           <button class="sup-filter-pill" data-sup-filter="at-risk" onclick="supSetFilter('at-risk')">At risk</button>
           <button class="sup-filter-pill" data-sup-filter="compliant" onclick="supSetFilter('compliant')">Compliant</button>
+          <span style="flex:1"></span>
+          <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--slate2);cursor:pointer;user-select:none" title="Select all matching lawyers">
+            <input type="checkbox" id="supSelectAll" onchange="supToggleAll(this.checked)" style="cursor:pointer">Select
+          </label>
         </div>
+      </div>
+      <!-- Bulk-action bar — appears when one or more lawyers are ticked -->
+      <div id="supBulkBar" style="display:none;align-items:center;gap:8px;padding:9px 14px;background:var(--green);color:#fff;flex-shrink:0;flex-wrap:wrap">
+        <span style="font-weight:700;font-size:12.5px" id="supBulkCount">0 selected</span>
+        <span style="flex:1"></span>
+        <button onclick="supBulkMessage()" style="background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:5px 11px;cursor:pointer;font-size:11.5px;font-weight:600;font-family:inherit">✉ Message</button>
+        <button onclick="supBulkBook()" style="background:#fff;border:1px solid #fff;color:var(--green);border-radius:6px;padding:5px 11px;cursor:pointer;font-size:11.5px;font-weight:700;font-family:inherit">📅 Book onto course</button>
+        <button onclick="supClearSel()" title="Clear selection" style="background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:11.5px;font-family:inherit">✕</button>
       </div>
       <div class="sup-list" id="supList"></div>
     </div>
@@ -2348,7 +2368,7 @@ async function loadLiveCourses(){
         provider:c.provider_id||'LAD Academy', location:c.location||'Dubai',
         bg:c.bg||(isMand?'linear-gradient(135deg,#241a38,#463a66)':'linear-gradient(135deg,#0a2040,#16386a)'),
         elearning:isElearn, status:'live', match:0, matchReason:'', desc:(c.title||'')+' — accredited CLPD course.',
-        sessions:(c.sessions||[]).map((s)=>({date:fd(s.scheduled_at),time:ft(s.scheduled_at)+(s.end_at?'–'+ft(s.end_at):''),seats:Number(s.seats_remaining)||0,lang:s.language||'English',sid:s.id})),
+        sessions:(c.sessions||[]).map((s)=>({date:fd(s.scheduled_at),time:ft(s.scheduled_at)+(s.end_at?'–'+ft(s.end_at):''),seats:Number(s.seats_remaining)||0,lang:s.language||'English',sid:s.id,iso:s.scheduled_at})),
         impact:[] };
     });
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(courses)); } catch {}
@@ -4368,11 +4388,14 @@ function supRender() {
     return;
   }
 
+  supFilteredIds = filtered.map(l => l.id);
   listEl.innerHTML = filtered.map(l => {
     const band = supBand(l.pts);
     const bandLabel = band === 'critical' ? 'CRITICAL' : band === 'at-risk' ? 'AT RISK' : 'COMPLIANT';
     const sel = supSelectedId === l.id ? 'selected' : '';
+    const checked = supSel.has(l.id) ? 'checked' : '';
     return `<div class="sup-list-row ${sel}" onclick="supSelectLawyer('${l.id}')">
+      <input type="checkbox" ${checked} onclick="event.stopPropagation();supToggleSel('${l.id}',this.checked)" style="cursor:pointer;width:15px;height:15px;flex-shrink:0" title="Select for bulk action">
       <div class="sup-avatar" style="background:${supAvatarColor(l.firm_id)}">${l.initials}</div>
       <div class="sup-list-info">
         <div class="sup-list-name">${escape(l.name)}</div>
@@ -4384,6 +4407,131 @@ function supRender() {
       </div>
     </div>`;
   }).join('');
+  supUpdateBulkBar();
+}
+
+// ─────────── MULTI-SELECT / BULK ACTIONS ───────────────────────────
+let supSel = new Set();          // ticked lawyer ids for bulk actions
+let supFilteredIds = [];         // ids currently shown (for select-all)
+function supToggleSel(id, on) { if (on) supSel.add(id); else supSel.delete(id); supUpdateBulkBar(); }
+function supToggleAll(on) {
+  if (on) supFilteredIds.forEach(id => supSel.add(id)); else supFilteredIds.forEach(id => supSel.delete(id));
+  supRender();
+}
+function supClearSel() { supSel.clear(); const sa = document.getElementById('supSelectAll'); if (sa) sa.checked = false; supRender(); }
+function supSelLawyers() { return supLawyers.filter(l => supSel.has(l.id)); }
+function supUpdateBulkBar() {
+  const bar = document.getElementById('supBulkBar'); if (!bar) return;
+  const n = supSel.size;
+  bar.style.display = n > 0 ? 'flex' : 'none';
+  const c = document.getElementById('supBulkCount'); if (c) c.textContent = n + ' lawyer' + (n === 1 ? '' : 's') + ' selected';
+  const sa = document.getElementById('supSelectAll');
+  if (sa) sa.checked = supFilteredIds.length > 0 && supFilteredIds.every(id => supSel.has(id));
+}
+
+// Bulk MESSAGE — broadcast to the selected lawyers via /notifications/send.
+function supBulkMessage() {
+  const sel = supSelLawyers(); if (!sel.length) return;
+  const names = sel.slice(0, 4).map(l => l.name).join(', ') + (sel.length > 4 ? ` +${sel.length - 4} more` : '');
+  document.getElementById('supBookModalBody').innerHTML = `
+    <div style="padding:22px 24px">
+      <div class="sup-book-label">Message ${sel.length} lawyer${sel.length === 1 ? '' : 's'}</div>
+      <div style="font-size:12px;color:var(--slate2);margin:4px 0 14px">${escape(names)}</div>
+      <input id="supMsgTitle" class="sup-search" placeholder="Subject (optional)" style="margin-bottom:10px"/>
+      <textarea id="supMsgBody" class="sup-search" placeholder="Write your message…" style="min-height:120px;resize:vertical;font-family:inherit"></textarea>
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:14px">
+        <button class="adm-btn-light" onclick="supBookModalClose()">Cancel</button>
+        <button class="adm-btn-green" id="supMsgSend" onclick="supBulkMessageSend()">Send to ${sel.length}</button>
+      </div>
+    </div>`;
+  document.getElementById('supBookModal').style.display = 'flex';
+}
+async function supBulkMessageSend() {
+  const ids = Array.from(supSel); if (!ids.length) return;
+  const title = (document.getElementById('supMsgTitle')?.value || '').trim();
+  const body = (document.getElementById('supMsgBody')?.value || '').trim();
+  if (!title && !body) { toast('Write a message first', 'error'); return; }
+  const btn = document.getElementById('supMsgSend'); if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  try {
+    const r = await fetch(_admBase().replace(/\/$/, '') + '/api/v1/notifications/send', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + _admToken() },
+      body: JSON.stringify({ audience: 'lawyer', lawyerIds: ids, title, body, level: 'info' }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || 'Failed');
+    toast(`Message sent to ${j.recipients || ids.length} lawyer${ids.length === 1 ? '' : 's'}`, 'success');
+    supBookModalClose(); supClearSel();
+  } catch (e) { toast(e.message || 'Send failed', 'error'); if (btn) { btn.disabled = false; btn.textContent = 'Send'; } }
+}
+
+// Bulk BOOK — book all selected lawyers onto one course/session via /bookings/bulk.
+function supBulkBook() {
+  const sel = supSelLawyers(); if (!sel.length) return;
+  supBulkBookCourseId = ''; supBulkBookSessionIdx = 0;
+  supBulkBookRender();
+  document.getElementById('supBookModal').style.display = 'flex';
+}
+let supBulkBookCourseId = '', supBulkBookSessionIdx = 0;
+function supBulkBookRender() {
+  const sel = supSelLawyers();
+  const c = courses.find(x => x.id === supBulkBookCourseId);
+  const credits = c?.credits || 5;
+  const sess = c?.sessions?.[supBulkBookSessionIdx];
+  const canAfford = sel.filter(l => (l.credits || 0) >= credits).length;
+  const tooPoor = sel.length - canAfford;
+  const names = sel.slice(0, 5).map(l => l.name).join(', ') + (sel.length > 5 ? ` +${sel.length - 5} more` : '');
+  document.getElementById('supBookModalBody').innerHTML = `
+    <div style="padding:20px 24px">
+      <div class="sup-book-label">Book ${sel.length} lawyer${sel.length === 1 ? '' : 's'} onto a course</div>
+      <div style="font-size:12px;color:var(--slate2);margin:4px 0 14px">${escape(names)}</div>
+      <div class="sup-book-section" style="padding-top:0">
+        <div class="sup-book-label">Course</div>
+        <select class="sup-book-select" onchange="supBulkBookCourseId=this.value;supBulkBookSessionIdx=0;supBulkBookRender()">
+          <option value="">— Select a course —</option>
+          ${courses.map(co => `<option value="${co.id}" ${co.id === supBulkBookCourseId ? 'selected' : ''}>${escape(co.title)} (${co.credits || 5} credits · +${co.pts || 2} pts)</option>`).join('')}
+        </select>
+      </div>
+      ${c ? `
+        <div class="sup-book-section">
+          <div class="sup-book-label">Session</div>
+          ${c.elearning ? `<div style="padding:10px 14px;background:var(--paper);border:1px solid var(--line);border-radius:7px;font-size:12.5px;color:var(--slate)"><strong>Online · self-paced</strong> — no fixed date.</div>`
+            : (c.sessions && c.sessions.length) ? `<select class="sup-book-select" onchange="supBulkBookSessionIdx=parseInt(this.value);supBulkBookRender()">
+                ${c.sessions.map((s, i) => `<option value="${i}" ${i === supBulkBookSessionIdx ? 'selected' : ''}>${escape(s.date)} · ${escape(s.time)} · ${escape(s.lang || 'English')} · ${s.seats} seats left</option>`).join('')}
+              </select>${sess && sess.seats < sel.length ? `<div style="margin-top:8px;font-size:12px;color:var(--amber);font-weight:600">⚠ Only ${sess.seats} seats left but ${sel.length} selected — the first ${sess.seats} will be booked.</div>` : ''}`
+            : `<div style="padding:10px 14px;background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:7px;font-size:12.5px">No upcoming sessions — add one via Schedules first.</div>`}
+        </div>
+        <div class="sup-book-section">
+          <div class="sup-book-summary">
+            <div class="sup-book-row"><span>Lawyers selected</span><span>${sel.length}</span></div>
+            <div class="sup-book-row"><span>Credits each</span><span>${credits} credits (${(credits * 120).toLocaleString()} AED)</span></div>
+            <div class="sup-book-row total"><span>Can afford it now</span><span style="color:${tooPoor ? 'var(--amber)' : 'var(--green)'}">${canAfford} of ${sel.length}</span></div>
+            ${tooPoor ? `<div class="sup-book-row warn"><span>⚠ Short on credits</span><span>${tooPoor} will be skipped</span></div>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:14px">
+          <button class="adm-btn-light" onclick="supBookModalClose()">Cancel</button>
+          <button class="adm-btn-green" id="supBulkBookBtn" onclick="supBulkBookConfirm()" ${(!c.elearning && (!c.sessions || !c.sessions.length)) ? 'disabled style="opacity:.5;cursor:not-allowed"' : ''}>Book ${canAfford} lawyer${canAfford === 1 ? '' : 's'}</button>
+        </div>
+      ` : ''}
+    </div>`;
+}
+async function supBulkBookConfirm() {
+  const ids = Array.from(supSel); if (!ids.length) return;
+  const c = courses.find(x => x.id === supBulkBookCourseId); if (!c) { toast('Pick a course', 'error'); return; }
+  const sess = c.sessions?.[supBulkBookSessionIdx];
+  const btn = document.getElementById('supBulkBookBtn'); if (btn) { btn.disabled = true; btn.textContent = 'Booking…'; }
+  try {
+    const r = await fetch(_admBase().replace(/\/$/, '') + '/api/v1/bookings/bulk', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + _admToken() },
+      body: JSON.stringify({ lawyer_ids: ids, course_id: c.id, course_title: c.title, session_id: sess?.sid || null, scheduled_at: sess?.iso || null, credits_used: Number(c.credits) || 5 }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || 'Failed');
+    const skipped = j.skipped_count ? ` · ${j.skipped_count} skipped` : '';
+    toast(`Booked ${j.booked} of ${j.requested} lawyers${skipped}`, j.booked ? 'success' : 'error');
+    supBookModalClose(); supClearSel();
+    if (typeof supFetch === 'function') supFetch();
+  } catch (e) { toast(e.message || 'Booking failed', 'error'); if (btn) { btn.disabled = false; btn.textContent = 'Book'; } }
 }
 
 async function supSelectLawyer(id) {
