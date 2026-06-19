@@ -434,6 +434,26 @@ router.get('/firms', requireAuth, (req, res) => {
   res.json({ firms, total: firms.length });
 });
 
+// GET /api/v1/admin/lawyers?band=critical|atrisk|compliant — practising lawyers
+// (optionally filtered to a compliance band) for the cohort galaxy.
+router.get('/lawyers', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
+  const year = String(cycleYear());
+  const band = (req.query.band || '').toString();
+  const limit = Math.min(1500, Math.max(1, parseInt(req.query.limit || '800', 10) || 800));
+  let rows = [];
+  try {
+    rows = db.prepare(`SELECT l.id, l.first_name, l.last_name, fr.name firm,
+      COALESCE(SUM(CASE WHEN b.status='attended' AND strftime('%Y',b.created_at)=? THEN b.points_earned ELSE 0 END),0) pts
+      FROM lawyers l LEFT JOIN bookings b ON b.lawyer_id=l.id LEFT JOIN firms fr ON fr.id=l.firm_id WHERE ${_PRACT} GROUP BY l.id`).all(year);
+  } catch (_) {}
+  if (band === 'critical') rows = rows.filter((r) => r.pts < 8);
+  else if (band === 'atrisk' || band === 'at-risk') rows = rows.filter((r) => r.pts >= 8 && r.pts < 16);
+  else if (band === 'compliant') rows = rows.filter((r) => r.pts >= 16);
+  const total = rows.length;
+  res.json({ total, lawyers: rows.slice(0, limit).map((r) => ({ id: r.id, name: ((r.first_name || '') + ' ' + (r.last_name || '')).trim() || r.id, points: r.pts, firm: r.firm })) });
+});
+
 // GET /api/v1/admin/firm/:id — rich firm profile (lawyers, bands, courses,
 // compliance) computed server-side, so a firm dives into its whole world.
 router.get('/firm/:id', requireAuth, (req, res) => {

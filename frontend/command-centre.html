@@ -765,8 +765,12 @@
         {label:'At Risk',sub:'8–15 pts',count:L.atRisk,color:0xffb84d,type:'band',id:'atrisk',drill:true},
         {label:'Compliant',sub:'16+ pts',count:L.compliant,color:0x3df0a0,type:'band',id:'compliant',drill:true}
       ]}; }); },
-      band:function(node){ return needLawyers().then(function(list){ var f=list.filter(function(l){var p=lawPts(l);return node.id==='critical'?p<8:node.id==='atrisk'?(p>=8&&p<16):p>=16;});
-        return {title:node.label+' lawyers',center:{label:node.label,color:node.id==='critical'?0xff5e7e:node.id==='atrisk'?0xffb84d:0x3df0a0},radius:155,children:f.slice(0,40).map(lawyerNode)}; }); },
+      band:function(node){ return getJSON('/api/v1/admin/lawyers?band='+encodeURIComponent(node.id)+'&limit=800').then(function(d){ var L=(d&&d.lawyers)||[]; if(!L.length) return null;
+        var n=L.length, GA=Math.PI*(3-Math.sqrt(5)), R=340, col=node.id==='critical'?0xff5e7e:node.id==='atrisk'?0xffb84d:0x3df0a0;
+        var dir=[]; for(var j=0;j<n;j++) dir.push(j); for(var j2=n-1;j2>0;j2--){ var m=Math.floor(Math.random()*(j2+1)); var tt=dir[j2]; dir[j2]=dir[m]; dir[m]=tt; }
+        var kids=L.map(function(l,i){ var dk=dir[i]+0.5, phi=Math.acos(1-2*dk/n), th=GA*dk; var pos=[Math.sin(phi)*Math.cos(th)*R, Math.cos(phi)*R, Math.sin(phi)*Math.sin(th)*R];
+          return {label:l.name,sub:l.points+' pts · '+(l.firm||'—'),count:Math.max(l.points,1),color:bandColor(l.points),type:'lawyer',id:l.id,drill:true,meta:{points:l.points,firm:l.firm},pos:pos,noLabel:(i>=10)}; });
+        return {title:node.label+' lawyers',center:{label:node.label,color:col,data:{cohort:node.label,inBand:d.total,showing:n}},children:kids,dense:true,spread:R}; }); },
       lawyer:function(node){ return getJSON('/api/v1/lawyers/'+encodeURIComponent(node.id)).then(function(d){ var att=(d&&(d.attendance||d.bookings))||[]; if(!att.length) return null;
         return {title:node.label,center:{label:node.label,color:bandColor(node.meta&&node.meta.points)},radius:110,children:att.slice(0,24).map(function(a){ var p=Number(a.points||a.points_earned||a.cpd_points)||0; return {label:a.course_title||a.title||a.course_code||'Course',sub:(p?('+'+p+' pts'):(a.created_at?fdate(a.created_at):'')),count:Math.max(p,1),color:0x1fe0b4,type:'attcourse',id:a.course_code||a.course_id||'',drill:false,meta:a};})}; }); },
       coursesRoot:function(){ return needAnalytics().then(function(d){ var cs=(d&&d.courses)||[]; return {title:'Courses',center:{label:'Courses',color:0x1fe0b4},radius:155,children:cs.slice(0,24).map(function(c){return {label:c.title,sub:nf(c.totalBookings)+' booked',count:Math.max(c.totalBookings,1),color:typeHex(c.type),type:'course',id:c.id,drill:true,meta:c};})}; }); },
@@ -907,6 +911,7 @@
       if(t==='accreditation') return 'In two short sentences, summarise this accreditation application ('+l+') and any action it needs.';
       if(t==='stat') return 'In one sentence, interpret what '+(node.meta&&node.meta.label||l)+' = '+(node.meta&&node.meta.value||s)+' tells us about the firm.';
       if(t==='center'){ var D=node.data; if(D&&D.firm) return 'Give an executive read on the law firm "'+D.firm+'": '+nf(D.total)+' practising lawyers, '+nf(D.compliant)+' compliant, '+nf(D.atRisk)+' at risk, '+nf(D.critical)+' critical (<8 CPD points), '+(D.compliancePct!=null?D.compliancePct+'%':'?')+' compliance, '+nf(D.courses)+' accredited activities. In two sentences give the key takeaway and the single most important action. Use these exact numbers; never say there is no data.';
+        if(D&&D.cohort) return 'Give an executive read on the "'+D.cohort+'" cohort of practising lawyers: '+nf(D.inBand)+' lawyers in this band'+(D.showing&&D.showing<D.inBand?(' ('+nf(D.showing)+' shown in the galaxy)'):'')+'. In two sentences explain what this cohort means for CLPD compliance across the profession and the single most important action to move them up. Use these exact numbers; never say there is no data.';
         return 'In two short sentences, give an executive insight on the current view "'+(node.ctx||l)+'" using the live numbers, and the key takeaway. Never say there is no data.'; }
       return 'In two short sentences, tell me about "'+l+'" ('+s+') and what it means for CLPD compliance. Use the figures given; never say there is no data.';
     }
@@ -918,7 +923,7 @@
     function showNodeDetail(node){ if(!node) return; document.body.classList.add('focus');
       $('fpEye').textContent=TYPE_LABEL[node.type]||(node.type||'NODE').toUpperCase();
       $('fpTitle').textContent=(node.type==='center'?(node.ctx||node.label):(node.label||node.id))||'Node';
-      $('fpSub').textContent=(node.type==='center'?((node.data&&node.data.firm)?'Firm overview':'Current view of the profession'):(node.sub||''));
+      $('fpSub').textContent=(node.type==='center'?((node.data&&node.data.firm)?'Firm overview':(node.data&&node.data.cohort)?(nf(node.data.inBand)+' lawyers in this cohort'):'Current view of the profession'):(node.sub||''));
       var html='';
       if(node.type==='lawyer'&&node.meta){ html=factRow('CPD points',nf(node.meta.points),bandCss(node.meta.points))+factRow('Status',esc(node.meta.status||'active'))+factRow('Credits',nf(node.meta.credits)); }
       else if(node.type==='session'&&node.meta){ var s=node.meta; html=factRow('Date',fdate(s.scheduled_at))+factRow('Seats open',nf(s.seats_remaining),'var(--amber)')+factRow('Capacity',nf(s.capacity))+factRow('Venue',esc(s.venue||'—')); }
@@ -927,7 +932,7 @@
       else if(node.type==='stat'&&node.meta){ html=factRow(esc(node.meta.label||'Value'),esc(node.meta.value||'—'),'var(--cyan)'); }
       else if(node.type==='firmCourse'&&node.meta){ html=factRow('Course',esc(node.label))+factRow('Bookings',nf(node.meta.count))+factRow('Attended',nf(node.meta.attended)); }
       else if(node.type==='firm'&&node.meta){ html=factRow('Lawyers',nf(node.meta.lawyers))+factRow('Compliance',(node.meta.compliancePct!=null?node.meta.compliancePct+'%':'—'))+factRow('Critical',nf(node.meta.critical)); }
-      else if(node.type==='center'){ var D=node.data; if(D&&D.firm){ html=factRow('Lawyers',nf(D.total))+factRow('Compliant',nf(D.compliant),'var(--green)')+factRow('At risk',nf(D.atRisk),'var(--amber)')+factRow('Critical',nf(D.critical),'var(--red)')+factRow('Compliance',(D.compliancePct!=null?D.compliancePct+'%':'—'))+factRow('Accredited activities',nf(D.courses),'var(--teal)'); } else { var o=window.__OV,L=(o&&o.lawyers)||{}; html=L.practising!=null?(factRow('Practising',nf(L.practising))+factRow('Compliant',nf(L.compliant),'var(--green)')+factRow('At risk',nf(L.atRisk),'var(--amber)')+factRow('Critical',nf(L.critical),'var(--red)')):'<div class="loading">Live overview</div>'; } }
+      else if(node.type==='center'){ var D=node.data; if(D&&D.firm){ html=factRow('Lawyers',nf(D.total))+factRow('Compliant',nf(D.compliant),'var(--green)')+factRow('At risk',nf(D.atRisk),'var(--amber)')+factRow('Critical',nf(D.critical),'var(--red)')+factRow('Compliance',(D.compliancePct!=null?D.compliancePct+'%':'—'))+factRow('Accredited activities',nf(D.courses),'var(--teal)'); } else if(D&&D.cohort){ html=factRow('Cohort',esc(D.cohort))+factRow('Lawyers in band',nf(D.inBand),'var(--cyan)')+(D.showing&&D.showing<D.inBand?factRow('Shown in galaxy',nf(D.showing)):''); } else { var o=window.__OV,L=(o&&o.lawyers)||{}; html=L.practising!=null?(factRow('Practising',nf(L.practising))+factRow('Compliant',nf(L.compliant),'var(--green)')+factRow('At risk',nf(L.atRisk),'var(--amber)')+factRow('Critical',nf(L.critical),'var(--red)')):'<div class="loading">Live overview</div>'; } }
       else { html='<div class="loading">The deepest layer here.</div>'; }
       $('fpFacts').innerHTML=html;
       var btn=$('fpAsk'); if(btn){ btn.style.display=''; btn.onclick=function(){ maryamInto(node); }; }
