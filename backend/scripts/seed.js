@@ -118,10 +118,13 @@ for (const r of rows) {
   if (!lid || !lid.startsWith('L-')) continue; // skip non-Lawyer rows
   if (!lawyers.has(lid)) {
     const firmName = cleanFirmName(r['Firm']);
+    const nm = (r['Name'] || '').toString().trim();
+    const sp = nm.indexOf(' ');
     lawyers.set(lid, {
       id: lid,
-      first_name: '', last_name: '',
-      email: r['Email '] || null,
+      first_name: sp > 0 ? nm.slice(0, sp) : nm,
+      last_name: sp > 0 ? nm.slice(sp + 1) : '',
+      email: r['Email'] || r['Email '] || null,
       phone: r['Phone'] || null,
       gender: r['Gender'] || null,
       firm_id: (firmName && !EXCLUDE_FIRMS.has(firmName)) ? slug(firmName) : null,
@@ -134,14 +137,8 @@ for (const r of rows) {
       credit_balance: r['Current Credits'] || 0,
       total_purchased: r['Total Purchased Credits'] || 0,
       total_refunded: r['Total Refunded Credits'] || 0,
-      lifetime_points: r['Total Points'] || 0,
+      lifetime_points: 0, // computed below by summing completed-course points
     });
-  } else {
-    // Update max lifetime points
-    const ex = lawyers.get(lid);
-    if (r['Total Points'] != null && r['Total Points'] > (ex.lifetime_points || 0)) {
-      ex.lifetime_points = r['Total Points'];
-    }
   }
   // Anonymise: real names are typically null in the LAD report. If the
   // partner wants names populated, they go here; otherwise we leave blank
@@ -157,6 +154,18 @@ for (const r of rows) {
   else if (fn === 'Inactive') lawyers.get(lid).status = 'inactive';
   else if (fn === 'Non-practising') lawyers.get(lid).status = 'inactive';
   else if (fn === 'Left Jurisdiction') lawyers.get(lid).status = 'inactive';
+}
+
+// Points are earned on COMPLETED courses. lifetime_points = the sum of every
+// completed course's Points Received for that lawyer (the report has no
+// pre-aggregated total). This is what drives the compliance bands.
+for (const r of rows) {
+  const lid = r['Firm/Lawyer ID'];
+  if (!lid || !lawyers.has(lid)) continue;
+  if (mapStatus(r['Course Status']) === 'attended') {
+    const p = Number(r['Points Received']) || 0;
+    lawyers.get(lid).lifetime_points += p;
+  }
 }
 
 const insertLawyer = db.prepare(`INSERT OR REPLACE INTO lawyers
@@ -212,8 +221,8 @@ console.log('\n[4/4] Bookings (this takes ~30s)…');
 
 const insertBooking = db.prepare(`INSERT OR REPLACE INTO bookings
   (id, lawyer_id, course_id, course_title, provider_id, scheduled_at, status,
-   points_earned, credits_used, language, booked_by, booked_at, admin_notes)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+   points_earned, credits_used, language, booked_by, booked_at, admin_notes, created_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
 let inserted = 0, skipped = 0;
 db.transaction(() => {
@@ -228,6 +237,9 @@ db.transaction(() => {
     const sched = parseSchedule(r['Course Schedule']);
     const providerName = (r['Course Provider'] || '').toString().trim();
     const id = `${lid}::${courseId}::${sched.start || i}`.replace(/[^a-zA-Z0-9_:-]/g,'_');
+    let bookedAt = null;
+    if (r['Course booked date']) { try { bookedAt = new Date(r['Course booked date'].toString().replace(',','')).toISOString(); } catch (_) {} }
+    const createdAt = bookedAt || sched.start || null; // real activity date, not import time
 
     insertBooking.run(
       id, lid, courseId, title,
@@ -236,8 +248,9 @@ db.transaction(() => {
       r['Points Received'] || 0, 0,
       r['Prefer Language'] || 'English',
       r['Course bookedby'] || null,
-      r['Course booked date'] ? new Date(r['Course booked date'].replace(',','')).toISOString() : null,
-      r['Course Admin Notes'] || null
+      bookedAt,
+      r['Course Admin Notes'] || null,
+      createdAt
     );
     inserted++;
 
@@ -288,11 +301,14 @@ const courseTopics = require('./course-topics-seed');
 const insertCourseTopic = db.prepare(`INSERT OR REPLACE INTO course_topics
   (course_id, topic_id, weight, source) VALUES (?, ?, ?, 'manual')`);
 let mappingCount = 0;
+// Only map topics for courses that actually exist in this dataset — the
+// fingerprint seed is a superset and its course ids won't all be present.
+const knownCourses = new Set(db.prepare('SELECT id FROM courses').all().map((c) => c.id));
 db.transaction(() => {
   for (const [courseId, topics] of Object.entries(courseTopics)) {
+    if (!knownCourses.has(courseId)) continue;
     for (const t of topics) {
-      insertCourseTopic.run(courseId, t.topic_id, t.weight);
-      mappingCount++;
+      try { insertCourseTopic.run(courseId, t.topic_id, t.weight); mappingCount++; } catch (_) {}
     }
   }
 })();
