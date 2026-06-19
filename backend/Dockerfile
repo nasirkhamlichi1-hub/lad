@@ -48,4 +48,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
 
 # tini reaps zombies and forwards SIGTERM cleanly — required for graceful shutdown
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["sh", "-c", "node scripts/migrate.js && node scripts/seed-if-needed.js && node src/server.js"]
+CMD ["sh", "-c", "node scripts/migrate.js && node scripts/seed-if-needed.js && { node scripts/seed-feedback.js || true; } && node src/server.js"]
