@@ -3536,8 +3536,25 @@ async function loadCatalogueLive() {
       return { id:c.id, title:c.title, pts:pts, credits:credits, isMand:isMand, internal:isPriv, provider:provider, sessions:sess, rating:c.rating||null };
     });
     markAttendedCourses();
+    applyStaticRatings();
   } catch (e) { console.warn('[lawyer-portal] loadCatalogueLive:', e.message); }
 }
+
+// Resilient feedback scores: the API includes ratings on /upcoming, but if the
+// backend is mid-redeploy and returns none, fall back to the static
+// feedback.json served by the frontend so course cards still show their score.
+var LFB_STATIC = null;
+function applyStaticRatings(){
+  if (!LFB_STATIC || !LFB_STATIC.byCourseId) return;
+  function fill(list){ (list||[]).forEach(function(c){ if(!(c.rating&&c.rating.responses)){ var r=LFB_STATIC.byCourseId[c.id]; if(r&&r.responses){ c.rating=r; if(window.COURSES&&window.COURSES[c.id]) window.COURSES[c.id].rating=r; } } }); }
+  fill(window.CAT_LIVE); fill(window.CAT_INTERNAL);
+  try{ if(typeof renderCatalogue==='function') renderCatalogue(); }catch(e){}
+  try{ if(typeof renderBasedOnHistory==='function'){ renderBasedOnHistory._t=0; renderBasedOnHistory(); } }catch(e){}
+}
+function loadStaticFeedbackLawyer(){
+  fetch('feedback.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(s){ if(s){ LFB_STATIC=s; applyStaticRatings(); } }).catch(function(){});
+}
+try{ if(document.readyState!=='loading') loadStaticFeedbackLawyer(); else document.addEventListener('DOMContentLoaded', loadStaticFeedbackLawyer); }catch(e){}
 
 // Flag courses the lawyer has already attended (from /me) so the catalogue can
 // grey them out and prevent a second booking.
@@ -4036,6 +4053,9 @@ function renderBookingRatings(c, courseId){
   }
   // Use cached rating if present, else fetch the dedicated endpoint.
   if (c.rating || c.provider_rating){ paint(c.rating, c.provider_rating || (c.rating && c.rating.provider)); return; }
+  // Static fallback first (always available), so scores show even if the API is down.
+  var stat = LFB_STATIC && LFB_STATIC.byCourseId ? LFB_STATIC.byCourseId[courseId] : null;
+  if (stat && stat.responses){ c.rating=stat; c.provider_rating=stat.provider||null; paint(stat, stat.provider); }
   try {
     var base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
     fetch(base.replace(/\/$/,'')+'/api/v1/courses/'+encodeURIComponent(courseId)+'/feedback')
