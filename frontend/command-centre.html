@@ -163,10 +163,27 @@
   .cd-fb .v{font-family:var(--title);font-size:26px;color:var(--dim2)}
   .cd-fb .soon{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--amber);border:1px solid rgba(255,184,77,.4);border-radius:10px;padding:2px 7px;display:inline-block;margin-top:6px}
   .chip{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.5px;color:var(--ink);background:rgba(52,225,255,.1);border:1px solid rgba(52,225,255,.25);border-radius:12px;padding:4px 10px;margin:3px 4px 0 0}
+
+  /* ── Cinematic boot sequence ── */
+  #boot{position:fixed;inset:0;z-index:200;background:radial-gradient(circle at 50% 44%,#0a1430,#04060f 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .9s}
+  #boot.gone{opacity:0;pointer-events:none}
+  #boot .bmark{width:64px;height:64px;border-radius:16px;border:1px solid rgba(52,225,255,.4);display:grid;place-items:center;box-shadow:0 0 44px rgba(52,225,255,.32);animation:bspin 3s linear infinite}
+  #boot .bmark svg{width:32px;height:32px;stroke:#34e1ff;fill:none;stroke-width:1.4}
+  @keyframes bspin{to{transform:rotate(360deg)}}
+  #boot .btxt{font-family:var(--title);font-size:14px;letter-spacing:5px;color:#9fc7ff;text-transform:uppercase}
+  #boot .bbar{width:240px;height:3px;border-radius:3px;background:rgba(120,150,210,.2);overflow:hidden}
+  #boot .bbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#34e1ff,#1fe0b4);animation:bfill 1.9s ease forwards}
+  @keyframes bfill{to{width:100%}}
+  #boot .bsub{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--dim2)}
+  /* live cohort legend (appears when the swarm recolours by band) */
+  #bandLegend{position:absolute;left:16px;bottom:16px;z-index:7;display:none;gap:14px;font-family:var(--mono);font-size:10px;letter-spacing:.5px;color:var(--dim);background:rgba(7,12,26,.55);border:1px solid var(--panel-b);border-radius:12px;padding:8px 13px;backdrop-filter:blur(8px)}
+  #bandLegend span{display:flex;align-items:center;gap:5px}
+  #bandLegend i{width:8px;height:8px;border-radius:2px;display:inline-block}
   @media(max-width:1200px){.stage{grid-template-columns:1fr}.kstrip{grid-template-columns:repeat(3,1fr)}.bottom{grid-template-columns:1fr 1fr}.centerstage{min-height:440px}}
 </style>
 </head>
 <body>
+<div id="boot"><div class="bmark"><svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 .9-4.5 4.2 1 6L12 16.8 6.5 19l1-6L3 8.9 9 8z"/></svg></div><div class="btxt">Initialising Digital Twin</div><div class="bbar"><i></i></div><div class="bsub">Legal Ecosystem · CLPD Command Centre</div></div>
 <div class="grid-bg"></div>
 <canvas id="twin"></canvas>
 <div class="scan"></div>
@@ -212,6 +229,7 @@
     <div class="col">
       <div class="centerstage" id="centerstage">
         <div class="cs-h"><div class="t">LEGAL ECOSYSTEM DIGITAL TWIN</div><div class="s">People · Practice · Learning · Regulation</div></div>
+        <div id="bandLegend"><span><i style="background:#3df0a0"></i>Compliant</span><span><i style="background:#ffb84d"></i>At risk</span><span><i style="background:#ff5e7e"></i>Critical</span><span style="color:var(--dim2)">· each point = a lawyer</span></div>
         <!-- twin labels injected here -->
         <div class="cs-foot">
           <button class="prim" onclick="cmdAsk('Give me a full executive readout of programme health and the three most important actions this week.')">✦ Ask the AI</button>
@@ -338,6 +356,9 @@
     $('clkd').textContent=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase(); }
   clock(); setInterval(clock,1000*30);
 
+  // Cinematic boot: fade the intro once the twin has had a moment to assemble.
+  setTimeout(function(){ var b=$('boot'); if(b){ b.classList.add('gone'); setTimeout(function(){ if(b&&b.parentNode) b.parentNode.removeChild(b); },1000); } }, 2200);
+
   // ── AI bridge ──
   window.cmdAsk=function(prompt){
     var url=base+'/api/v1/admin/command';
@@ -401,6 +422,10 @@
     setTimeout(function(){ arc.style.transition='stroke-dashoffset 1.6s cubic-bezier(.3,1,.4,1)'; arc.style.strokeDashoffset=C2*(1-health/100); },120);
     countUp($('hsNum'), health);
     $('hsLabel').textContent = health>=80?'EXCELLENT':health>=60?'STRONG':health>=40?'DEVELOPING':'NEEDS FOCUS';
+    // Bring the organism to life from real data: tempo of the heartbeat + the
+    // swarm recoloured into live compliance cohorts.
+    if(window.__setPulse) window.__setPulse(health);
+    if(window.recolorLawyers) window.recolorLawyers(L.critical||0, L.atRisk||0, L.compliant||0);
 
     // Compliance donut
     var prac=L.practising||1, segs=[['dCompliant',L.compliant||0,'var(--green)'],['dAtRisk',L.atRisk||0],['dCritical',L.critical||0]];
@@ -545,7 +570,7 @@
         arr[i*3]=pos.x+rr*Math.sin(ph)*Math.cos(th); arr[i*3+1]=pos.y+rr*Math.sin(ph)*Math.sin(th); arr[i*3+2]=pos.z+rr*Math.cos(ph); }
       geo.setAttribute('position',new THREE.BufferAttribute(arr,3));
       var mat=new THREE.PointsMaterial({color:c.color,size:c.center?2.0:1.7,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false});
-      group.add(new THREE.Points(geo,mat));
+      var swarm=new THREE.Points(geo,mat); group.add(swarm);
       // glowing core
       var core=new THREE.Mesh(new THREE.SphereGeometry(c.center?7:4,20,20),new THREE.MeshBasicMaterial({color:c.color,transparent:true,opacity:.9}));
       core.position.copy(pos); group.add(core);
@@ -554,7 +579,7 @@
       // invisible, larger hit-sphere so the node is easy to click/hover
       var hit=new THREE.Mesh(new THREE.SphereGeometry(c.center?32:19,12,12),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
       hit.position.copy(pos); hit.userData={key:c.key}; group.add(hit);
-      TW.cores.push({key:c.key, hit:hit, core:core, halo:halo, pos:pos, color:c.color});
+      TW.cores.push({key:c.key, hit:hit, core:core, halo:halo, pos:pos, color:c.color, swarm:swarm, geo:geo, mat:mat, n:n});
       // link to centre
       if(!c.center){ var lg=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),pos]);
         group.add(new THREE.Line(lg,new THREE.LineBasicMaterial({color:c.color,transparent:true,opacity:.22,blending:THREE.AdditiveBlending}))); }
@@ -570,6 +595,39 @@
     for(var s=0;s<sn;s++){ sa[s*3]=(Math.random()-.5)*900; sa[s*3+1]=(Math.random()-.5)*600; sa[s*3+2]=(Math.random()-.5)*900; }
     sg.setAttribute('position',new THREE.BufferAttribute(sa,3));
     scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0x4a6aa0,size:.8,transparent:true,opacity:.5})));
+
+    // ── Living booking-flow beams: light travels along every link, so you see
+    //    the programme's activity pulsing through the ecosystem in real time. ──
+    TW.flows=[];
+    TW.cores.forEach(function(c){
+      if(c.pos.lengthSq()<1) return; // skip the central node
+      var N=16, arr=new Float32Array(N*3), t=[];
+      for(var i=0;i<N;i++) t.push(Math.random());
+      var fgeo=new THREE.BufferGeometry(); fgeo.setAttribute('position',new THREE.BufferAttribute(arr,3));
+      var fmat=new THREE.PointsMaterial({color:c.color,size:2.7,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false});
+      group.add(new THREE.Points(fgeo,fmat));
+      TW.flows.push({a:new THREE.Vector3(0,0,0), b:c.pos.clone(), t:t, geo:fgeo});
+    });
+
+    // ── The organism breathes: tempo + colour of the central pulse track the
+    //    live CLPD health score (calm & green when healthy, fast & red when not). ──
+    TW.pulseFreq=1.2; TW.health=70;
+    window.__setPulse=function(h){ TW.health=Math.max(0,Math.min(100,h||0)); TW.pulseFreq=1.0+(1-TW.health/100)*2.6; };
+
+    // ── Each brick becomes a real lawyer: recolour the swarm into live
+    //    compliance cohorts (critical / at-risk / compliant). ──
+    window.recolorLawyers=function(crit,risk,comp){
+      var c=TW.cores.filter(function(x){return x.key==='Lawyers';})[0]; if(!c||!c.geo) return;
+      var n=c.geo.attributes.position.count, col=new Float32Array(n*3);
+      var total=Math.max(1,(crit||0)+(risk||0)+(comp||0));
+      var nC=Math.round(n*(crit||0)/total), nR=Math.round(n*(risk||0)/total), order=[];
+      for(var i=0;i<n;i++) order.push(i); // interleave so bands are visually mixed, not stacked
+      for(var k=order.length-1;k>0;k--){ var j=Math.floor(Math.random()*(k+1)); var tmp=order[k];order[k]=order[j];order[j]=tmp; }
+      order.forEach(function(idx,rank){ var r,g,b; if(rank<nC){r=1;g=.37;b=.49;} else if(rank<nC+nR){r=1;g=.72;b=.30;} else {r=.24;g=.94;b=.63;} col[idx*3]=r;col[idx*3+1]=g;col[idx*3+2]=b; });
+      c.geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+      c.mat.vertexColors=true; c.mat.color.set(0xffffff); c.mat.size=2.3; c.mat.needsUpdate=true;
+      var lg=$('bandLegend'); if(lg) lg.style.display='flex';
+    };
 
     var mx=0,my=0, pointer=new THREE.Vector2(-2,-2);
     window.addEventListener('mousemove',function(e){ mx=(e.clientX/W-.5); my=(e.clientY/H-.5); pointer.x=(e.clientX/W)*2-1; pointer.y=-(e.clientY/H)*2+1; });
@@ -681,7 +739,13 @@
       if(!TW.focusKey){ TW.camTarget.set(mx*60,40,250); TW.lookTarget.set(0,0,0); }
       camera.position.lerp(TW.camTarget,0.06); curLook.lerp(TW.lookTarget,0.08); camera.lookAt(curLook);
       pick();
-      TW.cores.forEach(function(c){ var want=(hovered&&hovered.key===c.key)||(TW.focusKey===c.key)?2.0:1; c.halo.scale.setScalar(c.halo.scale.x+(want-c.halo.scale.x)*0.16); });
+      // living booking-flow beams
+      if(TW.flows){ var sp=0.0055+(TW.health!=null?(1-TW.health/100)*0.004:0); TW.flows.forEach(function(f){ var p=f.geo.attributes.position.array;
+        for(var i=0;i<f.t.length;i++){ f.t[i]+=sp; if(f.t[i]>1) f.t[i]-=1; var tt=f.t[i]; p[i*3]=f.a.x+(f.b.x-f.a.x)*tt; p[i*3+1]=f.a.y+(f.b.y-f.a.y)*tt; p[i*3+2]=f.a.z+(f.b.z-f.a.z)*tt; }
+        f.geo.attributes.position.needsUpdate=true; }); }
+      // health heartbeat — the central node breathes at the programme's tempo
+      var hb=0.5+0.5*Math.sin(performance.now()/1000*(TW.pulseFreq||1.2)*Math.PI);
+      TW.cores.forEach(function(c){ var foc=(hovered&&hovered.key===c.key)||(TW.focusKey===c.key); var want=foc?2.0:(c.key==='Lawyers'?(1.15+0.5*hb):1); c.halo.scale.setScalar(c.halo.scale.x+(want-c.halo.scale.x)*0.16); if(c.key==='Lawyers'&&!foc) c.halo.material.opacity=0.10+0.12*hb; });
       group.updateMatrixWorld(); renderer.render(scene,camera); project();
     }
     loop();
