@@ -89,6 +89,65 @@ function adminEmails() {
   } catch (_) { return []; }
 }
 
+// Active CLPD admins who can own a conversation.
+function adminStaff() {
+  try {
+    return db.prepare(
+      `SELECT id, first_name, last_name, email, speciality FROM staff
+       WHERE COALESCE(status,'active')='active' AND role IN ('lad_admin','lad_intelligence','lad_super_admin','dg')`
+    ).all();
+  } catch (_) { return []; }
+}
+function fullName(a) { return `${(a && a.first_name) || ''} ${(a && a.last_name) || ''}`.trim() || 'CLPD Admin'; }
+
+const aid = () => 'AC-' + crypto.randomBytes(6).toString('hex').toUpperCase().slice(0, 12);
+
+// One row per interaction — this is the CRM timeline.
+function logActivity(a) {
+  try {
+    db.prepare(
+      `INSERT INTO activity_log (id, firm_id, lawyer_id, kind, actor_type, actor_id, actor_name, summary, ref_type, ref_id, meta, created_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`
+    ).run(aid(), a.firm_id || null, a.lawyer_id || null, a.kind, a.actor_type || null, a.actor_id || null,
+      a.actor_name || null, a.summary || null, a.ref_type || 'conversation', a.ref_id || null,
+      a.meta ? JSON.stringify(a.meta) : null, now());
+  } catch (e) { log.error('activity_log_failed', { error: e.message }); }
+}
+// Which firm / lawyer a conversation belongs to.
+function convScope(conv) {
+  return {
+    firm_id: conv.requester_type === 'firm' ? conv.requester_id : (conv.firm_id || null),
+    lawyer_id: conv.requester_type === 'lawyer' ? conv.requester_id : null,
+  };
+}
+
+// ─── Routing — give a conversation a single owner, not the whole team ──
+function leastLoaded(cands) {
+  let best = null, bestN = Infinity;
+  for (const a of cands) {
+    let n = 0;
+    try { n = db.prepare("SELECT COUNT(*) n FROM conversations WHERE assigned_to = ? AND status IN ('open','pending')").get(a.id).n; } catch (_) {}
+    if (n < bestN) { bestN = n; best = a; }
+  }
+  return best;
+}
+// The firm's account owner → a category specialist → the least-loaded admin on
+// duty (round-robin). One owner per conversation; never the whole team.
+function chooseAssignee(conv) {
+  const admins = adminStaff();
+  if (!admins.length) return null;
+  const byId = (id) => admins.find((a) => a.id === id);
+  const fid = conv.requester_type === 'firm' ? conv.requester_id : conv.firm_id;
+  if (fid) {
+    try { const f = db.prepare('SELECT account_owner FROM firms WHERE id = ?').get(fid); if (f && f.account_owner && byId(f.account_owner)) return byId(f.account_owner); } catch (_) {}
+  }
+  if (conv.category) {
+    const specialists = admins.filter((a) => (a.speciality || '') === conv.category);
+    if (specialists.length) return leastLoaded(specialists);
+  }
+  return leastLoaded(admins);
+}
+
 // ─── Maryam — AI first responder ─────────────────────────────────────
 // When a lawyer or firm opens a conversation (or replies while it's still
 // AI-handled and unassigned), Maryam attempts to help using their live CLPD
@@ -131,16 +190,22 @@ function maryamSystem(who) {
     + 'Decide whether a human CLPD officer is needed. Set needsHuman=true when the request needs an action or decision you cannot take or verify — '
     + 'refunds, payments, credit adjustments, record/account changes, exemptions or extensions, complaints, accreditation decisions, or anything needing human judgement or data you do not have. '
     + 'Otherwise answer it fully yourself with needsHuman=false. '
-    + 'Reply with ONLY JSON: {"answer": string, "needsHuman": boolean}. '
+    + 'Always classify the message. category is one of: compliance, credits, bookings, accreditation, technical, general. '
+    + 'priority is one of: low, normal, high (use high for a missed/at-risk deadline, a complaint, or anything involving money). '
+    + 'Reply with ONLY JSON: {"answer": string, "needsHuman": boolean, "category": string, "priority": string}. '
     + 'When needsHuman is true, make "answer" a short, reassuring note that you are bringing in a CLPD colleague who will follow up — do not promise specifics or timeframes.';
 }
 
-function pageAdmins(conv, body) {
+// Notify the ONE owner the work was routed to (fall back to the team only if we
+// couldn't resolve an owner). This is what stops every message paging everyone.
+function notifyAssignee(conv, body, owner) {
   if (!mailer) return;
   try {
-    const subj = `CLPD message needs a human — ${conv.requester_name}`;
-    const text = `${conv.requester_name} (${conv.requester_type}) messaged CLPD and Maryam couldn't fully resolve it:\n\nSubject: ${conv.subject || '(no subject)'}\n\n${body}\n\nOpen the CLPD admin inbox to take over.`;
-    for (const to of adminEmails()) mailer.enqueue({ to, subject: subj, text, category: 'message', ref: conv.id, dedupeKey: 'msg_escalate:' + conv.id + ':' + to + ':' + Date.now() });
+    const subj = `CLPD message needs you — ${conv.requester_name}`;
+    const text = `${conv.requester_name} (${conv.requester_type}) messaged CLPD and Maryam routed it to you.\n\n`
+      + `Subject: ${conv.subject || '(no subject)'}\nCategory: ${conv.category || '—'} · Priority: ${conv.priority || 'normal'}\n\n${body}\n\nOpen the CLPD admin inbox to respond.`;
+    const list = (owner && owner.email) ? [owner.email] : adminEmails();
+    for (const to of list) if (to) mailer.enqueue({ to, subject: subj, text, category: 'message', ref: conv.id, dedupeKey: 'msg_escalate:' + conv.id + ':' + to + ':' + Date.now() });
   } catch (_) {}
 }
 
@@ -152,15 +217,29 @@ async function runMaryam(convId, latestText) {
   // A human has taken over (assigned), or we've already handed off — stay quiet.
   if (conv.assigned_to || conv.escalated) return;
 
-  const escalate = (note) => {
+  const scope = convScope(conv);
+  const CATS = ['compliance', 'credits', 'bookings', 'accreditation', 'technical', 'general'];
+
+  // Hand off to a human: post Maryam's note (if any), tag the thread, route it to
+  // ONE owner, notify only them, and record it on the CRM timeline.
+  const escalate = (note, category, priority) => {
+    let owner = null;
+    const cat = CATS.includes(category) ? category : (conv.category || 'general');
+    const pri = ['low', 'normal', 'high'].includes(priority) ? priority : (conv.priority || 'normal');
     try {
       const ts = now();
       if (note) db.prepare("INSERT INTO conversation_messages (id, conversation_id, sender_side, sender_id, sender_name, sender_role, body, created_at) VALUES (?,?,'admin',?,?,?,?,?)")
         .run(mid(), convId, MARYAM.id, MARYAM.name, MARYAM.role, note, ts);
-      db.prepare('UPDATE conversations SET escalated = 1, ai_handled = 1, status = ?, updated_at = ?, ' + (note ? 'last_sender = ?, last_message_at = ? ' : 'last_sender = last_sender ') + 'WHERE id = ?')
-        .run(...(note ? ['open', ts, 'admin', ts, convId] : ['open', ts, convId]));
+      owner = chooseAssignee(Object.assign({}, conv, { category: cat }));
+      db.prepare('UPDATE conversations SET escalated=1, ai_handled=1, category=?, priority=?, assigned_to=?, assigned_name=?, status=?, last_sender=?, last_message_at=?, updated_at=? WHERE id=?')
+        .run(cat, pri, owner ? owner.id : null, owner ? fullName(owner) : null, 'pending',
+          note ? 'admin' : conv.last_sender, note ? ts : conv.last_message_at, ts, convId);
+      logActivity({ ...scope, kind: 'escalation', actor_type: 'ai', actor_id: MARYAM.id, actor_name: MARYAM.name, ref_id: convId,
+        summary: `Maryam escalated "${conv.subject || ''}"` + (owner ? ` → ${fullName(owner)}` : '') + ` · ${cat}/${pri}`,
+        meta: { category: cat, priority: pri, assignee: owner && owner.id } });
+      if (owner) logActivity({ ...scope, kind: 'assignment', actor_type: 'ai', actor_id: MARYAM.id, actor_name: MARYAM.name, ref_id: convId, summary: `Routed to ${fullName(owner)}` });
     } catch (e) { log.error('maryam_escalate_failed', { error: e.message }); }
-    pageAdmins(conv, latestText || conv.subject || '');
+    notifyAssignee(Object.assign({}, conv, { category: cat, priority: pri }), latestText || conv.subject || '', owner);
   };
 
   if (!aimodel.configured()) { escalate(null); return; }
@@ -185,16 +264,22 @@ async function runMaryam(convId, latestText) {
 
   const answer = (parsed && (parsed.answer || parsed.reply) || '').toString().trim();
   const needsHuman = !!(parsed && parsed.needsHuman);
-  if (!answer) { escalate(null); return; }
+  const category = (parsed && parsed.category || '').toString().toLowerCase().trim();
+  const priority = (parsed && parsed.priority || 'normal').toString().toLowerCase().trim();
 
+  // No answer, or a human is needed → escalate (this also posts Maryam's note).
+  if (!answer || needsHuman) { escalate(answer || null, category, priority); return; }
+
+  // Maryam resolved it herself — record the reply, no human paged.
+  const cat = CATS.includes(category) ? category : 'general';
   try {
     const ts = now();
     db.prepare("INSERT INTO conversation_messages (id, conversation_id, sender_side, sender_id, sender_name, sender_role, body, created_at) VALUES (?,?,'admin',?,?,?,?,?)")
       .run(mid(), convId, MARYAM.id, MARYAM.name, MARYAM.role, answer, ts);
-    db.prepare('UPDATE conversations SET ai_handled = 1, escalated = ?, status = ?, last_sender = ?, last_message_at = ?, updated_at = ? WHERE id = ?')
-      .run(needsHuman ? 1 : 0, needsHuman ? 'open' : 'pending', 'admin', ts, ts, convId);
+    db.prepare('UPDATE conversations SET ai_handled=1, escalated=0, category=?, priority=?, status=?, last_sender=?, last_message_at=?, updated_at=? WHERE id=?')
+      .run(cat, ['low', 'normal', 'high'].includes(priority) ? priority : 'normal', 'pending', 'admin', ts, ts, convId);
+    logActivity({ ...scope, kind: 'ai_reply', actor_type: 'ai', actor_id: MARYAM.id, actor_name: MARYAM.name, ref_id: convId, summary: `Maryam answered "${conv.subject || ''}" · ${cat}` });
   } catch (e) { log.error('maryam_reply_failed', { error: e.message }); }
-  if (needsHuman) pageAdmins(conv, latestText || conv.subject || '');
 }
 
 function scheduleMaryam(convId, latestText) {
@@ -224,6 +309,11 @@ router.post('/conversations', requireAuth, (req, res) => {
   });
   tx();
   markRead(id, req.user.sub);
+  logActivity({
+    firm_id: ctx.type === 'firm' ? ctx.id : ctx.firm_id, lawyer_id: ctx.type === 'lawyer' ? ctx.id : null,
+    kind: 'message_in', actor_type: 'requester', actor_id: ctx.id, actor_name: ctx.name, ref_id: id,
+    summary: `${ctx.name} opened "${subject || '(no subject)'}"`,
+  });
 
   // Maryam answers first; if she can't, she escalates and pages the team. When
   // the AI isn't configured, fall back to paging the admins straight away so a
@@ -283,7 +373,7 @@ router.get('/conversations', requireAuth, (req, res) => {
       firm_id: c.firm_id, assigned_to: c.assigned_to, assigned_name: c.assigned_name,
       last_message_at: c.last_message_at, last_sender: c.last_sender,
       preview: clip(c.last_body, 140), unread: isUnread,
-      ai_handled: !!c.ai_handled, escalated: !!c.escalated,
+      ai_handled: !!c.ai_handled, escalated: !!c.escalated, category: c.category || null, priority: c.priority || 'normal',
     };
   });
   res.json({ conversations, unread, admin });
@@ -300,7 +390,7 @@ function getConversation(id, u) {
     id: c.id, subject: c.subject, status: c.status,
     requester_type: c.requester_type, requester_id: c.requester_id, requester_name: c.requester_name, requester_email: c.requester_email,
     firm_id: c.firm_id, assigned_to: c.assigned_to, assigned_name: c.assigned_name,
-    ai_handled: !!c.ai_handled, escalated: !!c.escalated,
+    ai_handled: !!c.ai_handled, escalated: !!c.escalated, category: c.category || null, priority: c.priority || 'normal',
     created_at: c.created_at, last_message_at: c.last_message_at, last_sender: c.last_sender,
     messages,
   };
@@ -337,6 +427,9 @@ router.post('/conversations/:id/messages', requireAuth, (req, res) => {
   });
   tx();
   markRead(c.id, req.user.sub);
+  logActivity({ ...convScope(c), kind: side === 'admin' ? 'reply_out' : 'message_in',
+    actor_type: side === 'admin' ? 'admin' : 'requester', actor_id: req.user.sub, actor_name: senderName, ref_id: c.id,
+    summary: `${senderName} replied on "${c.subject || ''}"` });
 
   // While a thread is still Maryam's (unassigned, not yet escalated) she fields
   // the requester's replies too; the admins are only paged if she escalates.
@@ -366,11 +459,12 @@ router.post('/conversations/:id/messages', requireAuth, (req, res) => {
 // ─── Assign to an admin (admin only) ─────────────────────────────────
 router.post('/conversations/:id/assign', requireAuth, (req, res) => {
   if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admins only' });
-  const c = db.prepare('SELECT id FROM conversations WHERE id = ?').get(req.params.id);
+  const c = db.prepare('SELECT * FROM conversations WHERE id = ?').get(req.params.id);
   if (!c) return res.status(404).json({ error: 'Conversation not found' });
   const assigneeId = (req.body && (req.body.assigneeId || req.body.assigned_to) || '').toString().trim();
   if (!assigneeId) { // unassign
     db.prepare('UPDATE conversations SET assigned_to = NULL, assigned_name = NULL, updated_at = ? WHERE id = ?').run(now(), c.id);
+    logActivity({ ...convScope(c), kind: 'assignment', actor_type: 'admin', actor_id: req.user.sub, actor_name: req.user.name, ref_id: c.id, summary: `${req.user.name || 'An admin'} unassigned "${c.subject || ''}"` });
     return res.json({ ok: true, assigned_to: null });
   }
   const a = db.prepare("SELECT id, first_name, last_name, role FROM staff WHERE id = ? AND role IN ('lad_admin','lad_intelligence','lad_super_admin','dg')").get(assigneeId);
@@ -378,17 +472,19 @@ router.post('/conversations/:id/assign', requireAuth, (req, res) => {
   const name = `${a.first_name || ''} ${a.last_name || ''}`.trim();
   db.prepare("UPDATE conversations SET assigned_to = ?, assigned_name = ?, status = CASE WHEN status='open' THEN 'pending' ELSE status END, updated_at = ? WHERE id = ?")
     .run(a.id, name, now(), c.id);
+  logActivity({ ...convScope(c), kind: 'assignment', actor_type: 'admin', actor_id: req.user.sub, actor_name: req.user.name, ref_id: c.id, summary: `${req.user.name || 'An admin'} assigned "${c.subject || ''}" → ${name}` });
   res.json({ ok: true, assigned_to: a.id, assigned_name: name });
 });
 
 // ─── Set status (admin only) ─────────────────────────────────────────
 router.post('/conversations/:id/status', requireAuth, (req, res) => {
   if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admins only' });
-  const c = db.prepare('SELECT id FROM conversations WHERE id = ?').get(req.params.id);
+  const c = db.prepare('SELECT * FROM conversations WHERE id = ?').get(req.params.id);
   if (!c) return res.status(404).json({ error: 'Conversation not found' });
   const status = (req.body && req.body.status || '').toString();
   if (!['open', 'pending', 'resolved', 'closed'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
   db.prepare('UPDATE conversations SET status = ?, updated_at = ? WHERE id = ?').run(status, now(), c.id);
+  logActivity({ ...convScope(c), kind: 'status_change', actor_type: 'admin', actor_id: req.user.sub, actor_name: req.user.name, ref_id: c.id, summary: `${req.user.name || 'An admin'} marked "${c.subject || ''}" ${status}`, meta: { from: c.status, to: status } });
   res.json({ ok: true, status });
 });
 
@@ -442,6 +538,27 @@ router.get('/unread', requireAuth, (req, res) => {
     }
   } catch (e) { log.error('conv_unread_failed', { error: e.message }); }
   res.json({ unread: count, mine });
+});
+
+// ─── CRM timeline — every recorded interaction for a firm or a lawyer ────
+// GET /activity?firm_id=…  or  ?lawyer_id=…   (admin only)
+router.get('/activity', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admins only' });
+  const firmId = (req.query.firm_id || '').toString().trim();
+  const lawyerId = (req.query.lawyer_id || '').toString().trim();
+  if (!firmId && !lawyerId) return res.status(400).json({ error: 'firm_id or lawyer_id is required.' });
+  const limit = Math.min(parseInt(req.query.limit, 10) || 100, 300);
+  let rows = [];
+  try {
+    const where = []; const args = [];
+    if (firmId) { where.push('firm_id = ?'); args.push(firmId); }
+    if (lawyerId) { where.push('lawyer_id = ?'); args.push(lawyerId); }
+    rows = db.prepare(
+      `SELECT id, firm_id, lawyer_id, kind, actor_type, actor_id, actor_name, summary, ref_type, ref_id, meta, created_at
+       FROM activity_log WHERE ${where.join(' OR ')} ORDER BY created_at DESC LIMIT ?`
+    ).all(...args, limit);
+  } catch (e) { log.error('activity_list_failed', { error: e.message }); }
+  res.json({ activity: rows.map((r) => ({ ...r, meta: (() => { try { return r.meta ? JSON.parse(r.meta) : null; } catch (_) { return null; } })() })) });
 });
 
 module.exports = router;
