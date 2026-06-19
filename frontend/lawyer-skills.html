@@ -387,8 +387,8 @@ async function load() {
   } catch (e) {
     skills = DEMO_SKILLS;
     recommendations = DEMO_RECO;
-    name = 'Yousef Al Mansouri';
-    lawyerId = 'L-01494 · Galadari Advocates';
+    name = localStorage.getItem('lad_name') || 'Your Skill Map';
+    lawyerId = '';
   }
 
   document.getElementById('lawyer-name').textContent = name;

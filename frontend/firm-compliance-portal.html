@@ -3447,7 +3447,7 @@ async function genOR(){
   const missing = l ? Math.max(0,16-l.pts) : 0;
   const prompt = `Write a professional CLPD compliance reminder email from ${localStorage.getItem("lad_name")||"the Compliance Officer"}, Compliance Officer at ${window.__FIRM_NAME__||"the firm"}, to ${l?l.name:'the lawyer'}.
 ${l?`Context: ${l.name} is a ${l.role} in the ${l.practice} practice. They have ${l.pts}/16 CLPD points and ${missing} points still needed before 31 December 2026. They have booked ${l.booked} course${l.booked!==1?'s':''} so far.`:'They have outstanding CLPD compliance requirements.'}
-Requirements: Friendly but firm. Internal firm tone (not government). Mention specific points missing. CTA to book at training.legal.dubai.gov.ae or speak to Fatima. 2-3 paragraphs. Sign off as Fatima Al Mansouri, CLPD Compliance Officer.
+Requirements: Friendly but firm. Internal firm tone (not government). Mention specific points missing. CTA to book at training.legal.dubai.gov.ae or speak to the compliance officer. 2-3 paragraphs. Sign off as the firm's CLPD Compliance Officer.
 Start with "Subject: " on the first line.`;
   const res = await callClaude([{role:'user',content:prompt}],'You are a compliance officer writing an internal email. Friendly, professional, concise.');
   document.getElementById('orLoad').style.display='none';
@@ -5245,7 +5245,7 @@ Click the ⚙ icon at the top right to add a key, then ask me again.`;
 <script>
   LADPlatform.init({
     portal: 'firm',
-    userName: 'Fatima Al Mansouri',
+    userName: '',
     userRole: 'Compliance Officer',
     envBadge: 'FIRM · 2026',
   });

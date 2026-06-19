@@ -361,18 +361,8 @@ em{font-style:italic;color:var(--gold)}
 <div class="toast" id="toast"></div>
 
 <script>
-// Seed list; refreshed from /api/v1/admin/users?role=lad_admin on boot.
-let REVIEWERS = [
-  'Duncan Wood',
-  'Nasir Khamlichi',
-  'Layla Bouchart',
-  'Aisha Khalifa',
-  'Mohammed Hassan',
-  'Khalid Al Mansouri',
-  'Fatima Al Suwaidi',
-  'Omar Al Falasi',
-  'Sara Iqbal'
-];
+// Loaded from /api/v1/admin/users?role=lad_admin on boot — no fabricated names.
+let REVIEWERS = [];
 
 async function refreshReviewersFromBackend(){
   try {

@@ -2951,16 +2951,8 @@ function registrySet(d){try{localStorage.setItem(REGISTRY_KEY,JSON.stringify(d))
 function seedRegistry() {
   const db = registryGet();
   if(db.sessions && db.sessions.length > 0) return;
-  const now = new Date();
-  const dA = d => new Date(now - d*86400000).toISOString();
-  db.sessions = [
-    {id:'LAD-SESS-2026-001',providerRef:'ATP-2023-0017',providerName:'Kwintessential Training',courseTitle:'Advanced DIFC Arbitration Advocacy',pts:2,sessionDate:'2026-04-02',submittedAt:dA(38),attendanceFiledAt:null,status:'pending_attendance',warning1SentAt:null,warning2SentAt:null,attendees:[]},
-    {id:'LAD-SESS-2026-002',providerRef:'ATP-2024-0031',providerName:'Gulf Legal Academy',courseTitle:'UAE Tax Law Update 2026',pts:2,sessionDate:'2026-04-10',submittedAt:dA(30),attendanceFiledAt:null,status:'pending_attendance',warning1SentAt:null,warning2SentAt:null,attendees:[]},
-    {id:'LAD-SESS-2026-003',providerRef:'GAL-2008-0142',providerName:'Galadari Advocates',courseTitle:'Corporate Governance Workshop',pts:2,sessionDate:'2026-04-08',submittedAt:dA(32),attendanceFiledAt:dA(5),status:'attendance_filed',warning1SentAt:null,warning2SentAt:null,attendees:[{name:'Yousef Al Mansouri',practitionerId:'L-01494',pts:2},{name:'Ahmad Al Naqbi',practitionerId:'L-01496',pts:2}]},
-    {id:'LAD-SESS-2026-004',providerRef:'ATP-2023-0055',providerName:'Emirates Legal Institute',courseTitle:'AML & Financial Crime Compliance',pts:2,sessionDate:'2026-03-25',submittedAt:dA(46),attendanceFiledAt:null,status:'pending_attendance',warning1SentAt:dA(22),warning2SentAt:null,attendees:[]},
-    {id:'LAD-SESS-2026-005',providerRef:'ATP-2023-0017',providerName:'Kwintessential Training',courseTitle:'AI in Legal Practice Masterclass',pts:2,sessionDate:'2026-04-18',submittedAt:dA(22),attendanceFiledAt:null,status:'pending_attendance',warning1SentAt:null,warning2SentAt:null,attendees:[]},
-    {id:'LAD-SESS-2026-006',providerRef:'DIFC-2024-0088',providerName:'DIFC Academy',courseTitle:'International Arbitration & the Courts',pts:4,sessionDate:'2026-04-16',submittedAt:dA(24),attendanceFiledAt:null,status:'pending_attendance',warning1SentAt:null,warning2SentAt:null,attendees:[{name:'Yousef Al Mansouri',practitionerId:'L-01494',pts:4}]},
-  ];
+  // No fabricated attendance sessions — populated from real provider filings.
+  db.sessions = [];
   registrySet(db);
 }
 

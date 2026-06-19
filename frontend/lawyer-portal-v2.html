@@ -4948,18 +4948,15 @@ function registryGet(){try{return JSON.parse(localStorage.getItem(REGISTRY_KEY)|
 function registrySet(data){try{localStorage.setItem(REGISTRY_KEY,JSON.stringify(data))}catch{}}
 function registrySeedIfEmpty(){
   const db=registryGet();if(db.sessions.length>0)return;
-  const now=new Date();const dA=d=>new Date(now-d*86400000).toISOString();
-  db.sessions=[
-    {id:'LAD-SESS-2026-003',providerRef:'ATP-2022-0041',providerName:'Galadari Advocates & Legal Consultants',courseTitle:'Corporate Governance Workshop',pts:2,sessionDate:'2026-04-08',submittedAt:dA(32),attendanceFiledAt:dA(5),status:'attendance_filed',attendees:[{name:'Yousef Al Mansouri',practitionerId:'L-01494',email:'y.almansouri@galadari.ae',firm:'Galadari Advocates & Legal Consultants',pts:2},{name:'Husam Hourani',practitionerId:'DBA-2016-22',email:'husam@galadari.ae',firm:'Galadari Advocates & Legal Consultants',pts:2}]},
-    {id:'LAD-SESS-2026-006',providerRef:'ATP-2024-0088',providerName:'DIFC Academy',courseTitle:'International Arbitration & the Courts',pts:4,sessionDate:'2026-04-16',submittedAt:dA(24),attendanceFiledAt:null,status:'pending_attendance',attendees:[{name:'Yousef Al Mansouri',practitionerId:'L-01494',email:'y.almansouri@galadari.ae',firm:'Galadari Advocates & Legal Consultants',pts:4}]},
-  ];
+  // No fabricated attendance sessions — populated from real provider filings.
+  db.sessions=[];
   registrySet(db);
 }
 
 // Render pending/approved accredited sessions from ALL providers into the lawyer dashboard
 function syncLawyerSessionsFromRegistry() {
-  const LAWYER_NAME = 'Yousef Al Mansouri';
-  const LAWYER_ID   = 'L-01494';
+  const LAWYER_NAME = (function(){try{return localStorage.getItem('lad_name')||'';}catch(e){return '';}})();
+  const LAWYER_ID   = (function(){try{return localStorage.getItem('lad_lawyer_id')||'';}catch(e){return '';}})();
   registrySeedIfEmpty();
   const db = registryGet();
   const mySessions = db.sessions.filter(s =>
@@ -6019,39 +6016,17 @@ Be concise, practical, and warm. Use markdown sparingly (bold for key terms, ita
 
 You can get one at *console.anthropic.com* — keys start with \`sk-ant-\`.`;
     } else if (_lex.portal === 'lawyer' && lower.match(/point|track|compliance|status/)) {
-      reply = `Based on your record, ${window.__LAWYER_FIRST || 'there'}, here is your current status and the fastest path to 16 points.
+      reply = `I can summarise your CLPD points and recommend courses from the live catalogue to reach 16 — with the AI key connected.
 
-The fastest path to 16:
-- **DIFC Day** (28 May) — 4 points · 5 credits
-- **AI Governance & Legal Practice** — 4 points · 5 credits  
-- **Insolvency Update 2026** — 2 points · 5 credits
-- **AML Mandatory** — 4 points · free
-
-That's 14 points in courses you can book today. You'll close the remaining 2 with the November Ethics module.
-
-*Demo response — add your Claude API key for personalised AI guidance.*`;
+*Demo mode — add your AI API key (⚙ top bar) for personalised, data-backed guidance.*`;
     } else if (_lex.portal === 'firm' && lower.match(/critic|risk|book|plan/)) {
-      reply = `Your firm has **7 lawyers in the critical zone** (under 4 points with 234 days left).
+      reply = `With the AI key connected I can identify your firm's at-risk lawyers from the live record and plan bookings against real scheduled sessions.
 
-Recommended action:
-- Mass-book all 7 onto **DIFC Day (28 May)** = 28 points across the cohort
-- Add **AI Governance** for the 4 most senior = 16 more points
-- Total cost: **55 credits** (≈ AED 6,600)
-
-This brings firm compliance from 91.2% → 98.4% by end of June.
-
-*Demo response — add your Claude API key for personalised AI guidance.*`;
+*Demo mode — add your AI API key (⚙ top bar) for personalised, data-backed guidance.*`;
     } else if (_lex.portal === 'intel') {
-      reply = `At the current pace, the national CLPD compliance forecast for 31 Dec 2026 is **94.8%** (95% CI: 93.6% – 96.0%).
+      reply = `With the AI key connected I can read the live compliance figures and forecast cycle outcomes from the real data — no invented numbers.
 
-The 5.2% projected gap = approximately **96 lawyers** at risk of practising-certificate suspension.
-
-Three intervention levers:
-1. Mandate that all firms <90% submit a recovery plan by 30 June
-2. Open three additional DIFC Day cohorts in Aug-Oct
-3. Auto-flag any lawyer at <6 points on 1 Sep for firm escalation
-
-*Demo response — add your Claude API key for personalised AI guidance.*`;
+*Demo mode — add your AI API key (⚙ top bar) for data-backed intelligence.*`;
     } else {
       reply = `That's a great question. In **demo mode** I have limited responses — but with your Claude API key configured I can give you specific, contextual answers about your CLPD compliance, course recommendations, and strategic planning.
 
@@ -6187,8 +6162,8 @@ Click the ⚙ icon at the top right to add a key, then ask me again.`;
 <script>
   LADPlatform.init({
     portal: 'lawyer',
-    userName: 'Yousef Al Mansouri',
-    userRole: 'L-01494',
+    userName: '',
+    userRole: '',
     envBadge: 'LAWYER · 2026',
   });
 </script>
@@ -6204,7 +6179,7 @@ Click the ⚙ icon at the top right to add a key, then ask me again.`;
       <div id="pmAvatar" style="width:64px;height:64px;background:linear-gradient(135deg,var(--green),var(--green-l));border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:1px">YM</div>
       <div style="flex:1;min-width:0">
         <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.55);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:3px">MY PROFILE</div>
-        <div style="font-family:var(--serif);font-size:22px;color:#fff;letter-spacing:-.014em" id="pmHeaderName">Yousef Al Mansouri</div>
+        <div style="font-family:var(--serif);font-size:22px;color:#fff;letter-spacing:-.014em" id="pmHeaderName">—</div>
         <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.6px;margin-top:3px">L-01494 · ADMITTED OCT 2015 · AL TAMIMI &amp; CO.</div>
       </div>
       <button onclick="closeProfileModal()" style="width:30px;height:30px;border-radius:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);cursor:pointer;color:#fff;font-size:14px;display:grid;place-items:center;flex-shrink:0">✕</button>
@@ -6253,7 +6228,7 @@ Click the ⚙ icon at the top right to add a key, then ask me again.`;
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div>
             <label style="display:block;font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;margin-bottom:5px">Full name</label>
-            <input id="pmName" type="text" value="Yousef Al Mansouri" style="width:100%;padding:10px 13px;border:1.5px solid var(--line2);border-radius:9px;font-size:13.5px;color:var(--ink);outline:none;background:var(--white);font-family:var(--sans)" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--line2)'"/>
+            <input id="pmName" type="text" value="" style="width:100%;padding:10px 13px;border:1.5px solid var(--line2);border-radius:9px;font-size:13.5px;color:var(--ink);outline:none;background:var(--white);font-family:var(--sans)" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--line2)'"/>
           </div>
           <div>
             <label style="display:block;font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;margin-bottom:5px">Preferred name</label>
