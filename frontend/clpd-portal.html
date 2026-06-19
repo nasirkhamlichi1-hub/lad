@@ -2451,7 +2451,7 @@ function courseCardHTML(c) {
     </div>
     <div class="cc-foot">
       <div>
-        <div class="cc-credits"> ${credits} credits · AED ${(credits*CREDIT_RATE).toLocaleString()}</div>
+        <div class="cc-credits"> ${credits} credits${(c.type==='accredited' && !c.private)?` · AED ${(credits*CREDIT_RATE).toLocaleString()}`:''}</div>
         ${!currentUser?'<div style="font-family:var(--mono);font-size:9px;color:var(--slate3);margin-top:2px">Login to book</div>':''}
       </div>
       <button class="btn btn-sm ${canBook?'btn-g':!currentUser?'btn-gh':'btn-gold'}" onclick="event.stopPropagation();${!currentUser?`openAuth('login')`:canBook?`openCourse('${id}')`:`openBuyModal()`}">${!currentUser?'Login to book':canBook?'Book now':'Buy credits'}</button>
@@ -2664,6 +2664,7 @@ function mapApiCourse(c){
     sessions: sessions, seats:null,
     rating: (c.rating&&c.rating.responses)?c.rating:null,
     provider_rating: (c.provider_rating&&c.provider_rating.responses)?c.provider_rating:null,
+    private: !!c.private,
   };
 }
 function rerenderCatalogue(){
@@ -2706,7 +2707,7 @@ function openCourse(id) {
   document.getElementById('cdTag').textContent = `${typeLabel(c.type)} · ${c.format==='elearning'?'E-LEARNING':'FACE-TO-FACE'} · ${c.lang}`;
   document.getElementById('cdTitle').textContent = c.title;
   document.getElementById('cdPts').textContent = `+${c.pts} pts`;
-  document.getElementById('cdCredits').textContent = ` ${c.credits} credits · AED ${(c.credits*CREDIT_RATE).toLocaleString()}`;
+  document.getElementById('cdCredits').textContent = ` ${c.credits} credits` + ((c.type==='accredited' && !c.private) ? ` · AED ${(c.credits*CREDIT_RATE).toLocaleString()}` : '');
   document.getElementById('cdProv').textContent = c.provider;
   document.getElementById('cdLoc').textContent = c.location;
   document.getElementById('cdDesc').textContent = c.desc;
