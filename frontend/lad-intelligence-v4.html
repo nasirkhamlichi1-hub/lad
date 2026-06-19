@@ -1366,7 +1366,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         </div>
 
         <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:16px">
-          <div class="card">
+          <div class="card" style="display:none"><!-- hidden: fabricated course-scheduling recommendations (fake sessions/dates/enrolments + a fabricated trainer name) -->
             <div class="card-hd">
               <div>
                 <div style="font-family:var(--mono);font-size:9.5px;color:var(--purple);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:4px">AI RECOMMENDED · NEXT 60 DAYS</div>
@@ -1654,14 +1654,7 @@ const CMD_ITEMS=[
   {ico:'',name:'All Firms',desc:'499 firms ranked',sec:'Section',action:()=>scrollTo('firms')},
   {ico:'',name:'Cohort Analysis',desc:'Professional registration cohorts',sec:'Section',action:()=>scrollTo('cohort')},
   {ico:'',name:'Reports & Exports',desc:'Generate analytics',sec:'Section',action:()=>scrollTo('reports')},
-  {ico:'',name:'Galadari Advocates',desc:'284 lawyers · 91.2%',sec:'Firm',action:()=>showToast('Opening Galadari Advocates…')},
-  {ico:'',name:'Hadef & Partners',desc:'142 lawyers · 94.8%',sec:'Firm',action:()=>showToast('Opening Hadef & Partners…')},
-  {ico:'',name:'Baker McKenzie',desc:'98 lawyers · 96.1%',sec:'Firm',action:()=>showToast('Opening Baker McKenzie…')},
-  {ico:'',name:'Al Suwaidi & Co.',desc:'28 lawyers · 68.4% · CRITICAL',sec:'Firm',action:()=>showToast('Opening Al Suwaidi & Co.…')},
-  {ico:'',name:'Generate intervention plan',desc:'AI-powered action plan',sec:'Action',action:()=>showToast('Lex generating intervention plan…')},
-  {ico:'',name:'Export Annual Report',desc:'PDF · 12MB',sec:'Action',action:()=>showToast('Annual report generating…')},
-  {ico:'',name:'Audit anomalies',desc:'Review 5 flagged patterns',sec:'Action',action:()=>scrollTo('anomaly')},
-  {ico:'',name:'Outreach Innovation Law',desc:'Schedule director call',sec:'Action',action:()=>showToast('Scheduling outreach call…')}
+  {ico:'',name:'Audit anomalies',desc:'Review flagged patterns',sec:'Action',action:()=>scrollTo('anomaly')}
 ];
 
 // ═════════════ RENDER ═════════════
@@ -2140,20 +2133,8 @@ Be specific, data-driven, and end with one clear recommended action.`;
 
 
 // ═════════════ FIRM DEEP DIVE ═════════════
-const FIRM_MEMBERS={
-  'Al Suwaidi & Co.':[
-    {name:'Mohammed Al Suwaidi',role:'Senior Partner',pts:4,missing:12,email:'m.alsuwaidi@alsuwaidi.ae'},
-    {name:'Hessa Al Khoury',role:'Associate',pts:2,missing:14,email:'s.khalid@alsuwaidi.ae'},
-    {name:'Ahmad Nasser',role:'Associate',pts:6,missing:10,email:'a.nasser@alsuwaidi.ae'},
-    {name:'Layla Hassan',role:'Partner',pts:9,missing:7,email:'l.hassan@alsuwaidi.ae'},
-    {name:'Omar Faris',role:'Junior Associate',pts:0,missing:16,email:'o.faris@alsuwaidi.ae'},
-  ],
-  'Innovation Law Firm':[
-    {name:'Nadia Al-Rawi',role:'Managing Partner',pts:5,missing:11,email:'n.alrawi@innovationlaw.ae'},
-    {name:'Chris Park',role:'Associate',pts:3,missing:13,email:'c.park@innovationlaw.ae'},
-    {name:'Yusuf Karimi',role:'Senior Associate',pts:8,missing:8,email:'y.karimi@innovationlaw.ae'},
-  ],
-};
+// No fabricated member rosters — real lawyer-level data comes from the firm record.
+const FIRM_MEMBERS={};
 
 function openFirmDeepDive(firmName){
   const firm=((firmsLive||[]).find(f=>f.name===firmName))||FIRMS.find(f=>f.name===firmName);
@@ -2165,12 +2146,10 @@ function openFirmDeepDive(firmName){
   const status=compliance>=85?'compliant':compliance>=70?'at-risk':'critical';
   const accent=status==='compliant'?'#006B3F':status==='at-risk'?'#92540a':'#c0392b';
   const ptsMissing=hasCompliance?Math.round((100-compliance)/100*16*firm.size):0;
-  const members=FIRM_MEMBERS[firmName]||[
-    {name:'Contact 1',role:'Partner',pts:12,missing:4,email:`contact1@${firmName.toLowerCase().replace(/[^a-z]/g,'')}.ae`},
-    {name:'Contact 2',role:'Associate',pts:8,missing:8,email:`contact2@${firmName.toLowerCase().replace(/[^a-z]/g,'')}.ae`},
-    {name:'Contact 3',role:'Senior Associate',pts:14,missing:2,email:`contact3@${firmName.toLowerCase().replace(/[^a-z]/g,'')}.ae`},
-  ];
-  const membersHtml=members.map(m=>`
+  const members=FIRM_MEMBERS[firmName]||[]; // no fabricated people
+  const membersHtml=!members.length
+    ? '<div style="padding:16px;color:var(--slate3);font-family:var(--mono);font-size:11px">Member-level detail is available from the firm record.</div>'
+    : members.map(m=>`
     <div style="display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:${m.missing>=12?'var(--red-bg)':m.missing>=8?'var(--amber-bg)':'var(--paper2)'}">
       <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#3a4554,#5a6878);display:grid;place-items:center;font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;flex-shrink:0">${m.name.split(' ').map(n=>n[0]).join('')}</div>
       <div style="flex:1;min-width:0">
@@ -2237,8 +2216,12 @@ function kpiDeepDive(type){
     'accred':{title:'Pending Accreditations',tag:'14 APPLICATIONS · 3 SLA BREACH',icon:'',iconBg:'linear-gradient(135deg,var(--amber),var(--amber-l))',body:`<div style="background:var(--red-bg);border:1px solid var(--red-border);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;color:var(--red)">⚠ 3 applications have exceeded the 10-day SLA. Immediate action required.</div><div style="font-size:13px;color:var(--slate);line-height:1.65;margin-bottom:12px">14 applications pending: 8 new courses, 4 provider renewals, 2 point value amendments. Average review time up 23% this quarter. Top breach: ACC-2026-0128 (KTL Training, 18 days).</div><div style="display:flex;gap:8px"><button class="btn btn-sm" style="background:var(--red);color:#fff" onclick="window.location.href='lad-accreditation-review.html'">Open review workspace →</button><button class="btn btn-sm btn-ghost" onclick="window.location.href='lad-accreditation-review.html?filter=breach'">View 3 SLA breaches</button></div>`,aiContext:'14 pending accreditation applications. 3 in SLA breach — oldest 18 days (KTL Training). Average review time up 23%.'},
     'global':{title:'Global Compliance Score',tag:'78/100 · TOP 18% WORLDWIDE',icon:'',iconBg:'linear-gradient(135deg,var(--ink),var(--slate))',body:`<div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:10px;padding:16px;text-align:center;margin-bottom:14px"><div style="font-family:var(--serif);font-size:48px;color:var(--green);line-height:1">78<em style="font-size:22px">/100</em></div><div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1px;margin-top:4px">GLOBAL PROGRAMME SCORE · TOP 18%</div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:14px"><div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:9px;padding:11px;text-align:center"><div style="font-family:var(--serif);font-size:22px;color:var(--green)">92</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3)">DIGITAL DELIVERY</div></div><div style="background:var(--paper2);border:1px solid var(--line);border-radius:9px;padding:11px;text-align:center"><div style="font-family:var(--serif);font-size:22px;color:var(--ink)">81</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3)">CONTENT QUALITY</div></div><div style="background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:9px;padding:11px;text-align:center"><div style="font-family:var(--serif);font-size:22px;color:var(--amber)">64</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3)">ENFORCEMENT</div></div></div><div style="font-size:13px;color:var(--slate);line-height:1.65">Dubai ranks top 18% globally. Strongest: digital delivery (92/100). Development area: enforcement rigour (64/100).</div>`,aiContext:'Global score 78/100, top 18% worldwide. Digital delivery 92, content 81, enforcement 64.'}
   };
-  const d=all[type]; if(!d) return;
-  openSidePanel({...d, showOutreach: type==='critical'});
+  // Fabricated KPI drill-down content is not shown — open a neutral panel that
+  // points to the live figures instead of rendering invented numbers.
+  const titles={lawyers:'Registered Practitioners',compliance:'Compliance Rate',critical:'Critical Practitioners',deadline:'Days to Deadline',firms:'Registered Firms',courses:'Course Catalogue',accred:'Pending Accreditations',global:'Global Score'};
+  openSidePanel({title:titles[type]||'Details',tag:'LIVE DATA',icon:'',iconBg:'linear-gradient(135deg,var(--ink),var(--slate))',
+    body:'<div style="font-size:13px;color:var(--slate);line-height:1.65">The live figures are shown in the dashboard sections and the Command Centre — this programme reports real data only.</div>',
+    showOutreach:false});
 }
 
 
@@ -2409,24 +2392,10 @@ async function sendLexMessage() {
 // ═════════════════════════════════════════════
 // PATTERN INSIGHT DRILLDOWNS (with lawyer data)
 // ═════════════════════════════════════════════
-const SOLO_LAWYERS = [
-  {name:'Ahmad Al Zarooni',firm:'Solo · Dubai Courts',pts:2,missing:14,practice:'Tax',email:'a.zarooni@solo.ae'},
-  {name:'Mariam Khalil',firm:'Solo · DIFC',pts:4,missing:12,practice:'Immigration',email:'m.khalil@mklegal.ae'},
-  {name:'Hassan Nasser',firm:'Solo · Deira',pts:0,missing:16,practice:'Criminal',email:'h.nasser@nasserlegal.ae'},
-  {name:'Reem Saeed',firm:'Solo · Business Bay',pts:6,missing:10,practice:'Real Estate',email:'r.saeed@solo.ae'},
-  {name:'Khalid Ibrahim',firm:'Solo · JLT',pts:3,missing:13,practice:'Immigration',email:'k.ibrahim@kilegal.ae'},
-  {name:'Fatima Rashid',firm:'Solo · Deira',pts:1,missing:15,practice:'Tax',email:'f.rashid@raslaw.ae'},
-  {name:'Omar Bin Ali',firm:'Solo · DIFC',pts:8,missing:8,practice:'Corporate',email:'o.binali@obs.ae'},
-  {name:'Layla Al Hamdan',firm:'Solo · Jumeirah',pts:5,missing:11,practice:'Tax',email:'l.alhamdan@solo.ae'},
-];
-const DIFC_LAWYERS = [
-  {name:'James Thornton',firm:'Clyde & Co.',pts:6,missing:10,practice:'Construction',email:'j.thornton@clyde.ae'},
-  {name:'Priya Menon',firm:'BSA Ahmad',pts:4,missing:12,practice:'Banking',email:'p.menon@bsa.ae'},
-  {name:'David Walsh',firm:'Charles Russell',pts:7,missing:9,practice:'Corporate',email:'d.walsh@crs.ae'},
-  {name:'Fatima Al Blooshi',firm:'Habib Al Mulla',pts:5,missing:11,practice:'Real Estate',email:'f.alblooshi@ham.ae'},
-  {name:'Robert Chen',firm:'Baker McKenzie',pts:9,missing:7,practice:'Tax',email:'r.chen@bakermck.ae'},
-  {name:'Sara Lindqvist',firm:'Zarooni Advocates',pts:3,missing:13,practice:'Immigration',email:'s.lindqvist@zarooni.ae'},
-];
+// No fabricated practitioner lists — these insight panels describe the pattern;
+// real names come from the live firm/lawyer drill-downs.
+const SOLO_LAWYERS = [];
+const DIFC_LAWYERS = [];
 
 function openInsightDive(insightId) {
   const configs = {
@@ -2444,7 +2413,9 @@ function openInsightDive(insightId) {
     }
   };
   const cfg = configs[insightId]; if(!cfg) return;
-  const lawyersHtml = cfg.lawyers.map(l => `
+  const lawyersHtml = !cfg.lawyers.length
+    ? '<div style="padding:14px;color:var(--slate3);font-family:var(--mono);font-size:11px">Open the firm league or lawyer drill-down for the live list.</div>'
+    : cfg.lawyers.map(l => `
     <div style="display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:${l.missing>=12?'var(--red-bg)':l.missing>=8?'var(--amber-bg)':'var(--paper2)'}">
       <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#3a4554,#5a6878);display:grid;place-items:center;font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;flex-shrink:0">${l.name.split(' ').map(n=>n[0]).slice(0,2).join('')}</div>
       <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:12.5px;color:var(--ink)">${l.name}</div><div style="font-size:11px;color:var(--slate2)">${l.firm} · ${l.practice} · <strong style="color:${l.missing>=12?'var(--red)':l.missing>=8?'var(--amber)':'var(--slate)'}">${l.missing} pts missing</strong></div></div>
@@ -3578,39 +3549,17 @@ Please try again in a moment.`;
 
 You can get one at *console.anthropic.com* — keys start with \`sk-ant-\`.`;
     } else if (_lex.portal === 'lawyer' && lower.match(/point|track|compliance|status/)) {
-      reply = `Based on your record, Yousef, you're at **6/16 points** with 234 days remaining.
+      reply = `I can summarise your CLPD points, what's left to reach 16, and recommend courses from the live catalogue — but only with the AI API key connected.
 
-The fastest path to 16:
-- **DIFC Day** (28 May) — 4 points · 5 credits
-- **AI Governance & Legal Practice** — 4 points · 5 credits  
-- **Insolvency Update 2026** — 2 points · 5 credits
-- **AML Mandatory** — 4 points · free
-
-That's 14 points in courses you can book today. You'll close the remaining 2 with the November Ethics module.
-
-*Demo response — add your AI API key for personalised AI guidance.*`;
+*Demo mode — add your AI API key (⚙ top bar) for personalised, data-backed guidance.*`;
     } else if (_lex.portal === 'firm' && lower.match(/critic|risk|book|plan/)) {
-      reply = `Your firm has **7 lawyers in the critical zone** (under 4 points with 234 days left).
+      reply = `With the AI key connected I can identify your firm's at-risk lawyers from the live record and propose a mass-booking plan against real scheduled sessions.
 
-Recommended action:
-- Mass-book all 7 onto **DIFC Day (28 May)** = 28 points across the cohort
-- Add **AI Governance** for the 4 most senior = 16 more points
-- Total cost: **55 credits** (≈ AED 6,600)
-
-This brings firm compliance from 91.2% → 98.4% by end of June.
-
-*Demo response — add your AI API key for personalised AI guidance.*`;
+*Demo mode — add your AI API key (⚙ top bar) for personalised, data-backed guidance.*`;
     } else if (_lex.portal === 'intel') {
-      reply = `At the current pace, the national CLPD compliance forecast for 31 Dec 2026 is **94.8%** (95% CI: 93.6% – 96.0%).
+      reply = `With the AI key connected I can read the live compliance figures and forecast cycle outcomes from the real data — no invented numbers.
 
-The 5.2% projected gap = approximately **96 lawyers** at risk of practising-certificate suspension.
-
-Three intervention levers:
-1. Mandate that all firms <90% submit a recovery plan by 30 June
-2. Open three additional DIFC Day cohorts in Aug-Oct
-3. Auto-flag any lawyer at <6 points on 1 Sep for firm escalation
-
-*Demo response — add your AI API key for personalised AI guidance.*`;
+*Demo mode — add your AI API key (⚙ top bar) for data-backed intelligence.*`;
     } else {
       reply = `That's a great question. In **demo mode** I have limited responses — but with your AI API key configured I can give you specific, contextual answers about your CLPD compliance, course recommendations, and strategic planning.
 

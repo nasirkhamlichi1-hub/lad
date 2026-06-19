@@ -389,7 +389,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
   <div class="lad-shared-right">
     <div class="lad-user-chip" id="sharedUserChip" style="display:none">
       <div class="lad-user-dot" id="sharedUserDot" style="background:#006b3f">SA</div>
-      <span id="sharedUserName">Fatima</span>
+      <span id="sharedUserName"></span>
     </div>
     <a class="lad-snl" href="users-admin.html" style="cursor:pointer;font-size:11.5px;color:rgba(255,255,255,.65)" title="Manage lawyers in your firm">Users</a>
     <a class="lad-snl" href="help.html" style="cursor:pointer;font-size:11.5px;color:rgba(255,255,255,.55);margin-right:14px" title="Help">Help</a>
@@ -455,7 +455,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
           </div>
           <!-- Quick selectors -->
           <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px">
-            <button onclick="massPickAll()" class="btn btn-xs btn-gh" style="font-size:10px">Select all (284)</button>
+            <button onclick="massPickAll()" class="btn btn-xs btn-gh" style="font-size:10px">Select all</button>
             <button onclick="massPickCritical()" class="btn btn-xs" style="background:var(--red);color:#fff;border:none;font-size:10px">Critical only</button>
             <button onclick="massPickAtRisk()" class="btn btn-xs" style="background:var(--amber);color:#fff;border:none;font-size:10px">At-risk only</button>
             <button onclick="massPickClear()" class="btn btn-xs btn-gh" style="font-size:10px">Clear</button>
@@ -682,11 +682,12 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
       <div class="sb-ring-row">
         <div class="ring-wrap">
           <svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke="var(--green-border)" stroke-width="5"/><circle cx="26" cy="26" r="22" fill="none" stroke="var(--green)" stroke-width="5" stroke-dasharray="138.2" stroke-dashoffset="14.8" stroke-linecap="round"/></svg>
-          <div class="ring-num">48.4%</div>
+          <!-- Fabricated compliance figures blanked — no live source populates the firm ring. -->
+          <div class="ring-num">—</div>
         </div>
         <div class="sb-ring-info">
-          <div class="sb-ring-big">48.4%</div>
-          <div class="sb-ring-caption">267 / 284 compliant<br>234 days to deadline</div>
+          <div class="sb-ring-big">—</div>
+          <div class="sb-ring-caption">Compliance loads from your firm record<br>Deadline 31 December 2026</div>
         </div>
       </div>
     </div>
@@ -697,8 +698,8 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
       <a class="sb-link" onclick="scrollS('lawyers')"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>All lawyers <span class="sb-badge" style="background:var(--red)">17</span></a>
       <a class="sb-link" onclick="scrollS('courses')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Browse courses</a>
       <a class="sb-link" onclick="scrollS('booked')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>Bookings <span class="sb-badge g">8</span></a>
-      <a class="sb-link" onclick="scrollS('credits')"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Credits <span class="sb-badge" id="sbCreditBadge" style="background:var(--gold)">62</span></a>
-      <a class="sb-link" onclick="scrollS('internal')"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Accreditation <span class="sb-badge" style="background:var(--teal)">3</span></a>
+      <a class="sb-link" onclick="scrollS('credits')"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Credits <span class="sb-badge" id="sbCreditBadge" style="background:var(--gold)">—</span></a>
+      <a class="sb-link" onclick="scrollS('internal')"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>Accreditation</a>
       <div class="sb-sec">Intelligence</div>
       <a class="sb-link" onclick="scrollS('insights')"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>AI insights</a>
       <a class="sb-link" onclick="openLex()"><svg viewBox="0 0 24 24"><path d="M12 2a8 8 0 0 0-8 8c0 1.5.4 3 1 4l-1 4 4-1c1.2.6 2.6 1 4 1a8 8 0 0 0 0-16z"/></svg>Ask Maryam AI</a>
@@ -706,7 +707,8 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
     <div class="sb-foot">
       <div class="sb-av">SA</div>
       <div>
-        <div class="sb-uname">Fatima Al Mansouri</div>
+        <!-- Name left blank; populated from the signed-in user, not a fabricated demo name. -->
+        <div class="sb-uname" id="sbUserName">—</div>
         <div class="sb-urole">Compliance Officer</div>
       </div>
     </div>
@@ -720,11 +722,11 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
   <span class="hbg-bar"></span>
 </button>
       <div class="tb-title">
-        <div class="tb-eyebrow">AL TAMIMI & CO. · CLPD 2026</div>
+        <div class="tb-eyebrow">CLPD 2026</div>
         <div class="tb-heading">Firm compliance tracker</div>
       </div>
-      <div class="tb-pill"><span class="tb-dot"></span>LIVE · 31 lawyers</div>
-      <div class="tb-time" id="liveTime">10 May 2026 · 14:32 GST</div>
+      <div class="tb-pill"><span class="tb-dot"></span>LIVE</div>
+      <div class="tb-time" id="liveTime">—</div>
       <div class="tb-acts">
         <button style="width:32px;height:32px;background:rgba(0,0,0,.06);border:1px solid var(--line);border-radius:8px;cursor:pointer;display:grid;place-items:center;color:var(--slate);transition:all .15s;font-size:14px" title="Platform launcher" onclick="window.open('index.html','_self')" onmouseover="this.style.background='var(--paper2)'" onmouseout="this.style.background='rgba(0,0,0,.06)'">⌂</button>
         <button class="tb-btn" title="Search" onclick="document.getElementById('lawSearch').focus()"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
@@ -741,10 +743,12 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
           <div>
             <div class="eyebrow green" data-cfg="firm_sec_overview_eyebrow" style="margin-bottom:6px">FIRM OVERVIEW · 2026 CYCLE</div>
             <h1 class="sec-title" id="firmNameTitle" data-cfg-html="firm_sec_overview_title" style="font-size:38px;letter-spacing:-.022em;line-height:1.1;margin:0 0 8px">Firm <em style="color:var(--green);font-style:italic">compliance</em></h1>
-            <div style="font-size:14px;color:var(--slate);line-height:1.55"><span id="ovFirmLawyerCount">31</span> lawyers · 234 days to the 31&nbsp;December 2026 deadline</div>
+            <!-- Counts are fabricated placeholders; firm cohort loads from the API. Blanked to "—". -->
+            <div style="font-size:14px;color:var(--slate);line-height:1.55"><span id="ovFirmLawyerCount">—</span> lawyers · 31&nbsp;December 2026 deadline</div>
           </div>
           <div style="text-align:right">
-            <div style="font-family:var(--serif);font-size:60px;color:var(--green);letter-spacing:-.028em;line-height:.95;font-weight:500" id="ovFirmPct">48.4<em style="color:var(--slate3);font-size:26px;font-style:italic">%</em></div>
+            <!-- Fabricated compliance % blanked — no live source populates this element. -->
+            <div style="font-family:var(--serif);font-size:60px;color:var(--green);letter-spacing:-.028em;line-height:.95;font-weight:500" id="ovFirmPct">—</div>
             <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-top:8px">firm compliance today</div>
           </div>
         </div>
@@ -753,38 +757,38 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px">
           <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;cursor:pointer;transition:border-color .15s,transform .15s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--line)'" onclick="filterLawyers('all');scrollS('lawyers')">
             <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px"><span data-cfg="firm_stat1_label">Total practitioners</span></div>
-            <div style="font-family:var(--serif);font-size:34px;line-height:1;letter-spacing:-.02em;font-weight:500"><span data-cfg="firm_kpi1_num">31</span></div>
-            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px" data-cfg="firm_stat1_sub">12 added this year</div>
+            <div style="font-family:var(--serif);font-size:34px;line-height:1;letter-spacing:-.02em;font-weight:500"><span data-cfg="firm_kpi1_num">—</span></div>
+            <div style="font-size:12.5px;color:var(--slate2);margin-top:8px" data-cfg="firm_stat1_sub">&nbsp;</div>
           </div>
           <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--line)'" onclick="filterLawyers('compliant');scrollS('lawyers')">
             <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px"><span data-cfg="firm_stat2_label">Compliant</span></div>
-            <div style="font-family:var(--serif);font-size:34px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--green)"><span data-cfg="firm_kpi2_num">14</span><em style="color:var(--slate3);font-size:19px;font-style:italic">/31</em></div>
+            <div style="font-family:var(--serif);font-size:34px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--green)"><span data-cfg="firm_kpi2_num">—</span></div>
             <div style="font-size:12.5px;color:var(--slate2);margin-top:8px" data-cfg="firm_stat2_sub">At or above 16 pts</div>
           </div>
           <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--amber)'" onmouseout="this.style.borderColor='var(--line)'" onclick="filterLawyers('at-risk');scrollS('lawyers')">
             <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px"><span data-cfg="firm_stat3_label">At risk</span></div>
-            <div style="font-family:var(--serif);font-size:34px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--amber)"><span data-cfg="firm_kpi3_num">10</span></div>
+            <div style="font-family:var(--serif);font-size:34px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--amber)"><span data-cfg="firm_kpi3_num">—</span></div>
             <div style="font-size:12.5px;color:var(--slate2);margin-top:8px" data-cfg="firm_stat3_sub">Between 8 and 15 points</div>
           </div>
           <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='var(--line)'" onclick="filterLawyers('critical');scrollS('lawyers')">
             <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px"><span data-cfg="firm_stat4_label">Critical</span></div>
-            <div style="font-family:var(--serif);font-size:34px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--red)"><span data-cfg="firm_kpi4_num">7</span></div>
+            <div style="font-family:var(--serif);font-size:34px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--red)"><span data-cfg="firm_kpi4_num">—</span></div>
             <div style="font-size:12.5px;color:var(--slate2);margin-top:8px" data-cfg="firm_stat4_sub">Below 8 points — priority</div>
           </div>
         </div>
 
         <!-- Deadline strip: minimal, single accent -->
         <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;display:flex;align-items:center;gap:22px">
+          <!-- Fabricated countdown/progress figures (87 days, 73%) removed — no live source feeds them. -->
           <div style="flex-shrink:0">
-            <div style="font-family:var(--serif);font-size:34px;color:var(--amber);line-height:1;font-weight:500">87</div>
+            <div style="font-family:var(--serif);font-size:34px;color:var(--amber);line-height:1;font-weight:500">—</div>
             <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:4px">days left</div>
           </div>
           <div style="flex:1">
             <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--slate2);margin-bottom:8px;font-family:var(--mono);letter-spacing:.4px"><span>1 JAN</span><span>31 DEC</span></div>
-            <div style="height:6px;background:var(--paper2);border-radius:4px;overflow:hidden"><div style="height:100%;width:73%;background:linear-gradient(90deg,var(--green),var(--green-l));border-radius:4px;transition:width 1.5s ease"></div></div>
-            <div style="font-size:12px;color:var(--slate);margin-top:8px">73% of the compliance year is gone · target is 100% practitioner compliance by 31 December</div>
+            <div style="height:6px;background:var(--paper2);border-radius:4px;overflow:hidden"><div style="height:100%;width:0%;background:linear-gradient(90deg,var(--green),var(--green-l));border-radius:4px;transition:width 1.5s ease"></div></div>
+            <div style="font-size:12px;color:var(--slate);margin-top:8px">Target is 100% practitioner compliance by 31 December.</div>
           </div>
-          <div style="flex-shrink:0"><span class="pill pg" style="font-size:10px">ON TRACK</span></div>
         </div>
       </section>
 
@@ -793,11 +797,11 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
         <div class="sec-hd">
           <div>
             <div class="eyebrow" data-cfg="firm_sec_lawyers_eyebrow">ALL PRACTITIONERS</div>
-            <h2 class="sec-title" data-cfg-html="firm_sec_lawyers_title">Your <em>284 lawyers</em></h2>
+            <h2 class="sec-title" data-cfg-html="firm_sec_lawyers_title">Your <em>lawyers</em></h2>
             <div class="sec-desc">Click any row to open their profile, see course recommendations, and book individually.</div>
           </div>
           <div class="sec-acts">
-            <span id="filtCount" style="font-family:var(--mono);font-size:10.5px;color:var(--slate3)">284 shown</span>
+            <span id="filtCount" style="font-family:var(--mono);font-size:10.5px;color:var(--slate3)">—</span>
           </div>
         </div>
         <div class="search-wrap">
@@ -817,8 +821,8 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
         <!-- Quick select toolbar -->
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
           <span style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);font-weight:600;letter-spacing:.5px">QUICK SELECT:</span>
-          <button class="btn btn-xs btn-gh" onclick="quickSelect('critical')"> All critical (7)</button>
-          <button class="btn btn-xs btn-gh" onclick="quickSelect('at-risk')">⚠ All at-risk (10)</button>
+          <button class="btn btn-xs btn-gh" onclick="quickSelect('critical')"> All critical</button>
+          <button class="btn btn-xs btn-gh" onclick="quickSelect('at-risk')">⚠ All at-risk</button>
           <button class="btn btn-xs btn-gh" onclick="quickSelect('no-booking')">No bookings yet</button>
           <button class="btn btn-xs btn-gh" onclick="quickSelect('visible')">All visible</button>
           <button class="btn btn-xs btn-gh" onclick="clearSel()" style="margin-left:auto">✕ Clear selection</button>
@@ -866,7 +870,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
           <!-- Month nav -->
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <button onclick="calNav(-1)" class="btn btn-gh btn-sm">← Prev</button>
-            <div style="font-family:var(--serif);font-size:20px;color:var(--ink);letter-spacing:-.016em" id="calMonthLabel">May 2026</div>
+            <div style="font-family:var(--serif);font-size:20px;color:var(--ink);letter-spacing:-.016em" id="calMonthLabel">—</div>
             <button onclick="calNav(1)" class="btn btn-gh btn-sm">Next →</button>
           </div>
           <!-- Day-of-week headers -->
@@ -905,9 +909,9 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
           <div style="background:linear-gradient(135deg,#3a2a08,#1a1208);border-radius:var(--r-lg);padding:18px;position:relative;overflow:hidden;box-shadow:var(--sh-md)">
             <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(201,145,58,.15)"></div>
             <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.5);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:6px">FIRM POOL</div>
-            <div style="font-family:var(--serif);font-size:36px;color:var(--gold-l);line-height:1;margin-bottom:4px" id="firmCreditDisplay">62</div>
+            <div style="font-family:var(--serif);font-size:36px;color:var(--gold-l);line-height:1;margin-bottom:4px" id="firmCreditDisplay">—</div>
             <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.45)">credits available</div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--gold-l);margin-top:8px">≈ AED <span id="firmCreditAED">7,440</span></div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--gold-l);margin-top:8px">≈ AED <span id="firmCreditAED">0</span></div>
           </div>
           <div style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;box-shadow:var(--sh-sm);cursor:pointer" onclick="openAssign()">
             <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:6px">ASSIGNED TO LAWYERS</div>
@@ -1154,7 +1158,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
           </div>
           <div>
             <label style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:5px">TRAINER / PRESENTER</label>
-            <input id="upTrainer" type="text" placeholder="e.g. Yousef Al Mansouri" style="width:100%;padding:9px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--line2)'"/>
+            <input id="upTrainer" type="text" placeholder="Full name and qualifications" style="width:100%;padding:9px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--line2)'"/>
           </div>
         </div>
         <div style="margin-top:12px">
@@ -1794,7 +1798,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
 <script>
 
 // ════════════════════════════════════════════
-let firmCredits = 47; // unassigned pool
+let firmCredits = 0; // unassigned pool — real balance loads from /api/v1/credits/firm (was a fabricated demo value)
 const CREDIT_RATE = 120; // AED per credit
 const COURSE_CREDITS = 5; // all courses cost 5 credits
 
@@ -1805,19 +1809,9 @@ const CREDIT_PACKAGES = [
   {credits:500, price:45000, perCredit:90,  save:25, label:'Enterprise'},
 ];
 
-const CREDIT_TRANSACTIONS = [
-  {date:'1 May 2026',  type:'purchase', desc:'Purchased 200-credit package',    amount:+200, balance:162, aed:20000},
-  {date:'8 Apr 2026',  type:'booking',  desc:'Ahmad Al Naqbi — DIFC Arbitration', amount:-5,   balance:157, aed:600},
-  {date:'2 Apr 2026',  type:'booking',  desc:'Pierre Dubois — AML Update 2026',   amount:-5,   balance:162, aed:600},
-  {date:'2 Apr 2026',  type:'booking',  desc:'Fatima Al Mansouri — AI Governance',     amount:-5,   balance:167, aed:600},
-  {date:'15 Mar 2026', type:'booking',  desc:'Sophie Marsh — Tax Law Update',    amount:-5,   balance:172, aed:600},
-  {date:'15 Mar 2026', type:'booking',  desc:'Anita Vyas — Tax Law Update', amount:-5,   balance:177, aed:600},
-  {date:'10 Mar 2026', type:'booking',  desc:'Hamad Al Rashid — Construction',amount:-5,   balance:182, aed:600},
-  {date:'10 Mar 2026', type:'booking',  desc:'Mohammed Al Suwaidi — Construction Laws', amount:-5,   balance:187, aed:600},
-  {date:'1 Mar 2026',  type:'booking',  desc:'Yousef Al Mansouri — AI Governance',  amount:-5,   balance:192, aed:600},
-  {date:'28 Feb 2026', type:'purchase', desc:'Purchased 100-credit package',     amount:+100, balance:197, aed:11000},
-  {date:'1 Jan 2026',  type:'purchase', desc:'Initial 100-credit package',       amount:+100, balance:100, aed:11000},
-];
+// Fabricated demo ledger removed — real transactions load from /api/v1/credits/firm
+// into creditTxnsLive. Empty fallback shows a neutral "No credit transactions yet."
+const CREDIT_TRANSACTIONS = [];
 
 let selectedPkg = null;
 let assignDraft = {}; // {lawyerId: credits}
@@ -2167,70 +2161,28 @@ async function saveAssign() {
 // so submitted attendance maps to the real backend lawyer ids. Without this,
 // the firm portal's L-01496 ≠ the backend's L-01496 and point awards land
 // on the wrong lawyer record.
-let LAWYERS = [
-  {id:1,name:'Ahmad Al Naqbi',laId:'L-01496',initials:'AN',role:'Partner',practice:'Commercial Disputes',pts:12,booked:0,credits:5,lifetime:158,email:'a.naqbi@galadari.ae'},
-  {id:2,name:'Fatima Al Mansouri',laId:'L-01505',initials:'FM',role:'Partner',practice:'Real Estate',pts:10,booked:0,credits:5,lifetime:156,email:'f.mansouri@galadari.ae'},
-  {id:3,name:'Mohammed Al Suwaidi',laId:'L-01483',initials:'MS',role:'Partner',practice:'Corporate',pts:10,booked:0,credits:5,lifetime:158,email:'m.suwaidi@galadari.ae'},
-  {id:4,name:'Khalid Al Marri',laId:'L-05754',initials:'KM',role:'Associate',practice:'Arbitration',pts:10,booked:2,credits:5,lifetime:60,email:'k.marri@galadari.ae'},
-  {id:5,name:'Aisha Al Falasi',laId:'L-06904',initials:'AF',role:'Junior Associate',practice:'Banking',pts:8,booked:1,credits:5,lifetime:18,email:'a.falasi@galadari.ae'},
-  {id:6,name:'Omar Al Shamsi',laId:'L-06914',initials:'OS',role:'Junior Associate',practice:'Tax',pts:8,booked:1,credits:5,lifetime:16,email:'o.shamsi@galadari.ae'},
-  {id:7,name:'Layla Al Hashimi',laId:'L-07107',initials:'LH',role:'Junior Associate',practice:'IT & TMT',pts:8,booked:1,credits:5,lifetime:8,email:'l.hashimi@galadari.ae'},
-  {id:8,name:'Hamad Al Rashid',laId:'L-01516',initials:'HR',role:'Senior Associate',practice:'Construction',pts:6,booked:0,credits:10,lifetime:148,email:'h.rashid@galadari.ae'},
-  {id:9,name:'Mariam Al Awadhi',laId:'L-04347',initials:'MA',role:'Senior Associate',practice:'Employment',pts:6,booked:0,credits:10,lifetime:116,email:'m.awadhi@galadari.ae'},
-  {id:10,name:'Saif Al Mazrouei',laId:'L-05451',initials:'SaM',role:'Associate',practice:'Family',pts:6,booked:1,credits:10,lifetime:60,email:'s.mazrouei@galadari.ae'},
-  {id:11,name:'Noura Al Qubaisi',laId:'L-06131',initials:'NQ',role:'Associate',practice:'Commercial Disputes',pts:6,booked:1,credits:10,lifetime:42,email:'n.qubaisi@galadari.ae'},
-  {id:12,name:'Rashid Al Otaiba',laId:'L-06836',initials:'RO',role:'Associate',practice:'Real Estate',pts:6,booked:1,credits:10,lifetime:20,email:'r.otaiba@galadari.ae'},
-  {id:13,name:'Wael Habboush',laId:'L-06930',initials:'WH',role:'Junior Associate',practice:'Corporate',pts:6,booked:1,credits:10,lifetime:14,email:'w.habboush@galadari.ae'},
-  {id:14,name:'Daniel Tucker',laId:'L-06981',initials:'DT',role:'Junior Associate',practice:'Arbitration',pts:6,booked:1,credits:10,lifetime:12,email:'d.tucker@galadari.ae'},
-  {id:15,name:'Sophie Marsh',laId:'L-07112',initials:'SH',role:'Junior Associate',practice:'Banking',pts:6,booked:1,credits:10,lifetime:6,email:'s.marsh@galadari.ae'},
-  {id:16,name:'Yousef Al Mansouri',laId:'L-01494',initials:'YM',role:'Legal Consultant',practice:'Commercial Disputes',pts:4,booked:1,credits:10,lifetime:136,email:'y.mansouri@galadari.ae'},
-  {id:17,name:'Anita Vyas',laId:'L-03065',initials:'AV',role:'Senior Associate',practice:'Tax',pts:4,booked:2,credits:10,lifetime:114,email:'a.vyas@galadari.ae'},
-  {id:18,name:'Imran Bukhari',laId:'L-05602',initials:'IB',role:'Associate',practice:'IT & TMT',pts:4,booked:1,credits:10,lifetime:66,email:'i.bukhari@galadari.ae'},
-  {id:19,name:'Pierre Dubois',laId:'L-01502',initials:'PD',role:'Senior Associate',practice:'Construction',pts:4,booked:0,credits:10,lifetime:142,email:'p.dubois@galadari.ae'},
-  {id:20,name:'Maria Santos',laId:'L-04475',initials:'MaS',role:'Associate',practice:'Employment',pts:4,booked:1,credits:10,lifetime:88,email:'m.santos@galadari.ae'},
-  {id:21,name:'Ravi Krishnan',laId:'L-04797',initials:'RK',role:'Associate',practice:'Family',pts:4,booked:1,credits:10,lifetime:56,email:'r.krishnan@galadari.ae'},
-  {id:22,name:'Jonathan Reed',laId:'L-04873',initials:'JR',role:'Associate',practice:'Commercial Disputes',pts:4,booked:1,credits:10,lifetime:76,email:'j.reed@galadari.ae'},
-  {id:23,name:'Hala Younes',laId:'L-04952',initials:'HY',role:'Associate',practice:'Real Estate',pts:4,booked:2,credits:10,lifetime:78,email:'h.younes@galadari.ae'},
-  {id:24,name:'Karim Hassan',laId:'L-06544',initials:'KH',role:'Associate',practice:'Corporate',pts:4,booked:1,credits:10,lifetime:26,email:'k.hassan@galadari.ae'},
-  {id:25,name:'Reema Saleh',laId:'L-06746',initials:'RS',role:'Junior Associate',practice:'Arbitration',pts:4,booked:1,credits:10,lifetime:14,email:'r.saleh@galadari.ae'},
-  {id:26,name:'Tariq Najjar',laId:'L-06758',initials:'TaN',role:'Junior Associate',practice:'Banking',pts:4,booked:2,credits:10,lifetime:12,email:'t.najjar@galadari.ae'},
-  {id:27,name:'Yasmin Khoury',laId:'L-06895',initials:'YK',role:'Junior Associate',practice:'Tax',pts:4,booked:1,credits:10,lifetime:12,email:'y.khoury@galadari.ae'},
-  {id:28,name:'Faisal Al Tayer',laId:'L-01493',initials:'FT',role:'Partner',practice:'IT & TMT',pts:2,booked:0,credits:0,lifetime:152,email:'f.tayer@galadari.ae'},
-  {id:29,name:'Hessa Al Suwaidi',laId:'L-06120',initials:'HS',role:'Associate',practice:'Construction',pts:2,booked:2,credits:0,lifetime:38,email:'h.suwaidi@galadari.ae'},
-  {id:30,name:'Abdullah Karim',laId:'L-06693',initials:'AK',role:'Junior Associate',practice:'Employment',pts:2,booked:3,credits:0,lifetime:18,email:'a.karim@galadari.ae'},
-  {id:31,name:'Lina Mansour',laId:'L-06121',initials:'LMs',role:'Associate',practice:'Family',pts:0,booked:1,credits:0,lifetime:36,email:'l.mansour@galadari.ae'},
-];
+// Fabricated demo lawyers (invented names + emails) removed. The real cohort is
+// loaded from /api/v1/firms/F-GA/lawyers at boot by loadFirmLawyersFromBackend().
+// Empty fallback renders a neutral "No lawyers" state instead of fake people.
+let LAWYERS = [];
 
-let COURSES = [
-  {id:'aml',title:'Anti Money Laundering (Update 2026)',icon:'',bg:'linear-gradient(135deg,#1a0a30,#2d1b69)',type:'mandatory',pts:2,credits:5,provider:'Kwintessential',location:'Al Hudaiba Awards Bldg',cost:'5 credits',costNum:600,elearning:false,match:92,matchReason:'Directly addresses your Tax & Immigration gap lawyers.',desc:'In-depth UAE AML architecture, Federal Decree-Law No.10 of 2025, goAML platform, and targeted financial sanctions. Highly recommended for compliance gaps.',sessions:[{date:'Wed 20 May 2026',time:'12:00–14:00',seats:15,lang:'English'},{date:'Tue 2 Jun 2026',time:'9:30–11:30',seats:23,lang:'English'},{date:'Mon 29 Jun 2026',time:'12:00–14:00',seats:24,lang:'Arabic'}],impact:[{label:'Tax compliance',pct:85,gain:18},{label:'AML knowledge',pct:40,gain:42}]},
-  {id:'ai-gov',title:'AI Governance: Legal Risk & Compliance',icon:'',bg:'linear-gradient(135deg,#3b0764,#1e1b4b)',type:'mandatory',pts:2,credits:5,provider:'LAD Academy',location:'Online · Self-paced',cost:'Free (5 credits)',costNum:0,elearning:true,match:89,matchReason:'Mandatory for all practitioners. Your firm has 7 lawyers yet to complete.',desc:'Comprehensive understanding of AI governance, legal risk frameworks, and compliance obligations under UAE law. Covers safe AI integration in legal practice.',sessions:[],impact:[{label:'Ethics & AI',pct:62,gain:28},{label:'Regulatory',pct:22,gain:12}]},
-  {id:'difc-arb',title:'International Arbitration & the Courts',icon:'',bg:'linear-gradient(135deg,#0a2040,#020817)',type:'mandatory',pts:2,credits:5,provider:'DIFC Academy',location:'Gate Village Bldg 02 · DIFC',cost:'5 credits',costNum:600,elearning:false,match:96,matchReason:"Perfect match for your 14 Arbitration-practice lawyers. 3 seats left on 28 May.",desc:'DIFC & ADGM court interaction with arbitration across all stages. Uses UNCITRAL Model Law. Rated 4.9★ by 743 previous attendees.',sessions:[{date:'Wed 28 May 2026',time:'9:00–15:00',seats:3,lang:'English'},{date:'Tue 16 Jun 2026',time:'9:00–15:00',seats:18,lang:'English'}],impact:[{label:'Arbitration',pct:87,gain:18},{label:'Construction',pct:74,gain:8}]},
-  {id:'tax-update',title:'Tax Law Update 2026',icon:'',bg:'linear-gradient(135deg,#1a3a1a,#0a1a08)',type:'mandatory',pts:2,credits:5,provider:'Kwintessential',location:'Al Hudaiba Awards Bldg',cost:'5 credits',costNum:600,elearning:false,match:97,matchReason:"URGENT for 3 Tax lawyers under 8 pts. Only 5 sessions run city-wide — book immediately.",desc:'Corporate tax law developments in the UAE, CIT framework, transfer pricing, and economic substance requirements. Critical for Tax practice area compliance.',sessions:[{date:'Thu 22 May 2026',time:'9:00–11:00',seats:8,lang:'English'},{date:'Mon 9 Jun 2026',time:'14:00–16:00',seats:20,lang:'English'},{date:'Tue 1 Jul 2026',time:'9:30–11:30',seats:30,lang:'Arabic'}],impact:[{label:'Tax compliance',pct:61,gain:32},{label:'Regulatory',pct:22,gain:14}]},
-  {id:'construction',title:'Real Estate & Construction Laws · Case Trends',icon:'',bg:'linear-gradient(135deg,#2a3a1a,#0a1a08)',type:'mandatory',pts:2,credits:5,provider:'Kwintessential',location:'Al Hudaiba Awards Bldg',cost:'5 credits',costNum:600,elearning:false,match:84,matchReason:'Strong match for Real Estate and Construction associates.',desc:'Comprehensive UAE construction law analysis emphasising recent judicial decisions and legislative developments. Covers FIDIC in UAE context.',sessions:[{date:'Thu 21 May 2026',time:'9:00–11:00',seats:31,lang:'English'},{date:'Wed 4 Jun 2026',time:'12:00–14:00',seats:28,lang:'English'}],impact:[{label:'Construction',pct:74,gain:20},{label:'Real Estate',pct:38,gain:12}]},
-  {id:'esg',title:'ESG & Climate Law',icon:'',bg:'linear-gradient(135deg,#0a2a1a,#042214)',type:'accredited',pts:2,credits:3,provider:'Green Law Institute',location:'Online · E-learning',cost:'3 credits',costNum:300,elearning:true,match:78,matchReason:'Growing demand signal. 3 of your lawyers have expressed interest.',desc:'Environmental, Social, and Governance principles in legal practice. UAE regulatory framework, ESG due diligence, and climate-related legal obligations.',sessions:[],impact:[{label:'ESG knowledge',pct:20,gain:65},{label:'Regulatory',pct:22,gain:8}]},
-];
+// Fabricated demo catalogue (invented ratings/match %/dates/seat counts) removed.
+// Real courses load from /api/v1/courses/upcoming via refreshCoursesFromBackend().
+// Empty fallback renders a neutral "No accredited courses available yet." state.
+let COURSES = [];
 window.COURSES = COURSES;  // expose so the config loader can replace the contents
 
-const BOOKINGS = [
-  {lawyer:'Khalid Al Marri',role:'Associate',course:'Exclusion and Limitation Clauses in UAE',date:'12 May 2026 · 14:30–16:30',venue:'Al Hudaiba · Kwintessential',pts:2,status:'confirmed'},
-  {lawyer:'Yousef Al Mansouri',role:'Legal Consultant',course:'AI & Copyright in Practice 2026',date:'13 Apr 2026 · 9:30–11:30',venue:'Hadef & Partners',pts:2,status:'in-progress'},
-  {lawyer:'Anita Vyas',role:'Senior Associate',course:'Common Law Contract Update 2026',date:'23 Apr 2026 · 9:30–11:30',venue:'Clyde & Co · DIFC',pts:2,status:'confirmed'},
-  {lawyer:'Aisha Al Falasi',role:'Junior Associate',course:'International Arbitration & the Courts',date:'18 Feb 2026 · 9:30–11:30',venue:'Galadari Bldg',pts:2,status:'completed'},
-  {lawyer:'Omar Al Shamsi',role:'Junior Associate',course:'Data Protection & Privacy — UAE',date:'25 Mar 2026 · 12:00–14:00',venue:'Galadari Bldg',pts:2,status:'completed'},
-  {lawyer:'Layla Al Hashimi',role:'Junior Associate',course:'Powers of Attorney & Ostensible Authority',date:'28 Jan 2026 · 14:30–16:30',venue:'Al Hudaiba · Kwintessential',pts:2,status:'completed'},
-  {lawyer:'Noura Al Qubaisi',role:'Associate',course:'Advanced Mediation (SOLVE methodology)',date:'9 Mar 2026 · 9:30–11:30',venue:'ADR Center',pts:2,status:'completed'},
-  {lawyer:'Abdullah Karim',role:'Junior Associate',course:'Assignment of Debt under UAE Law',date:'15 Apr 2026 · 9:30–11:30',venue:'Galadari Bldg',pts:2,status:'confirmed'},
-];
+// Fabricated demo bookings (invented lawyer names + dates) removed. Real confirmed
+// bookings load from /api/v1/firms/F-GA/bookings into firmBookingsLive.
+const BOOKINGS = [];
 
-// Live confirmed bookings from the backend (null = not loaded yet → use demo).
+// Live confirmed bookings from the backend (null = not loaded yet → use empty).
 let firmBookingsLive = null;
 
-const INSIGHTS = [
-  {icon:'',tag:'CRITICAL · 1 LAWYER',title:'Lina Mansour at 0 pts — 234 days left',body:'Lina Mansour (L-06121, Family, Associate) has zero 2026 points and one stale booking. Book her onto Exclusion & Limitation Clauses (12 May, Al Hudaiba, 21 seats firmed) plus AI Governance e-learning today to clear 4 pts before end of May.',color:'var(--red)',actions:['Book Lina onto May sessions']},
-  {icon:'',tag:'GAP · ETHICS COMPULSORY',title:'29 of 31 lawyers missing Ethics this year',body:'Ethics is a mandatory annual requirement and only Aisha Al Falasi and Layla Al Hashimi have booked it for 2026. The Ethics in Legal AI e-learning module is free and self-paced — Lex recommends mass-enrolling all 29 remaining lawyers this week.',color:'var(--amber)',actions:['Mass-enrol 29 onto Ethics']},
-  {icon:'',tag:'OPPORTUNITY · ARBITRATION CLUSTER',title:'8 lawyers focused on Arbitration · DIFC Day fits 6',body:'Khalid Al Marri, Daniel Tucker, Reema Saleh and 5 others practise Arbitration. The 28 May DIFC Day delivers 2 mandatory + arbitration points in a single 6-hour session. Six of your 10 unassigned credit slots cover the booking.',color:'var(--teal)',actions:['Mass-book Arbitration cohort']},
-  {icon:'',tag:'E-LEARNING WIN',title:'AI Governance is free and would close 4 pts each',body:'The Ethics — AI e-learning is mandatory, free, and online. Across the 13 lawyers at 4 pts or below, this single module would lift the firm from 48.4% to 64.7% compliance.',color:'var(--green)',actions:['Open AI Governance']},
-];
+// Fabricated demo insights removed. Insights are computed live from real lawyer
+// data (computeInsights) or loaded from /api/v1/firms/F-GA/insights; this seed
+// array is unused. Kept empty so nothing invented can leak.
+const INSIGHTS = [];
 
 let activeFilter = 'all';
 let activeCat = 'all';
@@ -2630,7 +2582,8 @@ function selectMassSession(idx, courseOverride, courseFirstLawyerIds) {
   // Impact
   const moveToCompliant = lawyers.filter(l=>l.pts<16&&l.pts+c.pts>=16).length;
   document.getElementById('massImpactBox').style.display = '';
-  document.getElementById('massImpactText').innerHTML = `Booking <strong>${lawyers.length} lawyers</strong> adds <strong>${c.pts} pts each</strong>. ${moveToCompliant>0?`<strong style="color:var(--green)">${moveToCompliant} will reach full compliance.</strong>`:''} Firm compliance estimated ~<strong>${(48.4 + (moveToCompliant/284*100*0.7)).toFixed(1)}%</strong>.`;
+  // Removed fabricated "firm compliance estimated ~X%" (hardcoded 48.4 baseline / 284 total).
+  document.getElementById('massImpactText').innerHTML = `Booking <strong>${lawyers.length} lawyers</strong> adds <strong>${c.pts} pts each</strong>. ${moveToCompliant>0?`<strong style="color:var(--green)">${moveToCompliant} will reach full compliance.</strong>`:''}`;
 
   // Cost
   document.getElementById('massCostBox').style.display = '';
@@ -2668,7 +2621,7 @@ function confirmMassBook() {
 
   // Deduct from firm pool
   firmCredits -= totalCredits;
-  CREDIT_TRANSACTIONS.unshift({date:'10 May 2026',type:'booking',desc:`Mass booking — ${c.title} (${lawyers.length} lawyers)`,amount:-totalCredits,balance:firmCredits,aed:totalCredits*CREDIT_RATE});
+  CREDIT_TRANSACTIONS.unshift({date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}),type:'booking',desc:`Mass booking — ${c.title} (${lawyers.length} lawyers)`,amount:-totalCredits,balance:firmCredits,aed:totalCredits*CREDIT_RATE});
 
   lawyers.forEach(l=>{
     l.booked = (l.booked||0) + 1;
@@ -3268,7 +3221,7 @@ async function runAI() {
   const prompt = `You are Maryam, AI compliance advisor for ${window.__FIRM_NAME__ || "this"} law firm.
 Lawyer: ${l.name} · ${l.role} · ${l.practice} practice
 CLPD status: ${l.pts}/16 points earned · ${missing} points missing · ${l.booked} courses booked
-Deadline: 31 December 2026 · 234 days remaining
+Deadline: 31 December 2026
 
 Recommend: the 2 most important courses this lawyer should book next, in priority order, with a brief reason for each. Be specific about course names from: AML Update 2026, AI Governance, International Arbitration & the Courts, Tax Law Update 2026, Real Estate & Construction Laws, ESG & Climate Law. 3 sentences max. Practical and direct.`;
   const result = await callClaude([{role:'user',content:prompt}]);
@@ -3407,7 +3360,8 @@ function pickLawyer(id) {
 }
 
 function openBookForLawyer() {
-  if(currentLawyer) { openBookModal(COURSES[0].id, currentLawyer.id); }
+  // Guard against an empty catalogue (courses load from the API) so this never throws.
+  if(currentLawyer && COURSES.length) { openBookModal(COURSES[0].id, currentLawyer.id); }
   else { closeSP(); scrollS('courses'); }
 }
 
@@ -3548,7 +3502,7 @@ function openLex(){scrollS('insights');try{advisorTab('chat',document.querySelec
 // ════════════════════════════════════════════
 function showToast(m){const t=document.getElementById('toast');document.getElementById('tmsg').textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2800);}
 function scrollS(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth'});}
-function updateTime(){document.getElementById('liveTime').textContent='10 May 2026 · '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false})+' GST';}
+function updateTime(){const now=new Date();document.getElementById('liveTime').textContent=now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' · '+now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false})+' GST';}
 setInterval(updateTime,30000);updateTime();
 
 // Scroll spy
@@ -3568,8 +3522,9 @@ window.addEventListener('scroll',()=>{
 // VIEW TOGGLE (grid / calendar)
 // ════════════════════════════════════════════
 let courseView = 'grid';
-let calMonth = 4; // 0=Jan, 4=May
-let calYear = 2026;
+// Open the calendar on the real current month rather than a fabricated demo date.
+let calMonth = new Date().getMonth();
+let calYear = new Date().getFullYear();
 
 function setView(v) {
   courseView = v;
@@ -3682,11 +3637,11 @@ function showCalDay(d) {
 // backend `ref`) are shown, falling back to an empty state when there are none.
 let internalSessionsLoaded = false;
 
-const INTERNAL_SESSIONS = [
-  {id:1, title:'Corporate Governance Workshop', category:'Corporate Law', date:'8 Apr 2026', dateStr:'Tuesday 8 Apr 2026', time:'9:00–12:00', pts:2, trainer:'Faisal Al Tayer', attendees:['Ahmad Al Naqbi','Fatima Al Mansouri','Mohammed Al Suwaidi','Hamad Al Rashid','Pierre Dubois'], status:'approved', dateObj: new Date(2026,3,8)},
-  {id:2, title:'AML Compliance Briefing', category:'Banking & Finance', date:'15 Apr 2026', dateStr:'Wednesday 15 Apr 2026', time:'14:00–16:00', pts:2, trainer:'Pierre Dubois', attendees:['Hamad Al Rashid','Sophie Marsh','Karim Hassan'], status:'approved', dateObj: new Date(2026,3,15)},
-  {id:3, title:'AI in Legal Practice — Internal Seminar', category:'AI & Legal Technology', date:'2 May 2026', dateStr:'Saturday 2 May 2026', time:'10:00–13:00', pts:2, trainer:'External Speaker', attendees:['Faisal Al Tayer','Ahmad Al Naqbi','Fatima Al Mansouri','Yousef Al Mansouri','Anita Vyas','Pierre Dubois'], status:'pending', dateObj: new Date(2026,4,2)},
-];
+// Fabricated demo internal sessions (invented trainer + attendee names, fake
+// dates) removed — trainer names must never be displayed (policy). Real
+// submissions load from the backend via syncInternalSessionsFromBackend()
+// (keyed by `ref`); the empty fallback shows a neutral "No internal sessions" state.
+const INTERNAL_SESSIONS = [];
 
 function updateCycleStats() {
   const real = INTERNAL_SESSIONS.filter(s => s.ref);
@@ -3842,9 +3797,9 @@ function submitUpload() {
 async function triggerWorkflow(payload) {
   // No client-side reference — the backend issues the structured ref (e.g.
   // GAL2601P for a pending application) and we display whatever it returns.
-  payload.submittedBy = (window.LAD && window.LAD.getName && window.LAD.getName()) || localStorage.getItem('lad_name') || 'Fatima Al Mansouri';
+  payload.submittedBy = (window.LAD && window.LAD.getName && window.LAD.getName()) || localStorage.getItem('lad_name') || 'Compliance Officer';
   payload.firm = (window.__FIRM_NAME__ || 'your firm');
-  payload.accreditationRef = 'ATP-2022-0041';
+  // Fabricated demo accreditation reference removed; backend issues the real ref.
   payload.submittedAt = new Date().toISOString();
   payload.submittedVia = 'Firm Compliance Portal';
 
@@ -4455,7 +4410,7 @@ function updateSessionImpact() {
     course: opt.text?.split(' —')[0] || '',
     pointsPerLawyer: pts,
     totalLawyers: count,
-    lawyers: lawyers.map(l=>({name:l.name, practitionerId:'DBA-2018-'+l.id, email:l.email, currentPts:l.pts, newPts:Math.min(16,l.pts+pts)})),
+    lawyers: lawyers.map(l=>({name:l.name, practitionerId:l.laId||'', email:l.email||'', currentPts:l.pts, newPts:Math.min(16,l.pts+pts)})),
     attendanceSource: 'manual_selection',
   };
   document.getElementById('ss-payload-preview').textContent = JSON.stringify(payloadPreview, null, 2).slice(0, 400) + '\n  ...';
@@ -4567,7 +4522,7 @@ async function submitSession() {
     const db = JSON.parse(localStorage.getItem(REGISTRY_KEY)||'{"sessions":[]}');
     db.sessions.unshift({
       id: ref,
-      providerRef: 'ATP-2022-0041',
+      providerRef: '',  // backend issues the real accreditation reference (was a fabricated demo ref)
       providerName: (window.__FIRM_NAME__ || 'your firm'),
       courseTitle: courseLabel,
       pts, sessionDate: date || new Date().toISOString().split('T')[0],
@@ -4575,7 +4530,8 @@ async function submitSession() {
       attendanceFiledAt: lawyers.length ? new Date().toISOString() : null,
       status: lawyers.length ? 'attendance_filed' : 'pending_attendance',
       warning1SentAt: null, warning2SentAt: null,
-      attendees: lawyers.map(l=>({name:l.name, practitionerId:`DBA-2018-${l.id}`, email:l.email||`${l.name.split(' ')[0].toLowerCase()}@clpd.test`, firm:(window.__FIRM_NAME__ || 'your firm'), pts})),
+      // Use real backend ids/emails; do not invent practitioner ids or test emails.
+      attendees: lawyers.map(l=>({name:l.name, practitionerId:l.laId||'', email:l.email||'', firm:(window.__FIRM_NAME__ || 'your firm'), pts})),
     });
     localStorage.setItem(REGISTRY_KEY, JSON.stringify(db));
   } catch(e) { console.warn('Registry write failed', e); }
@@ -4593,6 +4549,13 @@ renderInternalCards();
 updateCreditUI();
 renderCreditLawyerList();
 renderCreditHistory();
+
+// Show the real signed-in user's name in the sidebar (never a fabricated demo name).
+try {
+  const _n = (window.LAD && window.LAD.getName && window.LAD.getName()) || localStorage.getItem('lad_name') || '';
+  const _el = document.getElementById('sbUserName');
+  if (_el && _n) _el.textContent = _n;
+} catch (_) {}
 
 // Init Lex
 lexMsg('assistant','Good afternoon. I'+String.fromCharCode(39)+'m Maryam, your firm'+String.fromCharCode(39)+'s CLPD compliance advisor. I can flag at-risk lawyers, recommend courses to close their gaps, and help you bulk-book or assign credits. How can I help?');
@@ -4882,7 +4845,7 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
         'Build me a 90-day study plan',
       ],
       firm: [
-        'Which 7 lawyers are critical and what should I book?',
+        'Which lawyers are critical and what should I book?',
         'Calculate the credit budget to reach 100% compliance',
         'Draft a notice to lawyers below 4 points',
       ],
@@ -5134,39 +5097,20 @@ Be concise, practical, and warm. Use markdown sparingly (bold for key terms, ita
 
 You can get one at *console.anthropic.com* — keys start with \`sk-ant-\`.`;
     } else if (_lex.portal === 'lawyer' && lower.match(/point|track|compliance|status/)) {
-      reply = `Based on your record, Fatima, you're at **6/16 points** with 234 days remaining.
+      // Fabricated demo figures removed — no invented points/names/dates.
+      reply = `I can talk you through your CLPD points, the gap to the 16-point target by 31 December 2026, and which courses would close it.
 
-The fastest path to 16:
-- **DIFC Day** (28 May) — 4 points · 5 credits
-- **AI Governance & Legal Practice** — 4 points · 5 credits  
-- **Insolvency Update 2026** — 2 points · 5 credits
-- **AML Mandatory** — 4 points · free
-
-That's 14 points in courses you can book today. You'll close the remaining 2 with the November Ethics module.
-
-*Demo response — add your Claude API key for personalised AI guidance.*`;
+I'm currently in **demo mode**, so I can't read your live record yet. Add your Claude API key (⚙ icon, top bar) and I'll give you personalised, data-backed guidance.`;
     } else if (_lex.portal === 'firm' && lower.match(/critic|risk|book|plan/)) {
-      reply = `Your firm has **7 lawyers in the critical zone** (under 4 points with 234 days left).
+      // Fabricated demo figures removed — no invented lawyer counts/credits/percentages.
+      reply = `I can flag your at-risk lawyers, recommend courses to close their gaps, and help you bulk-book or assign credits toward the 16-point CLPD target by 31 December 2026.
 
-Recommended action:
-- Mass-book all 7 onto **DIFC Day (28 May)** = 28 points across the cohort
-- Add **AI Governance** for the 4 most senior = 16 more points
-- Total cost: **55 credits** (≈ AED 6,600)
-
-This brings firm compliance from 48.4% → 98.4% by end of June.
-
-*Demo response — add your Claude API key for personalised AI guidance.*`;
+I'm currently in **demo mode**, so I can't read your firm's live data yet. Add your Claude API key (⚙ icon, top bar) for personalised analysis and recommendations.`;
     } else if (_lex.portal === 'intel') {
-      reply = `At the current pace, the national CLPD compliance forecast for 31 Dec 2026 is **94.8%** (95% CI: 93.6% – 96.0%).
+      // Fabricated forecast/statistics removed — no invented percentages or counts.
+      reply = `I can help with national CLPD compliance analysis and intervention planning toward the 31 December 2026 deadline.
 
-The 5.2% projected gap = approximately **96 lawyers** at risk of practising-certificate suspension.
-
-Three intervention levers:
-1. Mandate that all firms <90% submit a recovery plan by 30 June
-2. Open three additional DIFC Day cohorts in Aug-Oct
-3. Auto-flag any lawyer at <6 points on 1 Sep for firm escalation
-
-*Demo response — add your Claude API key for personalised AI guidance.*`;
+I'm currently in **demo mode**, so I can't compute live forecasts yet. Add your Claude API key (⚙ icon, top bar) for data-backed projections and recommendations.`;
     } else {
       reply = `That's a great question. In **demo mode** I have limited responses — but with your Claude API key configured I can give you specific, contextual answers about your CLPD compliance, course recommendations, and strategic planning.
 

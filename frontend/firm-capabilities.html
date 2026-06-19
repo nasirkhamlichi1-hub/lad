@@ -200,57 +200,12 @@ const DOMAIN_NAMES = {
   jx:'UAE Jurisdictional Specialisms',ps:'Professional Skills',eg:'Emerging Areas'
 };
 
-// Demo data — Galadari (31 lawyers in handoff seed)
+// Offline fallback — no fabricated firm/lawyer/capability data.
+// Real data is loaded from the backend API (see load()); when offline the
+// page renders its empty states rather than invented demo content.
 const DEMO = {
-  firm_name: 'Galadari Advocates & Legal Consultants',
-  capabilities: [
-    { topic_id:'rc.ethics.uae_code', label:'UAE Code of Ethics for Legal Professionals', domain:'rc',
-      total_depth: 142.5, lawyers_count: 28, avg_depth: 5.1, freshness:'current',
-      top_lawyers: [
-        { lawyer_id:'L-01494', name:'Yousef Al Mansouri', depth_score: 12.4, last_trained_at:'2025-03-15' },
-        { lawyer_id:'L-01483', name:'Khalid Al Marri',    depth_score: 11.2, last_trained_at:'2025-01-20' },
-        { lawyer_id:'L-04347', name:'Reema Saleh',        depth_score: 9.8,  last_trained_at:'2024-11-12' },
-      ]
-    },
-    { topic_id:'jx.civil_transactions', label:'UAE Civil Transactions Law', domain:'jx',
-      total_depth: 124.7, lawyers_count: 24, avg_depth: 5.2, freshness:'current',
-      top_lawyers: [
-        { lawyer_id:'L-01494', name:'Yousef Al Mansouri', depth_score: 11.2, last_trained_at:'2025-02-10' },
-        { lawyer_id:'L-04347', name:'Reema Saleh',        depth_score: 9.4,  last_trained_at:'2024-09-22' },
-      ]
-    },
-    { topic_id:'cc.contracts.civil_code', label:'UAE Civil Code (Contracts)', domain:'cc',
-      total_depth: 98.2, lawyers_count: 22, avg_depth: 4.5, freshness:'current',
-      top_lawyers: [
-        { lawyer_id:'L-01494', name:'Yousef Al Mansouri', depth_score: 9.8, last_trained_at:'2024-11-20' },
-      ]
-    },
-    { topic_id:'dr.arbitration.difc', label:'DIFC-LCIA / DIFC Arbitration', domain:'dr',
-      total_depth: 64.4, lawyers_count: 14, avg_depth: 4.6, freshness:'current',
-      top_lawyers: [
-        { lawyer_id:'L-01494', name:'Yousef Al Mansouri', depth_score: 8.4, last_trained_at:'2025-04-01' },
-        { lawyer_id:'L-06120', name:'Hamad Al Rashid',    depth_score: 7.1, last_trained_at:'2025-04-01' },
-      ]
-    },
-    { topic_id:'cc.contracts.common_law', label:'Common Law Contract Principles', domain:'cc',
-      total_depth: 42.3, lawyers_count: 14, avg_depth: 3.0, freshness:'current', top_lawyers: [] },
-    { topic_id:'fs.aml.uae_framework', label:'UAE AML Framework', domain:'fs',
-      total_depth: 38.4, lawyers_count: 18, avg_depth: 2.1, freshness:'stale',
-      top_lawyers: [{ lawyer_id:'L-01494', name:'Yousef Al Mansouri', depth_score: 1.7, last_trained_at:'2021-06-12' }]
-    },
-    { topic_id:'ip.tech.dp.uae_federal', label:'UAE PDPL (Federal Decree 45/2021)', domain:'ip',
-      total_depth: 28.4, lawyers_count: 11, avg_depth: 2.6, freshness:'current',
-      top_lawyers: [{ lawyer_id:'L-01494', name:'Yousef Al Mansouri', depth_score: 3.4, last_trained_at:'2024-03-25' }]
-    },
-    { topic_id:'cc.contracts.exclusion', label:'Exclusion & Limitation Clauses', domain:'cc',
-      total_depth: 24.1, lawyers_count: 9, avg_depth: 2.7, freshness:'current', top_lawyers: [] },
-    { topic_id:'ip.copyright.ai', label:'AI & Copyright', domain:'ip',
-      total_depth: 18.4, lawyers_count: 8, avg_depth: 2.3, freshness:'current',
-      top_lawyers: [{ lawyer_id:'L-01494', name:'Yousef Al Mansouri', depth_score: 2.4, last_trained_at:'2025-04-13' }]
-    },
-    { topic_id:'cc.contracts.poa', label:'Powers of Attorney', domain:'cc',
-      total_depth: 14.5, lawyers_count: 9, avg_depth: 1.6, freshness:'current', top_lawyers: [] },
-  ],
+  firm_name: '',
+  capabilities: [],
 };
 
 let allCaps = [];
