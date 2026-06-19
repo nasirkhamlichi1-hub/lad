@@ -129,6 +129,10 @@
   #focusPanel .fp-sub{font-size:12px;color:var(--dim);margin-bottom:14px}
   #focusPanel .fp-ai{margin-top:14px;border-top:1px solid var(--panel-b);padding-top:13px}
   #focusPanel .fp-ans{font-size:12.5px;line-height:1.6;color:var(--ink);margin-top:10px;white-space:pre-wrap}
+  #fpAskRow{display:flex;gap:7px;align-items:center;margin-top:11px;background:rgba(52,225,255,.06);border:1px solid rgba(52,225,255,.28);border-radius:20px;padding:5px 6px 5px 14px}
+  #fpAskRow input{flex:1;background:none;border:0;outline:0;color:#eaf4ff;font-family:'Inter',sans-serif;font-size:12.5px}
+  #fpAskRow input::placeholder{color:var(--dim2)}
+  #fpAskRow button{flex:0 0 auto;width:30px;height:30px;border:0;border-radius:50%;background:linear-gradient(90deg,var(--cyan),var(--teal));color:#04101a;font-weight:700;cursor:pointer;font-size:14px}
   .fp-btn{display:block;width:100%;text-align:center;margin-top:10px;border:0;border-radius:10px;padding:11px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer}
   .fp-btn.ai{background:linear-gradient(90deg,var(--cyan),var(--teal));color:#04101a}
   .fp-btn.back{background:transparent;color:var(--dim);border:1px solid var(--panel-b)}
@@ -376,7 +380,8 @@
   <div class="fp-ai">
     <div class="card-h" style="margin-bottom:0">Maryam · trends <span class="badge" style="color:var(--cyan);border-color:rgba(52,225,255,.35)">AI</span></div>
     <div class="fp-ans" id="fpAnswer" style="display:none"></div>
-    <button class="fp-btn ai" id="fpAsk">✦ Analyse trends &amp; actions</button>
+    <div id="fpAskRow"><input id="fpInput" autocomplete="off" placeholder="Ask a follow-up about this…"/><button id="fpSend" title="Send">↑</button></div>
+    <button class="fp-btn ai" id="fpAsk">✦ Re-analyse</button>
   </div>
   <button class="fp-btn back" onclick="exitFocus()">← Back to orbit</button>
 </div>
@@ -923,8 +928,19 @@
       else { html='<div class="loading">The deepest layer here.</div>'; }
       $('fpFacts').innerHTML=html;
       var btn=$('fpAsk'); if(btn){ btn.style.display=''; btn.onclick=function(){ maryamInto(node); }; }
+      bindFollowup(node);
       $('focusPanel').classList.add('on');
       maryamInto(node);   // proactively explain this node
+    }
+    // Typed follow-up about the current node, with its live context attached.
+    function nodeCtx(node){ var D=node.data; var c=(node.type||'node')+' "'+(node.label||node.ctx||'')+'"'+(node.sub?(' ('+node.sub+')'):'');
+      if(D&&D.firm) c+=' — '+nf(D.total)+' lawyers, '+nf(D.compliant)+' compliant, '+nf(D.atRisk)+' at risk, '+nf(D.critical)+' critical, '+(D.compliancePct!=null?D.compliancePct+'%':'?')+' compliance, '+nf(D.courses)+' accredited activities';
+      else if(node.meta){ try{ c+=' [data: '+JSON.stringify(node.meta).slice(0,260)+']'; }catch(e){} } return c; }
+    function bindFollowup(node){ var inp=$('fpInput'),send=$('fpSend'); if(!inp||!send) return; inp.value='';
+      var ask=function(){ var q=(inp.value||'').trim(); if(!q) return; inp.value=''; var a=$('fpAnswer'); if(a){ a.style.display='block'; a.textContent='Maryam is thinking…'; }
+        fetch(base+'/api/v1/admin/command',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({prompt:'Regarding the '+nodeCtx(node)+'. Question: '+q+'. Answer concisely using the live data provided; never say there is no data.'})})
+          .then(function(r){return r.json();}).then(function(d){ if(a) a.textContent=(d&&(d.answer||d.summary))||'No response.'; }).catch(function(){ if(a) a.textContent='Network error — try again.'; }); };
+      send.onclick=ask; inp.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); ask(); } };
     }
 
     // The home twin is the base of the dive stack.
@@ -1032,6 +1048,7 @@
       if(key==='Courses'||key==='Sessions'){ $('fpFacts').innerHTML+='<button class="fp-btn ai" style="margin-top:12px" onclick="openCoursesLayer()">⤢ Open market deep-dive</button>'; }
       var ans=$('fpAnswer'); ans.style.display='none'; ans.textContent='';
       var btn=$('fpAsk'); btn.disabled=false; btn.textContent='✦ Analyse trends & actions'; btn.onclick=function(){ focusAsk(key); };
+      bindFollowup({type:key, label:key, sub:meta.sub});
       $('focusPanel').classList.add('on');
     }
     function focusAsk(key){
