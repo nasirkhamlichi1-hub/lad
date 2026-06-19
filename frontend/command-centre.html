@@ -115,7 +115,8 @@
 
   /* ── Dive / focus mode: data screens blur out, you drop into the 3D world ── */
   .kstrip,.stage .card,.bottom{transition:filter .6s,opacity .6s,transform .6s}
-  body.focus .kstrip,body.focus .stage .card,body.focus .bottom{filter:blur(7px) brightness(.45);opacity:.22;transform:scale(.985);pointer-events:none}
+  body.focus .kstrip,body.focus .stage .card,body.focus .bottom{opacity:0;transform:scale(.96);pointer-events:none}
+  header{transition:opacity .6s} body.focus header{opacity:.12;pointer-events:none}
   body.focus .cs-h{opacity:.25;transition:opacity .5s}
   #twin{transition:filter .6s}
   #focusPanel{position:fixed;top:96px;right:26px;width:372px;max-height:80vh;overflow:auto;z-index:40;
@@ -833,15 +834,17 @@
     window.addEventListener('mousemove',function(e){ pointer.x=(e.clientX/W)*2-1; pointer.y=-(e.clientY/H)*2+1; });
     // ── Free-fly navigation: drag to orbit, right/shift-drag to pan, wheel to zoom ──
     var lx=0,ly=0,downX=0,downY=0;
-    canvas.addEventListener('pointerdown',function(e){ if(e.button===2||e.shiftKey){TW.pan=true;}else{TW.drag=true;} lx=e.clientX;ly=e.clientY;downX=e.clientX;downY=e.clientY;TW.moved=false; });
+    var SKIP='header,button,a,input,select,textarea,#focusPanel,#deepLayer,#crumbs,#timeMachine,#bandLegend';
+    window.addEventListener('pointerdown',function(e){ if(e.target.closest&&e.target.closest(SKIP)) return; if(e.button===2||e.shiftKey){TW.pan=true;}else{TW.drag=true;} lx=e.clientX;ly=e.clientY;downX=e.clientX;downY=e.clientY;TW.moved=false; });
     window.addEventListener('pointerup',function(){ TW.drag=false; TW.pan=false; });
     window.addEventListener('pointermove',function(e){ if(!TW.drag&&!TW.pan) return; var dx=e.clientX-lx,dy=e.clientY-ly; lx=e.clientX;ly=e.clientY;
       if(Math.abs(e.clientX-downX)+Math.abs(e.clientY-downY)>6) TW.moved=true;
-      if(TW.drag){ TW.orb.tt-=dx*0.005; TW.orb.tp=Math.max(0.18,Math.min(2.95,TW.orb.tp-dy*0.005)); }
+      if(TW.drag){ TW.orb.tt-=dx*0.006; TW.orb.tp=Math.max(0.08,Math.min(3.06,TW.orb.tp-dy*0.006)); }
       else { var k=TW.orbR.r*0.0016; var right=new THREE.Vector3().setFromMatrixColumn(camera.matrix,0); var up=new THREE.Vector3().setFromMatrixColumn(camera.matrix,1);
         var mv=right.multiplyScalar(-dx*k).add(up.multiplyScalar(dy*k)); TW.orb.cx+=mv.x; TW.orb.cy+=mv.y; TW.orb.cz+=mv.z; } });
-    canvas.addEventListener('wheel',function(e){ e.preventDefault(); TW.orb.tr=Math.max(45,Math.min(900,TW.orb.tr*(e.deltaY>0?1.1:0.9))); },{passive:false});
-    canvas.addEventListener('contextmenu',function(e){ e.preventDefault(); });
+    // Zoom over the open 3D area; let real panels keep their native scroll.
+    window.addEventListener('wheel',function(e){ if(e.target.closest&&e.target.closest('.card,#focusPanel,#deepLayer,#crumbs,#timeMachine,header')) return; e.preventDefault(); TW.orb.tr=Math.max(28,Math.min(1300,TW.orb.tr*(e.deltaY>0?1.1:0.9))); },{passive:false});
+    window.addEventListener('contextmenu',function(e){ if(!(e.target.closest&&e.target.closest(SKIP))) e.preventDefault(); });
     function resize(){ W=window.innerWidth;H=window.innerHeight; camera.aspect=W/H; camera.updateProjectionMatrix(); renderer.setSize(W,H); }
     window.addEventListener('resize',resize);
 
