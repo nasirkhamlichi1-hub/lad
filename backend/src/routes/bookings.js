@@ -309,20 +309,43 @@ router.patch('/:id', requireAuth, (req, res) => {
   // the seat. Idempotent: only fires on the transition out of an active state.
   const wasActive = !['cancelled', 'refunded'].includes((booking.status || '').toLowerCase());
   const nowCancelled = ['cancelled', 'refunded'].includes((req.body.status || '').toLowerCase());
-  let refundedCredits = 0;
+  let refundedCredits = 0, refundDest = null;
   if (nowCancelled && wasActive) {
     try {
       const cost = Number(booking.credits_used) || 0;
       refundedCredits = cost > 0 && booking.lawyer_id ? cost : 0;
       if (cost > 0 && booking.lawyer_id) {
-        db.prepare('UPDATE lawyers SET credit_balance = COALESCE(credit_balance,0) + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(cost, booking.lawyer_id);
-        try {
-          db.prepare(
-            `INSERT INTO credit_transactions (id, lawyer_id, type, amount, aed_amount, description, payment_method, status)
-             VALUES (?,?,?,?,?,?,?, 'completed')`
-          ).run(txId(), booking.lawyer_id, 'refund', cost, cost * Number(process.env.CREDIT_PRICE_AED || 120),
-            'Booking cancelled — credits refunded', 'admin');
-        } catch (_) {}
+        const PRICE = Number(process.env.CREDIT_PRICE_AED || 120);
+        const firmId = lawyer && lawyer.firm_id;
+        // Where do the credits go back to? Firm-funded bookings return to the
+        // firm POOL; self-funded ones to the lawyer's balance. An admin or firm
+        // officer may force it either way with refund_to.
+        let dest = ((req.body.refund_to === 'firm' || req.body.refund_to === 'lawyer') && (isLAD || isFirmCO)) ? req.body.refund_to : null;
+        if (!dest) dest = (firmId && booking.booked_by !== 'self') ? 'firm' : 'lawyer';
+        if (dest === 'firm' && firmId) {
+          // Return the credits the firm had committed back into its pool. The
+          // lawyer's balance stays as-is (those credits were the firm's).
+          db.prepare('UPDATE firms SET credit_pool = COALESCE(credit_pool,0) + ? WHERE id = ?').run(cost, firmId);
+          try {
+            const name = `${(lawyer.first_name || '')} ${(lawyer.last_name || '')}`.trim();
+            db.prepare(
+              `INSERT INTO firm_credit_transactions (id, firm_id, type, amount, aed_amount, description, lawyer_id)
+               VALUES (?,?,?,?,?,?,?)`
+            ).run('FTX-' + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8), firmId, 'refund', cost, cost * PRICE,
+              `Booking cancelled — ${cost} credits returned to firm pool${name ? ` (${name})` : ''}`, booking.lawyer_id);
+          } catch (_) {}
+          refundDest = 'firm';
+        } else {
+          db.prepare('UPDATE lawyers SET credit_balance = COALESCE(credit_balance,0) + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(cost, booking.lawyer_id);
+          try {
+            db.prepare(
+              `INSERT INTO credit_transactions (id, lawyer_id, type, amount, aed_amount, description, payment_method, status)
+               VALUES (?,?,?,?,?,?,?, 'completed')`
+            ).run(txId(), booking.lawyer_id, 'refund', cost, cost * PRICE,
+              'Booking cancelled — credits refunded', 'admin');
+          } catch (_) {}
+          refundDest = 'lawyer';
+        }
       }
       if (booking.session_id) {
         // Refund the seat but never let seats_remaining exceed the session
@@ -361,7 +384,7 @@ router.patch('/:id', requireAuth, (req, res) => {
     skillResult = skills.recordAttendance(updated.id);
   }
 
-  res.json({ ...updated, skill_propagation: skillResult });
+  res.json({ ...updated, skill_propagation: skillResult, refunded_credits: refundedCredits, refund_to: refundDest });
 });
 
 module.exports = router;
