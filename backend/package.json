@@ -10,6 +10,7 @@
     "migrate": "node scripts/migrate.js",
     "migrate:status": "node scripts/migrate.js status",
     "seed": "node scripts/seed.js",
+    "seed:if-needed": "node scripts/seed-if-needed.js",
     "seed:demo": "node scripts/create-account.js --seed-demo",
     "create-account": "node scripts/create-account.js",
     "bootstrap": "bash scripts/bootstrap.sh",

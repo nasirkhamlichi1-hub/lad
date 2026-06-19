@@ -9,9 +9,14 @@ const xlsx = require('xlsx');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../src/db');
 
-const SOURCE = path.join(__dirname, '..', 'data', 'Blank_data_25.xlsx');
-if (!fs.existsSync(SOURCE)) {
-  console.error(`✗ ${SOURCE} not found. Place the LAD report at this path and re-run.`);
+// Prefer the committed, PII-free report in seed-data/ (ships with the image,
+// not hidden by the /app/data runtime volume); fall back to data/ for local use.
+const SOURCE = [
+  path.join(__dirname, '..', 'seed-data', 'Blank_data_25.xlsx'),
+  path.join(__dirname, '..', 'data', 'Blank_data_25.xlsx'),
+].find((p) => fs.existsSync(p));
+if (!SOURCE) {
+  console.error('✗ Blank_data_25.xlsx not found in seed-data/ or data/. Place the LAD report and re-run.');
   process.exit(1);
 }
 
