@@ -831,7 +831,7 @@
     function buildSubEco(spec){
       var grp=new THREE.Group(); scene.add(grp); var cores=[],anchors=[],flows=[];
       var dense=!!spec.dense;
-      addBall(grp,{pos:new THREE.Vector3(0,0,0),color:spec.center.color,label:spec.center.label,count:null,isCenter:true,node:{type:'center'}},cores,anchors);
+      addBall(grp,{pos:new THREE.Vector3(0,0,0),color:spec.center.color,label:spec.center.label,count:null,isCenter:true,node:{type:'center',label:spec.center.label,ctx:spec.title}},cores,anchors);
       var n=spec.children.length, R=spec.radius||150;
       spec.children.forEach(function(ch,i){
         var pos = ch.pos ? new THREE.Vector3(ch.pos[0],ch.pos[1],ch.pos[2])
@@ -875,8 +875,27 @@
       c.classList.add('on'); c.innerHTML='<span data-i="0">⌂ Home</span><i>›</i>'+parts.slice(1).map(function(t,k){return '<span data-i="'+(k+1)+'">'+esc(t)+'</span>';}).join('<i>›</i>');
       c.querySelectorAll('span').forEach(function(s){ s.onclick=function(){ goToLevel(+s.getAttribute('data-i')); }; }); }
     function subClick(core){ if(!core) return; frameOn(core.pos.clone(), 70); if(core.node&&core.node.drill){ window.diveInto(core.node); } else { showNodeDetail(core.node); } }
+    var TYPE_LABEL={center:'VIEW',lawyer:'LAWYER',firm:'FIRM',band:'COHORT',course:'COURSE',firmCourse:'COURSE',attcourse:'COURSE',session:'SESSION',accreditation:'ACCREDITATION',stat:'METRIC',firmLawyers:'LAWYERS',firmBand:'COHORT',firmCourses:'ACTIVITIES'};
+    function nodePrompt(node){ var l=node.label||'', s=node.sub||'', t=node.type;
+      if(t==='lawyer') return 'In two short sentences, what does the practising lawyer "'+l+'" ('+s+') need to reach CLPD compliance, and the single best next action?';
+      if(t==='firm') return 'In two short sentences, give an executive read on the law firm "'+l+'" ('+s+') and the most important action for it.';
+      if(t==='band'||t==='firmBand') return 'In two short sentences, what does the "'+l+'" cohort ('+s+') mean for the profession right now, and what should we do?';
+      if(t==='course'||t==='firmCourse'||t==='attcourse') return 'In two short sentences, what is the significance of the course "'+l+'" ('+s+') and which lawyers should prioritise it?';
+      if(t==='session') return 'In two short sentences, what matters about the upcoming session of "'+l+'" ('+s+')?';
+      if(t==='accreditation') return 'In two short sentences, summarise this accreditation application ('+l+') and any action it needs.';
+      if(t==='stat') return 'In one sentence, interpret what '+(node.meta&&node.meta.label||l)+' = '+(node.meta&&node.meta.value||s)+' tells us about the firm.';
+      if(t==='center') return 'In two short sentences, give an executive insight on the current view "'+(node.ctx||l)+'" — what it reveals about the profession and the key takeaway.';
+      return 'In two short sentences, tell me about "'+l+'" ('+s+') and what it means for CLPD compliance.';
+    }
+    function maryamInto(node){ var a=$('fpAnswer'),btn=$('fpAsk'); if(a){ a.style.display='block'; a.textContent='Maryam is reading the data…'; } if(btn){ btn.disabled=true; btn.textContent='Reading…'; }
+      fetch(base+'/api/v1/admin/command',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({prompt:nodePrompt(node)})})
+        .then(function(r){return r.json();}).then(function(d){ if(a) a.textContent=(d&&(d.answer||d.summary))||'No insight available.'; if(btn){ btn.disabled=false; btn.textContent='✦ Ask a follow-up'; } })
+        .catch(function(){ if(a) a.textContent='Maryam is offline — try again.'; if(btn){ btn.disabled=false; btn.textContent='✦ Ask Maryam'; } });
+    }
     function showNodeDetail(node){ if(!node) return; document.body.classList.add('focus');
-      $('fpEye').textContent=(node.type||'NODE').toUpperCase(); $('fpTitle').textContent=node.label||node.id||'Node'; $('fpSub').textContent=node.sub||'';
+      $('fpEye').textContent=TYPE_LABEL[node.type]||(node.type||'NODE').toUpperCase();
+      $('fpTitle').textContent=(node.type==='center'?(node.ctx||node.label):(node.label||node.id))||'Node';
+      $('fpSub').textContent=(node.type==='center'?'Current view of the profession':(node.sub||''));
       var html='';
       if(node.type==='lawyer'&&node.meta){ html=factRow('CPD points',nf(node.meta.points),bandCss(node.meta.points))+factRow('Status',esc(node.meta.status||'active'))+factRow('Credits',nf(node.meta.credits)); }
       else if(node.type==='session'&&node.meta){ var s=node.meta; html=factRow('Date',fdate(s.scheduled_at))+factRow('Seats open',nf(s.seats_remaining),'var(--amber)')+factRow('Capacity',nf(s.capacity))+factRow('Venue',esc(s.venue||'—')); }
@@ -885,15 +904,12 @@
       else if(node.type==='stat'&&node.meta){ html=factRow(esc(node.meta.label||'Value'),esc(node.meta.value||'—'),'var(--cyan)'); }
       else if(node.type==='firmCourse'&&node.meta){ html=factRow('Course',esc(node.label))+factRow('Bookings',nf(node.meta.count))+factRow('Attended',nf(node.meta.attended)); }
       else if(node.type==='firm'&&node.meta){ html=factRow('Lawyers',nf(node.meta.lawyers))+factRow('Compliance',(node.meta.compliancePct!=null?node.meta.compliancePct+'%':'—'))+factRow('Critical',nf(node.meta.critical)); }
-      else { html='<div class="loading">Leaf node — the deepest layer here.</div>'; }
+      else if(node.type==='center'){ var o=window.__OV,L=(o&&o.lawyers)||{}; html=L.practising!=null?(factRow('Practising',nf(L.practising))+factRow('Compliant',nf(L.compliant),'var(--green)')+factRow('At risk',nf(L.atRisk),'var(--amber)')+factRow('Critical',nf(L.critical),'var(--red)')):'<div class="loading">Live overview</div>'; }
+      else { html='<div class="loading">The deepest layer here.</div>'; }
       $('fpFacts').innerHTML=html;
-      var ans=$('fpAnswer'); ans.style.display='none'; ans.textContent='';
-      var btn=$('fpAsk'); btn.style.display=''; btn.disabled=false; btn.textContent='✦ Ask Maryam about this';
-      btn.onclick=function(){ var a=$('fpAnswer'); a.style.display='block'; a.textContent='Analysing…'; btn.disabled=true;
-        fetch(base+'/api/v1/admin/command',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()},body:JSON.stringify({prompt:'Tell me about '+(node.type||'')+' "'+(node.label||'')+'" ('+(node.sub||'')+') and what action it suggests.'})})
-          .then(function(r){return r.json();}).then(function(d){ a.textContent=(d&&(d.answer||d.summary))||'No response.'; btn.disabled=false; btn.textContent='✦ Re-analyse'; })
-          .catch(function(){ a.textContent='Network error.'; btn.disabled=false; btn.textContent='✦ Ask Maryam about this'; }); };
+      var btn=$('fpAsk'); if(btn){ btn.style.display=''; btn.onclick=function(){ maryamInto(node); }; }
       $('focusPanel').classList.add('on');
+      maryamInto(node);   // proactively explain this node
     }
 
     // The home twin is the base of the dive stack.
