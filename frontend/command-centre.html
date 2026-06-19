@@ -14,7 +14,8 @@
     --mono:'Rajdhani',sans-serif; --title:'Orbitron',sans-serif;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;overflow-x:hidden}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;overflow-x:hidden;-webkit-user-select:none;-moz-user-select:none;user-select:none}
+  input,textarea,.fp-answer,#fpAnswer{-webkit-user-select:text;-moz-user-select:text;user-select:text}
   body{background:
     radial-gradient(1200px 700px at 50% 8%,rgba(40,70,150,.28),transparent 60%),
     radial-gradient(900px 600px at 12% 80%,rgba(120,60,200,.16),transparent 55%),
@@ -868,7 +869,7 @@
           var N=10,fa=new Float32Array(N*3),t=[]; for(var k=0;k<N;k++)t.push(Math.random()); var fgeo=new THREE.BufferGeometry(); fgeo.setAttribute('position',new THREE.BufferAttribute(fa,3)); grp.add(new THREE.Points(fgeo,new THREE.PointsMaterial({color:ch.color,size:4.4,map:SPRITE,transparent:true,opacity:.92,blending:THREE.AdditiveBlending,depthWrite:false}))); flows.push({a:new THREE.Vector3(0,0,0),b:pos.clone(),t:t,geo:fgeo});
         }
       });
-      return {cores:cores,anchors:anchors,flows:flows,group:grp,radius: dense ? Math.round((spec.spread||340)+60) : Math.round((vary?R*1.7:R)*1.55+90),spec:spec};
+      return {cores:cores,anchors:anchors,flows:flows,group:grp,dense:dense,radius: dense ? Math.round((spec.spread||340)+60) : Math.round((vary?R*1.7:R)*1.55+90),spec:spec};
     }
     function setActive(eco){ TW.active=eco; TW.cores=eco.cores; TW.anchors=eco.anchors; TW.flows=eco.flows; eco.group.visible=true; eco.anchors.forEach(function(a){a.el.style.display='';}); }
     function hideEco(eco){ if(!eco)return; eco.group.visible=false; eco.anchors.forEach(function(a){a.el.style.display='none';}); }
@@ -1003,10 +1004,12 @@
       pick();
       var inMain=(t.id==='twin'||t.closest('#centerstage')||t.closest('#diveHint')||t.closest('#bandLegend'));
       if(hovered){ if(TW.stack&&TW.stack.length) subClick(hovered); else window.focusCluster(hovered.key); }
-      else if(inMain){
-        if(TW.stack&&TW.stack.length) window.diveBack();                       // in a dive → climb up
-        else if(document.body.classList.contains('focus')) window.exitFocus(); // immersed → bring panels back
-        else document.body.classList.add('focus');                            // home → go immersive
+      else if(inMain && !(TW.stack&&TW.stack.length)){
+        // Only at HOME does an empty-space click toggle immersion. Inside a dive,
+        // an empty click does nothing — climbing back up is wheel-out / Esc / crumb,
+        // so a stray click never ejects you from the system you're exploring.
+        if(document.body.classList.contains('focus')) window.exitFocus(); // immersed → bring panels back
+        else document.body.classList.add('focus');                        // home → go immersive
       }
     });
     window.addEventListener('keydown',function(e){ if(e.key==='Escape'){ if(TW.stack&&TW.stack.length) window.diveBack(); else window.exitFocus(); } });
