@@ -867,11 +867,15 @@
         return {title:'Accreditation',center:{label:'Pipeline',color:0x3df0a0},radius:110,children:defs.map(function(x){return {label:x[1],sub:nf(cnt[x[0]]||0)+' applications',count:Math.max(cnt[x[0]]||0,1),color:x[2],type:'accStatus',id:x[0],drill:true};})}; }); },
       accStatus:function(node){ return getJSON('/api/v1/accreditations').then(function(d){ var rows=(d&&d.rows)||[]; var f=rows.filter(function(r){return (r.status||'')===node.id;});
         return {title:node.label+' accreditations',center:{label:node.label,color:0x3df0a0},radius:140,children:f.slice(0,40).map(function(r){ var title=(r.payload&&(r.payload.courseTitle||r.payload.title))||r.ref; return {label:title,sub:r.ref,count:1,color:0x3df0a0,type:'accreditation',id:r.ref,drill:false,meta:r};})}; }); },
-      sessionsRoot:function(){ return needUpcoming().then(function(map){ var out=[]; Object.keys(map).forEach(function(cid){ (map[cid]||[]).forEach(function(s){ out.push(s); }); });
+      sessionsRoot:function(){ return getJSON('/api/v1/courses/sessions/all').then(function(all){
+        var now=new Date().toISOString();
+        var out=(Array.isArray(all)?all:[]).filter(function(s){ return s&&s.scheduled_at&&s.scheduled_at>=now&&(s.status||'')!=='cancelled'; });
+        // Fallback so the world is never empty if the future filter clears everything.
+        if(!out.length) out=(Array.isArray(all)?all:[]).filter(function(s){ return s&&s.scheduled_at&&(s.status||'')!=='cancelled'; });
         if(!out.length) return null;
         // EXACTLY the firm-planet methodology: size = seats booked (popularity);
         // bigger sessions sit closer to the sun, the rest spiral outward; the
-        // direction is a shuffled fibonacci sphere so all 381 sit ALL around.
+        // direction is a shuffled fibonacci sphere so all sit ALL around.
         out.forEach(function(s){ var cap=Number(s.capacity)||0, seats=Number(s.seats_remaining)||0; s._cap=cap; s._booked=Math.max(cap-seats,0); });
         var maxB=Math.max.apply(null,out.map(function(s){return s._booked;})); if(!maxB) out.forEach(function(s){ s._booked=s._cap; });
         out.sort(function(a,b){ return b._booked-a._booked; });
