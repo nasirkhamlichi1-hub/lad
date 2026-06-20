@@ -1875,6 +1875,7 @@ async function loadFirmWallet() {
     set('totalPurchasedDisplay', Number(w.totalPurchased) || 0);
     set('totalPurchasedAED', ((Number(w.totalPurchased) || 0) * CREDIT_RATE).toLocaleString());
     const bcb = document.getElementById('buyCurrentBal'); if (bcb) bcb.textContent = firmCredits + ' credits';
+    try { if (typeof renderFirmSnapshot === 'function') renderFirmSnapshot(); } catch (_) {}
     // Ledger → history rows (running balance, newest first)
     const asc = [...(w.transactions || [])].reverse(); let bal = 0;
     asc.forEach(t => { bal += Number(t.credits) || 0; t._bal = bal; });
@@ -2197,6 +2198,42 @@ let orLawyer = null;
 // ════════════════════════════════════════════
 function statusOf(pts){return pts>=16?'compliant':pts>=8?'at-risk':'critical';}
 function accentOf(pts){return pts>=16?'var(--green)':pts>=8?'var(--amber)':'var(--red)';}
+
+// Compute the firm-snapshot KPIs from the live lawyer cohort and populate the
+// (otherwise blank "—") elements. Label-driven so it works whether the tiles are
+// labelled Total/Compliant/At-risk/Critical or Firm-compliance/Below-8/Pool/Behind.
+function renderFirmSnapshot(){
+  var prac=(LAWYERS||[]).filter(function(l){return l.practising!==false});
+  var total=prac.length;
+  var compliant=prac.filter(function(l){return l.pts>=16}).length;
+  var atRisk=prac.filter(function(l){return l.pts>=8&&l.pts<16}).length;
+  var critical=prac.filter(function(l){return l.pts<8}).length;
+  var pct=total?Math.round(100*compliant/total):0;
+  var avgPts=total?Math.round(prac.reduce(function(s,l){return s+(Number(l.pts)||0)},0)/total*10)/10:0;
+  var pool=(typeof firmCredits!=='undefined'&&firmCredits!=null)?firmCredits:0;
+  var now=new Date(),dec=new Date(Date.UTC(2026,11,31));var daysLeft=Math.max(0,Math.ceil((dec-now)/86400000));
+  var set=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
+  set('ovFirmPct',pct+'%');set('ovFirmLawyerCount',total);
+  document.querySelectorAll('.ring-num').forEach(function(e){e.textContent=pct+'%'});
+  document.querySelectorAll('.sb-ring-big').forEach(function(e){e.textContent=pct+'%'});
+  try{document.querySelectorAll('.sb-ring svg circle').forEach(function(c){ if(c.getAttribute('stroke-dasharray')) c.setAttribute('stroke-dashoffset',(138.2*(1-pct/100)).toFixed(1)); });}catch(e){}
+  [1,2,3,4].forEach(function(i){
+    var labelEl=document.querySelector('[data-cfg="firm_stat'+i+'_label"]');
+    var valEl=document.querySelector('[data-cfg="firm_kpi'+i+'_num"]');
+    if(!valEl)return;
+    var lab=((labelEl&&labelEl.textContent)||'').toLowerCase();var v;
+    if(/complianc/.test(lab)) v=pct+'%';
+    else if(/below\s*8|critical/.test(lab)) v=critical;
+    else if(/at.?risk/.test(lab)) v=atRisk;
+    else if(/compliant/.test(lab)) v=compliant;
+    else if(/credit|pool/.test(lab)) v=pool;
+    else if(/behind|cohort|median/.test(lab)) v=avgPts;
+    else if(/total|practition|lawyer/.test(lab)) v=total;
+    else v=total;
+    valEl.textContent=v;
+  });
+  document.querySelectorAll('.sec [style*="color:var(--amber)"]').forEach(function(e){ if((e.textContent||'').trim()==='—') e.textContent=daysLeft; });
+}
 function pillClass(pts){return pts>=16?'pg':pts>=8?'pa':'pr';}
 function pillLabel(pts){return pts>=16?'COMPLIANT':pts>=8?'AT RISK':'CRITICAL';}
 
@@ -3170,10 +3207,6 @@ function openLawyer(id) {
       </div>
     </div>
 
-    <!-- Recommended courses -->
-    <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:9px">✦ RECOMMENDED COURSES FOR ${l.name.split(' ')[0].toUpperCase()}</div>
-    <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:16px">${recHtml}</div>
-
     <!-- Lawyer details -->
     <div style="background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:13px;margin-bottom:14px">
       <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:9px">LAWYER DETAILS</div>
@@ -3189,7 +3222,11 @@ function openLawyer(id) {
     <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:9px">COMPLETED COURSES</div>
     <div id="spCompletedWrap" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
       <div style="padding:9px 11px;color:var(--slate3);font-size:11.5px">Loading course history…</div>
-    </div>`;
+    </div>
+
+    <!-- Recommended courses (moved to the bottom) -->
+    <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:9px">✦ RECOMMENDED COURSES FOR ${l.name.split(' ')[0].toUpperCase()}</div>
+    <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:4px">${recHtml}</div>`;
 
   document.getElementById('sp').classList.add('on');
   loadLawyerCompleted(l);
@@ -4001,6 +4038,7 @@ async function loadFirmLawyersFromBackend() {
     // Render the cohort now that the data is in — otherwise the table stays
     // empty until the user clicks a filter chip.
     try { if (typeof filterLawyers === 'function') filterLawyers(); } catch (_) {}
+    try { if (typeof renderFirmSnapshot === 'function') renderFirmSnapshot(); } catch (_) {}
     try { if (typeof renderCreditLawyerList === 'function') renderCreditLawyerList(); } catch (_) {}
     return true;
   } catch (e) {
@@ -4743,11 +4781,11 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
     }
 
     /* ───── Lex Claude AI panel ───── */
-    .ladlex-fab { position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg,#006B3F,#008549); color: #fff; border: none; cursor: pointer; box-shadow: 0 8px 28px rgba(0,107,63,.4); display: grid; place-items: center; z-index: 9998; transition: all .25s; }
+    .ladlex-fab { position: fixed; bottom: 24px; left: 24px; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg,#006B3F,#008549); color: #fff; border: none; cursor: pointer; box-shadow: 0 8px 28px rgba(0,107,63,.4); display: grid; place-items: center; z-index: 9998; transition: all .25s; }
     .ladlex-fab:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 12px 36px rgba(0,107,63,.5); }
     .ladlex-fab svg { width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 1.6; }
     .ladlex-fab-dot { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; background: #C9913A; border-radius: 50%; border: 2px solid #006B3F; }
-    .ladlex-panel { position: fixed; bottom: 90px; right: 24px; width: 420px; max-width: calc(100vw - 48px); height: 580px; max-height: calc(100vh - 130px); background: #fff; border-radius: 16px; box-shadow: 0 24px 80px rgba(10,30,58,.25), 0 4px 16px rgba(10,30,58,.1); display: none; flex-direction: column; overflow: hidden; z-index: 9997; font-family: 'Inter','IBM Plex Sans',system-ui,sans-serif; border: 1px solid rgba(10,30,58,.08); }
+    .ladlex-panel { position: fixed; bottom: 90px; left: 24px; width: 420px; max-width: calc(100vw - 48px); height: 580px; max-height: calc(100vh - 130px); background: #fff; border-radius: 16px; box-shadow: 0 24px 80px rgba(10,30,58,.25), 0 4px 16px rgba(10,30,58,.1); display: none; flex-direction: column; overflow: hidden; z-index: 9997; font-family: 'Inter','IBM Plex Sans',system-ui,sans-serif; border: 1px solid rgba(10,30,58,.08); }
     .ladlex-panel.open { display: flex; animation: lexSlideUp .25s ease-out; }
     @keyframes lexSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .ladlex-hd { background: linear-gradient(135deg,#006B3F 0%,#008549 100%); color: #fff; padding: 16px 18px; display: flex; align-items: center; gap: 12px; }
