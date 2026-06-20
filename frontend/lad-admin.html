@@ -879,6 +879,14 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
           <option value="inperson">Face-to-face</option>
         </select>
         <select id="admSessProvider" class="adm-input" style="font-size:12px;max-width:200px" onchange="admSessionsRender()"><option value="all">All providers</option></select>
+        <select id="admSessSort" class="adm-input" style="font-size:12px" onchange="admSessionsRender()" title="Sort the list">
+          <option value="date">Sort: soonest first</option>
+          <option value="date_desc">Sort: latest first</option>
+          <option value="title">Sort: course A–Z</option>
+          <option value="title_desc">Sort: course Z–A</option>
+          <option value="seats">Sort: most seats open</option>
+          <option value="status">Sort: by status</option>
+        </select>
         <button class="adm-btn-green" onclick="loadAdmSessions()" style="font-size:12px">↻ Refresh</button>
       </div>
     </div>
@@ -5933,7 +5941,18 @@ function admSessFiltered(){
     if(q){ const hay=((s.course_title||'')+' '+(s.venue||'')+' '+(s.provider_name||'')).toLowerCase(); if(hay.indexOf(q)===-1) return false; }
     return true;
   });
-  return rows.slice().sort(function(a,b){return String(a.scheduled_at||'').localeCompare(String(b.scheduled_at||''));});
+  const sort=document.getElementById('admSessSort')?.value||'date';
+  const ttl=function(s){return (s.course_title||'').toLowerCase();};
+  const dt=function(s){return String(s.scheduled_at||'');};
+  const seatsOf=function(s){return Number(s.seats_remaining!=null?s.seats_remaining:s.capacity)||0;};
+  rows=rows.slice();
+  if(sort==='title') rows.sort(function(a,b){return ttl(a).localeCompare(ttl(b))||dt(a).localeCompare(dt(b));});
+  else if(sort==='title_desc') rows.sort(function(a,b){return ttl(b).localeCompare(ttl(a))||dt(a).localeCompare(dt(b));});
+  else if(sort==='date_desc') rows.sort(function(a,b){return dt(b).localeCompare(dt(a));});
+  else if(sort==='seats') rows.sort(function(a,b){return seatsOf(b)-seatsOf(a)||dt(a).localeCompare(dt(b));});
+  else if(sort==='status') rows.sort(function(a,b){return String(a.status||'').localeCompare(String(b.status||''))||dt(a).localeCompare(dt(b));});
+  else rows.sort(function(a,b){return dt(a).localeCompare(dt(b));}); // soonest first (default)
+  return rows;
 }
 function admSessionsRender(){
   const el = document.getElementById('admSessionsList'); if(!el) return;
