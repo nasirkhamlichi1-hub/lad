@@ -5,6 +5,10 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>CLPD Compliance Portal — Legal Affairs Department</title>
+<!-- Single AI launcher: keep the shared "Ask Maryam ⌘K" bar; hide the old inline
+     Lex fab so the two no longer stack/overlap at bottom-left. The inline Lex is
+     still reachable from the sidebar "Ask Maryam AI" link. -->
+<style>#ladlex-fab,.ladlex-fab{display:none!important}</style>
 <!-- LAD CLPD — live API sync shim (multi-user persistence) -->
 <script src="runtime-config.js?v=render2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
