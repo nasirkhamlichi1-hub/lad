@@ -7,7 +7,7 @@
 (function () {
   'use strict';
 
-  // Resolve the API base. legalaffairsmain.netlify.app → Azure prod; localhost → localhost backend
+  // Resolve the API base. production host → Render API; localhost → localhost backend
   const API_BASE = (function () {
     if (typeof window === 'undefined') return '';
     if (window.LAD_API_BASE) return window.LAD_API_BASE;
