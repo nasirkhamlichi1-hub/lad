@@ -9,8 +9,8 @@
   feature it contained now lives in its own standalone file:
     - Lawyer portal    → lawyer-portal-v2.html
     - Firm portal      → firm-compliance-portal.html
-    - LAD admin        → lad-admin.html
-    - LAD intelligence → lad-intelligence-v4.html
+    - LAD admin / super → lad-crm.html  (the unified CRM; course admin lives embedded inside it)
+    - LAD intelligence → lad-crm.html
   Maintaining two copies caused every fix to be made twice. This stub
   redirects bookmarks based on the signed-in user's role.
 -->
@@ -35,13 +35,13 @@
   // Hash override: lad-super-system.html#firm, #lawyer, #admin, #intel
   if (hash === 'lawyer')          dest = 'lawyer-portal-v2.html';
   else if (hash === 'firm')       dest = 'firm-compliance-portal.html';
-  else if (hash === 'admin')      dest = 'lad-admin.html';
-  else if (hash === 'intel')      dest = 'lad-intelligence-v4.html';
+  else if (hash === 'admin')      dest = 'lad-crm.html';
+  else if (hash === 'intel')      dest = 'lad-crm.html#intel';
   else if (role === 'lawyer')     dest = 'lawyer-portal-v2.html';
   else if (role === 'firm_compliance_officer') dest = 'firm-compliance-portal.html';
   else if (role === 'provider')   dest = 'provider-portal.html';
-  else if (role === 'lad_admin' || role === 'super_admin' || role === 'lad_super_admin') dest = 'lad-admin.html';
-  else if (role === 'lad_intelligence' || role === 'dg') dest = 'lad-intelligence-v4.html';
+  else if (role === 'lad_admin' || role === 'super_admin' || role === 'lad_super_admin') dest = 'lad-crm.html';
+  else if (role === 'lad_intelligence' || role === 'dg') dest = 'lad-crm.html';
   else                            dest = 'clpd-portal.html'; // not signed in → public landing
   var el = document.getElementById('dest');
   if (el) el.textContent = 'Redirecting to ' + dest + '…';
