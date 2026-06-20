@@ -1840,6 +1840,10 @@ async function loadFirmsLive(){
 }
 
 function renderFirms(){
+  // XSS-safe escapers: eH for HTML text, eJ for a JS string inside an HTML
+  // attribute (hex-escape so neither the attribute nor the JS string can break).
+  const eH=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const eJ=s=>String(s==null?'':s).replace(/[^\w .,:/@-]/g,c=>{const h=c.charCodeAt(0);return h<256?'\\x'+h.toString(16).padStart(2,'0'):'\\u'+h.toString(16).padStart(4,'0');});
   const list=(firmsLive||FIRMS);
   const html=list.map((f,i)=>{
     const hasCompliance=(f.compliance!==null&&f.compliance!==undefined);
@@ -1857,8 +1861,8 @@ function renderFirms(){
     return `<div class="ft-row" style="grid-template-columns:auto 1fr 90px 110px 90px 90px 130px 100px;cursor:pointer" onclick="openFirmDeepDive('${f.name.replace(/'/g,"\\'")}')">
       <div class="ft-rank">${(i+1).toString().padStart(2,'0')}</div>
       <div style="display:flex;align-items:center;gap:10px;min-width:0">
-        <div style="width:34px;height:34px;border-radius:9px;background:${avatarBg};display:grid;place-items:center;font-family:var(--mono);font-size:11px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:.5px">${f.abbr}</div>
-        <div style="min-width:0"><div class="ft-name">${f.name}</div><div class="ft-name-sub">${f.size>=100?'LARGE':f.size>=30?'MID':'SMALL'} · ${f.size>=50?'EST.2010s':'EST.2020s'}</div></div>
+        <div style="width:34px;height:34px;border-radius:9px;background:${avatarBg};display:grid;place-items:center;font-family:var(--mono);font-size:11px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:.5px">${eH(f.abbr)}</div>
+        <div style="min-width:0"><div class="ft-name">${eH(f.name)}</div><div class="ft-name-sub">${f.size>=100?'LARGE':f.size>=30?'MID':'SMALL'} · ${f.size>=50?'EST.2010s':'EST.2020s'}</div></div>
       </div>
       <div class="ft-num" style="text-align:center">${f.size}</div>
       <div class="ft-num" style="text-align:center;color:${accent}">${hasCompliance?compliance.toFixed(1)+'<em>%</em>':'—'}</div>
@@ -1866,8 +1870,8 @@ function renderFirms(){
       <div class="ft-num" style="text-align:center;color:${ptsMissing>50?'#c0392b':ptsMissing>20?'#92540a':'#5a6878'}">${ptsMissing.toLocaleString()}</div>
       <div class="ft-trend">${trendBars}</div>
       <div onclick="event.stopPropagation()" style="display:flex;gap:5px;justify-content:flex-end;align-items:center">
-        <button class="btn btn-xs btn-ghost" onclick="openFirmMail('${f.name.replace(/'/g,"\\'")}','all')">✉ Mail all</button>
-        <button class="btn btn-xs" style="background:var(--ink);color:#fff;font-size:10px;padding:4px 8px;border-radius:6px" onclick="openFirmDeepDive('${f.name.replace(/'/g,"\\'")}')">View →</button>
+        <button class="btn btn-xs btn-ghost" onclick="openFirmMail('${eJ(f.name)}','all')">✉ Mail all</button>
+        <button class="btn btn-xs" style="background:var(--ink);color:#fff;font-size:10px;padding:4px 8px;border-radius:6px" onclick="openFirmDeepDive('${eJ(f.name)}')">View →</button>
       </div>
     </div>`;
   }).join('');

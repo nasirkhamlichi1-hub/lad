@@ -128,7 +128,7 @@ function bulkUpsertSessions(rows) {
 const CONTENT_DEFAULT = {
   // matches lad-config.json shape — used as fallback if no rows
   hero_title: 'CLPD — Continuing Legal Professional Development',
-  hero_desc: "The 11th year of Dubai's premier legal development programme. 4,411 licensed practitioners. 69 accredited courses.",
+  hero_desc: "The 11th year of Dubai's premier legal development programme.",
   stat_practitioners: 4411,
   stat_courses: 69,
   stat_providers: 11,
