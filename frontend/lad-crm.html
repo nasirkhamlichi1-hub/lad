@@ -30,6 +30,14 @@
   .rail-div{width:34px;height:1px;background:rgba(255,255,255,.12);margin:6px 0}
   .rail{overflow-y:auto;overflow-x:hidden;scrollbar-width:none}.rail::-webkit-scrollbar{display:none}
   .embed{flex:1;width:100%;height:100%;border:0;display:block;background:#fff}
+  /* secondary tab bar for hub views (Courses) */
+  .subwrap{flex:1;display:flex;flex-direction:column;min-width:0}
+  .subtabs{display:flex;gap:2px;padding:7px 16px 0;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0;overflow-x:auto;white-space:nowrap}
+  .subtab{background:none;border:none;border-bottom:2px solid transparent;padding:10px 14px;font-size:13px;font-weight:600;color:var(--slate2);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:7px}
+  .subtab svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.9}
+  .subtab.on{border-bottom-color:var(--green);color:var(--ink)}
+  .subtab:hover{color:var(--ink)}
+  .subbody{flex:1;min-height:0;display:flex}
   /* ── main ── */
   .main{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh}
   .topbar{height:60px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 22px;flex-shrink:0}
@@ -182,7 +190,6 @@
     <div class="rail-div"></div>
     <!-- Everyday operations — all LAD admins -->
     <button class="rl" data-v="courses" onclick="go('courses')"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>Courses</span></button>
-    <button class="rl" data-v="trainer" onclick="go('trainer')"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg><span>Trainer</span></button>
     <button class="rl" id="railUsers" data-v="users" onclick="go('users')"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span>Users</span></button>
     <div class="rail-sp"></div>
     <!-- Strategic oversight — super users only -->
@@ -234,9 +241,20 @@
     </div></div>
 
     <!-- EMBEDDED ADMIN MODULES — same shell, one navigation, no page-hopping -->
-    <div class="view" id="v-courses"><iframe class="embed" title="Courses" data-src="lad-admin.html?embed=1"></iframe></div>
+    <!-- COURSES — the course-creation hub: catalogue, scheduling, AI trainer, knowledge hub -->
+    <div class="view" id="v-courses"><div class="subwrap">
+      <div class="subtabs">
+        <button class="subtab on" data-sub="catalogue" onclick="coursesSub('catalogue',this)"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Catalogue</button>
+        <button class="subtab" data-sub="schedules" onclick="coursesSub('schedules',this)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedules</button>
+        <button class="subtab" data-sub="trainer" onclick="coursesSub('trainer',this)"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>AI Trainer</button>
+        <button class="subtab" data-sub="hub" onclick="coursesSub('hub',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg>Knowledge Hub</button>
+      </div>
+      <div class="subbody">
+        <iframe class="embed" id="admFrame" title="Course admin" data-src="lad-admin.html?embed=1&page=courses"></iframe>
+        <iframe class="embed" id="trnFrame" title="AI Trainer" data-src="lad-trainer-admin.html?embed=1" style="display:none"></iframe>
+      </div>
+    </div></div>
     <div class="view" id="v-accred"><iframe class="embed" title="Accreditation" data-src="lad-accreditation-review.html?embed=1"></iframe></div>
-    <div class="view" id="v-trainer"><iframe class="embed" title="Trainer" data-src="lad-trainer-admin.html?embed=1"></iframe></div>
     <div class="view" id="v-users"><iframe class="embed" title="Users" data-src="users-admin.html?embed=1"></iframe></div>
     <div class="view" id="v-intel"><iframe class="embed" title="Intelligence" data-src="lad-intelligence-v4.html?embed=1"></iframe></div>
   </div>
@@ -296,8 +314,18 @@
 
   // ── view switching ──
   var TITLES={dash:['Dashboard','CLPD customer operations'],inbox:['Inbox','Customer conversations'],cust:['Customers','Lawyers & firms'],ops:['Operations','Sessions & bookings'],
-    courses:['Courses','Catalogue · sessions · scheduling · website'],accred:['Accreditation','Application review queue'],trainer:['Trainer','Staff training materials & learners'],users:['Users','Accounts, roles & access'],intel:['Intelligence','Profession analytics & oversight']};
-  var EMBED={courses:1,accred:1,trainer:1,users:1,intel:1};
+    courses:['Courses','Catalogue · scheduling · AI trainer · knowledge hub'],accred:['Accreditation','Application review queue'],users:['Users','Accounts, roles & access'],intel:['Intelligence','Profession analytics & oversight']};
+  var EMBED={courses:1,accred:1,users:1,intel:1};
+  // Courses hub — one embedded admin frame driven by message, plus the trainer.
+  window.coursesSub=function(sub,el){
+    document.querySelectorAll('#v-courses .subtab').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-sub')===sub)});
+    var adm=document.getElementById('admFrame'),trn=document.getElementById('trnFrame');
+    if(adm&&!adm.getAttribute('src'))adm.setAttribute('src',adm.getAttribute('data-src'));
+    if(sub==='trainer'){if(trn&&!trn.getAttribute('src'))trn.setAttribute('src',trn.getAttribute('data-src'));if(trn)trn.style.display='';if(adm)adm.style.display='none';return}
+    if(trn)trn.style.display='none';if(adm)adm.style.display='';
+    var page=sub==='schedules'?'schedules':sub==='hub'?'content':'courses';
+    try{adm.contentWindow.postMessage({type:'ladPage',page:page},'*')}catch(e){}
+  };
   // A module is reachable only if its rail entry is visible to this role.
   function viewAllowed(v){var map={accred:'railAccred',intel:'railIntel',users:'railUsers'};var id=map[v];if(!id)return true;var el=document.getElementById(id);return!!el&&el.style.display!=='none'}
   window.go=function(v){
