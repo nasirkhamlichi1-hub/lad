@@ -2228,17 +2228,23 @@ function renderFirmSnapshot(){
   [1,2,3,4].forEach(function(i){
     var labelEl=document.querySelector('[data-cfg="firm_stat'+i+'_label"]');
     var valEl=document.querySelector('[data-cfg="firm_kpi'+i+'_num"]');
+    var subEl=document.querySelector('[data-cfg="firm_stat'+i+'_sub"]');
     if(!valEl)return;
-    var lab=((labelEl&&labelEl.textContent)||'').toLowerCase();var v;
+    var lab=((labelEl&&labelEl.textContent)||'').toLowerCase();var v,sub,relabel;
+    var rate=(typeof CREDIT_RATE!=='undefined'?CREDIT_RATE:120);
     if(/complianc/.test(lab)) v=pct+'%';
     else if(/below\s*8|critical/.test(lab)) v=critical;
     else if(/at.?risk/.test(lab)) v=atRisk;
     else if(/compliant/.test(lab)) v=compliant;
-    else if(/credit|pool/.test(lab)) v=pool;
-    else if(/behind|cohort|median/.test(lab)) v=avgPts;
+    else if(/credit|pool/.test(lab)){ v=pool; sub='≈ AED '+(pool*rate).toLocaleString()+' available'; }
+    else if(/behind|cohort|median|average|avg/.test(lab)){ v=avgPts; relabel='Avg points / lawyer'; sub='average across '+total+' practitioners'; }
     else if(/total|practition|lawyer/.test(lab)) v=total;
     else v=total;
     valEl.textContent=v;
+    // Data-bearing captions/labels are computed live here so a stale admin-config
+    // figure (e.g. a fixed "AED 12,600" or "vs Tier-1 median") can never be shown.
+    if(subEl && sub!==undefined) subEl.textContent=sub;
+    if(labelEl && relabel) labelEl.textContent=relabel;
   });
   document.querySelectorAll('.sec [style*="color:var(--amber)"]').forEach(function(e){ if((e.textContent||'').trim()==='—') e.textContent=daysLeft; });
 }
