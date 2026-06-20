@@ -15,7 +15,6 @@ Static HTML/CSS/JavaScript portals for the Dubai Legal Affairs Department's CLPD
 | `lad-config.json` | Defaults loaded by the public portals on first visit |
 | `api-client.js` | REST client + localStorage fallback |
 | `auth-bridge.js` | Captures the JWT from `#token=…` after UAE Pass redirect |
-| `netlify.toml` | Netlify configuration |
 | `img/` | Hero photos |
 
 ## Connecting to the backend
@@ -49,14 +48,6 @@ python3 -m http.server 8080
 ```
 
 ## Deploying
-
-### Netlify
-
-```bash
-netlify deploy --prod --dir .
-```
-
-The included `netlify.toml` redirects `/` to `lad-super-system.html`.
 
 ### Azure Static Web Apps
 

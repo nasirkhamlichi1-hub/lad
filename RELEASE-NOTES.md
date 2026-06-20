@@ -15,7 +15,7 @@ cp <this-bundle>/backend/src/config.js backend/src/config.js
 cp <this-bundle>/backend/.env.example backend/.env.example
 ```
 
-Restart the backend so the new `FRONTEND_POST_LOGIN_URL` takes effect. Frontend redeploys to Netlify or Azure Static Web Apps with no build step.
+Restart the backend so the new `FRONTEND_POST_LOGIN_URL` takes effect. Frontend redeploys to Azure Static Web Apps with no build step.
 
 ## Compatibility
 

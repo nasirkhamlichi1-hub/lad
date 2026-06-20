@@ -1569,37 +1569,37 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
           </div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:11px">
-          <div class="card card-hover" style="cursor:pointer" onclick="showToast('Generating Annual Report 2026…')">
+          <div class="card card-hover" style="cursor:pointer" onclick="genReport('annual')">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><div style="width:34px;height:34px;border-radius:9px;background:var(--green-bg);color:var(--green);display:grid;place-items:center;font-size:16px"></div><div><div class="card-eyebrow" style="margin-bottom:0">ANNUAL</div></div></div>
             <div style="font-family:var(--serif);font-size:18px;color:var(--ink);letter-spacing:-.015em;margin-bottom:5px;font-weight:400">2026 CLPD Annual Report</div>
             <div style="font-size:11.5px;color:var(--slate2);line-height:1.55;letter-spacing:-.005em">Comprehensive year-end analysis · 48 pages · Updated nightly</div>
             <div style="display:flex;align-items:center;gap:6px;margin-top:11px;padding-top:11px;border-top:1px solid var(--line);font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:.3px;font-weight:600">PDF · 12 MB</div>
           </div>
-          <div class="card card-hover" style="cursor:pointer" onclick="showToast('Generating Compliance Audit…')">
+          <div class="card card-hover" style="cursor:pointer" onclick="genReport('quarterly')">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><div style="width:34px;height:34px;border-radius:9px;background:var(--blue-bg);color:var(--blue);display:grid;place-items:center;font-size:16px"></div><div><div class="card-eyebrow" style="margin-bottom:0">QUARTERLY</div></div></div>
             <div style="font-family:var(--serif);font-size:18px;color:var(--ink);letter-spacing:-.015em;margin-bottom:5px;font-weight:400">Q2 Compliance Audit</div>
             <div style="font-size:11.5px;color:var(--slate2);line-height:1.55;letter-spacing:-.005em">Detailed firm-by-firm audit · Includes anomaly findings</div>
             <div style="display:flex;align-items:center;gap:6px;margin-top:11px;padding-top:11px;border-top:1px solid var(--line);font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:.3px;font-weight:600">PDF · 8 MB</div>
           </div>
-          <div class="card card-hover" style="cursor:pointer" onclick="showToast('Generating Forecast Model…')">
+          <div class="card card-hover" style="cursor:pointer" onclick="genReport('predictive')">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><div style="width:34px;height:34px;border-radius:9px;background:var(--purple-bg);color:var(--purple);display:grid;place-items:center;font-size:16px"></div><div><div class="card-eyebrow" style="margin-bottom:0">PREDICTIVE</div></div></div>
             <div style="font-family:var(--serif);font-size:18px;color:var(--ink);letter-spacing:-.015em;margin-bottom:5px;font-weight:400">Forecast Model 2027</div>
             <div style="font-size:11.5px;color:var(--slate2);line-height:1.55;letter-spacing:-.005em">Lex-generated projections · trajectory from live compliance data</div>
             <div style="display:flex;align-items:center;gap:6px;margin-top:11px;padding-top:11px;border-top:1px solid var(--line);font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:.3px;font-weight:600">PDF + XLSX</div>
           </div>
-          <div class="card card-hover" style="cursor:pointer" onclick="showToast('Generating Provider Performance…')">
+          <div class="card card-hover" style="cursor:pointer" onclick="genReport('providers')">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><div style="width:34px;height:34px;border-radius:9px;background:var(--gold-bg);color:var(--gold);display:grid;place-items:center;font-size:16px"></div><div><div class="card-eyebrow" style="margin-bottom:0">PROVIDERS</div></div></div>
             <div style="font-family:var(--serif);font-size:18px;color:var(--ink);letter-spacing:-.015em;margin-bottom:5px;font-weight:400">Provider Performance</div>
             <div style="font-size:11.5px;color:var(--slate2);line-height:1.55;letter-spacing:-.005em">11 accredited providers · enrolment, completion, ratings</div>
             <div style="display:flex;align-items:center;gap:6px;margin-top:11px;padding-top:11px;border-top:1px solid var(--line);font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:.3px;font-weight:600">PDF · 6 MB</div>
           </div>
-          <div class="card card-hover" style="cursor:pointer" onclick="showToast('Generating Cohort Deep Dive…')">
+          <div class="card card-hover" style="cursor:pointer" onclick="genReport('cohorts')">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><div style="width:34px;height:34px;border-radius:9px;background:var(--teal-bg);color:var(--teal);display:grid;place-items:center;font-size:16px"></div><div><div class="card-eyebrow" style="margin-bottom:0">COHORTS</div></div></div>
             <div style="font-family:var(--serif);font-size:18px;color:var(--ink);letter-spacing:-.015em;margin-bottom:5px;font-weight:400">Cohort Deep Dive</div>
             <div style="font-size:11.5px;color:var(--slate2);line-height:1.55;letter-spacing:-.005em">Professional registration cohorts · retention, engagement, attrition</div>
             <div style="display:flex;align-items:center;gap:6px;margin-top:11px;padding-top:11px;border-top:1px solid var(--line);font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:.3px;font-weight:600">PDF + CSV</div>
           </div>
-          <div class="card card-hover" style="cursor:pointer;background:var(--ink);color:#fff;border-color:var(--ink)" onclick="showToast('Custom report builder opening…')">
+          <div class="card card-hover" style="cursor:pointer;background:var(--ink);color:#fff;border-color:var(--ink)" onclick="openExportReport()">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><div style="width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.1);color:var(--gold-l);display:grid;place-items:center;font-size:16px">✦</div><div><div class="card-eyebrow" style="margin-bottom:0;color:rgba(255,255,255,.6)">CUSTOM</div></div></div>
             <div style="font-family:var(--serif);font-size:18px;color:#fff;letter-spacing:-.015em;margin-bottom:5px;font-weight:400">Build with Maryam</div>
             <div style="font-size:11.5px;color:rgba(255,255,255,.65);line-height:1.55;letter-spacing:-.005em">Describe what you want and Lex builds the report</div>
@@ -4002,6 +4002,72 @@ Click the ⚙ icon at the top right to add a key, then ask me again.`;
   // repaint forecast on resize (svg width)
   var rt; window.addEventListener('resize', function(){ clearTimeout(rt); rt=setTimeout(function(){ if(window.LAD_LIVE.forecast) paintForecast(window.LAD_LIVE.forecast); }, 250); });
 })();
+</script>
+
+<!-- ── Analytics report generator — real, live-data reports (print → PDF) ── -->
+<script>
+function _rNum(n){ n=Number(n)||0; return n.toLocaleString('en-US'); }
+function _rPct(n){ return (n==null||isNaN(Number(n)))?'—':(Math.round(Number(n)*10)/10)+'%'; }
+function _rEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+async function genReport(type){
+  try{
+    if(typeof showToast==='function') showToast('Generating '+(type||'')+' report…');
+    var base=(window.LAD_SYNC&&window.LAD_SYNC.base)||window.LAD_API_BASE||'https://lad-clpd-backend.onrender.com';
+    var token=''; try{token=localStorage.getItem('lad_token')||'';}catch(e){}
+    function api(p){ return fetch(base.replace(/\/$/,'')+p,{headers:token?{Authorization:'Bearer '+token}:{}}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}); }
+    var L=window.LAD_LIVE||{};
+    var o=L.oversight||await api('/api/v1/admin/oversight');
+    var f=L.forecast||null, a=L.anomalies||null;
+    var ca=(type==='providers'||type==='annual'||type==='quarterly')?await api('/api/v1/admin/course-analytics'):null;
+    var html=_buildReportHTML(type,o,f,a,ca);
+    var w=window.open('','_blank');
+    if(!w){ if(typeof showToast==='function') showToast('Allow pop-ups to view the report'); return; }
+    w.document.open(); w.document.write(html); w.document.close();
+    if(typeof showToast==='function') showToast('✓ Report ready — Print / Save as PDF from the new tab');
+  }catch(e){ if(typeof showToast==='function') showToast('Report failed: '+e.message); }
+}
+
+function _buildReportHTML(type,o,f,a,ca){
+  o=o||{}; var L=o.lawyers||{},F=o.firms||{},C=o.courses||{},AC=o.accreditations||{},B=o.bookings||{},rk=o.firmRankings||{};
+  var today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  var titles={annual:'CLPD Annual Report',quarterly:'Quarterly Compliance Audit',predictive:'Compliance Forecast Model',providers:'Provider Performance Report',cohorts:'Cohort Deep Dive'};
+  var title=titles[type]||'CLPD Intelligence Report';
+  function table(headers,rows){ return '<table><thead><tr>'+headers.map(function(h){return '<th>'+_rEsc(h)+'</th>';}).join('')+'</tr></thead><tbody>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table>'; }
+  function firmRows(list){ return (list||[]).slice(0,15).map(function(fr){return [_rEsc(fr.name||'—'),_rNum(fr.lawyers),_rPct(fr.compliancePct),_rNum(fr.critical)];}); }
+  var kpis=[['Practising practitioners',_rNum(L.practising)],['Compliance rate',_rPct(L.complianceRate)],['Compliant (≥16 pts)',_rNum(L.compliant)],['At risk (8–15 pts)',_rNum(L.atRisk)],['Critical (<8 pts)',_rNum(L.critical)],['Registered firms',_rNum(F.total)],['Active courses',_rNum(C.active)],['Days to 31 Dec deadline',_rNum(o.daysToDeadline)]];
+  var sections='';
+  if(type==='annual'||type==='quarterly'){
+    if(rk.top&&rk.top.length) sections+='<h2>Top-performing firms</h2>'+table(['Firm','Lawyers','Compliance','Critical'],firmRows(rk.top));
+    if(rk.bottom&&rk.bottom.length) sections+='<h2>Firms needing intervention</h2>'+table(['Firm','Lawyers','Compliance','Critical'],firmRows(rk.bottom));
+    if(B&&B.total!=null) sections+='<h2>Attendance</h2>'+table(['Metric','Value'],[['Total bookings',_rNum(B.total)],['Attended',_rNum(B.attended)],['No-show',_rNum(B.noShow)],['Cancelled',_rNum(B.cancelled)],['Attendance rate',_rPct(B.attendanceRate)]]);
+    if(a&&a.counts) sections+='<h2>Anomaly signals</h2>'+table(['Priority','Count'],[['High',_rNum(a.counts.high)],['Medium',_rNum(a.counts.medium)],['Low',_rNum(a.counts.low)]]);
+  }
+  if(type==='predictive'){
+    sections+='<h2>Forecast</h2>'+table(['Metric','Value'],[['Current compliance',_rPct(L.complianceRate)],['Projected 31 December',_rPct(f&&f.projectedRate)],['Method',_rEsc((f&&f.method)||'trend projection')],['Days remaining',_rNum(o.daysToDeadline)]]);
+  }
+  if(type==='providers'&&ca&&Array.isArray(ca.courses)){
+    var byP={};
+    ca.courses.forEach(function(c){var p=c.provider||c.provider_name||'—';if(!byP[p])byP[p]={courses:0,bookings:0,rsum:0,rn:0};byP[p].courses++;byP[p].bookings+=Number(c.totalBookings||c.bookings||0);var rv=(c.rating&&c.rating.overall)||(typeof c.rating==='number'?c.rating:0);if(rv){byP[p].rsum+=rv;byP[p].rn++;}});
+    var prows=Object.keys(byP).map(function(p){var x=byP[p];return {p:p,c:x.courses,b:x.bookings,r:x.rn?Math.round(x.rsum/x.rn*100)/100:null};}).sort(function(a,b){return b.b-a.b;}).map(function(x){return [_rEsc(x.p),_rNum(x.c),_rNum(x.b),x.r!=null?x.r+'★':'—'];});
+    sections+='<h2>Provider performance</h2>'+table(['Provider','Courses','Bookings','Avg rating'],prows);
+  }
+  if(type==='cohorts'){
+    var prac=L.practising||0;
+    sections+='<h2>Compliance cohorts</h2>'+table(['Cohort','Lawyers','Share'],[['Compliant (≥16)',_rNum(L.compliant),prac?_rPct(100*(L.compliant||0)/prac):'—'],['At risk (8–15)',_rNum(L.atRisk),prac?_rPct(100*(L.atRisk||0)/prac):'—'],['Critical (<8)',_rNum(L.critical),prac?_rPct(100*(L.critical||0)/prac):'—']]);
+    if(rk.bottom&&rk.bottom.length) sections+='<h2>Highest-risk firms</h2>'+table(['Firm','Lawyers','Compliance','Critical'],firmRows(rk.bottom));
+  }
+  if(!sections) sections='<p style="color:#667;font-family:Arial">Live programme data for this report is still loading — please reopen in a moment.</p>';
+  var css='body{font-family:Georgia,serif;color:#1a2230;max-width:900px;margin:0 auto;padding:48px 40px;line-height:1.55}@media print{.noprint{display:none}body{padding:0}}.gov{font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;color:#0d7377;text-transform:uppercase;font-weight:700}h1{font-size:30px;margin:6px 0 2px}.sub{font-family:Arial;color:#667;font-size:13px;margin-bottom:22px}h2{font-size:17px;border-bottom:2px solid #0d7377;padding-bottom:5px;margin:30px 0 12px;color:#0a2540}table{width:100%;border-collapse:collapse;font-family:Arial;font-size:13px;margin:8px 0 18px}th{text-align:left;background:#0a2540;color:#fff;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.5px}td{padding:7px 10px;border-bottom:1px solid #e3e9f0}tr:nth-child(even) td{background:#f6f9fc}.foot{margin-top:36px;border-top:1px solid #ccc;padding-top:12px;font-family:Arial;font-size:10px;color:#889;letter-spacing:.5px}.btn{font-family:Arial;background:#0d7377;color:#fff;border:none;padding:10px 18px;border-radius:6px;font-size:13px;cursor:pointer}';
+  return '<!doctype html><html><head><meta charset="utf-8"><title>'+_rEsc(title)+' · LAD CLPD</title><style>'+css+'</style></head><body>'+
+    '<div class="noprint" style="text-align:right;margin-bottom:18px"><button class="btn" onclick="window.print()">⬇ Print / Save as PDF</button></div>'+
+    '<div class="gov">Government of Dubai · Legal Affairs Department</div>'+
+    '<h1>'+_rEsc(title)+'</h1>'+
+    '<div class="sub">Continuing Legal &amp; Professional Development · Generated '+today+' · Live programme data</div>'+
+    '<h2>Executive summary</h2>'+table(['Indicator','Value'],kpis)+sections+
+    '<div class="foot">© 2026 Government of Dubai · Legal Affairs Department · CLPD Intelligence. Figures reflect live system data at generation time.</div>'+
+    '</body></html>';
+}
 </script>
 </body>
 

@@ -60,7 +60,7 @@ app.use(requestId);
 
 // ─── Security headers ───────────────────────────────────────────────────
 // CSP is enforced for the API only — the static frontend portals have their
-// own (looser) CSP set by Netlify. The API never serves HTML, so a strict
+// own (looser) CSP set by the static host. The API never serves HTML, so a strict
 // policy is fine. If you ever serve HTML from here, relax `default-src`.
 app.use(helmet({
   contentSecurityPolicy: {

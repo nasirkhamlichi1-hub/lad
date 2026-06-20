@@ -32,7 +32,7 @@ git commit -m "v8: two-tier admin user management"
 git push
 ```
 
-GitHub Actions builds the new backend image (~3 min) and pushes to GHCR. Render auto-pulls. Netlify auto-deploys the frontend (~30 sec).
+GitHub Actions builds the new backend image (~3 min) and pushes to GHCR. Render auto-pulls. Azure Static Web Apps auto-deploys the frontend (~30 sec).
 
 **Option B — GitHub web UI:** edit each changed file in the browser and commit. Slower but works if PowerShell is misbehaving.
 
@@ -91,7 +91,7 @@ You'll see:
 
 ### 4. Sign in for the first time
 
-1. Go to `https://legalaffairsmain.netlify.app`
+1. Go to the live site `https://legalaffairstraining.com`
 2. Click **Sign in** → pick **LAD Admin** (the staff/back-office option)
 3. Email: `nasir.khamlichi@legal.dubai.gov.ae`
 4. Password: `lad@2026`
@@ -146,5 +146,5 @@ If all of that works, the feature is live.
 If something breaks in production:
 
 1. Revert the commit in GitHub (`git revert <commit-sha>` then push)
-2. Both Render and Netlify will auto-deploy the previous version (~3 min total)
+2. Both Render and Azure Static Web Apps will auto-deploy the previous version (~3 min total)
 3. The migration cannot be rolled back automatically — but it's purely additive (only adds columns with defaults), so the previous code still works against the new schema. No data loss.

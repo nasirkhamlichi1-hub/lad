@@ -11,8 +11,7 @@
  * the LAD_API_BASE value below and redeploy. No source-code changes.
  *
  * If LAD_API_BASE is empty (the default), every portal runs in demo mode
- * using localStorage — useful for previews on Netlify Drop with no
- * backend connected.
+ * using localStorage — useful for static previews with no backend connected.
  * ─────────────────────────────────────────────────────────────────────
  */
 
@@ -25,13 +24,6 @@
   // Previous (Azure App Service): 'https://clpd-lad-api-0878.azurewebsites.net'
   // Demo/empty: ''  (use localStorage fallback)
   // ─── END EDIT ──────────────────────────────────────────────────────
-
-  // Netlify PR deploy previews (deploy-preview-N--<site>.netlify.app) point at
-  // the Render staging backend, so a feature branch's API + DB can be tested
-  // end-to-end without touching production. Never affects the live site.
-  if (typeof location !== 'undefined' && /^deploy-preview-\d+--/.test(location.hostname)) {
-    window.LAD_API_BASE = 'https://lad-clpd-backend.onrender.com';
-  }
 
   // Local development: when the frontend is served from localhost/127.0.0.1,
   // talk to the local backend (npm start, port 4000) instead of production, so
@@ -46,7 +38,6 @@
   window.LAD_ENV = (function () {
     const host = (typeof location !== 'undefined' && location.hostname) || '';
     if (!window.LAD_API_BASE) return 'demo';
-    if (host.endsWith('.netlify.app')) return 'staging';
     if (host === 'localhost' || host === '127.0.0.1') return 'local';
     return 'production';
   })();

@@ -1,9 +1,7 @@
 name: azure-swa
 
 # Deploys ./frontend to Azure Static Web App (clpd-frontend) on every push to
-# main that touches frontend code. Runs alongside the existing Netlify
-# workflow during the migration period; once Netlify is retired this file
-# becomes the sole frontend deploy path.
+# main that touches frontend code. This is the sole frontend deploy path.
 on:
   push:
     branches: [main]
