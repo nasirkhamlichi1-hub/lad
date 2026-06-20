@@ -1621,10 +1621,29 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
         Add one row per session. Date format: e.g. <code>Wed 20 May 2026</code>. Time format: e.g. <code>12:00–14:00</code>.
       </div>
       <div class="adm-sessions" id="sessionList"></div>
-      <button class="adm-session-add" onclick="addSession()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Add another session
-      </button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="adm-session-add" type="button" onclick="addSession()" style="flex:1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add another session
+        </button>
+        <button class="adm-session-add" type="button" onclick="openBulkDates()" style="flex:1;border-style:dashed">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Import many dates
+        </button>
+      </div>
+      <div id="bulkDatesPanel" style="display:none;margin-top:12px;padding:16px;background:var(--paper);border:1px solid var(--line2);border-radius:10px">
+        <div style="font-weight:600;font-size:13px;margin-bottom:4px">Import multiple session dates</div>
+        <div style="font-size:12px;color:var(--slate2);margin-bottom:8px">Paste one date per line — most formats work: <code>27 Nov 2026</code>, <code>10 Dec 2026</code>, <code>2026-12-17</code>, <code>10/12/2026</code>. They all share the time, seats and language set below.</div>
+        <textarea id="bulkDatesText" rows="6" placeholder="27 Nov 2026&#10;10 Dec 2026&#10;2026-12-17" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--line2);border-radius:8px;font-family:var(--mono,monospace);font-size:13px;resize:vertical;outline:none"></textarea>
+        <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;align-items:flex-end">
+          <div><label class="adm-label" style="margin-bottom:3px">Time</label><input id="bulkTime" class="adm-input" value="14:30–16:30" style="width:140px"/></div>
+          <div><label class="adm-label" style="margin-bottom:3px">Seats</label><input id="bulkSeats" class="adm-input" type="number" min="0" value="30" style="width:80px"/></div>
+          <div><label class="adm-label" style="margin-bottom:3px">Lang</label><select id="bulkLang" class="adm-select-full" style="width:120px"><option>English</option><option>Arabic</option></select></div>
+          <button type="button" onclick="applyBulkDates()" style="margin-left:auto;background:var(--green,#006B3F);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer">Add dates →</button>
+          <button type="button" onclick="document.getElementById('bulkDatesPanel').style.display='none'" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;color:var(--slate2)">Cancel</button>
+        </div>
+        <div id="bulkDatesMsg" style="font-size:12px;margin-top:9px;color:var(--slate3)"></div>
+      </div>
     </div>
 
     <!-- IMPACT -->
@@ -2810,6 +2829,45 @@ function removeSession(idx){
   collectForm();
   editingDraft.sessions.splice(idx, 1);
   renderSessions();
+}
+
+// ── Bulk date import ──
+function openBulkDates(){
+  const p = document.getElementById('bulkDatesPanel');
+  if (!p) return;
+  p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none';
+  if (p.style.display === 'block') { const t = document.getElementById('bulkDatesText'); if (t) t.focus(); }
+}
+// Parse a single pasted date in many formats → canonical "Fri 27 Nov 2026".
+function _normDateLine(s){
+  s = String(s || '').trim().replace(/^[A-Za-z]+,\s*/, ''); // drop a leading "Friday, "
+  if (!s) return null;
+  let d = null;
+  const m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/); // DD/MM/YYYY (day-first)
+  if (m) { let dd = +m[1], mm = +m[2], yy = +m[3]; if (yy < 100) yy += 2000; d = new Date(yy, mm - 1, dd); }
+  else { const t = Date.parse(s); if (!isNaN(t)) d = new Date(t); }
+  if (!d || isNaN(d.getTime())) return null;
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return days[d.getDay()] + ' ' + d.getDate() + ' ' + mons[d.getMonth()] + ' ' + d.getFullYear();
+}
+function applyBulkDates(){
+  collectForm();
+  if (!editingDraft) return;
+  const lines = (document.getElementById('bulkDatesText').value || '').split(/[\n,;]+/).map(x => x.trim()).filter(Boolean);
+  const time = (document.getElementById('bulkTime').value || '').trim() || '14:30–16:30';
+  const seats = parseInt(document.getElementById('bulkSeats').value, 10) || 30;
+  const lang = document.getElementById('bulkLang').value || 'English';
+  editingDraft.sessions = editingDraft.sessions || [];
+  let added = 0; const bad = [];
+  lines.forEach(line => {
+    const nd = _normDateLine(line);
+    if (nd) { editingDraft.sessions.push({ date: nd, time, seats, lang }); added++; }
+    else bad.push(line);
+  });
+  const msg = document.getElementById('bulkDatesMsg');
+  if (msg) msg.innerHTML = (added ? '<span style="color:var(--green,#006B3F);font-weight:600">' + added + ' session' + (added === 1 ? '' : 's') + ' added.</span>' : 'No valid dates found.')
+    + (bad.length ? ' Couldn\'t read: ' + bad.map(b => escapeAttr(b)).join(', ') : '');
+  if (added) { document.getElementById('bulkDatesText').value = ''; renderSessions(); }
 }
 
 // ────────── IMPACT ──────────
@@ -6034,7 +6092,7 @@ async function admMsgSend(){
 
 <!-- ══════ AI ADMIN CONSOLE · ⌘K command bar + notifications composer ══════ -->
 <style>
-#aicFab{position:fixed;right:22px;bottom:22px;z-index:1400;background:linear-gradient(135deg,#0a3a28,#0d5a4a);color:#fff;border:0;border-radius:30px;padding:13px 20px;font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(10,58,40,.4);display:flex;align-items:center;gap:8px;font-family:inherit}
+#aicFab{position:fixed;left:22px;bottom:22px;z-index:1400;background:linear-gradient(135deg,#0a3a28,#0d5a4a);color:#fff;border:0;border-radius:30px;padding:13px 20px;font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(10,58,40,.4);display:flex;align-items:center;gap:8px;font-family:inherit}
 #aicFab:hover{transform:translateY(-2px)}
 #aicFab .kbd{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(255,255,255,.18);padding:2px 6px;border-radius:5px}
 #aicOverlay{position:fixed;inset:0;background:rgba(8,18,12,.55);backdrop-filter:blur(8px);z-index:1500;display:none;align-items:flex-start;justify-content:center;padding:80px 20px}
