@@ -194,10 +194,10 @@
     <button class="rl" data-v="activity" onclick="go('activity')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg><span>Activity</span></button>
     <button class="rl" data-v="finance" onclick="go('finance')"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><line x1="6" y1="12" x2="6" y2="12.01"/><line x1="18" y1="12" x2="18" y2="12.01"/></svg><span>Finance</span></button>
     <div class="rail-sp"></div>
-    <!-- Strategic oversight — super users only -->
-    <button class="rl" id="railAccred" data-v="accred" onclick="go('accred')" style="display:none"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg><span>Accredit</span></button>
-    <button class="rl" id="railIntel" data-v="intel" onclick="go('intel')" style="display:none"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg><span>Intel</span></button>
-    <a class="rl" id="railCmd" href="command-centre.html" target="_blank" style="display:none"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg><span>Command</span></a>
+    <!-- Strategic oversight — admin team + super users -->
+    <button class="rl" id="railAccred" data-v="accred" onclick="go('accred')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg><span>Accredit</span></button>
+    <button class="rl" id="railIntel" data-v="intel" onclick="go('intel')"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg><span>Intel</span></button>
+    <a class="rl" id="railCmd" href="command-centre.html" target="_blank"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg><span>Command</span></a>
     <button class="rl" onclick="signOut()" title="Sign out"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Sign out</span></button>
   </nav>
 
@@ -344,9 +344,8 @@
   var IS_SUPER=SUPER_ROLES.indexOf(ME.role)!==-1;
   var roleLabel={lad_admin:'LAD Admin',lad_intelligence:'LAD Intelligence',lad_super_admin:'LAD Super User',super_admin:'Super Admin',dg:'Director General'}[ME.role]||'CLPD Admin';
   var rlEl=document.getElementById('meRole');if(rlEl)rlEl.textContent=roleLabel;
-  // Accreditation, Intelligence and the Command Centre are strategic-oversight
-  // functions — super users only. Everyday admins don't see them.
-  if(SUPER_ROLES.indexOf(ME.role)!==-1){['railAccred','railIntel','railCmd'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=''})}
+  // Accreditation, Intelligence and the Command Centre are open to the whole
+  // admin team (and super users); they're always shown in the admin-only CRM.
   if(ME.role==='lad_intelligence'){var ru=document.getElementById('railUsers');if(ru)ru.style.display='none'}
 
   // ── shared state ──
