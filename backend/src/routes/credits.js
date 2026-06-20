@@ -185,11 +185,15 @@ router.post('/topup', requireAuth, (req, res) => {
   const b = req.body || {};
   const email = (b.email || '').toString().trim().toLowerCase();
   const credits = Math.round(Number(b.credits || b.amount) || 0);
-  if (!email || !credits) return res.status(400).json({ error: 'email and credits are required' });
-  const lawyer = store.getLawyerByEmail(email);
-  if (!lawyer) return res.status(404).json({ error: 'No lawyer account with that email' });
+  if (!credits) return res.status(400).json({ error: 'credits are required' });
+  // Resolve the lawyer by email, falling back to id — so admins can grant to a
+  // lawyer who has no email on file (looked up by record id from the CRM).
+  let lawyer = email ? store.getLawyerByEmail(email) : null;
+  const id = (b.lawyer_id || b.lawyerId || b.id || '').toString().trim();
+  if (!lawyer && id) lawyer = store.getLawyerById(id);
+  if (!lawyer) return res.status(404).json({ error: 'No matching lawyer account' });
   const balance = grant(lawyer, credits, { type: credits >= 0 ? 'purchase' : 'refund', description: b.note || 'Administrator top-up', method: 'admin' });
-  res.json({ ok: true, email, balance });
+  res.json({ ok: true, email: lawyer.email || email, balance });
 });
 
 router.post('/assign', requireAuth, (req, res) => {
