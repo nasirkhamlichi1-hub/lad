@@ -30,6 +30,14 @@
   .rail-div{width:34px;height:1px;background:rgba(255,255,255,.12);margin:6px 0}
   .rail{overflow-y:auto;overflow-x:hidden;scrollbar-width:none}.rail::-webkit-scrollbar{display:none}
   .embed{flex:1;width:100%;height:100%;border:0;display:block;background:#fff}
+  /* secondary tab bar for hub views (Courses) */
+  .subwrap{flex:1;display:flex;flex-direction:column;min-width:0}
+  .subtabs{display:flex;gap:2px;padding:7px 16px 0;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0;overflow-x:auto;white-space:nowrap}
+  .subtab{background:none;border:none;border-bottom:2px solid transparent;padding:10px 14px;font-size:13px;font-weight:600;color:var(--slate2);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:7px}
+  .subtab svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.9}
+  .subtab.on{border-bottom-color:var(--green);color:var(--ink)}
+  .subtab:hover{color:var(--ink)}
+  .subbody{flex:1;min-height:0;display:flex}
   /* ── main ── */
   .main{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh}
   .topbar{height:60px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 22px;flex-shrink:0}
@@ -182,8 +190,8 @@
     <div class="rail-div"></div>
     <!-- Everyday operations — all LAD admins -->
     <button class="rl" data-v="courses" onclick="go('courses')"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>Courses</span></button>
-    <button class="rl" data-v="trainer" onclick="go('trainer')"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg><span>Trainer</span></button>
     <button class="rl" id="railUsers" data-v="users" onclick="go('users')"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span>Users</span></button>
+    <button class="rl" data-v="activity" onclick="go('activity')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg><span>Activity</span></button>
     <div class="rail-sp"></div>
     <!-- Strategic oversight — super users only -->
     <button class="rl" id="railAccred" data-v="accred" onclick="go('accred')" style="display:none"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg><span>Accredit</span></button>
@@ -233,10 +241,32 @@
       </div>
     </div></div>
 
+    <!-- ACTIVITY — the unified, searchable audit trail (every action, AI-tagged) -->
+    <div class="view" id="v-activity"><div class="scroll" style="width:100%;padding:22px">
+      <div class="panel" style="max-width:1000px;margin:0 auto"><div class="panel-hd" style="flex-wrap:wrap;gap:8px"><h2>Activity log</h2>
+        <input class="inp" id="actSearch" placeholder="Search actions, names, references…" style="max-width:300px;margin-left:auto" oninput="actSearch()"/>
+        <select class="inp" id="actCat" style="max-width:170px" onchange="actSearch()"><option value="">All categories</option><option value="credits">Credits</option><option value="bookings">Bookings</option><option value="accreditation">Accreditation</option><option value="account">Account</option><option value="course">Course</option><option value="message">Messages</option></select>
+      </div>
+      <div class="panel-bd" id="actList" style="max-height:none"><div class="empty">Loading…</div></div>
+      <div style="padding:10px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--slate3)">Every transaction and action is recorded here and kept for 4 years. Click a row to open the customer record.</div>
+      </div>
+    </div></div>
+
     <!-- EMBEDDED ADMIN MODULES — same shell, one navigation, no page-hopping -->
-    <div class="view" id="v-courses"><iframe class="embed" title="Courses" data-src="lad-admin.html?embed=1"></iframe></div>
+    <!-- COURSES — the course-creation hub: catalogue, scheduling, AI trainer, knowledge hub -->
+    <div class="view" id="v-courses"><div class="subwrap">
+      <div class="subtabs">
+        <button class="subtab on" data-sub="catalogue" onclick="coursesSub('catalogue',this)"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Catalogue</button>
+        <button class="subtab" data-sub="schedules" onclick="coursesSub('schedules',this)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedules</button>
+        <button class="subtab" data-sub="trainer" onclick="coursesSub('trainer',this)"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>AI Trainer</button>
+        <button class="subtab" data-sub="hub" onclick="coursesSub('hub',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg>Knowledge Hub</button>
+      </div>
+      <div class="subbody">
+        <iframe class="embed" id="admFrame" title="Course admin" data-src="lad-admin.html?embed=1&page=courses"></iframe>
+        <iframe class="embed" id="trnFrame" title="AI Trainer" data-src="lad-trainer-admin.html?embed=1" style="display:none"></iframe>
+      </div>
+    </div></div>
     <div class="view" id="v-accred"><iframe class="embed" title="Accreditation" data-src="lad-accreditation-review.html?embed=1"></iframe></div>
-    <div class="view" id="v-trainer"><iframe class="embed" title="Trainer" data-src="lad-trainer-admin.html?embed=1"></iframe></div>
     <div class="view" id="v-users"><iframe class="embed" title="Users" data-src="users-admin.html?embed=1"></iframe></div>
     <div class="view" id="v-intel"><iframe class="embed" title="Intelligence" data-src="lad-intelligence-v4.html?embed=1"></iframe></div>
   </div>
@@ -296,8 +326,18 @@
 
   // ── view switching ──
   var TITLES={dash:['Dashboard','CLPD customer operations'],inbox:['Inbox','Customer conversations'],cust:['Customers','Lawyers & firms'],ops:['Operations','Sessions & bookings'],
-    courses:['Courses','Catalogue · sessions · scheduling · website'],accred:['Accreditation','Application review queue'],trainer:['Trainer','Staff training materials & learners'],users:['Users','Accounts, roles & access'],intel:['Intelligence','Profession analytics & oversight']};
-  var EMBED={courses:1,accred:1,trainer:1,users:1,intel:1};
+    courses:['Courses','Catalogue · scheduling · AI trainer · knowledge hub'],accred:['Accreditation','Application review queue'],users:['Users','Accounts, roles & access'],activity:['Activity','Searchable audit trail · kept 4 years'],intel:['Intelligence','Profession analytics & oversight']};
+  var EMBED={courses:1,accred:1,users:1,intel:1};
+  // Courses hub — one embedded admin frame driven by message, plus the trainer.
+  window.coursesSub=function(sub,el){
+    document.querySelectorAll('#v-courses .subtab').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-sub')===sub)});
+    var adm=document.getElementById('admFrame'),trn=document.getElementById('trnFrame');
+    if(adm&&!adm.getAttribute('src'))adm.setAttribute('src',adm.getAttribute('data-src'));
+    if(sub==='trainer'){if(trn&&!trn.getAttribute('src'))trn.setAttribute('src',trn.getAttribute('data-src'));if(trn)trn.style.display='';if(adm)adm.style.display='none';return}
+    if(trn)trn.style.display='none';if(adm)adm.style.display='';
+    var page=sub==='schedules'?'schedules':sub==='hub'?'content':'courses';
+    try{adm.contentWindow.postMessage({type:'ladPage',page:page},'*')}catch(e){}
+  };
   // A module is reachable only if its rail entry is visible to this role.
   function viewAllowed(v){var map={accred:'railAccred',intel:'railIntel',users:'railUsers'};var id=map[v];if(!id)return true;var el=document.getElementById(id);return!!el&&el.style.display!=='none'}
   window.go=function(v){
@@ -308,8 +348,23 @@
     document.getElementById('v-'+v).classList.add('on');
     document.getElementById('vTitle').textContent=TITLES[v][0];document.getElementById('vSub').textContent=TITLES[v][1];
     if(EMBED[v]){var f=document.querySelector('#v-'+v+' iframe[data-src]');if(f&&!f.getAttribute('src'))f.setAttribute('src',f.getAttribute('data-src'));return}
-    if(v==='inbox')renderInbox();if(v==='ops')renderOps();if(v==='cust'&&!document.getElementById('custSearch').value)browseFirms();
+    if(v==='inbox')renderInbox();if(v==='ops')renderOps();if(v==='cust'&&!document.getElementById('custSearch').value)browseFirms();if(v==='activity')loadActivity();
   };
+  // ── activity / audit trail ──
+  var actT;window.actSearch=function(){clearTimeout(actT);actT=setTimeout(loadActivity,250)};
+  function loadActivity(){
+    var qv=(document.getElementById('actSearch').value||'').trim();var cat=document.getElementById('actCat').value;
+    var host=document.getElementById('actList');host.innerHTML='<div class="empty">Loading…</div>';
+    api('/api/v1/admin/activity?limit=200'+(qv?'&q='+encodeURIComponent(qv):'')+(cat?'&category='+encodeURIComponent(cat):'')).then(function(j){
+      var rows=j.rows||[];host.innerHTML=rows.length?rows.map(actRow).join(''):'<div class="empty">No matching activity.</div>';
+    }).catch(function(e){host.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
+  }
+  function actRow(a){
+    var who=(a.lawyer_name&&a.lawyer_name.trim())?a.lawyer_name:(a.firm_name||'');
+    var open=a.lawyer_id?'openLawyer(\''+q1(a.lawyer_id)+'\',\''+q1(who)+'\')':(a.firm_id?'openFirm(\''+q1(a.firm_id)+'\')':'');
+    var c=tlColor(a.kind);
+    return '<div class="row"'+(open?' onclick="'+open+'"':'')+'><div style="width:10px;height:10px;border-radius:50%;background:'+c+';flex-shrink:0"></div><div style="flex:1;min-width:0"><div class="ttl" style="font-weight:500">'+esc(a.summary||a.kind)+'</div><div class="sub">'+fdatetime(a.created_at)+(a.actor_name?' · by '+esc(a.actor_name):'')+(who?' · '+esc(who):'')+'</div></div>'+(a.category?'<span class="pill cat">'+esc(a.category)+'</span>':'')+((a.aed!=null&&Number(a.aed)!==0)?'<span class="sub" style="font-family:monospace;margin-left:8px;white-space:nowrap">'+(a.aed<0?'−':'')+'AED '+num(Math.abs(a.aed))+'</span>':'')+'</div>';
+  }
   window.signOut=function(){try{localStorage.removeItem('lad_token');localStorage.removeItem('lad_role');localStorage.removeItem('lad_name')}catch(e){}location.replace('clpd-portal.html')};
 
   // ── command / global search ──

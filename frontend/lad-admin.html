@@ -5,13 +5,16 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Course Admin · Legal Affairs Department</title>
-<!-- Embedded inside the CRM shell (lad-crm.html): drop our own chrome so the CRM rail is the single navigation. -->
+<!-- Embedded inside the CRM shell (lad-crm.html): drop ALL our own navigation
+     (the global nav AND the in-page tab strips) so the CRM's Courses hub is the
+     single source of navigation. The parent tells us which page to show via a
+     ?page= param on load and a postMessage afterwards. -->
 <script>try{if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add('lad-embed')}catch(e){}</script>
 <style>
-html.lad-embed .adm-brand,html.lad-embed .adm-stats,html.lad-embed .adm-azure-banner{display:none!important}
+html.lad-embed .lgn,html.lad-embed .adm-brand,html.lad-embed .adm-stats,html.lad-embed .adm-azure-banner,html.lad-embed .adm-tabs-top,html.lad-embed .adm-pagetabs{display:none!important}
 html.lad-embed .adm-topbar{position:static!important;top:auto!important;box-shadow:none;grid-template-columns:1fr;padding:8px 22px}
 html.lad-embed .adm-actions{justify-content:flex-end}
-html.lad-embed .adm-tabs-top,html.lad-embed .adm-filterbar{top:0!important}
+html.lad-embed .adm-filterbar{top:0!important}
 </style>
 <!-- LAD CLPD — live API sync shim (multi-user persistence) -->
 <script src="runtime-config.js?v=render2"></script>
@@ -6409,5 +6412,14 @@ async function admMsgSend(){
 })();
 </script>
 <script src="lad-messages.js" defer></script>
+<!-- Embedded in the CRM Courses hub: show the page the parent asks for. -->
+<script>(function(){
+  if(!/[?&]embed=1/.test(location.search))return;
+  function show(p){try{if(p&&typeof switchPage==='function'){switchPage(p);return true}}catch(e){}return false}
+  function ready(p){var n=0;(function w(){if(show(p))return;if(n++<120)setTimeout(w,50)})()}
+  var m=(location.search.match(/[?&]page=([a-z]+)/)||[])[1]||'courses';
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){ready(m)});else ready(m);
+  window.addEventListener('message',function(e){var d=e&&e.data;if(d&&d.type==='ladPage'&&d.page)show(d.page)});
+})();</script>
 </body>
 </html>

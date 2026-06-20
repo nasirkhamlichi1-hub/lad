@@ -13,6 +13,43 @@ const { requireAuth } = require('../middleware/auth');
 const ADMIN_ROLES = ['lad_admin', 'lad_intelligence', 'lad_super_admin', 'super_admin', 'dg'];
 const isAdmin = (u) => !!u && ADMIN_ROLES.includes(u.role);
 
+// GET /admin/activity — the unified, searchable audit trail. Every transaction
+// and action on the platform is here, tagged for the admin team and the AI.
+// Filters: q (free text over summary/tags/actor), category, kind, lawyer_id,
+// firm_id, from, to (ISO dates). Admin-only; retained ≥4 years.
+router.get('/activity', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
+  const q = req.query || {};
+  const where = ['1=1']; const args = [];
+  if (q.category) { where.push('a.category = ?'); args.push(String(q.category)); }
+  if (q.kind) { where.push('a.kind = ?'); args.push(String(q.kind)); }
+  if (q.lawyer_id) { where.push('a.lawyer_id = ?'); args.push(String(q.lawyer_id)); }
+  if (q.firm_id) { where.push('a.firm_id = ?'); args.push(String(q.firm_id)); }
+  if (q.from) { where.push('a.created_at >= ?'); args.push(String(q.from)); }
+  if (q.to) { where.push('a.created_at <= ?'); args.push(String(q.to)); }
+  if (q.q && String(q.q).trim()) {
+    const like = '%' + String(q.q).trim() + '%';
+    where.push('(a.summary LIKE ? OR a.tags LIKE ? OR a.actor_name LIKE ? OR a.ref_id LIKE ?)');
+    args.push(like, like, like, like);
+  }
+  const limit = Math.min(500, parseInt(q.limit || '100', 10) || 100);
+  args.push(limit);
+  let rows = [];
+  try {
+    rows = db.prepare(
+      `SELECT a.id, a.created_at, a.firm_id, a.lawyer_id, a.kind, a.category, a.tags,
+              a.actor_type, a.actor_name, a.summary, a.ref_type, a.ref_id, a.aed,
+              (l.first_name || ' ' || l.last_name) AS lawyer_name, f.name AS firm_name
+       FROM activity_log a
+       LEFT JOIN lawyers l ON l.id = a.lawyer_id
+       LEFT JOIN firms f ON f.id = a.firm_id
+       WHERE ${where.join(' AND ')}
+       ORDER BY a.created_at DESC LIMIT ?`
+    ).all(...args);
+  } catch (e) { return res.json({ rows: [], error: e.message }); }
+  res.json({ rows, count: rows.length });
+});
+
 function snapshot() {
   const one = (sql) => { try { return db.prepare(sql).get() || {}; } catch (_) { return {}; } };
   const all = (sql) => { try { return db.prepare(sql).all(); } catch (_) { return []; } };

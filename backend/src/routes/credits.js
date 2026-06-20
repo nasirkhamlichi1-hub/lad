@@ -17,6 +17,7 @@ const crypto = require('crypto');
 const router = express.Router();
 const db = require('../db');
 const store = require('../services/store');
+const activity = require('../services/activity');
 const mailer = require('../services/email');
 const tpl = require('../services/email-templates');
 const { requireAuth } = require('../middleware/auth');
@@ -47,21 +48,37 @@ function ownRequests(email) {
     ).all((email || '').toLowerCase());
   } catch (_) { return []; }
 }
-// Apply a credit movement to a lawyer's balance + write a ledger row.
+// Apply a credit movement to a lawyer's balance + write a ledger row + an
+// activity-log entry (so the movement is searchable, AI-readable, and shows on
+// the lawyer's AND firm's timelines).
 function grant(lawyer, credits, opts) {
+  opts = opts || {};
   const amt = Math.round(Number(credits) || 0);
   if (!lawyer || !amt) return lawyer ? (Number(lawyer.credit_balance) || 0) : 0;
   db.prepare(
     `UPDATE lawyers SET credit_balance = COALESCE(credit_balance,0) + ?,
        total_purchased = COALESCE(total_purchased,0) + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
   ).run(amt, amt > 0 ? amt : 0, lawyer.id);
+  const type = opts.type || 'purchase';
+  const aed = opts.aed != null ? Number(opts.aed) : (amt * PRICE);
+  const txId = rid('TX-');
   try {
     db.prepare(
       `INSERT INTO credit_transactions (id, lawyer_id, type, amount, aed_amount, description, payment_method, reference, status)
        VALUES (?,?,?,?,?,?,?,?, 'completed')`
-    ).run(rid('TX-'), lawyer.id, (opts && opts.type) || 'purchase', amt,
-      (opts && opts.aed) != null ? opts.aed : (amt * PRICE),
-      (opts && opts.description) || 'Credit movement', (opts && opts.method) || 'admin', (opts && opts.reference) || null);
+    ).run(txId, lawyer.id, type, amt, aed, opts.description || 'Credit movement', opts.method || 'admin', opts.reference || null);
+  } catch (_) {}
+  try {
+    const kind = type === 'refund' ? 'credit_refund' : type === 'adjustment' ? 'credit_adjustment' : type === 'transfer' ? 'credit_assign' : 'credit_purchase';
+    const name = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || lawyer.id;
+    const verb = type === 'refund' ? 'Refunded' : type === 'adjustment' ? 'Adjusted' : amt >= 0 ? 'Purchased' : 'Deducted';
+    activity.logActivity(Object.assign({
+      lawyer_id: lawyer.id, firm_id: lawyer.firm_id || activity.firmOfLawyer(lawyer.id),
+      kind, category: 'credits', aed,
+      summary: `${verb} ${Math.abs(amt)} credit${Math.abs(amt) === 1 ? '' : 's'}${type !== 'adjustment' ? ` (${type === 'refund' ? '-' : ''}AED ${Math.abs(aed).toLocaleString('en-US')})` : ''} — ${name}`,
+      ref_type: 'transaction', ref_id: txId,
+      meta: { credits: amt, method: opts.method || 'admin', reference: opts.reference || null, note: opts.description || null },
+    }, opts.actor ? activity.actorFrom(opts.actor) : { actor_type: 'system' }));
   } catch (_) {}
   const row = db.prepare('SELECT credit_balance FROM lawyers WHERE id = ?').get(lawyer.id);
   return row ? Number(row.credit_balance) || 0 : 0;
@@ -101,7 +118,7 @@ router.post('/checkout', requireAuth, (req, res) => {
   const aed = credits * PRICE; // never trust a client-supplied amount
   const reference = rid('PAY-');
   const balance = grant(lawyer, credits, {
-    type: 'purchase', aed, method: 'card', reference,
+    type: 'purchase', aed, method: 'card', reference, actor: req.user,
     description: `Card purchase — ${credits} credits`,
   });
   if (lawyer.email) {
@@ -204,7 +221,7 @@ router.post('/topup', requireAuth, (req, res) => {
   if (!lawyer) return res.status(404).json({ error: 'No matching lawyer account' });
   const aed = type === 'adjustment' ? 0 : (b.aed != null ? Number(b.aed) : undefined);
   const desc = (b.note || '').toString().trim() || (type === 'purchase' ? 'Credit purchase (admin-recorded)' : type === 'refund' ? 'Credit refund' : 'Balance correction');
-  const balance = grant(lawyer, credits, { type, aed, reference: (b.reference || '').toString().trim() || null, method: b.method || 'admin', description: desc });
+  const balance = grant(lawyer, credits, { type, aed, reference: (b.reference || '').toString().trim() || null, method: b.method || 'admin', description: desc, actor: req.user });
   res.json({ ok: true, email: lawyer.email || email, balance, type });
 });
 
@@ -216,7 +233,7 @@ router.post('/assign', requireAuth, (req, res) => {
   const credits = Math.round(Number(b.credits || b.amount) || 0);
   if (!lawyer || !credits) return res.status(400).json({ error: 'lawyerId and credits are required' });
   if (u.role === 'firm_compliance_officer' && lawyer.firm_id !== u.firm_id) return res.status(403).json({ error: 'That lawyer is not in your firm' });
-  const balance = grant(lawyer, credits, { type: 'transfer', description: 'Assigned by firm', method: 'firm' });
+  const balance = grant(lawyer, credits, { type: 'transfer', description: credits >= 0 ? 'Assigned from firm pool' : 'Returned to firm pool', method: 'firm', actor: u });
   // Move the credits between the firm pool and the lawyer, and record it on
   // the firm ledger. Positive = assign out of pool; negative = return to pool.
   // Non-blocking: clamp at 0 so legacy firms with no pool aren't stuck.
