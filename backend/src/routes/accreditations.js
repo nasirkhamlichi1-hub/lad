@@ -73,12 +73,50 @@ function genCode(row) {
   return structuredCode(p.providerName || p.firm || p.orgName || row.submitted_by || 'LAD');
 }
 function emailOf(p) { return String((p && (p.applicantEmail || p.contactEmail || p.submittedByEmail)) || '').toLowerCase() || null; }
+
+// Conservative firm-name normalisation (mirrors the firm dedup) so a firm sees
+// its accreditations even when the submitted name differs from the firm's
+// canonical record ("AL TAMIMI & COMPANY…" vs "Al Tamimi And Company…").
+function firmNorm(s) {
+  return String(s || '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\b(llp|llc|ltd|limited|plc|pllc|fze|fzc|fz|incorporated|inc)\b/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+}
+// The most distinctive word in a firm name — used to bound the candidate query.
+function firmToken(name) {
+  const ws = String(name || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/)
+    .filter((w) => w.length >= 4 && !/^(and|the|llp|llc|ltd|limited|company|advocates|advocate|legal|consultants|consultant|firm)$/.test(w));
+  ws.sort((a, b) => b.length - a.length);
+  return ws[0] || '';
+}
+// The firm a CO/lawyer belongs to: { id, name, norm }.
+function userFirm(u) {
+  if (!u || !u.firm_id) return null;
+  let name = u.firm_id;
+  try { const f = db.prepare('SELECT name FROM firms WHERE id = ?').get(u.firm_id); if (f && f.name) name = f.name; } catch (_) {}
+  return { id: u.firm_id, name, norm: firmNorm(name) };
+}
+// Does this accreditation belong to the given firm? Match the firm id or any of
+// the name fields by normalised name.
+function rowMatchesFirm(row, firm) {
+  if (!firm) return false;
+  const p = parse(row.payload, {});
+  if (firm.id && (row.submitted_by === firm.id || p.firmId === firm.id || p.firm_id === firm.id)) return true;
+  if (!firm.norm) return false;
+  for (const cand of [p.firm, p.providerName, p.orgName, p.firmName, row.submitted_by]) {
+    if (cand && firmNorm(cand) === firm.norm) return true;
+  }
+  return false;
+}
+
 function ownsRow(u, row) {
   if (!u || !row) return false;
   if (isReviewer(u)) return true;
   const e = (u.email || '').toLowerCase();
   if (e && row.submitted_by_email && row.submitted_by_email.toLowerCase() === e) return true;
   if (e && emailOf(parse(row.payload, {})) === e) return true;
+  // A firm CO sees everything submitted under their firm, not just their own email.
+  if (u.role === 'firm_compliance_officer' && rowMatchesFirm(row, userFirm(u))) return true;
   return false;
 }
 
@@ -342,11 +380,29 @@ router.post('/', optionalAuth, (req, res) => {
 router.get('/', requireAuth, (req, res) => {
   if (!isReviewer(req.user)) {
     const email = (req.user.email || '').toLowerCase();
-    const rows = db.prepare(
+    // Always include the user's own submissions (by email).
+    let raw = db.prepare(
       `SELECT * FROM accreditations
        WHERE LOWER(submitted_by_email) = ? OR payload LIKE ?
        ORDER BY submitted_at DESC`
-    ).all(email, '%"applicantEmail":"' + email + '"%').map(rowOut);
+    ).all(email, '%"applicantEmail":"' + email + '"%');
+    // A firm CO also sees everything submitted under their firm — match a
+    // distinctive token in SQL, then confirm by normalised firm name in JS so
+    // duplicate/variant firm names still resolve to one firm.
+    const firm = req.user.role === 'firm_compliance_officer' ? userFirm(req.user) : null;
+    if (firm) {
+      const seen = new Set(raw.map((r) => r.ref));
+      const tok = firmToken(firm.name);
+      let candidates = [];
+      try {
+        candidates = db.prepare(
+          `SELECT * FROM accreditations WHERE submitted_by = ?${tok ? ' OR LOWER(submitted_by) LIKE ? OR LOWER(payload) LIKE ?' : ''} ORDER BY submitted_at DESC LIMIT 500`
+        ).all(...(tok ? [firm.id, '%' + tok + '%', '%' + tok + '%'] : [firm.id]));
+      } catch (_) {}
+      for (const r of candidates) { if (!seen.has(r.ref) && rowMatchesFirm(r, firm)) { raw.push(r); seen.add(r.ref); } }
+      raw.sort((a, b) => String(b.submitted_at || '').localeCompare(String(a.submitted_at || '')));
+    }
+    const rows = raw.map(rowOut);
     const counts = { pending: 0, approved: 0, rejected: 0, returned: 0 };
     rows.forEach((r) => { if (counts[r.status] !== undefined) counts[r.status]++; });
     return res.json({ rows, counts, mine: true });
