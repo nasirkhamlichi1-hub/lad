@@ -29,7 +29,9 @@ const tpl = require('../services/email-templates');
 const log = require('../logger');
 const { requireAuth, optionalAuth } = require('../middleware/auth');
 
-const REVIEWER_ROLES = ['lad_admin', 'lad_intelligence', 'lad_super_admin', 'dg'];
+// Accreditation review & decisions are strategic oversight — super users only.
+// Everyday admins (lad_admin) run courses/bookings/users, not accreditation.
+const REVIEWER_ROLES = ['lad_super_admin', 'super_admin', 'dg'];
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 const isReviewer = (u) => !!u && REVIEWER_ROLES.includes(u.role);

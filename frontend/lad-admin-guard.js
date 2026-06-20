@@ -13,12 +13,16 @@
  *   2. firm_compliance_officer → firm-compliance-portal          (own firm's lawyers)
  *   3. provider_admin          → provider-portal                 (accreditation + own-course attendance; NO profession data)
  *   4. lad_staff               → lad-staff-training              (internal training)
- *   5. lad_admin               → lad-admin, lad-crm, accreditation, users-admin (CRM + ops, +lad_intelligence)
- *   6. lad_super_admin         → everything incl. command-centre + lad-intelligence + accreditation
+ *   5. lad_admin               → everyday running: lad-crm, lad-admin, trainer, users-admin (NOT accreditation/intelligence/command)
+ *   6. lad_super_admin         → strategic oversight: everything incl. command-centre, lad-intelligence AND accreditation
+ *
+ * Admin vs super: admins run the day-to-day (courses, bookings, users,
+ * customers, messaging). Super users own strategic oversight — the Command
+ * Centre, Intelligence, and accreditation decisions.
  *
  * Page → roles policy:
- *   command-centre, lad-intelligence  → lad_super_admin, dg, super_admin   (SUPER ONLY)
- *   lad-crm, lad-admin, accreditation → lad_admin, lad_intelligence, +super  (LAD admins + super)
+ *   command-centre, lad-intelligence, accreditation → lad_super_admin, dg, super_admin   (SUPER ONLY)
+ *   lad-crm, lad-admin                → lad_admin, lad_intelligence, +super  (LAD admins + super)
  *   users-admin                       → lad_admin, +super                    (user mgmt)
  *   lad-staff-training                → lad_staff, lad_admin, +super         (internal training)
  *   provider-portal                   → provider_admin                       (training companies only)
