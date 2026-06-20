@@ -26,29 +26,53 @@ function fmtSession(iso) {
 router.get('/', requireAuth, (req, res) => {
   if (!ADMIN_BK_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Forbidden' });
   const limit = Math.min(1000, Math.max(1, parseInt(req.query.limit || '300', 10) || 300));
-  let rows = [];
+  const where = ['1=1']; const args = [];
+  const status = (req.query.status || '').toString().trim();
+  if (status) { where.push('b.status = ?'); args.push(status); }
+  const q = (req.query.q || '').toString().trim();
+  if (q) {
+    const like = '%' + q + '%';
+    where.push('(l.first_name LIKE ? OR l.last_name LIKE ? OR f.name LIKE ? OR b.course_title LIKE ? OR c.title LIKE ? OR b.id LIKE ?)');
+    args.push(like, like, like, like, like, like);
+  }
+  const whereSql = where.join(' AND ');
+  let rows = [], summary = { total: 0, confirmed: 0, attended: 0, no_show: 0, cancelled: 0 };
   try {
     rows = db.prepare(
-      `SELECT b.id, b.status, b.credits_used, b.points_earned, b.scheduled_at, b.booked_at,
-              b.course_title, c.title AS course_cur, l.first_name, l.last_name, f.name AS firm_name
+      `SELECT b.id, b.status, b.credits_used, b.points_earned, b.scheduled_at, b.booked_at, b.lawyer_id,
+              b.course_title, c.title AS course_cur, l.first_name, l.last_name, l.firm_id, f.name AS firm_name
        FROM bookings b
        LEFT JOIN lawyers l ON l.id = b.lawyer_id
        LEFT JOIN firms f ON f.id = l.firm_id
        LEFT JOIN courses c ON c.id = b.course_id
+       WHERE ${whereSql}
        ORDER BY COALESCE(b.booked_at, b.scheduled_at) DESC LIMIT ?`
-    ).all(limit);
+    ).all(...args, limit);
+    const s = db.prepare(
+      `SELECT COUNT(*) total,
+              COALESCE(SUM(CASE WHEN b.status = 'booked' THEN 1 ELSE 0 END),0) confirmed,
+              COALESCE(SUM(CASE WHEN b.status = 'attended' THEN 1 ELSE 0 END),0) attended,
+              COALESCE(SUM(CASE WHEN b.status = 'no_show' THEN 1 ELSE 0 END),0) no_show,
+              COALESCE(SUM(CASE WHEN b.status IN ('cancelled','refunded') THEN 1 ELSE 0 END),0) cancelled
+       FROM bookings b LEFT JOIN lawyers l ON l.id = b.lawyer_id LEFT JOIN firms f ON f.id = l.firm_id LEFT JOIN courses c ON c.id = b.course_id
+       WHERE ${whereSql}`
+    ).get(...args);
+    if (s) summary = s;
   } catch (_) {}
   const data = rows.map((b) => ({
     id: b.id,
+    lawyer_id: b.lawyer_id || null,
+    firm_id: b.firm_id || null,
     lawyer: `${b.first_name || ''} ${b.last_name || ''}`.trim() || '—',
     firm: b.firm_name || '—',
     course: b.course_title || b.course_cur || '—',
     session: fmtSession(b.scheduled_at),
+    scheduled_at: b.scheduled_at,
     credits: Number(b.credits_used) || 0,
     pts: Number(b.points_earned) || 0,
     status: b.status || 'booked',
   }));
-  res.json({ data, meta: { total: data.length } });
+  res.json({ data, summary, meta: { total: data.length } });
 });
 
 // GET /api/v1/bookings/availability — public seat counts per session, so the

@@ -236,9 +236,21 @@
 
     <!-- OPERATIONS -->
     <div class="view" id="v-ops"><div class="scroll" style="width:100%;padding:22px">
-      <div class="panel" style="max-width:900px;margin:0 auto"><div class="panel-hd"><h2>Upcoming sessions</h2>
-        <input class="inp" id="opsSearch" placeholder="Filter course…" style="max-width:280px;margin-left:auto" oninput="renderOps()"/></div>
-        <div class="panel-bd" id="opsList" style="max-height:none"></div>
+      <div style="max-width:1000px;margin:0 auto">
+        <div class="seg" style="margin:0 0 14px"><button class="on" onclick="opsMode('sessions',this)">Upcoming sessions</button><button onclick="opsMode('bookings',this)">All bookings</button></div>
+        <div class="panel" id="opsSessions"><div class="panel-hd"><h2>Upcoming sessions</h2>
+          <input class="inp" id="opsSearch" placeholder="Filter course…" style="max-width:280px;margin-left:auto" oninput="renderOps()"/></div>
+          <div class="panel-bd" id="opsList" style="max-height:none"></div>
+        </div>
+        <div id="opsBookings" style="display:none">
+          <div class="dash" id="bkCards" style="grid-template-columns:repeat(4,1fr);padding:0 0 14px"></div>
+          <div class="panel"><div class="panel-hd" style="flex-wrap:wrap;gap:8px"><h2>All bookings</h2>
+            <input class="inp" id="bkSearchG" placeholder="Search lawyer, firm, course…" style="max-width:260px;margin-left:auto" oninput="bkSearchGo()"/>
+            <select class="inp" id="bkStatus" style="max-width:150px" onchange="bkSearchGo()"><option value="">All statuses</option><option value="booked">Confirmed</option><option value="attended">Attended</option><option value="no_show">No-show</option><option value="cancelled">Cancelled</option></select>
+          </div>
+          <div class="panel-bd" id="bkGList" style="max-height:none"><div class="empty">Loading…</div></div>
+          </div>
+        </div>
       </div>
     </div></div>
 
@@ -493,6 +505,23 @@
   function loadSessions(){return api('/api/v1/courses/sessions/all').then(function(all){var now=new Date().toISOString();SESS=(Array.isArray(all)?all:[]).filter(function(s){return s&&s.scheduled_at&&s.scheduled_at>=now&&(s.status||'')!=='cancelled'}).sort(function(a,b){return String(a.scheduled_at).localeCompare(String(b.scheduled_at))});window.__SESS=SESS}).catch(function(){})}
   function sessRow(s){var cap=Number(s.capacity)||0,left=Number(s.seats_remaining)||0;return '<div class="row" onclick="openSession(\''+s.id+'\',\''+q1(s.course_title||'')+'\')"><div style="flex:1;min-width:0"><div class="ttl">'+esc(s.course_title||s.course_id||'—')+'</div><div class="sub">'+esc(s.provider_name||'')+' · '+fdate(s.scheduled_at)+'</div></div><span class="pill cat">'+(cap-left)+' booked · '+left+'/'+cap+'</span></div>'}
   window.renderOps=function(){var qv=(document.getElementById('opsSearch').value||'').toLowerCase().trim();var rows=SESS.filter(function(s){return !qv||((s.course_title||'').toLowerCase().indexOf(qv)>=0||(s.provider_name||'').toLowerCase().indexOf(qv)>=0)}).slice(0,120);document.getElementById('opsList').innerHTML=rows.length?rows.map(sessRow).join(''):'<div class="empty">No upcoming sessions.</div>'};
+  // Operations has two modes: upcoming Sessions and the global Bookings ledger.
+  window.opsMode=function(m,el){if(el){el.parentNode.querySelectorAll('button').forEach(function(b){b.classList.remove('on')});el.classList.add('on')}var s=document.getElementById('opsSessions'),b=document.getElementById('opsBookings');if(m==='bookings'){s.style.display='none';b.style.display='';loadBookings()}else{b.style.display='none';s.style.display='';renderOps()}};
+  var bkGT;window.bkSearchGo=function(){clearTimeout(bkGT);bkGT=setTimeout(loadBookings,250)};
+  function loadBookings(){
+    var qv=(document.getElementById('bkSearchG').value||'').trim();var st=document.getElementById('bkStatus').value;
+    var host=document.getElementById('bkGList');host.innerHTML='<div class="empty">Loading…</div>';
+    api('/api/v1/bookings?limit=300'+(qv?'&q='+encodeURIComponent(qv):'')+(st?'&status='+encodeURIComponent(st):'')).then(function(j){
+      var rows=j.data||[],s=j.summary||{};
+      var cards=document.getElementById('bkCards');if(cards)cards.innerHTML=finCard('Total bookings',num(s.total||0),'all time')+finCard('Confirmed',num(s.confirmed||0),'upcoming')+finCard('Attended',num(s.attended||0),'completed')+finCard('No-shows',num(s.no_show||0),'missed');
+      host.innerHTML=rows.length?rows.map(bkGRow).join(''):'<div class="empty">No bookings'+(qv||st?' match your filter.':' recorded yet — they appear here as lawyers and firms book courses.')+'</div>';
+    }).catch(function(e){host.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
+  }
+  function bkGRow(b){
+    var open=b.lawyer_id?'openLawyer(\''+q1(b.lawyer_id)+'\',\''+q1(b.lawyer)+'\')':(b.firm_id?'openFirm(\''+q1(b.firm_id)+'\')':'');
+    var st=(b.status||'booked').toLowerCase();var cls=st==='attended'?'compliant':st==='no_show'?'high':(st==='cancelled'||st==='refunded')?'closed':'pending';
+    return '<div class="row"'+(open?' onclick="'+open+'"':'')+'><div style="flex:1;min-width:0"><div class="ttl">'+esc(b.lawyer)+' · <span class="sub">'+esc(b.course)+'</span></div><div class="sub">'+esc(b.firm)+' · '+esc(b.session)+(b.credits?' · '+b.credits+' cr':'')+'</div></div><span class="pill '+cls+'">'+esc(b.status)+'</span></div>';
+  }
   window.openSession=function(id,title){
     openDrawer();var dw=document.getElementById('dwInner');
     dw.innerHTML='<div class="hero"><button class="x" onclick="closeDrawer()">×</button><div class="hero-name">'+esc(title||'Session')+'</div><div class="hero-sub" id="sxSub">Loading…</div></div><div class="dw-bd"><div class="sec"><h4>Book a lawyer onto this session</h4><input id="sxSearch" class="inp" placeholder="Search lawyer by name or email…" oninput="sxSearch()"/><div id="sxRes" style="margin-top:10px"></div></div><div class="sec"><h4>Booked (<span id="sxN">…</span>)</h4><div id="sxBooked"></div></div></div>';
