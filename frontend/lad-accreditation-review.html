@@ -431,14 +431,39 @@ const RUBRIC_TRAINER = [
   {key:'t_local',      group:'trainer', max:5, label:'Sufficient local knowledge', desc:'Sufficient knowledge of the local (UAE / DIFC) legal context?'},
   {key:'t_materials',  group:'trainer', max:5, label:'Ownership / creation or adoption of materials', desc:'Ownership, creation or considered adoption of the training materials?'}
 ];
+// Provider (entity) accreditation is judged on a DIFFERENT rubric from an
+// activity/course — institutional capability rather than course content.
+const RUBRIC_ENTITY = [
+  {key:'e_legal_exp',     group:'entity', max:4, label:'Legal industry experience',              desc:'Depth of experience in the legal industry.'},
+  {key:'e_training_exp',  group:'entity', max:4, label:'Training experience',                     desc:'Track record delivering professional training.'},
+  {key:'e_local',         group:'entity', max:2, label:'Local presence',                          desc:'Established presence in the UAE / local market.'},
+  {key:'e_intl',          group:'entity', max:2, label:'International presence',                   desc:'Reach or operations internationally.'},
+  {key:'e_affil',         group:'entity', max:2, label:'Relevant affiliations or qualifications', desc:'Relevant professional affiliations or qualifications held.'},
+  {key:'e_prev_training', group:'entity', max:2, label:'Examples of previous training',           desc:'Concrete examples of training previously delivered.'},
+  {key:'e_prospective',   group:'entity', max:2, label:'Prospective training',                    desc:'Quality and relevance of the proposed / prospective training.'},
+  {key:'e_client_ref',    group:'entity', max:2, label:'Client references',                       desc:'Credible client references provided.'}
+];
 const RUBRIC_CRITERIA = RUBRIC_ACTIVITY.concat(RUBRIC_TRAINER);
+const RUBRIC_ALL = RUBRIC_ACTIVITY.concat(RUBRIC_TRAINER, RUBRIC_ENTITY);
+// Which scored sections apply: providers get the entity rubric; everything else
+// (courses / activities / renewals) keeps the activity + trainer rubric.
+function rubricSectionsFor(a){
+  return (a && a.isProviderReg)
+    ? [{title:'Entity Review', crit:RUBRIC_ENTITY, group:'entity'}]
+    : [{title:'Activity Review', crit:RUBRIC_ACTIVITY, group:'activity'},
+       {title:'Trainer Review',  crit:RUBRIC_TRAINER,  group:'trainer'}];
+}
+// A reviewer slot passes when EVERY applicable section reaches the threshold.
+function slotPassesApp(a, scores, slot){
+  return rubricSectionsFor(a).every(s => sectionScore(scores, slot, s.group).pass);
+}
 // Same methodology applies to courses and renewals.
 const RUBRIC_CRITERIA_COURSE = RUBRIC_CRITERIA;
 const RUBRIC_CRITERIA_RENEWAL = RUBRIC_CRITERIA;
 
 // Score one section for a reviewer slot ('r1' | 'r2' | 'ai').
 function sectionScore(scores, slot, group){
-  const crit = group === 'activity' ? RUBRIC_ACTIVITY : RUBRIC_TRAINER;
+  const crit = group === 'activity' ? RUBRIC_ACTIVITY : group === 'entity' ? RUBRIC_ENTITY : RUBRIC_TRAINER;
   const s = (scores && scores[slot]) || {};
   const score = crit.reduce((t,c) => t + (Number(s[c.key]) || 0), 0);
   const max = crit.reduce((t,c) => t + c.max, 0);
@@ -680,7 +705,7 @@ function renderScoring(a){
     const result = (s) => `<span style="font-weight:700;color:${s.pass?'var(--green-d)':'var(--red)'}">${s.pass?'Pass':'Fail'}</span>`;
     return `
       <div style="margin-bottom:20px">
-        <div style="font-family:var(--mono);font-size:9.5px;color:var(--teal);letter-spacing:1.3px;text-transform:uppercase;font-weight:700;margin-bottom:8px">${title} · ${crit.length} criteria · 0–${crit[0].max} each · pass ≥70%</div>
+        <div style="font-family:var(--mono);font-size:9.5px;color:var(--teal);letter-spacing:1.3px;text-transform:uppercase;font-weight:700;margin-bottom:8px">${title} · ${crit.length} criteria · ${crit.every(c=>c.max===crit[0].max)?('0–'+crit[0].max+' each'):('max '+crit.reduce((t,c)=>t+c.max,0))} · pass ≥70%</div>
         <div class="rubric-hd"><div>Criterion</div><div>${r1Label}${r1IsMe?' · YOU':''}</div><div>${r2Label}${r2IsMe?' · YOU':''}</div><div>AI</div></div>
         ${crit.map(c => `
           <div class="rubric-row">
@@ -696,10 +721,9 @@ function renderScoring(a){
   };
 
   p.innerHTML = `
-    <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:14px">Two reviews · both must reach 70% in each section ${mode}</div>
+    <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:14px">Two reviews · both must reach 70% in ${a.isProviderReg?'the entity review':'each section'} ${mode}</div>
 
-    ${section('Activity Review', RUBRIC_ACTIVITY, 'activity')}
-    ${section('Trainer Review', RUBRIC_TRAINER, 'trainer')}
+    ${rubricSectionsFor(a).map(s => section(s.title, s.crit, s.group)).join('')}
 
     ${isReal ? `
     <div style="margin-top:16px;padding:14px;background:linear-gradient(135deg,#f3e8ff,#fdf4ff);border:1px solid var(--purple-border);border-radius:10px;display:flex;align-items:center;gap:12px">
@@ -763,18 +787,18 @@ function renderAI(a){
 
 function renderDecision(a){
   const p = document.getElementById('panel-decision');
-  const r1A = sectionScore(a.scores,'r1','activity'), r1T = sectionScore(a.scores,'r1','trainer');
-  const r2A = sectionScore(a.scores,'r2','activity'), r2T = sectionScore(a.scores,'r2','trainer');
-  const r1Pass = r1A.pass && r1T.pass, r2Pass = r2A.pass && r2T.pass;
+  const _secs = rubricSectionsFor(a);
+  const r1Pass = slotPassesApp(a, a.scores, 'r1'), r2Pass = slotPassesApp(a, a.scores, 'r2');
   const accredited = r1Pass && r2Pass;
+  const _secLabel = a.isProviderReg ? 'the Entity Review section' : 'the Activity and Trainer sections';
   const verdict = accredited
-    ? { color:'green', label:'MEETS THRESHOLD', msg:'Both reviews score ≥70% in the Activity and Trainer sections — eligible for accreditation.' }
-    : { color:'red', label:'BELOW THRESHOLD', msg:'Accreditation requires BOTH reviews to reach 70% in BOTH the Activity and Trainer sections.' };
+    ? { color:'green', label:'MEETS THRESHOLD', msg:'Both reviews score ≥70% in '+_secLabel+' — eligible for accreditation.' }
+    : { color:'red', label:'BELOW THRESHOLD', msg:'Accreditation requires BOTH reviews to reach 70% in '+_secLabel+'.' };
 
-  const revCard = (name, label, A, T, pass) => `
+  const revCard = (name, label, slot, pass) => `
     <div style="flex:1;padding:11px;background:var(--paper);border:1px solid ${pass?'var(--green-border)':'var(--line)'};border-radius:8px">
       <div style="font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:1.1px;text-transform:uppercase;margin-bottom:5px">${label}${name && name!=='— Unassigned' ? ' · '+name.split(' ').pop() : ''}</div>
-      <div style="font-size:12px;color:var(--slate2);line-height:1.5">Activity <b style="color:${A.pass?'var(--green-d)':'var(--red)'}">${Math.round(A.pct*100)}%</b> · Trainer <b style="color:${T.pass?'var(--green-d)':'var(--red)'}">${Math.round(T.pct*100)}%</b></div>
+      <div style="font-size:12px;color:var(--slate2);line-height:1.5">${_secs.map(s=>{const sc=sectionScore(a.scores,slot,s.group);return s.title.replace(' Review','')+' <b style="color:'+(sc.pass?'var(--green-d)':'var(--red)')+'">'+Math.round(sc.pct*100)+'%</b>';}).join(' · ')}</div>
       <div style="margin-top:5px;font-family:var(--mono);font-size:11px;font-weight:700;color:${pass?'var(--green-d)':'var(--red)'}">${pass?'✓ PASS':'✕ FAIL'}</div>
     </div>`;
 
@@ -788,8 +812,8 @@ function renderDecision(a){
     </div>
 
     <div style="display:flex;gap:8px;margin-bottom:14px">
-      ${revCard(a.reviewer1, 'First review', r1A, r1T, r1Pass)}
-      ${revCard(a.reviewer2, 'Second review', r2A, r2T, r2Pass)}
+      ${revCard(a.reviewer1, 'First review', 'r1', r1Pass)}
+      ${revCard(a.reviewer2, 'Second review', 'r2', r2Pass)}
     </div>
 
     <div class="decision-notes">
@@ -798,7 +822,7 @@ function renderDecision(a){
     </div>
 
     <div class="decision-actions">
-      <button class="btn btn-approve" ${accredited?'':'disabled'} title="${accredited?'':'Both reviews must reach 70% in both the Activity and Trainer sections'}" style="${accredited?'':'opacity:.45;cursor:not-allowed'}" onclick="decide('approve')">✓ Approve &amp; accredit</button>
+      <button class="btn btn-approve" ${accredited?'':'disabled'} title="${accredited?'':('Both reviews must reach 70% in '+_secLabel)}" style="${accredited?'':'opacity:.45;cursor:not-allowed'}" onclick="decide('approve')">✓ Approve &amp; accredit</button>
       <button class="btn btn-changes" onclick="decide('changes')">↻ Request changes</button>
       <button class="btn btn-reject" onclick="decide('reject')">✕ Reject</button>
       <button class="btn btn-ghost" onclick="decide('defer')">⏸ Defer · escalate to DG</button>
@@ -961,7 +985,7 @@ async function persistPoints(ref, final_points, final_credits) {
 function onScoreInput(appRef, slot, critKey, value) {
   const a = APPLICATIONS.find(x => x.ref === appRef);
   if (!a) return;
-  const crit = RUBRIC_CRITERIA.find(c => c.key === critKey);
+  const crit = RUBRIC_ALL.find(c => c.key === critKey);
   const cmax = crit ? crit.max : 5;
   const n = value === '' ? undefined : Math.max(0, Math.min(cmax, Math.round(Number(value))));
   if (n === undefined) delete a.scores[slot][critKey];
@@ -991,9 +1015,9 @@ function onPointsBlur(appRef) {
 }
 
 function refreshScoringTotals(a){
-  const criteria = a.kind === 'renewal' ? RUBRIC_CRITERIA_RENEWAL : RUBRIC_CRITERIA_COURSE;
+  const criteria = a.isProviderReg ? RUBRIC_ENTITY : (a.kind === 'renewal' ? RUBRIC_CRITERIA_RENEWAL : RUBRIC_CRITERIA_COURSE);
   const tot = (slot) => criteria.reduce((s,c) => s + (Number(a.scores[slot][c.key])||0), 0);
-  const max = criteria.length * 10;
+  const max = criteria.reduce((s,c) => s + c.max, 0);
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   set('score-tot-r1', tot('r1'));
   set('score-tot-r2', tot('r2'));

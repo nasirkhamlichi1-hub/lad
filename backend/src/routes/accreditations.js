@@ -44,6 +44,8 @@ const isReviewer = (u) => !!u && REVIEWER_ROLES.includes(u.role);
 const RUBRIC = {
   activity: [['a_intellectual', 4], ['a_law', 4], ['a_current', 4], ['a_concise', 4], ['a_relevant', 4]],
   trainer: [['t_experience', 5], ['t_topic', 5], ['t_local', 5], ['t_materials', 5]],
+  // Provider (entity) accreditation uses a different rubric from an activity.
+  entity: [['e_legal_exp', 4], ['e_training_exp', 4], ['e_local', 2], ['e_intl', 2], ['e_affil', 2], ['e_prev_training', 2], ['e_prospective', 2], ['e_client_ref', 2]],
 };
 const PASS_PCT = 0.70;
 function sectionPct(slot, group) {
@@ -52,10 +54,13 @@ function sectionPct(slot, group) {
   const score = crit.reduce((t, c) => t + (Number(slot && slot[c[0]]) || 0), 0);
   return max ? score / max : 0;
 }
-const reviewPasses = (slot) => !!slot && sectionPct(slot, 'activity') >= PASS_PCT && sectionPct(slot, 'trainer') >= PASS_PCT;
-function bothReviewsPass(scores) {
+// Providers are judged on the entity rubric; activities on activity + trainer.
+const reviewPasses = (slot, isProvider) => !!slot && (isProvider
+  ? sectionPct(slot, 'entity') >= PASS_PCT
+  : (sectionPct(slot, 'activity') >= PASS_PCT && sectionPct(slot, 'trainer') >= PASS_PCT));
+function bothReviewsPass(scores, isProvider) {
   const s = typeof scores === 'string' ? parse(scores, {}) : (scores || {});
-  return reviewPasses(s.r1) && reviewPasses(s.r2);
+  return reviewPasses(s.r1, isProvider) && reviewPasses(s.r2, isProvider);
 }
 // Chasing attendance filing is everyday LAD operations (not an accreditation
 // decision) — all internal LAD staff see the LAD-wide alert queue.
@@ -543,9 +548,12 @@ router.patch('/:ref', requireAuth, (req, res) => {
     // BOTH reviews reach 70% in BOTH sections. (Session attendance filings are a
     // different flow and are not rubric-scored.)
     if (b.status === 'approved' && row.type !== 'session_submission') {
+      const isProvider = row.type === 'provider_registration' || parse(row.payload, {}).type === 'provider_registration';
       const eff = b.scores !== undefined ? b.scores : row.scores;
-      if (!bothReviewsPass(eff)) {
-        return res.status(422).json({ error: 'Accreditation needs both reviews to score at least 70% in both the Activity and Trainer sections.' });
+      if (!bothReviewsPass(eff, isProvider)) {
+        return res.status(422).json({ error: isProvider
+          ? 'Provider accreditation needs both reviews to score at least 70% in the Entity Review.'
+          : 'Accreditation needs both reviews to score at least 70% in both the Activity and Trainer sections.' });
       }
     }
     sets.push('status = ?', 'reviewed_by = ?', 'reviewed_at = ?');
@@ -616,9 +624,19 @@ router.post('/:ref/ai-rationale', requireAuth, async (req, res, next) => {
     `Description: ${p.description || p.summary || 'n/a'}`,
     `Learning objectives: ${Array.isArray(p.learningObjectives) ? p.learningObjectives.join('; ') : (p.learningObjectives || p.objectives || 'n/a')}`,
   ].join('\n');
-  // CLPD rubric: two sections — Activity Review (5 criteria, each 0–4) and
-  // Trainer Review (4 criteria, each 0–5). Each section passes at ≥70%.
-  const CRITERIA = [
+  // Rubric depends on the application type: a provider (entity) is scored on
+  // institutional capability; an activity/course on content + trainer.
+  const isProvider = row.type === 'provider_registration' || p.type === 'provider_registration';
+  const CRITERIA = isProvider ? [
+    ['e_legal_exp', 4, 'Entity — legal industry experience'],
+    ['e_training_exp', 4, 'Entity — training experience'],
+    ['e_local', 2, 'Entity — local presence (UAE / local market)'],
+    ['e_intl', 2, 'Entity — international presence'],
+    ['e_affil', 2, 'Entity — relevant affiliations or qualifications'],
+    ['e_prev_training', 2, 'Entity — examples of previous training delivered'],
+    ['e_prospective', 2, 'Entity — prospective training proposed'],
+    ['e_client_ref', 2, 'Entity — client references'],
+  ] : [
     ['a_intellectual', 4, 'Activity — intellectual, educational or practical'],
     ['a_law', 4, 'Activity — deals with matters of law or day-to-day skills'],
     ['a_current', 4, 'Activity — up-to-date and factually correct'],
@@ -632,18 +650,26 @@ router.post('/:ref/ai-rationale', requireAuth, async (req, res, next) => {
   const keys = CRITERIA.map((c) => c[0]);
   const maxOf = Object.fromEntries(CRITERIA.map((c) => [c[0], c[1]]));
   const critList = CRITERIA.map((c) => `- ${c[0]} (score 0–${c[1]}): ${c[2]}`).join('\n');
+  const totalMax = CRITERIA.reduce((t, c) => t + c[1], 0);
+  const passMark = Math.ceil(totalMax * PASS_PCT);
+
+  const rubricLine = isProvider
+    ? 'A provider is accredited only when the Entity Review (8 criteria, max ' + totalMax + ') reaches at least 70% (i.e. ≥' + passMark + '/' + totalMax + '). '
+    : 'A course is accredited only when BOTH the Activity Review (5 criteria, each 0–4, max 20) and the Trainer Review (4 criteria, each 0–5, max 20) reach at least 70% (i.e. ≥14/20 in each section). ';
+  const sectionsRef = isProvider ? 'the Entity Review' : 'both sections';
+  const pointsLine = isProvider
+    ? 'CPD points do not apply to a provider entity — set recommendedPoints to 0. '
+    : 'Recommend CPD points at about 1 point per hour of substantive learning (0 if rejected). ';
 
   const system = 'You are Lex, an accreditation assessor for the Dubai Legal Affairs Department CLPD programme. '
-    + 'A course is accredited only when BOTH the Activity Review (5 criteria, each 0–4, max 20) and the Trainer Review '
-    + '(4 criteria, each 0–5, max 20) reach at least 70% (i.e. ≥14/20 in each section). Score EACH listed criterion within '
-    + 'its stated range, derived directly from your assessment (top of range = excellent and fully evidenced; middle = '
+    + rubricLine
+    + 'Score EACH listed criterion within its stated range, derived directly from your assessment (top of range = excellent and fully evidenced; middle = '
     + 'adequate but with gaps; 0–1 = weak, vague, missing, or a placeholder/test submission). Be strict and evidence-based: '
-    + 'if a field is empty, nonsensical, or clearly a test (gibberish audience, no learning objectives, implausibly short '
-    + 'duration), the affected criteria MUST score at the bottom of their range. '
+    + 'if a field is empty, nonsensical, or clearly a test (gibberish, no detail, implausible content), the affected criteria MUST score at the bottom of their range. '
     + 'The rationale, the per-criterion scores, the recommendedPoints and the recommendation MUST be mutually consistent. '
-    + 'Recommend "approve" only when BOTH sections would clear 70%, "request_changes" when there are fixable gaps, and '
-    + '"reject" when the submission is weak or incomplete. Recommend CPD points at about 1 point per hour of substantive '
-    + 'learning (0 if rejected). Write a 4–6 sentence rationale that explicitly references the scoring and both sections. '
+    + 'Recommend "approve" only when ' + sectionsRef + ' would clear 70%, "request_changes" when there are fixable gaps, and '
+    + '"reject" when the submission is weak or incomplete. ' + pointsLine
+    + 'Write a 4–6 sentence rationale that explicitly references the scoring. '
     + 'Reply with ONLY a JSON object: {"scores": {<criterionKey>: integer within its range, ...}, '
     + '"recommendedPoints": integer, "recommendation": "approve"|"request_changes"|"reject", "rationale": string}. '
     + 'Use EXACTLY these criterion keys and ranges:\n' + critList;
