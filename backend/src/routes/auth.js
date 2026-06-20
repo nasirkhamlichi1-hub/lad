@@ -248,6 +248,7 @@ router.post('/staff/login', async (req, res) => {
   db.prepare(`INSERT INTO audit_log (actor_id, actor_type, action, details, ip)
               VALUES (?, 'staff', 'login', ?, ?)`)
     .run(staff.id, JSON.stringify({ method: 'password' }), req.ip || null);
+  try { db.prepare('UPDATE staff SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?').run(staff.id); } catch (_) {}
 
   res.json({ token, role: staff.role, name: `${staff.first_name} ${staff.last_name}`.trim(),
              must_change_password: !!staff.must_change_password });
