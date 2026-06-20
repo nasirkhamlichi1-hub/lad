@@ -66,6 +66,40 @@ router.get('/availability', optionalAuth, (_req, res) => {
   res.json({ seats, soldOut });
 });
 
+// GET /api/v1/bookings/session/:id — who is booked onto a session (admin).
+// Returns the session header + the list of booked lawyers, for the admin
+// "manage a session" view.
+router.get('/session/:id', requireAuth, (req, res) => {
+  if (!ADMIN_BK_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Forbidden' });
+  const sid = req.params.id;
+  let s = null;
+  try {
+    s = db.prepare(
+      `SELECT s.id, s.course_id, s.scheduled_at, s.capacity, s.seats_remaining, s.status, s.venue, c.title AS course_title
+       FROM course_sessions s LEFT JOIN courses c ON c.id = s.course_id WHERE s.id = ?`
+    ).get(sid);
+  } catch (_) {}
+  if (!s) return res.status(404).json({ error: 'Session not found' });
+  let rows = [];
+  try {
+    rows = db.prepare(
+      `SELECT b.id, b.status, b.credits_used, b.booked_at, b.points_earned, b.lawyer_id,
+              l.first_name, l.last_name, l.email, l.lifetime_points, f.name AS firm_name
+       FROM bookings b LEFT JOIN lawyers l ON l.id = b.lawyer_id LEFT JOIN firms f ON f.id = l.firm_id
+       WHERE b.session_id = ? AND b.status NOT IN ('cancelled','refunded')
+       ORDER BY b.booked_at DESC`
+    ).all(sid);
+  } catch (_) {}
+  res.json({
+    session: { id: s.id, course_id: s.course_id, course_title: s.course_title || s.course_id, scheduled_at: s.scheduled_at, capacity: s.capacity, seats_remaining: s.seats_remaining, status: s.status, venue: s.venue },
+    bookings: rows.map((b) => ({
+      id: b.id, lawyer_id: b.lawyer_id, name: `${b.first_name || ''} ${b.last_name || ''}`.trim() || b.lawyer_id,
+      email: b.email || '', firm: b.firm_name || '', status: b.status || 'booked',
+      credits_used: Number(b.credits_used) || 0, points: Number(b.lifetime_points) || 0,
+    })),
+  });
+});
+
 // POST /api/v1/bookings — create a booking (lawyer self-books or firm CO books a member)
 //
 // Enforces, atomically:
