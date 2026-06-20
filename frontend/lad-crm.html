@@ -282,6 +282,7 @@
   // Role-scope the rail. Super users (+dg) get Intelligence & Command Centre;
   // lad_intelligence analysts don't manage user accounts.
   var SUPER_ROLES=['lad_super_admin','super_admin','dg'];
+  var IS_SUPER=SUPER_ROLES.indexOf(ME.role)!==-1;
   var roleLabel={lad_admin:'LAD Admin',lad_intelligence:'LAD Intelligence',lad_super_admin:'LAD Super User',super_admin:'Super Admin',dg:'Director General'}[ME.role]||'CLPD Admin';
   var rlEl=document.getElementById('meRole');if(rlEl)rlEl.textContent=roleLabel;
   // Accreditation, Intelligence and the Command Centre are strategic-oversight
@@ -348,6 +349,7 @@
         +kpi('Assigned to me',CONV.filter(function(c){return c.assigned_to===ME.sub&&c.status!=='closed'}).length,'your queue')
         +kpi('Upcoming sessions',SESS.length,(SESS.reduce(function(s,x){return s+(Number(x.seats_remaining)||0)},0))+' seats open')
         +kpi('Tasks due',TASKS_DUE.length,'follow-ups')
+        +(IS_SUPER?kpiGo('Accreditation','accredPending','awaiting your decision','accred'):'')
         +'<div class="panel" style="grid-column:span 2;min-height:300px"><div class="panel-hd"><h2>Needs attention</h2><button class="btn btn-l btn-xs" style="margin-left:auto" onclick="go(\'inbox\')">Open inbox →</button></div><div class="panel-bd" id="dashQueue" style="flex:1"></div></div>'
         +'<div class="panel" style="grid-column:span 2"><div class="panel-hd"><h2>Tasks due</h2></div><div class="panel-bd" id="dashTasks" style="flex:1;padding:6px 18px"></div></div>'
         +'<div class="ai" style="grid-column:span 2"><div class="ey" style="color:rgba(255,255,255,.6);margin-bottom:9px">✦ Ask Maryam · AI assist</div><textarea id="aiQ" rows="2" placeholder="which firms are most at risk? · summarise today\'s messages · who needs chasing"></textarea><div style="margin-top:9px"><button class="btn btn-g" onclick="askAI()" id="aiBtn">Ask</button></div><div class="ans" id="aiAns"></div></div>'
@@ -356,8 +358,12 @@
       dq.innerHTML=att.length?att.map(convRow).join(''):'<div class="empty">All clear — nothing waiting.</div>';
       var dt=document.getElementById('dashTasks');dt.innerHTML=TASKS_DUE.length?TASKS_DUE.slice(0,8).map(function(t){return '<div class="task"><input type="checkbox" onchange="taskDone(\''+t.id+'\',this.checked)"/><div style="flex:1"><div style="font-size:13px;font-weight:500">'+esc(t.title)+'</div><div class="sub">'+(t.due_at?'Due '+fdate(t.due_at):'')+'</div></div></div>'}).join(''):'<div class="empty">No open tasks.</div>';
       var ds=document.getElementById('dashSess');ds.innerHTML=SESS.slice(0,8).map(sessRow).join('')||'<div class="empty">No upcoming sessions.</div>';
+      if(IS_SUPER)loadAccredWidget();
     });
   }
+  // Super only — surface the accreditation decision queue on Home.
+  function loadAccredWidget(){api('/api/v1/accreditations?status=pending&limit=1').then(function(j){var n=(j.counts&&j.counts.pending)||0;var el=document.getElementById('accredPending');if(!el)return;el.textContent=num(n);el.style.color=n>0?'var(--amber)':'';}).catch(function(){})}
+  function kpiGo(l,id,s,view){return '<div class="kpi" style="cursor:pointer" onclick="go(\''+view+'\')" title="Open accreditation review"><div class="l">'+l+'</div><div class="v" id="'+id+'">…</div><div class="s">'+esc(s)+' ›</div></div>'}
   function kpi(l,v,s){return '<div class="kpi"><div class="l">'+l+'</div><div class="v">'+num(v)+'</div><div class="s">'+esc(s)+'</div></div>'}
 
   // ── conversations ──
