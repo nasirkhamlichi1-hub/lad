@@ -7,6 +7,9 @@ const db = require('../db');
 const store = require('../services/store');
 const feedback = require('../services/feedback');
 const tagger = require('../services/coursetagger');
+const email = require('../services/email');
+const tpl = require('../services/email-templates');
+const activity = require('../services/activity');
 const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth');
 
 const _nid = () => 'NT-' + crypto.randomBytes(6).toString('hex').toUpperCase().slice(0, 10);
@@ -93,49 +96,86 @@ router.post('/sessions/:id/register-free', requireRole('lad_staff'), (req, res) 
 });
 
 // POST /api/v1/courses/sessions/:id/cancel — cancel a session: refund + free all
-// bookings and notify every affected lawyer.
-router.post('/sessions/:id/cancel', requireRole('lad_admin'), (req, res) => {
+// bookings, then notify every affected lawyer in-system AND by email, and write
+// the refund to the audit trail.
+router.post('/sessions/:id/cancel', requireRole('lad_admin', 'lad_super_admin', 'super_admin', 'dg'), (req, res) => {
   const id = req.params.id;
   const s = db.prepare('SELECT * FROM course_sessions WHERE id = ?').get(id);
   if (!s) return res.status(404).json({ error: 'Session not found' });
   const course = store.getCourseById(s.course_id);
   const cTitle = (course && course.title) || 'a course';
+  const PRICE = Number(process.env.CREDIT_PRICE_AED || 120);
+  // Capture who is booked BEFORE we cancel — otherwise the post-cancel notify
+  // query (status NOT IN cancelled) would find nobody.
   const bks = db.prepare("SELECT * FROM bookings WHERE session_id = ? AND status NOT IN ('cancelled','refunded')").all(id);
+  const affected = [];
   const tx = db.transaction(() => {
     for (const bk of bks) {
       db.prepare("UPDATE bookings SET status = 'cancelled' WHERE id = ?").run(bk.id);
       const cost = Number(bk.credits_used) || 0;
-      if (cost > 0 && bk.lawyer_id) {
-        const PRICE = Number(process.env.CREDIT_PRICE_AED || 120);
+      let toFirm = false, firmId = null;
+      if (bk.lawyer_id) {
         const lw = db.prepare('SELECT firm_id FROM lawyers WHERE id = ?').get(bk.lawyer_id) || {};
-        // Firm-funded bookings return to the firm pool; self-funded to the lawyer.
-        if (lw.firm_id && bk.booked_by !== 'self') {
-          db.prepare('UPDATE firms SET credit_pool = COALESCE(credit_pool,0) + ? WHERE id = ?').run(cost, lw.firm_id);
-          try {
-            db.prepare("INSERT INTO firm_credit_transactions (id, firm_id, type, amount, aed_amount, description, lawyer_id) VALUES (?,?,?,?,?,?,?)")
-              .run('FTX-' + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8), lw.firm_id, 'refund', cost, cost * PRICE, 'Session cancelled — credits returned to firm pool', bk.lawyer_id);
-          } catch (_) {}
-        } else {
-          db.prepare('UPDATE lawyers SET credit_balance = COALESCE(credit_balance,0) + ? WHERE id = ?').run(cost, bk.lawyer_id);
-          try {
-            db.prepare("INSERT INTO credit_transactions (id, lawyer_id, type, amount, aed_amount, description, payment_method, status) VALUES (?,?,?,?,?,?,?, 'completed')")
-              .run(_tid(), bk.lawyer_id, 'refund', cost, cost * PRICE, 'Session cancelled — credits refunded', 'admin');
-          } catch (_) {}
+        firmId = lw.firm_id || null;
+        if (cost > 0) {
+          // Firm-funded bookings return to the firm pool; self-funded to the lawyer.
+          if (lw.firm_id && bk.booked_by !== 'self') {
+            toFirm = true;
+            db.prepare('UPDATE firms SET credit_pool = COALESCE(credit_pool,0) + ? WHERE id = ?').run(cost, lw.firm_id);
+            try {
+              db.prepare("INSERT INTO firm_credit_transactions (id, firm_id, type, amount, aed_amount, description, lawyer_id) VALUES (?,?,?,?,?,?,?)")
+                .run('FTX-' + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8), lw.firm_id, 'refund', cost, cost * PRICE, 'Session cancelled — credits returned to firm pool', bk.lawyer_id);
+            } catch (_) {}
+          } else {
+            db.prepare('UPDATE lawyers SET credit_balance = COALESCE(credit_balance,0) + ? WHERE id = ?').run(cost, bk.lawyer_id);
+            try {
+              db.prepare("INSERT INTO credit_transactions (id, lawyer_id, type, amount, aed_amount, description, payment_method, status) VALUES (?,?,?,?,?,?,?, 'completed')")
+                .run(_tid(), bk.lawyer_id, 'refund', cost, cost * PRICE, 'Session cancelled — credits refunded', 'admin');
+            } catch (_) {}
+          }
         }
+        affected.push({ booking_id: bk.id, lawyer_id: bk.lawyer_id, cost, toFirm, firmId });
       }
     }
     db.prepare("UPDATE course_sessions SET status = 'cancelled' WHERE id = ?").run(id);
   });
   tx();
-  const notified = notifyBookedLawyers(id, 'Session cancelled · ' + cTitle,
-    'Your booked session for "' + cTitle + '" has been cancelled and your credits refunded. Please book an alternative session.',
-    'urgent', req.user.email || 'LAD Admin');
-  res.json({ ok: true, cancelled: bks.length, refunded: bks.length, notified });
+
+  // Notify every affected lawyer: in the system, by email, and on the audit trail.
+  const ins = db.prepare('INSERT INTO notifications (id, recipient_type, recipient_id, title, body, level, created_by) VALUES (?,?,?,?,?,?,?)');
+  const actor = req.user.email || req.user.name || 'LAD Admin';
+  let emailed = 0;
+  for (const af of affected) {
+    const lw = db.prepare('SELECT first_name, last_name, email, credit_balance FROM lawyers WHERE id = ?').get(af.lawyer_id) || {};
+    const name = tpl.fullName(lw.first_name, lw.last_name);
+    const refundMsg = af.cost > 0 ? (af.toFirm ? ` ${af.cost} credit${af.cost === 1 ? '' : 's'} returned to your firm's pool.` : ` ${af.cost} credit${af.cost === 1 ? '' : 's'} refunded to your balance.`) : '';
+    try { ins.run(_nid(), 'lawyer', af.lawyer_id, 'Session cancelled · ' + cTitle, 'Your booked session for "' + cTitle + '" has been cancelled.' + refundMsg + ' Please book an alternative session.', 'urgent', actor); } catch (_) {}
+    if (lw.email) {
+      try {
+        email.send('cancellation', tpl.bookingCancellation({
+          name, courseTitle: cTitle, refundCredits: af.cost || null,
+          balance: lw.credit_balance != null ? Number(lw.credit_balance) : null,
+        }), { to: lw.email, toName: name, ref: af.booking_id, dedupeKey: 'session_cancel:' + af.booking_id });
+        emailed++;
+      } catch (_) {}
+    }
+    try {
+      activity.logActivity(Object.assign({
+        lawyer_id: af.lawyer_id, firm_id: af.firmId, kind: 'booking_cancel', category: 'bookings',
+        tags: ['session-cancelled', af.cost > 0 ? 'refund' : 'no-charge', af.toFirm ? 'refund-firm' : 'refund-lawyer'],
+        aed: af.cost * PRICE,
+        summary: `Session cancelled — "${cTitle}"` + (af.cost > 0 ? ` · ${af.cost} credit${af.cost === 1 ? '' : 's'} ${af.toFirm ? 'returned to firm pool' : 'refunded to lawyer'}` : ''),
+        ref_type: 'session', ref_id: id,
+        meta: { booking_id: af.booking_id, credits: af.cost, refund_to: af.toFirm ? 'firm' : 'lawyer' },
+      }, activity.actorFrom(req.user)));
+    } catch (_) {}
+  }
+  res.json({ ok: true, cancelled: bks.length, refunded: affected.filter((a) => a.cost > 0).length, notified: affected.length, emailed });
 });
 
 // POST /api/v1/courses/sessions/:id/reschedule — move a session; booked lawyers
 // keep their seat and are notified.
-router.post('/sessions/:id/reschedule', requireRole('lad_admin'), (req, res) => {
+router.post('/sessions/:id/reschedule', requireRole('lad_admin', 'lad_super_admin', 'super_admin', 'dg'), (req, res) => {
   const id = req.params.id; const b = req.body || {};
   const s = db.prepare('SELECT * FROM course_sessions WHERE id = ?').get(id);
   if (!s) return res.status(404).json({ error: 'Session not found' });
@@ -225,7 +265,7 @@ router.post('/', requireRole('lad_admin', 'provider_admin'), (req, res) => {
 });
 
 // DELETE /api/v1/courses/:id
-router.delete('/:id', requireRole('lad_admin'), (req, res) => {
+router.delete('/:id', requireRole('lad_admin', 'lad_super_admin', 'super_admin', 'dg'), (req, res) => {
   store.deleteCourse(req.params.id);
   res.json({ ok: true });
 });
