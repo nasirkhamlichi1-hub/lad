@@ -77,6 +77,37 @@
   .ai-box{background:linear-gradient(135deg,#0a1e14,#13231b);color:#fff;border-radius:14px;padding:16px 18px;margin-bottom:18px}
   .ai-box textarea{width:100%;box-sizing:border-box;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#fff;border-radius:9px;padding:9px 12px;font-size:13px;resize:vertical;font-family:inherit;outline:none}
   .ai-ans{font-size:13px;line-height:1.6;margin-top:10px;white-space:pre-wrap}
+  /* ── CRM record profile ── */
+  .drawer{width:520px}
+  .pf-wrap{padding:0!important}
+  .pf-hero{background:linear-gradient(135deg,#0a1e14 0%,#13231b 60%,#143a2a 100%);color:#fff;padding:22px}
+  .pf-row{display:flex;gap:14px;align-items:flex-start}
+  .pf-av{width:56px;height:56px;border-radius:15px;display:grid;place-items:center;font-weight:800;font-size:20px;color:#fff;flex-shrink:0;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+  .pf-name{font-size:22px;font-weight:700;letter-spacing:-.015em;line-height:1.1}
+  .pf-sub{font-size:12.5px;color:rgba(255,255,255,.62);margin-top:3px}
+  .pf-badge{display:inline-block;padding:3px 11px;border-radius:20px;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;margin-top:9px}
+  .pf-prog-l{display:flex;justify-content:space-between;font-size:10.5px;color:rgba(255,255,255,.6);margin:16px 0 6px;font-family:'JetBrains Mono',monospace;letter-spacing:.4px}
+  .pf-prog{height:8px;background:rgba(255,255,255,.15);border-radius:5px;overflow:hidden}
+  .pf-prog>div{height:100%;border-radius:5px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+  .pf-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px 22px;border-bottom:1px solid var(--line)}
+  .pf-tile{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .pf-tile .l{font-size:8.5px;letter-spacing:.9px;text-transform:uppercase;color:var(--slate3);font-weight:700}
+  .pf-tile .v{font-size:21px;font-weight:700;margin-top:3px;letter-spacing:-.01em}
+  .pf-actions{display:flex;gap:8px;padding:14px 22px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .pf-act{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line2);border-radius:9px;padding:8px 13px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink);font-family:inherit}
+  .pf-act:hover{border-color:var(--green);color:var(--green)}
+  .pf-act.primary{background:var(--green);border-color:var(--green);color:#fff}
+  .pf-sec{padding:18px 22px;border-bottom:1px solid var(--line)}
+  .pf-sec h4{font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--gold);font-weight:700;margin:0 0 13px}
+  .tl{position:relative;padding-left:24px}
+  .tl:before{content:'';position:absolute;left:7px;top:5px;bottom:8px;width:2px;background:var(--line)}
+  .tl-item{position:relative;padding:0 0 15px}
+  .tl-dot{position:absolute;left:-24px;top:0;width:17px;height:17px;border-radius:50%;background:#fff;border:2px solid var(--green);display:grid;place-items:center;font-size:9px;line-height:1}
+  .tl-text{font-size:12.8px;line-height:1.4}
+  .tl-when{font-size:10.5px;color:var(--slate3);font-family:'JetBrains Mono',monospace;margin-top:1px}
+  .lw-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer}
+  .lw-item:hover{background:var(--paper)}
+  .lw-av{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-weight:700;font-size:11px;color:#fff;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -228,7 +259,7 @@
   function loadSessions(){
     api('/api/v1/courses/sessions/all').then(function(all){
       var now=new Date().toISOString();
-      SESS=(Array.isArray(all)?all:[]).filter(function(s){return s&&s.scheduled_at&&s.scheduled_at>=now&&(s.status||'')!=='cancelled'}).sort(function(a,b){return String(a.scheduled_at).localeCompare(String(b.scheduled_at))});
+      SESS=(Array.isArray(all)?all:[]).filter(function(s){return s&&s.scheduled_at&&s.scheduled_at>=now&&(s.status||'')!=='cancelled'}).sort(function(a,b){return String(a.scheduled_at).localeCompare(String(b.scheduled_at))}); window.__SESSALL=SESS;
       document.getElementById('stSessions').textContent=num(SESS.length);
       var seats=SESS.reduce(function(s,x){return s+(Number(x.seats_remaining)||0)},0);
       document.getElementById('stSeats').textContent=num(seats)+' seats open';
@@ -286,48 +317,102 @@
     api('/api/v1/lawyers?search='+encodeURIComponent(q)+'&limit=15').then(function(j){
       var rows=Array.isArray(j)?j:(j.data||j.rows||[]);
       var h='';
-      if(firmHits.length){h+='<div class="row-sub" style="padding:8px 18px 2px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;font-size:10px">Firms</div>'+firmHits.map(function(f){return '<div class="row" onclick="openFirm(\''+esc(f.id)+'\')"><div class="row-top"><span class="row-title">🏢 '+esc(f.name||f.id)+'</span></div></div>'}).join('')}
+      if(firmHits.length){h+='<div class="row-sub" style="padding:8px 18px 2px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;font-size:10px">Firms</div>'+firmHits.map(function(f){return '<div class="row" onclick="openFirm(\''+esc(f.id)+'\')"><div class="row-top"><span class="lw-av" style="background:'+avColor(f.name)+'">'+initials(f.name)+'</span><span class="row-title">'+esc(f.name||f.id)+'</span></div></div>'}).join('')}
       h+='<div class="row-sub" style="padding:10px 18px 2px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;font-size:10px">Lawyers</div>';
-      h+=rows.length?rows.map(function(l){var n=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.id;var pts=l.points!=null?l.points:(l.lifetime_points!=null?l.lifetime_points:'');return '<div class="row" onclick="openLawyer(\''+esc(l.id)+'\')"><div class="row-top"><span class="row-title">'+esc(n)+'</span>'+(pts!==''?'<span class="pill cat">'+pts+'/16</span>':'')+'</div><div class="row-sub">'+esc(l.email||'')+' · '+esc(l.firmId||l.firm_id||'')+'</div></div>'}).join(''):'<div class="empty">No lawyers found.</div>';
+      h+=rows.length?rows.map(function(l){var n=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.fullName||l.name||l.id;var pts=l.points!=null?l.points:(l.lifetime_points!=null?l.lifetime_points:0);var st=lawStatus(pts,l.practicing!==false&&l.status!=='non-practising');return '<div class="row" onclick="openLawyer(\''+esc(l.id)+'\',\''+esc(n).replace(/'/g,"")+'\')"><div class="row-top"><span class="lw-av" style="background:'+avColor(n)+'">'+initials(n)+'</span><span class="row-title">'+esc(n)+'</span><span class="pf-badge" style="margin:0;padding:2px 8px;background:'+st.bg+';color:'+st.color+'">'+st.label+'</span></div><div class="row-sub" style="margin-left:40px">'+esc(l.email||'')+' · '+pts+'/16 pts</div></div>'}).join(''):'<div class="empty">No lawyers found.</div>';
       host.innerHTML=h;
     }).catch(function(e){host.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
   }
-  window.openLawyer=function(id){
-    openDrawer('Lawyer','');
-    Promise.all([api('/api/v1/lawyers/'+id).catch(function(){return null}),api('/api/v1/credits/transactions?limit=200').catch(function(){return{data:[]}})]).then(function(res){
-      var l=res[0]||{};var name=((l.first_name||'')+' '+(l.last_name||'')).trim()||id;
-      var tx=((res[1]&&res[1].data)||[]).filter(function(t){return (t.buyer||'').indexOf(name)>=0}).slice(0,10);
-      document.getElementById('drawerInner').innerHTML='<div class="drawer-hd"><h3>'+esc(name)+'</h3><button class="x" onclick="closeDrawer()">×</button></div>'
-        +'<div class="drawer-bd">'
-        +'<div class="kv"><span class="k">Email</span><span>'+esc(l.email||'—')+'</span></div>'
-        +'<div class="kv"><span class="k">Firm</span><span>'+esc(l.firm_name||l.firm_id||'—')+'</span></div>'
-        +'<div class="kv"><span class="k">CPD points</span><span>'+num(l.lifetime_points)+' / 16</span></div>'
-        +'<div class="kv"><span class="k">Credits</span><span>'+num(l.credit_balance)+'</span></div>'
-        +'<div class="kv"><span class="k">Status</span><span>'+esc(l.status||'active')+'</span></div>'
-        +'<div class="ey" style="font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--gold);font-weight:700;margin:16px 0 6px">Recent transactions</div>'
-        +(tx.length?tx.map(function(t){return '<div class="kv"><span>'+esc(t.kind||'')+' · '+esc(t.date||'')+'</span><span>'+(t.credits>0?'+':'')+t.credits+' cr</span></div>'}).join(''):'<div class="row-sub">No transactions found.</div>')
+  // ── CRM helpers ──
+  function initials(n){return String(n||'?').replace(/[^A-Za-z ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(function(w){return w[0]}).join('').toUpperCase()||'?'}
+  function avColor(n){var h=0;String(n||'x').split('').forEach(function(c){h=c.charCodeAt(0)+((h<<5)-h)});return 'hsl('+(Math.abs(h)%360)+',42%,40%)'}
+  function lawStatus(pts,practising){if(!practising)return{key:'non',label:'Non-practising',color:'#cbd5cd',bg:'rgba(180,190,184,.25)'};if(pts>=16)return{key:'compliant',label:'Compliant',color:'#3df0a0',bg:'rgba(61,240,160,.18)'};if(pts>=8)return{key:'atrisk',label:'At risk',color:'#ffc875',bg:'rgba(255,184,77,.2)'};return{key:'critical',label:'Critical',color:'#ff9aac',bg:'rgba(255,94,126,.22)'}}
+  function tlIcon(k){return{message_in:'💬',reply_out:'↩',ai_reply:'✦',escalation:'⚠',assignment:'👤',status_change:'◔',booking:'📅',credit_purchase:'💳',note:'📝'}[k]||'•'}
+  function timelineHTML(items){if(!items.length)return '<div class="row-sub">No activity yet.</div>';
+    return '<div class="tl">'+items.map(function(a){return '<div class="tl-item"><div class="tl-dot">'+tlIcon(a.kind)+'</div><div class="tl-text">'+esc(a.text||a.summary||a.kind)+'</div><div class="tl-when">'+(a.who?esc(a.who)+' · ':'')+fdate(a.when||a.created_at)+'</div></div>'}).join('')+'</div>';}
+  function pfTabs(tabs){return '<div style="display:flex;gap:4px;padding:12px 22px 0;border-bottom:1px solid var(--line)">'+tabs.map(function(t,i){return '<button class="pf-tab'+(i===0?' on':'')+'" data-t="'+t.id+'" onclick="pfTab(this,\''+t.id+'\')" style="background:none;border:none;border-bottom:2px solid '+(i===0?'var(--green)':'transparent')+';padding:9px 12px;font-size:12.5px;font-weight:600;cursor:pointer;color:'+(i===0?'var(--ink)':'var(--slate2)')+';font-family:inherit">'+t.label+'</button>'}).join('')+'</div>';}
+  window.pfTab=function(btn,id){btn.parentNode.querySelectorAll('button').forEach(function(b){b.style.borderBottomColor='transparent';b.style.color='var(--slate2)'});btn.style.borderBottomColor='var(--green)';btn.style.color='var(--ink)';document.querySelectorAll('[data-tab]').forEach(function(p){p.style.display=p.getAttribute('data-tab')===id?'block':'none'})};
+
+  var _rec={};
+  window.openLawyer=function(id,nameHint){
+    openDrawer(nameHint||'Lawyer','');
+    Promise.all([
+      api('/api/v1/lawyers/'+id).catch(function(){return{}}),
+      api('/api/v1/messages/activity?lawyer_id='+encodeURIComponent(id)+'&limit=50').catch(function(){return{activity:[]}})
+    ]).then(function(res){
+      var l=res[0]||{};var acts=(res[1]&&res[1].activity)||[];
+      var name=l.name||l.fullName||((l.firstName||'')+' '+(l.lastName||'')).trim()||nameHint||id;
+      var pts=Number(l.points!=null?l.points:l.lifetime_points)||0;
+      var practising=l.practicing!==false&&(l.status||'')!=='non-practising';
+      var st=lawStatus(pts,practising);
+      var bookings=Array.isArray(l.bookings)?l.bookings:[];
+      _rec={type:'lawyer',id:id,name:name,firm:l.firmId||l.firm_id,course:null};
+      var tl=acts.map(function(a){return {kind:a.kind,when:a.created_at,text:a.summary,who:a.actor_name}});
+      bookings.forEach(function(b){tl.push({kind:'booking',when:b.booked_at||b.scheduled_at||b.created_at,text:'Booked: '+(b.course_title||b.course_id||''),who:b.booked_by||'self'})});
+      tl.sort(function(a,b){return String(b.when||'').localeCompare(String(a.when||''))});
+      var pct=Math.min(100,Math.round(pts/16*100));
+      document.getElementById('drawerInner').innerHTML=
+        '<div class="drawer-hd" style="background:none;padding:0;position:relative"><button class="x" onclick="closeDrawer()" style="position:absolute;top:14px;right:16px;z-index:2;background:rgba(255,255,255,.18)">×</button></div>'
+        +'<div class="drawer-bd pf-wrap">'
+        +'<div class="pf-hero"><div class="pf-row"><div class="pf-av" style="background:'+avColor(name)+'">'+initials(name)+'</div>'
+          +'<div style="flex:1;min-width:0"><div class="pf-name">'+esc(name)+'</div><div class="pf-sub">'+esc(l.role||'Lawyer')+(l.firm_name||l.firmName?' · '+esc(l.firm_name||l.firmName):'')+'</div>'
+          +'<span class="pf-badge" style="background:'+st.bg+';color:'+st.color+'">'+st.label+'</span></div></div>'
+          +'<div class="pf-prog-l"><span>CPD PROGRESS</span><span>'+pts+' / 16 pts</span></div><div class="pf-prog"><div style="width:'+pct+'%;background:'+st.color+'"></div></div></div>'
+        +'<div class="pf-tiles"><div class="pf-tile"><div class="l">Points</div><div class="v">'+pts+'</div></div><div class="pf-tile"><div class="l">Credits</div><div class="v">'+num(l.credits!=null?l.credits:l.credit_balance)+'</div></div><div class="pf-tile"><div class="l">Bookings</div><div class="v">'+bookings.length+'</div></div></div>'
+        +'<div class="pf-actions"><button class="pf-act primary" onclick="pfBookStart()">📅 Book onto course</button>'+(_rec.firm?'<button class="pf-act" onclick="openFirm(\''+esc(_rec.firm)+'\')">🏢 Firm</button>':'')+'<button class="pf-act" onclick="pfNoteToggle()">📝 Add note</button>'+(l.email?'<button class="pf-act" onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+esc(l.email)+'\');crmToast(\'Email copied\')">✉ '+esc(l.email)+'</button>':'')+'</div>'
+        +'<div id="pfNote" style="display:none;padding:0 22px 14px;border-bottom:1px solid var(--line)"><textarea id="pfNoteText" class="inp" rows="2" placeholder="Add an internal note to this record…"></textarea><div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-g" onclick="pfNoteSave()">Save note</button></div></div>'
+        +'<div id="pfBook" style="display:none;padding:14px 22px;border-bottom:1px solid var(--line)"><div class="pf-sec" style="padding:0"><h4>Book onto a course</h4><input id="pfBookSearch" class="inp" placeholder="Search a course / session…" oninput="pfBookSearch()"/><div id="pfBookRes" style="margin-top:8px"></div></div></div>'
+        +pfTabs([{id:'tl',label:'Activity'},{id:'bk',label:'Bookings'},{id:'dt',label:'Details'}])
+        +'<div class="pf-sec" data-tab="tl">'+timelineHTML(tl)+'</div>'
+        +'<div class="pf-sec" data-tab="bk" style="display:none">'+(bookings.length?bookings.map(function(b){return '<div class="kv"><span>'+esc(b.course_title||b.course_id||'—')+'<div class="row-sub">'+fdate(b.scheduled_at)+'</div></span><span class="pill cat">'+esc(b.status||'booked')+'</span></div>'}).join(''):'<div class="row-sub">No bookings.</div>')+'</div>'
+        +'<div class="pf-sec" data-tab="dt" style="display:none"><div class="kv"><span class="k">Email</span><span>'+esc(l.email||'—')+'</span></div><div class="kv"><span class="k">Phone</span><span>'+esc(l.phone||'—')+'</span></div><div class="kv"><span class="k">Firm</span><span>'+esc(l.firm_name||l.firmName||l.firmId||'—')+'</span></div><div class="kv"><span class="k">Practice areas</span><span>'+esc(l.practice_areas||l.specialisms||'—')+'</span></div><div class="kv"><span class="k">Status</span><span>'+esc(l.status||'active')+'</span></div></div>'
         +'</div>';
     });
   };
   window.openFirm=function(id){
     openDrawer('Firm','');
-    Promise.all([api('/api/v1/firms/'+id).catch(function(){return{}}),api('/api/v1/firms/'+id+'/lawyers').catch(function(){return[]}),api('/api/v1/firms/'+id+'/transactions').catch(function(){return{transactions:[]}})]).then(function(r){
-      var f=r[0]||{};var laws=Array.isArray(r[1])?r[1]:(r[1].data||[]);var txns=(r[2]&&(r[2].transactions||r[2].data))||[];
+    Promise.all([
+      api('/api/v1/firms/'+id).catch(function(){return{}}),
+      api('/api/v1/firms/'+id+'/lawyers').catch(function(){return[]}),
+      api('/api/v1/firms/'+id+'/transactions').catch(function(){return{transactions:[]}}),
+      api('/api/v1/messages/activity?firm_id='+encodeURIComponent(id)+'&limit=50').catch(function(){return{activity:[]}})
+    ]).then(function(r){
+      var f=r[0]||{};var laws=Array.isArray(r[1])?r[1]:(r[1].data||[]);var txns=(r[2]&&(r[2].transactions||r[2].data))||[];var acts=(r[3]&&r[3].activity)||[];
+      var name=f.name||id;_rec={type:'firm',id:id,name:name};
       var comp=laws.length?Math.round(100*laws.filter(function(l){return (l.points||l.lifetime_points||0)>=16}).length/laws.length):0;
       var crit=laws.filter(function(l){return (l.points||l.lifetime_points||0)<8}).length;
-      document.getElementById('drawerInner').innerHTML='<div class="drawer-hd"><h3>'+esc(f.name||id)+'</h3><button class="x" onclick="closeDrawer()">×</button></div>'
-        +'<div class="drawer-bd">'
-        +'<div class="kv"><span class="k">Lawyers</span><span>'+num(laws.length)+'</span></div>'
-        +'<div class="kv"><span class="k">Compliance</span><span>'+comp+'%</span></div>'
-        +'<div class="kv"><span class="k">Critical (&lt;8 pts)</span><span style="color:var(--red)">'+num(crit)+'</span></div>'
-        +'<div class="kv"><span class="k">Credit pool</span><span>'+num(f.credit_pool||f.pool)+'</span></div>'
-        +'<div class="ey" style="font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--gold);font-weight:700;margin:16px 0 6px">Lawyers</div>'
-        +(laws.length?laws.slice(0,40).map(function(l){var n=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.id;var p=l.points!=null?l.points:(l.lifetime_points||0);return '<div class="kv" style="cursor:pointer" onclick="openLawyer(\''+esc(l.id)+'\')"><span>'+esc(n)+'</span><span class="pill cat">'+p+'/16</span></div>'}).join(''):'<div class="row-sub">No lawyers.</div>')
-        +'<div class="ey" style="font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--gold);font-weight:700;margin:16px 0 6px">Credit ledger</div>'
-        +(txns.length?txns.slice(0,12).map(function(t){return '<div class="kv"><span>'+esc(t.description||t.type||'')+'</span><span>'+(t.credits||t.amount||0)+' cr</span></div>'}).join(''):'<div class="row-sub">No transactions.</div>')
+      var tl=acts.map(function(a){return {kind:a.kind,when:a.created_at,text:a.summary,who:a.actor_name}});
+      txns.forEach(function(t){tl.push({kind:'credit_purchase',when:t.date||t.created_at,text:(t.description||t.type||'Credit movement')+' ('+(t.credits||t.amount||0)+' cr)'})});
+      tl.sort(function(a,b){return String(b.when||'').localeCompare(String(a.when||''))});
+      document.getElementById('drawerInner').innerHTML=
+        '<div class="drawer-hd" style="background:none;padding:0;position:relative"><button class="x" onclick="closeDrawer()" style="position:absolute;top:14px;right:16px;z-index:2;background:rgba(255,255,255,.18)">×</button></div>'
+        +'<div class="drawer-bd pf-wrap">'
+        +'<div class="pf-hero"><div class="pf-row"><div class="pf-av" style="background:'+avColor(name)+'">'+initials(name)+'</div>'
+          +'<div style="flex:1;min-width:0"><div class="pf-name">'+esc(name)+'</div><div class="pf-sub">'+num(laws.length)+' lawyers · '+comp+'% compliant</div>'
+          +'<span class="pf-badge" style="background:'+(comp>=70?'rgba(61,240,160,.18)':comp>=40?'rgba(255,184,77,.2)':'rgba(255,94,126,.22)')+';color:'+(comp>=70?'#3df0a0':comp>=40?'#ffc875':'#ff9aac')+'">'+(comp>=70?'Healthy':comp>=40?'Watch':'At risk')+'</span></div></div>'
+          +'<div class="pf-prog-l"><span>FIRM COMPLIANCE</span><span>'+comp+'%</span></div><div class="pf-prog"><div style="width:'+comp+'%;background:'+(comp>=70?'#3df0a0':comp>=40?'#ffc875':'#ff9aac')+'"></div></div></div>'
+        +'<div class="pf-tiles"><div class="pf-tile"><div class="l">Lawyers</div><div class="v">'+num(laws.length)+'</div></div><div class="pf-tile"><div class="l">Critical</div><div class="v" style="color:var(--red)">'+num(crit)+'</div></div><div class="pf-tile"><div class="l">Credit pool</div><div class="v">'+num(f.credit_pool||f.pool)+'</div></div></div>'
+        +'<div class="pf-actions"><button class="pf-act" onclick="pfNoteToggle()">📝 Add note</button></div>'
+        +'<div id="pfNote" style="display:none;padding:0 22px 14px;border-bottom:1px solid var(--line)"><textarea id="pfNoteText" class="inp" rows="2" placeholder="Add an internal note to this firm…"></textarea><div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-g" onclick="pfNoteSave()">Save note</button></div></div>'
+        +pfTabs([{id:'tl',label:'Activity'},{id:'lw',label:'Lawyers ('+laws.length+')'},{id:'cr',label:'Credits'}])
+        +'<div class="pf-sec" data-tab="tl">'+timelineHTML(tl)+'</div>'
+        +'<div class="pf-sec" data-tab="lw" style="display:none">'+(laws.length?laws.slice(0,60).map(function(l){var n=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.name||l.id;var p=l.points!=null?l.points:(l.lifetime_points||0);var s=lawStatus(p,(l.practicing!==false));return '<div class="lw-item" onclick="openLawyer(\''+esc(l.id)+'\',\''+esc(n).replace(/\x27/g,"")+'\')"><span class="lw-av" style="background:'+avColor(n)+'">'+initials(n)+'</span><span style="flex:1">'+esc(n)+'</span><span class="pf-badge" style="margin:0;padding:2px 8px;background:'+s.bg+';color:'+s.color+'">'+p+'/16</span></div>'}).join(''):'<div class="row-sub">No lawyers.</div>')+'</div>'
+        +'<div class="pf-sec" data-tab="cr" style="display:none">'+(txns.length?txns.slice(0,20).map(function(t){return '<div class="kv"><span>'+esc(t.description||t.type||'')+'<div class="row-sub">'+fdate(t.date||t.created_at)+'</div></span><span>'+(t.credits||t.amount||0)+' cr</span></div>'}).join(''):'<div class="row-sub">No transactions.</div>')+'</div>'
         +'</div>';
     });
   };
+  // record quick actions
+  window.pfNoteToggle=function(){var n=document.getElementById('pfNote');if(n)n.style.display=n.style.display==='none'?'block':'none';var t=document.getElementById('pfNoteText');if(t&&n.style.display==='block')t.focus()};
+  window.pfNoteSave=function(){var t=document.getElementById('pfNoteText');var v=(t.value||'').trim();if(!v)return;var body={summary:v};if(_rec.type==='lawyer')body.lawyer_id=_rec.id;else body.firm_id=_rec.id;
+    api('/api/v1/messages/activity',{method:'POST',body:JSON.stringify(body)}).then(function(){toast('✓ Note saved');if(_rec.type==='lawyer')openLawyer(_rec.id,_rec.name);else openFirm(_rec.id)}).catch(function(e){toast(e.message)})};
+  window.pfBookStart=function(){var b=document.getElementById('pfBook');if(b){b.style.display='block';document.getElementById('pfBookSearch').focus()}};
+  var pfbT;window.pfBookSearch=function(){clearTimeout(pfbT);pfbT=setTimeout(function(){
+    var q=(document.getElementById('pfBookSearch').value||'').trim();var host=document.getElementById('pfBookRes');if(q.length<2){host.innerHTML='';return}
+    var ql=q.toLowerCase();var rows=(window.__SESSALL||[]).filter(function(s){return (s.course_title||'').toLowerCase().indexOf(ql)>=0}).slice(0,8);
+    host.innerHTML=rows.length?rows.map(function(s){var left=Number(s.seats_remaining)||0;return '<div class="kv"><span>'+esc(s.course_title||'')+'<div class="row-sub">'+fdate(s.scheduled_at)+' · '+left+' seats</div></span><button class="btn btn-g" onclick="pfBookDo(\''+esc(s.id)+'\',\''+esc(s.course_id)+'\',this)">Book</button></div>'}).join(''):'<div class="row-sub">No matching upcoming sessions.</div>';
+  },220)};
+  window.pfBookDo=function(sid,cid,btn){btn.disabled=true;btn.textContent='…';
+    api('/api/v1/bookings',{method:'POST',body:JSON.stringify({lawyer_id:_rec.id,session_id:sid,course_id:cid})}).then(function(){toast('✓ Booked onto the session');openLawyer(_rec.id,_rec.name)}).catch(function(e){toast(e.message);btn.disabled=false;btn.textContent='Book'})};
 
   // ── AI assist ──
   window.askAI=function(){

@@ -561,4 +561,17 @@ router.get('/activity', requireAuth, (req, res) => {
   res.json({ activity: rows.map((r) => ({ ...r, meta: (() => { try { return r.meta ? JSON.parse(r.meta) : null; } catch (_) { return null; } })() })) });
 });
 
+// POST /activity — an admin logs a note against a firm or lawyer (CRM note).
+router.post('/activity', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admins only' });
+  const b = req.body || {};
+  const firm_id = (b.firm_id || '').toString().trim() || null;
+  const lawyer_id = (b.lawyer_id || '').toString().trim() || null;
+  const summary = clip(b.summary || b.note || '', 1000).trim();
+  if (!firm_id && !lawyer_id) return res.status(400).json({ error: 'firm_id or lawyer_id is required.' });
+  if (!summary) return res.status(400).json({ error: 'A note is required.' });
+  logActivity({ firm_id, lawyer_id, kind: (b.kind || 'note'), actor_type: 'admin', actor_id: req.user.sub, actor_name: req.user.name || 'CLPD Admin', ref_type: 'note', ref_id: null, summary });
+  res.status(201).json({ ok: true });
+});
+
 module.exports = router;
