@@ -47,6 +47,7 @@ const cpdRoutes = require('./routes/cpd');
 const notificationsRoutes = require('./routes/notifications');
 const creditsRoutes = require('./routes/credits');
 const messagesRoutes = require('./routes/messages');
+const tasksRoutes = require('./routes/tasks');
 
 const pkg = require('../package.json');
 const app = express();
@@ -191,6 +192,7 @@ app.use('/api/v1/cpd',      cpdRoutes);
 app.use('/api/v1/notifications', notificationsRoutes);
 app.use('/api/v1/credits',  creditsRoutes);
 app.use('/api/v1/messages', messagesRoutes);
+app.use('/api/v1/tasks',    tasksRoutes);
 
 // Composite /config — the frontend portals call this on boot
 app.get('/api/v1/config', async (_req, res, next) => {
