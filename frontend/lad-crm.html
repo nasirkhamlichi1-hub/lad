@@ -128,7 +128,8 @@
 
     <div class="panel">
       <div class="panel-hd"><div><div class="ey">Records</div><h2 id="recTitle">Search lawyers &amp; firms</h2></div></div>
-      <div class="panel-bd" id="recList"><div class="empty">Type a name, email or ID in the search bar above to find a lawyer or firm.</div></div>
+      <div style="padding:12px 18px 4px"><input id="recSearch" class="inp" placeholder="Type a lawyer or firm — name, email or ID…" oninput="recSearch()" autocomplete="off"/></div>
+      <div class="panel-bd" id="recList"><div class="empty">Start typing above to find a lawyer or firm.</div></div>
     </div>
   </div>
 </div>
@@ -272,10 +273,13 @@
   // ── Global search: lawyers + firms ──
   var FIRMS=[];
   function loadFirms(){api('/api/v1/firms').then(function(j){FIRMS=Array.isArray(j)?j:(j.data||j.firms||[]);document.getElementById('stFirms').textContent=num(FIRMS.length)}).catch(function(){})}
-  var gT;window.gSearch=function(){clearTimeout(gT);gT=setTimeout(_gSearch,260)};
-  function _gSearch(){
-    var q=(document.getElementById('gsearch').value||'').trim();var host=document.getElementById('recList');
-    if(q.length<2){document.getElementById('recTitle').textContent='Search lawyers & firms';host.innerHTML='<div class="empty">Type a name, email or ID to find a lawyer or firm.</div>';return}
+  var gT;
+  function _deb(q){clearTimeout(gT);gT=setTimeout(function(){runSearch(q)},260)}
+  window.gSearch=function(){var q=document.getElementById('gsearch').value||'';var r=document.getElementById('recSearch');if(r&&r.value!==q)r.value=q;_deb(q)};
+  window.recSearch=function(){var q=document.getElementById('recSearch').value||'';var g=document.getElementById('gsearch');if(g&&g.value!==q)g.value=q;_deb(q)};
+  function runSearch(qRaw){
+    var q=(qRaw||'').trim();var host=document.getElementById('recList');
+    if(q.length<2){document.getElementById('recTitle').textContent='Search lawyers & firms';host.innerHTML='<div class="empty">Start typing above to find a lawyer or firm.</div>';return}
     document.getElementById('recTitle').textContent='Results for "'+esc(q)+'"';host.innerHTML='<div class="empty">Searching…</div>';
     var ql=q.toLowerCase();
     var firmHits=FIRMS.filter(function(f){return (f.name||'').toLowerCase().indexOf(ql)>=0||(f.id||'').toLowerCase().indexOf(ql)>=0}).slice(0,6);
