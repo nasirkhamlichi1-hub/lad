@@ -75,6 +75,10 @@
     .ladmsg-msg.them{background:#1c2740;align-self:flex-start;border-bottom-left-radius:4px}
     .ladmsg-msg.me{background:#0d7377;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
     .ladmsg-msg .ladmsg-who{font-size:10.5px;opacity:.7;margin-bottom:3px}
+    .ladmsg-typing .ladmsg-dots{display:inline-flex;gap:4px;align-items:center;height:14px}
+    .ladmsg-typing .ladmsg-dots i{width:6px;height:6px;border-radius:50%;background:#9fb0cc;display:inline-block;animation:ladmsgBlink 1.2s infinite ease-in-out}
+    .ladmsg-typing .ladmsg-dots i:nth-child(2){animation-delay:.2s}.ladmsg-typing .ladmsg-dots i:nth-child(3){animation-delay:.4s}
+    @keyframes ladmsgBlink{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
     .ladmsg-compose{border-top:1px solid #232c40;padding:10px 14px;flex-shrink:0;background:#0f1626}
     .ladmsg-compose textarea,.ladmsg-compose input{width:100%;background:#1a2336;border:1px solid #2b364f;color:#eef2fa;border-radius:9px;padding:9px 11px;font:13.5px/1.4 inherit;resize:none;box-sizing:border-box}
     .ladmsg-compose .row{display:flex;gap:8px;margin-top:8px;align-items:center}
@@ -125,7 +129,7 @@
   }
 
   function openPanel() { ST.open = true; document.getElementById('ladMsgPanel').classList.add('on'); loadList(); }
-  function closePanel() { ST.open = false; document.getElementById('ladMsgPanel').classList.remove('on'); ST.active = null; if (ST.poll) { clearInterval(ST.poll); ST.poll = null; } refreshBadge(); }
+  function closePanel() { ST.open = false; document.getElementById('ladMsgPanel').classList.remove('on'); ST.active = null; if (ST.poll) { clearInterval(ST.poll); ST.poll = null; } if (ST.typingPoll) { clearInterval(ST.typingPoll); ST.typingPoll = null; } refreshBadge(); }
 
   // ─── Conversation list ──────────────────────────────────────────────
   async function loadList() {
@@ -211,6 +215,7 @@
     if (ST.admin && !ST.admins.length) { try { ST.admins = (await api('/admins')).admins || []; } catch (_) {} }
     await renderThread();
     if (ST.poll) clearInterval(ST.poll);
+    if (ST.typingPoll) { clearInterval(ST.typingPoll); ST.typingPoll = null; }
     ST.poll = setInterval(() => { if (ST.active === id && ST.open) renderThread(true); }, 12000);
   }
 
@@ -252,11 +257,17 @@
         satHtml = `<div class="ladmsg-sat" id="ladMsgSat"><div class="ladmsg-sat-q">How happy are you with the service we provided?</div>${stars}</div>`;
       }
     }
+    // Maryam is composing: the requester's message is the latest and no human has
+    // taken over → show a live "Maryam is typing" bubble and poll fast for her reply.
+    const expectMaryam = !ST.admin && last && last.sender_side === 'requester' && !c.assigned_to && !c.escalated;
+    const typingHtml = expectMaryam ? '<div class="ladmsg-msg them ladmsg-typing"><div class="ladmsg-who">Maryam · CLPD Assistant</div><span class="ladmsg-dots"><i></i><i></i><i></i></span></div>' : '';
+    if (expectMaryam) { if (!ST.typingPoll) { ST.typingStart = Date.now(); ST.typingPoll = setInterval(() => { if (ST.active === id && ST.open && (Date.now() - ST.typingStart) < 45000) renderThread(true); else { clearInterval(ST.typingPoll); ST.typingPoll = null; } }, 2500); } }
+    else if (ST.typingPoll) { clearInterval(ST.typingPoll); ST.typingPoll = null; }
     inner.innerHTML = `
       <div class="ladmsg-hd"><button class="ladmsg-back" id="ladMsgBack">‹ Back</button><h3 style="flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.subject || 'Conversation')}</h3><button class="ladmsg-x" id="ladMsgClose">×</button></div>
       ${assignBar}
-      <div class="ladmsg-thread" id="ladMsgThread">${msgs || '<div class="ladmsg-empty">No messages.</div>'}</div>
-      ${satHtml}
+      <div class="ladmsg-thread" id="ladMsgThread">${msgs || '<div class="ladmsg-empty">No messages.</div>'}${typingHtml}</div>
+      ${typingHtml ? '' : satHtml}
       <div class="ladmsg-compose"><textarea id="ladMsgReply" rows="2" placeholder="Write a reply…"></textarea><div class="row"><span style="flex:1"></span><button class="ladmsg-send" id="ladMsgSendBtn">Send</button></div></div>`;
     document.getElementById('ladMsgClose').onclick = closePanel;
     document.getElementById('ladMsgBack').onclick = loadList;
