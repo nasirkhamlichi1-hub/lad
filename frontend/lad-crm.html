@@ -258,7 +258,11 @@
   var TITLES={dash:['Dashboard','CLPD customer operations'],inbox:['Inbox','Customer conversations'],cust:['Customers','Lawyers & firms'],ops:['Operations','Sessions & bookings'],
     courses:['Courses','Catalogue · sessions · scheduling · website'],accred:['Accreditation','Application review queue'],trainer:['Trainer','Staff training materials & learners'],users:['Users','Accounts, roles & access'],intel:['Intelligence','Profession analytics & oversight']};
   var EMBED={courses:1,accred:1,trainer:1,users:1,intel:1};
+  // A module is reachable only if its rail entry is visible to this role.
+  function viewAllowed(v){var map={accred:'railAccred',intel:'railIntel',users:'railUsers'};var id=map[v];if(!id)return true;var el=document.getElementById(id);return!!el&&el.style.display!=='none'}
   window.go=function(v){
+    if(!document.getElementById('v-'+v)||!viewAllowed(v))v='dash';
+    try{if(location.hash!=='#'+v)history.replaceState(null,'',location.pathname+location.search+'#'+v)}catch(e){}
     document.querySelectorAll('.rl').forEach(function(r){r.classList.toggle('on',r.getAttribute('data-v')===v)});
     document.querySelectorAll('.view').forEach(function(x){x.classList.remove('on')});
     document.getElementById('v-'+v).classList.add('on');
@@ -275,9 +279,11 @@
     if(qv.length<2){box.classList.remove('on');return}
     box.classList.add('on');box.innerHTML='<div class="empty">Searching…</div>';
     var ql=qv.toLowerCase();var fh=FIRMS.filter(function(f){return (f.name||'').toLowerCase().indexOf(ql)>=0}).slice(0,4);
+    var sh=SESS.filter(function(s){return (s.course_title||'').toLowerCase().indexOf(ql)>=0||(s.provider_name||'').toLowerCase().indexOf(ql)>=0}).slice(0,4);
     api('/api/v1/lawyers?search='+encodeURIComponent(qv)+'&limit=10').then(function(j){
       var rows=Array.isArray(j)?j:(j.data||j.rows||[]);var h='';
       if(fh.length)h+=fh.map(function(f){return cmdRow(ico('firm'),f.name,f.id+' · firm','openFirm(\''+q1(f.id)+'\')')}).join('');
+      if(sh.length)h+=sh.map(function(s){return cmdRow(ico('cal'),s.course_title||'Session',fdate(s.scheduled_at)+' · '+(Number(s.seats_remaining)||0)+' seats · session','openSession(\''+q1(s.id)+'\',\''+q1(s.course_title||'')+'\')')}).join('');
       h+=rows.map(function(l){var n=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.id;var p=l.points!=null?l.points:(l.lifetime_points||0);return cmdRow(initials(n),n,(l.email||'')+' · '+p+'/16 pts','openLawyer(\''+q1(l.id)+'\',\''+q1(n)+'\')',avColor(n))}).join('');
       box.innerHTML=h||'<div class="empty">No results.</div>';
     }).catch(function(e){box.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
@@ -487,6 +493,10 @@
   api('/api/v1/firms').then(function(j){FIRMS=Array.isArray(j)?j:(j.data||j.firms||[])}).catch(function(){});
   loadSessions().then(loadDash);
   setInterval(function(){if(document.getElementById('v-dash').classList.contains('on'))loadDash()},45000);
+  // Deep-link / refresh-safe navigation — the URL hash tracks the open module.
+  function fromHash(){var h=(location.hash||'').replace(/^#/,'');if(h&&document.getElementById('v-'+h))go(h)}
+  window.addEventListener('hashchange',fromHash);
+  fromHash();
 })();
 </script>
 </body>
