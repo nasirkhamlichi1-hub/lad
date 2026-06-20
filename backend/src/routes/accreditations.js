@@ -36,6 +36,27 @@ const REVIEWER_ROLES = ['lad_super_admin', 'super_admin', 'dg'];
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 const isReviewer = (u) => !!u && REVIEWER_ROLES.includes(u.role);
+
+// CLPD scoring rubric (mirrors the reviewer UI): Activity Review = 5 criteria
+// each 0–4 (max 20); Trainer Review = 4 criteria each 0–5 (max 20). Each section
+// passes at ≥70%. A course is accredited only when BOTH reviews (r1 + r2) pass
+// BOTH sections.
+const RUBRIC = {
+  activity: [['a_intellectual', 4], ['a_law', 4], ['a_current', 4], ['a_concise', 4], ['a_relevant', 4]],
+  trainer: [['t_experience', 5], ['t_topic', 5], ['t_local', 5], ['t_materials', 5]],
+};
+const PASS_PCT = 0.70;
+function sectionPct(slot, group) {
+  const crit = RUBRIC[group];
+  const max = crit.reduce((t, c) => t + c[1], 0);
+  const score = crit.reduce((t, c) => t + (Number(slot && slot[c[0]]) || 0), 0);
+  return max ? score / max : 0;
+}
+const reviewPasses = (slot) => !!slot && sectionPct(slot, 'activity') >= PASS_PCT && sectionPct(slot, 'trainer') >= PASS_PCT;
+function bothReviewsPass(scores) {
+  const s = typeof scores === 'string' ? parse(scores, {}) : (scores || {});
+  return reviewPasses(s.r1) && reviewPasses(s.r2);
+}
 // Chasing attendance filing is everyday LAD operations (not an accreditation
 // decision) — all internal LAD staff see the LAD-wide alert queue.
 const LAD_INTERNAL_ROLES = ['lad_admin', 'lad_intelligence', 'lad_super_admin', 'super_admin', 'dg', 'lad_staff'];
@@ -518,6 +539,15 @@ router.patch('/:ref', requireAuth, (req, res) => {
   let courseCode = row.accreditation_code;
   if (b.status !== undefined) {
     if (!['pending', 'approved', 'rejected', 'returned'].includes(b.status)) return res.status(400).json({ error: 'Invalid status' });
+    // Enforce the methodology server-side: a course can only be approved when
+    // BOTH reviews reach 70% in BOTH sections. (Session attendance filings are a
+    // different flow and are not rubric-scored.)
+    if (b.status === 'approved' && row.type !== 'session_submission') {
+      const eff = b.scores !== undefined ? b.scores : row.scores;
+      if (!bothReviewsPass(eff)) {
+        return res.status(422).json({ error: 'Accreditation needs both reviews to score at least 70% in both the Activity and Trainer sections.' });
+      }
+    }
     sets.push('status = ?', 'reviewed_by = ?', 'reviewed_at = ?');
     args.push(b.status, me, now);
     if (b.status === 'approved' && !courseCode) { courseCode = genCode(row); sets.push('accreditation_code = ?'); args.push(courseCode); }
@@ -586,28 +616,37 @@ router.post('/:ref/ai-rationale', requireAuth, async (req, res, next) => {
     `Description: ${p.description || p.summary || 'n/a'}`,
     `Learning objectives: ${Array.isArray(p.learningObjectives) ? p.learningObjectives.join('; ') : (p.learningObjectives || p.objectives || 'n/a')}`,
   ].join('\n');
-  // Rubric criteria depend on the application kind (course vs renewal).
-  const isRenewal = /renew/i.test(row.type || '');
-  const CRITERIA = isRenewal
-    ? [['compliance','Compliance history'],['quality','Delivery quality'],['reach','Reach & demand'],['governance','Governance & QA'],['fees','Fee structure']]
-    : [['relevance','Relevance & alignment'],['depth','Substantive depth'],['trainer','Trainer credentials'],['materials','Quality of materials'],['pedagogy','Delivery & pedagogy']];
+  // CLPD rubric: two sections — Activity Review (5 criteria, each 0–4) and
+  // Trainer Review (4 criteria, each 0–5). Each section passes at ≥70%.
+  const CRITERIA = [
+    ['a_intellectual', 4, 'Activity — intellectual, educational or practical'],
+    ['a_law', 4, 'Activity — deals with matters of law or day-to-day skills'],
+    ['a_current', 4, 'Activity — up-to-date and factually correct'],
+    ['a_concise', 4, 'Activity — concise and clear'],
+    ['a_relevant', 4, 'Activity — relevant to audience and in correct format'],
+    ['t_experience', 5, 'Trainer — sufficient training experience'],
+    ['t_topic', 5, 'Trainer — sufficient experience in the topic/area'],
+    ['t_local', 5, 'Trainer — sufficient local (UAE/DIFC) knowledge'],
+    ['t_materials', 5, 'Trainer — ownership/creation or adoption of materials'],
+  ];
   const keys = CRITERIA.map((c) => c[0]);
-  const critList = CRITERIA.map((c) => `- ${c[0]}: ${c[1]}`).join('\n');
+  const maxOf = Object.fromEntries(CRITERIA.map((c) => [c[0], c[1]]));
+  const critList = CRITERIA.map((c) => `- ${c[0]} (score 0–${c[1]}): ${c[2]}`).join('\n');
 
   const system = 'You are Lex, an accreditation assessor for the Dubai Legal Affairs Department CLPD programme. '
-    + 'Assess the submission rigorously and score EACH listed criterion from 1 to 10, where the score is derived '
-    + 'directly from your assessment of that criterion (10 = excellent and fully evidenced; 5–6 = adequate but with gaps; '
-    + '1–3 = weak, vague, missing, or a placeholder/test submission). Be strict and evidence-based: if a field is empty, '
-    + 'nonsensical, or clearly a test (e.g. gibberish audience, no learning objectives, implausibly short duration), the '
-    + 'affected criteria MUST score 1–3. '
-    + 'The rationale, the per-criterion scores, the recommendedPoints and the recommendation MUST all be mutually '
-    + 'consistent — the rationale must justify the scores it gave, and the recommendation must follow from them: '
-    + 'recommend "approve" only when the criteria are strong overall, "request_changes" when there are fixable gaps, '
-    + 'and "reject" when the submission is weak or incomplete. Recommend CPD points at about 1 point per hour of '
-    + 'substantive learning (0 if rejected). Write a 4–6 sentence rationale that explicitly references the scoring. '
-    + 'Reply with ONLY a JSON object: {"scores": {<criterionKey>: integer 1-10, ...}, '
+    + 'A course is accredited only when BOTH the Activity Review (5 criteria, each 0–4, max 20) and the Trainer Review '
+    + '(4 criteria, each 0–5, max 20) reach at least 70% (i.e. ≥14/20 in each section). Score EACH listed criterion within '
+    + 'its stated range, derived directly from your assessment (top of range = excellent and fully evidenced; middle = '
+    + 'adequate but with gaps; 0–1 = weak, vague, missing, or a placeholder/test submission). Be strict and evidence-based: '
+    + 'if a field is empty, nonsensical, or clearly a test (gibberish audience, no learning objectives, implausibly short '
+    + 'duration), the affected criteria MUST score at the bottom of their range. '
+    + 'The rationale, the per-criterion scores, the recommendedPoints and the recommendation MUST be mutually consistent. '
+    + 'Recommend "approve" only when BOTH sections would clear 70%, "request_changes" when there are fixable gaps, and '
+    + '"reject" when the submission is weak or incomplete. Recommend CPD points at about 1 point per hour of substantive '
+    + 'learning (0 if rejected). Write a 4–6 sentence rationale that explicitly references the scoring and both sections. '
+    + 'Reply with ONLY a JSON object: {"scores": {<criterionKey>: integer within its range, ...}, '
     + '"recommendedPoints": integer, "recommendation": "approve"|"request_changes"|"reject", "rationale": string}. '
-    + 'Use EXACTLY these criterion keys:\n' + critList;
+    + 'Use EXACTLY these criterion keys and ranges:\n' + critList;
   try {
     const text = await aimodel.chat({ system, messages: [{ role: 'user', content: 'Assess this submission:\n\n' + profile }], maxTokens: 700, temperature: 0.15 });
     let parsed = null; try { const m = text.match(/\{[\s\S]*\}/); parsed = JSON.parse(m ? m[0] : text); } catch (_) {}
@@ -616,7 +655,7 @@ router.post('/:ref/ai-rationale', requireAuth, async (req, res, next) => {
     if (parsed && parsed.scores && typeof parsed.scores === 'object') {
       for (const k of keys) {
         const v = Math.round(Number(parsed.scores[k]));
-        if (Number.isFinite(v)) aiScores[k] = Math.max(1, Math.min(10, v));
+        if (Number.isFinite(v)) aiScores[k] = Math.max(0, Math.min(maxOf[k], v));
       }
     }
     const recommendedPoints = parsed && parsed.recommendedPoints != null ? Math.max(0, Math.round(Number(parsed.recommendedPoints))) : null;
