@@ -408,21 +408,45 @@ async function refreshReviewersFromBackend(){
 let APPLICATIONS = [];
 let LAST_COUNTS = { pending: 0, approved: 0, rejected: 0, returned: 0 };
 
-const RUBRIC_CRITERIA_COURSE = [
-  {key:'relevance', label:'Relevance & alignment', desc:'Alignment with UAE legal landscape and current LAD strategic priorities.'},
-  {key:'depth', label:'Substantive depth', desc:'Technical rigour appropriate for the stated audience level.'},
-  {key:'trainer', label:'Trainer credentials', desc:'Subject-matter expertise, prior delivery, peer review.'},
-  {key:'materials', label:'Quality of materials', desc:'Completeness, currency, and pedagogical clarity of supplied materials.'},
-  {key:'pedagogy', label:'Delivery & pedagogy', desc:'Method appropriate for learning objectives — discussion, case study, assessment.'}
+// ── CLPD accreditation rubric — the live scoring methodology ──
+// Two scored sections per application:
+//   • Activity Review — 5 criteria, each 0–4 (max 20)
+//   • Trainer Review  — 4 criteria, each 0–5 (max 20)
+// Each section yields a % (score ÷ 20); ≥70% passes. There are TWO reviews
+// (First + Second) and a course is accredited only when BOTH reviews pass
+// BOTH sections.
+const PASS_PCT = 0.70;
+const RUBRIC_ACTIVITY = [
+  {key:'a_intellectual', group:'activity', max:4, label:'Intellectual, educational or practical', desc:'Is the content intellectual, educational or practical for legal professionals?'},
+  {key:'a_law',          group:'activity', max:4, label:'Deals with matters of law / day-to-day skills', desc:'Does it address matters of law, or build skills for the day-to-day role?'},
+  {key:'a_current',      group:'activity', max:4, label:'Up-to-date and factually correct', desc:'Is the material current and factually correct?'},
+  {key:'a_concise',      group:'activity', max:4, label:'Concise and clear', desc:'Is it concise and clearly presented?'},
+  {key:'a_relevant',     group:'activity', max:4, label:'Relevant to audience and in correct format', desc:'Relevant to the target audience and in the correct format?'}
 ];
+const RUBRIC_TRAINER = [
+  {key:'t_experience', group:'trainer', max:5, label:'Sufficient training experience', desc:'Does the trainer have sufficient training experience?'},
+  {key:'t_topic',      group:'trainer', max:5, label:'Sufficient experience in topic / area', desc:'Sufficient experience in the topic or area of law?'},
+  {key:'t_local',      group:'trainer', max:5, label:'Sufficient local knowledge', desc:'Sufficient knowledge of the local (UAE / DIFC) legal context?'},
+  {key:'t_materials',  group:'trainer', max:5, label:'Ownership / creation or adoption of materials', desc:'Ownership, creation or considered adoption of the training materials?'}
+];
+const RUBRIC_CRITERIA = RUBRIC_ACTIVITY.concat(RUBRIC_TRAINER);
+// Same methodology applies to courses and renewals.
+const RUBRIC_CRITERIA_COURSE = RUBRIC_CRITERIA;
+const RUBRIC_CRITERIA_RENEWAL = RUBRIC_CRITERIA;
 
-const RUBRIC_CRITERIA_RENEWAL = [
-  {key:'compliance', label:'Compliance history', desc:'Filing and quality record over the prior cycle.'},
-  {key:'quality', label:'Delivery quality', desc:'Aggregate learner ratings and qualitative feedback.'},
-  {key:'reach', label:'Reach & demand', desc:'Volume delivered, breadth of practitioners served.'},
-  {key:'governance', label:'Governance & QA', desc:'Quality assurance processes, attestations, trainer roster controls.'},
-  {key:'fees', label:'Fee structure', desc:'Reasonableness and transparency of pricing to practitioners.'}
-];
+// Score one section for a reviewer slot ('r1' | 'r2' | 'ai').
+function sectionScore(scores, slot, group){
+  const crit = group === 'activity' ? RUBRIC_ACTIVITY : RUBRIC_TRAINER;
+  const s = (scores && scores[slot]) || {};
+  const score = crit.reduce((t,c) => t + (Number(s[c.key]) || 0), 0);
+  const max = crit.reduce((t,c) => t + c.max, 0);
+  const pct = max ? score / max : 0;
+  return { score, max, pct, pass: pct >= PASS_PCT };
+}
+// A review passes only when BOTH its sections reach the threshold.
+function reviewerPasses(scores, slot){
+  return sectionScore(scores, slot, 'activity').pass && sectionScore(scores, slot, 'trainer').pass;
+}
 
 // ─────────────────────────────────────────────────────────────
 // STATE & RENDER
@@ -618,71 +642,62 @@ function scoreClass(score){
 
 function renderScoring(a){
   const p = document.getElementById('panel-scoring');
-  const criteria = a.kind === 'renewal' ? RUBRIC_CRITERIA_RENEWAL : RUBRIC_CRITERIA_COURSE;
-  const totR1 = criteria.reduce((s,c) => s + (Number(a.scores.r1[c.key])||0), 0);
-  const totR2 = criteria.reduce((s,c) => s + (Number(a.scores.r2[c.key])||0), 0);
-  const totAI = criteria.reduce((s,c) => s + (Number(a.scores.ai[c.key])||0), 0);
-  const max = criteria.length * 10;
   const isReal = !!a._real;
   const me = window.CURRENT_USER_NAME || '';
   const r1IsMe = isReal && me && a.reviewer1 === me;
   const r2IsMe = isReal && me && a.reviewer2 === me;
 
   // Cell editability: only the assigned reviewer can edit their column.
-  // If neither slot matches the current user, scores are read-only — they
-  // need to assign themselves first via the "+ me" buttons in the Materials
-  // panel, or be assigned by an admin via the dropdowns.
-  const cell = (slot, key, val, editable) => {
+  const cell = (slot, c, val, editable) => {
     if (editable) {
-      return `<input type="number" min="0" max="10" step="1" value="${val ?? ''}"
-        oninput="onScoreInput('${a.ref}','${slot}','${key}',this.value)"
+      return `<input type="number" min="0" max="${c.max}" step="1" value="${val ?? ''}"
+        oninput="onScoreInput('${a.ref}','${slot}','${c.key}',this.value)"
         onblur="onScoreBlur('${a.ref}')"
         style="width:46px;height:34px;padding:4px 6px;border:1.5px solid var(--line2);border-radius:6px;text-align:center;font-family:var(--serif);font-size:18px;color:var(--ink);background:#fff;outline:none"
         onfocus="this.style.borderColor='var(--teal)'" placeholder="—"/>`;
     }
-    return `<div class="rubric-score ${scoreClass(val)}" title="${isReal ? 'Read-only — only the assigned reviewer can score this column' : ''}">${val ?? '—'}</div>`;
+    return `<div class="rubric-score" title="${isReal ? 'Read-only — only the assigned reviewer can score this column' : ''}">${val ?? '—'}</div>`;
   };
 
-  const r1Label = isReal && a.reviewer1 && a.reviewer1 !== '— Unassigned' ? `R1 · ${a.reviewer1.split(' ')[0]}` : 'R1';
-  const r2Label = isReal && a.reviewer2 && a.reviewer2 !== '— Unassigned' ? `R2 · ${a.reviewer2.split(' ')[0]}` : 'R2';
+  const r1Label = isReal && a.reviewer1 && a.reviewer1 !== '— Unassigned' ? a.reviewer1.split(' ')[0] : 'First';
+  const r2Label = isReal && a.reviewer2 && a.reviewer2 !== '— Unassigned' ? a.reviewer2.split(' ')[0] : 'Second';
 
   let mode = '';
   if (isReal) {
-    if (r1IsMe && r2IsMe) mode = '<span style="color:var(--teal)">· you are R1 and R2 — both editable</span>';
-    else if (r1IsMe)      mode = '<span style="color:var(--teal)">· you are R1 — R1 column editable</span>';
-    else if (r2IsMe)      mode = '<span style="color:var(--teal)">· you are R2 — R2 column editable</span>';
+    if (r1IsMe && r2IsMe) mode = '<span style="color:var(--teal)">· you are both reviews — both editable</span>';
+    else if (r1IsMe)      mode = '<span style="color:var(--teal)">· you are the First review — your column is editable</span>';
+    else if (r2IsMe)      mode = '<span style="color:var(--teal)">· you are the Second review — your column is editable</span>';
     else if (me)          mode = '<span style="color:var(--amber)">· you are not assigned — assign yourself in Materials panel</span>';
     else                  mode = '<span style="color:var(--slate3)">· sign in to score</span>';
   }
 
+  // Render one scored section (Activity or Trainer) with per-review % + pass/fail.
+  const section = (title, crit, group) => {
+    const s1 = sectionScore(a.scores,'r1',group), s2 = sectionScore(a.scores,'r2',group), sai = sectionScore(a.scores,'ai',group);
+    const pctCell = (s) => `<div class="rubric-score" style="font-weight:700;color:${s.pass?'var(--green-d)':'var(--red)'}">${Math.round(s.pct*100)}%</div>`;
+    const result = (s) => `<span style="font-weight:700;color:${s.pass?'var(--green-d)':'var(--red)'}">${s.pass?'Pass':'Fail'}</span>`;
+    return `
+      <div style="margin-bottom:20px">
+        <div style="font-family:var(--mono);font-size:9.5px;color:var(--teal);letter-spacing:1.3px;text-transform:uppercase;font-weight:700;margin-bottom:8px">${title} · ${crit.length} criteria · 0–${crit[0].max} each · pass ≥70%</div>
+        <div class="rubric-hd"><div>Criterion</div><div>${r1Label}${r1IsMe?' · YOU':''}</div><div>${r2Label}${r2IsMe?' · YOU':''}</div><div>AI</div></div>
+        ${crit.map(c => `
+          <div class="rubric-row">
+            <div><div class="rubric-crit">${c.label}</div><div class="rubric-crit-d">${c.desc}</div></div>
+            ${cell('r1', c, a.scores.r1[c.key], r1IsMe)}
+            ${cell('r2', c, a.scores.r2[c.key], r2IsMe)}
+            <div class="rubric-score ai">${a.scores.ai[c.key] ?? '—'}</div>
+          </div>`).join('')}
+        <div class="rubric-tot"><div class="rubric-tot-lbl">${title} score · /${s1.max}</div><div class="rubric-tot-score">${s1.score}</div><div class="rubric-tot-score">${s2.score}</div><div class="rubric-tot-score ai">${sai.score}</div></div>
+        <div class="rubric-tot" style="border-top:none;padding-top:2px"><div class="rubric-tot-lbl">Result · pass ≥70%</div>${pctCell(s1)}${pctCell(s2)}${pctCell(sai)}</div>
+        <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:.6px;text-transform:uppercase;margin-top:4px;text-align:right">First ${result(s1)} · Second ${result(s2)}</div>
+      </div>`;
+  };
+
   p.innerHTML = `
-    <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:14px">Collaborative scoring · ${criteria.length} criteria · /10 ${mode}</div>
+    <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:14px">Two reviews · both must reach 70% in each section ${mode}</div>
 
-    <div class="rubric-hd">
-      <div>Criterion</div>
-      <div title="${r1Label}">${r1Label.split(' · ')[0]}${r1IsMe ? ' · YOU' : ''}</div>
-      <div title="${r2Label}">${r2Label.split(' · ')[0]}${r2IsMe ? ' · YOU' : ''}</div>
-      <div>AI</div>
-    </div>
-
-    ${criteria.map(c => `
-      <div class="rubric-row">
-        <div>
-          <div class="rubric-crit">${c.label}</div>
-          <div class="rubric-crit-d">${c.desc}</div>
-        </div>
-        ${cell('r1', c.key, a.scores.r1[c.key], r1IsMe)}
-        ${cell('r2', c.key, a.scores.r2[c.key], r2IsMe)}
-        <div class="rubric-score ai">${a.scores.ai[c.key] ?? '—'}</div>
-      </div>
-    `).join('')}
-
-    <div class="rubric-tot">
-      <div class="rubric-tot-lbl">Total · /<span id="score-max">${max}</span></div>
-      <div class="rubric-tot-score" id="score-tot-r1">${totR1}</div>
-      <div class="rubric-tot-score" id="score-tot-r2">${totR2}</div>
-      <div class="rubric-tot-score ai" id="score-tot-ai">${totAI}</div>
-    </div>
+    ${section('Activity Review', RUBRIC_ACTIVITY, 'activity')}
+    ${section('Trainer Review', RUBRIC_TRAINER, 'trainer')}
 
     ${isReal ? `
     <div style="margin-top:16px;padding:14px;background:linear-gradient(135deg,#f3e8ff,#fdf4ff);border:1px solid var(--purple-border);border-radius:10px;display:flex;align-items:center;gap:12px">
@@ -746,37 +761,33 @@ function renderAI(a){
 
 function renderDecision(a){
   const p = document.getElementById('panel-decision');
-  const criteria = a.kind === 'renewal' ? RUBRIC_CRITERIA_RENEWAL : RUBRIC_CRITERIA_COURSE;
-  const totR1 = criteria.reduce((s,c) => s + (a.scores.r1[c.key]||0), 0);
-  const totR2 = criteria.reduce((s,c) => s + (a.scores.r2[c.key]||0), 0);
-  const totAI = criteria.reduce((s,c) => s + (a.scores.ai[c.key]||0), 0);
-  const avg = (totR1 + totR2 + totAI) / 3;
-  const max = criteria.length * 10;
-  const pct = avg / max;
-  const recommend = pct >= 0.85 ? {label:'APPROVE',color:'green',msg:'All three reviewers (including AI) score this submission in the top tier. Recommend approval at proposed point value.'} : pct >= 0.7 ? {label:'APPROVE WITH CHANGES',color:'amber',msg:'Strong submission with specific issues to address. See AI rationale for recommended changes.'} : {label:'REQUEST REWORK',color:'red',msg:'Significant concerns across reviewers. Recommend requesting rework before resubmission.'};
+  const r1A = sectionScore(a.scores,'r1','activity'), r1T = sectionScore(a.scores,'r1','trainer');
+  const r2A = sectionScore(a.scores,'r2','activity'), r2T = sectionScore(a.scores,'r2','trainer');
+  const r1Pass = r1A.pass && r1T.pass, r2Pass = r2A.pass && r2T.pass;
+  const accredited = r1Pass && r2Pass;
+  const verdict = accredited
+    ? { color:'green', label:'MEETS THRESHOLD', msg:'Both reviews score ≥70% in the Activity and Trainer sections — eligible for accreditation.' }
+    : { color:'red', label:'BELOW THRESHOLD', msg:'Accreditation requires BOTH reviews to reach 70% in BOTH the Activity and Trainer sections.' };
+
+  const revCard = (name, label, A, T, pass) => `
+    <div style="flex:1;padding:11px;background:var(--paper);border:1px solid ${pass?'var(--green-border)':'var(--line)'};border-radius:8px">
+      <div style="font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:1.1px;text-transform:uppercase;margin-bottom:5px">${label}${name && name!=='— Unassigned' ? ' · '+name.split(' ').pop() : ''}</div>
+      <div style="font-size:12px;color:var(--slate2);line-height:1.5">Activity <b style="color:${A.pass?'var(--green-d)':'var(--red)'}">${Math.round(A.pct*100)}%</b> · Trainer <b style="color:${T.pass?'var(--green-d)':'var(--red)'}">${Math.round(T.pct*100)}%</b></div>
+      <div style="margin-top:5px;font-family:var(--mono);font-size:11px;font-weight:700;color:${pass?'var(--green-d)':'var(--red)'}">${pass?'✓ PASS':'✕ FAIL'}</div>
+    </div>`;
 
   p.innerHTML = `
-    <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:14px">Decision summary</div>
+    <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.3px;text-transform:uppercase;font-weight:600;margin-bottom:14px">Decision summary · pass ≥70% in both sections, both reviews</div>
 
     <div class="decision-recap">
-      <div class="decision-recap-num ${recommend.color==='green'?'':recommend.color}">${avg.toFixed(1)}<span style="font-size:18px;color:var(--slate3)">/${max}</span></div>
-      <div class="decision-recap-lbl">CONSENSUS SCORE · ${Math.round(pct*100)}%</div>
-      <div class="decision-recap-bd">${recommend.msg}</div>
+      <div class="decision-recap-num ${verdict.color==='green'?'':verdict.color}" style="font-size:26px">${accredited?'✓ ELIGIBLE':'NOT YET'}</div>
+      <div class="decision-recap-lbl">${verdict.label}</div>
+      <div class="decision-recap-bd">${verdict.msg}</div>
     </div>
 
     <div style="display:flex;gap:8px;margin-bottom:14px">
-      <div style="flex:1;text-align:center;padding:8px;background:var(--paper);border:1px solid var(--line);border-radius:8px">
-        <div style="font-family:var(--serif);font-size:18px;color:var(--ink)">${totR1}</div>
-        <div style="font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:1.1px;text-transform:uppercase;margin-top:2px">R1 · ${a.reviewer1.split(' ').pop()}</div>
-      </div>
-      <div style="flex:1;text-align:center;padding:8px;background:var(--paper);border:1px solid var(--line);border-radius:8px">
-        <div style="font-family:var(--serif);font-size:18px;color:var(--ink)">${totR2}</div>
-        <div style="font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:1.1px;text-transform:uppercase;margin-top:2px">R2 · ${a.reviewer2.split(' ').pop()}</div>
-      </div>
-      <div style="flex:1;text-align:center;padding:8px;background:linear-gradient(135deg,#f3e8ff,#fdf4ff);border:1px solid var(--purple-border);border-radius:8px">
-        <div style="font-family:var(--serif);font-size:18px;color:var(--purple)">${totAI}</div>
-        <div style="font-family:var(--mono);font-size:8.5px;color:var(--purple);letter-spacing:1.1px;text-transform:uppercase;margin-top:2px">Lex AI</div>
-      </div>
+      ${revCard(a.reviewer1, 'First review', r1A, r1T, r1Pass)}
+      ${revCard(a.reviewer2, 'Second review', r2A, r2T, r2Pass)}
     </div>
 
     <div class="decision-notes">
@@ -785,7 +796,7 @@ function renderDecision(a){
     </div>
 
     <div class="decision-actions">
-      <button class="btn btn-approve" onclick="decide('approve')">✓ Approve at proposed value</button>
+      <button class="btn btn-approve" ${accredited?'':'disabled'} title="${accredited?'':'Both reviews must reach 70% in both the Activity and Trainer sections'}" style="${accredited?'':'opacity:.45;cursor:not-allowed'}" onclick="decide('approve')">✓ Approve &amp; accredit</button>
       <button class="btn btn-changes" onclick="decide('changes')">↻ Request changes</button>
       <button class="btn btn-reject" onclick="decide('reject')">✕ Reject</button>
       <button class="btn btn-ghost" onclick="decide('defer')">⏸ Defer · escalate to DG</button>
@@ -948,16 +959,22 @@ async function persistPoints(ref, final_points, final_credits) {
 function onScoreInput(appRef, slot, critKey, value) {
   const a = APPLICATIONS.find(x => x.ref === appRef);
   if (!a) return;
-  const n = value === '' ? undefined : Math.max(0, Math.min(10, Number(value)));
+  const crit = RUBRIC_CRITERIA.find(c => c.key === critKey);
+  const cmax = crit ? crit.max : 5;
+  const n = value === '' ? undefined : Math.max(0, Math.min(cmax, Math.round(Number(value))));
   if (n === undefined) delete a.scores[slot][critKey];
   else a.scores[slot][critKey] = n;
-  // Recompute totals + recommendation in-place without rerendering inputs (would lose focus)
-  refreshScoringTotals(a);
+  // Live-update the decision recap; section %/pass refresh on blur (re-rendering
+  // the inputs mid-keystroke would steal focus).
   refreshDecisionRecap(a);
 }
 function onScoreBlur(appRef) {
   const a = APPLICATIONS.find(x => x.ref === appRef);
-  if (a && a._real) persistScores(a.ref, a.scores);
+  if (!a) return;
+  if (a._real) persistScores(a.ref, a.scores);
+  const panel = document.getElementById('panel-scoring');
+  if (panel && panel.classList.contains('on')) renderScoring(a);
+  refreshDecisionRecap(a);
 }
 function onPointsInput(appRef, kind, value) {
   const a = APPLICATIONS.find(x => x.ref === appRef);
