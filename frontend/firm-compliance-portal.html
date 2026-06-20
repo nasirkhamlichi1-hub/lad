@@ -479,6 +479,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
           <div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px">
             <span id="step2Num" style="width:20px;height:20px;background:var(--slate3);color:#fff;border-radius:50%;display:grid;place-items:center;font-size:11px;flex-shrink:0">2</span> SELECT COURSE
           </div>
+          <input id="massCourseSearch" type="text" placeholder="Search courses by name, provider or topic…" oninput="renderMassCourseList(this.value)" style="width:100%;box-sizing:border-box;padding:9px 12px;margin-bottom:10px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--line2)'"/>
           <div id="massCourseList" style="display:flex;flex-direction:column;gap:8px"></div>
         </div>
 
@@ -2420,19 +2421,10 @@ function _openMassModal(mode, preselectedCourseId, lawyerIds) {
         <span style="font-family:var(--mono);font-size:9px;color:var(--slate3)">${l.pts}/16</span>
         <button onclick="removeMassLawyer(${l.id})" style="background:none;border:none;cursor:pointer;color:var(--slate3);font-size:12px;padding:0;line-height:1">✕</button>
       </div>`).join('');
-    // Course list
-    document.getElementById('massCourseList').innerHTML = COURSES.map(c=>`
-      <div id="mCourse-${c.id}" style="display:flex;align-items:center;gap:12px;padding:11px 14px;border:1.5px solid var(--line2);border-radius:10px;cursor:pointer;transition:all .15s" onclick="selectMassCourse('${c.id}')" onmouseover="this.style.borderColor='var(--green)'" onmouseout="if(massSelectedCourse!=='${c.id}')this.style.borderColor='var(--line2)'">
-        <div style="width:36px;height:36px;border-radius:9px;background:${c.bg};display:grid;place-items:center;font-size:16px;flex-shrink:0">${c.icon}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.title}</div>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:3px">
-            <span style="font-family:var(--mono);font-size:9.5px;color:var(--slate3)">${c.provider}</span>
-            <span style="font-family:var(--mono);font-size:9.5px;color:var(--green);font-weight:700">+${c.pts} pts</span>
-          </div>
-        </div>
-        <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--gold)">${(c.credits||COURSE_CREDITS)*lawyers.length} cr · AED ${((c.credits||COURSE_CREDITS)*CREDIT_RATE*lawyers.length).toLocaleString()}</span>
-      </div>`).join('');
+    // Course list (searchable)
+    window.__massBookLawyers = lawyers;
+    var _msIn = document.getElementById('massCourseSearch'); if (_msIn) _msIn.value = '';
+    renderMassCourseList('');
     document.getElementById('massSessionStep').style.display = 'none';
     document.getElementById('massSummary').innerHTML = '<div style="font-size:12.5px;color:var(--slate2);padding:20px;text-align:center;border:1px dashed var(--line2);border-radius:10px">Select a course and session to see summary</div>';
     document.getElementById('massImpactBox').style.display = 'none';
@@ -2504,6 +2496,36 @@ function updateMassFromPicker() {
 function updateMassRightPanel() { /* placeholder — called on open */ }
 
 
+
+// Render the mass-book course list, filtered by a search term (name / provider
+// / topic / description). Called on open and on every keystroke in the search box.
+function renderMassCourseList(filter){
+  var q = String(filter||'').trim().toLowerCase();
+  var n = (window.__massBookLawyers||[]).length || 1;
+  var list = (COURSES||[]).filter(function(c){
+    if(!q) return true;
+    return (c.title||'').toLowerCase().indexOf(q)>=0
+        || (c.provider||'').toLowerCase().indexOf(q)>=0
+        || (c.desc||'').toLowerCase().indexOf(q)>=0
+        || (c.type||'').toLowerCase().indexOf(q)>=0;
+  });
+  var el = document.getElementById('massCourseList'); if(!el) return;
+  if(!list.length){ el.innerHTML = '<div style="padding:22px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:11.5px">No courses match “'+_mEsc(q)+'”</div>'; return; }
+  el.innerHTML = list.map(function(c){ return ''
+    +'<div id="mCourse-'+c.id+'" style="display:flex;align-items:center;gap:12px;padding:11px 14px;border:1.5px solid '+(massSelectedCourse===c.id?'var(--green)':'var(--line2)')+';border-radius:10px;cursor:pointer;transition:all .15s" onclick="selectMassCourse(\''+c.id+'\')" onmouseover="this.style.borderColor=\'var(--green)\'" onmouseout="if(massSelectedCourse!==\''+c.id+'\')this.style.borderColor=\'var(--line2)\'">'
+    +  '<div style="width:36px;height:36px;border-radius:9px;background:'+c.bg+';display:grid;place-items:center;font-size:16px;flex-shrink:0">'+(c.icon||'')+'</div>'
+    +  '<div style="flex:1;min-width:0">'
+    +    '<div style="font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+_mEsc(c.title)+'</div>'
+    +    '<div style="display:flex;align-items:center;gap:8px;margin-top:3px">'
+    +      '<span style="font-family:var(--mono);font-size:9.5px;color:var(--slate3)">'+_mEsc(c.provider)+'</span>'
+    +      '<span style="font-family:var(--mono);font-size:9.5px;color:var(--green);font-weight:700">+'+c.pts+' pts</span>'
+    +    '</div>'
+    +  '</div>'
+    +  '<span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--gold)">'+((c.credits||COURSE_CREDITS)*n)+' cr · AED '+(((c.credits||COURSE_CREDITS)*CREDIT_RATE*n).toLocaleString())+'</span>'
+    +'</div>';
+  }).join('');
+}
+function _mEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];}); }
 
 function selectMassCourse(courseId, courseFirstLawyerIds) {
   massSelectedCourse = courseId;
