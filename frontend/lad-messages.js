@@ -40,7 +40,7 @@
   function injectCSS() {
     if (document.getElementById('ladMsgCSS')) return;
     const css = `
-    #ladMsgBtn{position:fixed;right:20px;bottom:86px;z-index:99998;background:#0d7377;color:#fff;border:none;border-radius:30px;padding:12px 18px;font:600 13px/1 -apple-system,Segoe UI,Roboto,sans-serif;box-shadow:0 6px 22px rgba(13,115,119,.45);cursor:pointer;display:flex;align-items:center;gap:8px}
+    #ladMsgBtn{position:fixed;right:20px;bottom:20px;z-index:99998;background:#0d7377;color:#fff;border:none;border-radius:30px;padding:12px 18px;font:600 13px/1 -apple-system,Segoe UI,Roboto,sans-serif;box-shadow:0 6px 22px rgba(13,115,119,.45);cursor:pointer;display:flex;align-items:center;gap:8px}
     #ladMsgBtn:hover{background:#0a5d61}
     #ladMsgBtn .ladmsg-badge{background:#ff4d6d;color:#fff;border-radius:10px;min-width:18px;height:18px;padding:0 5px;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center}
     #ladMsgBtn .ladmsg-badge.on{display:flex}

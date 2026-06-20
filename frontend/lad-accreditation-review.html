@@ -107,8 +107,10 @@ em{font-style:italic;color:var(--gold)}
 .c-file-ico{width:28px;height:28px;border-radius:6px;background:var(--red-bg);color:var(--red);display:grid;place-items:center;font-family:var(--mono);font-size:9px;font-weight:600;flex-shrink:0}
 .c-file-ico.docx{background:var(--blue-bg);color:var(--blue)}
 .c-file-ico.xlsx{background:var(--green-bg);color:var(--green)}
-.c-file-name{flex:1;font-size:12.5px;color:var(--ink);font-weight:500}
-.c-file-size{font-family:var(--mono);font-size:10px;color:var(--slate3)}
+.c-file-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.c-file-label{font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:.6px;text-transform:uppercase;font-weight:600}
+.c-file-name{font-size:12.5px;color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-file-size{font-family:var(--mono);font-size:10px;color:var(--slate3);flex-shrink:0;white-space:nowrap}
 
 .c-objectives{margin-top:10px;display:flex;flex-direction:column;gap:7px}
 .c-obj{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:var(--slate);line-height:1.55}
@@ -615,8 +617,8 @@ function renderCenter(a){
           const ext = (name.split('.').pop() || 'doc').toLowerCase();
           const bytes = Number(f.size) || 0;
           const size = f.sz || (bytes ? (bytes/1024/1024).toFixed(2) + ' MB' : '');
-          const label = f.label ? `<div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:3px">${esc(f.label)}</div>` : '';
-          const inner = `${label}<div class="c-file-ico ${ext}">${ext.toUpperCase()}</div><div class="c-file-name">${esc(name)}</div><div class="c-file-size">${esc(size)}</div>`;
+          const label = f.label ? `<div class="c-file-label">${esc(f.label)}</div>` : '';
+          const inner = `<div class="c-file-ico ${ext}">${ext.toUpperCase()}</div><div class="c-file-main">${label}<div class="c-file-name" title="${esc(name)}">${esc(name)}</div></div><div class="c-file-size">${esc(size)}</div>`;
           return f.dataUrl
             ? `<a class="c-file" href="${f.dataUrl}" download="${esc(name)}" target="_blank" style="text-decoration:none;color:inherit">${inner}</a>`
             : `<div class="c-file" title="File content not available">${inner}</div>`;
