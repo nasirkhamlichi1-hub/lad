@@ -71,6 +71,11 @@ function canSee(u, conv) {
 
 function sideOf(u) { return isAdmin(u) ? 'admin' : 'requester'; }
 
+// Stamp the first reply (Maryam or a human) so we can measure response speed.
+function markFirstResponse(convId, ts) {
+  try { db.prepare('UPDATE conversations SET first_response_at = ? WHERE id = ? AND first_response_at IS NULL').run(ts, convId); } catch (_) {}
+}
+
 function markRead(convId, readerId) {
   if (!convId || !readerId) return;
   try {
@@ -228,8 +233,8 @@ async function runMaryam(convId, latestText) {
     const pri = ['low', 'normal', 'high'].includes(priority) ? priority : (conv.priority || 'normal');
     try {
       const ts = now();
-      if (note) db.prepare("INSERT INTO conversation_messages (id, conversation_id, sender_side, sender_id, sender_name, sender_role, body, created_at) VALUES (?,?,'admin',?,?,?,?,?)")
-        .run(mid(), convId, MARYAM.id, MARYAM.name, MARYAM.role, note, ts);
+      if (note) { db.prepare("INSERT INTO conversation_messages (id, conversation_id, sender_side, sender_id, sender_name, sender_role, body, created_at) VALUES (?,?,'admin',?,?,?,?,?)")
+        .run(mid(), convId, MARYAM.id, MARYAM.name, MARYAM.role, note, ts); markFirstResponse(convId, ts); }
       owner = chooseAssignee(Object.assign({}, conv, { category: cat }));
       db.prepare('UPDATE conversations SET escalated=1, ai_handled=1, category=?, priority=?, assigned_to=?, assigned_name=?, status=?, last_sender=?, last_message_at=?, updated_at=? WHERE id=?')
         .run(cat, pri, owner ? owner.id : null, owner ? fullName(owner) : null, 'pending',
@@ -284,6 +289,7 @@ async function runMaryam(convId, latestText) {
     const ts = now();
     db.prepare("INSERT INTO conversation_messages (id, conversation_id, sender_side, sender_id, sender_name, sender_role, body, created_at) VALUES (?,?,'admin',?,?,?,?,?)")
       .run(mid(), convId, MARYAM.id, MARYAM.name, MARYAM.role, answer, ts);
+    markFirstResponse(convId, ts);
     db.prepare('UPDATE conversations SET ai_handled=1, escalated=0, category=?, priority=?, status=?, last_sender=?, last_message_at=?, updated_at=? WHERE id=?')
       .run(cat, ['low', 'normal', 'high'].includes(priority) ? priority : 'normal', 'pending', 'admin', ts, ts, convId);
     logActivity({ ...scope, kind: 'ai_reply', actor_type: 'ai', actor_id: MARYAM.id, actor_name: MARYAM.name, ref_id: convId, summary: `Maryam answered "${conv.subject || ''}" · ${cat}` });
@@ -445,6 +451,7 @@ function getConversation(id, u) {
     requester_type: c.requester_type, requester_id: c.requester_id, requester_name: c.requester_name, requester_email: c.requester_email,
     firm_id: c.firm_id, assigned_to: c.assigned_to, assigned_name: c.assigned_name,
     ai_handled: !!c.ai_handled, escalated: !!c.escalated, category: c.category || null, priority: c.priority || 'normal',
+    rating: c.rating != null ? Number(c.rating) : null,
     created_at: c.created_at, last_message_at: c.last_message_at, last_sender: c.last_sender,
     messages,
   };
@@ -480,6 +487,7 @@ router.post('/conversations/:id/messages', requireAuth, (req, res) => {
       .run(ts, ts, side, reopen ? 1 : 0, side === 'admin' ? 'pending' : 'open', c.id);
   });
   tx();
+  if (side === 'admin') markFirstResponse(c.id, ts);
   markRead(c.id, req.user.sub);
   logActivity({ ...convScope(c), kind: side === 'admin' ? 'reply_out' : 'message_in',
     actor_type: side === 'admin' ? 'admin' : 'requester', actor_id: req.user.sub, actor_name: senderName, ref_id: c.id,
@@ -672,6 +680,84 @@ router.post('/broadcast', requireAuth, (req, res) => {
     } catch (_) {}
   }
   res.json({ ok: true, sent });
+});
+
+// ─── Happiness rating (requester closes the loop on ANY conversation) ──
+// Every conversation — answered by Maryam or a human — ends with one simple
+// question: out of 5 stars, how happy are you with the service.
+router.post('/conversations/:id/rate', requireAuth, (req, res) => {
+  const c = db.prepare('SELECT * FROM conversations WHERE id = ?').get(req.params.id);
+  if (!c) return res.status(404).json({ error: 'Conversation not found' });
+  if (!canSee(req.user, c)) return res.status(403).json({ error: 'Forbidden' });
+  if (sideOf(req.user) !== 'requester') return res.status(403).json({ error: 'Only the requester can rate the service.' });
+  const rating = Math.round(Number(req.body && req.body.rating));
+  if (!(rating >= 1 && rating <= 5)) return res.status(400).json({ error: 'Rating must be 1–5.' });
+  const ts = now();
+  db.prepare("UPDATE conversations SET rating = ?, rating_at = ?, status = CASE WHEN status IN ('open','pending') THEN 'resolved' ELSE status END, updated_at = ? WHERE id = ?")
+    .run(rating, ts, ts, c.id);
+  logActivity({ ...convScope(c), kind: 'rating', actor_type: 'requester', actor_id: req.user.sub, actor_name: req.user.name || c.requester_name, ref_id: c.id,
+    summary: `${c.requester_name || 'Client'} rated the service ${rating}/5 on "${c.subject || ''}"`, meta: { rating, ai_handled: !!c.ai_handled, escalated: !!c.escalated } });
+  res.json({ ok: true, rating });
+});
+
+// ─── Requester asks for additional human help (Maryam couldn't satisfy) ─
+router.post('/conversations/:id/escalate', requireAuth, (req, res) => {
+  const c = db.prepare('SELECT * FROM conversations WHERE id = ?').get(req.params.id);
+  if (!c) return res.status(404).json({ error: 'Conversation not found' });
+  if (!canSee(req.user, c)) return res.status(403).json({ error: 'Forbidden' });
+  if (sideOf(req.user) !== 'requester') return res.status(403).json({ error: 'Only the requester can request help.' });
+  if (c.assigned_to || c.escalated) return res.json({ ok: true, escalated: true, already: true });
+  const ts = now();
+  const note = 'Thanks for letting me know — I’m bringing in a CLPD colleague who will follow up with you shortly.';
+  let owner = null;
+  try {
+    owner = chooseAssignee(c);
+    db.prepare("INSERT INTO conversation_messages (id, conversation_id, sender_side, sender_id, sender_name, sender_role, body, created_at) VALUES (?,?,'admin',?,?,?,?,?)")
+      .run(mid(), c.id, MARYAM.id, MARYAM.name, MARYAM.role, note, ts);
+    db.prepare("UPDATE conversations SET escalated=1, assigned_to=?, assigned_name=?, status='pending', last_sender='admin', last_message_at=?, updated_at=? WHERE id=?")
+      .run(owner ? owner.id : null, owner ? fullName(owner) : null, ts, ts, c.id);
+    logActivity({ ...convScope(c), kind: 'escalation', actor_type: 'requester', actor_id: req.user.sub, actor_name: req.user.name || c.requester_name, ref_id: c.id,
+      summary: `${c.requester_name || 'Client'} asked for more help on "${c.subject || ''}"` + (owner ? ` → ${fullName(owner)}` : ''), meta: { assignee: owner && owner.id, requested: true } });
+  } catch (e) { log.error('requester_escalate_failed', { error: e.message }); }
+  try { notifyAssignee(c, c.subject || '', owner); } catch (_) {}
+  res.json({ ok: true, escalated: true, conversation: getConversation(c.id, req.user) });
+});
+
+// ─── Customer happiness stats (super-admin oversight of Maryam + the team) ──
+router.get('/happiness', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admins only' });
+  const one = (sql) => { try { return db.prepare(sql).get() || {}; } catch (_) { return {}; } };
+  // Minutes between conversation open and first reply.
+  const SPEED = "AVG((julianday(first_response_at) - julianday(created_at)) * 1440.0)";
+  const totals = one(`SELECT
+      COUNT(*) conversations,
+      SUM(CASE WHEN rating IS NOT NULL THEN 1 ELSE 0 END) rated,
+      ROUND(AVG(CASE WHEN rating IS NOT NULL THEN rating END), 2) avgRating,
+      SUM(CASE WHEN ai_handled=1 THEN 1 ELSE 0 END) aiHandled,
+      SUM(CASE WHEN ai_handled=1 AND escalated=0 THEN 1 ELSE 0 END) aiResolved,
+      SUM(CASE WHEN escalated=1 THEN 1 ELSE 0 END) escalated,
+      ROUND(${SPEED}, 1) avgFirstResponseMins
+    FROM conversations`);
+  // Rating split: how happy with Maryam vs the human team.
+  const aiRate = one('SELECT ROUND(AVG(rating),2) v, COUNT(rating) n FROM conversations WHERE ai_handled=1 AND escalated=0 AND rating IS NOT NULL');
+  const humanRate = one('SELECT ROUND(AVG(rating),2) v, COUNT(rating) n FROM conversations WHERE (escalated=1 OR assigned_to IS NOT NULL) AND rating IS NOT NULL');
+  const dist = {};
+  try { db.prepare('SELECT rating r, COUNT(*) n FROM conversations WHERE rating IS NOT NULL GROUP BY rating').all().forEach((x) => { dist[x.r] = x.n; }); } catch (_) {}
+  const conv = Number(totals.conversations) || 0;
+  const aiHandled = Number(totals.aiHandled) || 0;
+  res.json({
+    conversations: conv,
+    rated: Number(totals.rated) || 0,
+    avgRating: totals.avgRating != null ? Number(totals.avgRating) : null,
+    avgFirstResponseMins: totals.avgFirstResponseMins != null ? Number(totals.avgFirstResponseMins) : null,
+    aiHandled,
+    aiResolved: Number(totals.aiResolved) || 0,
+    aiResolutionRate: aiHandled ? Math.round(1000 * (Number(totals.aiResolved) || 0) / aiHandled) / 10 : null,
+    escalated: Number(totals.escalated) || 0,
+    maryamRating: aiRate.v != null ? { avg: Number(aiRate.v), count: Number(aiRate.n) || 0 } : null,
+    teamRating: humanRate.v != null ? { avg: Number(humanRate.v), count: Number(humanRate.n) || 0 } : null,
+    distribution: dist,
+  });
 });
 
 module.exports = router;
