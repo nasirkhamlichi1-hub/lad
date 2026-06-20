@@ -140,34 +140,59 @@ function fmtTxDate(iso) {
 router.get('/transactions', requireAuth, (req, res) => {
   if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
   const limit = Math.min(1000, Math.max(1, parseInt(req.query.limit || '300', 10) || 300));
-  let rows = [];
+  const where = ['1=1']; const args = [];
+  const type = (req.query.type || '').toString().trim();
+  if (type) { where.push('t.type = ?'); args.push(type); }
+  const q = (req.query.q || '').toString().trim();
+  if (q) {
+    const like = '%' + q + '%';
+    where.push('(l.first_name LIKE ? OR l.last_name LIKE ? OR f.name LIKE ? OR t.reference LIKE ? OR t.description LIKE ? OR t.id LIKE ?)');
+    args.push(like, like, like, like, like, like);
+  }
+  const whereSql = where.join(' AND ');
+  let rows = [], summary = { collected: 0, refunded: 0, net: 0, count: 0 };
   try {
     rows = db.prepare(
-      `SELECT t.id, t.type, t.amount, t.aed_amount, t.payment_method, t.created_at, t.status, t.description,
-              l.first_name, l.last_name, f.name AS firm_name
+      `SELECT t.id, t.type, t.amount, t.aed_amount, t.payment_method, t.reference, t.created_at, t.status, t.description,
+              t.lawyer_id, l.first_name, l.last_name, l.firm_id, f.name AS firm_name
        FROM credit_transactions t
        LEFT JOIN lawyers l ON l.id = t.lawyer_id
        LEFT JOIN firms f ON f.id = l.firm_id
+       WHERE ${whereSql}
        ORDER BY t.created_at DESC LIMIT ?`
-    ).all(limit);
+    ).all(...args, limit);
+    const s = db.prepare(
+      `SELECT COUNT(*) c,
+              COALESCE(SUM(CASE WHEN t.type = 'purchase' AND t.aed_amount > 0 THEN t.aed_amount ELSE 0 END),0) collected,
+              COALESCE(SUM(CASE WHEN t.type = 'refund' OR t.aed_amount < 0 THEN ABS(t.aed_amount) ELSE 0 END),0) refunded
+       FROM credit_transactions t LEFT JOIN lawyers l ON l.id = t.lawyer_id LEFT JOIN firms f ON f.id = l.firm_id WHERE ${whereSql}`
+    ).get(...args);
+    if (s) summary = { collected: s.collected, refunded: s.refunded, net: s.collected - s.refunded, count: s.c };
   } catch (_) {}
-  const kindOf = (type, amount) => {
-    if (type === 'transfer') return 'adjustment';   // pool ↔ lawyer move, not a refund
-    if (type === 'use') return 'booking';
-    if (type === 'refund' || amount < 0) return 'refund';
+  const kindOf = (type2, amount) => {
+    if (type2 === 'transfer') return 'adjustment';   // pool ↔ lawyer move, not a refund
+    if (type2 === 'use') return 'booking';
+    if (type2 === 'refund' || amount < 0) return 'refund';
     return 'lawyer';
   };
   const data = rows.map((t) => ({
     id: t.id,
     kind: kindOf(t.type, Number(t.amount) || 0),
+    type: t.type,
+    lawyer_id: t.lawyer_id || null,
+    firm_id: t.firm_id || null,
     buyer: `${t.first_name || ''} ${t.last_name || ''}`.trim() || t.firm_name || '—',
+    firm: t.firm_name || '',
     credits: Number(t.amount) || 0,
     aed: Number(t.aed_amount) || 0,
-    method: t.payment_method || t.description || '—',
+    method: t.payment_method || '—',
+    reference: t.reference || '',
+    description: t.description || '',
     date: fmtTxDate(t.created_at),
+    created_at: t.created_at,
     status: t.status || 'completed',
   }));
-  res.json({ data, meta: { total: data.length } });
+  res.json({ data, summary, meta: { total: data.length } });
 });
 
 router.get('/requests', requireAuth, (req, res) => {
