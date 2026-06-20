@@ -41,7 +41,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
 .app{display:flex;min-height:100vh}
 
 /* ── Sidebar ── */
-.sidebar{width:248px;background:rgba(255,255,255,.75);backdrop-filter:saturate(180%) blur(40px);border-right:1px solid var(--line);position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column;z-index:20}
+.sidebar{width:248px;background:rgba(255,255,255,.75);backdrop-filter:saturate(180%) blur(40px);border-right:1px solid var(--line);position:sticky;top:var(--lad-nav-h);height:calc(100vh - var(--lad-nav-h));overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column;z-index:20}
 .sb-brand{padding:18px 16px 14px;border-bottom:1px solid var(--line)}
 .sb-logo{display:flex;align-items:center;gap:10px}
 .sb-emblem{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:10px;display:grid;place-items:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,107,63,.2)}
@@ -343,7 +343,10 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
 <!-- ═══ SHARED LAD PORTAL TOPBAR ═══ -->
 <style>
 :root{--lad-nav-h:58px}
-.lad-shared-nav{background:#1c1f2e;height:var(--lad-nav-h);display:flex;align-items:center;padding:0 24px;gap:20px;position:sticky;top:0;z-index:500;box-shadow:0 2px 12px rgba(0,0,0,.35)}
+/* Fixed (not sticky) so the bar stays pinned to the top through every scroll —
+   the page's sidebar/sticky offsets below already assume a fixed nav of this height. */
+.lad-shared-nav{background:#1c1f2e;height:var(--lad-nav-h);display:flex;align-items:center;padding:0 24px;gap:20px;position:fixed;top:0;left:0;right:0;z-index:500;box-shadow:0 2px 12px rgba(0,0,0,.35)}
+body{padding-top:var(--lad-nav-h)}
 .lad-shared-logos{display:flex;align-items:center;gap:12px;padding-right:18px;border-right:1px solid rgba(255,255,255,.12);flex-shrink:0}
 .lad-shared-logos img{height:34px;width:auto}
 .lad-shared-sep{width:1px;height:26px;background:rgba(255,255,255,.22)}
@@ -2336,7 +2339,13 @@ function filterLawyers(forceFilter) {
     return matchQ && matchF;
   });
   document.getElementById('filtCount').textContent = `${filtered.length} shown`;
-  document.getElementById('lawRows').innerHTML = filtered.length ? filtered.map((l,i) => renderLawyerRow(l,i)).join('') : `<div style="padding:32px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:11px">No lawyers match your filter</div>`;
+  // Reassuring, filter-aware empty state — the cohort hasn't disappeared, it just
+  // doesn't match the active chip (e.g. nobody is "compliant" until they hit 16 pts).
+  const fLabel = {compliant:'fully compliant (16/16 pts)','at-risk':'at risk (8–15 pts)',critical:'critical (under 8 pts)','no-booking':'without a booking yet','non-practising':'non-practising',partner:'a partner',associate:'an associate'}[activeFilter];
+  const emptyHtml = LAWYERS.length === 0
+    ? `<div style="padding:32px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:11px">Loading your lawyers…</div>`
+    : `<div style="padding:30px 24px;text-align:center;color:var(--slate2);font-size:13px;line-height:1.6">No lawyers are ${fLabel || 'matching this filter'} right now.<br><span style="color:var(--slate3);font-size:12px">All ${LAWYERS.length} are still here — they just don't match this filter.</span><br><button onclick="filterLawyers('all')" style="margin-top:12px;background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12.5px;font-weight:600;cursor:pointer">Show all ${LAWYERS.length} →</button></div>`;
+  document.getElementById('lawRows').innerHTML = filtered.length ? filtered.map((l,i) => renderLawyerRow(l,i)).join('') : emptyHtml;
   // Restore check state
   document.querySelectorAll('.law-row-check').forEach(cb=>{
     const id = parseInt(cb.dataset.id);
