@@ -247,6 +247,7 @@
         <input class="inp" id="actSearch" placeholder="Search actions, names, references…" style="max-width:300px;margin-left:auto" oninput="actSearch()"/>
         <select class="inp" id="actCat" style="max-width:170px" onchange="actSearch()"><option value="">All categories</option><option value="credits">Credits</option><option value="bookings">Bookings</option><option value="accreditation">Accreditation</option><option value="account">Account</option><option value="course">Course</option><option value="message">Messages</option></select>
       </div>
+      <div id="actTotals" style="display:none;padding:10px 18px;border-bottom:1px solid var(--line);font-size:12px;color:var(--slate2)"></div>
       <div class="panel-bd" id="actList" style="max-height:none"><div class="empty">Loading…</div></div>
       <div style="padding:10px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--slate3)">Every transaction and action is recorded here and kept for 4 years. Click a row to open the customer record.</div>
       </div>
@@ -332,11 +333,16 @@
   window.coursesSub=function(sub,el){
     document.querySelectorAll('#v-courses .subtab').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-sub')===sub)});
     var adm=document.getElementById('admFrame'),trn=document.getElementById('trnFrame');
-    if(adm&&!adm.getAttribute('src'))adm.setAttribute('src',adm.getAttribute('data-src'));
     if(sub==='trainer'){if(trn&&!trn.getAttribute('src'))trn.setAttribute('src',trn.getAttribute('data-src'));if(trn)trn.style.display='';if(adm)adm.style.display='none';return}
     if(trn)trn.style.display='none';if(adm)adm.style.display='';
-    var page=sub==='schedules'?'schedules':sub==='hub'?'content':'courses';
-    try{adm.contentWindow.postMessage({type:'ladPage',page:page},'*')}catch(e){}
+    if(!adm)return;
+    // Track the wanted page and (re)deliver it on load — covers the race where
+    // a sub-tab is clicked before the frame has finished loading.
+    window.__coursesPage=sub==='schedules'?'schedules':sub==='hub'?'content':'courses';
+    function postPage(){try{adm.contentWindow.postMessage({type:'ladPage',page:window.__coursesPage},'*')}catch(e){}}
+    adm.onload=postPage;
+    if(!adm.getAttribute('src'))adm.setAttribute('src',adm.getAttribute('data-src'));
+    postPage();
   };
   // A module is reachable only if its rail entry is visible to this role.
   function viewAllowed(v){var map={accred:'railAccred',intel:'railIntel',users:'railUsers'};var id=map[v];if(!id)return true;var el=document.getElementById(id);return!!el&&el.style.display!=='none'}
@@ -356,8 +362,10 @@
     var qv=(document.getElementById('actSearch').value||'').trim();var cat=document.getElementById('actCat').value;
     var host=document.getElementById('actList');host.innerHTML='<div class="empty">Loading…</div>';
     api('/api/v1/admin/activity?limit=200'+(qv?'&q='+encodeURIComponent(qv):'')+(cat?'&category='+encodeURIComponent(cat):'')).then(function(j){
-      var rows=j.rows||[];host.innerHTML=rows.length?rows.map(actRow).join(''):'<div class="empty">No matching activity.</div>';
-    }).catch(function(e){host.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
+      var rows=j.rows||[],t=j.totals||{};var tot=document.getElementById('actTotals');
+      if(tot){if(t.count){tot.style.display='block';tot.innerHTML='<strong>'+num(t.count)+'</strong> event'+(t.count===1?'':'s')+((t.aed_in||t.aed_out)?' · <span style="color:var(--green)">AED '+num(t.aed_in)+' collected</span> · <span style="color:var(--red)">AED '+num(t.aed_out)+' refunded</span> · net <strong>AED '+num(t.net)+'</strong>':'');}else tot.style.display='none';}
+      host.innerHTML=rows.length?rows.map(actRow).join(''):'<div class="empty">No matching activity.</div>';
+    }).catch(function(e){var tot=document.getElementById('actTotals');if(tot)tot.style.display='none';host.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
   }
   function actRow(a){
     var who=(a.lawyer_name&&a.lawyer_name.trim())?a.lawyer_name:(a.firm_name||'');
