@@ -228,6 +228,16 @@ em{font-style:italic;color:var(--gold)}
 .lgn ~ .adm-tabs-top,.lgn ~ * .adm-tabs-top{top:54px !important}
 .lgn ~ .adm-web-subtabs,.lgn ~ * .adm-web-subtabs{top:54px !important}
 @media (max-width:760px){.lgn{padding:0 10px;gap:2px}.lgn-pill{padding:6px 8px;font-size:11.5px}.lgn-emblem{width:28px;height:28px;font-size:15px}}
+/* Phone: the fixed 3-pane review workspace stacks into one scrollable column */
+@media (max-width:900px){
+  .workspace{grid-template-columns:1fr !important;height:auto !important;overflow:visible !important}
+  .queue,.right{overflow:visible !important}
+  .queue{border-right:0;border-bottom:1px solid var(--line)}
+  .queue-list{max-height:48vh}
+  .center{border-left:0;border-right:0;padding:16px}
+  .right{border-left:0;border-top:1px solid var(--line)}
+  .page-hd{flex-wrap:wrap;gap:10px}
+}
 </style>
 </head>
 <body>

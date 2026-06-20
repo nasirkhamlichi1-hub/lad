@@ -292,6 +292,11 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
   .adm-editor{width:100%}
   .adm-field-row.two,.adm-field-row.three{grid-template-columns:1fr}
   .adm-session{grid-template-columns:1fr 1fr;gap:8px}
+  /* horizontal nav strips and data tables scroll instead of clipping */
+  .adm-tabs-top,.adm-pagetabs,.adm-web-subtabs{overflow-x:auto;overflow-y:hidden;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
+  .adm-tabs-top::-webkit-scrollbar,.adm-pagetabs::-webkit-scrollbar{display:none}
+  .adm-tab-top,.adm-pagetab{flex:0 0 auto}
+  table{display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
 }
 
 /* ─── PAGE TABS (sub-nav below topbar) ─── */
