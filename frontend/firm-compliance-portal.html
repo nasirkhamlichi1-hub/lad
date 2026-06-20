@@ -2241,8 +2241,16 @@ function renderFirmSnapshot(){
   var compliant=prac.filter(function(l){return statusOf(l.pts)==='compliant'}).length;
   var atRisk=prac.filter(function(l){return statusOf(l.pts)==='at-risk'}).length;
   var critical=prac.filter(function(l){return statusOf(l.pts)==='critical'}).length;
-  var pct=total?Math.round(100*compliant/total):0;
-  var avgPts=total?Math.round(prac.reduce(function(s,l){return s+(Number(l.pts)||0)},0)/total*10)/10:0;
+  // Firm "compliance" is a STATISTICAL pace measure, not "% of lawyers who have
+  // already hit 16": the aggregate points the firm holds vs the points it needs
+  // (16 each), read against how far through the 12-month cycle we are.
+  var totalPtsHeld=prac.reduce(function(s,l){return s+(Number(l.pts)||0)},0);
+  var requiredTotal=total*16;
+  var yearFrac=(typeof clpdYearFrac==='function')?clpdYearFrac():0;
+  var elapsedPct=Math.round(100*yearFrac);
+  var pct=requiredTotal?Math.round(100*totalPtsHeld/requiredTotal):0;
+  var onPace=pct>=elapsedPct;
+  var avgPts=total?Math.round(totalPtsHeld/total*10)/10:0;
   var pool=(typeof firmCredits!=='undefined'&&firmCredits!=null)?firmCredits:0;
   var now=new Date(),dec=new Date(Date.UTC(2026,11,31));var daysLeft=Math.max(0,Math.ceil((dec-now)/86400000));
   var set=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
@@ -2257,7 +2265,7 @@ function renderFirmSnapshot(){
     if(!valEl)return;
     var lab=((labelEl&&labelEl.textContent)||'').toLowerCase();var v,sub,relabel;
     var rate=(typeof CREDIT_RATE!=='undefined'?CREDIT_RATE:120);
-    if(/complianc/.test(lab)) v=pct+'%';
+    if(/complianc/.test(lab)){ v=pct+'%'; sub=(onPace?'on track':'behind pace')+' · '+totalPtsHeld.toLocaleString()+'/'+requiredTotal.toLocaleString()+' pts, '+elapsedPct+'% of year'; }
     else if(/below\s*8|critical/.test(lab)){ v=critical; relabel='Lawyers critical'; sub='well behind pace for 31 Dec'; }
     else if(/at.?risk/.test(lab)) v=atRisk;
     else if(/compliant/.test(lab)) v=compliant;
