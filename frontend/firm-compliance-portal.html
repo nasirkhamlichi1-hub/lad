@@ -384,18 +384,18 @@ body{padding-top:var(--lad-nav-h)}
     FIRM COMPLIANCE
   </div>
 
-  <!-- Section nav — firm-focused: view lawyers, manage compliance, apply for accreditation -->
+  <!-- Section nav — firm-focused: view lawyers, manage compliance -->
   <div class="lad-shared-nav-links">
     <a class="lad-snl active" onclick="scrollS('overview')" style="cursor:pointer">Overview</a>
     <a class="lad-snl" onclick="scrollS('lawyers')" style="cursor:pointer">My lawyers</a>
     <a class="lad-snl" href="firm-capabilities.html" style="cursor:pointer">Capabilities</a>
     <a class="lad-snl" onclick="scrollS('booked')" style="cursor:pointer">Bookings</a>
     <a class="lad-snl" onclick="scrollS('credits')" style="cursor:pointer">Credits</a>
-    <a class="lad-snl" onclick="scrollS('internal')" style="cursor:pointer;background:rgba(255,200,80,.18);color:#ffd166;font-weight:600;border:1px solid rgba(255,200,80,.35)">Apply for accreditation →</a>
   </div>
 
-  <!-- Right: user chip + sign out (no portal switcher — firm staff see only the firm portal) -->
+  <!-- Right: apply CTA + user chip + sign out. Pinned (never scrolls/clips). -->
   <div class="lad-shared-right">
+    <a class="lad-snl" onclick="scrollS('internal')" style="cursor:pointer;background:rgba(255,200,80,.18);color:#ffd166;font-weight:600;border:1px solid rgba(255,200,80,.35);margin-right:6px">Apply for accreditation →</a>
     <div class="lad-user-chip" id="sharedUserChip" style="display:none">
       <div class="lad-user-dot" id="sharedUserDot" style="background:#006b3f">SA</div>
       <span id="sharedUserName"></span>
