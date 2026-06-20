@@ -242,6 +242,14 @@ async function runMaryam(convId, latestText) {
     notifyAssignee(Object.assign({}, conv, { category: cat, priority: pri }), latestText || conv.subject || '', owner);
   };
 
+  // Explicit request for a person ALWAYS escalates — never argue with it.
+  var lt = String(latestText || '');
+  if (/\b(real\s+person|a\s+human|speak\s+to\s+a?\s*human|talk\s+to\s+a?\s*human|human\s+(please|being|agent)|real\s+human)\b/i.test(lt)
+      || /\b(speak|talk|connect|put\s+me\s+through)\b[\s\S]{0,32}\b(human|person|someone|agent|advisor|adviser|officer|representative)\b/i.test(lt)) {
+    escalate('Of course — I’m bringing in a CLPD colleague who will follow up with you shortly.', null, 'high');
+    return;
+  }
+
   if (!aimodel.configured()) { escalate(null); return; }
 
   let parsed = null;
@@ -618,6 +626,52 @@ router.post('/activity', requireAuth, (req, res) => {
   if (!summary) return res.status(400).json({ error: 'A note is required.' });
   logActivity({ firm_id, lawyer_id, kind: (b.kind || 'note'), actor_type: 'admin', actor_id: req.user.sub, actor_name: req.user.name || 'CLPD Admin', ref_type: 'note', ref_id: null, summary });
   res.status(201).json({ ok: true });
+});
+
+// POST /conversations/:id/draft — Maryam drafts the next admin reply (admin only).
+router.post('/conversations/:id/draft', requireAuth, async (req, res, next) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admins only' });
+  const c = db.prepare('SELECT * FROM conversations WHERE id = ?').get(req.params.id);
+  if (!c) return res.status(404).json({ error: 'Conversation not found' });
+  if (!aimodel.configured()) return res.json({ draft: '' });
+  try {
+    const ctx = requesterContext(c);
+    let history = [];
+    try { history = db.prepare('SELECT sender_side, sender_name, body FROM conversation_messages WHERE conversation_id = ? ORDER BY created_at ASC').all(c.id).slice(-8); } catch (_) {}
+    const convo = history.map((m) => (m.sender_side === 'admin' ? 'CLPD' : (m.sender_name || 'User')) + ': ' + m.body).join('\n');
+    const system = 'You are drafting the next reply that a CLPD admin will send to ' + ctx.who + '. Write the reply itself — warm, concise, helpful, ready to send, plain text, no preamble, no sign-off. Use the live context with real numbers.';
+    const text = await aimodel.chat({ system, messages: [{ role: 'user', content: 'Context:\n' + JSON.stringify(ctx) + '\n\nConversation so far:\n' + (convo || '(none)') + '\n\nDraft the next reply from CLPD.' }], maxTokens: 320, temperature: 0.4 });
+    res.json({ draft: text });
+  } catch (e) { if (e.code === 'AIMODEL_ERROR') return res.status(502).json({ error: 'AiModel call failed' }); next(e); }
+});
+
+// POST /broadcast { lawyer_ids[], subject, body } — message many lawyers at once.
+router.post('/broadcast', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admins only' });
+  const ids = Array.isArray(req.body && req.body.lawyer_ids) ? req.body.lawyer_ids.map(String).filter(Boolean) : [];
+  const subject = clip(req.body && req.body.subject, 200).trim() || 'A message from CLPD';
+  const body = clip(req.body && req.body.body, 5000).trim();
+  if (!ids.length || !body) return res.status(400).json({ error: 'lawyer_ids and body are required.' });
+  const adminName = req.user.name || 'CLPD Admin';
+  let sent = 0;
+  for (const lid of ids) {
+    const l = store.getLawyerById(lid); if (!l) continue;
+    const name = `${l.first_name || ''} ${l.last_name || ''}`.trim() || l.id;
+    const id = cid(), ts = now();
+    try {
+      db.transaction(() => {
+        db.prepare(`INSERT INTO conversations (id, subject, requester_type, requester_id, requester_name, requester_email, firm_id, status, ai_handled, escalated, assigned_to, assigned_name, created_by, created_at, updated_at, last_message_at, last_sender)
+                    VALUES (?,?,'lawyer',?,?,?,?, 'pending', 0, 0, ?, ?, ?, ?, ?, ?, 'admin')`)
+          .run(id, subject, l.id, name, l.email || null, l.firm_id || null, req.user.sub, adminName, req.user.sub, ts, ts, ts);
+        db.prepare(`INSERT INTO conversation_messages (id, conversation_id, sender_side, sender_id, sender_name, sender_role, body, created_at) VALUES (?,?, 'admin', ?,?,?,?,?)`)
+          .run(mid(), id, req.user.sub, adminName, req.user.role, body, ts);
+      })();
+      logActivity({ firm_id: l.firm_id || null, lawyer_id: l.id, kind: 'reply_out', actor_type: 'admin', actor_id: req.user.sub, actor_name: adminName, ref_id: id, summary: `${adminName} messaged ${name} (broadcast): "${subject}"` });
+      if (mailer && l.email) { try { mailer.enqueue({ to: l.email, toName: name, subject: `CLPD: ${subject}`, text: `${adminName} from the CLPD team:\n\n${body}\n\nSign in to the CLPD portal to reply.`, category: 'message', ref: id, dedupeKey: 'msg_bcast:' + id }); } catch (_) {} }
+      sent++;
+    } catch (_) {}
+  }
+  res.json({ ok: true, sent });
 });
 
 module.exports = router;

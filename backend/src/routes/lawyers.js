@@ -118,6 +118,9 @@ router.get('/', requireAuth, (req, res) => {
   if (band === 'critical') where.push('COALESCE(l.lifetime_points,0) < 8');
   else if (band === 'at-risk') where.push('COALESCE(l.lifetime_points,0) >= 8 AND COALESCE(l.lifetime_points,0) < 16');
   else if (band === 'compliant') where.push('COALESCE(l.lifetime_points,0) >= 16');
+  if (band === 'no-booking') where.push('NOT EXISTS (SELECT 1 FROM bookings b WHERE b.lawyer_id = l.id AND b.status IN (\'booked\',\'attended\'))');
+  const firmFilter = (req.query.firm_id || '').toString().trim();
+  if (firmFilter) { where.push('l.firm_id = ?'); args.push(firmFilter); }
   const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
   let total = 0, rows = [];
   try {

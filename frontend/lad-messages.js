@@ -44,6 +44,9 @@
     #ladMsgBtn:hover{background:#0a5d61}
     #ladMsgBtn .ladmsg-badge{background:#ff4d6d;color:#fff;border-radius:10px;min-width:18px;height:18px;padding:0 5px;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center}
     #ladMsgBtn .ladmsg-badge.on{display:flex}
+    @keyframes ladmsgPulse{0%,100%{box-shadow:0 6px 22px rgba(13,115,119,.45)}50%{box-shadow:0 6px 22px rgba(255,77,109,.55),0 0 0 5px rgba(255,77,109,.22)}}
+    #ladMsgBtn.has-unread{animation:ladmsgPulse 1.7s ease-in-out infinite}
+    #ladMsgBtn.has-unread .ladmsg-badge{animation:ladmsgPulse 1.7s ease-in-out infinite}
     #ladMsgPanel{position:fixed;right:0;top:0;height:100vh;width:420px;max-width:100vw;background:#0f1626;color:#e7ecf5;z-index:99999;box-shadow:-8px 0 40px rgba(0,0,0,.5);transform:translateX(102%);transition:transform .26s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif}
     #ladMsgPanel.on{transform:translateX(0)}
     .ladmsg-hd{padding:15px 18px;border-bottom:1px solid #232c40;display:flex;align-items:center;gap:10px;flex-shrink:0}
@@ -106,6 +109,8 @@
       const j = await api('/unread');
       const b = document.getElementById('ladMsgBadge');
       if (b) { b.textContent = j.unread > 99 ? '99+' : j.unread; b.classList.toggle('on', j.unread > 0); }
+      var btn = document.getElementById('ladMsgBtn'); if (btn) btn.classList.toggle('has-unread', j.unread > 0);
+      try { document.title = (j.unread > 0 ? '(' + j.unread + ') ' : '') + document.title.replace(/^\(\d+\)\s*/, ''); } catch (_) {}
     } catch (_) {}
   }
 
@@ -250,7 +255,7 @@
     if (!token()) return;            // signed-out pages get no widget
     mount();
     refreshBadge();
-    setInterval(() => { if (!ST.open) refreshBadge(); }, 30000);
+    setInterval(() => { if (!ST.open) refreshBadge(); }, 15000);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
