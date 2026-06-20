@@ -131,6 +131,44 @@
   .task{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
   .task input{margin-top:2px}
   .task.done span{text-decoration:line-through;color:var(--slate3)}
+  .ib-back{display:none}
+  /* ─────────────── MOBILE ─────────────── */
+  @media (max-width:768px){
+    body{overflow:auto}
+    /* Left rail becomes a fixed, swipeable bottom tab bar */
+    .rail{position:fixed;bottom:0;left:0;right:0;top:auto;width:auto;height:58px;flex-direction:row;align-items:stretch;padding:0;gap:0;overflow-x:auto;overflow-y:hidden;border-top:1px solid rgba(255,255,255,.1);z-index:150;-webkit-overflow-scrolling:touch}
+    .rail .logo,.rail-div,.rail-sp{display:none}
+    .rl{flex:0 0 62px;height:58px;border-radius:0;gap:4px}
+    .rl svg{width:19px;height:19px}
+    .rl span{font-size:8px}
+    .rl .badge{top:6px;right:14px}
+    .main{height:100vh;padding-bottom:58px}
+    .topbar{height:54px;gap:10px;padding:0 12px}
+    .topbar h1{font-size:15px}.topbar .sub{display:none}
+    .cmd{max-width:none}
+    .cmd input{padding:9px 12px 9px 34px;font-size:16px}/* 16px stops iOS zoom-on-focus */
+    .cmd svg{top:10px}
+    .who .av{width:30px;height:30px}.who>div:last-child{display:none}
+    .dash{grid-template-columns:repeat(2,1fr);gap:12px;padding:14px}
+    .dash>[style*="span 2"]{grid-column:1 / -1 !important}
+    .dash .panel[style*="min-height"]{min-height:0 !important}
+    .kpi{padding:13px 14px}.kpi .v{font-size:26px}
+    /* Inbox: master list, then full-screen thread with a Back affordance */
+    .inbox{flex-direction:column}
+    .inbox-list{width:100%;border-right:0;border-bottom:1px solid var(--line)}
+    .inbox.show-thread .inbox-list{display:none}
+    .inbox-thread{display:none}
+    .inbox.show-thread .inbox-thread{display:flex}
+    .ib-back{display:inline-flex;align-items:center;gap:5px;background:none;border:none;color:var(--green);font-weight:700;font-size:13px;cursor:pointer;padding:0 0 8px}
+    #v-cust .scroll,#v-ops .scroll{padding:14px !important}
+    #v-cust .panel,#v-ops .panel{max-width:none !important}
+    #v-cust .panel-hd,#v-ops .panel-hd{flex-wrap:wrap}
+    #custSearch,#opsSearch{max-width:none !important;margin-left:0 !important;width:100%}
+    /* Record drawer goes full-screen */
+    .drawer{width:100%}
+    .tiles{grid-template-columns:repeat(3,1fr);padding:14px}
+    .qa{padding:12px 16px}.sec{padding:16px}
+  }
 </style>
 </head>
 <body>
@@ -334,12 +372,13 @@
     });
   }
   window.takeConv=function(id){api('/api/v1/messages/conversations/'+id+'/assign',{method:'POST',body:JSON.stringify({assigneeId:ME.sub})}).then(function(){toast('✓ You own this');renderInbox();loadDash()}).catch(function(e){toast(e.message)})};
+  window.ibBack=function(){var ibx=document.querySelector('.inbox');if(ibx)ibx.classList.remove('show-thread')};
   window.openConv=function(id){
-    go('inbox');document.querySelectorAll('.conv').forEach(function(r){r.classList.remove('active')});
+    go('inbox');var ibx=document.querySelector('.inbox');if(ibx)ibx.classList.add('show-thread');document.querySelectorAll('.conv').forEach(function(r){r.classList.remove('active')});
     var th=document.getElementById('ibThread');th.innerHTML='<div class="empty">Loading…</div>';
     api('/api/v1/messages/conversations/'+id).then(function(j){
       var c=j.conversation;
-      var head='<div style="padding:16px 22px;border-bottom:1px solid var(--line);background:#fff"><div style="display:flex;align-items:center;gap:10px"><div><div style="font-size:16px;font-weight:700">'+esc(c.subject||'Conversation')+'</div><div class="sub" style="cursor:pointer" onclick="'+(c.requester_type==='firm'?'openFirm(\''+q1(c.requester_id)+'\')':'openLawyer(\''+q1(c.requester_id)+'\',\''+q1(c.requester_name)+'\')')+'">'+esc(c.requester_name||'')+' · '+esc(c.requester_type||'')+' →</div></div><div style="margin-left:auto;display:flex;gap:6px;align-items:center"><span class="pill '+esc(c.status)+'">'+esc(c.status)+'</span>'+(c.assigned_to===ME.sub?'':'<button class="btn btn-g btn-xs" onclick="takeConv(\''+id+'\');openConv(\''+id+'\')">Take ownership</button>')+(c.status!=='resolved'?'<button class="btn btn-l btn-xs" onclick="convStatus(\''+id+'\',\'resolved\')">Resolve</button>':'')+'</div></div></div>';
+      var head='<div style="padding:16px 22px;border-bottom:1px solid var(--line);background:#fff"><button class="ib-back" onclick="ibBack()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" style="vertical-align:-2px"><polyline points="15 18 9 12 15 6"/></svg> Inbox</button><div style="display:flex;align-items:center;gap:10px"><div><div style="font-size:16px;font-weight:700">'+esc(c.subject||'Conversation')+'</div><div class="sub" style="cursor:pointer" onclick="'+(c.requester_type==='firm'?'openFirm(\''+q1(c.requester_id)+'\')':'openLawyer(\''+q1(c.requester_id)+'\',\''+q1(c.requester_name)+'\')')+'">'+esc(c.requester_name||'')+' · '+esc(c.requester_type||'')+' →</div></div><div style="margin-left:auto;display:flex;gap:6px;align-items:center"><span class="pill '+esc(c.status)+'">'+esc(c.status)+'</span>'+(c.assigned_to===ME.sub?'':'<button class="btn btn-g btn-xs" onclick="takeConv(\''+id+'\');openConv(\''+id+'\')">Take ownership</button>')+(c.status!=='resolved'?'<button class="btn btn-l btn-xs" onclick="convStatus(\''+id+'\',\'resolved\')">Resolve</button>':'')+'</div></div></div>';
       var msgs=(c.messages||[]).map(function(m){var mine=m.sender_side==='admin';return '<div class="msg '+(mine?'me':'them')+'"><div class="who2">'+esc(m.sender_name||(mine?'CLPD':'User'))+' · '+ago(m.created_at)+'</div>'+esc(m.body)+'</div>'}).join('');
       th.innerHTML=head+'<div style="flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column">'+msgs+'</div>'+'<div style="padding:14px 22px;border-top:1px solid var(--line);background:#fff"><textarea id="ibReply" class="inp" rows="2" placeholder="Reply to '+esc(c.requester_name||'')+'…"></textarea><div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-l" id="ibDraftBtn" onclick="ibDraft(\''+id+'\')">'+ico('spark')+' Draft with AI</button><button class="btn btn-g" style="margin-left:auto" onclick="ibSend(\''+id+'\')">Send reply</button></div></div>';
     }).catch(function(e){th.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
