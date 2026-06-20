@@ -17,7 +17,7 @@
     { "route": "/intelligence", "rewrite": "/lad-intelligence-v4.html" },
     { "route": "/lad-crm.html", "headers": { "cache-control": "no-store, must-revalidate" } },
     { "route": "/crm", "rewrite": "/lad-crm.html", "headers": { "cache-control": "no-store, must-revalidate" } },
-    { "route": "/admin", "rewrite": "/lad-admin.html" },
+    { "route": "/admin", "rewrite": "/lad-crm.html" },
     { "route": "/accreditation", "rewrite": "/lad-accreditation-review.html" },
     { "route": "/heatmap", "rewrite": "/lad-capability-heatmap.html" },
     { "route": "/skills", "rewrite": "/lawyer-skills.html" },

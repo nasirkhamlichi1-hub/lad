@@ -122,7 +122,7 @@ tr:hover td{background:var(--paper)}
     </div>
     <div class="top-spacer"></div>
     <span id="modePill" class="pill pill-demo">Checking…</span>
-    <a class="ghost-link" href="lad-admin.html">← Admin home</a>
+    <a class="ghost-link" href="lad-crm.html">← Back to CRM</a>
   </div>
 </header>
 
@@ -285,7 +285,7 @@ tr:hover td{background:var(--paper)}
     if(e && (e.status===401 || e.status===403)){
       n.classList.remove('hidden');
       n.innerHTML='<div class="notice">You need to be signed in as an LAD administrator to manage course materials. '+
-        '<a href="lad-admin.html">Sign in</a>, then return to this page.</div>';
+        '<a href="clpd-portal.html">Sign in</a>, then return to this page.</div>';
     } else if(e){ toast('Error: '+(e.message||e)); }
   }
 
