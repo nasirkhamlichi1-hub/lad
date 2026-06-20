@@ -442,14 +442,31 @@
       bookings.forEach(function(b){tl.push({kind:'booking',when:b.booked_at||b.scheduled_at,text:'Booking: '+(b.course_title||b.course_title_current||b.course_id||''),who:b.booked_by})});
       tl.sort(function(a,b){return String(b.when||'').localeCompare(String(a.when||''))});
       var pct=Math.min(100,Math.round(pts/16*100));
+      // Compliance picture (moved in from the old Course-Admin "Support" record).
+      var needed=Math.max(0,16-pts);
+      var _now=new Date();var _dl=new Date(Date.UTC(_now.getUTCFullYear(),11,31));if(_dl<_now)_dl=new Date(Date.UTC(_now.getUTCFullYear()+1,11,31));
+      var daysDL=Math.max(0,Math.ceil((_dl-_now)/86400000));var dlYr=_dl.getUTCFullYear();
+      var pendingBk=bookings.filter(function(b){return String(b.status||'booked').toLowerCase()==='booked'});
+      var bkPts=function(b){return Number(b.points_earned!=null?b.points_earned:(b.delta_points!=null?b.delta_points:b.course_points))||2};
+      var potential=pendingBk.reduce(function(s,b){return s+bkPts(b)},0);
+      var cmpHTML='<h4>Compliance · deadline 31 Dec '+dlYr+'</h4>'
+        +(needed>0
+          ?'<div style="background:#fce8e4;color:var(--red);padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.55;margin-bottom:14px"><strong>'+needed+' point'+(needed===1?'':'s')+' short</strong> of the 16 required — <strong>'+daysDL+' days</strong> to the deadline.'+(potential>0?' '+pendingBk.length+' booked course'+(pendingBk.length===1?'':'s')+' would add <strong>+'+potential+' pts</strong> once attended.':'')+'</div>'
+          :'<div style="background:#e3f5ec;color:var(--green);padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:14px"><strong>Requirement met</strong> — '+pts+'/16 points for '+dlYr+'.</div>')
+        +'<div class="kv"><span class="k">CPD points earned</span><span><strong>'+pts+'</strong> / 16</span></div>'
+        +'<div class="kv"><span class="k">Still needed</span><span style="color:'+(needed>0?'var(--red)':'var(--green)')+';font-weight:600">'+needed+'</span></div>'
+        +'<div class="kv"><span class="k">Days to 31 Dec '+dlYr+'</span><span>'+daysDL+'</span></div>'
+        +'<div class="kv"><span class="k">Requirement</span><span>8 mandatory (LAD) + 8 accredited</span></div>'
+        +(pendingBk.length?'<h4 style="margin-top:18px">Booked — potential points</h4>'+pendingBk.map(function(b){return '<div class="kv"><span>'+esc(b.course_title||b.course_title_current||b.course_id||'Course')+'<div class="sub">'+fdatetime(b.scheduled_at)+'</div></span><span style="color:var(--green);font-weight:600">+'+bkPts(b)+' pts</span></div>'}).join(''):'');
       document.getElementById('dwInner').innerHTML=
         '<div class="hero"><button class="x" onclick="closeDrawer()">×</button><div style="display:flex;gap:14px;align-items:flex-start"><div class="av" style="width:56px;height:56px;font-size:20px;border-radius:15px;background:'+avColor(name)+'">'+initials(name)+'</div><div style="flex:1;min-width:0"><div class="hero-name">'+esc(name)+'</div><div class="hero-sub">'+esc(l.role||'Lawyer')+(l.firm_name||l.firmName?' · '+esc(l.firm_name||l.firmName):'')+'</div><span class="hbadge" style="background:rgba(255,255,255,.14);color:'+st.color+'">'+st.label+'</span></div></div><div class="prog-l"><span>CPD PROGRESS</span><span>'+pts+' / 16 pts</span></div><div class="prog"><div style="width:'+pct+'%;background:'+st.color+'"></div></div></div>'
         +'<div class="dw-bd">'
         +'<div class="tiles"><div class="tile"><div class="l">Points</div><div class="v">'+pts+'</div></div><div class="tile"><div class="l">Credits</div><div class="v">'+num(l.credits!=null?l.credits:l.credit_balance)+'</div></div><div class="tile"><div class="l">Bookings</div><div class="v">'+bookings.length+'</div></div></div>'
         +'<div class="qa"><button class="p" onclick="dwBookOpen()">'+ico('cal')+' Book onto course</button><button onclick="dwMessageOpen()">'+ico('mail')+' Message</button><button onclick="dwAiBrief()">'+ico('spark')+' AI brief</button>'+(REC.firm?'<button onclick="openFirm(\''+q1(REC.firm)+'\')">'+ico('firm')+' Firm</button>':'')+'<button onclick="dwNoteOpen()">'+ico('note')+' Note</button><button onclick="dwTaskOpen()">'+ico('task')+' Task</button><button onclick="dwCreditsOpen()">'+ico('card')+' Credits</button></div>'
         +'<div id="dwForm" style="display:none;padding:0 22px 14px;border-bottom:1px solid var(--line)"></div>'
-        +tabs([{id:'bk',label:'Bookings ('+bookings.length+')'},{id:'tl',label:'Activity'},{id:'tk',label:'Tasks'},{id:'dt',label:'Details'}])
-        +'<div class="sec" data-tab="bk">'+(bookings.length?bookings.map(bookingCard).join(''):'<div class="sub">No bookings. Use “Book onto course”.</div>')+'</div>'
+        +tabs([{id:'cmp',label:'Compliance'},{id:'bk',label:'Bookings ('+bookings.length+')'},{id:'tl',label:'Activity'},{id:'tk',label:'Tasks'},{id:'dt',label:'Details'}])
+        +'<div class="sec" data-tab="cmp">'+cmpHTML+'</div>'
+        +'<div class="sec" data-tab="bk" style="display:none">'+(bookings.length?bookings.map(bookingCard).join(''):'<div class="sub">No bookings. Use “Book onto course”.</div>')+'</div>'
         +'<div class="sec" data-tab="tl" style="display:none">'+timeline(tl)+'</div>'
         +'<div class="sec" data-tab="tk" style="display:none"><div id="dwTasks">'+tasksHTML(tasks)+'</div></div>'
         +'<div class="sec" data-tab="dt" style="display:none"><div class="kv"><span class="k">Email</span><span>'+esc(l.email||'—')+'</span></div><div class="kv"><span class="k">Phone</span><span>'+esc(l.phone||'—')+'</span></div><div class="kv"><span class="k">Firm</span><span>'+esc(l.firm_name||l.firmName||l.firmId||'—')+'</span></div><div class="kv"><span class="k">Practice</span><span>'+esc(l.practice_areas||l.specialisms||'—')+'</span></div><div class="kv"><span class="k">Status</span><span>'+esc(l.status||'active')+'</span></div></div>'
