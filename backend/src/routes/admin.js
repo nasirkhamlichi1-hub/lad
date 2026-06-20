@@ -99,7 +99,7 @@ router.post('/command', requireAuth, async (req, res, next) => {
   const sessList = sessions.map((s) => `- id=${s.id} | ${s.course_title} | ${new Date(s.scheduled_at).toUTCString()} | booked=${s.booked} | seatsLeft=${s.seats_remaining}`).join('\n') || '(no upcoming sessions)';
   const history = Array.isArray(req.body.history) ? req.body.history.filter((m) => m && m.role && typeof m.content === 'string').slice(-8) : [];
   const system = 'You are the LAD CLPD admin copilot for the Dubai Legal Affairs Department. You can ANSWER questions and PROPOSE actions for the admin to confirm. Use ONLY the provided live data. Reply with ONLY a JSON object.\n'
-    + 'Context: practising lawyers need 16 CPD points by 31 December; <8 = critical, 8-15 = at risk, 16+ = compliant.\n'
+    + 'Context: CLPD is one 12-month cycle — practising lawyers need 16 CPD points (8 mandatory + 8 accredited) by 31 December. Judge standing on PACE, not raw points: a lawyer is on track if their points roughly match the share of the year elapsed; "at risk"/"critical" mean behind / well behind the pace needed to still finish. Most lawyers being mid-progress mid-year is normal, not a crisis.\n'
     + 'If the admin asks a question, reply {"intent":"answer","answer": string} using the real numbers.\n'
     + 'If the admin asks to perform an action, choose exactly one:\n'
     + '- Cancel a session: {"intent":"cancel_session","summary": string,"params":{"sessionId": string}}\n'
@@ -150,22 +150,46 @@ function daysToDeadline() {
   const end = new Date(Date.UTC(now.getUTCFullYear(), 11, 31, 23, 59, 59));
   return Math.max(0, Math.ceil((end - now) / 86400000));
 }
+// Pace-aware standing: a lawyer needs (16-pts)/monthsLeft points per month to
+// finish by 31 Dec; >=6/mo => critical, >=3/mo => at risk, else on track. These
+// point thresholds move through the year (negative early on, rising to 16 at the
+// deadline) and are the single source of truth for every band count/filter here.
+function paceThresholds() {
+  const m = Math.max(0, daysToDeadline()) / 30.44;
+  return { critAt: m > 0 ? 16 - 6 * m : 16, riskAt: m > 0 ? 16 - 3 * m : 16 };
+}
+function paceBand(pts) {
+  const p = Number(pts) || 0;
+  if (p >= 16) return 'compliant';
+  const { critAt, riskAt } = paceThresholds();
+  if (p <= critAt) return 'critical';
+  if (p <= riskAt) return 'at-risk';
+  return 'on-track';
+}
 function oversight() {
   const year = String(cycleYear());
   const one = (sql, ...a) => { try { return db.prepare(sql).get(...a) || {}; } catch (_) { return {}; } };
   const all = (sql, ...a) => { try { return db.prepare(sql).all(...a); } catch (_) { return []; } };
   // Practising = anyone not explicitly out of the profession.
   const PRACT = "COALESCE(LOWER(l.status),'active') NOT IN ('inactive','resigned','non-practising','struck off','left')";
-  // Bands by lifetime CPD points (the platform-wide source of truth, same as
-  // the lawyer/firm portals): <8 critical, 8–15 at risk, 16+ compliant.
+  // PACE-AWARE bands (same model as the lawyer/firm portals): a lawyer's standing
+  // depends on whether they can still reach 16 points by 31 Dec at a sensible rate,
+  // not on raw points. Needed rate = (16-pts)/monthsLeft; >=6/mo critical, >=3/mo
+  // at risk, else on track. Solving for points gives thresholds that move through
+  // the year (in June almost everyone is on track; 0 pts becomes at risk ~Aug,
+  // critical ~Oct).
+  const monthsLeft = Math.max(0, daysToDeadline()) / 30.44;
+  const critAt = monthsLeft > 0 ? 16 - 6 * monthsLeft : 16; // pts<=critAt (and <16) => critical
+  const riskAt = monthsLeft > 0 ? 16 - 3 * monthsLeft : 16; // critAt<pts<=riskAt => at risk
   const bands = one(
     `WITH lp AS (
        SELECT l.id, COALESCE(l.lifetime_points,0) pts
        FROM lawyers l WHERE ${PRACT})
      SELECT COUNT(*) practising,
        SUM(CASE WHEN pts>=16 THEN 1 ELSE 0 END) compliant,
-       SUM(CASE WHEN pts>=8 AND pts<16 THEN 1 ELSE 0 END) atRisk,
-       SUM(CASE WHEN pts<8 THEN 1 ELSE 0 END) critical
+       SUM(CASE WHEN pts<16 AND pts>${critAt} AND pts<=${riskAt} THEN 1 ELSE 0 END) atRisk,
+       SUM(CASE WHEN pts<16 AND pts<=${critAt} THEN 1 ELSE 0 END) critical,
+       SUM(CASE WHEN pts<16 AND pts>${riskAt} THEN 1 ELSE 0 END) onTrack
      FROM lp`);
   const roll = one('SELECT COUNT(*) n FROM lawyers').n || 0;
   const firms = one('SELECT COUNT(*) n FROM firms').n || 0;
@@ -181,7 +205,7 @@ function oversight() {
        FROM lawyers l WHERE ${PRACT} AND l.firm_id IS NOT NULL)
      SELECT f.id, f.name, COUNT(lp.id) lawyers, ROUND(AVG(lp.pts),1) avgPts,
        ROUND(100.0*SUM(CASE WHEN lp.pts>=16 THEN 1 ELSE 0 END)/COUNT(lp.id),1) compliancePct,
-       SUM(CASE WHEN lp.pts<8 THEN 1 ELSE 0 END) critical
+       SUM(CASE WHEN lp.pts<16 AND lp.pts<=${critAt} THEN 1 ELSE 0 END) critical
      FROM firms f JOIN lp ON lp.firm_id = f.id
      GROUP BY f.id HAVING lawyers >= 5
      ORDER BY compliancePct DESC, avgPts DESC`);
@@ -190,7 +214,8 @@ function oversight() {
   return {
     generatedAt: new Date().toISOString(),
     cycleYear: cycleYear(), daysToDeadline: daysToDeadline(),
-    lawyers: { roll, practising, critical: bands.critical || 0, atRisk: bands.atRisk || 0, compliant,
+    lawyers: { roll, practising, critical: bands.critical || 0, atRisk: bands.atRisk || 0,
+      onTrack: bands.onTrack || 0, compliant,
       complianceRate: practising ? Math.round(1000 * compliant / practising) / 10 : 0 },
     firms: { total: firms },
     providers: { total: providers },
@@ -215,11 +240,12 @@ router.get('/briefing', requireAuth, async (req, res, next) => {
   const o = oversight();
   if (!aimodel.configured()) {
     return res.json({ engine: 'snapshot', oversight: o,
-      headline: `${o.lawyers.complianceRate}% of practising lawyers are compliant with ${o.daysToDeadline} days to the deadline.`,
-      summary: `${o.lawyers.compliant} of ${o.lawyers.practising} practising lawyers have reached 16 points. ${o.lawyers.critical} are critical (below 8) and ${o.lawyers.atRisk} are at risk. ${o.accreditations.pending} accreditations await review.`,
+      headline: `${o.lawyers.onTrack + o.lawyers.compliant} of ${o.lawyers.practising} practising lawyers are on track or compliant with ${o.daysToDeadline} days to the deadline.`,
+      summary: `CLPD is a 12-month cycle (16 points by 31 Dec). ${o.lawyers.compliant} have already reached 16 points and ${o.lawyers.onTrack} more are on track for the pace. ${o.lawyers.atRisk} are behind pace (at risk) and ${o.lawyers.critical} are well behind (critical). ${o.accreditations.pending} accreditations await review.`,
       actions: [], watch: [] });
   }
-  const system = 'You are chief of staff to the Director-General of the Dubai Legal Affairs Department, briefing the LAD super-users who oversee the entire CLPD programme. From the LIVE oversight data, write a crisp executive briefing. Reply with ONLY JSON: {"headline": string (one sentence on overall programme health), "summary": string (2-3 sentences citing the real key numbers), "actions": [{"priority":"high"|"medium"|"low","title": string,"detail": string (one sentence citing a real number)}] (exactly 3, most important first), "watch": [string] (1-3 short risk flags)}. Use ONLY the numbers provided. Context: practising lawyers need 16 CPD points by 31 December; <8 = critical, 8-15 = at risk, 16+ = compliant.';
+  const system = 'You are chief of staff to the Director-General of the Dubai Legal Affairs Department, briefing the LAD super-users who oversee the entire CLPD programme. From the LIVE oversight data, write a crisp executive briefing. Reply with ONLY JSON: {"headline": string (one sentence on overall programme health), "summary": string (2-3 sentences citing the real key numbers), "actions": [{"priority":"high"|"medium"|"low","title": string,"detail": string (one sentence citing a real number)}] (exactly 3, most important first), "watch": [string] (1-3 short risk flags)}. Use ONLY the numbers provided. '
+    + 'CRITICAL CONTEXT — judge on PACE, not raw points: CLPD is one 12-month cycle (16 points = 8 mandatory + 8 accredited, due 31 December). It is normal for most lawyers to be mid-progress mid-year, so a low compliance rate now is NOT a crisis. The snapshot already classifies lawyers by pace: "compliant" (16+), "onTrack" (progressing at a healthy rate), "atRisk" (behind the pace needed), "critical" (well behind with little time). Treat compliant + onTrack as healthy. Do NOT describe the programme as "critical" or "in crisis" when most practitioners are on track — reserve urgency for the atRisk and critical counts. Be accurate and measured, not alarmist.';
   try {
     const text = await aimodel.chat({ system, messages: [{ role: 'user', content: 'Live oversight snapshot:\n' + JSON.stringify(o) }], maxTokens: 650, temperature: 0.3 });
     let p = null; try { const m = text.match(/\{[\s\S]*\}/); p = JSON.parse(m ? m[0] : text); } catch (_) {}
@@ -252,11 +278,13 @@ function detectAnomalies() {
   // 3. Cancellation spike in the last 7 days.
   const cx = (all("SELECT COUNT(*) n FROM bookings WHERE status='cancelled' AND created_at>=datetime('now','-7 day')")[0] || {}).n || 0;
   if (cx >= 10) out.push({ level: cx >= 25 ? 'high' : 'medium', kind: 'demand', title: 'Cancellation spike', detail: cx + ' bookings cancelled in the last 7 days — review whether sessions are mistimed.', metric: cx });
-  // 4. Firms where >60% of lawyers are critical (and >=5 lawyers).
+  // 4. Firms where >60% of lawyers are critical (well behind pace) and >=5 lawyers.
+  const _critMl = Math.max(0, daysToDeadline()) / 30.44;
+  const _critAt = _critMl > 0 ? 16 - 6 * _critMl : 16;
   all(`WITH lp AS (SELECT l.firm_id, l.id, COALESCE(l.lifetime_points,0) pts
         FROM lawyers l
         WHERE COALESCE(LOWER(l.status),'active') NOT IN ('inactive','resigned','non-practising','struck off','left') AND l.firm_id IS NOT NULL)
-      SELECT f.id, f.name, COUNT(lp.id) lawyers, SUM(CASE WHEN lp.pts<8 THEN 1 ELSE 0 END) crit
+      SELECT f.id, f.name, COUNT(lp.id) lawyers, SUM(CASE WHEN lp.pts<16 AND lp.pts<=${_critAt} THEN 1 ELSE 0 END) crit
       FROM firms f JOIN lp ON lp.firm_id=f.id GROUP BY f.id HAVING lawyers>=5 AND crit*1.0/lawyers>0.6 ORDER BY crit*1.0/lawyers DESC LIMIT 5`)
     .forEach((r) => out.push({ level: 'high', kind: 'compliance', title: r.name + ' — compliance cluster',
       detail: r.crit + ' of ' + r.lawyers + ' lawyers are critical (' + Math.round(100 * r.crit / r.lawyers) + '%). Prioritise firm-wide outreach.', metric: r.crit, firmId: r.id }));
@@ -406,9 +434,10 @@ function _fmtD(iso) { const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'
 function runQuery(spec) {
   const all = (sql, ...a) => { try { return db.prepare(sql).all(...a); } catch (_) { return []; } };
   const f = spec.filters || {}, lim = Math.min(60, Math.max(1, spec.limit || 30)), year = String(cycleYear());
+  const { critAt: _qCritAt } = paceThresholds();
   if (spec.entity === 'firms') {
     let r = all(`WITH lp AS (SELECT l.firm_id, l.id, COALESCE(l.lifetime_points,0) pts FROM lawyers l WHERE ${_PRACT} AND l.firm_id IS NOT NULL)
-      SELECT f.id, f.name, COUNT(lp.id) lawyers, ROUND(100.0*SUM(CASE WHEN lp.pts>=16 THEN 1 ELSE 0 END)/COUNT(lp.id),1) compliancePct, SUM(CASE WHEN lp.pts<8 THEN 1 ELSE 0 END) critical FROM firms f JOIN lp ON lp.firm_id=f.id GROUP BY f.id`);
+      SELECT f.id, f.name, COUNT(lp.id) lawyers, ROUND(100.0*SUM(CASE WHEN lp.pts>=16 THEN 1 ELSE 0 END)/COUNT(lp.id),1) compliancePct, SUM(CASE WHEN lp.pts<16 AND lp.pts<=${_qCritAt} THEN 1 ELSE 0 END) critical FROM firms f JOIN lp ON lp.firm_id=f.id GROUP BY f.id`);
     if (f.minLawyers != null) r = r.filter((x) => x.lawyers >= f.minLawyers);
     if (f.maxLawyers != null) r = r.filter((x) => x.lawyers <= f.maxLawyers);
     if (f.minCompliance != null) r = r.filter((x) => (x.compliancePct || 0) >= f.minCompliance);
@@ -431,7 +460,7 @@ function runQuery(spec) {
   }
   if (spec.entity === 'lawyers') {
     let r = all(`SELECT l.id, l.first_name, l.last_name, COALESCE(l.lifetime_points,0) pts, fr.name firm FROM lawyers l LEFT JOIN firms fr ON fr.id=l.firm_id WHERE ${_PRACT}`);
-    if (f.band === 'critical') r = r.filter((x) => x.pts < 8); else if (f.band === 'at-risk') r = r.filter((x) => x.pts >= 8 && x.pts < 16); else if (f.band === 'compliant') r = r.filter((x) => x.pts >= 16);
+    if (f.band === 'critical') r = r.filter((x) => paceBand(x.pts) === 'critical'); else if (f.band === 'at-risk') r = r.filter((x) => paceBand(x.pts) === 'at-risk'); else if (f.band === 'compliant') r = r.filter((x) => x.pts >= 16);
     if (f.minPoints != null) r = r.filter((x) => x.pts >= f.minPoints);
     if (f.maxPoints != null) r = r.filter((x) => x.pts <= f.maxPoints);
     r.sort((a, b) => a.pts - b.pts);
@@ -502,6 +531,7 @@ router.post('/query', requireAuth, async (req, res, next) => {
 router.get('/firms', requireAuth, (req, res) => {
   if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admin only' });
   const year = String(cycleYear());
+  const { critAt: _fCritAt } = paceThresholds();
   let firms = [];
   try {
     firms = db.prepare(`WITH lp AS (
@@ -509,7 +539,7 @@ router.get('/firms', requireAuth, (req, res) => {
         FROM lawyers l WHERE ${_PRACT} AND l.firm_id IS NOT NULL)
       SELECT f.id, f.name, COUNT(lp.id) lawyers,
         ROUND(100.0*SUM(CASE WHEN lp.pts>=16 THEN 1 ELSE 0 END)/COUNT(lp.id),1) compliancePct,
-        SUM(CASE WHEN lp.pts<8 THEN 1 ELSE 0 END) critical
+        SUM(CASE WHEN lp.pts<16 AND lp.pts<=${_fCritAt} THEN 1 ELSE 0 END) critical
       FROM firms f JOIN lp ON lp.firm_id=f.id GROUP BY f.id HAVING lawyers>=1 ORDER BY lawyers DESC`).all();
   } catch (_) {}
   res.json({ firms, total: firms.length });
@@ -528,8 +558,9 @@ router.get('/lawyers', requireAuth, (req, res) => {
       COALESCE(l.lifetime_points,0) pts
       FROM lawyers l LEFT JOIN firms fr ON fr.id=l.firm_id WHERE ${_PRACT}`).all();
   } catch (_) {}
-  if (band === 'critical') rows = rows.filter((r) => r.pts < 8);
-  else if (band === 'atrisk' || band === 'at-risk') rows = rows.filter((r) => r.pts >= 8 && r.pts < 16);
+  if (band === 'critical') rows = rows.filter((r) => paceBand(r.pts) === 'critical');
+  else if (band === 'atrisk' || band === 'at-risk') rows = rows.filter((r) => paceBand(r.pts) === 'at-risk');
+  else if (band === 'ontrack' || band === 'on-track') rows = rows.filter((r) => paceBand(r.pts) === 'on-track');
   else if (band === 'compliant') rows = rows.filter((r) => r.pts >= 16);
   const min = req.query.min != null && req.query.min !== '' ? parseInt(req.query.min, 10) : null;
   const max = req.query.max != null && req.query.max !== '' ? parseInt(req.query.max, 10) : null;
@@ -575,7 +606,7 @@ router.get('/firm/:id', requireAuth, (req, res) => {
       COALESCE(l.lifetime_points,0) pts
     FROM lawyers l WHERE l.firm_id=? AND ${_PRACT}`, id);
   let crit = 0, risk = 0, comp = 0;
-  lawyers.forEach((l) => { if (l.pts < 8) crit++; else if (l.pts < 16) risk++; else comp++; });
+  lawyers.forEach((l) => { const b = paceBand(l.pts); if (b === 'critical') crit++; else if (b === 'compliant') comp++; else risk++; });
   const courses = all(`SELECT COALESCE(NULLIF(b.course_title,''), c.title) title, COUNT(*) n,
       SUM(CASE WHEN b.status='attended' THEN 1 ELSE 0 END) attended
     FROM bookings b LEFT JOIN courses c ON c.id=b.course_id JOIN lawyers l ON l.id=b.lawyer_id

@@ -876,8 +876,8 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
               set('aiLiveDesc','Live oversight of '+n(L.practising)+' practising lawyers across '+n(F.total)+' firms · '+o.daysToDeadline+' days to deadline');
               var grid=document.getElementById('aiLiveGrid');
               if(grid) grid.innerHTML =
-                statCard('COMPLIANCE RATE',(L.complianceRate!=null?L.complianceRate:'—'),'%', (L.compliant||0).toLocaleString()+' at or above 16 points')
-               +statCard('CRITICAL · BELOW 8',(L.critical||0).toLocaleString(),'', (L.atRisk||0).toLocaleString()+' more at risk (8–15)')
+                statCard('ON TRACK OR COMPLIANT',(((L.onTrack||0)+(L.compliant||0))).toLocaleString(),'', (L.compliant||0).toLocaleString()+' compliant · '+(L.onTrack||0).toLocaleString()+' on pace')
+               +statCard('CRITICAL · BEHIND PACE',(L.critical||0).toLocaleString(),'', (L.atRisk||0).toLocaleString()+' more behind pace (at risk)')
                +statCard('ACCREDITATIONS',(o.accreditations&&o.accreditations.pending||0).toLocaleString(),'', 'awaiting review · '+(o.sessions&&o.sessions.lowSeat||0)+' low-seat sessions');
             }).catch(function(){});
 
