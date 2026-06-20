@@ -1658,10 +1658,6 @@ body{padding-top:var(--lad-nav-h)}
               <option>Face-to-face</option><option>Online · live</option><option>Online · recorded</option><option>Hybrid</option>
             </select>
           </div>
-          <div style="grid-column:1/-1">
-            <label style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:5px">TARGET AUDIENCE</label>
-            <input id="ac-audience" type="text" placeholder="e.g. Mid- to senior-level practitioners · corporate &amp; commercial" style="width:100%;padding:9px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--line2)'"/>
-          </div>
         </div>
       </div>
 
@@ -4033,7 +4029,7 @@ async function submitAccredApp() {
     duration: document.getElementById('ac-duration').value,
     intendedDate: document.getElementById('ac-date').value,
     format:   (document.getElementById('ac-format')?.value || '').trim() || 'Face-to-face',
-    audience: (document.getElementById('ac-audience')?.value || '').trim() || 'All practitioners',
+    audience: 'All practitioners',
     applicantEmail,
     documents: acDocsFiles.map(f => f.name),
     // The reviewer reads `attachments` (with base64 dataUrl so files are
