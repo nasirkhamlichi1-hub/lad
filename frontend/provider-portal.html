@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
+<script src="lad-admin-guard.js" data-roles="provider_admin,provider"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Provider Portal · Accreditation Application · LAD</title>
 <!-- LAD CLPD — live API sync shim (multi-user persistence) -->
@@ -80,7 +81,12 @@ a{color:inherit;text-decoration:none}
 .field-textarea{resize:vertical;min-height:80px;font-family:inherit}
 .field-help{font-size:11px;color:var(--slate2);margin-top:5px;line-height:1.5}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media (max-width:600px){.field-row{grid-template-columns:1fr}}
+@media (max-width:600px){
+  .field-row{grid-template-columns:1fr}
+  [style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr) !important}
+  [style*="grid-template-columns:1.15fr 1fr"],[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr !important}
+  [style*="grid-template-columns:1fr auto auto"]{grid-template-columns:1fr !important;gap:10px}
+}
 
 .file-upload{position:relative;display:block;padding:12px 14px;border:1.5px dashed var(--line2);border-radius:9px;cursor:pointer;background:var(--paper);transition:all .15s;text-align:center}
 .file-upload:hover{border-color:var(--green);background:var(--green-bg)}

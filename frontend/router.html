@@ -67,14 +67,17 @@
     // Firms
     firm:                        'firm-compliance-portal.html',
     firm_compliance_officer:     'firm-compliance-portal.html',
-    // LAD Staff (oversight + accreditation sign-off)
-    lad_staff:                   'lad-intelligence-v4.html',
-    lad_intelligence:            'lad-intelligence-v4.html',
-    // LAD Admin (operations)
-    lad_admin:                   'lad-admin.html',
-    // Super admin — full system access; default landing is LAD Admin, but
-    // they can navigate anywhere from there.
-    super_admin:                 'lad-admin.html',
+    // LAD Staff (internal training only)
+    lad_staff:                   'lad-staff-training.html',
+    // LAD Admin & intelligence land on the unified CRM shell, which embeds the
+    // course admin, accreditation, trainer and user-management workspaces.
+    lad_intelligence:            'lad-crm.html',
+    lad_admin:                   'lad-crm.html',
+    // Super users — full system access; the CRM shell also exposes Intelligence
+    // and the Command Centre. Navigate anywhere from there.
+    super_admin:                 'lad-crm.html',
+    lad_super_admin:             'lad-crm.html',
+    dg:                          'lad-crm.html',
     // External training providers
     provider:                    'provider-portal.html',
     provider_admin:              'provider-portal.html',

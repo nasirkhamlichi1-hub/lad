@@ -27,6 +27,9 @@
   .rl .badge{position:absolute;top:8px;right:9px;min-width:16px;height:16px;background:var(--red);border-radius:9px;font-size:9px;font-weight:700;color:#fff;display:none;align-items:center;justify-content:center;padding:0 4px}
   .rl.has .badge{display:flex}
   .rail-sp{flex:1}
+  .rail-div{width:34px;height:1px;background:rgba(255,255,255,.12);margin:6px 0}
+  .rail{overflow-y:auto;overflow-x:hidden;scrollbar-width:none}.rail::-webkit-scrollbar{display:none}
+  .embed{flex:1;width:100%;height:100%;border:0;display:block;background:#fff}
   /* ── main ── */
   .main{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh}
   .topbar{height:60px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 22px;flex-shrink:0}
@@ -92,7 +95,8 @@
   .drawer.on{transform:translateX(0)}
   .scrim{position:fixed;inset:0;background:rgba(8,16,12,.45);z-index:190;opacity:0;pointer-events:none;transition:opacity .2s}
   .scrim.on{opacity:1;pointer-events:auto}
-  .dw-bd{flex:1;overflow-y:auto}
+  #dwInner{flex:1;min-height:0;display:flex;flex-direction:column}
+  .dw-bd{flex:1;overflow-y:auto;min-height:0}
   .hero{background:linear-gradient(135deg,#0c1712 0%,#10241a 55%,#0e3322 100%);color:#fff;padding:22px;position:relative}
   .hero .x{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.16);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:17px}
   .hero-name{font-size:23px;font-weight:700;letter-spacing:-.015em;line-height:1.1}
@@ -128,6 +132,44 @@
   .task{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
   .task input{margin-top:2px}
   .task.done span{text-decoration:line-through;color:var(--slate3)}
+  .ib-back{display:none}
+  /* ─────────────── MOBILE ─────────────── */
+  @media (max-width:768px){
+    body{overflow:auto}
+    /* Left rail becomes a fixed, swipeable bottom tab bar */
+    .rail{position:fixed;bottom:0;left:0;right:0;top:auto;width:auto;height:58px;flex-direction:row;align-items:stretch;padding:0;gap:0;overflow-x:auto;overflow-y:hidden;border-top:1px solid rgba(255,255,255,.1);z-index:150;-webkit-overflow-scrolling:touch}
+    .rail .logo,.rail-div,.rail-sp{display:none}
+    .rl{flex:0 0 62px;height:58px;border-radius:0;gap:4px}
+    .rl svg{width:19px;height:19px}
+    .rl span{font-size:8px}
+    .rl .badge{top:6px;right:14px}
+    .main{height:100vh;padding-bottom:58px}
+    .topbar{height:54px;gap:10px;padding:0 12px}
+    .topbar h1{font-size:15px}.topbar .sub{display:none}
+    .cmd{max-width:none}
+    .cmd input{padding:9px 12px 9px 34px;font-size:16px}/* 16px stops iOS zoom-on-focus */
+    .cmd svg{top:10px}
+    .who .av{width:30px;height:30px}.who>div:last-child{display:none}
+    .dash{grid-template-columns:repeat(2,1fr);gap:12px;padding:14px}
+    .dash>[style*="span 2"]{grid-column:1 / -1 !important}
+    .dash .panel[style*="min-height"]{min-height:0 !important}
+    .kpi{padding:13px 14px}.kpi .v{font-size:26px}
+    /* Inbox: master list, then full-screen thread with a Back affordance */
+    .inbox{flex-direction:column}
+    .inbox-list{width:100%;border-right:0;border-bottom:1px solid var(--line)}
+    .inbox.show-thread .inbox-list{display:none}
+    .inbox-thread{display:none}
+    .inbox.show-thread .inbox-thread{display:flex}
+    .ib-back{display:inline-flex;align-items:center;gap:5px;background:none;border:none;color:var(--green);font-weight:700;font-size:13px;cursor:pointer;padding:0 0 8px}
+    #v-cust .scroll,#v-ops .scroll{padding:14px !important}
+    #v-cust .panel,#v-ops .panel{max-width:none !important}
+    #v-cust .panel-hd,#v-ops .panel-hd{flex-wrap:wrap}
+    #custSearch,#opsSearch{max-width:none !important;margin-left:0 !important;width:100%}
+    /* Record drawer goes full-screen */
+    .drawer{width:100%}
+    .tiles{grid-template-columns:repeat(3,1fr);padding:14px}
+    .qa{padding:12px 16px}.sec{padding:16px}
+  }
 </style>
 </head>
 <body>
@@ -137,8 +179,17 @@
     <button class="rl" data-v="inbox" id="railInbox" onclick="go('inbox')" style="position:relative"><span class="badge" id="inboxBadge">0</span><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Inbox</span></button>
     <button class="rl" data-v="cust" onclick="go('cust')"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="18" cy="9" r="3"/></svg><span>Customers</span></button>
     <button class="rl" data-v="ops" onclick="go('ops')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Operations</span></button>
+    <div class="rail-div"></div>
+    <!-- Everyday operations — all LAD admins -->
+    <button class="rl" data-v="courses" onclick="go('courses')"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>Courses</span></button>
+    <button class="rl" data-v="trainer" onclick="go('trainer')"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg><span>Trainer</span></button>
+    <button class="rl" id="railUsers" data-v="users" onclick="go('users')"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span>Users</span></button>
     <div class="rail-sp"></div>
-    <a class="rl" href="lad-admin.html"><svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg><span>Admin</span></a>
+    <!-- Strategic oversight — super users only -->
+    <button class="rl" id="railAccred" data-v="accred" onclick="go('accred')" style="display:none"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg><span>Accredit</span></button>
+    <button class="rl" id="railIntel" data-v="intel" onclick="go('intel')" style="display:none"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg><span>Intel</span></button>
+    <a class="rl" id="railCmd" href="command-centre.html" target="_blank" style="display:none"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg><span>Command</span></a>
+    <button class="rl" onclick="signOut()" title="Sign out"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Sign out</span></button>
   </nav>
 
   <div class="main">
@@ -148,7 +199,7 @@
         <input id="cmd" placeholder="Search anyone or anything — lawyer, firm, course…" autocomplete="off" oninput="cmdSearch()" onfocus="cmdSearch()"/>
         <div class="cmd-res" id="cmdRes"></div>
       </div>
-      <div class="who"><div class="av" id="meAv" style="background:#006B3F">··</div><div><b id="meName">—</b><br><a href="lad-admin.html">Admin console →</a></div></div>
+      <div class="who"><div class="av" id="meAv" style="background:#006B3F">··</div><div><b id="meName">—</b><br><span id="meRole" style="color:var(--slate3);font-size:11px">CLPD Admin</span></div></div>
     </div>
 
     <!-- DASHBOARD -->
@@ -181,6 +232,13 @@
         <div class="panel-bd" id="opsList" style="max-height:none"></div>
       </div>
     </div></div>
+
+    <!-- EMBEDDED ADMIN MODULES — same shell, one navigation, no page-hopping -->
+    <div class="view" id="v-courses"><iframe class="embed" title="Courses" data-src="lad-admin.html?embed=1"></iframe></div>
+    <div class="view" id="v-accred"><iframe class="embed" title="Accreditation" data-src="lad-accreditation-review.html?embed=1"></iframe></div>
+    <div class="view" id="v-trainer"><iframe class="embed" title="Trainer" data-src="lad-trainer-admin.html?embed=1"></iframe></div>
+    <div class="view" id="v-users"><iframe class="embed" title="Users" data-src="users-admin.html?embed=1"></iframe></div>
+    <div class="view" id="v-intel"><iframe class="embed" title="Intelligence" data-src="lad-intelligence-v4.html?embed=1"></iframe></div>
   </div>
 
   <div class="scrim" id="scrim" onclick="closeDrawer()"></div>
@@ -222,19 +280,37 @@
   }
   document.getElementById('meName').textContent=ME.name||'CLPD Admin';
   var av=document.getElementById('meAv');av.textContent=initials(ME.name);av.style.background=avColor(ME.name);
+  // Role-scope the rail. Super users (+dg) get Intelligence & Command Centre;
+  // lad_intelligence analysts don't manage user accounts.
+  var SUPER_ROLES=['lad_super_admin','super_admin','dg'];
+  var IS_SUPER=SUPER_ROLES.indexOf(ME.role)!==-1;
+  var roleLabel={lad_admin:'LAD Admin',lad_intelligence:'LAD Intelligence',lad_super_admin:'LAD Super User',super_admin:'Super Admin',dg:'Director General'}[ME.role]||'CLPD Admin';
+  var rlEl=document.getElementById('meRole');if(rlEl)rlEl.textContent=roleLabel;
+  // Accreditation, Intelligence and the Command Centre are strategic-oversight
+  // functions — super users only. Everyday admins don't see them.
+  if(SUPER_ROLES.indexOf(ME.role)!==-1){['railAccred','railIntel','railCmd'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=''})}
+  if(ME.role==='lad_intelligence'){var ru=document.getElementById('railUsers');if(ru)ru.style.display='none'}
 
   // ── shared state ──
   var CONV=[],SESS=[],FIRMS=[],TASKS_DUE=[];
 
   // ── view switching ──
-  var TITLES={dash:['Dashboard','CLPD customer operations'],inbox:['Inbox','Customer conversations'],cust:['Customers','Lawyers & firms'],ops:['Operations','Sessions & bookings']};
+  var TITLES={dash:['Dashboard','CLPD customer operations'],inbox:['Inbox','Customer conversations'],cust:['Customers','Lawyers & firms'],ops:['Operations','Sessions & bookings'],
+    courses:['Courses','Catalogue · sessions · scheduling · website'],accred:['Accreditation','Application review queue'],trainer:['Trainer','Staff training materials & learners'],users:['Users','Accounts, roles & access'],intel:['Intelligence','Profession analytics & oversight']};
+  var EMBED={courses:1,accred:1,trainer:1,users:1,intel:1};
+  // A module is reachable only if its rail entry is visible to this role.
+  function viewAllowed(v){var map={accred:'railAccred',intel:'railIntel',users:'railUsers'};var id=map[v];if(!id)return true;var el=document.getElementById(id);return!!el&&el.style.display!=='none'}
   window.go=function(v){
+    if(!document.getElementById('v-'+v)||!viewAllowed(v))v='dash';
+    try{if(location.hash!=='#'+v)history.replaceState(null,'',location.pathname+location.search+'#'+v)}catch(e){}
     document.querySelectorAll('.rl').forEach(function(r){r.classList.toggle('on',r.getAttribute('data-v')===v)});
     document.querySelectorAll('.view').forEach(function(x){x.classList.remove('on')});
     document.getElementById('v-'+v).classList.add('on');
     document.getElementById('vTitle').textContent=TITLES[v][0];document.getElementById('vSub').textContent=TITLES[v][1];
+    if(EMBED[v]){var f=document.querySelector('#v-'+v+' iframe[data-src]');if(f&&!f.getAttribute('src'))f.setAttribute('src',f.getAttribute('data-src'));return}
     if(v==='inbox')renderInbox();if(v==='ops')renderOps();if(v==='cust'&&!document.getElementById('custSearch').value)browseFirms();
   };
+  window.signOut=function(){try{localStorage.removeItem('lad_token');localStorage.removeItem('lad_role');localStorage.removeItem('lad_name')}catch(e){}location.replace('clpd-portal.html')};
 
   // ── command / global search ──
   var cmdT;window.cmdSearch=function(){clearTimeout(cmdT);cmdT=setTimeout(_cmd,240)};
@@ -243,9 +319,11 @@
     if(qv.length<2){box.classList.remove('on');return}
     box.classList.add('on');box.innerHTML='<div class="empty">Searching…</div>';
     var ql=qv.toLowerCase();var fh=FIRMS.filter(function(f){return (f.name||'').toLowerCase().indexOf(ql)>=0}).slice(0,4);
+    var sh=SESS.filter(function(s){return (s.course_title||'').toLowerCase().indexOf(ql)>=0||(s.provider_name||'').toLowerCase().indexOf(ql)>=0}).slice(0,4);
     api('/api/v1/lawyers?search='+encodeURIComponent(qv)+'&limit=10').then(function(j){
       var rows=Array.isArray(j)?j:(j.data||j.rows||[]);var h='';
       if(fh.length)h+=fh.map(function(f){return cmdRow(ico('firm'),f.name,f.id+' · firm','openFirm(\''+q1(f.id)+'\')')}).join('');
+      if(sh.length)h+=sh.map(function(s){return cmdRow(ico('cal'),s.course_title||'Session',fdate(s.scheduled_at)+' · '+(Number(s.seats_remaining)||0)+' seats · session','openSession(\''+q1(s.id)+'\',\''+q1(s.course_title||'')+'\')')}).join('');
       h+=rows.map(function(l){var n=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.id;var p=l.points!=null?l.points:(l.lifetime_points||0);return cmdRow(initials(n),n,(l.email||'')+' · '+p+'/16 pts','openLawyer(\''+q1(l.id)+'\',\''+q1(n)+'\')',avColor(n))}).join('');
       box.innerHTML=h||'<div class="empty">No results.</div>';
     }).catch(function(e){box.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
@@ -272,6 +350,7 @@
         +kpi('Assigned to me',CONV.filter(function(c){return c.assigned_to===ME.sub&&c.status!=='closed'}).length,'your queue')
         +kpi('Upcoming sessions',SESS.length,(SESS.reduce(function(s,x){return s+(Number(x.seats_remaining)||0)},0))+' seats open')
         +kpi('Tasks due',TASKS_DUE.length,'follow-ups')
+        +(IS_SUPER?kpiGo('Accreditation','accredPending','awaiting your decision','accred'):'')
         +'<div class="panel" style="grid-column:span 2;min-height:300px"><div class="panel-hd"><h2>Needs attention</h2><button class="btn btn-l btn-xs" style="margin-left:auto" onclick="go(\'inbox\')">Open inbox →</button></div><div class="panel-bd" id="dashQueue" style="flex:1"></div></div>'
         +'<div class="panel" style="grid-column:span 2"><div class="panel-hd"><h2>Tasks due</h2></div><div class="panel-bd" id="dashTasks" style="flex:1;padding:6px 18px"></div></div>'
         +'<div class="ai" style="grid-column:span 2"><div class="ey" style="color:rgba(255,255,255,.6);margin-bottom:9px">✦ Ask Maryam · AI assist</div><textarea id="aiQ" rows="2" placeholder="which firms are most at risk? · summarise today\'s messages · who needs chasing"></textarea><div style="margin-top:9px"><button class="btn btn-g" onclick="askAI()" id="aiBtn">Ask</button></div><div class="ans" id="aiAns"></div></div>'
@@ -280,8 +359,12 @@
       dq.innerHTML=att.length?att.map(convRow).join(''):'<div class="empty">All clear — nothing waiting.</div>';
       var dt=document.getElementById('dashTasks');dt.innerHTML=TASKS_DUE.length?TASKS_DUE.slice(0,8).map(function(t){return '<div class="task"><input type="checkbox" onchange="taskDone(\''+t.id+'\',this.checked)"/><div style="flex:1"><div style="font-size:13px;font-weight:500">'+esc(t.title)+'</div><div class="sub">'+(t.due_at?'Due '+fdate(t.due_at):'')+'</div></div></div>'}).join(''):'<div class="empty">No open tasks.</div>';
       var ds=document.getElementById('dashSess');ds.innerHTML=SESS.slice(0,8).map(sessRow).join('')||'<div class="empty">No upcoming sessions.</div>';
+      if(IS_SUPER)loadAccredWidget();
     });
   }
+  // Super only — surface the accreditation decision queue on Home.
+  function loadAccredWidget(){api('/api/v1/accreditations?status=pending&limit=1').then(function(j){var n=(j.counts&&j.counts.pending)||0;var el=document.getElementById('accredPending');if(!el)return;el.textContent=num(n);el.style.color=n>0?'var(--amber)':'';}).catch(function(){})}
+  function kpiGo(l,id,s,view){return '<div class="kpi" style="cursor:pointer" onclick="go(\''+view+'\')" title="Open accreditation review"><div class="l">'+l+'</div><div class="v" id="'+id+'">…</div><div class="s">'+esc(s)+' ›</div></div>'}
   function kpi(l,v,s){return '<div class="kpi"><div class="l">'+l+'</div><div class="v">'+num(v)+'</div><div class="s">'+esc(s)+'</div></div>'}
 
   // ── conversations ──
@@ -296,12 +379,13 @@
     });
   }
   window.takeConv=function(id){api('/api/v1/messages/conversations/'+id+'/assign',{method:'POST',body:JSON.stringify({assigneeId:ME.sub})}).then(function(){toast('✓ You own this');renderInbox();loadDash()}).catch(function(e){toast(e.message)})};
+  window.ibBack=function(){var ibx=document.querySelector('.inbox');if(ibx)ibx.classList.remove('show-thread')};
   window.openConv=function(id){
-    go('inbox');document.querySelectorAll('.conv').forEach(function(r){r.classList.remove('active')});
+    go('inbox');var ibx=document.querySelector('.inbox');if(ibx)ibx.classList.add('show-thread');document.querySelectorAll('.conv').forEach(function(r){r.classList.remove('active')});
     var th=document.getElementById('ibThread');th.innerHTML='<div class="empty">Loading…</div>';
     api('/api/v1/messages/conversations/'+id).then(function(j){
       var c=j.conversation;
-      var head='<div style="padding:16px 22px;border-bottom:1px solid var(--line);background:#fff"><div style="display:flex;align-items:center;gap:10px"><div><div style="font-size:16px;font-weight:700">'+esc(c.subject||'Conversation')+'</div><div class="sub" style="cursor:pointer" onclick="'+(c.requester_type==='firm'?'openFirm(\''+q1(c.requester_id)+'\')':'openLawyer(\''+q1(c.requester_id)+'\',\''+q1(c.requester_name)+'\')')+'">'+esc(c.requester_name||'')+' · '+esc(c.requester_type||'')+' →</div></div><div style="margin-left:auto;display:flex;gap:6px;align-items:center"><span class="pill '+esc(c.status)+'">'+esc(c.status)+'</span>'+(c.assigned_to===ME.sub?'':'<button class="btn btn-g btn-xs" onclick="takeConv(\''+id+'\');openConv(\''+id+'\')">Take ownership</button>')+(c.status!=='resolved'?'<button class="btn btn-l btn-xs" onclick="convStatus(\''+id+'\',\'resolved\')">Resolve</button>':'')+'</div></div></div>';
+      var head='<div style="padding:16px 22px;border-bottom:1px solid var(--line);background:#fff"><button class="ib-back" onclick="ibBack()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" style="vertical-align:-2px"><polyline points="15 18 9 12 15 6"/></svg> Inbox</button><div style="display:flex;align-items:center;gap:10px"><div><div style="font-size:16px;font-weight:700">'+esc(c.subject||'Conversation')+'</div><div class="sub" style="cursor:pointer" onclick="'+(c.requester_type==='firm'?'openFirm(\''+q1(c.requester_id)+'\')':'openLawyer(\''+q1(c.requester_id)+'\',\''+q1(c.requester_name)+'\')')+'">'+esc(c.requester_name||'')+' · '+esc(c.requester_type||'')+' →</div></div><div style="margin-left:auto;display:flex;gap:6px;align-items:center"><span class="pill '+esc(c.status)+'">'+esc(c.status)+'</span>'+(c.assigned_to===ME.sub?'':'<button class="btn btn-g btn-xs" onclick="takeConv(\''+id+'\');openConv(\''+id+'\')">Take ownership</button>')+(c.status!=='resolved'?'<button class="btn btn-l btn-xs" onclick="convStatus(\''+id+'\',\'resolved\')">Resolve</button>':'')+'</div></div></div>';
       var msgs=(c.messages||[]).map(function(m){var mine=m.sender_side==='admin';return '<div class="msg '+(mine?'me':'them')+'"><div class="who2">'+esc(m.sender_name||(mine?'CLPD':'User'))+' · '+ago(m.created_at)+'</div>'+esc(m.body)+'</div>'}).join('');
       th.innerHTML=head+'<div style="flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column">'+msgs+'</div>'+'<div style="padding:14px 22px;border-top:1px solid var(--line);background:#fff"><textarea id="ibReply" class="inp" rows="2" placeholder="Reply to '+esc(c.requester_name||'')+'…"></textarea><div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-l" id="ibDraftBtn" onclick="ibDraft(\''+id+'\')">'+ico('spark')+' Draft with AI</button><button class="btn btn-g" style="margin-left:auto" onclick="ibSend(\''+id+'\')">Send reply</button></div></div>';
     }).catch(function(e){th.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
@@ -358,14 +442,31 @@
       bookings.forEach(function(b){tl.push({kind:'booking',when:b.booked_at||b.scheduled_at,text:'Booking: '+(b.course_title||b.course_title_current||b.course_id||''),who:b.booked_by})});
       tl.sort(function(a,b){return String(b.when||'').localeCompare(String(a.when||''))});
       var pct=Math.min(100,Math.round(pts/16*100));
+      // Compliance picture (moved in from the old Course-Admin "Support" record).
+      var needed=Math.max(0,16-pts);
+      var _now=new Date();var _dl=new Date(Date.UTC(_now.getUTCFullYear(),11,31));if(_dl<_now)_dl=new Date(Date.UTC(_now.getUTCFullYear()+1,11,31));
+      var daysDL=Math.max(0,Math.ceil((_dl-_now)/86400000));var dlYr=_dl.getUTCFullYear();
+      var pendingBk=bookings.filter(function(b){return String(b.status||'booked').toLowerCase()==='booked'});
+      var bkPts=function(b){return Number(b.points_earned!=null?b.points_earned:(b.delta_points!=null?b.delta_points:b.course_points))||2};
+      var potential=pendingBk.reduce(function(s,b){return s+bkPts(b)},0);
+      var cmpHTML='<h4>Compliance · deadline 31 Dec '+dlYr+'</h4>'
+        +(needed>0
+          ?'<div style="background:#fce8e4;color:var(--red);padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.55;margin-bottom:14px"><strong>'+needed+' point'+(needed===1?'':'s')+' short</strong> of the 16 required — <strong>'+daysDL+' days</strong> to the deadline.'+(potential>0?' '+pendingBk.length+' booked course'+(pendingBk.length===1?'':'s')+' would add <strong>+'+potential+' pts</strong> once attended.':'')+'</div>'
+          :'<div style="background:#e3f5ec;color:var(--green);padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:14px"><strong>Requirement met</strong> — '+pts+'/16 points for '+dlYr+'.</div>')
+        +'<div class="kv"><span class="k">CPD points earned</span><span><strong>'+pts+'</strong> / 16</span></div>'
+        +'<div class="kv"><span class="k">Still needed</span><span style="color:'+(needed>0?'var(--red)':'var(--green)')+';font-weight:600">'+needed+'</span></div>'
+        +'<div class="kv"><span class="k">Days to 31 Dec '+dlYr+'</span><span>'+daysDL+'</span></div>'
+        +'<div class="kv"><span class="k">Requirement</span><span>8 mandatory (LAD) + 8 accredited</span></div>'
+        +(pendingBk.length?'<h4 style="margin-top:18px">Booked — potential points</h4>'+pendingBk.map(function(b){return '<div class="kv"><span>'+esc(b.course_title||b.course_title_current||b.course_id||'Course')+'<div class="sub">'+fdatetime(b.scheduled_at)+'</div></span><span style="color:var(--green);font-weight:600">+'+bkPts(b)+' pts</span></div>'}).join(''):'');
       document.getElementById('dwInner').innerHTML=
         '<div class="hero"><button class="x" onclick="closeDrawer()">×</button><div style="display:flex;gap:14px;align-items:flex-start"><div class="av" style="width:56px;height:56px;font-size:20px;border-radius:15px;background:'+avColor(name)+'">'+initials(name)+'</div><div style="flex:1;min-width:0"><div class="hero-name">'+esc(name)+'</div><div class="hero-sub">'+esc(l.role||'Lawyer')+(l.firm_name||l.firmName?' · '+esc(l.firm_name||l.firmName):'')+'</div><span class="hbadge" style="background:rgba(255,255,255,.14);color:'+st.color+'">'+st.label+'</span></div></div><div class="prog-l"><span>CPD PROGRESS</span><span>'+pts+' / 16 pts</span></div><div class="prog"><div style="width:'+pct+'%;background:'+st.color+'"></div></div></div>'
         +'<div class="dw-bd">'
         +'<div class="tiles"><div class="tile"><div class="l">Points</div><div class="v">'+pts+'</div></div><div class="tile"><div class="l">Credits</div><div class="v">'+num(l.credits!=null?l.credits:l.credit_balance)+'</div></div><div class="tile"><div class="l">Bookings</div><div class="v">'+bookings.length+'</div></div></div>'
         +'<div class="qa"><button class="p" onclick="dwBookOpen()">'+ico('cal')+' Book onto course</button><button onclick="dwMessageOpen()">'+ico('mail')+' Message</button><button onclick="dwAiBrief()">'+ico('spark')+' AI brief</button>'+(REC.firm?'<button onclick="openFirm(\''+q1(REC.firm)+'\')">'+ico('firm')+' Firm</button>':'')+'<button onclick="dwNoteOpen()">'+ico('note')+' Note</button><button onclick="dwTaskOpen()">'+ico('task')+' Task</button><button onclick="dwCreditsOpen()">'+ico('card')+' Credits</button></div>'
         +'<div id="dwForm" style="display:none;padding:0 22px 14px;border-bottom:1px solid var(--line)"></div>'
-        +tabs([{id:'bk',label:'Bookings ('+bookings.length+')'},{id:'tl',label:'Activity'},{id:'tk',label:'Tasks'},{id:'dt',label:'Details'}])
-        +'<div class="sec" data-tab="bk">'+(bookings.length?bookings.map(bookingCard).join(''):'<div class="sub">No bookings. Use “Book onto course”.</div>')+'</div>'
+        +tabs([{id:'cmp',label:'Compliance'},{id:'bk',label:'Bookings ('+bookings.length+')'},{id:'tl',label:'Activity'},{id:'tk',label:'Tasks'},{id:'dt',label:'Details'}])
+        +'<div class="sec" data-tab="cmp">'+cmpHTML+'</div>'
+        +'<div class="sec" data-tab="bk" style="display:none">'+(bookings.length?bookings.map(bookingCard).join(''):'<div class="sub">No bookings. Use “Book onto course”.</div>')+'</div>'
         +'<div class="sec" data-tab="tl" style="display:none">'+timeline(tl)+'</div>'
         +'<div class="sec" data-tab="tk" style="display:none"><div id="dwTasks">'+tasksHTML(tasks)+'</div></div>'
         +'<div class="sec" data-tab="dt" style="display:none"><div class="kv"><span class="k">Email</span><span>'+esc(l.email||'—')+'</span></div><div class="kv"><span class="k">Phone</span><span>'+esc(l.phone||'—')+'</span></div><div class="kv"><span class="k">Firm</span><span>'+esc(l.firm_name||l.firmName||l.firmId||'—')+'</span></div><div class="kv"><span class="k">Practice</span><span>'+esc(l.practice_areas||l.specialisms||'—')+'</span></div><div class="kv"><span class="k">Status</span><span>'+esc(l.status||'active')+'</span></div></div>'
@@ -383,7 +484,7 @@
   window.bkCancel=function(id,cost){
     var f=document.getElementById('dwForm');f.style.display='block';f.scrollIntoView&&f.scrollIntoView({behavior:'smooth',block:'nearest'});
     var firmBtn=REC.firm?'<button class="btn btn-l" onclick="bkCancelDo(\''+id+'\',\'firm\')">'+ico('refund')+' Refund '+cost+' cr to firm pool</button>':'';
-    f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Cancel booking — where do the credits go?</h4><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-l" onclick="bkCancelDo(\''+id+'\',\'lawyer\')"X/button>'+firmBtn+'<button class="btn btn-l" style="margin-left:auto" onclick="document.getElementById(\'dwForm\').style.display=\'none\'">Keep booking</button></div></div>';
+    f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Cancel booking — where do the credits go?</h4><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-l" onclick="bkCancelDo(\''+id+'\',\'lawyer\')">'+ico('refund')+' Refund '+cost+' cr to lawyer</button>'+firmBtn+'<button class="btn btn-l" style="margin-left:auto" onclick="document.getElementById(\'dwForm\').style.display=\'none\'">Keep booking</button></div></div>';
   };
   window.bkCancelDo=function(id,dest){api('/api/v1/bookings/'+id,{method:'PATCH',body:JSON.stringify({status:'cancelled',refund_to:dest})}).then(function(r){toast('✓ Cancelled · '+(r.refunded_credits||0)+' cr → '+(r.refund_to==='firm'?'firm pool':'lawyer'));reopenRec()}).catch(function(e){toast(e.message)})};
   window.dwMessageOpen=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Message '+esc(REC.name)+'</h4><input id="msSubj" class="inp" placeholder="Subject (optional)"/><textarea id="msBody" class="inp" rows="3" placeholder="Write your message…" style="margin-top:8px"></textarea><div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-g" onclick="dwMessageSend()">Send message</button><button class="btn btn-l" onclick="document.getElementById(\'dwForm\').style.display=\'none\'">Cancel</button></div></div>';var t=document.getElementById('msBody');if(t)t.focus()};
@@ -396,17 +497,23 @@
   };
   window.bkReschedDo=function(id){var sid=document.getElementById('rsSel').value;api('/api/v1/bookings/'+id+'/reschedule',{method:'POST',body:JSON.stringify({session_id:sid})}).then(function(){toast('✓ Rescheduled');reopenRec()}).catch(function(e){toast(e.message)})};
   window.dwAiBrief=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>'+ico('spark')+' Maryam’s brief</h4><div id="aiBriefBody" class="sub">Reading the record…</div></div>';var b=REC.type==='lawyer'?{lawyer_id:REC.id}:{firm_id:REC.id};api('/api/v1/admin/crm-summary',{method:'POST',body:JSON.stringify(b)}).then(function(j){var el=document.getElementById('aiBriefBody');if(el)el.innerHTML='<div style="font-size:13.5px;line-height:1.65;color:var(--ink)">'+esc(j.summary||'')+'</div>'}).catch(function(e){var el=document.getElementById('aiBriefBody');if(el)el.textContent='AI unavailable: '+e.message})};
-  window.dwBookOpen=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Book '+esc(REC.name)+' onto a course</h4><div class="sub" style="margin-bottom:8px">Balance: <strong>'+REC.credits+' credits</strong> · each course costs 5</div><input id="bkSearch" class="inp" placeholder="Search a course / session…" oninput="dwBookSearch()"/><div id="bkRes" style="margin-top:8px"></div></div>'};
-  var bkT;window.dwBookSearch=function(){clearTimeout(bkT);bkT=setTimeout(function(){var qv=(document.getElementById('bkSearch').value||'').toLowerCase().trim();var h=document.getElementById('bkRes');if(qv.length<2){h.innerHTML='';return}var rows=SESS.filter(function(s){return (s.course_title||'').toLowerCase().indexOf(qv)>=0}).slice(0,10);h.innerHTML=rows.length?rows.map(function(s){return '<div class="kv"><span>'+esc(s.course_title||'')+'<div class="sub">'+fdate(s.scheduled_at)+' · '+(Number(s.seats_remaining)||0)+' seats</div></span><button class="btn btn-g btn-xs" onclick="dwBookConfirm(\''+s.id+'\',\''+q1(s.course_id)+'\',\''+q1(s.course_title||'')+'\',\''+fdate(s.scheduled_at)+'\','+(Number(s.seats_remaining)||0)+')">Select</button></div>'}).join(''):'<div class="sub">No matching sessions.</div>'},220)};
+  window.dwBookOpen=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Book '+esc(REC.name)+' onto a course</h4><div class="sub" style="margin-bottom:8px">Balance: <strong>'+REC.credits+' credits</strong> · each course costs 5</div><input id="bkSearch" class="inp" placeholder="Search a course / session…" oninput="dwBookSearch()"/><div id="bkRes" style="margin-top:8px"></div></div>';
+    // Show the available sessions straight away — don't make the admin guess.
+    if(!SESS.length){var h=document.getElementById('bkRes');if(h)h.innerHTML='<div class="sub">Loading sessions…</div>';loadSessions().then(function(){dwBookRender('')})}else dwBookRender('')};
+  function dwBookRender(qv){var h=document.getElementById('bkRes');if(!h)return;qv=(qv||'').toLowerCase().trim();
+    if(!SESS.length){h.innerHTML='<div class="sub">No upcoming sessions are scheduled. Add dates in <a onclick="go(\'courses\')" style="cursor:pointer;font-weight:600">Courses → Schedules</a>.</div>';return}
+    var rows=SESS.filter(function(s){return s.scheduled_at&&(!qv||(s.course_title||'').toLowerCase().indexOf(qv)>=0||(s.provider_name||'').toLowerCase().indexOf(qv)>=0)}).slice(0,25);
+    h.innerHTML=rows.length?rows.map(function(s){return '<div class="kv"><span>'+esc(s.course_title||'')+'<div class="sub">'+fdate(s.scheduled_at)+' · '+(Number(s.seats_remaining)||0)+' seats'+(s.provider_name?' · '+esc(s.provider_name):'')+'</div></span><button class="btn btn-g btn-xs" onclick="dwBookConfirm(\''+s.id+'\',\''+q1(s.course_id)+'\',\''+q1(s.course_title||'')+'\',\''+fdate(s.scheduled_at)+'\','+(Number(s.seats_remaining)||0)+')">Select</button></div>'}).join(''):'<div class="sub">No sessions match “'+esc(qv)+'”.</div>'}
+  var bkT;window.dwBookSearch=function(){clearTimeout(bkT);bkT=setTimeout(function(){dwBookRender(document.getElementById('bkSearch').value)},180)};
   window.dwBookConfirm=function(sid,cid,title,date,seats){var cost=5,bal=REC.credits,short=cost-bal;var f=document.getElementById('dwForm');f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Confirm booking</h4><div class="bk"><div style="font-weight:600">'+esc(title)+'</div><div class="sub">'+date+' · '+seats+' seats</div></div><div class="kv"><span class="k">Course cost</span><span>'+cost+' credits</span></div><div class="kv"><span class="k">'+esc(REC.name)+'’s balance</span><span>'+bal+' credits</span></div>'+(short>0?'<div style="background:#fce8e4;color:var(--red);padding:10px 12px;border-radius:9px;margin:10px 0;font-size:12.5px">Short by '+short+' credit'+(short===1?'':'s')+' — grant them to book now.</div><div style="display:flex;gap:8px"><button class="btn btn-g" onclick="dwBookGrantAndBook(\''+sid+'\',\''+cid+'\','+short+')">Grant '+short+' &amp; book</button><button class="btn btn-l" onclick="dwBookOpen()">Back</button></div>':'<div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-g" onclick="dwBookDo(\''+sid+'\',\''+cid+'\',this)">Book — uses '+cost+' of their '+bal+' credits</button><button class="btn btn-l" onclick="dwBookOpen()">Back</button></div>')+'</div>'};
-  window.dwBookGrantAndBook=function(sid,cid,amt){if(!REC.email){toast('No email on file to grant credits');return}api('/api/v1/credits/topup',{method:'POST',body:JSON.stringify({email:REC.email,credits:amt,note:'Granted to enable a booking'})}).then(function(){REC.credits+=amt;return api('/api/v1/bookings',{method:'POST',body:JSON.stringify({lawyer_id:REC.id,session_id:sid,course_id:cid})})}).then(function(){toast('✓ Granted '+amt+' & booked');reopenRec()}).catch(function(e){toast(e.message)})};
+  window.dwBookGrantAndBook=function(sid,cid,amt){api('/api/v1/credits/topup',{method:'POST',body:JSON.stringify({email:REC.email,lawyer_id:REC.id,credits:amt,note:'Granted to enable a booking'})}).then(function(){REC.credits+=amt;return api('/api/v1/bookings',{method:'POST',body:JSON.stringify({lawyer_id:REC.id,session_id:sid,course_id:cid})})}).then(function(){toast('✓ Granted '+amt+' & booked');reopenRec()}).catch(function(e){toast(e.message)})};
   window.dwBookDo=function(sid,cid,btn){if(btn){btn.disabled=true;btn.textContent='Booking…'}api('/api/v1/bookings',{method:'POST',body:JSON.stringify({lawyer_id:REC.id,session_id:sid,course_id:cid})}).then(function(){toast('✓ Booked');reopenRec()}).catch(function(e){toast(e.message);if(btn){btn.disabled=false;btn.textContent='Book'}})};
   window.dwNoteOpen=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Add note</h4><textarea id="ntText" class="inp" rows="2" placeholder="Internal note…"></textarea><div style="margin-top:8px"><button class="btn btn-g" onclick="dwNoteSave()">Save</button></div></div>'};
   window.dwNoteSave=function(){var v=(document.getElementById('ntText').value||'').trim();if(!v)return;var b=REC.type==='lawyer'?{lawyer_id:REC.id}:{firm_id:REC.id};b.summary=v;api('/api/v1/messages/activity',{method:'POST',body:JSON.stringify(b)}).then(function(){toast('✓ Note saved');reopenRec()}).catch(function(e){toast(e.message)})};
   window.dwTaskOpen=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>New task</h4><input id="tkText" class="inp" placeholder="e.g. Call back re: refund"/><input id="tkDue" type="date" class="inp" style="margin-top:8px"/><div style="margin-top:8px"><button class="btn btn-g" onclick="dwTaskSave()">Add task</button></div></div>'};
   window.dwTaskSave=function(){var v=(document.getElementById('tkText').value||'').trim();if(!v)return;var b=REC.type==='lawyer'?{lawyer_id:REC.id}:{firm_id:REC.id};b.title=v;b.due_at=document.getElementById('tkDue').value||null;api('/api/v1/tasks',{method:'POST',body:JSON.stringify(b)}).then(function(){toast('✓ Task added');reopenRec()}).catch(function(e){toast(e.message)})};
   window.dwCreditsOpen=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Credits · balance '+REC.credits+'</h4><input id="crAmt" type="number" min="1" class="inp" placeholder="Amount of credits"/><div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn btn-g" onclick="dwCredits(\'grant\')">+ Grant</button><button class="btn btn-l" onclick="dwCredits(\'deduct\')">− Deduct</button><button class="btn btn-r" onclick="dwCredits(\'refund\')">'+ico('refund')+' Refund</button></div><div class="sub" style="margin-top:8px"><strong>Grant</strong> add credits · <strong>Deduct</strong> correct a balance · <strong>Refund</strong> return purchased credits (money back).</div></div>'};
-  window.dwCredits=function(mode){var n=Math.abs(parseInt(document.getElementById('crAmt').value,10))||0;if(!n)return;if(!REC.email){toast('No email on file');return}var amt=mode==='grant'?n:-n;var note=mode==='grant'?'Goodwill grant':mode==='refund'?'Credit refund — money returned to customer':'Balance correction';api('/api/v1/credits/topup',{method:'POST',body:JSON.stringify({email:REC.email,credits:amt,note:note})}).then(function(){toast('✓ '+(mode==='grant'?'+':'−')+n+' credits ('+mode+')');reopenRec()}).catch(function(e){toast(e.message)})};
+  window.dwCredits=function(mode){var ci=document.getElementById('crAmt');var n=Math.abs(parseInt(ci&&ci.value,10))||0;if(!n){toast('Enter an amount of credits first');if(ci)ci.focus();return}var amt=mode==='grant'?n:-n;var note=mode==='grant'?'Goodwill grant':mode==='refund'?'Credit refund — money returned to customer':'Balance correction';api('/api/v1/credits/topup',{method:'POST',body:JSON.stringify({email:REC.email,lawyer_id:REC.id,credits:amt,note:note})}).then(function(){toast('✓ '+(mode==='grant'?'+':'−')+n+' credits ('+mode+')');reopenRec()}).catch(function(e){toast(e.message)})};
 
   function tasksHTML(tasks){return tasks.length?tasks.map(function(t){return '<div class="task'+(t.done?' done':'')+'"><input type="checkbox" '+(t.done?'checked':'')+' onchange="taskDone(\''+t.id+'\',this.checked)"/><div style="flex:1"><span style="font-size:13px;font-weight:500">'+esc(t.title)+'</span><div class="sub">'+(t.due_at?'Due '+fdate(t.due_at):'')+(t.created_by_name?' · '+esc(t.created_by_name):'')+'</div></div></div>'}).join(''):'<div class="sub">No tasks. Add one with the  Task action.</div>'}
   window.taskDone=function(id,done){api('/api/v1/tasks/'+id,{method:'PATCH',body:JSON.stringify({done:done})}).then(function(){toast(done?'✓ Done':'Reopened');loadDash()}).catch(function(e){toast(e.message)})};
@@ -454,7 +561,14 @@
   // ── boot ──
   api('/api/v1/firms').then(function(j){FIRMS=Array.isArray(j)?j:(j.data||j.firms||[])}).catch(function(){});
   loadSessions().then(loadDash);
-  setInterval(function(){if(document.getElementById('v-dash').classList.contains('on'))loadDash()},45000);
+  // The Inbox badge (new-message indicator) updates everywhere in the shell —
+  // not just on Home — so it's live while you're deep in Courses, Users, etc.
+  function refreshInboxBadge(){api('/api/v1/messages/conversations?box=unassigned').then(function(j){var un=(j.conversations||[]).filter(function(c){return c.status!=='closed'}).length;var ib=document.getElementById('inboxBadge');if(ib)ib.textContent=un;var ri=document.getElementById('railInbox');if(ri)ri.classList.toggle('has',un>0)}).catch(function(){})}
+  setInterval(function(){if(document.getElementById('v-dash').classList.contains('on'))loadDash();else refreshInboxBadge()},45000);
+  // Deep-link / refresh-safe navigation — the URL hash tracks the open module.
+  function fromHash(){var h=(location.hash||'').replace(/^#/,'');if(h&&document.getElementById('v-'+h))go(h)}
+  window.addEventListener('hashchange',fromHash);
+  fromHash();
 })();
 </script>
 </body>

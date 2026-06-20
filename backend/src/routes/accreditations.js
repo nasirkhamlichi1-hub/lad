@@ -29,10 +29,16 @@ const tpl = require('../services/email-templates');
 const log = require('../logger');
 const { requireAuth, optionalAuth } = require('../middleware/auth');
 
-const REVIEWER_ROLES = ['lad_admin', 'lad_intelligence', 'lad_super_admin', 'dg'];
+// Accreditation review & decisions are strategic oversight — super users only.
+// Everyday admins (lad_admin) run courses/bookings/users, not accreditation.
+const REVIEWER_ROLES = ['lad_super_admin', 'super_admin', 'dg'];
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 const isReviewer = (u) => !!u && REVIEWER_ROLES.includes(u.role);
+// Chasing attendance filing is everyday LAD operations (not an accreditation
+// decision) — all internal LAD staff see the LAD-wide alert queue.
+const LAD_INTERNAL_ROLES = ['lad_admin', 'lad_intelligence', 'lad_super_admin', 'super_admin', 'dg', 'lad_staff'];
+const isLadInternal = (u) => !!u && (LAD_INTERNAL_ROLES.includes(u.role) || u.user_type === 'lad');
 const parse = (s, fb) => { try { return s ? JSON.parse(s) : fb; } catch (_) { return fb; } };
 const newRef = (p) => p + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8);
 const rid = (p) => p + crypto.randomBytes(4).toString('hex').toUpperCase().slice(0, 5);
@@ -301,7 +307,7 @@ function attendanceAlerts(audience) {
 router.get('/alerts', requireAuth, (req, res) => {
   const u = req.user;
   let audience;
-  if (isReviewer(u) || u.user_type === 'lad') {
+  if (isReviewer(u) || isLadInternal(u)) {
     audience = { scope: 'lad' };
   } else if (u.role === 'provider_admin') {
     audience = { scope: 'provider', providerName: req.query.provider || u.name || u.email || '' };

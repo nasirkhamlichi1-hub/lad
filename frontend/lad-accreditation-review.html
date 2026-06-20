@@ -1,10 +1,16 @@
 <!doctype html>
 <html lang="en">
 <head>
-<script src="lad-admin-guard.js" data-roles="lad_admin,lad_intelligence,lad_super_admin,super_admin,dg"></script>
+<script src="lad-admin-guard.js" data-roles="lad_super_admin,super_admin,dg"></script>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Accreditation Review Workspace · LAD</title>
+<script>try{if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add('lad-embed')}catch(e){}</script>
+<style>
+html.lad-embed{--lad-nav-h:0px}
+html.lad-embed .lgn{display:none!important}
+html.lad-embed .page-hd{top:0!important}
+</style>
 <!-- LAD CLPD — live API sync shim (multi-user persistence) -->
 <script src="runtime-config.js?v=render2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -223,6 +229,16 @@ em{font-style:italic;color:var(--gold)}
 .lgn ~ .adm-tabs-top,.lgn ~ * .adm-tabs-top{top:54px !important}
 .lgn ~ .adm-web-subtabs,.lgn ~ * .adm-web-subtabs{top:54px !important}
 @media (max-width:760px){.lgn{padding:0 10px;gap:2px}.lgn-pill{padding:6px 8px;font-size:11.5px}.lgn-emblem{width:28px;height:28px;font-size:15px}}
+/* Phone: the fixed 3-pane review workspace stacks into one scrollable column */
+@media (max-width:900px){
+  .workspace{grid-template-columns:1fr !important;height:auto !important;overflow:visible !important}
+  .queue,.right{overflow:visible !important}
+  .queue{border-right:0;border-bottom:1px solid var(--line)}
+  .queue-list{max-height:48vh}
+  .center{border-left:0;border-right:0;padding:16px}
+  .right{border-left:0;border-top:1px solid var(--line)}
+  .page-hd{flex-wrap:wrap;gap:10px}
+}
 </style>
 </head>
 <body>
