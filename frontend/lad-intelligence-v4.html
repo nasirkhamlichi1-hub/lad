@@ -1456,7 +1456,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 
             <div class="card" style="background:linear-gradient(135deg,#0a0e14,#1a2330);color:#fff">
               <div style="font-family:var(--mono);font-size:9.5px;color:rgba(255,255,255,.5);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:8px">✦ LEX SCHEDULING SUMMARY</div>
-              <div style="font-size:13px;color:rgba(255,255,255,.85);line-height:1.6">With <strong style="color:#fff">14 additional sessions</strong> across Tax, Immigration, and AML — and filling current capacity gaps — compliance is projected to reach <strong style="color:#a5b4fc">95.8%</strong> by December 2026. Estimated cost: <strong style="color:#fff">AED 840,000</strong>.</div>
+              <div id="lexSchedSummary" style="font-size:13px;color:rgba(255,255,255,.85);line-height:1.6">Lex prioritises the courses your lawyers are booking most and fills current capacity gaps to keep the cohort on track for December 2026.</div>
               <div style="margin-top:11px;display:flex;gap:8px">
                 <button class="btn btn-xs" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="showToast('Generating auto-schedule…')">Auto-schedule now</button>
                 <button class="btn btn-xs" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="showToast('Sending invitations…')">Send invitations</button>
@@ -3921,6 +3921,20 @@ Click the ⚙ icon at the top right to add a key, then ask me again.`;
     });
     var arr=Object.keys(agg).map(function(k){ var a=agg[k]; return {name:k, total:a.total, attended:a.attended, rate:a.total?a.attended/a.total*100:0}; });
     arr.sort(function(a,b){ return b.total-a.total; });
+    // Lex scheduling summary — driven by which courses are in highest demand
+    // (most-booked right now), no cost figures.
+    try {
+      var lexEl=document.getElementById('lexSchedSummary');
+      if(lexEl && arr.length){
+        var top=arr.filter(function(r){return r.name && r.name!=='—';}).slice(0,3).map(function(r){return r.name;});
+        if(top.length){
+          var lead=top.length>1?(top.slice(0,-1).join(', ')+' and '+top[top.length-1]):top[0];
+          lexEl.innerHTML='Demand is concentrated in <strong style="color:#fff">'+esc(lead)+'</strong> — the most-booked '
+            +(top.length>1?'activities':'activity')+' right now. Lex prioritises additional sessions for these and fills current '
+            +'capacity gaps to keep the cohort on track for December 2026.';
+        }
+      }
+    } catch(e){}
     rowsEl.innerHTML=arr.slice(0,12).map(function(r){
       var col=r.rate>=80?'var(--green)':r.rate>=60?'var(--amber)':'var(--red)';
       return '<div style="display:grid;grid-template-columns:2.4fr 1fr 1fr 1fr;gap:8px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line)">'
