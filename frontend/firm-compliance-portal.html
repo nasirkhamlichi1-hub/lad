@@ -819,8 +819,9 @@ body{padding-top:var(--lad-nav-h)}
         </div>
         <div class="chips">
           <span class="chip on" data-f="all" onclick="setFilter(this,'all')">All practising</span>
-          <span class="chip" data-f="critical" onclick="setFilter(this,'critical')"> Critical &lt;8 pts</span>
-          <span class="chip" data-f="at-risk" onclick="setFilter(this,'at-risk')">⚠ At risk 8–15</span>
+          <span class="chip" data-f="critical" onclick="setFilter(this,'critical')"> Critical</span>
+          <span class="chip" data-f="at-risk" onclick="setFilter(this,'at-risk')">⚠ At risk</span>
+          <span class="chip" data-f="on-track" onclick="setFilter(this,'on-track')">On track</span>
           <span class="chip" data-f="compliant" onclick="setFilter(this,'compliant')">✓ Compliant</span>
           <span class="chip" data-f="no-booking" onclick="setFilter(this,'no-booking')">No booking yet</span>
           <span class="chip" data-f="partner" onclick="setFilter(this,'partner')">Partners</span>
@@ -2204,8 +2205,21 @@ let orLawyer = null;
 // ════════════════════════════════════════════
 // STATUS HELPERS
 // ════════════════════════════════════════════
-function statusOf(pts){return pts>=16?'compliant':pts>=8?'at-risk':'critical';}
-function accentOf(pts){return pts>=16?'var(--green)':pts>=8?'var(--amber)':'var(--red)';}
+// Months left in the 2026 cycle and the monthly points rate a lawyer would now
+// need to still finish on time — the basis for PACE-AWARE status.
+function clpdMonthsLeft(){ var e=Date.UTC(2026,11,31),n=Date.now(); return Math.max(0,(e-n)/86400000)/30.44; }
+function clpdRequiredRate(pts){ var need=Math.max(0,16-(Number(pts)||0)),m=clpdMonthsLeft(); return need<=0?0:(m>0?need/m:Infinity); }
+// Status is judged on whether a lawyer can still finish at a sensible pace, NOT
+// on raw points: e.g. 0 points is "on track" early on, "at risk" by ~August and
+// "critical" by ~October (need 6+ pts/month). Anchored to today's date.
+function statusOf(pts){
+  if((Number(pts)||0)>=16) return 'compliant';
+  var r=clpdRequiredRate(pts);
+  if(r>=6) return 'critical';     // would need 6+ pts/month — very hard
+  if(r>=3) return 'at-risk';      // 3–6 pts/month — needs to push
+  return 'on-track';              // comfortably on pace
+}
+function accentOf(pts){var s=statusOf(pts);return s==='compliant'?'var(--green)':s==='on-track'?'var(--teal)':s==='at-risk'?'var(--amber)':'var(--red)';}
 
 // CLPD is a single 12-MONTH cycle (16 pts = 8 mandatory + 8 accredited, due 31 Dec).
 // This gives the AI time-of-year context so it judges lawyers on PACE, not raw
@@ -2227,9 +2241,9 @@ function clpdPace(){
 function renderFirmSnapshot(){
   var prac=(LAWYERS||[]).filter(function(l){return l.practising!==false});
   var total=prac.length;
-  var compliant=prac.filter(function(l){return l.pts>=16}).length;
-  var atRisk=prac.filter(function(l){return l.pts>=8&&l.pts<16}).length;
-  var critical=prac.filter(function(l){return l.pts<8}).length;
+  var compliant=prac.filter(function(l){return statusOf(l.pts)==='compliant'}).length;
+  var atRisk=prac.filter(function(l){return statusOf(l.pts)==='at-risk'}).length;
+  var critical=prac.filter(function(l){return statusOf(l.pts)==='critical'}).length;
   var pct=total?Math.round(100*compliant/total):0;
   var avgPts=total?Math.round(prac.reduce(function(s,l){return s+(Number(l.pts)||0)},0)/total*10)/10:0;
   var pool=(typeof firmCredits!=='undefined'&&firmCredits!=null)?firmCredits:0;
@@ -2247,7 +2261,7 @@ function renderFirmSnapshot(){
     var lab=((labelEl&&labelEl.textContent)||'').toLowerCase();var v,sub,relabel;
     var rate=(typeof CREDIT_RATE!=='undefined'?CREDIT_RATE:120);
     if(/complianc/.test(lab)) v=pct+'%';
-    else if(/below\s*8|critical/.test(lab)) v=critical;
+    else if(/below\s*8|critical/.test(lab)){ v=critical; relabel='Lawyers critical'; sub='well behind pace for 31 Dec'; }
     else if(/at.?risk/.test(lab)) v=atRisk;
     else if(/compliant/.test(lab)) v=compliant;
     else if(/credit|pool/.test(lab)){ v=pool; sub='≈ AED '+(pool*rate).toLocaleString()+' available'; }
@@ -2262,8 +2276,8 @@ function renderFirmSnapshot(){
   });
   document.querySelectorAll('.sec [style*="color:var(--amber)"]').forEach(function(e){ if((e.textContent||'').trim()==='—') e.textContent=daysLeft; });
 }
-function pillClass(pts){return pts>=16?'pg':pts>=8?'pa':'pr';}
-function pillLabel(pts){return pts>=16?'COMPLIANT':pts>=8?'AT RISK':'CRITICAL';}
+function pillClass(pts){var s=statusOf(pts);return s==='compliant'?'pg':s==='on-track'?'pt':s==='at-risk'?'pa':'pr';}
+function pillLabel(pts){var s=statusOf(pts);return s==='compliant'?'COMPLIANT':s==='on-track'?'ON TRACK':s==='at-risk'?'AT RISK':'CRITICAL';}
 
 // ════════════════════════════════════════════
 // RENDER LAWYERS
@@ -2295,8 +2309,8 @@ function quickSelect(type) {
   selected.clear();
   const visible = getVisible();
   let targets;
-  if(type==='critical') targets = LAWYERS.filter(l=>l.pts<8);
-  else if(type==='at-risk') targets = LAWYERS.filter(l=>l.pts>=8&&l.pts<16);
+  if(type==='critical') targets = LAWYERS.filter(l=>statusOf(l.pts)==='critical');
+  else if(type==='at-risk') targets = LAWYERS.filter(l=>statusOf(l.pts)==='at-risk');
   else if(type==='no-booking') targets = LAWYERS.filter(l=>l.booked===0);
   else if(type==='visible') targets = visible;
   else targets = LAWYERS;
@@ -2361,7 +2375,7 @@ function filterLawyers(forceFilter) {
   document.getElementById('filtCount').textContent = `${filtered.length} shown`;
   // Reassuring, filter-aware empty state — the cohort hasn't disappeared, it just
   // doesn't match the active chip (e.g. nobody is "compliant" until they hit 16 pts).
-  const fLabel = {compliant:'fully compliant (16/16 pts)','at-risk':'at risk (8–15 pts)',critical:'critical (under 8 pts)','no-booking':'without a booking yet','non-practising':'non-practising',partner:'a partner',associate:'an associate'}[activeFilter];
+  const fLabel = {compliant:'fully compliant (16/16 pts)','on-track':'on track for the cycle','at-risk':'at risk (behind pace)',critical:'critical (well behind pace)','no-booking':'without a booking yet','non-practising':'non-practising',partner:'a partner',associate:'an associate'}[activeFilter];
   const emptyHtml = LAWYERS.length === 0
     ? `<div style="padding:32px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:11px">Loading your lawyers…</div>`
     : `<div style="padding:30px 24px;text-align:center;color:var(--slate2);font-size:13px;line-height:1.6">No lawyers are ${fLabel || 'matching this filter'} right now.<br><span style="color:var(--slate3);font-size:12px">All ${LAWYERS.length} are still here — they just don't match this filter.</span><br><button onclick="filterLawyers('all')" style="margin-top:12px;background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12.5px;font-weight:600;cursor:pointer">Show all ${LAWYERS.length} →</button></div>`;
@@ -2543,8 +2557,8 @@ function toggleMassPick(id, on) {
 
 function massPickAll()      { LAWYERS.forEach(l=>massPickedLawyers.add(l.id)); renderMassLawyerPicker(); updateMassFromPicker(); }
 function massPickClear()    { massPickedLawyers.clear(); renderMassLawyerPicker(); updateMassFromPicker(); }
-function massPickCritical() { massPickedLawyers.clear(); LAWYERS.filter(l=>l.pts<8).forEach(l=>massPickedLawyers.add(l.id)); renderMassLawyerPicker(); updateMassFromPicker(); }
-function massPickAtRisk()   { massPickedLawyers.clear(); LAWYERS.filter(l=>l.pts>=8&&l.pts<12).forEach(l=>massPickedLawyers.add(l.id)); renderMassLawyerPicker(); updateMassFromPicker(); }
+function massPickCritical() { massPickedLawyers.clear(); LAWYERS.filter(l=>statusOf(l.pts)==='critical').forEach(l=>massPickedLawyers.add(l.id)); renderMassLawyerPicker(); updateMassFromPicker(); }
+function massPickAtRisk()   { massPickedLawyers.clear(); LAWYERS.filter(l=>statusOf(l.pts)==='at-risk').forEach(l=>massPickedLawyers.add(l.id)); renderMassLawyerPicker(); updateMassFromPicker(); }
 
 function updateMassFromPicker() {
   const n = massPickedLawyers.size;
