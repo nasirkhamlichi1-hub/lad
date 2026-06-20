@@ -458,14 +458,31 @@ function catalogCourse(r) {
     earliest_session_date: p.dateHeld || p.earliest_session_date || '',
   };
 }
-function sendCatalog(_req, res) {
-  const rows = db.prepare("SELECT * FROM accreditations WHERE status = 'approved' AND accreditation_code IS NOT NULL ORDER BY reviewed_at DESC").all();
+// A firm-internal accreditation (a firm's own course) is private to that firm
+// and must NEVER appear in another firm's catalogue or the public one.
+function isFirmInternal(r) {
+  const p = parse(r.payload, {});
+  return !!(p.firm || p.firmName || (p.providerType && /firm/i.test(p.providerType)) || (p.orgType && /firm/i.test(p.orgType)));
+}
+function sendCatalog(req, res) {
+  const u = req && req.user;
+  let rows = db.prepare("SELECT * FROM accreditations WHERE status = 'approved' AND accreditation_code IS NOT NULL ORDER BY reviewed_at DESC").all();
+  if (u && isReviewer(u)) {
+    // LAD reviewers/admins see every accredited course.
+  } else if (u && u.role === 'firm_compliance_officer') {
+    // A firm officer sees ONLY their own firm's accredited courses — never another firm's.
+    const firm = userFirm(u);
+    rows = rows.filter((r) => rowMatchesFirm(r, firm));
+  } else {
+    // Lawyers, providers and the public never see a firm's internal courses.
+    rows = rows.filter((r) => !isFirmInternal(r));
+  }
   res.json({ courses: rows.map(catalogCourse) });
 }
-router.get('/catalogue', sendCatalog);
-router.get('/catalog', sendCatalog);
-router.get('/_/catalog', sendCatalog);
-router.get('/_/catalogue', sendCatalog);
+router.get('/catalogue', optionalAuth, sendCatalog);
+router.get('/catalog', optionalAuth, sendCatalog);
+router.get('/_/catalog', optionalAuth, sendCatalog);
+router.get('/_/catalogue', optionalAuth, sendCatalog);
 
 router.get('/:ref', requireAuth, (req, res) => {
   const row = db.prepare('SELECT * FROM accreditations WHERE ref = ?').get(req.params.ref);

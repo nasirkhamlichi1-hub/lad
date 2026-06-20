@@ -2718,6 +2718,11 @@ async function refreshCoursesFromBackend() {
       cost: (Number(c.credits) || COURSE_CREDITS) + ' credits',
       costNum: (Number(c.credits) || COURSE_CREDITS) * 120,
       elearning: !!c.elearning,
+      // Participant feedback rating (\u2605) \u2014 carried through from /upcoming so the
+      // card can show the course's quality score.
+      rating: (c.rating && (c.rating.stars != null ? c.rating.stars : c.rating.overall)) || null,
+      ratingCount: (c.rating && c.rating.responses) || 0,
+      providerRating: (c.provider_rating && (c.provider_rating.stars != null ? c.provider_rating.stars : c.provider_rating.overall)) || null,
       match: 0,
       matchReason: '',
       desc: c.title + ' \u2014 ' + ((c.type || 'accredited') === 'mandatory' ? 'mandatory' : 'accredited') + ' CLPD course. Seats are limited per session.',
@@ -2858,7 +2863,7 @@ function renderCourseCards() {
         </div>
       </div>
       <div class="c-body">
-        <div class="c-prov">${c.provider}</div>
+        <div class="c-prov">${c.provider}${c.rating ? ` · <span style="color:#e0a33a;font-weight:700">★ ${Number(c.rating).toFixed(1)}</span>${c.ratingCount ? ` <span style="color:var(--slate3)">(${c.ratingCount})</span>` : ''}` : ' · <span style="color:var(--slate3)">No ratings yet</span>'}</div>
         <div class="c-title">${c.title}</div>
         ${!c.elearning ? `<div class="c-meta"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${c.sessions[0]?.date||'Dates TBC'} · ${c.location}</div>` : `<div class="c-meta"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Self-paced · Online · ~4 hours</div>`}
         ${!c.elearning && c.sessions.length>0 ? `<div class="c-meta" style="color:${c.sessions[0].seats<=5?'var(--red)':c.sessions[0].seats<=15?'var(--amber)':'var(--green)'}"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>${c.sessions[0].seats<=5?`⚠ Only ${c.sessions[0].seats} seats left`:c.sessions[0].seats+' seats available'}</div>` : ''}
@@ -4299,7 +4304,7 @@ async function loadApprovedCoursesIntoDropdown() {
   }
   sel.innerHTML = '<option value="">Loading approved courses…</option>';
   try {
-    const r = await fetch(base + '/api/v1/accreditations/_/catalog', { cache: 'no-store' });
+    const r = await fetch(base + '/api/v1/accreditations/_/catalog', { headers: { Authorization: 'Bearer ' + (localStorage.getItem('lad_token') || '') }, cache: 'no-store' });
     if (!r.ok) {
       sel.innerHTML = '<option value="">Catalog unavailable (HTTP ' + r.status + ') — enter accreditation code below ↓</option>';
       console.warn('[session-submit] catalog HTTP', r.status);
