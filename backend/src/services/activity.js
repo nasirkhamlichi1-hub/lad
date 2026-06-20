@@ -7,8 +7,9 @@
 //   • attributed to a lawyer and/or firm  → surfaces on their record timeline
 //   • classified (category) + tagged      → searchable by admins, readable by AI
 //   • stamped with an AED value where money moved → credits reconcile to money
-// Retention: rows are kept for at least 4 years. Nothing prunes activity younger
-// than that (see purgeExpiredActivity). Best-effort; never throws into callers.
+// Records are WRITE-ONCE: the database (migration 034) blocks any UPDATE/DELETE
+// on activity_log, so the trail is permanent and tamper-proof and retained
+// indefinitely for audit. Best-effort on write; never throws into callers.
 const crypto = require('crypto');
 const db = require('../db');
 
@@ -77,14 +78,4 @@ function firmOfLawyer(lawyerId) {
   try { const r = db.prepare('SELECT firm_id FROM lawyers WHERE id = ?').get(lawyerId); return r && r.firm_id || null; } catch (_) { return null; }
 }
 
-// Retention: delete only entries OLDER than 4 years; never touches the 4-year
-// window. Call from a scheduled job if/when desired.
-function purgeExpiredActivity() {
-  try {
-    const cutoff = new Date(Date.now() - 4 * 365.25 * 24 * 3600 * 1000).toISOString();
-    const r = db.prepare('DELETE FROM activity_log WHERE created_at < ?').run(cutoff);
-    return r.changes || 0;
-  } catch (_) { return 0; }
-}
-
-module.exports = { logActivity, firmOfLawyer, actorFrom, categoryFor, purgeExpiredActivity };
+module.exports = { logActivity, firmOfLawyer, actorFrom, categoryFor };

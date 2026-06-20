@@ -192,6 +192,7 @@
     <button class="rl" data-v="courses" onclick="go('courses')"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>Courses</span></button>
     <button class="rl" id="railUsers" data-v="users" onclick="go('users')"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span>Users</span></button>
     <button class="rl" data-v="activity" onclick="go('activity')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg><span>Activity</span></button>
+    <button class="rl" data-v="finance" onclick="go('finance')"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><line x1="6" y1="12" x2="6" y2="12.01"/><line x1="18" y1="12" x2="18" y2="12.01"/></svg><span>Finance</span></button>
     <div class="rail-sp"></div>
     <!-- Strategic oversight — super users only -->
     <button class="rl" id="railAccred" data-v="accred" onclick="go('accred')" style="display:none"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg><span>Accredit</span></button>
@@ -250,6 +251,20 @@
       <div id="actTotals" style="display:none;padding:10px 18px;border-bottom:1px solid var(--line);font-size:12px;color:var(--slate2)"></div>
       <div class="panel-bd" id="actList" style="max-height:none"><div class="empty">Loading…</div></div>
       <div style="padding:10px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--slate3)">Every transaction and action is recorded here and kept for 4 years. Click a row to open the customer record.</div>
+      </div>
+    </div></div>
+
+    <!-- FINANCE — purchases, refunds & reconciliation (immutable ledger) -->
+    <div class="view" id="v-finance"><div class="scroll" style="width:100%;padding:22px">
+      <div style="max-width:1000px;margin:0 auto">
+        <div class="dash" id="finCards" style="grid-template-columns:repeat(4,1fr);padding:0 0 16px"></div>
+        <div class="panel"><div class="panel-hd" style="flex-wrap:wrap;gap:8px"><h2>Transactions</h2>
+          <input class="inp" id="finSearch" placeholder="Search buyer, firm, reference…" style="max-width:280px;margin-left:auto" oninput="finSearch()"/>
+          <select class="inp" id="finType" style="max-width:150px" onchange="finSearch()"><option value="">All types</option><option value="purchase">Purchases</option><option value="refund">Refunds</option><option value="transfer">Firm pool</option><option value="use">Bookings</option></select>
+        </div>
+        <div class="panel-bd" id="finList" style="max-height:none"><div class="empty">Loading…</div></div>
+        <div style="padding:10px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--slate3)">Every purchase and refund is recorded here. Financial records are immutable — preserved for audit and never edited or deleted.</div>
+        </div>
       </div>
     </div></div>
 
@@ -327,7 +342,7 @@
 
   // ── view switching ──
   var TITLES={dash:['Dashboard','CLPD customer operations'],inbox:['Inbox','Customer conversations'],cust:['Customers','Lawyers & firms'],ops:['Operations','Sessions & bookings'],
-    courses:['Courses','Catalogue · scheduling · AI trainer · knowledge hub'],accred:['Accreditation','Application review queue'],users:['Users','Accounts, roles & access'],activity:['Activity','Searchable audit trail · kept 4 years'],intel:['Intelligence','Profession analytics & oversight']};
+    courses:['Courses','Catalogue · scheduling · AI trainer · knowledge hub'],accred:['Accreditation','Application review queue'],users:['Users','Accounts, roles & access'],activity:['Activity','Searchable audit trail · permanent'],finance:['Finance','Purchases, refunds & reconciliation'],intel:['Intelligence','Profession analytics & oversight']};
   var EMBED={courses:1,accred:1,users:1,intel:1};
   // Courses hub — one embedded admin frame driven by message, plus the trainer.
   window.coursesSub=function(sub,el){
@@ -354,8 +369,26 @@
     document.getElementById('v-'+v).classList.add('on');
     document.getElementById('vTitle').textContent=TITLES[v][0];document.getElementById('vSub').textContent=TITLES[v][1];
     if(EMBED[v]){var f=document.querySelector('#v-'+v+' iframe[data-src]');if(f&&!f.getAttribute('src'))f.setAttribute('src',f.getAttribute('data-src'));return}
-    if(v==='inbox')renderInbox();if(v==='ops')renderOps();if(v==='cust'&&!document.getElementById('custSearch').value)browseFirms();if(v==='activity')loadActivity();
+    if(v==='inbox')renderInbox();if(v==='ops')renderOps();if(v==='cust'&&!document.getElementById('custSearch').value)browseFirms();if(v==='activity')loadActivity();if(v==='finance')loadFinance();
   };
+  // ── finance / immutable ledger ──
+  var finT;window.finSearch=function(){clearTimeout(finT);finT=setTimeout(loadFinance,250)};
+  function finCard(l,v,s){return '<div class="kpi"><div class="l">'+l+'</div><div class="v" style="font-size:24px">'+v+'</div><div class="s">'+esc(s)+'</div></div>'}
+  function loadFinance(){
+    var qv=(document.getElementById('finSearch').value||'').trim();var ty=document.getElementById('finType').value;
+    var host=document.getElementById('finList');host.innerHTML='<div class="empty">Loading…</div>';
+    api('/api/v1/credits/transactions?limit=300'+(qv?'&q='+encodeURIComponent(qv):'')+(ty?'&type='+encodeURIComponent(ty):'')).then(function(j){
+      var rows=j.data||[],s=j.summary||{};
+      var cards=document.getElementById('finCards');if(cards)cards.innerHTML=finCard('AED collected',num(s.collected||0),'purchases')+finCard('AED refunded',num(s.refunded||0),'returned')+finCard('Net AED',num(s.net||0),'collected − refunded')+finCard('Transactions',num(s.count||0),'records');
+      host.innerHTML=rows.length?rows.map(finRow).join(''):'<div class="empty">No transactions yet.</div>';
+    }).catch(function(e){host.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
+  }
+  function finRow(t){
+    var who=t.buyer||'';var open=t.lawyer_id?'openLawyer(\''+q1(t.lawyer_id)+'\',\''+q1(who)+'\')':(t.firm_id?'openFirm(\''+q1(t.firm_id)+'\')':'');
+    var pillCls=t.kind==='refund'?'high':t.kind==='booking'?'cat':t.kind==='adjustment'?'closed':'pending';
+    var aed=Number(t.aed)||0,cr=Number(t.credits)||0;
+    return '<div class="row"'+(open?' onclick="'+open+'"':'')+'><div style="flex:1;min-width:0"><div class="ttl" style="font-weight:500">'+esc(who)+(t.firm?' · <span class="sub">'+esc(t.firm)+'</span>':'')+'</div><div class="sub">'+esc(t.date)+' · '+esc(t.method)+(t.reference?' · '+esc(t.reference):'')+'</div></div><span class="pill '+pillCls+'">'+esc(t.type||t.kind)+'</span><span class="sub" style="font-family:monospace;margin:0 10px;white-space:nowrap">'+(cr>0?'+':'')+cr+' cr</span><span style="font-family:monospace;font-weight:600;white-space:nowrap;color:'+(aed<0?'var(--red)':'var(--ink)')+'">'+(aed<0?'−':'')+'AED '+num(Math.abs(aed))+'</span></div>';
+  }
   // ── activity / audit trail ──
   var actT;window.actSearch=function(){clearTimeout(actT);actT=setTimeout(loadActivity,250)};
   function loadActivity(){
