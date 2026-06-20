@@ -492,7 +492,10 @@
   // ── boot ──
   api('/api/v1/firms').then(function(j){FIRMS=Array.isArray(j)?j:(j.data||j.firms||[])}).catch(function(){});
   loadSessions().then(loadDash);
-  setInterval(function(){if(document.getElementById('v-dash').classList.contains('on'))loadDash()},45000);
+  // The Inbox badge (new-message indicator) updates everywhere in the shell —
+  // not just on Home — so it's live while you're deep in Courses, Users, etc.
+  function refreshInboxBadge(){api('/api/v1/messages/conversations?box=unassigned').then(function(j){var un=(j.conversations||[]).filter(function(c){return c.status!=='closed'}).length;var ib=document.getElementById('inboxBadge');if(ib)ib.textContent=un;var ri=document.getElementById('railInbox');if(ri)ri.classList.toggle('has',un>0)}).catch(function(){})}
+  setInterval(function(){if(document.getElementById('v-dash').classList.contains('on'))loadDash();else refreshInboxBadge()},45000);
   // Deep-link / refresh-safe navigation — the URL hash tracks the open module.
   function fromHash(){var h=(location.hash||'').replace(/^#/,'');if(h&&document.getElementById('v-'+h))go(h)}
   window.addEventListener('hashchange',fromHash);
