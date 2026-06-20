@@ -508,8 +508,8 @@ async function submitRegistration(e){
   const payload = {
     type: 'provider_registration',
     providerName: obj.entityName,
-    legalForm: obj.legalForm,
-    licenceNumber: obj.licence,
+    legalForm: obj.entityType,
+    licenceNumber: obj.tradeLicence,
     country: obj.country,
     yearsInOperation: obj.years ? Number(obj.years) : null,
     address: obj.address,
