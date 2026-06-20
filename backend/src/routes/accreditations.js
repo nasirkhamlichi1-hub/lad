@@ -23,6 +23,7 @@ const crypto = require('crypto');
 const router = express.Router();
 const db = require('../db');
 const store = require('../services/store');
+const activity = require('../services/activity');
 const aimodel = require('../services/aimodel');
 const mailer = require('../services/email');
 const tpl = require('../services/email-templates');
@@ -530,6 +531,22 @@ router.patch('/:ref', requireAuth, (req, res) => {
   const updated = db.prepare('SELECT * FROM accreditations WHERE ref = ?').get(row.ref);
   if (b.status === 'approved' && updated.type === 'session_submission') {
     try { pointsAwarded = awardSessionPoints(updated); } catch (e) { log.error('award_failed', { ref: row.ref, error: e.message }); }
+  }
+
+  // Audit every accreditation decision — searchable, AI-readable, on the firm timeline.
+  if (b.status !== undefined && ['approved', 'rejected', 'returned'].includes(b.status)) {
+    try {
+      const pp = parse(updated.payload, {});
+      const firm = userFirm(req.user) || (pp.firmId ? { id: pp.firmId } : null);
+      const title = pp.courseTitle || pp.course || pp.title || updated.ref;
+      activity.logActivity(Object.assign({
+        firm_id: (firm && firm.id) || pp.firmId || null,
+        kind: 'accreditation_decision', category: 'accreditation', tags: [b.status],
+        summary: `Accreditation ${b.status}: ${title} (${updated.ref})${courseCode ? ' · code ' + courseCode : ''}`,
+        ref_type: 'accreditation', ref_id: updated.ref,
+        meta: { status: b.status, code: courseCode || null, type: updated.type, pointsAwarded },
+      }, activity.actorFrom(req.user)));
+    } catch (_) {}
   }
 
   // Decision email to the applicant on a terminal decision (approved/rejected/returned).
