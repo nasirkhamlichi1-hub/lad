@@ -186,14 +186,26 @@ router.post('/topup', requireAuth, (req, res) => {
   const email = (b.email || '').toString().trim().toLowerCase();
   const credits = Math.round(Number(b.credits || b.amount) || 0);
   if (!credits) return res.status(400).json({ error: 'credits are required' });
-  // Resolve the lawyer by email, falling back to id — so admins can grant to a
-  // lawyer who has no email on file (looked up by record id from the CRM).
+  // Credits are prepaid money — they must never be minted out of nothing.
+  // 'purchase' records money received (AED + reference required), 'refund'
+  // returns money, 'adjustment' is a money-less balance correction (must say why).
+  const type = ['purchase', 'refund', 'adjustment'].includes(b.type) ? b.type : (credits >= 0 ? 'purchase' : 'adjustment');
+  if (type === 'purchase') {
+    if (credits <= 0) return res.status(400).json({ error: 'A purchase must add a positive number of credits' });
+    if (b.aed == null || !(Number(b.aed) > 0)) return res.status(400).json({ error: 'Record the AED amount actually received for this purchase' });
+  }
+  if (type === 'adjustment' && !(b.note || '').toString().trim()) {
+    return res.status(400).json({ error: 'A balance correction needs a reason' });
+  }
+  // Resolve the lawyer by email, falling back to id (CRM has the record id).
   let lawyer = email ? store.getLawyerByEmail(email) : null;
   const id = (b.lawyer_id || b.lawyerId || b.id || '').toString().trim();
   if (!lawyer && id) lawyer = store.getLawyerById(id);
   if (!lawyer) return res.status(404).json({ error: 'No matching lawyer account' });
-  const balance = grant(lawyer, credits, { type: credits >= 0 ? 'purchase' : 'refund', description: b.note || 'Administrator top-up', method: 'admin' });
-  res.json({ ok: true, email: lawyer.email || email, balance });
+  const aed = type === 'adjustment' ? 0 : (b.aed != null ? Number(b.aed) : undefined);
+  const desc = (b.note || '').toString().trim() || (type === 'purchase' ? 'Credit purchase (admin-recorded)' : type === 'refund' ? 'Credit refund' : 'Balance correction');
+  const balance = grant(lawyer, credits, { type, aed, reference: (b.reference || '').toString().trim() || null, method: b.method || 'admin', description: desc });
+  res.json({ ok: true, email: lawyer.email || email, balance, type });
 });
 
 router.post('/assign', requireAuth, (req, res) => {
