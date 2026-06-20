@@ -81,6 +81,16 @@
     .ladmsg-send{background:#0d7377;border:none;color:#fff;border-radius:9px;padding:9px 16px;font-weight:600;cursor:pointer;font-family:inherit}
     .ladmsg-send:disabled{opacity:.5;cursor:default}
     .ladmsg-empty{text-align:center;color:#6b7794;padding:40px 24px;font-size:13px}
+    .ladmsg-sat{border-top:1px solid #232c40;padding:12px 14px;flex-shrink:0;background:#111a2c;text-align:center}
+    .ladmsg-sat-q{font-size:12.5px;color:#c7d2e6;margin-bottom:9px}
+    .ladmsg-sat-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+    .ladmsg-sat-yes,.ladmsg-sat-no{border:1px solid #2c3a55;background:#1a2740;color:#e7ecf5;border-radius:9px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
+    .ladmsg-sat-yes{background:#0d7377;border-color:#0d7377;color:#fff}
+    .ladmsg-sat-yes:hover{background:#0a5d61}.ladmsg-sat-no:hover{border-color:#5fd0c8;color:#fff}
+    .ladmsg-stars{display:flex;gap:4px;justify-content:center}
+    .ladmsg-star{background:none;border:none;font-size:30px;line-height:1;color:#33405c;cursor:pointer;padding:0 2px;transition:color .1s}
+    .ladmsg-star.on,.ladmsg-star:hover{color:#f5b301}
+    .ladmsg-sat-thanks{font-size:13px;color:#5fd0c8;font-weight:600;padding:4px 0}
     .ladmsg-assign{display:flex;gap:6px;align-items:center;padding:9px 16px;border-bottom:1px solid #232c40;background:#131c2e;flex-wrap:wrap}
     .ladmsg-assign select{background:#1a2336;border:1px solid #2b364f;color:#eef2fa;border-radius:7px;padding:5px 8px;font-size:12px;font-family:inherit}
     .ladmsg-newbtn{background:#0d7377;border:none;color:#fff;border-radius:8px;padding:7px 13px;font-weight:600;cursor:pointer;font-size:12.5px;font-family:inherit}
@@ -225,16 +235,44 @@
       const mine = ST.admin ? m.sender_side === 'admin' : m.sender_side === 'requester';
       return `<div class="ladmsg-msg ${mine ? 'me' : 'them'}"><div class="ladmsg-who">${esc(m.sender_name || (m.sender_side === 'admin' ? 'CLPD Admin' : 'You'))} · ${ago(m.created_at)}</div>${esc(m.body)}</div>`;
     }).join('');
+    // Every conversation ends in a happiness rating; if Maryam couldn't help,
+    // one click brings in a human. Requester-side only, until they've rated.
+    let satHtml = '';
+    const last = (c.messages || []).slice(-1)[0];
+    const lastIsReply = last && last.sender_side === 'admin';
+    if (!ST.admin && lastIsReply && !c.rating) {
+      const stars = '<div class="ladmsg-stars" id="ladMsgStars">' + [1,2,3,4,5].map(n => `<button class="ladmsg-star" data-n="${n}" title="${n} star${n>1?'s':''}">★</button>`).join('') + '</div>';
+      if (c.ai_handled && !c.escalated && !c.assigned_to) {
+        satHtml = `<div class="ladmsg-sat" id="ladMsgSat">
+          <div class="ladmsg-sat-q" id="ladMsgSatQ">Did this resolve your question?</div>
+          <div class="ladmsg-sat-row" id="ladMsgSatRow"><button class="ladmsg-sat-yes" id="ladMsgSatYes">👍 Yes, thanks</button><button class="ladmsg-sat-no" id="ladMsgSatNo">I need more help</button></div>
+          <div id="ladMsgRate" style="display:none"><div class="ladmsg-sat-q">How happy are you with the service?</div>${stars}</div>
+        </div>`;
+      } else {
+        satHtml = `<div class="ladmsg-sat" id="ladMsgSat"><div class="ladmsg-sat-q">How happy are you with the service we provided?</div>${stars}</div>`;
+      }
+    }
     inner.innerHTML = `
       <div class="ladmsg-hd"><button class="ladmsg-back" id="ladMsgBack">‹ Back</button><h3 style="flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.subject || 'Conversation')}</h3><button class="ladmsg-x" id="ladMsgClose">×</button></div>
       ${assignBar}
       <div class="ladmsg-thread" id="ladMsgThread">${msgs || '<div class="ladmsg-empty">No messages.</div>'}</div>
+      ${satHtml}
       <div class="ladmsg-compose"><textarea id="ladMsgReply" rows="2" placeholder="Write a reply…"></textarea><div class="row"><span style="flex:1"></span><button class="ladmsg-send" id="ladMsgSendBtn">Send</button></div></div>`;
     document.getElementById('ladMsgClose').onclick = closePanel;
     document.getElementById('ladMsgBack').onclick = loadList;
     const thread = document.getElementById('ladMsgThread'); thread.scrollTop = thread.scrollHeight;
     document.getElementById('ladMsgSendBtn').onclick = sendReply;
     document.getElementById('ladMsgReply').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendReply(); });
+    // Satisfaction wiring
+    const satNo = document.getElementById('ladMsgSatNo');
+    if (satNo) satNo.onclick = async () => { satNo.disabled = true; satNo.textContent = 'Connecting you…'; try { await api('/conversations/' + id + '/escalate', { method: 'POST', body: '{}' }); } catch (_) {} await renderThread(true); };
+    const satYes = document.getElementById('ladMsgSatYes');
+    if (satYes) satYes.onclick = () => { const r = document.getElementById('ladMsgRate'); if (r) r.style.display = 'block'; const row = document.getElementById('ladMsgSatRow'); if (row) row.style.display = 'none'; const q = document.getElementById('ladMsgSatQ'); if (q) q.style.display = 'none'; };
+    const paintStars = n => document.querySelectorAll('#ladMsgStars .ladmsg-star').forEach(s => s.classList.toggle('on', Number(s.dataset.n) <= n));
+    document.querySelectorAll('#ladMsgStars .ladmsg-star').forEach(b => {
+      b.onmouseenter = () => paintStars(Number(b.dataset.n));
+      b.onclick = async () => { const n = Number(b.dataset.n); try { await api('/conversations/' + id + '/rate', { method: 'POST', body: JSON.stringify({ rating: n }) }); } catch (_) {} const sat = document.getElementById('ladMsgSat'); if (sat) sat.innerHTML = '<div class="ladmsg-sat-thanks">Thank you — you rated us ' + n + '/5 ★</div>'; };
+    });
     if (ST.admin) {
       document.getElementById('ladMsgAssign').onchange = e => api('/conversations/' + id + '/assign', { method: 'POST', body: JSON.stringify({ assigneeId: e.target.value }) }).catch(() => {});
       document.getElementById('ladMsgStatus').onchange = e => api('/conversations/' + id + '/status', { method: 'POST', body: JSON.stringify({ status: e.target.value }) }).catch(() => {});

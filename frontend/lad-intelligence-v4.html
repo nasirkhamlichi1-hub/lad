@@ -957,6 +957,40 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         </div>
       </section>
 
+      <!-- ════ CUSTOMER HAPPINESS ════ -->
+      <section class="section" id="happiness">
+        <div class="section-hd">
+          <div>
+            <div class="section-eyebrow purple">CUSTOMER HAPPINESS</div>
+            <h2 class="section-title">How happy clients are with <em style="color:var(--purple)">Maryam &amp; the team</em></h2>
+            <div class="section-desc">Every conversation — answered by Maryam or a human — ends in a 1–5 star rating. Keep an eye on happiness and response speed here.</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px" id="happyGrid">
+          <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;color:var(--slate3);font-size:13px">Loading customer happiness…</div>
+        </div>
+      </section>
+      <script>
+      (function(){
+        var base=(window.LAD_API_BASE||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
+        function tok(){return localStorage.getItem('lad_token')||'';}
+        function card(label,val,meta){return '<div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px"><div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px">'+label+'</div><div style="font-family:var(--serif);font-size:34px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--ink)">'+val+'</div><div style="font-size:12.5px;color:var(--slate2);margin-top:8px">'+(meta||'')+'</div></div>';}
+        function load(){
+          fetch(base+'/api/v1/messages/happiness',{headers:{Authorization:'Bearer '+tok()}}).then(function(r){return r.ok?r.json():null;}).then(function(h){
+            var g=document.getElementById('happyGrid'); if(!g||!h)return;
+            var stars=h.avgRating!=null?h.avgRating.toFixed(1)+'<em style="font-size:18px;color:#f5b301"> ★</em>':'—';
+            var speed=h.avgFirstResponseMins!=null?(h.avgFirstResponseMins<60?Math.round(h.avgFirstResponseMins)+'<em style="font-size:16px"> min</em>':(h.avgFirstResponseMins/60).toFixed(1)+'<em style="font-size:16px"> hr</em>'):'—';
+            g.innerHTML=
+              card('AVG HAPPINESS',stars,(h.rated||0)+' ratings across '+(h.conversations||0)+' conversations')
+             +card('AVG RESPONSE TIME',speed,'time to first reply (Maryam or team)')
+             +card('MARYAM RESOLVED',(h.aiResolutionRate!=null?h.aiResolutionRate+'%':'—'),(h.aiResolved||0)+' of '+(h.aiHandled||0)+' AI chats · '+(h.escalated||0)+' escalated to a human')
+             +card('MARYAM vs TEAM',(h.maryamRating?h.maryamRating.avg.toFixed(1):'—')+' / '+(h.teamRating?h.teamRating.avg.toFixed(1):'—')+'<em style="font-size:16px"> ★</em>','Maryam rating vs human-team rating');
+          }).catch(function(){});
+        }
+        load(); setInterval(load,60000);
+      })();
+      </script>
+
       <!-- ════ OPERATIONS CENTER ════ -->
       <section class="section" id="ops">
         <div class="section-hd">
