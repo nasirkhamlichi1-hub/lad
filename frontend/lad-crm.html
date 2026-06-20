@@ -3,434 +3,437 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>CLPD CRM · Data Centre — Legal Affairs Department</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<title>CLPD CRM — Legal Affairs Department</title>
 <style>
-  :root{--ink:#13231b;--green:#006B3F;--green-l:#008549;--gold:#C9913A;--paper:#f5f7f6;--paper2:#eef2f0;
-        --line:#e3e9e5;--line2:#d2dad5;--slate:#3a4a42;--slate2:#6b7a72;--slate3:#9aa8a0;--red:#c0392b;--amber:#b8791f;--blue:#1c3a5e;
-        --r:12px;--sh:0 1px 3px rgba(10,30,20,.06),0 8px 24px rgba(10,30,20,.05);}
+  :root{--ink:#0f1b15;--green:#006B3F;--green-l:#00935a;--gold:#C9913A;--bg:#f4f6f5;--card:#fff;
+        --line:#e6ebe8;--line2:#d6ded9;--slate:#3a4a42;--slate2:#69786f;--slate3:#9aa8a0;
+        --red:#d0432e;--amber:#c17d1c;--blue:#22577a;--rail:#0c1712;
+        --sh:0 1px 2px rgba(10,30,20,.05),0 6px 20px rgba(10,30,20,.06);--sh2:0 20px 60px rgba(10,30,20,.16);}
   *{box-sizing:border-box}
-  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased;display:flex;overflow:hidden}
   .mono{font-family:'JetBrains Mono','SF Mono',ui-monospace,monospace}
-  .serif{font-family:'Instrument Serif','IBM Plex Serif',Georgia,serif}
   a{color:var(--green);text-decoration:none}
-  /* top bar */
-  .top{background:linear-gradient(90deg,#0a1e14,#13231b);color:#fff;padding:12px 22px;display:flex;align-items:center;gap:18px;position:sticky;top:0;z-index:50}
-  .top .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--green),var(--green-l));display:grid;place-items:center;font-weight:800;font-size:13px;flex-shrink:0}
-  .top h1{font-size:16px;margin:0;font-weight:700;letter-spacing:-.01em}
-  .top .sub{font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:600;margin-top:1px}
-  .gsearch{flex:1;max-width:560px;position:relative}
-  .gsearch input{width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:10px;padding:10px 14px;font-size:13.5px;outline:none}
-  .gsearch input::placeholder{color:rgba(255,255,255,.5)}
-  .top .who{margin-left:auto;text-align:right;font-size:12px}
-  .top .who b{display:block;font-weight:600}
-  .top .who a{color:rgba(255,255,255,.7);font-size:11px}
-  /* stats */
-  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;padding:20px 22px 6px}
-  .stat{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:15px 18px;box-shadow:var(--sh)}
-  .stat .l{font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--slate3);font-weight:700}
-  .stat .v{font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.05;margin-top:6px}
-  .stat .s{font-size:11.5px;color:var(--slate2);margin-top:3px}
-  /* grid */
-  .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;padding:14px 22px 40px;align-items:start}
-  @media (max-width:1100px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
-  .panel{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);overflow:hidden;margin-bottom:18px}
-  .panel-hd{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
-  .panel-hd h2{margin:0;font-size:15px;font-weight:700}
-  .panel-hd .ey{font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--gold);font-weight:700}
-  .panel-bd{padding:8px 0;max-height:560px;overflow-y:auto}
-  .seg{display:flex;gap:6px;margin-left:auto}
-  .seg button{background:var(--paper2);border:1px solid var(--line);color:var(--slate);border-radius:14px;padding:4px 11px;font-size:11.5px;cursor:pointer;font-family:inherit}
-  .seg button.on{background:var(--green);border-color:var(--green);color:#fff}
-  .row{padding:11px 18px;border-bottom:1px solid var(--line);cursor:pointer}
-  .row:hover{background:var(--paper)}
-  .row-top{display:flex;align-items:center;gap:8px}
-  .row-title{font-weight:600;font-size:13.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .row-sub{font-size:11.5px;color:var(--slate2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .pill{font-size:9.5px;font-weight:700;letter-spacing:.4px;padding:2px 7px;border-radius:6px;text-transform:uppercase;white-space:nowrap}
-  .pill.open{background:#fff4e0;color:var(--amber)} .pill.pending{background:#e9f7f1;color:var(--green)}
-  .pill.resolved,.pill.closed{background:#eef2f0;color:var(--slate2)} .pill.high{background:#fdecea;color:var(--red)}
-  .pill.cat{background:#eef4ff;color:var(--blue)} .pill.esc{background:#fdecea;color:var(--red)} .pill.ai{background:#e9f7f1;color:var(--green)}
-  .pill.time{background:none;color:var(--slate3);font-family:'JetBrains Mono',monospace;padding:0}
-  .btn{border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
-  .btn-g{background:var(--green);color:#fff} .btn-l{background:var(--paper2);color:var(--slate);border:1px solid var(--line)}
-  .empty{padding:34px 18px;text-align:center;color:var(--slate3);font-size:13px}
-  .inp{width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;outline:none;font-family:inherit}
+  button{font-family:inherit}
+  /* ── rail ── */
+  .rail{width:74px;background:var(--rail);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px;flex-shrink:0;z-index:30}
+  .rail .logo{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--green),var(--green-l));display:grid;place-items:center;font-weight:800;color:#fff;font-size:13px;margin-bottom:10px}
+  .rl{width:54px;height:54px;border-radius:13px;display:grid;place-items:center;gap:3px;color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;border:none;background:none}
+  .rl svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7}
+  .rl span{font-size:8.5px;letter-spacing:.3px;font-weight:600}
+  .rl:hover{color:#fff;background:rgba(255,255,255,.06)}
+  .rl.on{color:#fff;background:linear-gradient(135deg,rgba(0,147,90,.35),rgba(0,107,63,.2));box-shadow:inset 0 0 0 1px rgba(0,147,90,.5)}
+  .rl .badge{position:absolute;top:8px;right:9px;min-width:16px;height:16px;background:var(--red);border-radius:9px;font-size:9px;font-weight:700;color:#fff;display:none;align-items:center;justify-content:center;padding:0 4px}
+  .rl.has .badge{display:flex}
+  .rail-sp{flex:1}
+  /* ── main ── */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh}
+  .topbar{height:60px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 22px;flex-shrink:0}
+  .topbar h1{font-size:17px;margin:0;font-weight:700;letter-spacing:-.01em}
+  .topbar .sub{font-size:11px;color:var(--slate3);margin-top:1px}
+  .cmd{flex:1;max-width:540px;position:relative}
+  .cmd input{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:11px;padding:10px 14px 10px 38px;font-size:13.5px;outline:none}
+  .cmd input:focus{border-color:var(--green);background:#fff}
+  .cmd svg{position:absolute;left:13px;top:11px;width:16px;height:16px;stroke:var(--slate3);fill:none;stroke-width:2}
+  .cmd-res{position:absolute;top:46px;left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh2);max-height:420px;overflow-y:auto;z-index:60;display:none}
+  .cmd-res.on{display:block}
+  .who{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12.5px}
+  .who .av{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:12px}
+  .who a{color:var(--slate3);font-size:11px}
+  .view{flex:1;overflow:hidden;display:none}
+  .view.on{display:flex}
+  .scroll{overflow-y:auto;height:100%}
+  /* ── shared bits ── */
+  .av{border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:700;flex-shrink:0}
+  .pill{font-size:9.5px;font-weight:700;letter-spacing:.4px;padding:2px 8px;border-radius:7px;text-transform:uppercase;white-space:nowrap;display:inline-block}
+  .pill.open{background:#fdf0dc;color:var(--amber)} .pill.pending{background:#e3f5ec;color:var(--green)}
+  .pill.resolved,.pill.closed{background:#eef2f0;color:var(--slate2)} .pill.high{background:#fce8e4;color:var(--red)}
+  .pill.cat{background:#e9f1f8;color:var(--blue)} .pill.esc{background:#fce8e4;color:var(--red)} .pill.ai{background:#e3f5ec;color:var(--green)}
+  .pill.compliant{background:#e3f5ec;color:var(--green)} .pill.atrisk{background:#fdf0dc;color:var(--amber)} .pill.critical{background:#fce8e4;color:var(--red)} .pill.non{background:#eef2f0;color:var(--slate2)}
+  .btn{border:none;border-radius:9px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .btn-g{background:var(--green);color:#fff} .btn-g:hover{background:var(--green-l)}
+  .btn-l{background:#fff;color:var(--slate);border:1px solid var(--line2)} .btn-l:hover{border-color:var(--green);color:var(--green)}
+  .btn-r{background:#fff;color:var(--red);border:1px solid #f1c4ba} .btn-r:hover{background:#fdf2f0}
+  .btn-xs{padding:5px 10px;font-size:11px;border-radius:7px}
+  .inp{width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;outline:none;font-family:inherit;background:#fff}
   .inp:focus{border-color:var(--green)}
+  .empty{padding:40px 22px;text-align:center;color:var(--slate3);font-size:13px}
+  .ey{font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--gold);font-weight:700}
+  /* dashboard */
+  .dash{padding:22px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-content:start}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--sh)}
+  .kpi .l{font-size:9.5px;letter-spacing:1.1px;text-transform:uppercase;color:var(--slate3);font-weight:700}
+  .kpi .v{font-size:32px;font-weight:700;letter-spacing:-.02em;line-height:1.05;margin-top:6px}
+  .kpi .s{font-size:11.5px;color:var(--slate2);margin-top:3px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh);overflow:hidden;display:flex;flex-direction:column}
+  .panel-hd{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .panel-hd h2{margin:0;font-size:15px;font-weight:700}
+  .panel-bd{overflow-y:auto}
+  .row{padding:12px 18px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;align-items:center;gap:12px}
+  .row:hover{background:var(--bg)}
+  .row .ttl{font-weight:600;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .sub{font-size:11.5px;color:var(--slate2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .seg{display:flex;gap:6px;margin-left:auto}
+  .seg button{background:var(--bg);border:1px solid var(--line);color:var(--slate);border-radius:18px;padding:5px 13px;font-size:11.5px;cursor:pointer}
+  .seg button.on{background:var(--green);border-color:var(--green);color:#fff}
+  /* inbox master-detail */
+  .inbox{display:flex;width:100%;height:100%}
+  .inbox-list{width:380px;border-right:1px solid var(--line);display:flex;flex-direction:column;flex-shrink:0;background:var(--card)}
+  .inbox-thread{flex:1;display:flex;flex-direction:column;background:var(--bg)}
+  .conv{align-items:flex-start}
+  .conv.active{background:#eef5f1;box-shadow:inset 3px 0 0 var(--green)}
+  /* AI box */
+  .ai{background:linear-gradient(135deg,#0c1712,#10241a);color:#fff;border-radius:16px;padding:18px;box-shadow:var(--sh)}
+  .ai textarea{width:100%;box-sizing:border-box;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:10px;padding:10px 12px;font-size:13px;resize:vertical;font-family:inherit;outline:none}
+  .ai .ans{font-size:13px;line-height:1.6;margin-top:11px;white-space:pre-wrap}
   /* drawer */
-  .drawer{position:fixed;top:0;right:0;height:100vh;width:460px;max-width:100vw;background:#fff;box-shadow:-10px 0 40px rgba(10,30,20,.18);transform:translateX(102%);transition:transform .26s cubic-bezier(.4,0,.2,1);z-index:200;display:flex;flex-direction:column}
+  .drawer{position:fixed;top:0;right:0;height:100vh;width:560px;max-width:100vw;background:#fff;box-shadow:var(--sh2);transform:translateX(103%);transition:transform .28s cubic-bezier(.4,0,.2,1);z-index:200;display:flex;flex-direction:column}
   .drawer.on{transform:translateX(0)}
-  .drawer-hd{background:var(--ink);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px}
-  .drawer-hd h3{margin:0;font-size:17px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .drawer-hd .x{background:rgba(255,255,255,.12);border:none;color:#fff;width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:17px}
-  .drawer-bd{flex:1;overflow-y:auto;padding:18px 20px}
-  .scrim{position:fixed;inset:0;background:rgba(10,20,15,.5);z-index:150;opacity:0;pointer-events:none;transition:opacity .2s}
+  .scrim{position:fixed;inset:0;background:rgba(8,16,12,.45);z-index:190;opacity:0;pointer-events:none;transition:opacity .2s}
   .scrim.on{opacity:1;pointer-events:auto}
-  .kv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
-  .kv .k{color:var(--slate2)}
-  .msg{max-width:84%;padding:9px 13px;border-radius:12px;font-size:13.5px;line-height:1.45;margin-bottom:9px}
-  .msg.them{background:var(--paper2);align-self:flex-start;border-bottom-left-radius:4px}
+  .dw-bd{flex:1;overflow-y:auto}
+  .hero{background:linear-gradient(135deg,#0c1712 0%,#10241a 55%,#0e3322 100%);color:#fff;padding:22px;position:relative}
+  .hero .x{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.16);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:17px}
+  .hero-name{font-size:23px;font-weight:700;letter-spacing:-.015em;line-height:1.1}
+  .hero-sub{font-size:12.5px;color:rgba(255,255,255,.62);margin-top:3px}
+  .hbadge{display:inline-block;padding:3px 11px;border-radius:20px;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;margin-top:10px}
+  .prog-l{display:flex;justify-content:space-between;font-size:10.5px;color:rgba(255,255,255,.6);margin:16px 0 6px;font-family:'JetBrains Mono',monospace;letter-spacing:.4px}
+  .prog{height:8px;background:rgba(255,255,255,.16);border-radius:5px;overflow:hidden}.prog>div{height:100%;border-radius:5px;transition:width .7s}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px 22px;border-bottom:1px solid var(--line)}
+  .tile{background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:11px 13px}
+  .tile .l{font-size:8.5px;letter-spacing:.9px;text-transform:uppercase;color:var(--slate3);font-weight:700}.tile .v{font-size:21px;font-weight:700;margin-top:3px}
+  .qa{display:flex;gap:8px;padding:14px 22px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .qa button{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line2);border-radius:10px;padding:9px 13px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink)}
+  .qa button:hover{border-color:var(--green);color:var(--green)}
+  .qa button.p{background:var(--green);border-color:var(--green);color:#fff}
+  .tabs{display:flex;gap:2px;padding:12px 22px 0;border-bottom:1px solid var(--line);overflow-x:auto}
+  .tab{background:none;border:none;border-bottom:2px solid transparent;padding:9px 13px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--slate2);white-space:nowrap}
+  .tab.on{border-bottom-color:var(--green);color:var(--ink)}
+  .sec{padding:18px 22px}
+  .sec h4{font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--gold);font-weight:700;margin:0 0 13px}
+  .kv{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}.kv .k{color:var(--slate2)}
+  .bk{border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:10px}
+  .bk-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .bk-acts{display:flex;gap:6px;flex-wrap:wrap}
+  .tl{position:relative;padding-left:24px}.tl:before{content:'';position:absolute;left:7px;top:5px;bottom:8px;width:2px;background:var(--line)}
+  .tl-i{position:relative;padding:0 0 15px}.tl-d{position:absolute;left:-24px;top:0;width:17px;height:17px;border-radius:50%;background:#fff;border:2px solid var(--green);display:grid;place-items:center;font-size:9px}
+  .tl-t{font-size:12.8px;line-height:1.4}.tl-w{font-size:10.5px;color:var(--slate3);font-family:'JetBrains Mono',monospace;margin-top:1px}
+  .msg{max-width:82%;padding:10px 14px;border-radius:13px;font-size:13.5px;line-height:1.45;margin-bottom:10px}
+  .msg.them{background:#fff;border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px}
   .msg.me{background:var(--green);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
-  .msg .who{font-size:10px;opacity:.7;margin-bottom:2px}
-  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(70px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:500;opacity:0;transition:all .3s}
+  .msg .who2{font-size:10px;opacity:.7;margin-bottom:2px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(70px);background:var(--ink);color:#fff;padding:12px 22px;border-radius:11px;font-size:13px;font-weight:600;z-index:500;opacity:0;transition:all .3s;box-shadow:var(--sh2)}
   .toast.on{transform:translateX(-50%) translateY(0);opacity:1}
-  .ai-box{background:linear-gradient(135deg,#0a1e14,#13231b);color:#fff;border-radius:14px;padding:16px 18px;margin-bottom:18px}
-  .ai-box textarea{width:100%;box-sizing:border-box;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#fff;border-radius:9px;padding:9px 12px;font-size:13px;resize:vertical;font-family:inherit;outline:none}
-  .ai-ans{font-size:13px;line-height:1.6;margin-top:10px;white-space:pre-wrap}
-  /* ── CRM record profile ── */
-  .drawer{width:520px}
-  .pf-wrap{padding:0!important}
-  .pf-hero{background:linear-gradient(135deg,#0a1e14 0%,#13231b 60%,#143a2a 100%);color:#fff;padding:22px}
-  .pf-row{display:flex;gap:14px;align-items:flex-start}
-  .pf-av{width:56px;height:56px;border-radius:15px;display:grid;place-items:center;font-weight:800;font-size:20px;color:#fff;flex-shrink:0;box-shadow:0 6px 18px rgba(0,0,0,.3)}
-  .pf-name{font-size:22px;font-weight:700;letter-spacing:-.015em;line-height:1.1}
-  .pf-sub{font-size:12.5px;color:rgba(255,255,255,.62);margin-top:3px}
-  .pf-badge{display:inline-block;padding:3px 11px;border-radius:20px;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;margin-top:9px}
-  .pf-prog-l{display:flex;justify-content:space-between;font-size:10.5px;color:rgba(255,255,255,.6);margin:16px 0 6px;font-family:'JetBrains Mono',monospace;letter-spacing:.4px}
-  .pf-prog{height:8px;background:rgba(255,255,255,.15);border-radius:5px;overflow:hidden}
-  .pf-prog>div{height:100%;border-radius:5px;transition:width .7s cubic-bezier(.4,0,.2,1)}
-  .pf-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px 22px;border-bottom:1px solid var(--line)}
-  .pf-tile{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
-  .pf-tile .l{font-size:8.5px;letter-spacing:.9px;text-transform:uppercase;color:var(--slate3);font-weight:700}
-  .pf-tile .v{font-size:21px;font-weight:700;margin-top:3px;letter-spacing:-.01em}
-  .pf-actions{display:flex;gap:8px;padding:14px 22px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-  .pf-act{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line2);border-radius:9px;padding:8px 13px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink);font-family:inherit}
-  .pf-act:hover{border-color:var(--green);color:var(--green)}
-  .pf-act.primary{background:var(--green);border-color:var(--green);color:#fff}
-  .pf-sec{padding:18px 22px;border-bottom:1px solid var(--line)}
-  .pf-sec h4{font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--gold);font-weight:700;margin:0 0 13px}
-  .tl{position:relative;padding-left:24px}
-  .tl:before{content:'';position:absolute;left:7px;top:5px;bottom:8px;width:2px;background:var(--line)}
-  .tl-item{position:relative;padding:0 0 15px}
-  .tl-dot{position:absolute;left:-24px;top:0;width:17px;height:17px;border-radius:50%;background:#fff;border:2px solid var(--green);display:grid;place-items:center;font-size:9px;line-height:1}
-  .tl-text{font-size:12.8px;line-height:1.4}
-  .tl-when{font-size:10.5px;color:var(--slate3);font-family:'JetBrains Mono',monospace;margin-top:1px}
-  .lw-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer}
-  .lw-item:hover{background:var(--paper)}
-  .lw-av{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-weight:700;font-size:11px;color:#fff;flex-shrink:0}
+  .task{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .task input{margin-top:2px}
+  .task.done span{text-decoration:line-through;color:var(--slate3)}
 </style>
 </head>
 <body>
-<div class="top">
-  <div class="logo">LAD</div>
-  <div><h1>CLPD CRM · Data Centre</h1><div class="sub">Legal Affairs Department · Customer Operations</div></div>
-  <div class="gsearch"><input id="gsearch" placeholder="Search a lawyer or firm by name, email or ID…" autocomplete="off" oninput="gSearch()"/></div>
-  <div class="who"><b id="meName">—</b><a href="lad-admin.html">← Admin console</a></div>
-</div>
+  <nav class="rail">
+    <div class="logo">LAD</div>
+    <button class="rl on" data-v="dash" onclick="go('dash')" style="position:relative"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Home</span></button>
+    <button class="rl" data-v="inbox" id="railInbox" onclick="go('inbox')" style="position:relative"><span class="badge" id="inboxBadge">0</span><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Inbox</span></button>
+    <button class="rl" data-v="cust" onclick="go('cust')"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="18" cy="9" r="3"/></svg><span>Customers</span></button>
+    <button class="rl" data-v="ops" onclick="go('ops')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Operations</span></button>
+    <div class="rail-sp"></div>
+    <a class="rl" href="lad-admin.html"><svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg><span>Admin</span></a>
+  </nav>
 
-<div class="stats" id="stats">
-  <div class="stat"><div class="l">Open conversations</div><div class="v" id="stOpen">—</div><div class="s" id="stUnassigned">—</div></div>
-  <div class="stat"><div class="l">Assigned to me</div><div class="v" id="stMine">—</div><div class="s">your queue</div></div>
-  <div class="stat"><div class="l">Upcoming sessions</div><div class="v" id="stSessions">—</div><div class="s" id="stSeats">—</div></div>
-  <div class="stat"><div class="l">Lawyers</div><div class="v" id="stLawyers">—</div><div class="s">on the roll</div></div>
-  <div class="stat"><div class="l">Firms</div><div class="v" id="stFirms">—</div><div class="s">registered</div></div>
-</div>
-
-<div class="grid">
-  <!-- LEFT: message queue + sessions -->
-  <div>
-    <div class="panel">
-      <div class="panel-hd">
-        <div><div class="ey">Customer messages</div><h2>Inbox queue</h2></div>
-        <div class="seg" id="qSeg">
-          <button data-box="unassigned" class="on" onclick="qBox('unassigned',this)">Unassigned</button>
-          <button data-box="mine" onclick="qBox('mine',this)">Mine</button>
-          <button data-box="all" onclick="qBox('all',this)">All</button>
-        </div>
+  <div class="main">
+    <div class="topbar">
+      <div><h1 id="vTitle">Dashboard</h1><div class="sub" id="vSub">CLPD customer operations</div></div>
+      <div class="cmd"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+        <input id="cmd" placeholder="Search anyone or anything — lawyer, firm, course…" autocomplete="off" oninput="cmdSearch()" onfocus="cmdSearch()"/>
+        <div class="cmd-res" id="cmdRes"></div>
       </div>
-      <div class="panel-bd" id="queueList"><div class="empty">Loading…</div></div>
+      <div class="who"><div class="av" id="meAv" style="background:#006B3F">··</div><div><b id="meName">—</b><br><a href="lad-admin.html">Admin console →</a></div></div>
     </div>
 
-    <div class="panel">
-      <div class="panel-hd"><div><div class="ey">Operations</div><h2>Upcoming sessions</h2></div>
-        <div class="seg"><input id="sessSearch" class="inp" style="width:170px;padding:5px 10px;font-size:12px" placeholder="Filter course…" oninput="renderSessions()"/></div></div>
-      <div class="panel-bd" id="sessList"><div class="empty">Loading…</div></div>
-    </div>
+    <!-- DASHBOARD -->
+    <div class="view on" id="v-dash"><div class="scroll" style="width:100%"><div class="dash" id="dashGrid"></div></div></div>
+
+    <!-- INBOX -->
+    <div class="view" id="v-inbox"><div class="inbox">
+      <div class="inbox-list">
+        <div class="panel-hd"><h2>Inbox</h2><div class="seg" id="ibSeg">
+          <button class="on" onclick="ibBox('unassigned',this)">Unassigned</button>
+          <button onclick="ibBox('mine',this)">Mine</button>
+          <button onclick="ibBox('all',this)">All</button></div></div>
+        <div class="panel-bd" id="ibList" style="flex:1"></div>
+      </div>
+      <div class="inbox-thread" id="ibThread"><div class="empty">Select a conversation to read and reply.</div></div>
+    </div></div>
+
+    <!-- CUSTOMERS -->
+    <div class="view" id="v-cust"><div class="scroll" style="width:100%;padding:22px">
+      <div class="panel" style="max-width:900px;margin:0 auto"><div class="panel-hd"><h2>Customers</h2>
+        <input class="inp" id="custSearch" placeholder="Search a lawyer or firm…" style="max-width:340px;margin-left:auto" oninput="custSearch()"/></div>
+        <div class="panel-bd" id="custList" style="max-height:none"><div class="empty">Search above, or browse firms below.</div></div>
+      </div>
+    </div></div>
+
+    <!-- OPERATIONS -->
+    <div class="view" id="v-ops"><div class="scroll" style="width:100%;padding:22px">
+      <div class="panel" style="max-width:900px;margin:0 auto"><div class="panel-hd"><h2>Upcoming sessions</h2>
+        <input class="inp" id="opsSearch" placeholder="Filter course…" style="max-width:280px;margin-left:auto" oninput="renderOps()"/></div>
+        <div class="panel-bd" id="opsList" style="max-height:none"></div>
+      </div>
+    </div></div>
   </div>
 
-  <!-- RIGHT: AI assist + search records -->
-  <div>
-    <div class="ai-box">
-      <div style="font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:rgba(255,255,255,.6);font-weight:700;margin-bottom:8px">✦ Ask Maryam · AI assist</div>
-      <textarea id="aiQ" rows="2" placeholder="e.g. which firms are most at risk? · how many lawyers are critical? · summarise today's messages"></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-g" onclick="askAI()" id="aiBtn">Ask</button></div>
-      <div class="ai-ans" id="aiAns"></div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-hd"><div><div class="ey">Records</div><h2 id="recTitle">Search lawyers &amp; firms</h2></div></div>
-      <div style="padding:12px 18px 4px"><input id="recSearch" class="inp" placeholder="Type a lawyer or firm — name, email or ID…" oninput="recSearch()" autocomplete="off"/></div>
-      <div class="panel-bd" id="recList"><div class="empty">Start typing above to find a lawyer or firm.</div></div>
-    </div>
-  </div>
-</div>
-
-<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
-<div class="drawer" id="drawer"><div id="drawerInner"></div></div>
-<div class="toast" id="toast"></div>
+  <div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+  <div class="drawer" id="drawer"><div id="dwInner"></div></div>
+  <div class="toast" id="toast"></div>
 
 <script src="runtime-config.js"></script>
 <script>
 (function(){
   'use strict';
   var BASE=(window.LAD_API_BASE||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
-  function tok(){try{return localStorage.getItem('lad_token')||'';}catch(e){return''}}
-  function me(){try{var p=tok().split('.')[1];return JSON.parse(atob(p.replace(/-/g,'+').replace(/_/g,'/')));}catch(e){return{}}}
-  var ME=me();
+  function tok(){try{return localStorage.getItem('lad_token')||''}catch(e){return''}}
+  var ME=(function(){try{return JSON.parse(atob(tok().split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))}catch(e){return{}}})();
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-  function api(p,o){return fetch(BASE+p,Object.assign({headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()}},o||{})).then(function(r){return r.ok?r.json():r.json().then(function(e){throw new Error(e.error||('HTTP '+r.status))})})}
+  function q1(s){return String(s||'').replace(/'/g,"\\'")}
+  function api(p,o){return fetch(BASE+p,Object.assign({headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok()}},o||{})).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.message||j.error||('HTTP '+r.status));return j})})}
   function num(n){return (Number(n)||0).toLocaleString('en-US')}
   function ago(iso){if(!iso)return'';var t=Date.parse(String(iso).replace(' ','T'));if(isNaN(t))return'';var s=Math.max(0,(Date.now()-t)/1000);if(s<60)return'now';if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d'}
-  function fdate(iso){if(!iso)return'—';var d=new Date(iso);if(isNaN(d))return String(iso).slice(0,16);var M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return d.getUTCDate()+' '+M[d.getUTCMonth()]+' '+d.getUTCFullYear()+' · '+String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')}
-  var toastT;function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('on')},2600)}
-  window.crmToast=toast;
-
-  document.getElementById('meName').textContent=ME.name||'CLPD Admin';
-
-  // ── Stats ──
-  function loadStats(){
-    api('/api/v1/admin/oversight').then(function(o){
-      var L=o.lawyers||{},F=o.firms||{},S=o.sessions||{};
-      document.getElementById('stLawyers').textContent=num(L.practising||L.roll);
-      document.getElementById('stFirms').textContent=num(F.total);
-      if(S.upcoming!=null){document.getElementById('stSessions').textContent=num(S.upcoming);}
-    }).catch(function(){});
-    api('/api/v1/messages/conversations?box=all').then(function(j){
-      var c=(j.conversations||[]);
-      var open=c.filter(function(x){return x.status!=='closed'&&x.status!=='resolved'}).length;
-      var un=c.filter(function(x){return !x.assigned_to&&x.status!=='closed'}).length;
-      var mine=c.filter(function(x){return x.assigned_to===ME.sub&&x.status!=='closed'}).length;
-      document.getElementById('stOpen').textContent=num(open);
-      document.getElementById('stUnassigned').textContent=num(un)+' unassigned';
-      document.getElementById('stMine').textContent=num(mine);
-    }).catch(function(){});
-  }
-
-  // ── Message queue ──
-  var QBOX='unassigned';
-  window.qBox=function(b,el){QBOX=b;document.querySelectorAll('#qSeg button').forEach(function(x){x.classList.remove('on')});el.classList.add('on');loadQueue()};
-  function loadQueue(){
-    var host=document.getElementById('queueList');host.innerHTML='<div class="empty">Loading…</div>';
-    api('/api/v1/messages/conversations?box='+QBOX).then(function(j){
-      var rows=j.conversations||[];
-      if(QBOX==='all') rows=rows.filter(function(c){return c.status!=='closed'});
-      if(!rows.length){host.innerHTML='<div class="empty">Nothing here right now.</div>';return}
-      host.innerHTML=rows.map(function(c){
-        return '<div class="row" onclick="openConv(\''+c.id+'\')">'
-          +'<div class="row-top"><span class="row-title">'+esc(c.subject||'(no subject)')+'</span><span class="pill time">'+ago(c.last_message_at)+'</span></div>'
-          +'<div class="row-sub">'+esc(c.preview||'')+'</div>'
-          +'<div class="row-top" style="margin-top:6px;gap:6px">'
-            +'<span class="pill '+esc(c.status)+'">'+esc(c.status)+'</span>'
-            +(c.priority==='high'?'<span class="pill high">high</span>':'')
-            +(c.category?'<span class="pill cat">'+esc(c.category)+'</span>':'')
-            +(c.escalated?'<span class="pill esc">needs human</span>':(c.ai_handled?'<span class="pill ai">Maryam</span>':''))
-            +'<span class="row-sub" style="flex:1;margin:0">'+esc(c.requester_name||'')+(c.assigned_name?' · → '+esc(c.assigned_name):'')+'</span>'
-            +(c.assigned_to===ME.sub?'':'<button class="btn btn-l" onclick="event.stopPropagation();takeConv(\''+c.id+'\')">Take it</button>')
-          +'</div></div>';
-      }).join('');
-    }).catch(function(e){host.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
-  }
-  window.takeConv=function(id){
-    api('/api/v1/messages/conversations/'+id+'/assign',{method:'POST',body:JSON.stringify({assigneeId:ME.sub})})
-      .then(function(){toast('✓ You own this conversation');loadQueue();loadStats()})
-      .catch(function(e){toast(e.message)});
-  };
-  window.openConv=function(id){
-    openDrawer('Conversation','<div id="cvThread" style="display:flex;flex-direction:column"></div>');
-    api('/api/v1/messages/conversations/'+id).then(function(j){
-      var c=j.conversation;document.querySelector('#drawer h3').textContent=c.subject||'Conversation';
-      var head='<div style="margin-bottom:12px;display:flex;gap:6px;flex-wrap:wrap">'
-        +'<span class="pill '+esc(c.status)+'">'+esc(c.status)+'</span>'+(c.category?'<span class="pill cat">'+esc(c.category)+'</span>':'')+(c.priority==='high'?'<span class="pill high">high</span>':'')
-        +'<span class="row-sub" style="flex:1">'+esc(c.requester_name||'')+' · '+esc(c.requester_type||'')+(c.assigned_name?' · owner '+esc(c.assigned_name):' · unassigned')+'</span>'
-        +(c.assigned_to===ME.sub?'':'<button class="btn btn-g" onclick="takeConv(\''+id+'\');openConv(\''+id+'\')">Take ownership</button>')+'</div>';
-      var msgs=(c.messages||[]).map(function(m){var mine=m.sender_side==='admin';return '<div class="msg '+(mine?'me':'them')+'"><div class="who">'+esc(m.sender_name||(mine?'CLPD':'User'))+' · '+ago(m.created_at)+'</div>'+esc(m.body)+'</div>'}).join('');
-      document.getElementById('drawerInner').innerHTML='<div class="drawer-hd"><h3>'+esc(c.subject||'Conversation')+'</h3><button class="x" onclick="closeDrawer()">×</button></div>'
-        +'<div class="drawer-bd">'+head+'<div style="display:flex;flex-direction:column">'+msgs+'</div></div>'
-        +'<div style="border-top:1px solid var(--line);padding:12px 16px"><textarea id="cvReply" class="inp" rows="2" placeholder="Reply…"></textarea><div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-g" onclick="sendReply(\''+id+'\')">Send</button></div></div>';
-    }).catch(function(e){toast(e.message)});
-  };
-  window.sendReply=function(id){
-    var t=document.getElementById('cvReply');var b=(t.value||'').trim();if(!b)return;
-    api('/api/v1/messages/conversations/'+id+'/messages',{method:'POST',body:JSON.stringify({body:b})}).then(function(){openConv(id);loadQueue()}).catch(function(e){toast(e.message)});
-  };
-
-  // ── Upcoming sessions ──
-  var SESS=[];
-  function loadSessions(){
-    api('/api/v1/courses/sessions/all').then(function(all){
-      var now=new Date().toISOString();
-      SESS=(Array.isArray(all)?all:[]).filter(function(s){return s&&s.scheduled_at&&s.scheduled_at>=now&&(s.status||'')!=='cancelled'}).sort(function(a,b){return String(a.scheduled_at).localeCompare(String(b.scheduled_at))}); window.__SESSALL=SESS;
-      document.getElementById('stSessions').textContent=num(SESS.length);
-      var seats=SESS.reduce(function(s,x){return s+(Number(x.seats_remaining)||0)},0);
-      document.getElementById('stSeats').textContent=num(seats)+' seats open';
-      renderSessions();
-    }).catch(function(e){document.getElementById('sessList').innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
-  }
-  window.renderSessions=function(){
-    var q=(document.getElementById('sessSearch').value||'').toLowerCase().trim();
-    var rows=SESS.filter(function(s){return !q||((s.course_title||'').toLowerCase().indexOf(q)>=0||(s.provider_name||'').toLowerCase().indexOf(q)>=0)}).slice(0,60);
-    var host=document.getElementById('sessList');
-    if(!rows.length){host.innerHTML='<div class="empty">No upcoming sessions.</div>';return}
-    host.innerHTML=rows.map(function(s){var cap=Number(s.capacity)||0,left=Number(s.seats_remaining)||0,booked=Math.max(cap-left,0);
-      return '<div class="row" onclick="openSession(\''+s.id+'\',\''+esc(s.course_title||'').replace(/'/g,"\\'")+'\')">'
-        +'<div class="row-top"><span class="row-title">'+esc(s.course_title||s.course_id||'—')+'</span><span class="pill time">'+fdate(s.scheduled_at).split(' · ')[0]+'</span></div>'
-        +'<div class="row-top" style="margin-top:4px"><span class="row-sub" style="flex:1;margin:0">'+esc(s.provider_name||'')+'</span>'
-          +'<span class="pill cat">'+booked+' booked · '+left+'/'+cap+' seats</span></div></div>';
-    }).join('');
-  };
-  window.openSession=function(id,title){
-    openDrawer(title||'Session','');
-    api('/api/v1/bookings/session/'+id).then(function(j){
-      var s=j.session;window.__SESS={id:id,course:s.course_id};
-      var booked=(j.bookings||[]).map(function(b){return '<div class="kv"><span>'+esc(b.name)+' <span class="row-sub">'+esc(b.email||'')+(b.firm?' · '+esc(b.firm):'')+'</span></span><span class="pill cat">'+esc(b.status)+'</span></div>'}).join('')||'<div class="empty" style="padding:14px">No one booked yet.</div>';
-      document.getElementById('drawerInner').innerHTML='<div class="drawer-hd"><h3>'+esc(s.course_title||'Session')+'</h3><button class="x" onclick="closeDrawer()">×</button></div>'
-        +'<div class="drawer-bd"><div class="row-sub" style="margin-bottom:12px">'+fdate(s.scheduled_at)+' · '+num(s.seats_remaining)+' of '+num(s.capacity)+' seats left · '+esc(s.status||'')+'</div>'
-        +'<div class="ey" style="font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:6px">Book a lawyer onto this session</div>'
-        +'<input id="sbSearch" class="inp" placeholder="Search lawyer by name or email…" oninput="sbSearch()"/><div id="sbRes" style="margin:8px 0"></div>'
-        +'<div class="ey" style="font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--gold);font-weight:700;margin:14px 0 6px">Booked ('+(j.bookings||[]).length+')</div><div id="sbBooked">'+booked+'</div></div>';
-    }).catch(function(e){toast(e.message)});
-  };
-  var sbT;window.sbSearch=function(){clearTimeout(sbT);sbT=setTimeout(function(){
-    var q=(document.getElementById('sbSearch').value||'').trim();var host=document.getElementById('sbRes');if(q.length<2){host.innerHTML='';return}
-    api('/api/v1/lawyers?search='+encodeURIComponent(q)+'&limit=10').then(function(j){var rows=Array.isArray(j)?j:(j.data||j.rows||[]);
-      host.innerHTML=rows.length?rows.map(function(l){var n=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.id;return '<div class="kv"><span>'+esc(n)+' <span class="row-sub">'+esc(l.email||'')+'</span></span><button class="btn btn-g" onclick="sbBook(\''+esc(l.id)+'\',this)">Book</button></div>'}).join(''):'<div class="row-sub">No lawyers found.</div>';
-    }).catch(function(e){host.innerHTML='<div class="row-sub">'+esc(e.message)+'</div>'});
-  },250)};
-  window.sbBook=function(lid,btn){btn.disabled=true;btn.textContent='…';
-    api('/api/v1/bookings',{method:'POST',body:JSON.stringify({lawyer_id:lid,session_id:window.__SESS.id,course_id:window.__SESS.course})})
-      .then(function(){toast('✓ Booked');openSession(window.__SESS.id)}).catch(function(e){toast(e.message);btn.disabled=false;btn.textContent='Book'});
-  };
-
-  // ── Global search: lawyers + firms ──
-  var FIRMS=[];
-  function loadFirms(){api('/api/v1/firms').then(function(j){FIRMS=Array.isArray(j)?j:(j.data||j.firms||[]);document.getElementById('stFirms').textContent=num(FIRMS.length)}).catch(function(){})}
-  var gT;
-  function _deb(q){clearTimeout(gT);gT=setTimeout(function(){runSearch(q)},260)}
-  window.gSearch=function(){var q=document.getElementById('gsearch').value||'';var r=document.getElementById('recSearch');if(r&&r.value!==q)r.value=q;_deb(q)};
-  window.recSearch=function(){var q=document.getElementById('recSearch').value||'';var g=document.getElementById('gsearch');if(g&&g.value!==q)g.value=q;_deb(q)};
-  function runSearch(qRaw){
-    var q=(qRaw||'').trim();var host=document.getElementById('recList');
-    if(q.length<2){document.getElementById('recTitle').textContent='Search lawyers & firms';host.innerHTML='<div class="empty">Start typing above to find a lawyer or firm.</div>';return}
-    document.getElementById('recTitle').textContent='Results for "'+esc(q)+'"';host.innerHTML='<div class="empty">Searching…</div>';
-    var ql=q.toLowerCase();
-    var firmHits=FIRMS.filter(function(f){return (f.name||'').toLowerCase().indexOf(ql)>=0||(f.id||'').toLowerCase().indexOf(ql)>=0}).slice(0,6);
-    api('/api/v1/lawyers?search='+encodeURIComponent(q)+'&limit=15').then(function(j){
-      var rows=Array.isArray(j)?j:(j.data||j.rows||[]);
-      var h='';
-      if(firmHits.length){h+='<div class="row-sub" style="padding:8px 18px 2px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;font-size:10px">Firms</div>'+firmHits.map(function(f){return '<div class="row" onclick="openFirm(\''+esc(f.id)+'\')"><div class="row-top"><span class="lw-av" style="background:'+avColor(f.name)+'">'+initials(f.name)+'</span><span class="row-title">'+esc(f.name||f.id)+'</span></div></div>'}).join('')}
-      h+='<div class="row-sub" style="padding:10px 18px 2px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;font-size:10px">Lawyers</div>';
-      h+=rows.length?rows.map(function(l){var n=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.fullName||l.name||l.id;var pts=l.points!=null?l.points:(l.lifetime_points!=null?l.lifetime_points:0);var st=lawStatus(pts,l.practicing!==false&&l.status!=='non-practising');return '<div class="row" onclick="openLawyer(\''+esc(l.id)+'\',\''+esc(n).replace(/'/g,"")+'\')"><div class="row-top"><span class="lw-av" style="background:'+avColor(n)+'">'+initials(n)+'</span><span class="row-title">'+esc(n)+'</span><span class="pf-badge" style="margin:0;padding:2px 8px;background:'+st.bg+';color:'+st.color+'">'+st.label+'</span></div><div class="row-sub" style="margin-left:40px">'+esc(l.email||'')+' · '+pts+'/16 pts</div></div>'}).join(''):'<div class="empty">No lawyers found.</div>';
-      host.innerHTML=h;
-    }).catch(function(e){host.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
-  }
-  // ── CRM helpers ──
+  function fdate(iso){if(!iso)return'—';var d=new Date(iso);if(isNaN(d))return String(iso).slice(0,16);var M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return d.getUTCDate()+' '+M[d.getUTCMonth()]+' '+d.getUTCFullYear()}
+  function fdatetime(iso){var d=new Date(iso);if(isNaN(d))return fdate(iso);return fdate(iso)+' · '+String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')}
   function initials(n){return String(n||'?').replace(/[^A-Za-z ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(function(w){return w[0]}).join('').toUpperCase()||'?'}
   function avColor(n){var h=0;String(n||'x').split('').forEach(function(c){h=c.charCodeAt(0)+((h<<5)-h)});return 'hsl('+(Math.abs(h)%360)+',42%,40%)'}
-  function lawStatus(pts,practising){if(!practising)return{key:'non',label:'Non-practising',color:'#cbd5cd',bg:'rgba(180,190,184,.25)'};if(pts>=16)return{key:'compliant',label:'Compliant',color:'#3df0a0',bg:'rgba(61,240,160,.18)'};if(pts>=8)return{key:'atrisk',label:'At risk',color:'#ffc875',bg:'rgba(255,184,77,.2)'};return{key:'critical',label:'Critical',color:'#ff9aac',bg:'rgba(255,94,126,.22)'}}
-  function tlIcon(k){return{message_in:'💬',reply_out:'↩',ai_reply:'✦',escalation:'⚠',assignment:'👤',status_change:'◔',booking:'📅',credit_purchase:'💳',note:'📝'}[k]||'•'}
-  function timelineHTML(items){if(!items.length)return '<div class="row-sub">No activity yet.</div>';
-    return '<div class="tl">'+items.map(function(a){return '<div class="tl-item"><div class="tl-dot">'+tlIcon(a.kind)+'</div><div class="tl-text">'+esc(a.text||a.summary||a.kind)+'</div><div class="tl-when">'+(a.who?esc(a.who)+' · ':'')+fdate(a.when||a.created_at)+'</div></div>'}).join('')+'</div>';}
-  function pfTabs(tabs){return '<div style="display:flex;gap:4px;padding:12px 22px 0;border-bottom:1px solid var(--line)">'+tabs.map(function(t,i){return '<button class="pf-tab'+(i===0?' on':'')+'" data-t="'+t.id+'" onclick="pfTab(this,\''+t.id+'\')" style="background:none;border:none;border-bottom:2px solid '+(i===0?'var(--green)':'transparent')+';padding:9px 12px;font-size:12.5px;font-weight:600;cursor:pointer;color:'+(i===0?'var(--ink)':'var(--slate2)')+';font-family:inherit">'+t.label+'</button>'}).join('')+'</div>';}
-  window.pfTab=function(btn,id){btn.parentNode.querySelectorAll('button').forEach(function(b){b.style.borderBottomColor='transparent';b.style.color='var(--slate2)'});btn.style.borderBottomColor='var(--green)';btn.style.color='var(--ink)';document.querySelectorAll('[data-tab]').forEach(function(p){p.style.display=p.getAttribute('data-tab')===id?'block':'none'})};
+  function lawStatus(pts,prac){if(prac===false)return{label:'Non-practising',cls:'non',color:'#cbd5cd'};if(pts>=16)return{label:'Compliant',cls:'compliant',color:'#3df0a0'};if(pts>=8)return{label:'At risk',cls:'atrisk',color:'#ffc875'};return{label:'Critical',cls:'critical',color:'#ff9aac'}}
+  function tlIcon(k){return{message_in:'💬',reply_out:'↩',ai_reply:'✦',escalation:'⚠',assignment:'👤',status_change:'◔',booking:'📅',attended:'✓',credit_purchase:'💳',note:'📝',task:'◻'}[k]||'•'}
+  var toastT;function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('on')},2800)}
+  window.crmToast=toast;
 
-  var _rec={};
-  window.openLawyer=function(id,nameHint){
-    openDrawer(nameHint||'Lawyer','');
+  if(!tok()){document.body.innerHTML='<div style="margin:auto;text-align:center;font-size:15px">Please <a href="clpd-portal.html">sign in</a> as a LAD admin.</div>';return}
+  document.getElementById('meName').textContent=ME.name||'CLPD Admin';
+  var av=document.getElementById('meAv');av.textContent=initials(ME.name);av.style.background=avColor(ME.name);
+
+  // ── shared state ──
+  var CONV=[],SESS=[],FIRMS=[],TASKS_DUE=[];
+
+  // ── view switching ──
+  var TITLES={dash:['Dashboard','CLPD customer operations'],inbox:['Inbox','Customer conversations'],cust:['Customers','Lawyers & firms'],ops:['Operations','Sessions & bookings']};
+  window.go=function(v){
+    document.querySelectorAll('.rl').forEach(function(r){r.classList.toggle('on',r.getAttribute('data-v')===v)});
+    document.querySelectorAll('.view').forEach(function(x){x.classList.remove('on')});
+    document.getElementById('v-'+v).classList.add('on');
+    document.getElementById('vTitle').textContent=TITLES[v][0];document.getElementById('vSub').textContent=TITLES[v][1];
+    if(v==='inbox')renderInbox();if(v==='ops')renderOps();if(v==='cust'&&!document.getElementById('custSearch').value)browseFirms();
+  };
+
+  // ── command / global search ──
+  var cmdT;window.cmdSearch=function(){clearTimeout(cmdT);cmdT=setTimeout(_cmd,240)};
+  function _cmd(){
+    var qv=(document.getElementById('cmd').value||'').trim();var box=document.getElementById('cmdRes');
+    if(qv.length<2){box.classList.remove('on');return}
+    box.classList.add('on');box.innerHTML='<div class="empty">Searching…</div>';
+    var ql=qv.toLowerCase();var fh=FIRMS.filter(function(f){return (f.name||'').toLowerCase().indexOf(ql)>=0}).slice(0,4);
+    api('/api/v1/lawyers?search='+encodeURIComponent(qv)+'&limit=10').then(function(j){
+      var rows=Array.isArray(j)?j:(j.data||j.rows||[]);var h='';
+      if(fh.length)h+=fh.map(function(f){return cmdRow('🏢',f.name,f.id+' · firm','openFirm(\''+q1(f.id)+'\')')}).join('');
+      h+=rows.map(function(l){var n=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.id;var p=l.points!=null?l.points:(l.lifetime_points||0);return cmdRow(initials(n),n,(l.email||'')+' · '+p+'/16 pts','openLawyer(\''+q1(l.id)+'\',\''+q1(n)+'\')',avColor(n))}).join('');
+      box.innerHTML=h||'<div class="empty">No results.</div>';
+    }).catch(function(e){box.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
+  }
+  function cmdRow(ic,t,s,onclick,avbg){var avh=avbg?'<div class="av" style="width:32px;height:32px;font-size:11px;background:'+avbg+'">'+esc(ic)+'</div>':'<div style="width:32px;text-align:center;font-size:17px">'+ic+'</div>';
+    return '<div class="row" onclick="document.getElementById(\'cmdRes\').classList.remove(\'on\');document.getElementById(\'cmd\').value=\'\';'+onclick+'">'+avh+'<div style="flex:1;min-width:0"><div class="ttl">'+esc(t)+'</div><div class="sub">'+esc(s)+'</div></div></div>';}
+  document.addEventListener('click',function(e){if(!e.target.closest('.cmd'))document.getElementById('cmdRes').classList.remove('on')});
+
+  // ── dashboard ──
+  function loadDash(){
     Promise.all([
-      api('/api/v1/lawyers/'+id).catch(function(){return{}}),
-      api('/api/v1/messages/activity?lawyer_id='+encodeURIComponent(id)+'&limit=50').catch(function(){return{activity:[]}})
-    ]).then(function(res){
-      var l=res[0]||{};var acts=(res[1]&&res[1].activity)||[];
-      var name=l.name||l.fullName||((l.firstName||'')+' '+(l.lastName||'')).trim()||nameHint||id;
-      var pts=Number(l.points!=null?l.points:l.lifetime_points)||0;
-      var practising=l.practicing!==false&&(l.status||'')!=='non-practising';
-      var st=lawStatus(pts,practising);
+      api('/api/v1/messages/conversations?box=all').catch(function(){return{conversations:[]}}),
+      api('/api/v1/admin/oversight').catch(function(){return{}}),
+      api('/api/v1/tasks?open=1').catch(function(){return{tasks:[]}})
+    ]).then(function(r){
+      CONV=r[0].conversations||[];var o=r[1]||{};TASKS_DUE=(r[2].tasks||[]);
+      var open=CONV.filter(function(c){return c.status!=='closed'&&c.status!=='resolved'}).length;
+      var un=CONV.filter(function(c){return !c.assigned_to&&c.status!=='closed'}).length;
+      var ib=document.getElementById('inboxBadge');ib.textContent=un;document.getElementById('railInbox').classList.toggle('has',un>0);
+      var L=o.lawyers||{},F=o.firms||{};
+      var dash=document.getElementById('dashGrid');
+      dash.innerHTML=
+        kpi('Open conversations',open,un+' unassigned')
+        +kpi('Assigned to me',CONV.filter(function(c){return c.assigned_to===ME.sub&&c.status!=='closed'}).length,'your queue')
+        +kpi('Upcoming sessions',SESS.length,(SESS.reduce(function(s,x){return s+(Number(x.seats_remaining)||0)},0))+' seats open')
+        +kpi('Tasks due',TASKS_DUE.length,'follow-ups')
+        +'<div class="panel" style="grid-column:span 2;min-height:300px"><div class="panel-hd"><h2>Needs attention</h2><button class="btn btn-l btn-xs" style="margin-left:auto" onclick="go(\'inbox\')">Open inbox →</button></div><div class="panel-bd" id="dashQueue" style="flex:1"></div></div>'
+        +'<div class="panel" style="grid-column:span 2"><div class="panel-hd"><h2>Tasks due</h2></div><div class="panel-bd" id="dashTasks" style="flex:1;padding:6px 18px"></div></div>'
+        +'<div class="ai" style="grid-column:span 2"><div class="ey" style="color:rgba(255,255,255,.6);margin-bottom:9px">✦ Ask Maryam · AI assist</div><textarea id="aiQ" rows="2" placeholder="which firms are most at risk? · summarise today\'s messages · who needs chasing"></textarea><div style="margin-top:9px"><button class="btn btn-g" onclick="askAI()" id="aiBtn">Ask</button></div><div class="ans" id="aiAns"></div></div>'
+        +'<div class="panel" style="grid-column:span 2"><div class="panel-hd"><h2>Upcoming sessions</h2><button class="btn btn-l btn-xs" style="margin-left:auto" onclick="go(\'ops\')">All →</button></div><div class="panel-bd" id="dashSess" style="max-height:320px"></div></div>';
+      var dq=document.getElementById('dashQueue');var att=CONV.filter(function(c){return c.escalated||(!c.assigned_to&&c.status!=='closed'&&c.status!=='resolved')}).slice(0,7);
+      dq.innerHTML=att.length?att.map(convRow).join(''):'<div class="empty">All clear — nothing waiting.</div>';
+      var dt=document.getElementById('dashTasks');dt.innerHTML=TASKS_DUE.length?TASKS_DUE.slice(0,8).map(function(t){return '<div class="task"><input type="checkbox" onchange="taskDone(\''+t.id+'\',this.checked)"/><div style="flex:1"><div style="font-size:13px;font-weight:500">'+esc(t.title)+'</div><div class="sub">'+(t.due_at?'Due '+fdate(t.due_at):'')+'</div></div></div>'}).join(''):'<div class="empty">No open tasks.</div>';
+      var ds=document.getElementById('dashSess');ds.innerHTML=SESS.slice(0,8).map(sessRow).join('')||'<div class="empty">No upcoming sessions.</div>';
+    });
+  }
+  function kpi(l,v,s){return '<div class="kpi"><div class="l">'+l+'</div><div class="v">'+num(v)+'</div><div class="s">'+esc(s)+'</div></div>'}
+
+  // ── conversations ──
+  function convRow(c){return '<div class="row conv" onclick="openConv(\''+c.id+'\')"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px"><span class="ttl" style="flex:1">'+esc(c.subject||'(no subject)')+'</span><span class="sub" style="font-family:monospace">'+ago(c.last_message_at)+'</span></div><div class="sub">'+esc(c.preview||'')+'</div><div style="margin-top:6px;display:flex;gap:5px;align-items:center;flex-wrap:wrap"><span class="pill '+esc(c.status)+'">'+esc(c.status)+'</span>'+(c.priority==='high'?'<span class="pill high">high</span>':'')+(c.category?'<span class="pill cat">'+esc(c.category)+'</span>':'')+(c.escalated?'<span class="pill esc">needs human</span>':(c.ai_handled?'<span class="pill ai">Maryam</span>':''))+'<span class="sub" style="flex:1">'+esc(c.requester_name||'')+(c.assigned_name?' · → '+esc(c.assigned_name):'')+'</span>'+(c.assigned_to===ME.sub?'':'<button class="btn btn-l btn-xs" onclick="event.stopPropagation();takeConv(\''+c.id+'\')">Take it</button>')+'</div></div></div>'}
+  var IBBOX='unassigned';
+  window.ibBox=function(b,el){IBBOX=b;document.querySelectorAll('#ibSeg button').forEach(function(x){x.classList.remove('on')});el.classList.add('on');renderInbox()};
+  function renderInbox(){
+    var host=document.getElementById('ibList');host.innerHTML='<div class="empty">Loading…</div>';
+    api('/api/v1/messages/conversations?box='+IBBOX).then(function(j){
+      var rows=j.conversations||[];if(IBBOX==='all')rows=rows.filter(function(c){return c.status!=='closed'});
+      host.innerHTML=rows.length?rows.map(convRow).join(''):'<div class="empty">Nothing here.</div>';
+    });
+  }
+  window.takeConv=function(id){api('/api/v1/messages/conversations/'+id+'/assign',{method:'POST',body:JSON.stringify({assigneeId:ME.sub})}).then(function(){toast('✓ You own this');renderInbox();loadDash()}).catch(function(e){toast(e.message)})};
+  window.openConv=function(id){
+    go('inbox');document.querySelectorAll('.conv').forEach(function(r){r.classList.remove('active')});
+    var th=document.getElementById('ibThread');th.innerHTML='<div class="empty">Loading…</div>';
+    api('/api/v1/messages/conversations/'+id).then(function(j){
+      var c=j.conversation;
+      var head='<div style="padding:16px 22px;border-bottom:1px solid var(--line);background:#fff"><div style="display:flex;align-items:center;gap:10px"><div><div style="font-size:16px;font-weight:700">'+esc(c.subject||'Conversation')+'</div><div class="sub" style="cursor:pointer" onclick="'+(c.requester_type==='firm'?'openFirm(\''+q1(c.requester_id)+'\')':'openLawyer(\''+q1(c.requester_id)+'\',\''+q1(c.requester_name)+'\')')+'">'+esc(c.requester_name||'')+' · '+esc(c.requester_type||'')+' →</div></div><div style="margin-left:auto;display:flex;gap:6px;align-items:center"><span class="pill '+esc(c.status)+'">'+esc(c.status)+'</span>'+(c.assigned_to===ME.sub?'':'<button class="btn btn-g btn-xs" onclick="takeConv(\''+id+'\');openConv(\''+id+'\')">Take ownership</button>')+(c.status!=='resolved'?'<button class="btn btn-l btn-xs" onclick="convStatus(\''+id+'\',\'resolved\')">Resolve</button>':'')+'</div></div></div>';
+      var msgs=(c.messages||[]).map(function(m){var mine=m.sender_side==='admin';return '<div class="msg '+(mine?'me':'them')+'"><div class="who2">'+esc(m.sender_name||(mine?'CLPD':'User'))+' · '+ago(m.created_at)+'</div>'+esc(m.body)+'</div>'}).join('');
+      th.innerHTML=head+'<div style="flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column">'+msgs+'</div>'+'<div style="padding:14px 22px;border-top:1px solid var(--line);background:#fff"><textarea id="ibReply" class="inp" rows="2" placeholder="Reply to '+esc(c.requester_name||'')+'…"></textarea><div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-g" onclick="ibSend(\''+id+'\')">Send reply</button></div></div>';
+    }).catch(function(e){th.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
+  };
+  window.ibSend=function(id){var t=document.getElementById('ibReply');var b=(t.value||'').trim();if(!b)return;api('/api/v1/messages/conversations/'+id+'/messages',{method:'POST',body:JSON.stringify({body:b})}).then(function(){openConv(id);renderInbox()}).catch(function(e){toast(e.message)})};
+  window.convStatus=function(id,s){api('/api/v1/messages/conversations/'+id+'/status',{method:'POST',body:JSON.stringify({status:s})}).then(function(){toast('✓ '+s);openConv(id);renderInbox();loadDash()}).catch(function(e){toast(e.message)})};
+
+  // ── operations / sessions ──
+  function loadSessions(){return api('/api/v1/courses/sessions/all').then(function(all){var now=new Date().toISOString();SESS=(Array.isArray(all)?all:[]).filter(function(s){return s&&s.scheduled_at&&s.scheduled_at>=now&&(s.status||'')!=='cancelled'}).sort(function(a,b){return String(a.scheduled_at).localeCompare(String(b.scheduled_at))});window.__SESS=SESS}).catch(function(){})}
+  function sessRow(s){var cap=Number(s.capacity)||0,left=Number(s.seats_remaining)||0;return '<div class="row" onclick="openSession(\''+s.id+'\',\''+q1(s.course_title||'')+'\')"><div style="flex:1;min-width:0"><div class="ttl">'+esc(s.course_title||s.course_id||'—')+'</div><div class="sub">'+esc(s.provider_name||'')+' · '+fdate(s.scheduled_at)+'</div></div><span class="pill cat">'+(cap-left)+' booked · '+left+'/'+cap+'</span></div>'}
+  window.renderOps=function(){var qv=(document.getElementById('opsSearch').value||'').toLowerCase().trim();var rows=SESS.filter(function(s){return !qv||((s.course_title||'').toLowerCase().indexOf(qv)>=0||(s.provider_name||'').toLowerCase().indexOf(qv)>=0)}).slice(0,120);document.getElementById('opsList').innerHTML=rows.length?rows.map(sessRow).join(''):'<div class="empty">No upcoming sessions.</div>'};
+  window.openSession=function(id,title){
+    openDrawer();var dw=document.getElementById('dwInner');
+    dw.innerHTML='<div class="hero"><button class="x" onclick="closeDrawer()">×</button><div class="hero-name">'+esc(title||'Session')+'</div><div class="hero-sub" id="sxSub">Loading…</div></div><div class="dw-bd"><div class="sec"><h4>Book a lawyer onto this session</h4><input id="sxSearch" class="inp" placeholder="Search lawyer by name or email…" oninput="sxSearch()"/><div id="sxRes" style="margin-top:10px"></div></div><div class="sec"><h4>Booked (<span id="sxN">…</span>)</h4><div id="sxBooked"></div></div></div>';
+    api('/api/v1/bookings/session/'+id).then(function(j){
+      window.__SX={id:id,course:j.session.course_id};
+      document.getElementById('sxSub').textContent=fdatetime(j.session.scheduled_at)+' · '+num(j.session.seats_remaining)+'/'+num(j.session.capacity)+' seats · '+(j.session.status||'');
+      document.getElementById('sxN').textContent=(j.bookings||[]).length;
+      document.getElementById('sxBooked').innerHTML=(j.bookings||[]).length?j.bookings.map(function(b){return '<div class="kv" style="cursor:pointer" onclick="openLawyer(\''+q1(b.lawyer_id)+'\',\''+q1(b.name)+'\')"><span>'+esc(b.name)+'<div class="sub">'+esc(b.email||'')+(b.firm?' · '+esc(b.firm):'')+'</div></span><span class="pill cat">'+esc(b.status)+'</span></div>'}).join(''):'<div class="empty">No one booked yet.</div>';
+    }).catch(function(e){toast(e.message)});
+  };
+  var sxT;window.sxSearch=function(){clearTimeout(sxT);sxT=setTimeout(function(){var qv=(document.getElementById('sxSearch').value||'').trim();var h=document.getElementById('sxRes');if(qv.length<2){h.innerHTML='';return}
+    api('/api/v1/lawyers?search='+encodeURIComponent(qv)+'&limit=10').then(function(j){var rows=Array.isArray(j)?j:(j.data||j.rows||[]);h.innerHTML=rows.length?rows.map(function(l){var n=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.id;return '<div class="kv"><span>'+esc(n)+'<div class="sub">'+esc(l.email||'')+'</div></span><button class="btn btn-g btn-xs" onclick="sxBook(\''+q1(l.id)+'\',this)">Book</button></div>'}).join(''):'<div class="sub">No lawyers found.</div>'})},220)};
+  window.sxBook=function(lid,btn){btn.disabled=true;btn.textContent='…';api('/api/v1/bookings',{method:'POST',body:JSON.stringify({lawyer_id:lid,session_id:window.__SX.id,course_id:window.__SX.course})}).then(function(){toast('✓ Booked');openSession(window.__SX.id)}).catch(function(e){toast(e.message);btn.disabled=false;btn.textContent='Book'})};
+
+  // ── customers ──
+  function browseFirms(){document.getElementById('custList').innerHTML=FIRMS.slice(0,40).map(function(f){return '<div class="row" onclick="openFirm(\''+q1(f.id)+'\')"><div class="av" style="width:36px;height:36px;font-size:12px;background:'+avColor(f.name)+'">'+initials(f.name)+'</div><div style="flex:1"><div class="ttl">'+esc(f.name||f.id)+'</div><div class="sub">'+esc(f.id)+'</div></div></div>'}).join('')||'<div class="empty">No firms.</div>'}
+  var csT;window.custSearch=function(){clearTimeout(csT);csT=setTimeout(function(){
+    var qv=(document.getElementById('custSearch').value||'').trim();var host=document.getElementById('custList');
+    if(qv.length<2){browseFirms();return}var ql=qv.toLowerCase();host.innerHTML='<div class="empty">Searching…</div>';
+    var fh=FIRMS.filter(function(f){return (f.name||'').toLowerCase().indexOf(ql)>=0}).slice(0,8);
+    api('/api/v1/lawyers?search='+encodeURIComponent(qv)+'&limit=25').then(function(j){var rows=Array.isArray(j)?j:(j.data||j.rows||[]);var h='';
+      if(fh.length)h+='<div class="sub" style="padding:8px 18px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;font-size:10px">Firms</div>'+fh.map(function(f){return '<div class="row" onclick="openFirm(\''+q1(f.id)+'\')"><div class="av" style="width:34px;height:34px;font-size:12px;background:'+avColor(f.name)+'">'+initials(f.name)+'</div><div style="flex:1"><div class="ttl">'+esc(f.name||f.id)+'</div></div></div>'}).join('');
+      h+='<div class="sub" style="padding:8px 18px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;font-size:10px">Lawyers</div>'+(rows.length?rows.map(function(l){var n=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.id;var p=l.points!=null?l.points:(l.lifetime_points||0);var st=lawStatus(p,l.practicing!==false);return '<div class="row" onclick="openLawyer(\''+q1(l.id)+'\',\''+q1(n)+'\')"><div class="av" style="width:34px;height:34px;font-size:12px;background:'+avColor(n)+'">'+initials(n)+'</div><div style="flex:1"><div class="ttl">'+esc(n)+'</div><div class="sub">'+esc(l.email||'')+' · '+p+'/16 pts</div></div><span class="pill '+st.cls+'">'+st.label+'</span></div>'}).join(''):'<div class="empty">No lawyers found.</div>');
+      host.innerHTML=h;
+    }).catch(function(e){host.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
+  },240)};
+
+  // ════════ RECORD DRAWER ════════
+  var REC={};
+  function tabs(list){return '<div class="tabs">'+list.map(function(t,i){return '<button class="tab'+(i===0?' on':'')+'" onclick="dwTab(this,\''+t.id+'\')">'+t.label+'</button>'}).join('')+'</div>'}
+  window.dwTab=function(btn,id){btn.parentNode.querySelectorAll('.tab').forEach(function(b){b.classList.remove('on')});btn.classList.add('on');document.querySelectorAll('#dwInner [data-tab]').forEach(function(p){p.style.display=p.getAttribute('data-tab')===id?'block':'none'})};
+  function timeline(items){if(!items.length)return '<div class="sub">No activity yet.</div>';return '<div class="tl">'+items.map(function(a){return '<div class="tl-i"><div class="tl-d">'+tlIcon(a.kind)+'</div><div class="tl-t">'+esc(a.text||a.summary||a.kind)+'</div><div class="tl-w">'+(a.who?esc(a.who)+' · ':'')+fdatetime(a.when||a.created_at)+'</div></div>'}).join('')+'</div>'}
+
+  window.openLawyer=function(id,nameHint){
+    openDrawer();document.getElementById('dwInner').innerHTML='<div class="hero"><button class="x" onclick="closeDrawer()">×</button><div class="hero-name">'+esc(nameHint||'Loading…')+'</div></div><div class="empty">Loading…</div>';
+    Promise.all([api('/api/v1/lawyers/'+id).catch(function(){return{}}),api('/api/v1/messages/activity?lawyer_id='+encodeURIComponent(id)+'&limit=60').catch(function(){return{activity:[]}}),api('/api/v1/tasks?lawyer_id='+encodeURIComponent(id)).catch(function(){return{tasks:[]}})]).then(function(res){
+      var l=res[0]||{},acts=(res[1].activity)||[],tasks=(res[2].tasks)||[];
+      var name=l.name||l.fullName||nameHint||id;var pts=Number(l.points!=null?l.points:l.lifetime_points)||0;
+      var prac=l.practicing!==false&&(l.status||'')!=='non-practising';var st=lawStatus(pts,prac);
       var bookings=Array.isArray(l.bookings)?l.bookings:[];
-      _rec={type:'lawyer',id:id,name:name,firm:l.firmId||l.firm_id,course:null};
-      var tl=acts.map(function(a){return {kind:a.kind,when:a.created_at,text:a.summary,who:a.actor_name}});
-      bookings.forEach(function(b){tl.push({kind:'booking',when:b.booked_at||b.scheduled_at||b.created_at,text:'Booked: '+(b.course_title||b.course_id||''),who:b.booked_by||'self'})});
+      REC={type:'lawyer',id:id,name:name,firm:l.firmId||l.firm_id,email:l.email};
+      var tl=acts.map(function(a){return{kind:a.kind,when:a.created_at,text:a.summary,who:a.actor_name}});
+      bookings.forEach(function(b){tl.push({kind:'booking',when:b.booked_at||b.scheduled_at,text:'Booking: '+(b.course_title||b.course_title_current||b.course_id||''),who:b.booked_by})});
       tl.sort(function(a,b){return String(b.when||'').localeCompare(String(a.when||''))});
       var pct=Math.min(100,Math.round(pts/16*100));
-      document.getElementById('drawerInner').innerHTML=
-        '<div class="drawer-hd" style="background:none;padding:0;position:relative"><button class="x" onclick="closeDrawer()" style="position:absolute;top:14px;right:16px;z-index:2;background:rgba(255,255,255,.18)">×</button></div>'
-        +'<div class="drawer-bd pf-wrap">'
-        +'<div class="pf-hero"><div class="pf-row"><div class="pf-av" style="background:'+avColor(name)+'">'+initials(name)+'</div>'
-          +'<div style="flex:1;min-width:0"><div class="pf-name">'+esc(name)+'</div><div class="pf-sub">'+esc(l.role||'Lawyer')+(l.firm_name||l.firmName?' · '+esc(l.firm_name||l.firmName):'')+'</div>'
-          +'<span class="pf-badge" style="background:'+st.bg+';color:'+st.color+'">'+st.label+'</span></div></div>'
-          +'<div class="pf-prog-l"><span>CPD PROGRESS</span><span>'+pts+' / 16 pts</span></div><div class="pf-prog"><div style="width:'+pct+'%;background:'+st.color+'"></div></div></div>'
-        +'<div class="pf-tiles"><div class="pf-tile"><div class="l">Points</div><div class="v">'+pts+'</div></div><div class="pf-tile"><div class="l">Credits</div><div class="v">'+num(l.credits!=null?l.credits:l.credit_balance)+'</div></div><div class="pf-tile"><div class="l">Bookings</div><div class="v">'+bookings.length+'</div></div></div>'
-        +'<div class="pf-actions"><button class="pf-act primary" onclick="pfBookStart()">📅 Book onto course</button>'+(_rec.firm?'<button class="pf-act" onclick="openFirm(\''+esc(_rec.firm)+'\')">🏢 Firm</button>':'')+'<button class="pf-act" onclick="pfNoteToggle()">📝 Add note</button>'+(l.email?'<button class="pf-act" onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+esc(l.email)+'\');crmToast(\'Email copied\')">✉ '+esc(l.email)+'</button>':'')+'</div>'
-        +'<div id="pfNote" style="display:none;padding:0 22px 14px;border-bottom:1px solid var(--line)"><textarea id="pfNoteText" class="inp" rows="2" placeholder="Add an internal note to this record…"></textarea><div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-g" onclick="pfNoteSave()">Save note</button></div></div>'
-        +'<div id="pfBook" style="display:none;padding:14px 22px;border-bottom:1px solid var(--line)"><div class="pf-sec" style="padding:0"><h4>Book onto a course</h4><input id="pfBookSearch" class="inp" placeholder="Search a course / session…" oninput="pfBookSearch()"/><div id="pfBookRes" style="margin-top:8px"></div></div></div>'
-        +pfTabs([{id:'tl',label:'Activity'},{id:'bk',label:'Bookings'},{id:'dt',label:'Details'}])
-        +'<div class="pf-sec" data-tab="tl">'+timelineHTML(tl)+'</div>'
-        +'<div class="pf-sec" data-tab="bk" style="display:none">'+(bookings.length?bookings.map(function(b){return '<div class="kv"><span>'+esc(b.course_title||b.course_id||'—')+'<div class="row-sub">'+fdate(b.scheduled_at)+'</div></span><span class="pill cat">'+esc(b.status||'booked')+'</span></div>'}).join(''):'<div class="row-sub">No bookings.</div>')+'</div>'
-        +'<div class="pf-sec" data-tab="dt" style="display:none"><div class="kv"><span class="k">Email</span><span>'+esc(l.email||'—')+'</span></div><div class="kv"><span class="k">Phone</span><span>'+esc(l.phone||'—')+'</span></div><div class="kv"><span class="k">Firm</span><span>'+esc(l.firm_name||l.firmName||l.firmId||'—')+'</span></div><div class="kv"><span class="k">Practice areas</span><span>'+esc(l.practice_areas||l.specialisms||'—')+'</span></div><div class="kv"><span class="k">Status</span><span>'+esc(l.status||'active')+'</span></div></div>'
+      document.getElementById('dwInner').innerHTML=
+        '<div class="hero"><button class="x" onclick="closeDrawer()">×</button><div style="display:flex;gap:14px;align-items:flex-start"><div class="av" style="width:56px;height:56px;font-size:20px;border-radius:15px;background:'+avColor(name)+'">'+initials(name)+'</div><div style="flex:1;min-width:0"><div class="hero-name">'+esc(name)+'</div><div class="hero-sub">'+esc(l.role||'Lawyer')+(l.firm_name||l.firmName?' · '+esc(l.firm_name||l.firmName):'')+'</div><span class="hbadge" style="background:rgba(255,255,255,.14);color:'+st.color+'">'+st.label+'</span></div></div><div class="prog-l"><span>CPD PROGRESS</span><span>'+pts+' / 16 pts</span></div><div class="prog"><div style="width:'+pct+'%;background:'+st.color+'"></div></div></div>'
+        +'<div class="dw-bd">'
+        +'<div class="tiles"><div class="tile"><div class="l">Points</div><div class="v">'+pts+'</div></div><div class="tile"><div class="l">Credits</div><div class="v">'+num(l.credits!=null?l.credits:l.credit_balance)+'</div></div><div class="tile"><div class="l">Bookings</div><div class="v">'+bookings.length+'</div></div></div>'
+        +'<div class="qa"><button class="p" onclick="dwBookOpen()">📅 Book onto course</button><button onclick="dwMessageOpen()">✉ Message</button>'+(REC.firm?'<button onclick="openFirm(\''+q1(REC.firm)+'\')">🏢 Firm</button>':'')+'<button onclick="dwNoteOpen()">📝 Note</button><button onclick="dwTaskOpen()">◻ Task</button><button onclick="dwCreditsOpen()">💳 Credits</button></div>'
+        +'<div id="dwForm" style="display:none;padding:0 22px 14px;border-bottom:1px solid var(--line)"></div>'
+        +tabs([{id:'bk',label:'Bookings ('+bookings.length+')'},{id:'tl',label:'Activity'},{id:'tk',label:'Tasks'},{id:'dt',label:'Details'}])
+        +'<div class="sec" data-tab="bk">'+(bookings.length?bookings.map(bookingCard).join(''):'<div class="sub">No bookings. Use “Book onto course”.</div>')+'</div>'
+        +'<div class="sec" data-tab="tl" style="display:none">'+timeline(tl)+'</div>'
+        +'<div class="sec" data-tab="tk" style="display:none"><div id="dwTasks">'+tasksHTML(tasks)+'</div></div>'
+        +'<div class="sec" data-tab="dt" style="display:none"><div class="kv"><span class="k">Email</span><span>'+esc(l.email||'—')+'</span></div><div class="kv"><span class="k">Phone</span><span>'+esc(l.phone||'—')+'</span></div><div class="kv"><span class="k">Firm</span><span>'+esc(l.firm_name||l.firmName||l.firmId||'—')+'</span></div><div class="kv"><span class="k">Practice</span><span>'+esc(l.practice_areas||l.specialisms||'—')+'</span></div><div class="kv"><span class="k">Status</span><span>'+esc(l.status||'active')+'</span></div></div>'
         +'</div>';
     });
   };
+
+  function bookingCard(b){
+    var st=(b.status||'booked').toLowerCase();var done=st==='attended';var dead=st==='cancelled'||st==='refunded';
+    var title=b.course_title||b.course_title_current||b.course_id||'Course';
+    return '<div class="bk" style="'+(dead?'opacity:.55':'')+'"><div class="bk-top"><div style="flex:1"><div style="font-weight:600;font-size:13.5px">'+esc(title)+'</div><div class="sub">'+fdatetime(b.scheduled_at)+' · '+(Number(b.credits_used)||0)+' credits</div></div><span class="pill '+(done?'compliant':dead?'closed':'cat')+'">'+esc(st)+'</span></div>'
+      +(dead?'':'<div class="bk-acts">'+(done?'':'<button class="btn btn-l btn-xs" onclick="bkAttend(\''+b.id+'\')">✓ Mark attended</button>')+'<button class="btn btn-l btn-xs" onclick="bkResched(\''+b.id+'\',\''+q1(b.course_id)+'\')">↻ Reschedule</button><button class="btn btn-r btn-xs" onclick="bkCancel(\''+b.id+'\',\''+(Number(b.credits_used)||0)+'\')">✕ Cancel &amp; refund</button></div>')+'</div>';
+  }
+  window.bkAttend=function(id){api('/api/v1/bookings/'+id,{method:'PATCH',body:JSON.stringify({status:'attended',points_earned:2})}).then(function(){toast('✓ Marked attended');reopenRec()}).catch(function(e){toast(e.message)})};
+  window.bkCancel=function(id,cost){
+    var f=document.getElementById('dwForm');f.style.display='block';f.scrollIntoView&&f.scrollIntoView({behavior:'smooth',block:'nearest'});
+    var firmBtn=REC.firm?'<button class="btn btn-l" onclick="bkCancelDo(\''+id+'\',\'firm\')">↩ Refund '+cost+' cr to firm pool</button>':'';
+    f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Cancel booking — where do the credits go?</h4><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-l" onclick="bkCancelDo(\''+id+'\',\'lawyer\')">↩ Refund '+cost+' cr to lawyer</button>'+firmBtn+'<button class="btn btn-l" style="margin-left:auto" onclick="document.getElementById(\'dwForm\').style.display=\'none\'">Keep booking</button></div></div>';
+  };
+  window.bkCancelDo=function(id,dest){api('/api/v1/bookings/'+id,{method:'PATCH',body:JSON.stringify({status:'cancelled',refund_to:dest})}).then(function(r){toast('✓ Cancelled · '+(r.refunded_credits||0)+' cr → '+(r.refund_to==='firm'?'firm pool':'lawyer'));reopenRec()}).catch(function(e){toast(e.message)})};
+  window.dwMessageOpen=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Message '+esc(REC.name)+'</h4><input id="msSubj" class="inp" placeholder="Subject (optional)"/><textarea id="msBody" class="inp" rows="3" placeholder="Write your message…" style="margin-top:8px"></textarea><div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-g" onclick="dwMessageSend()">Send message</button><button class="btn btn-l" onclick="document.getElementById(\'dwForm\').style.display=\'none\'">Cancel</button></div></div>';var t=document.getElementById('msBody');if(t)t.focus()};
+  window.dwMessageSend=function(){var body=(document.getElementById('msBody').value||'').trim();if(!body){toast('Write a message first');return}var subj=(document.getElementById('msSubj').value||'').trim();var b=REC.type==='lawyer'?{lawyer_id:REC.id}:{firm_id:REC.id};b.subject=subj;b.body=body;
+    api('/api/v1/messages/conversations/admin',{method:'POST',body:JSON.stringify(b)}).then(function(j){toast('✓ Message sent to '+REC.name);closeDrawer();go('inbox');renderInbox();if(j.id)openConv(j.id)}).catch(function(e){toast(e.message)})};
+  window.bkResched=function(id,courseId){
+    var form=document.getElementById('dwForm');form.style.display='block';
+    var opts=SESS.filter(function(s){return !courseId||s.course_id===courseId}).slice(0,40);
+    form.innerHTML='<div class="sec" style="padding:14px 0"><h4>Reschedule — pick a session</h4>'+(opts.length?'<select id="rsSel" class="inp">'+opts.map(function(s){return '<option value="'+s.id+'">'+esc(s.course_title||'')+' · '+fdate(s.scheduled_at)+' · '+(Number(s.seats_remaining)||0)+' seats</option>'}).join('')+'</select><div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-g" onclick="bkReschedDo(\''+id+'\')">Move booking</button><button class="btn btn-l" onclick="document.getElementById(\'dwForm\').style.display=\'none\'">Cancel</button></div>':'<div class="sub">No other upcoming sessions for this course.</div>')+'</div>';
+  };
+  window.bkReschedDo=function(id){var sid=document.getElementById('rsSel').value;api('/api/v1/bookings/'+id+'/reschedule',{method:'POST',body:JSON.stringify({session_id:sid})}).then(function(){toast('✓ Rescheduled');reopenRec()}).catch(function(e){toast(e.message)})};
+  window.dwBookOpen=function(){var form=document.getElementById('dwForm');form.style.display='block';form.innerHTML='<div class="sec" style="padding:14px 0"><h4>Book onto a course</h4><input id="bkSearch" class="inp" placeholder="Search course / session…" oninput="dwBookSearch()"/><div id="bkRes" style="margin-top:8px"></div></div>'};
+  var bkT;window.dwBookSearch=function(){clearTimeout(bkT);bkT=setTimeout(function(){var qv=(document.getElementById('bkSearch').value||'').toLowerCase().trim();var h=document.getElementById('bkRes');if(qv.length<2){h.innerHTML='';return}var rows=SESS.filter(function(s){return (s.course_title||'').toLowerCase().indexOf(qv)>=0}).slice(0,10);h.innerHTML=rows.length?rows.map(function(s){return '<div class="kv"><span>'+esc(s.course_title||'')+'<div class="sub">'+fdate(s.scheduled_at)+' · '+(Number(s.seats_remaining)||0)+' seats</div></span><button class="btn btn-g btn-xs" onclick="dwBookDo(\''+s.id+'\',\''+q1(s.course_id)+'\',this)">Book</button></div>'}).join(''):'<div class="sub">No matching sessions.</div>'},220)};
+  window.dwBookDo=function(sid,cid,btn){btn.disabled=true;btn.textContent='…';api('/api/v1/bookings',{method:'POST',body:JSON.stringify({lawyer_id:REC.id,session_id:sid,course_id:cid})}).then(function(){toast('✓ Booked');reopenRec()}).catch(function(e){toast(e.message);btn.disabled=false;btn.textContent='Book'})};
+  window.dwNoteOpen=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Add note</h4><textarea id="ntText" class="inp" rows="2" placeholder="Internal note…"></textarea><div style="margin-top:8px"><button class="btn btn-g" onclick="dwNoteSave()">Save</button></div></div>'};
+  window.dwNoteSave=function(){var v=(document.getElementById('ntText').value||'').trim();if(!v)return;var b=REC.type==='lawyer'?{lawyer_id:REC.id}:{firm_id:REC.id};b.summary=v;api('/api/v1/messages/activity',{method:'POST',body:JSON.stringify(b)}).then(function(){toast('✓ Note saved');reopenRec()}).catch(function(e){toast(e.message)})};
+  window.dwTaskOpen=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>New task</h4><input id="tkText" class="inp" placeholder="e.g. Call back re: refund"/><input id="tkDue" type="date" class="inp" style="margin-top:8px"/><div style="margin-top:8px"><button class="btn btn-g" onclick="dwTaskSave()">Add task</button></div></div>'};
+  window.dwTaskSave=function(){var v=(document.getElementById('tkText').value||'').trim();if(!v)return;var b=REC.type==='lawyer'?{lawyer_id:REC.id}:{firm_id:REC.id};b.title=v;b.due_at=document.getElementById('tkDue').value||null;api('/api/v1/tasks',{method:'POST',body:JSON.stringify(b)}).then(function(){toast('✓ Task added');reopenRec()}).catch(function(e){toast(e.message)})};
+  window.dwCreditsOpen=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Adjust credits</h4><div style="display:flex;gap:8px"><input id="crAmt" type="number" class="inp" placeholder="Credits (use − to deduct)" style="flex:1"/><button class="btn btn-g" onclick="dwCreditsSave()">Apply</button></div><div class="sub" style="margin-top:6px">Grants/deducts credits on this lawyer’s balance.</div></div>'};
+  window.dwCreditsSave=function(){var n=parseInt(document.getElementById('crAmt').value,10);if(!n)return;if(!REC.email){toast('No email on file');return}api('/api/v1/credits/topup',{method:'POST',body:JSON.stringify({email:REC.email,credits:n,note:'Admin adjustment via CRM'})}).then(function(){toast('✓ '+(n>0?'+':'')+n+' credits');reopenRec()}).catch(function(e){toast(e.message)})};
+
+  function tasksHTML(tasks){return tasks.length?tasks.map(function(t){return '<div class="task'+(t.done?' done':'')+'"><input type="checkbox" '+(t.done?'checked':'')+' onchange="taskDone(\''+t.id+'\',this.checked)"/><div style="flex:1"><span style="font-size:13px;font-weight:500">'+esc(t.title)+'</span><div class="sub">'+(t.due_at?'Due '+fdate(t.due_at):'')+(t.created_by_name?' · '+esc(t.created_by_name):'')+'</div></div></div>'}).join(''):'<div class="sub">No tasks. Add one with the ◻ Task action.</div>'}
+  window.taskDone=function(id,done){api('/api/v1/tasks/'+id,{method:'PATCH',body:JSON.stringify({done:done})}).then(function(){toast(done?'✓ Done':'Reopened');loadDash()}).catch(function(e){toast(e.message)})};
+
   window.openFirm=function(id){
-    openDrawer('Firm','');
-    Promise.all([
-      api('/api/v1/firms/'+id).catch(function(){return{}}),
-      api('/api/v1/firms/'+id+'/lawyers').catch(function(){return[]}),
-      api('/api/v1/firms/'+id+'/transactions').catch(function(){return{transactions:[]}}),
-      api('/api/v1/messages/activity?firm_id='+encodeURIComponent(id)+'&limit=50').catch(function(){return{activity:[]}})
-    ]).then(function(r){
-      var f=r[0]||{};var laws=Array.isArray(r[1])?r[1]:(r[1].data||[]);var txns=(r[2]&&(r[2].transactions||r[2].data))||[];var acts=(r[3]&&r[3].activity)||[];
-      var name=f.name||id;_rec={type:'firm',id:id,name:name};
+    openDrawer();document.getElementById('dwInner').innerHTML='<div class="hero"><button class="x" onclick="closeDrawer()">×</button><div class="hero-name">Loading…</div></div>';
+    Promise.all([api('/api/v1/firms/'+id).catch(function(){return{}}),api('/api/v1/firms/'+id+'/lawyers').catch(function(){return[]}),api('/api/v1/firms/'+id+'/transactions').catch(function(){return{transactions:[]}}),api('/api/v1/messages/activity?firm_id='+encodeURIComponent(id)+'&limit=60').catch(function(){return{activity:[]}}),api('/api/v1/tasks?firm_id='+encodeURIComponent(id)).catch(function(){return{tasks:[]}})]).then(function(r){
+      var f=r[0]||{},laws=Array.isArray(r[1])?r[1]:(r[1].data||[]),txns=(r[2]&&(r[2].transactions||r[2].data))||[],acts=(r[3].activity)||[],tasks=(r[4].tasks)||[];
+      var name=f.name||id;REC={type:'firm',id:id,name:name};
       var comp=laws.length?Math.round(100*laws.filter(function(l){return (l.points||l.lifetime_points||0)>=16}).length/laws.length):0;
       var crit=laws.filter(function(l){return (l.points||l.lifetime_points||0)<8}).length;
-      var tl=acts.map(function(a){return {kind:a.kind,when:a.created_at,text:a.summary,who:a.actor_name}});
+      var col=comp>=70?'#3df0a0':comp>=40?'#ffc875':'#ff9aac';
+      var tl=acts.map(function(a){return{kind:a.kind,when:a.created_at,text:a.summary,who:a.actor_name}});
       txns.forEach(function(t){tl.push({kind:'credit_purchase',when:t.date||t.created_at,text:(t.description||t.type||'Credit movement')+' ('+(t.credits||t.amount||0)+' cr)'})});
       tl.sort(function(a,b){return String(b.when||'').localeCompare(String(a.when||''))});
-      document.getElementById('drawerInner').innerHTML=
-        '<div class="drawer-hd" style="background:none;padding:0;position:relative"><button class="x" onclick="closeDrawer()" style="position:absolute;top:14px;right:16px;z-index:2;background:rgba(255,255,255,.18)">×</button></div>'
-        +'<div class="drawer-bd pf-wrap">'
-        +'<div class="pf-hero"><div class="pf-row"><div class="pf-av" style="background:'+avColor(name)+'">'+initials(name)+'</div>'
-          +'<div style="flex:1;min-width:0"><div class="pf-name">'+esc(name)+'</div><div class="pf-sub">'+num(laws.length)+' lawyers · '+comp+'% compliant</div>'
-          +'<span class="pf-badge" style="background:'+(comp>=70?'rgba(61,240,160,.18)':comp>=40?'rgba(255,184,77,.2)':'rgba(255,94,126,.22)')+';color:'+(comp>=70?'#3df0a0':comp>=40?'#ffc875':'#ff9aac')+'">'+(comp>=70?'Healthy':comp>=40?'Watch':'At risk')+'</span></div></div>'
-          +'<div class="pf-prog-l"><span>FIRM COMPLIANCE</span><span>'+comp+'%</span></div><div class="pf-prog"><div style="width:'+comp+'%;background:'+(comp>=70?'#3df0a0':comp>=40?'#ffc875':'#ff9aac')+'"></div></div></div>'
-        +'<div class="pf-tiles"><div class="pf-tile"><div class="l">Lawyers</div><div class="v">'+num(laws.length)+'</div></div><div class="pf-tile"><div class="l">Critical</div><div class="v" style="color:var(--red)">'+num(crit)+'</div></div><div class="pf-tile"><div class="l">Credit pool</div><div class="v">'+num(f.credit_pool||f.pool)+'</div></div></div>'
-        +'<div class="pf-actions"><button class="pf-act" onclick="pfNoteToggle()">📝 Add note</button></div>'
-        +'<div id="pfNote" style="display:none;padding:0 22px 14px;border-bottom:1px solid var(--line)"><textarea id="pfNoteText" class="inp" rows="2" placeholder="Add an internal note to this firm…"></textarea><div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-g" onclick="pfNoteSave()">Save note</button></div></div>'
-        +pfTabs([{id:'tl',label:'Activity'},{id:'lw',label:'Lawyers ('+laws.length+')'},{id:'cr',label:'Credits'}])
-        +'<div class="pf-sec" data-tab="tl">'+timelineHTML(tl)+'</div>'
-        +'<div class="pf-sec" data-tab="lw" style="display:none">'+(laws.length?laws.slice(0,60).map(function(l){var n=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.name||l.id;var p=l.points!=null?l.points:(l.lifetime_points||0);var s=lawStatus(p,(l.practicing!==false));return '<div class="lw-item" onclick="openLawyer(\''+esc(l.id)+'\',\''+esc(n).replace(/\x27/g,"")+'\')"><span class="lw-av" style="background:'+avColor(n)+'">'+initials(n)+'</span><span style="flex:1">'+esc(n)+'</span><span class="pf-badge" style="margin:0;padding:2px 8px;background:'+s.bg+';color:'+s.color+'">'+p+'/16</span></div>'}).join(''):'<div class="row-sub">No lawyers.</div>')+'</div>'
-        +'<div class="pf-sec" data-tab="cr" style="display:none">'+(txns.length?txns.slice(0,20).map(function(t){return '<div class="kv"><span>'+esc(t.description||t.type||'')+'<div class="row-sub">'+fdate(t.date||t.created_at)+'</div></span><span>'+(t.credits||t.amount||0)+' cr</span></div>'}).join(''):'<div class="row-sub">No transactions.</div>')+'</div>'
+      document.getElementById('dwInner').innerHTML=
+        '<div class="hero"><button class="x" onclick="closeDrawer()">×</button><div style="display:flex;gap:14px;align-items:flex-start"><div class="av" style="width:56px;height:56px;font-size:20px;border-radius:15px;background:'+avColor(name)+'">'+initials(name)+'</div><div style="flex:1;min-width:0"><div class="hero-name">'+esc(name)+'</div><div class="hero-sub">'+num(laws.length)+' lawyers · '+comp+'% compliant</div><span class="hbadge" style="background:rgba(255,255,255,.14);color:'+col+'">'+(comp>=70?'Healthy':comp>=40?'Watch':'At risk')+'</span></div></div><div class="prog-l"><span>FIRM COMPLIANCE</span><span>'+comp+'%</span></div><div class="prog"><div style="width:'+comp+'%;background:'+col+'"></div></div></div>'
+        +'<div class="dw-bd"><div class="tiles"><div class="tile"><div class="l">Lawyers</div><div class="v">'+num(laws.length)+'</div></div><div class="tile"><div class="l">Critical</div><div class="v" style="color:var(--red)">'+num(crit)+'</div></div><div class="tile"><div class="l">Credit pool</div><div class="v">'+num(f.credit_pool||f.pool)+'</div></div></div>'
+        +'<div class="qa"><button class="p" onclick="dwMessageOpen()">✉ Message firm</button><button onclick="dwNoteOpen()">📝 Note</button><button onclick="dwTaskOpen()">◻ Task</button></div>'
+        +'<div id="dwForm" style="display:none;padding:0 22px 14px;border-bottom:1px solid var(--line)"></div>'
+        +tabs([{id:'lw',label:'Lawyers ('+laws.length+')'},{id:'tl',label:'Activity'},{id:'tk',label:'Tasks'},{id:'cr',label:'Credits'}])
+        +'<div class="sec" data-tab="lw">'+(laws.length?laws.slice(0,80).map(function(l){var n=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.id;var p=l.points!=null?l.points:(l.lifetime_points||0);var s=lawStatus(p,l.practicing!==false);return '<div class="row" style="padding:9px 0" onclick="openLawyer(\''+q1(l.id)+'\',\''+q1(n)+'\')"><div class="av" style="width:30px;height:30px;font-size:11px;background:'+avColor(n)+'">'+initials(n)+'</div><span style="flex:1;font-size:13px">'+esc(n)+'</span><span class="pill '+s.cls+'">'+p+'/16</span></div>'}).join(''):'<div class="sub">No lawyers.</div>')+'</div>'
+        +'<div class="sec" data-tab="tl" style="display:none">'+timeline(tl)+'</div>'
+        +'<div class="sec" data-tab="tk" style="display:none">'+tasksHTML(tasks)+'</div>'
+        +'<div class="sec" data-tab="cr" style="display:none">'+(txns.length?txns.slice(0,30).map(function(t){return '<div class="kv"><span>'+esc(t.description||t.type||'')+'<div class="sub">'+fdatetime(t.date||t.created_at)+'</div></span><span>'+(t.credits||t.amount||0)+' cr</span></div>'}).join(''):'<div class="sub">No transactions.</div>')+'</div>'
         +'</div>';
     });
   };
-  // record quick actions
-  window.pfNoteToggle=function(){var n=document.getElementById('pfNote');if(n)n.style.display=n.style.display==='none'?'block':'none';var t=document.getElementById('pfNoteText');if(t&&n.style.display==='block')t.focus()};
-  window.pfNoteSave=function(){var t=document.getElementById('pfNoteText');var v=(t.value||'').trim();if(!v)return;var body={summary:v};if(_rec.type==='lawyer')body.lawyer_id=_rec.id;else body.firm_id=_rec.id;
-    api('/api/v1/messages/activity',{method:'POST',body:JSON.stringify(body)}).then(function(){toast('✓ Note saved');if(_rec.type==='lawyer')openLawyer(_rec.id,_rec.name);else openFirm(_rec.id)}).catch(function(e){toast(e.message)})};
-  window.pfBookStart=function(){var b=document.getElementById('pfBook');if(b){b.style.display='block';document.getElementById('pfBookSearch').focus()}};
-  var pfbT;window.pfBookSearch=function(){clearTimeout(pfbT);pfbT=setTimeout(function(){
-    var q=(document.getElementById('pfBookSearch').value||'').trim();var host=document.getElementById('pfBookRes');if(q.length<2){host.innerHTML='';return}
-    var ql=q.toLowerCase();var rows=(window.__SESSALL||[]).filter(function(s){return (s.course_title||'').toLowerCase().indexOf(ql)>=0}).slice(0,8);
-    host.innerHTML=rows.length?rows.map(function(s){var left=Number(s.seats_remaining)||0;return '<div class="kv"><span>'+esc(s.course_title||'')+'<div class="row-sub">'+fdate(s.scheduled_at)+' · '+left+' seats</div></span><button class="btn btn-g" onclick="pfBookDo(\''+esc(s.id)+'\',\''+esc(s.course_id)+'\',this)">Book</button></div>'}).join(''):'<div class="row-sub">No matching upcoming sessions.</div>';
-  },220)};
-  window.pfBookDo=function(sid,cid,btn){btn.disabled=true;btn.textContent='…';
-    api('/api/v1/bookings',{method:'POST',body:JSON.stringify({lawyer_id:_rec.id,session_id:sid,course_id:cid})}).then(function(){toast('✓ Booked onto the session');openLawyer(_rec.id,_rec.name)}).catch(function(e){toast(e.message);btn.disabled=false;btn.textContent='Book'})};
+  function reopenRec(){if(REC.type==='lawyer')openLawyer(REC.id,REC.name);else if(REC.type==='firm')openFirm(REC.id);if(document.getElementById('v-ops').classList.contains('on')||document.getElementById('v-dash').classList.contains('on'))loadSessions().then(loadDash)}
 
-  // ── AI assist ──
-  window.askAI=function(){
-    var q=(document.getElementById('aiQ').value||'').trim();if(!q)return;
-    var btn=document.getElementById('aiBtn'),ans=document.getElementById('aiAns');btn.disabled=true;btn.textContent='Thinking…';ans.textContent='';
-    api('/api/v1/admin/command',{method:'POST',body:JSON.stringify({prompt:q})}).then(function(j){
-      ans.textContent=j.answer||(j.summary)||JSON.stringify(j);btn.disabled=false;btn.textContent='Ask';
-    }).catch(function(e){ans.textContent='AI unavailable: '+e.message;btn.disabled=false;btn.textContent='Ask'});
-  };
+  // ── AI ──
+  window.askAI=function(){var qv=(document.getElementById('aiQ').value||'').trim();if(!qv)return;var b=document.getElementById('aiBtn'),a=document.getElementById('aiAns');b.disabled=true;b.textContent='Thinking…';a.textContent='';api('/api/v1/admin/command',{method:'POST',body:JSON.stringify({prompt:qv})}).then(function(j){a.textContent=j.answer||j.summary||JSON.stringify(j);b.disabled=false;b.textContent='Ask'}).catch(function(e){a.textContent='AI unavailable: '+e.message;b.disabled=false;b.textContent='Ask'})};
 
-  // ── Drawer ──
-  function openDrawer(title,inner){document.getElementById('drawerInner').innerHTML='<div class="drawer-hd"><h3>'+esc(title)+'</h3><button class="x" onclick="closeDrawer()">×</button></div><div class="drawer-bd">'+(inner||'<div class="empty">Loading…</div>')+'</div>';document.getElementById('drawer').classList.add('on');document.getElementById('scrim').classList.add('on')}
+  // ── drawer ──
+  function openDrawer(){document.getElementById('drawer').classList.add('on');document.getElementById('scrim').classList.add('on')}
   window.closeDrawer=function(){document.getElementById('drawer').classList.remove('on');document.getElementById('scrim').classList.remove('on')};
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeDrawer()});
 
-  // boot
-  if(!tok()){document.body.innerHTML='<div style="padding:60px;text-align:center;font-size:15px">Please <a href="clpd-portal.html">sign in</a> as a LAD admin to use the CRM.</div>';return}
-  loadStats();loadQueue();loadSessions();loadFirms();
-  setInterval(function(){loadQueue();loadStats()},45000);
+  // ── boot ──
+  api('/api/v1/firms').then(function(j){FIRMS=Array.isArray(j)?j:(j.data||j.firms||[])}).catch(function(){});
+  loadSessions().then(loadDash);
+  setInterval(function(){if(document.getElementById('v-dash').classList.contains('on'))loadDash()},45000);
 })();
 </script>
 </body>

@@ -331,6 +331,52 @@ router.post('/conversations', requireAuth, (req, res) => {
   res.status(201).json({ ok: true, id, conversation: getConversation(id, req.user) });
 });
 
+// ─── Admin reaches OUT to a customer ─────────────────────────────────
+// POST /conversations/admin { lawyer_id | firm_id, subject, body }
+// Opens a conversation with that lawyer/firm, owned by the admin, first message
+// from the CLPD side. The customer sees it in their portal and can reply.
+router.post('/conversations/admin', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admins only' });
+  const b = req.body || {};
+  const body = clip(b.body || b.message, 5000).trim();
+  if (!body) return res.status(400).json({ error: 'A message is required.' });
+
+  let type, rid, name, emailTo = null, firmId = null;
+  if ((b.lawyer_id || '').toString().trim()) {
+    const l = store.getLawyerById(b.lawyer_id.toString().trim());
+    if (!l) return res.status(404).json({ error: 'Lawyer not found' });
+    type = 'lawyer'; rid = l.id; name = `${l.first_name || ''} ${l.last_name || ''}`.trim() || l.id;
+    emailTo = l.email || null; firmId = l.firm_id || null;
+  } else if ((b.firm_id || '').toString().trim()) {
+    firmId = b.firm_id.toString().trim();
+    const f = db.prepare('SELECT name FROM firms WHERE id = ?').get(firmId);
+    if (!f) return res.status(404).json({ error: 'Firm not found' });
+    type = 'firm'; rid = firmId; name = f.name || firmId;
+  } else {
+    return res.status(400).json({ error: 'lawyer_id or firm_id is required.' });
+  }
+
+  const subject = clip(b.subject, 200).trim() || 'A message from CLPD';
+  const id = cid(); const ts = now();
+  const adminName = req.user.name || 'CLPD Admin';
+  db.transaction(() => {
+    db.prepare(
+      `INSERT INTO conversations (id, subject, requester_type, requester_id, requester_name, requester_email, firm_id, status, ai_handled, escalated, assigned_to, assigned_name, created_by, created_at, updated_at, last_message_at, last_sender)
+       VALUES (?,?,?,?,?,?,?, 'pending', 0, 0, ?, ?, ?, ?, ?, ?, 'admin')`
+    ).run(id, subject, type, rid, name, emailTo, firmId, req.user.sub, adminName, req.user.sub, ts, ts, ts);
+    db.prepare(
+      `INSERT INTO conversation_messages (id, conversation_id, sender_side, sender_id, sender_name, sender_role, body, created_at)
+       VALUES (?,?, 'admin', ?, ?, ?, ?, ?)`
+    ).run(mid(), id, req.user.sub, adminName, req.user.role, body, ts);
+  })();
+  markRead(id, req.user.sub);
+  logActivity({ firm_id: type === 'firm' ? rid : firmId, lawyer_id: type === 'lawyer' ? rid : null, kind: 'reply_out', actor_type: 'admin', actor_id: req.user.sub, actor_name: adminName, ref_id: id, summary: `${adminName} messaged ${name}: "${subject}"` });
+  if (mailer && emailTo) {
+    try { mailer.enqueue({ to: emailTo, toName: name, subject: `CLPD: ${subject}`, text: `${adminName} from the CLPD team sent you a message:\n\n${body}\n\nSign in to the CLPD portal to reply.`, category: 'message', ref: id, dedupeKey: 'msg_admin:' + id }); } catch (_) {}
+  }
+  res.status(201).json({ ok: true, id, conversation: getConversation(id, req.user) });
+});
+
 // ─── List conversations ──────────────────────────────────────────────
 router.get('/conversations', requireAuth, (req, res) => {
   const admin = isAdmin(req.user);

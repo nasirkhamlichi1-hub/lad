@@ -6,6 +6,7 @@ const router = express.Router();
 const db = require('../db');
 const store = require('../services/store');
 const skills = require('../services/skills');
+const activity = require('../services/activity');
 const email = require('../services/email');
 const tpl = require('../services/email-templates');
 const { requireAuth, requireRole, optionalAuth, isSuper } = require('../middleware/auth');
@@ -418,7 +419,59 @@ router.patch('/:id', requireAuth, (req, res) => {
     skillResult = skills.recordAttendance(updated.id);
   }
 
+  // CRM timeline
+  if (req.body.status && req.body.status !== booking.status) {
+    const title = booking.course_title || booking.course_id || 'a course';
+    const sum = req.body.status === 'attended' ? `Marked attended: ${title}`
+      : (nowCancelled ? `Booking cancelled: ${title}${refundedCredits ? ` · ${refundedCredits} cr refunded to ${refundDest === 'firm' ? 'firm pool' : 'lawyer'}` : ''}`
+      : `Booking ${req.body.status}: ${title}`);
+    activity.logActivity({ lawyer_id: booking.lawyer_id, firm_id: activity.firmOfLawyer(booking.lawyer_id), kind: req.body.status === 'attended' ? 'attended' : 'booking',
+      actor_type: 'admin', actor_id: u.sub, actor_name: u.name, ref_type: 'booking', ref_id: booking.id, summary: sum });
+  }
+
   res.json({ ...updated, skill_propagation: skillResult, refunded_credits: refundedCredits, refund_to: refundDest });
+});
+
+// POST /api/v1/bookings/:id/reschedule { session_id } — move a booking to another
+// session: free the old seat, take the new one, keep credits/points unchanged.
+router.post('/:id/reschedule', requireAuth, (req, res) => {
+  const u = req.user;
+  const booking = db.prepare('SELECT * FROM bookings WHERE id = ?').get(req.params.id);
+  if (!booking) return res.status(404).json({ error: 'Booking not found' });
+  const isLAD = isSuper(u.role) || u.role === 'lad_admin' || u.role === 'provider_admin';
+  const lawyer = store.getLawyerById(booking.lawyer_id);
+  const isFirmCO = u.role === 'firm_compliance_officer' && lawyer && lawyer.firm_id === u.firm_id;
+  if (!isLAD && !isFirmCO) return res.status(403).json({ error: 'Forbidden' });
+  const newSid = (req.body && req.body.session_id || '').toString();
+  if (!newSid) return res.status(400).json({ error: 'session_id is required' });
+  if (newSid === booking.session_id) return res.status(400).json({ error: 'Already on that session' });
+  const ns = db.prepare('SELECT * FROM course_sessions WHERE id = ?').get(newSid);
+  if (!ns) return res.status(404).json({ error: 'Target session not found' });
+  if ((ns.status || '') === 'cancelled') return res.status(409).json({ error: 'session_cancelled', message: 'That session has been cancelled.' });
+  try {
+    const tx = db.transaction(() => {
+      // duplicate guard: already booked on the target session
+      const dup = db.prepare("SELECT id FROM bookings WHERE lawyer_id = ? AND session_id = ? AND status IN ('booked','attended') AND id != ?").get(booking.lawyer_id, newSid, booking.id);
+      if (dup) { const e = new Error('already_booked'); e.code = 'already_booked'; throw e; }
+      if ((ns.seats_remaining != null)) {
+        const upd = db.prepare("UPDATE course_sessions SET seats_remaining = seats_remaining - 1, status = CASE WHEN seats_remaining - 1 <= 0 THEN 'closed' ELSE status END WHERE id = ? AND seats_remaining > 0").run(newSid);
+        if (upd.changes !== 1) { const e = new Error('sold_out'); e.code = 'sold_out'; throw e; }
+      }
+      if (booking.session_id) {
+        db.prepare("UPDATE course_sessions SET seats_remaining = MIN(COALESCE(seats_remaining,0) + 1, COALESCE(capacity, seats_remaining + 1)), status = CASE WHEN status = 'closed' THEN 'scheduled' ELSE status END WHERE id = ?").run(booking.session_id);
+      }
+      db.prepare("UPDATE bookings SET session_id = ?, scheduled_at = ?, course_id = COALESCE(?, course_id), status = CASE WHEN status IN ('cancelled','refunded') THEN 'booked' ELSE status END WHERE id = ?")
+        .run(newSid, ns.scheduled_at, ns.course_id || null, req.params.id);
+    });
+    tx();
+  } catch (e) {
+    if (e.code === 'sold_out') return res.status(409).json({ error: 'sold_out', message: 'That session is full.' });
+    if (e.code === 'already_booked') return res.status(409).json({ error: 'already_booked', message: 'This lawyer is already booked on that session.' });
+    throw e;
+  }
+  const updated = db.prepare('SELECT * FROM bookings WHERE id = ?').get(req.params.id);
+  activity.logActivity({ lawyer_id: booking.lawyer_id, firm_id: activity.firmOfLawyer(booking.lawyer_id), kind: 'booking', actor_type: 'admin', actor_id: u.sub, actor_name: u.name, ref_type: 'booking', ref_id: booking.id, summary: `Rescheduled "${booking.course_title || booking.course_id || 'a course'}" to ${fmtSession(ns.scheduled_at)}` });
+  res.json({ ok: true, booking: updated, scheduled_at: ns.scheduled_at });
 });
 
 module.exports = router;
