@@ -20,12 +20,21 @@
     --arabic:'Noto Naskh Arabic','Amiri',serif;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--paper);font-family:var(--sans);color:var(--ink);line-height:1.65}
-  header{background:linear-gradient(135deg,var(--green-d),var(--green));color:#fff;padding:28px 32px 24px}
+  body{margin:0;background:var(--paper);font-family:var(--sans);color:var(--ink);line-height:1.65;padding-top:var(--lad-nav-h)}
+  /* Shared LAD top nav — matches every other portal */
+  :root{--lad-nav-h:58px}
+  .lad-shared-nav{background:#1c1f2e;height:var(--lad-nav-h);display:flex;align-items:center;padding:0 24px;gap:20px;position:fixed;top:0;left:0;right:0;z-index:500;box-shadow:0 2px 12px rgba(0,0,0,.35)}
+  .lad-shared-logos{display:flex;align-items:center;gap:12px;padding-right:18px;border-right:1px solid rgba(255,255,255,.12);flex-shrink:0}
+  .lad-shared-logos img{height:34px;width:auto}
+  .lad-portal-chip{display:flex;align-items:center;gap:7px;padding:4px 12px;border-radius:20px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;flex-shrink:0}
+  .lad-shared-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
+  .lad-snl{color:rgba(255,255,255,.75);font-size:12.5px;font-weight:500;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;text-decoration:none;display:flex;align-items:center;transition:all .15s}
+  .lad-snl:hover{background:rgba(255,255,255,.08);color:#fff}
+  header{background:var(--white);border-bottom:1px solid var(--line);padding:26px 32px 22px}
   .hdr-inner{max-width:1080px;margin:0 auto}
-  .hdr-inner .ar{font-family:var(--arabic);font-size:13px;color:rgba(201,145,58,.85);direction:rtl;margin-bottom:4px}
-  .hdr-inner h1{font-family:var(--serif);font-size:32px;letter-spacing:-.018em;margin:0 0 4px}
-  .hdr-inner .sub{font-size:13px;color:rgba(255,255,255,.7)}
+  .hdr-inner .ar{font-family:var(--arabic);font-size:13px;color:var(--gold);direction:rtl;margin-bottom:4px}
+  .hdr-inner h1{font-family:var(--serif);font-size:32px;letter-spacing:-.018em;margin:0 0 4px;color:var(--ink)}
+  .hdr-inner .sub{font-size:13.5px;color:var(--slate2)}
   .layout{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:240px 1fr;gap:0;background:var(--white);min-height:80vh;box-shadow:0 1px 0 var(--line)}
   nav{padding:24px 18px 24px 24px;border-right:1px solid var(--line);background:var(--paper)}
   nav .nav-eyebrow{font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:12px}
@@ -67,9 +76,19 @@
 </style>
 </head>
 <body>
+<div class="lad-shared-nav">
+  <div class="lad-shared-logos">
+    <a href="/" title="Home"><img src="https://legal.dubai.gov.ae/assets/govlogo/DG_white.svg" alt="Government of Dubai" onerror="this.style.display='none'"/></a>
+    <div style="width:1px;height:26px;background:rgba(255,255,255,.22)"></div>
+    <a href="/" title="Home"><img src="https://legal.dubai.gov.ae/assets/govlogo/lad_logo_white.svg" alt="Legal Affairs Department" onerror="this.style.display='none'"/></a>
+  </div>
+  <div class="lad-portal-chip" style="background:rgba(201,145,58,.15);border:1px solid rgba(201,145,58,.35);color:rgba(224,176,90,.95)"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8;flex-shrink:0"></span>HELP</div>
+  <div class="lad-shared-right">
+    <a class="lad-snl" href="javascript:history.back()">← Back to portal</a>
+  </div>
+</div>
 <header>
   <div class="hdr-inner">
-    <a href="javascript:history.back()" class="back-link">← Back</a>
     <div class="ar">دائرة الشؤون القانونية · حكومة دبي</div>
     <h1>CLPD Portal — Help</h1>
     <div class="sub">How to use the portal, by role. Pick yours on the left.</div>
