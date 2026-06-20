@@ -22,6 +22,8 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const router = express.Router();
 const db = require('../db');
+const store = require('../services/store');
+const activity = require('../services/activity');
 const { requireAuth } = require('../middleware/auth');
 const { requireRole } = require('../middleware/requireRole');
 const passwords = require('../services/passwords');
@@ -64,6 +66,36 @@ function audit(actor, action, targetId, details) {
     // eslint-disable-next-line no-console
     console.error('[audit] failed:', e.message);
   }
+  // Mirror account actions into the unified, searchable activity log so they sit
+  // alongside credits/bookings/accreditation and surface on the lawyer/firm
+  // timeline. Best-effort; never breaks the operation.
+  try {
+    const act = String(action).replace(/^user\./, '');
+    const kind = { create: 'account_create', suspend: 'account_suspend', reactivate: 'account_reactivate',
+      password_reset: 'password_reset', update: 'account_update', delete: 'account_delete' }[act] || ('account_' + act);
+    const d = details || {};
+    let lawyer_id = null, firm_id = d.firm_id || null, who = '';
+    if (/^L-/i.test(String(targetId))) {
+      const l = store.getLawyerById(targetId);
+      if (l) { lawyer_id = l.id; firm_id = firm_id || l.firm_id || null; who = `${l.first_name || ''} ${l.last_name || ''}`.trim() || l.email || l.id; }
+    } else if (/^S-/i.test(String(targetId))) {
+      try { const s = db.prepare('SELECT first_name, last_name, email FROM staff WHERE id = ?').get(targetId); if (s) who = `${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email || targetId; } catch (_) {}
+    }
+    who = who || d.email || targetId;
+    const summary = {
+      account_create: `New account created — ${who}${d.role ? ` (${d.role})` : ''}`,
+      account_suspend: `Account suspended — ${who}`,
+      account_reactivate: `Account reactivated — ${who}`,
+      password_reset: `Password reset issued — ${who}`,
+      account_update: `Account updated — ${who}`,
+      account_delete: `Account deleted — ${who}`,
+    }[kind] || `Account ${act} — ${who}`;
+    activity.logActivity(Object.assign({
+      lawyer_id, firm_id, kind, category: 'account',
+      tags: [d.role].filter(Boolean),
+      summary, ref_type: 'user', ref_id: targetId, meta: d,
+    }, activity.actorFrom(actor)));
+  } catch (_) { /* never fatal */ }
 }
 
 function genStaffId() { return 'S-' + crypto.randomBytes(4).toString('hex').toUpperCase(); }
