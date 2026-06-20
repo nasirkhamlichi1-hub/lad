@@ -2261,13 +2261,13 @@ function dashboardFor(role) {
     case 'firm_compliance_officer':
     case 'firm':                      return '/firm';
     case 'lad_intelligence':
-    case 'lad_oversight':             return '/oversight';                 // LAD oversight / intelligence (super users)
+    case 'lad_oversight':
     case 'clpd_admin':
     case 'lad_operations':
     case 'lad_admin':
     case 'super_admin':
     case 'lad_super_admin':
-    case 'dg':                        return '/admin';                     // CLPD Admin / super users — admin + everything
+    case 'dg':                        return '/crm';                       // Unified CRM shell — embeds course admin, accreditation, trainer, users (+ intelligence/command for super)
     case 'provider':
     case 'provider_admin':            return '/provider';
     case 'lad_staff':

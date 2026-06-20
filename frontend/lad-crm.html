@@ -27,6 +27,9 @@
   .rl .badge{position:absolute;top:8px;right:9px;min-width:16px;height:16px;background:var(--red);border-radius:9px;font-size:9px;font-weight:700;color:#fff;display:none;align-items:center;justify-content:center;padding:0 4px}
   .rl.has .badge{display:flex}
   .rail-sp{flex:1}
+  .rail-div{width:34px;height:1px;background:rgba(255,255,255,.12);margin:6px 0}
+  .rail{overflow-y:auto;overflow-x:hidden;scrollbar-width:none}.rail::-webkit-scrollbar{display:none}
+  .embed{flex:1;width:100%;height:100%;border:0;display:block;background:#fff}
   /* ── main ── */
   .main{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh}
   .topbar{height:60px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 22px;flex-shrink:0}
@@ -137,8 +140,15 @@
     <button class="rl" data-v="inbox" id="railInbox" onclick="go('inbox')" style="position:relative"><span class="badge" id="inboxBadge">0</span><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Inbox</span></button>
     <button class="rl" data-v="cust" onclick="go('cust')"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="18" cy="9" r="3"/></svg><span>Customers</span></button>
     <button class="rl" data-v="ops" onclick="go('ops')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Operations</span></button>
+    <div class="rail-div"></div>
+    <button class="rl" data-v="courses" onclick="go('courses')"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>Courses</span></button>
+    <button class="rl" data-v="accred" onclick="go('accred')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg><span>Accredit</span></button>
+    <button class="rl" data-v="trainer" onclick="go('trainer')"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg><span>Trainer</span></button>
+    <button class="rl" id="railUsers" data-v="users" onclick="go('users')"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span>Users</span></button>
     <div class="rail-sp"></div>
-    <a class="rl" href="lad-admin.html"><svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg><span>Admin</span></a>
+    <button class="rl" id="railIntel" data-v="intel" onclick="go('intel')" style="display:none"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg><span>Intel</span></button>
+    <a class="rl" id="railCmd" href="command-centre.html" target="_blank" style="display:none"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg><span>Command</span></a>
+    <button class="rl" onclick="signOut()" title="Sign out"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Sign out</span></button>
   </nav>
 
   <div class="main">
@@ -148,7 +158,7 @@
         <input id="cmd" placeholder="Search anyone or anything — lawyer, firm, course…" autocomplete="off" oninput="cmdSearch()" onfocus="cmdSearch()"/>
         <div class="cmd-res" id="cmdRes"></div>
       </div>
-      <div class="who"><div class="av" id="meAv" style="background:#006B3F">··</div><div><b id="meName">—</b><br><a href="lad-admin.html">Admin console →</a></div></div>
+      <div class="who"><div class="av" id="meAv" style="background:#006B3F">··</div><div><b id="meName">—</b><br><span id="meRole" style="color:var(--slate3);font-size:11px">CLPD Admin</span></div></div>
     </div>
 
     <!-- DASHBOARD -->
@@ -181,6 +191,13 @@
         <div class="panel-bd" id="opsList" style="max-height:none"></div>
       </div>
     </div></div>
+
+    <!-- EMBEDDED ADMIN MODULES — same shell, one navigation, no page-hopping -->
+    <div class="view" id="v-courses"><iframe class="embed" title="Courses" data-src="lad-admin.html?embed=1"></iframe></div>
+    <div class="view" id="v-accred"><iframe class="embed" title="Accreditation" data-src="lad-accreditation-review.html?embed=1"></iframe></div>
+    <div class="view" id="v-trainer"><iframe class="embed" title="Trainer" data-src="lad-trainer-admin.html?embed=1"></iframe></div>
+    <div class="view" id="v-users"><iframe class="embed" title="Users" data-src="users-admin.html?embed=1"></iframe></div>
+    <div class="view" id="v-intel"><iframe class="embed" title="Intelligence" data-src="lad-intelligence-v4.html?embed=1"></iframe></div>
   </div>
 
   <div class="scrim" id="scrim" onclick="closeDrawer()"></div>
@@ -222,19 +239,30 @@
   }
   document.getElementById('meName').textContent=ME.name||'CLPD Admin';
   var av=document.getElementById('meAv');av.textContent=initials(ME.name);av.style.background=avColor(ME.name);
+  // Role-scope the rail. Super users (+dg) get Intelligence & Command Centre;
+  // lad_intelligence analysts don't manage user accounts.
+  var SUPER_ROLES=['lad_super_admin','super_admin','dg'];
+  var roleLabel={lad_admin:'LAD Admin',lad_intelligence:'LAD Intelligence',lad_super_admin:'LAD Super User',super_admin:'Super Admin',dg:'Director General'}[ME.role]||'CLPD Admin';
+  var rlEl=document.getElementById('meRole');if(rlEl)rlEl.textContent=roleLabel;
+  if(SUPER_ROLES.indexOf(ME.role)!==-1){var ri=document.getElementById('railIntel'),rc=document.getElementById('railCmd');if(ri)ri.style.display='';if(rc)rc.style.display=''}
+  if(ME.role==='lad_intelligence'){var ru=document.getElementById('railUsers');if(ru)ru.style.display='none'}
 
   // ── shared state ──
   var CONV=[],SESS=[],FIRMS=[],TASKS_DUE=[];
 
   // ── view switching ──
-  var TITLES={dash:['Dashboard','CLPD customer operations'],inbox:['Inbox','Customer conversations'],cust:['Customers','Lawyers & firms'],ops:['Operations','Sessions & bookings']};
+  var TITLES={dash:['Dashboard','CLPD customer operations'],inbox:['Inbox','Customer conversations'],cust:['Customers','Lawyers & firms'],ops:['Operations','Sessions & bookings'],
+    courses:['Courses','Catalogue · sessions · scheduling · website'],accred:['Accreditation','Application review queue'],trainer:['Trainer','Staff training materials & learners'],users:['Users','Accounts, roles & access'],intel:['Intelligence','Profession analytics & oversight']};
+  var EMBED={courses:1,accred:1,trainer:1,users:1,intel:1};
   window.go=function(v){
     document.querySelectorAll('.rl').forEach(function(r){r.classList.toggle('on',r.getAttribute('data-v')===v)});
     document.querySelectorAll('.view').forEach(function(x){x.classList.remove('on')});
     document.getElementById('v-'+v).classList.add('on');
     document.getElementById('vTitle').textContent=TITLES[v][0];document.getElementById('vSub').textContent=TITLES[v][1];
+    if(EMBED[v]){var f=document.querySelector('#v-'+v+' iframe[data-src]');if(f&&!f.getAttribute('src'))f.setAttribute('src',f.getAttribute('data-src'));return}
     if(v==='inbox')renderInbox();if(v==='ops')renderOps();if(v==='cust'&&!document.getElementById('custSearch').value)browseFirms();
   };
+  window.signOut=function(){try{localStorage.removeItem('lad_token');localStorage.removeItem('lad_role');localStorage.removeItem('lad_name')}catch(e){}location.replace('clpd-portal.html')};
 
   // ── command / global search ──
   var cmdT;window.cmdSearch=function(){clearTimeout(cmdT);cmdT=setTimeout(_cmd,240)};

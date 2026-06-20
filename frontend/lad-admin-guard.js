@@ -44,8 +44,8 @@
     case 'firm_compliance_officer': dest = 'firm-compliance-portal.html'; break;
     case 'provider_admin': case 'provider': dest = 'provider-portal.html'; break;
     case 'lad_staff': dest = 'lad-staff-training.html'; break;
-    case 'lad_admin': case 'lad_intelligence': dest = 'lad-admin.html'; break;
-    case 'lad_super_admin': case 'super_admin': case 'dg': dest = 'lad-admin.html'; break;
+    case 'lad_admin': case 'lad_intelligence': dest = 'lad-crm.html'; break;
+    case 'lad_super_admin': case 'super_admin': case 'dg': dest = 'lad-crm.html'; break;
     case 'lawyer': dest = 'lawyer-portal-v2.html'; break;
     default: dest = (me.user_type === 'lawyer') ? 'lawyer-portal-v2.html' : 'index.html';
   }
