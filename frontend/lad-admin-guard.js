@@ -35,6 +35,9 @@
   var allowed = ((script && script.getAttribute('data-roles')) || 'lad_admin,lad_intelligence,lad_super_admin,super_admin,dg')
     .split(',').map(function (s) { return s.trim(); }).filter(Boolean);
   function tok() { try { return localStorage.getItem('lad_token') || ''; } catch (e) { return ''; } }
+  // When embedded inside the CRM shell (?embed=1), the parent has already gated
+  // access — never redirect the iframe (that would nest a broken page).
+  try { if (/[?&]embed=1/.test(location.search)) return; } catch (e) {}
   var t = tok();
   if (!t) return; // not signed in — let the page run its own sign-in flow
   var me = {};
@@ -51,7 +54,9 @@
     case 'lad_admin': case 'lad_intelligence': dest = 'lad-crm.html'; break;
     case 'lad_super_admin': case 'super_admin': case 'dg': dest = 'lad-crm.html'; break;
     case 'lawyer': dest = 'lawyer-portal-v2.html'; break;
-    default: dest = (me.user_type === 'lawyer') ? 'lawyer-portal-v2.html' : 'index.html';
+    // Unknown role: the public landing does NOT auto-route (#public), so this
+    // can never bounce into a redirect loop.
+    default: dest = (me.user_type === 'lawyer') ? 'lawyer-portal-v2.html' : 'clpd-portal.html#public';
   }
   try { document.documentElement.style.display = 'none'; window.stop && window.stop(); } catch (e) {}
   location.replace(dest);
