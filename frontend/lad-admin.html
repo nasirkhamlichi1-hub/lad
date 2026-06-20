@@ -5967,18 +5967,96 @@ function admSessionsRender(){
     const closed = (s.status||'').toLowerCase()==='closed';
     const seats = Number(s.seats_remaining)||0;
     const fmt = _admFmtOf(s)==='online'?'Online':'Face-to-face';
-    return '<div style="display:grid;grid-template-columns:34px 1.6fr 1.2fr 70px 96px 92px 140px;gap:0;border-bottom:1px solid var(--line);font-size:12.5px;align-items:center;'+(cancelled?'opacity:.5':'')+'">'
+    return '<div style="display:grid;grid-template-columns:34px 1.5fr 1fr 56px 78px 80px 210px;gap:0;border-bottom:1px solid var(--line);font-size:12.5px;align-items:center;'+(cancelled?'opacity:.5':'')+'">'
       +'<div style="padding:9px 0 9px 14px"><input type="checkbox" '+(ADM_SESS_SEL[s.id]?'checked':'')+' onchange="admSessSel(\''+escape(s.id)+'\',this.checked)"/></div>'
-      +'<div style="padding:9px 14px;font-weight:500">'+escape(s.course_title||s.course_id||'—')+(s.provider_name?'<span style="color:var(--slate3);font-weight:400"> · '+escape(s.provider_name)+'</span>':'')+'</div>'
+      +'<div style="padding:9px 14px;font-weight:500"><span style="cursor:pointer;border-bottom:1px dashed var(--green,#006B3F);color:var(--ink)" title="View bookings & add lawyers" onclick="admSessionBookings(\''+escape(s.id)+'\',\''+escapeAttr(String(s.course_title||''))+'\')">'+escape(s.course_title||s.course_id||'—')+'</span>'+(s.provider_name?'<span style="color:var(--slate3);font-weight:400"> · '+escape(s.provider_name)+'</span>':'')+'</div>'
       +'<div style="padding:9px 14px;color:var(--slate2);font-family:var(--mono);font-size:11px">'+_admSdate(s.scheduled_at)+'</div>'
       +'<div style="padding:9px 14px;text-align:right;font-family:var(--mono)">'+(cancelled?'—':seats)+'</div>'
       +'<div style="padding:9px 14px;font-size:11px;color:var(--slate2)">'+fmt+'</div>'
       +'<div style="padding:9px 14px"><span style="font-size:10px;font-weight:600;text-transform:uppercase;color:'+(cancelled?'var(--red)':(closed?'var(--amber)':'var(--green)'))+'">'+escape(s.status||'scheduled')+'</span></div>'
       +'<div style="padding:9px 14px;text-align:right;display:flex;gap:6px;justify-content:flex-end">'
+        +'<button class="adm-btn-green" style="padding:4px 9px;font-size:11px;background:#eef4ff;border-color:#cfe0ff;color:#1c3a5e" onclick="admSessionBookings(\''+escape(s.id)+'\',\''+escapeAttr(String(s.course_title||''))+'\')">Bookings</button>'
         +(cancelled?'' : '<button class="adm-btn-green" style="padding:4px 9px;font-size:11px" onclick="admSessionMove(\''+escape(s.id)+'\',\''+escapeAttr(String(s.course_title||''))+'\')">Move</button><button class="adm-btn-green" style="padding:4px 9px;font-size:11px;background:#fdecea;border-color:#f1b8b0;color:#c0392b" onclick="admSessionCancel(\''+escape(s.id)+'\',\''+escapeAttr(String(s.course_title||''))+'\')">Cancel</button>')
       +'</div></div>';
   }).join('');
 }
+// ── Per-session bookings: view who's booked + search a lawyer + book them ──
+let _sbState = { sessionId:null, courseId:null, title:'' };
+function admSessionBookings(id, title){
+  _sbState = { sessionId:id, courseId:null, title:title||'' };
+  let m=document.getElementById('sbModal'); if(m) m.remove();
+  m=document.createElement('div'); m.id='sbModal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(10,20,15,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:3000;padding:24px';
+  m.onclick=function(e){ if(e.target===m) m.remove(); };
+  m.innerHTML='<div style="background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.32);overflow:hidden">'
+    +'<div style="background:#13231b;color:#fff;padding:16px 22px;display:flex;align-items:center;gap:12px">'
+      +'<div style="flex:1;min-width:0"><div style="font-family:var(--serif,Georgia);font-size:19px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="sbTitle">'+escape(title||'Session')+'</div><div style="font-family:var(--mono);font-size:10.5px;opacity:.72;margin-top:2px" id="sbSub">Loading…</div></div>'
+      +'<button onclick="document.getElementById(\'sbModal\').remove()" style="background:rgba(255,255,255,.12);border:none;color:#fff;width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:17px;line-height:1">×</button>'
+    +'</div>'
+    +'<div style="padding:16px 22px;border-bottom:1px solid var(--line,#e3e9e4)">'
+      +'<div style="font-family:var(--mono);font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--slate3,#9aa);font-weight:700;margin-bottom:8px">Add a lawyer to this session</div>'
+      +'<input id="sbSearch" placeholder="Search lawyer by name or email…" oninput="sbSearchInput()" autocomplete="off" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid var(--line2,#dde3de);border-radius:8px;font-size:13px;outline:none"/>'
+      +'<div id="sbSearchResults" style="margin-top:8px;max-height:190px;overflow-y:auto"></div>'
+    +'</div>'
+    +'<div style="padding:14px 22px;overflow-y:auto">'
+      +'<div style="font-family:var(--mono);font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--slate3,#9aa);font-weight:700;margin-bottom:8px">Booked lawyers · <span id="sbCount">…</span></div>'
+      +'<div id="sbBooked">Loading…</div>'
+    +'</div></div>';
+  document.body.appendChild(m);
+  sbLoadBookings();
+}
+async function sbLoadBookings(){
+  const base=_admBase().replace(/\/$/,''); const tok=localStorage.getItem('lad_token')||'';
+  try{
+    const r=await fetch(base+'/api/v1/bookings/session/'+encodeURIComponent(_sbState.sessionId),{headers:{Authorization:'Bearer '+tok},cache:'no-store'});
+    const j=await r.json(); if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+    _sbState.courseId=j.session&&j.session.course_id;
+    const sub=document.getElementById('sbSub'); if(sub&&j.session) sub.textContent=_admSdate(j.session.scheduled_at)+(j.session.seats_remaining!=null?(' · '+j.session.seats_remaining+' seats left'):'')+' · '+(j.session.status||'');
+    const cnt=document.getElementById('sbCount'); if(cnt) cnt.textContent=(j.bookings||[]).length;
+    const host=document.getElementById('sbBooked');
+    if(host) host.innerHTML=(j.bookings&&j.bookings.length)? j.bookings.map(sbBookedRow).join('') : '<div style="color:var(--slate3,#9aa);font-size:12.5px;padding:8px 0">No one booked yet.</div>';
+  }catch(e){ const host=document.getElementById('sbBooked'); if(host) host.innerHTML='<div style="color:#c0392b;font-size:12.5px">'+escape(e.message)+'</div>'; }
+}
+function sbBookedRow(b){
+  return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line,#eef)">'
+    +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+escape(b.name)+'</div><div style="font-size:11px;color:var(--slate3,#9aa)">'+escape(b.email||'')+(b.firm?' · '+escape(b.firm):'')+'</div></div>'
+    +'<span style="font-family:var(--mono);font-size:10px;color:var(--slate2,#778);text-transform:uppercase">'+escape(b.status)+'</span></div>';
+}
+let _sbTimer=null;
+function sbSearchInput(){ clearTimeout(_sbTimer); _sbTimer=setTimeout(sbSearch,250); }
+async function sbSearch(){
+  const q=(document.getElementById('sbSearch').value||'').trim();
+  const host=document.getElementById('sbSearchResults'); if(!host) return;
+  if(q.length<2){ host.innerHTML=''; return; }
+  const base=_admBase().replace(/\/$/,''); const tok=localStorage.getItem('lad_token')||'';
+  host.innerHTML='<div style="color:var(--slate3,#9aa);font-size:12px;padding:6px 0">Searching…</div>';
+  try{
+    const r=await fetch(base+'/api/v1/lawyers?search='+encodeURIComponent(q)+'&limit=12',{headers:{Authorization:'Bearer '+tok}});
+    const j=await r.json(); const rows=Array.isArray(j)?j:(j.data||j.rows||[]);
+    if(!rows.length){ host.innerHTML='<div style="color:var(--slate3,#9aa);font-size:12px;padding:6px 0">No lawyers found.</div>'; return; }
+    host.innerHTML=rows.map(function(l){
+      const name=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.fullName||l.name||l.id;
+      const pts=l.points!=null?l.points:(l.lifetime_points!=null?l.lifetime_points:'');
+      return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line,#eef)">'
+        +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+escape(name)+'</div><div style="font-size:11px;color:var(--slate3,#9aa)">'+escape(l.email||'')+(pts!==''?(' · '+pts+'/16 pts'):'')+'</div></div>'
+        +'<button onclick="sbBook(\''+escape(l.id)+'\',this)" style="background:var(--green,#006B3F);color:#fff;border:none;border-radius:7px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer">Book</button></div>';
+    }).join('');
+  }catch(e){ host.innerHTML='<div style="color:#c0392b;font-size:12px">'+escape(e.message)+'</div>'; }
+}
+async function sbBook(lawyerId, btn){
+  if(btn){ btn.disabled=true; btn.textContent='Booking…'; }
+  const base=_admBase().replace(/\/$/,''); const tok=localStorage.getItem('lad_token')||'';
+  try{
+    const r=await fetch(base+'/api/v1/bookings',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({lawyer_id:lawyerId,session_id:_sbState.sessionId,course_id:_sbState.courseId})});
+    const j=await r.json();
+    if(!r.ok){ toast(j.message||j.error||'Booking failed','error'); if(btn){btn.disabled=false;btn.textContent='Book';} return; }
+    toast('✓ Booked onto the session','success');
+    if(btn){ btn.textContent='✓ Booked'; btn.style.background='#9aa'; btn.disabled=true; }
+    sbLoadBookings();
+    if(typeof loadAdmSessions==='function') loadAdmSessions();
+  }catch(e){ toast('Booking failed: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='Book';} }
+}
+
 function admSessSel(id, checked){ if(checked) ADM_SESS_SEL[id]=true; else delete ADM_SESS_SEL[id]; admSessionsRender(); }
 function admSessToggleAll(checked){ admSessFiltered().forEach(function(s){ if(checked) ADM_SESS_SEL[s.id]=true; else delete ADM_SESS_SEL[s.id]; }); admSessionsRender(); }
 function admSessExport(){
