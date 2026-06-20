@@ -12,13 +12,12 @@ This bundle contains everything needed to deploy the platform to production:
 │   ├── scripts/              bootstrap.sh, migrate.js, seed.js
 │   ├── Dockerfile            Multi-stage, non-root, health-checked
 │   └── package.json
-├── frontend/                 Static HTML/CSS/JS, Netlify-ready
+├── frontend/                 Static HTML/CSS/JS, deployed to Azure Static Web Apps
 │   ├── runtime-config.js     One file to point at staging vs production
 │   ├── *.html                Portal pages per role
-│   └── netlify.toml          Friendly URLs + CSP + caching
 ├── .github/workflows/
 │   ├── backend.yml           Build & push container on every push to main
-│   └── frontend.yml          Deploy to Netlify on every push to main
+│   └── azure-swa.yml         Deploy to Azure Static Web Apps on every push to main
 ├── render.yaml               One-click Render deploy (staging)
 ├── PRODUCTION.md             ← The runbook. Read this.
 └── README.md                 This file
@@ -30,7 +29,7 @@ This bundle contains everything needed to deploy the platform to production:
 2. Complete the **irreducible manual steps** (UAE Pass onboarding, domain, cloud account) — these run in parallel with development.
 3. Push this repo to GitHub. CI will build the backend container on the first push to `main`.
 4. Connect Render (staging) or Azure Container Apps (production) to the repo / GHCR image.
-5. Connect Netlify to the repo for the frontend.
+5. Azure Static Web Apps deploys the frontend on every push to main (.github/workflows/azure-swa.yml).
 6. Fill in secrets in the cloud dashboards (listed in `PRODUCTION.md` §2.3).
 7. Edit `frontend/runtime-config.js` to point at your backend URL; commit; auto-deploy.
 

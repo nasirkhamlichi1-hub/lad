@@ -26,7 +26,7 @@ order you should do them.
 | Concern | Mechanism |
 |---|---|
 | Backend image build | `.github/workflows/backend.yml` → push to `ghcr.io/<owner>/lad-clpd-backend:latest` on every push to `main` |
-| Frontend deploy | `.github/workflows/frontend.yml` → Netlify push on every commit to `main` |
+| Frontend deploy | `.github/workflows/azure-swa.yml` → Azure Static Web Apps deploy on every commit to `main` |
 | Schema migrations | `node scripts/migrate.js` runs automatically in the container's `CMD` before the server boots |
 | Env validation | `src/validateEnv.js` runs at boot — refuses to start in production with default/insecure values |
 | Graceful shutdown | SIGTERM handler drains in-flight HTTP and closes the DB before exiting |
@@ -34,8 +34,8 @@ order you should do them.
 | Request correlation | Every request gets an `X-Request-Id` echoed back in headers and embedded in logs and error responses |
 | Structured logging | JSON one-liner per request in production; pretty single-line in development |
 | Rate limiting | 120 req/min/IP by default (`RATE_LIMIT_MAX`), with UAE Pass callback excluded |
-| HTTPS | Provider-managed (Netlify, Render, Azure) — automatic free certificates |
-| Security headers | Helmet on the API; CSP/HSTS/Permissions-Policy on Netlify |
+| HTTPS | Provider-managed (Azure, Render) — automatic free certificates |
+| Security headers | Helmet on the API; CSP/HSTS/Permissions-Policy on the static host |
 
 ### Not automated — these need a person
 
@@ -43,7 +43,7 @@ order you should do them.
 |---|---|---|---|
 | Register UAE Pass Service Provider | LAD | 2–6 weeks | UAE government onboarding; involves signed agreements + security review |
 | Domain registration on `.ae` | LAD / IT | 1 hour | Procurement + payment |
-| DNS records (A/CNAME to Netlify + Render/Azure) | IT | 30 min + propagation | Registrar-specific UI |
+| DNS records (A/CNAME to Azure + Render) | IT | 30 min + propagation | Registrar-specific UI |
 | Cloud account creation (Render or Azure) | IT | 30 min | Account + billing setup |
 | Paste secrets into cloud dashboards | IT | 15 min | Secret values shouldn't transit through CI |
 | Anthropic API key | Engineering | 5 min | Sign up at console.anthropic.com, generate, paste |
@@ -70,10 +70,10 @@ Do these in order. None depends on code; you can start before any deploy.
 ### 2.2 Domain + DNS
 1. Register `<your-domain>.ae` (or use an existing LAD subdomain).
 2. DNS records:
-   - `<your-domain>.ae` → Netlify (frontend) — Netlify gives you a `*.netlify.app` host; add a CNAME or use Netlify-hosted DNS.
+   - `<your-domain>.ae` → Azure Static Web Apps (frontend) — add the custom domain in the Azure SWA portal and point a CNAME at the provided host.
    - `api.<your-domain>.ae` → backend host (Render or Azure) — CNAME to the host's domain.
 3. Wait for propagation (5 min – 24 h).
-4. SSL is auto-issued by Netlify and Render. For Azure, enable "Managed Certificate" in Custom Domains.
+4. SSL is auto-issued by Azure Static Web Apps and Render (managed certificates).
 
 ### 2.3 Cloud account + secrets
 1. Create a Render account (recommended for staging) **or** Azure subscription (recommended for UAE production — UAE North region for data residency).
@@ -143,15 +143,15 @@ az containerapp create \
 
 For multi-instance production, replace SQLite with Azure Database for PostgreSQL Flexible Server (UAE North). The codebase uses prepared statements throughout, so the swap is a `db.js` rewrite — keep this in mind once concurrent writers become a bottleneck.
 
-### 3.3 First-time frontend deploy (Netlify)
+### 3.3 First-time frontend deploy (Azure Static Web Apps)
 
 ```sh
 # Option A — drag-and-drop (one-off):
-#   1. Open https://app.netlify.com/drop
+#   1. Push to `main` — the azure-swa workflow deploys ./frontend automatically
 #   2. Drag the frontend folder
 
 # Option B — connected to GitHub (auto-deploy on every push):
-#   1. In Netlify: Add new site → Import from Git → pick this repo
+#   1. In Azure: create a Static Web App → connect this repo → app location ./frontend
 #   2. Build settings:
 #      - Base directory: frontend
 #      - Build command: (leave blank — static)
@@ -171,8 +171,8 @@ In the repo's **Settings → Secrets and variables → Actions**, add:
 
 | Secret | Where to get it |
 |---|---|
-| `NETLIFY_AUTH_TOKEN` | Netlify → User settings → Applications → New access token |
-| `NETLIFY_SITE_ID` | Netlify site → Site settings → General → Site ID |
+| `AZURE_STATIC_WEB_APPS_API_TOKEN` | Azure SWA → Manage deployment token |
+
 
 That's it for CI. The backend's container push uses the built-in `GITHUB_TOKEN` — no setup needed.
 
@@ -216,7 +216,7 @@ If all six pass, you're live.
 Default flow: edit code on a feature branch, open a PR, merge to `main`.
 
 - Backend changes → `.github/workflows/backend.yml` builds and pushes a new image. Render/Azure auto-pulls on next deploy.
-- Frontend changes → `.github/workflows/frontend.yml` pushes to Netlify.
+- Frontend changes → `.github/workflows/azure-swa.yml` deploys to Azure Static Web Apps.
 - Schema changes → add a new file to `backend/migrations/` (e.g. `002-add-thing.sql`); it'll be applied automatically by the container's startup command.
 
 ### 5.2 Database backups
@@ -263,7 +263,7 @@ docker tag  ghcr.io/<owner>/lad-clpd-backend:<previous-sha> ghcr.io/<owner>/lad-
 docker push ghcr.io/<owner>/lad-clpd-backend:latest
 # Render/Azure picks up the new :latest on next deploy.
 
-# Frontend — Netlify keeps every deploy. In the dashboard: Deploys → pick a previous one → "Publish deploy".
+# Frontend — Azure Static Web Apps keeps deploy history; roll back from the SWA portal or re-run the workflow on a prior commit.
 ```
 
 ### 6.2 Restore the database
@@ -311,7 +311,7 @@ Before flipping DNS to point at production:
 - [ ] Frontend `runtime-config.js` points at the production API
 - [ ] DNS records resolve
 - [ ] SSL certificates valid for both frontend and API domains
-- [ ] GitHub Actions secrets set (`NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`)
+- [ ] GitHub Actions secrets set (`AZURE_STATIC_WEB_APPS_API_TOKEN`)
 - [ ] At least one rollback drill performed
 
 ### Legal / compliance (manual, not in this repo's scope)
