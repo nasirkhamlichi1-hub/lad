@@ -283,7 +283,7 @@
     <div class="col">
       <div class="centerstage" id="centerstage">
         <div class="cs-h"><div class="t">LEGAL ECOSYSTEM DIGITAL TWIN</div><div class="s">People · Practice · Learning · Regulation</div></div>
-        <div id="bandLegend"><span><i style="background:#3df0a0"></i>Compliant</span><span><i style="background:#ffb84d"></i>At risk</span><span><i style="background:#ff5e7e"></i>Critical</span><span style="color:var(--dim2)">· each point = a lawyer</span></div>
+        <div id="bandLegend"><span><i style="background:#3df0a0"></i>Compliant</span><span><i style="background:#1fe0b4"></i>On track</span><span><i style="background:#ffb84d"></i>At risk</span><span><i style="background:#ff5e7e"></i>Critical</span><span style="color:var(--dim2)">· each point = a lawyer</span></div>
         <!-- twin labels injected here -->
         <div class="cs-foot">
           <button class="prim" onclick="cmdAsk('Give me a full executive readout of programme health and the three most important actions this week.')">✦ Ask the AI</button>
@@ -331,6 +331,7 @@
         <svg width="120" height="120" viewBox="0 0 120 120">
           <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(120,150,210,.14)" stroke-width="11"/>
           <circle id="dCompliant" cx="60" cy="60" r="48" fill="none" stroke="var(--green)" stroke-width="11" stroke-dasharray="0 999" stroke-linecap="round"/>
+          <circle id="dOnTrack" cx="60" cy="60" r="48" fill="none" stroke="var(--teal)" stroke-width="11" stroke-dasharray="0 999"/>
           <circle id="dAtRisk" cx="60" cy="60" r="48" fill="none" stroke="var(--amber)" stroke-width="11" stroke-dasharray="0 999"/>
           <circle id="dCritical" cx="60" cy="60" r="48" fill="none" stroke="var(--red)" stroke-width="11" stroke-dasharray="0 999"/>
         </svg>
@@ -338,6 +339,7 @@
       </div>
       <div class="leg">
         <div><span><i style="background:var(--green)"></i>Compliant</span><span id="lgC">—</span></div>
+        <div><span><i style="background:var(--teal)"></i>On track</span><span id="lgO">—</span></div>
         <div><span><i style="background:var(--amber)"></i>At risk</span><span id="lgA">—</span></div>
         <div><span><i style="background:var(--red)"></i>Critical</span><span id="lgX">—</span></div>
       </div>
@@ -475,7 +477,7 @@
     countUp($('kTotal'), L.roll); $('kTotalM').textContent=nf((L.roll||0)-(L.practising||0))+' non-practising';
     countUp($('kPract'), L.practising);
     countUp($('kComp'), L.complianceRate, '%'); $('kCompM').textContent=nf(L.compliant)+' compliant';
-    countUp($('kCrit'), L.critical); $('kCritM').textContent=nf(L.atRisk)+' at risk (8–15)';
+    countUp($('kCrit'), L.critical); $('kCritM').textContent=nf(L.atRisk)+' at risk (behind pace)';
     countUp($('kDays'), o.daysToDeadline);
     countUp($('kAcc'), A.pending);
 
@@ -502,13 +504,13 @@
     // Bring the organism to life from real data: tempo of the heartbeat + the
     // swarm recoloured into live compliance cohorts.
     if(window.__setPulse) window.__setPulse(health);
-    if(window.recolorLawyers) window.recolorLawyers(L.critical||0, L.atRisk||0, L.compliant||0);
+    if(window.recolorLawyers) window.recolorLawyers(L.critical||0, L.atRisk||0, L.onTrack||0, L.compliant||0);
 
     // Compliance donut
-    var prac=L.practising||1, segs=[['dCompliant',L.compliant||0,'var(--green)'],['dAtRisk',L.atRisk||0],['dCritical',L.critical||0]];
+    var prac=L.practising||1, segs=[['dCompliant',L.compliant||0],['dOnTrack',L.onTrack||0],['dAtRisk',L.atRisk||0],['dCritical',L.critical||0]];
     var Cd=2*Math.PI*48, off=0;
-    segs.forEach(function(s){ var frac=(s[1]||0)/prac; var len=frac*Cd; var el=$(s[0]); el.style.strokeDasharray=len+' '+(Cd-len); el.style.strokeDashoffset=-off; off+=len; });
-    countUp($('dPct'), L.complianceRate, '%'); $('lgC').textContent=nf(L.compliant); $('lgA').textContent=nf(L.atRisk); $('lgX').textContent=nf(L.critical);
+    segs.forEach(function(s){ var frac=(s[1]||0)/prac; var len=frac*Cd; var el=$(s[0]); if(!el)return; el.style.strokeDasharray=len+' '+(Cd-len); el.style.strokeDashoffset=-off; off+=len; });
+    countUp($('dPct'), L.complianceRate, '%'); $('lgC').textContent=nf(L.compliant); if($('lgO'))$('lgO').textContent=nf(L.onTrack); $('lgA').textContent=nf(L.atRisk); $('lgX').textContent=nf(L.critical);
 
     // Engagement bars
     var seatPct = S.upcoming? Math.min(100, Math.round(100*(S.openSeats||0)/Math.max(S.openSeats||0,1))) : 0;
@@ -707,15 +709,22 @@
 
     // ── Each brick becomes a real lawyer: recolour the swarm into live
     //    compliance cohorts (critical / at-risk / compliant). ──
-    window.recolorLawyers=function(crit,risk,comp){
+    window.recolorLawyers=function(crit,risk,onTrack,comp){
+      // Back-compat: older 3-arg callers pass (crit,risk,comp) — no on-track band.
+      if(arguments.length<4){ comp=onTrack; onTrack=0; }
       var c=TW.cores.filter(function(x){return x.key==='Lawyers';})[0]; if(!c||!c.geo) return;
       var n=c.geo.attributes.position.count, col=new Float32Array(n*3);
-      var total=Math.max(1,(crit||0)+(risk||0)+(comp||0));
-      var nC=Math.round(n*(crit||0)/total), nR=Math.round(n*(risk||0)/total);
+      var total=Math.max(1,(crit||0)+(risk||0)+(onTrack||0)+(comp||0));
+      var nC=Math.round(n*(crit||0)/total), nR=Math.round(n*(risk||0)/total), nO=Math.round(n*(onTrack||0)/total);
       // Cache one shuffled ordering so repeated recolours (e.g. the Time Machine
       // scrubbing) only move the band thresholds — smooth, never flickering.
       var order=c._order; if(!order||order.length!==n){ order=[]; for(var i=0;i<n;i++) order.push(i); for(var k=n-1;k>0;k--){ var j=Math.floor(Math.random()*(k+1)); var tmp=order[k];order[k]=order[j];order[j]=tmp; } c._order=order; }
-      order.forEach(function(idx,rank){ var r,g,b; if(rank<nC){r=1;g=.37;b=.49;} else if(rank<nC+nR){r=1;g=.72;b=.30;} else {r=.24;g=.94;b=.63;} col[idx*3]=r;col[idx*3+1]=g;col[idx*3+2]=b; });
+      order.forEach(function(idx,rank){ var r,g,b;
+        if(rank<nC){r=1;g=.37;b=.49;}                 // critical · pink
+        else if(rank<nC+nR){r=1;g=.72;b=.30;}         // at risk · amber
+        else if(rank<nC+nR+nO){r=.12;g=.88;b=.71;}    // on track · teal
+        else {r=.24;g=.94;b=.63;}                      // compliant · green
+        col[idx*3]=r;col[idx*3+1]=g;col[idx*3+2]=b; });
       c.geo.setAttribute('color',new THREE.BufferAttribute(col,3));
       c.mat.vertexColors=true; c.mat.color.set(0xffffff); c.mat.size=2.3; c.mat.needsUpdate=true;
       var lg=$('bandLegend'); if(lg) lg.style.display='flex';
@@ -724,11 +733,15 @@
     // ════════════ RECURSIVE DIVE — descend into living sub-ecosystems ════════════
     var MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     function fdate(iso){ var d=new Date(iso); return isNaN(d)?'—':d.getUTCDate()+' '+MO[d.getUTCMonth()]; }
-    function bandColor(p){ p=Number(p)||0; return p>=16?0x3df0a0:p>=8?0xffb84d:0xff5e7e; }
+    // Pace-aware: a lawyer's band depends on whether they can still reach 16 by
+    // 31 Dec at a sensible rate, not on raw points. Need >=6/mo critical, >=3/mo
+    // at risk, else on track. So mid-year most lawyers are on track, not critical.
+    function _cmdMonthsLeft(){ var e=Date.UTC(new Date().getUTCFullYear(),11,31),n=Date.now(); return Math.max(0,(e-n)/86400000)/30.44; }
+    function bandColor(p){ p=Number(p)||0; if(p>=16) return 0x3df0a0; var m=_cmdMonthsLeft(),r=m>0?(16-p)/m:Infinity; return r>=6?0xff5e7e:r>=3?0xffb84d:0x1fe0b4; }
     function bandPctColor(p){ p=Number(p)||0; return p>=70?0x3df0a0:p>=40?0xffb84d:0xff5e7e; }
     // Star rating (out of 5) → colour: 4.5+ green, 4+ teal, 3+ amber, else red.
     function ratingHex(r){ r=Number(r)||0; return r>=4.5?0x3df0a0:r>=4?0x1fe0b4:r>=3?0xffb84d:0xff5e7e; }
-    function bandCss(p){ p=Number(p)||0; return p>=16?'var(--green)':p>=8?'var(--amber)':'var(--red)'; }
+    function bandCss(p){ p=Number(p)||0; if(p>=16) return 'var(--green)'; var m=_cmdMonthsLeft(),r=m>0?(16-p)/m:Infinity; return r>=6?'var(--red)':r>=3?'var(--amber)':'var(--teal)'; }
     function typeHex(t){ t=(t||'').toLowerCase(); return t==='mandatory'?0x9a6cff:t.indexOf('internal')>=0?0xffb84d:0x1fe0b4; }
     var _an=null,_up=null,_fb=null;
     function needAnalytics(){ return _an?Promise.resolve(_an):getJSON('/api/v1/admin/course-analytics').then(function(d){_an=d;return d;}); }
@@ -1498,7 +1511,7 @@
     if(!series()){ $('tmRead').innerHTML='<span style="color:var(--dim2)">Forecast loading — sign in as a LAD admin</span>'; return; }
     renderTrack(); apply(curFrac!=null?curFrac:frac(nowIndex())); };
   function closeTM(){ playing=false; if(RAF)cancelAnimationFrame(RAF); $('timeMachine').classList.remove('on');
-    var L=(window.__OV&&window.__OV.lawyers)||null; if(L&&window.recolorLawyers) window.recolorLawyers(L.critical||0,L.atRisk||0,L.compliant||0);
+    var L=(window.__OV&&window.__OV.lawyers)||null; if(L&&window.recolorLawyers) window.recolorLawyers(L.critical||0,L.atRisk||0,L.onTrack||0,L.compliant||0);
     if(window.__setPulse&&window.__health!=null) window.__setPulse(window.__health); }
   function play(){ if(playing){ playing=false; $('tmPlay').textContent='▶ Play'; if(RAF)cancelAnimationFrame(RAF); return; } if(!series())return; playing=true; $('tmPlay').textContent='⏸ Pause';
     var from=(curFrac!=null&&curFrac<0.999?curFrac:0), start=performance.now();
