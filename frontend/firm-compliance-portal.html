@@ -3920,8 +3920,7 @@ function closeAccredApp() { document.getElementById('accredModal').classList.rem
 
 // Selected supporting-document filenames for the accreditation application.
 var acDocsFiles = [];
-function acDocsPicked(input) {
-  acDocsFiles = Array.from(input.files || []).map(f => ({ name: f.name, size: f.size }));
+function renderAcDocsList() {
   const list = document.getElementById('ac-docs-list');
   if (!list) return;
   list.innerHTML = acDocsFiles.map(f =>
@@ -3929,6 +3928,22 @@ function acDocsPicked(input) {
        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📄 ${f.name}</span>
        <span style="font-family:var(--mono);font-size:10px;color:var(--slate3)">${(f.size/1024).toFixed(0)} KB</span>
      </div>`).join('');
+}
+function acDocsPicked(input) {
+  // Read each file's content (base64) so it's actually submitted with the
+  // application and the reviewer can open it — not just the filename.
+  acDocsFiles = [];
+  const files = Array.from(input.files || []);
+  files.forEach(f => {
+    if (f.size > 10 * 1024 * 1024) { showToast(`${f.name} is over 10 MB and was skipped`); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      acDocsFiles.push({ name: f.name, type: f.type, size: f.size, dataUrl: reader.result });
+      renderAcDocsList();
+    };
+    reader.readAsDataURL(f);
+  });
+  renderAcDocsList();
 }
 
 async function submitAccredApp() {
@@ -3951,6 +3966,9 @@ async function submitAccredApp() {
     audience: (document.getElementById('ac-audience')?.value || '').trim() || 'All practitioners',
     applicantEmail,
     documents: acDocsFiles.map(f => f.name),
+    // The reviewer reads `attachments` (with base64 dataUrl so files are
+    // downloadable). Send the full objects, not just names.
+    attachments: acDocsFiles.map(f => ({ name: f.name, type: f.type, size: f.size, dataUrl: f.dataUrl })),
   };
 
   const ref = await triggerWorkflow(payload);
