@@ -351,7 +351,8 @@ body{padding-top:var(--lad-nav-h)}
 .lad-shared-logos img{height:34px;width:auto}
 .lad-shared-sep{width:1px;height:26px;background:rgba(255,255,255,.22)}
 .lad-portal-chip{display:flex;align-items:center;gap:7px;padding:4px 12px;border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;flex-shrink:0}
-.lad-shared-nav-links{display:flex;align-items:center;gap:2px;flex:1}
+.lad-shared-nav-links{display:flex;align-items:center;gap:2px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+.lad-shared-nav-links::-webkit-scrollbar{display:none}
 .lad-snl{color:rgba(255,255,255,.75);font-size:12.5px;font-weight:500;padding:6px 12px;border-radius:6px;cursor:pointer;transition:all .15s;white-space:nowrap;text-decoration:none;display:flex;align-items:center}
 .lad-snl:hover{background:rgba(255,255,255,.1);color:#fff}
 .lad-snl.active{background:rgba(255,255,255,.1);color:#fff}
@@ -3060,7 +3061,7 @@ function computeInsights() {
 
   // ── 1. Critical zone clusters by practice area ────────────────
   // Find practice areas with the highest concentration of critical lawyers
-  const critical = LAWYERS.filter(l => l.pts < 8);
+  const critical = LAWYERS.filter(l => statusOf(l.pts) === 'critical');
   if (critical.length > 0) {
     const byPractice = {};
     critical.forEach(l => {
@@ -3089,7 +3090,7 @@ function computeInsights() {
     insights.push({
       tag: `${cfgInsLabel('urgent')} · ${lawyersInPractice.length} LAWYER${lawyersInPractice.length === 1 ? '' : 'S'}`,
       title: `${topPractice} cluster critically behind`,
-      body: `${lawyersInPractice.length} ${topPractice} lawyer${lawyersInPractice.length === 1 ? '' : 's'} ${lawyersInPractice.length === 1 ? 'is' : 'are'} below 8 points: ${names}${more}.${courseHint}`,
+      body: `${lawyersInPractice.length} ${topPractice} lawyer${lawyersInPractice.length === 1 ? '' : 's'} ${lawyersInPractice.length === 1 ? 'is' : 'are'} well behind pace: ${names}${more}.${courseHint}`,
       color: 'var(--red)',
       actions: [`Book ${topPractice} lawyers`],
       meta: { courseId: targetCourse?.id, practice: topPractice, lawyerIds: lawyersInPractice.map(l => l.id) },

@@ -114,6 +114,20 @@ router.get('/:id/bookings', requireAuth, (req, res) => {
 const _IMONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 function _idate(iso) { if (!iso) return 'TBC'; const d = new Date(iso); return isNaN(d) ? 'TBC' : `${d.getUTCDate()} ${_IMONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`; }
 
+// Pace-aware standing (mirrors the portals/oversight): judge on whether a lawyer
+// can still reach 16 points by 31 Dec at a sensible monthly rate, NOT on raw
+// points. Mid-year, a lawyer on ~8 points is on track, not "critical".
+function _clpdMonthsLeft() { const e = Date.UTC(new Date().getUTCFullYear(), 11, 31); return Math.max(0, (e - Date.now()) / 86400000) / 30.44; }
+function _clpdBand(points) {
+  const p = Number(points) || 0;
+  if (p >= 16) return 'compliant';
+  const m = _clpdMonthsLeft();
+  const r = m > 0 ? (16 - p) / m : Infinity;
+  if (r >= 6) return 'critical';
+  if (r >= 3) return 'at-risk';
+  return 'on-track';
+}
+
 function firmInsightData(firmId) {
   const firm = store.getFirmById(firmId);
   const all = store.getLawyersByFirm(firmId) || [];
@@ -122,8 +136,9 @@ function firmInsightData(firmId) {
     return s !== 'inactive' && s !== 'resigned' && s !== 'non-practising';
   });
   const pts = (l) => Number(l.lifetime_points) || 0;
-  const critical = practising.filter((l) => pts(l) < 8);
-  const atRisk = practising.filter((l) => pts(l) >= 8 && pts(l) < 16);
+  const critical = practising.filter((l) => _clpdBand(pts(l)) === 'critical');
+  const atRisk = practising.filter((l) => _clpdBand(pts(l)) === 'at-risk');
+  const onTrack = practising.filter((l) => _clpdBand(pts(l)) === 'on-track');
   const compliant = practising.filter((l) => pts(l) >= 16);
   const totalPts = practising.reduce((s, l) => s + pts(l), 0);
   const avg = practising.length ? Math.round((totalPts / practising.length) * 10) / 10 : 0;
@@ -144,7 +159,7 @@ function firmInsightData(firmId) {
         seats: sessions.length ? Number(sessions[0].seats_remaining) || 0 : 0 };
     });
   } catch (_) {}
-  return { firm, practising, critical, atRisk, compliant, avg, compliancePct, topCritical, courses };
+  return { firm, practising, critical, atRisk, onTrack, compliant, avg, compliancePct, topCritical, courses };
 }
 
 function heuristicInsights(d) {
@@ -157,7 +172,7 @@ function heuristicInsights(d) {
     const course = f2f[0];
     cards.push({ kind: 'urgent', eyebrow: `URGENT · ${d.critical.length} LAWYER${d.critical.length === 1 ? '' : 'S'}`,
       title: `${d.critical.length} lawyer${d.critical.length === 1 ? '' : 's'} critically behind`,
-      body: `${d.critical.length} lawyers are below 8 points${names ? ': ' + names : ''}.${course ? ` <strong>${course.title}</strong> on ${_idate(course.next)} adds +${course.pts} each.` : ''}`,
+      body: `${d.critical.length} lawyers are well behind the pace needed for 31 Dec${names ? ': ' + names : ''}.${course ? ` <strong>${course.title}</strong> on ${_idate(course.next)} adds +${course.pts} each.` : ''}`,
       actionLabel: course ? `Book onto ${course.title.split(' ').slice(0, 3).join(' ')}` : 'Review critical lawyers',
       courseId: course ? course.id : null, lawyerCount: d.critical.length, pointsGain: course ? course.pts * d.critical.length : 0, credits: course ? course.credits * d.critical.length : 0 });
   }
@@ -189,14 +204,16 @@ router.get('/:id/insights', requireAuth, async (req, res, next) => {
   if (!isLADrole(u) && !isOwnCO) return res.status(403).json({ error: 'Forbidden' });
   const d = firmInsightData(id);
   const firmName = (d.firm && d.firm.name) || 'the firm';
-  const metrics = { firm: firmName, practising: d.practising.length, critical: d.critical.length, atRisk: d.atRisk.length, compliant: d.compliant.length, avgPoints: d.avg, compliancePct: d.compliancePct };
+  const metrics = { firm: firmName, practising: d.practising.length, critical: d.critical.length, atRisk: d.atRisk.length, onTrack: d.onTrack.length, compliant: d.compliant.length, avgPoints: d.avg, compliancePct: d.compliancePct };
 
   if (aimodel.configured() && d.practising.length) {
     try {
       const courseList = d.courses.map((c) => `- ${c.title} [${c.id}] · ${c.type} · ${c.elearning ? 'e-learning' : 'face-to-face'} · ${c.pts}pts · ${c.credits}cr${c.next ? ' · next ' + _idate(c.next) + ' · ' + c.seats + ' seats' : ''}`).join('\n');
       const critList = d.topCritical.map((l) => `${l.name} ${l.pts}/16${l.practice ? ' · ' + l.practice : ''}`).join('; ') || 'none';
-      const system = 'You are Maryam, an elite legal-sector CLPD compliance strategist advising the compliance officer of a Dubai law firm. From the firm\'s REAL data, produce the THREE highest-impact, specific, quantified priorities for THIS WEEK. Each must cite real numbers (lawyers affected, points gained, credits, seats, dates) and be directly actionable by booking a course from the catalogue. Reply with ONLY JSON: {"summary": string (one punchy sentence on firm posture), "cards": [{"kind": "urgent"|"opportunity"|"strategy", "eyebrow": string (e.g. "URGENT · 3 LAWYERS"), "title": string, "body": string (may use <strong> for key numbers), "actionLabel": string, "courseId": string|null (EXACT id from the catalogue or null), "lawyerCount": number, "pointsGain": number, "credits": number}]}. Exactly 3 cards: one urgent (at-risk lawyers), one opportunity (a seat-limited course that lifts many), one strategy (firm-wide, e.g. e-learning). Use only catalogue course ids.';
-      const user = `Firm: ${firmName}\nPractising lawyers: ${d.practising.length}\nCompliance: ${d.compliancePct}% · avg ${d.avg}/16 pts\nCritical (<8 pts): ${d.critical.length} · At-risk (8-15): ${d.atRisk.length} · Compliant (16+): ${d.compliant.length}\nMost-behind lawyers: ${critList}\n\nLive course catalogue:\n${courseList || '(none scheduled)'}`;
+      const system = 'You are Maryam, an elite legal-sector CLPD compliance strategist advising the compliance officer of a Dubai law firm. '
+        + 'CRITICAL CONTEXT — judge on PACE, not raw points: CLPD is ONE 12-month cycle (16 points = 8 mandatory + 8 accredited, due 31 December). It is normal for lawyers to be mid-progress mid-year, so most of a firm having fewer than 16 points now is NOT a crisis and a low compliance rate mid-cycle is EXPECTED. The data already classifies lawyers by pace: "onTrack" (progressing at a healthy rate), "atRisk" (behind the pace needed), "critical" (well behind with little time), "compliant" (16+). Treat onTrack + compliant as HEALTHY. Do NOT say the firm is "in critical condition", "critical compliance exposure", "100% below target" or similar when most lawyers are on track — be accurate and constructive, not alarmist. '
+        + 'From the firm\'s REAL data, produce the THREE highest-impact, specific, quantified priorities for THIS WEEK. Each must cite real numbers (lawyers affected, points gained, credits, seats, dates) and be directly actionable by booking a course from the catalogue. Reply with ONLY JSON: {"summary": string (one accurate, measured sentence on firm posture — lead with how many are on track/compliant before any concern), "cards": [{"kind": "urgent"|"opportunity"|"strategy", "eyebrow": string (e.g. "URGENT · 3 LAWYERS"), "title": string, "body": string (may use <strong> for key numbers), "actionLabel": string, "courseId": string|null (EXACT id from the catalogue or null), "lawyerCount": number, "pointsGain": number, "credits": number}]}. Exactly 3 cards: one urgent (only the genuinely behind-pace lawyers — if there are none, make it an early-momentum nudge instead), one opportunity (a seat-limited course that lifts many), one strategy (firm-wide, e.g. e-learning). Use only catalogue course ids.';
+      const user = `Firm: ${firmName}\nPractising lawyers: ${d.practising.length} · avg ${d.avg}/16 pts · ${_clpdMonthsLeft().toFixed(1)} months left in the cycle\nBy PACE: ${d.onTrack.length} on track · ${d.atRisk.length} behind pace (at risk) · ${d.critical.length} well behind (critical) · ${d.compliant.length} already compliant (16+)\nMost-behind lawyers: ${critList}\n\nLive course catalogue:\n${courseList || '(none scheduled)'}`;
       const text = await aimodel.chat({ system, messages: [{ role: 'user', content: user }], maxTokens: 1100, temperature: 0.4 });
       let parsed = null; try { const m = text.match(/\{[\s\S]*\}/); parsed = JSON.parse(m ? m[0] : text); } catch (_) {}
       if (parsed && Array.isArray(parsed.cards) && parsed.cards.length) {
@@ -207,7 +224,12 @@ router.get('/:id/insights', requireAuth, async (req, res, next) => {
       }
     } catch (e) { log.error('firm_insights_aimodel', { error: e.message }); }
   }
-  res.json({ engine: 'heuristic', summary: `${firmName} is at ${d.compliancePct}% compliance — ${d.critical.length} lawyers need urgent action.`, cards: heuristicInsights(d), metrics });
+  const _healthy = d.onTrack.length + d.compliant.length;
+  const _behind = d.critical.length + d.atRisk.length;
+  const heurSummary = _behind
+    ? `${firmName}: ${_healthy} of ${d.practising.length} lawyers on track or compliant; ${_behind} behind pace to prioritise before 31 Dec.`
+    : `${firmName}: all ${d.practising.length} practising lawyers are on track or compliant — keep the momentum.`;
+  res.json({ engine: 'heuristic', summary: heurSummary, cards: heuristicInsights(d), metrics });
 });
 
 module.exports = router;
