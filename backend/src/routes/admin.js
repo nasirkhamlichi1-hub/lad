@@ -33,8 +33,8 @@ router.get('/activity', requireAuth, (req, res) => {
     args.push(like, like, like, like);
   }
   const limit = Math.min(500, parseInt(q.limit || '100', 10) || 100);
-  args.push(limit);
-  let rows = [];
+  const whereSql = where.join(' AND ');
+  let rows = [], totals = { count: 0, aed_in: 0, aed_out: 0, net: 0 };
   try {
     rows = db.prepare(
       `SELECT a.id, a.created_at, a.firm_id, a.lawyer_id, a.kind, a.category, a.tags,
@@ -43,11 +43,19 @@ router.get('/activity', requireAuth, (req, res) => {
        FROM activity_log a
        LEFT JOIN lawyers l ON l.id = a.lawyer_id
        LEFT JOIN firms f ON f.id = a.firm_id
-       WHERE ${where.join(' AND ')}
+       WHERE ${whereSql}
        ORDER BY a.created_at DESC LIMIT ?`
-    ).all(...args);
-  } catch (e) { return res.json({ rows: [], error: e.message }); }
-  res.json({ rows, count: rows.length });
+    ).all(...args, limit);
+    // Money totals across the WHOLE filtered set (not just the page shown).
+    const t = db.prepare(
+      `SELECT COUNT(*) c,
+              COALESCE(SUM(CASE WHEN aed > 0 THEN aed ELSE 0 END),0) inn,
+              COALESCE(SUM(CASE WHEN aed < 0 THEN -aed ELSE 0 END),0) out
+       FROM activity_log a WHERE ${whereSql}`
+    ).get(...args);
+    if (t) totals = { count: t.c, aed_in: t.inn, aed_out: t.out, net: (t.inn - t.out) };
+  } catch (e) { return res.json({ rows: [], totals, error: e.message }); }
+  res.json({ rows, count: rows.length, totals });
 });
 
 function snapshot() {
