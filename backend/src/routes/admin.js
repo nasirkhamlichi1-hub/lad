@@ -650,4 +650,40 @@ router.get('/lawyer/:id', requireAuth, (req, res) => {
   });
 });
 
+// POST /api/v1/admin/crm-summary { lawyer_id | firm_id } — a per-customer AI
+// brief for the admin opening their record: status, risk, next best action.
+router.post('/crm-summary', requireAuth, async (req, res, next) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admins only' });
+  const store = require('../services/store');
+  const b = req.body || {};
+  let ctx = null, who = '';
+  try {
+    if ((b.lawyer_id || '').toString().trim()) {
+      const l = store.getLawyerById(b.lawyer_id.toString().trim()) || {};
+      const pts = Number(l.lifetime_points) || 0;
+      let bookings = [], acts = [];
+      try { bookings = db.prepare("SELECT course_title, status, scheduled_at FROM bookings WHERE lawyer_id = ? ORDER BY scheduled_at DESC LIMIT 8").all(l.id); } catch (_) {}
+      try { acts = db.prepare('SELECT summary FROM activity_log WHERE lawyer_id = ? ORDER BY created_at DESC LIMIT 8').all(l.id); } catch (_) {}
+      who = 'a Dubai lawyer';
+      ctx = { name: `${l.first_name || ''} ${l.last_name || ''}`.trim(), firm: l.firm_name || l.firm_id || '', points: pts, needed: Math.max(0, 16 - pts),
+        credits: Number(l.credit_balance) || 0, status: l.status || 'active', bookings, recentActivity: acts.map((a) => a.summary) };
+    } else if ((b.firm_id || '').toString().trim()) {
+      const fid = b.firm_id.toString().trim();
+      const f = db.prepare('SELECT name FROM firms WHERE id = ?').get(fid) || {};
+      const agg = db.prepare("SELECT COUNT(*) lawyers, SUM(CASE WHEN COALESCE(lifetime_points,0)<8 THEN 1 ELSE 0 END) critical, SUM(CASE WHEN COALESCE(lifetime_points,0)>=16 THEN 1 ELSE 0 END) compliant FROM lawyers WHERE firm_id = ?").get(fid) || {};
+      let acts = []; try { acts = db.prepare('SELECT summary FROM activity_log WHERE firm_id = ? ORDER BY created_at DESC LIMIT 8').all(fid); } catch (_) {}
+      who = 'a law firm';
+      ctx = { firm: f.name || fid, lawyers: agg.lawyers || 0, critical: agg.critical || 0, compliant: agg.compliant || 0,
+        compliancePct: agg.lawyers ? Math.round(100 * (agg.compliant || 0) / agg.lawyers) : 0, recentActivity: acts.map((a) => a.summary) };
+    } else return res.status(400).json({ error: 'lawyer_id or firm_id is required.' });
+  } catch (e) { return next(e); }
+  if (!aimodel.configured()) return res.json({ summary: 'AI is not configured. Live snapshot: ' + JSON.stringify(ctx) });
+  try {
+    const system = 'You are Maryam, the CLPD CRM assistant. In 3–4 sentences brief an admin about to help ' + who
+      + ': their CLPD compliance status and risk, what is going on recently, and the single most useful next action. Use ONLY the JSON with real numbers, warm and practical, plain text, no markdown.';
+    const text = await aimodel.chat({ system, messages: [{ role: 'user', content: JSON.stringify(ctx) }], maxTokens: 300, temperature: 0.3 });
+    res.json({ summary: text });
+  } catch (e) { if (e.code === 'AIMODEL_ERROR') return res.status(502).json({ error: 'AiModel call failed' }); next(e); }
+});
+
 module.exports = router;
