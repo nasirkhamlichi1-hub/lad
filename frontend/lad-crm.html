@@ -186,7 +186,7 @@
     <button class="rl on" data-v="dash" onclick="go('dash')" style="position:relative"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Home</span></button>
     <button class="rl" data-v="inbox" id="railInbox" onclick="go('inbox')" style="position:relative"><span class="badge" id="inboxBadge">0</span><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Inbox</span></button>
     <button class="rl" data-v="cust" onclick="go('cust')"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="18" cy="9" r="3"/></svg><span>Customers</span></button>
-    <button class="rl" data-v="ops" onclick="go('ops')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Operations</span></button>
+    <button class="rl" id="railOps" data-v="ops" onclick="go('ops')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Operations</span></button>
     <div class="rail-div"></div>
     <!-- Everyday operations — all LAD admins -->
     <button class="rl" data-v="courses" onclick="go('courses')"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>Courses</span></button>
@@ -349,6 +349,10 @@
   // Accreditation, Intelligence and the Command Centre are open to the whole
   // admin team (and super users); they're always shown in the admin-only CRM.
   if(ME.role==='lad_intelligence'){var ru=document.getElementById('railUsers');if(ru)ru.style.display='none'}
+  // Everyday LAD Admins run the day-to-day (inbox, customers, courses, users,
+  // finance). Operations analytics and Accreditation review are reserved for the
+  // strategic tier (intelligence + super users).
+  if(ME.role==='lad_admin'){['railOps','railAccred'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none'})}
 
   // ── shared state ──
   var CONV=[],SESS=[],FIRMS=[],TASKS_DUE=[];
@@ -373,7 +377,7 @@
     postPage();
   };
   // A module is reachable only if its rail entry is visible to this role.
-  function viewAllowed(v){var map={accred:'railAccred',intel:'railIntel',users:'railUsers'};var id=map[v];if(!id)return true;var el=document.getElementById(id);return!!el&&el.style.display!=='none'}
+  function viewAllowed(v){var map={ops:'railOps',accred:'railAccred',intel:'railIntel',users:'railUsers'};var id=map[v];if(!id)return true;var el=document.getElementById(id);return!!el&&el.style.display!=='none'}
   window.go=function(v){
     if(!document.getElementById('v-'+v)||!viewAllowed(v))v='dash';
     try{if(location.hash!=='#'+v)history.replaceState(null,'',location.pathname+location.search+'#'+v)}catch(e){}
