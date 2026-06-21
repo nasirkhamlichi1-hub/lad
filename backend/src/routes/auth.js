@@ -400,4 +400,72 @@ router.post('/change-password', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── Self-service password reset ─────────────────────────────────────
+// POST /auth/request-reset  { username }  — always 200 (never leak which
+// accounts exist); emails a single-use link valid for 60 minutes.
+const crypto = require('crypto');
+const _sha256 = (s) => crypto.createHash('sha256').update(String(s)).digest('hex');
+let _mailer = null; try { _mailer = require('../services/email'); } catch (_) {}
+
+router.post('/request-reset', (req, res) => {
+  const username = ((req.body && (req.body.username || req.body.email)) || '').toString().trim();
+  const ok200 = () => res.json({ ok: true, message: 'If that account exists, a reset link has been sent to its email.' });
+  if (!username) return ok200();
+  const u = username.toLowerCase();
+  let user = null, userType = 'lawyer';
+  try {
+    user = db.prepare("SELECT id, first_name, last_name, email FROM lawyers WHERE (LOWER(email)=? OR LOWER(id)=?) AND COALESCE(LOWER(status),'active') NOT IN ('inactive','resigned')").get(u, u);
+    if (!user) { user = db.prepare("SELECT id, first_name, last_name, email FROM staff WHERE (LOWER(email)=? OR LOWER(id)=?) AND COALESCE(LOWER(status),'active')='active'").get(u, u); userType = 'staff'; }
+  } catch (_) {}
+  if (!user || !user.email) return ok200(); // nothing to email → say nothing
+  const raw = crypto.randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+  try {
+    db.prepare('INSERT INTO password_reset_tokens (token_hash, user_type, user_id, email, expires_at) VALUES (?,?,?,?,?)')
+      .run(_sha256(raw), userType, user.id, user.email, expires);
+  } catch (_) { return ok200(); }
+  let frontBase = process.env.FRONTEND_BASE_URL || '';
+  if (!frontBase) { try { frontBase = new URL(config.uaepass.postLoginUrl).origin; } catch (_) { frontBase = ''; } }
+  const link = frontBase + '/reset-password.html?token=' + raw;
+  const name = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+  if (_mailer && _mailer.enqueue) {
+    try {
+      _mailer.enqueue({
+        to: user.email, toName: name, category: 'auth', ref: user.id,
+        dedupeKey: 'pwreset:' + user.id + ':' + Date.now(),
+        subject: 'Reset your CLPD portal password',
+        text: `Hello${name ? ' ' + name : ''},\n\nWe received a request to reset your CLPD portal password. Open the link below within 60 minutes to choose a new one:\n\n${link}\n\nIf you didn't request this, you can safely ignore this email.\n\n— Legal Affairs Department, Dubai`,
+        html: `<p>Hello${name ? ' ' + name : ''},</p><p>We received a request to reset your CLPD portal password. Open the link below within 60 minutes to choose a new one:</p><p><a href="${link}">Reset my password</a></p><p>If you didn't request this, you can safely ignore this email.</p><p>— Legal Affairs Department, Dubai</p>`,
+      });
+    } catch (_) {}
+  }
+  try { db.prepare("INSERT INTO audit_log (actor_id, actor_type, action, details, ip) VALUES (?,?, 'user.password_reset_requested', ?, ?)").run(user.id, userType, JSON.stringify({}), req.ip || null); } catch (_) {}
+  return ok200();
+});
+
+// POST /auth/reset-password  { token, newPassword }
+router.post('/reset-password', (req, res) => {
+  const token = ((req.body && req.body.token) || '').toString();
+  const newPassword = ((req.body && (req.body.newPassword || req.body.password)) || '').toString();
+  if (!token || !newPassword) return res.status(400).json({ error: 'token and newPassword are required' });
+  const errors = passwords.validateUserChosen(newPassword);
+  if (errors.length) return res.status(400).json({ error: errors.join('; '), code: 'WEAK_PASSWORD', details: errors });
+  const row = db.prepare('SELECT * FROM password_reset_tokens WHERE token_hash = ?').get(_sha256(token));
+  if (!row) return res.status(400).json({ error: 'This reset link is invalid.', code: 'INVALID_TOKEN' });
+  if (row.used_at) return res.status(400).json({ error: 'This reset link has already been used.', code: 'USED_TOKEN' });
+  if (new Date(row.expires_at).getTime() < Date.now()) return res.status(400).json({ error: 'This reset link has expired — please request a new one.', code: 'EXPIRED_TOKEN' });
+  const table = row.user_type === 'lawyer' ? 'lawyers' : 'staff';
+  const u = db.prepare(`SELECT id FROM ${table} WHERE id = ?`).get(row.user_id);
+  if (!u) return res.status(400).json({ error: 'Account not found.' });
+  const hash = bcrypt.hashSync(newPassword, 12);
+  const tx = db.transaction(() => {
+    db.prepare(`UPDATE ${table} SET password_hash = ?, must_change_password = 0, password_changed_at = CURRENT_TIMESTAMP WHERE id = ?`).run(hash, row.user_id);
+    // single-use + invalidate any other outstanding tokens for this user
+    db.prepare('UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE user_type=? AND user_id=? AND used_at IS NULL').run(row.user_type, row.user_id);
+  });
+  tx();
+  try { db.prepare("INSERT INTO audit_log (actor_id, actor_type, action, details, ip) VALUES (?,?, 'user.password_reset', ?, ?)").run(row.user_id, row.user_type, JSON.stringify({ via: 'reset_token' }), req.ip || null); } catch (_) {}
+  res.json({ ok: true });
+});
+
 module.exports = router;
