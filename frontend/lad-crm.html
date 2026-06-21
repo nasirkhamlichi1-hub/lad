@@ -258,6 +258,7 @@
     <div class="view" id="v-activity"><div class="scroll" style="width:100%;padding:22px">
       <div class="panel" style="max-width:1000px;margin:0 auto"><div class="panel-hd" style="flex-wrap:wrap;gap:8px"><h2>Activity log</h2>
         <input class="inp" id="actSearch" placeholder="Search actions, names, references…" style="max-width:300px;margin-left:auto" oninput="actSearch()"/>
+        <select class="inp" id="actAdmin" style="max-width:180px" onchange="actSearch()"><option value="">All team members</option></select>
         <select class="inp" id="actCat" style="max-width:170px" onchange="actSearch()"><option value="">All categories</option><option value="credits">Credits</option><option value="bookings">Bookings</option><option value="accreditation">Accreditation</option><option value="account">Account</option><option value="course">Course</option><option value="message">Messages</option></select>
       </div>
       <div id="actTotals" style="display:none;padding:10px 18px;border-bottom:1px solid var(--line);font-size:12px;color:var(--slate2)"></div>
@@ -402,10 +403,22 @@
   }
   // ── activity / audit trail ──
   var actT;window.actSearch=function(){clearTimeout(actT);actT=setTimeout(loadActivity,250)};
+  // Populate the team-member filter once, so a super-admin can see exactly what
+  // each of the admin team did and which customers they handled.
+  var _actAdminsLoaded=false;
+  function ensureActAdmins(){
+    if(_actAdminsLoaded)return;_actAdminsLoaded=true;
+    api('/api/v1/messages/admins').then(function(j){
+      var sel=document.getElementById('actAdmin');if(!sel)return;
+      (j.admins||[]).forEach(function(a){var o=document.createElement('option');o.value=a.id;o.textContent=a.name;sel.appendChild(o);});
+    }).catch(function(){_actAdminsLoaded=false;});
+  }
   function loadActivity(){
+    ensureActAdmins();
     var qv=(document.getElementById('actSearch').value||'').trim();var cat=document.getElementById('actCat').value;
+    var actor=(document.getElementById('actAdmin')||{}).value||'';
     var host=document.getElementById('actList');host.innerHTML='<div class="empty">Loading…</div>';
-    api('/api/v1/admin/activity?limit=200'+(qv?'&q='+encodeURIComponent(qv):'')+(cat?'&category='+encodeURIComponent(cat):'')).then(function(j){
+    api('/api/v1/admin/activity?limit=200'+(qv?'&q='+encodeURIComponent(qv):'')+(cat?'&category='+encodeURIComponent(cat):'')+(actor?'&actor_id='+encodeURIComponent(actor):'')).then(function(j){
       var rows=j.rows||[],t=j.totals||{};var tot=document.getElementById('actTotals');
       if(tot){if(t.count){tot.style.display='block';tot.innerHTML='<strong>'+num(t.count)+'</strong> event'+(t.count===1?'':'s')+((t.aed_in||t.aed_out)?' · <span style="color:var(--green)">AED '+num(t.aed_in)+' collected</span> · <span style="color:var(--red)">AED '+num(t.aed_out)+' refunded</span> · net <strong>AED '+num(t.net)+'</strong>':'');}else tot.style.display='none';}
       host.innerHTML=rows.length?rows.map(actRow).join(''):'<div class="empty">No matching activity.</div>';
