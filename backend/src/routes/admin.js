@@ -25,6 +25,7 @@ router.get('/activity', requireAuth, (req, res) => {
   if (q.kind) { where.push('a.kind = ?'); args.push(String(q.kind)); }
   if (q.lawyer_id) { where.push('a.lawyer_id = ?'); args.push(String(q.lawyer_id)); }
   if (q.firm_id) { where.push('a.firm_id = ?'); args.push(String(q.firm_id)); }
+  if (q.actor_id) { where.push('a.actor_id = ?'); args.push(String(q.actor_id)); }
   if (q.from) { where.push('a.created_at >= ?'); args.push(String(q.from)); }
   if (q.to) { where.push('a.created_at <= ?'); args.push(String(q.to)); }
   if (q.q && String(q.q).trim()) {
