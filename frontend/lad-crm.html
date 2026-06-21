@@ -237,8 +237,9 @@
     <!-- OPERATIONS -->
     <div class="view" id="v-ops"><div class="scroll" style="width:100%;padding:22px">
       <div style="max-width:1000px;margin:0 auto">
-        <div class="seg" style="margin:0 0 14px"><button class="on" onclick="opsMode('sessions',this)">Upcoming sessions</button><button onclick="opsMode('bookings',this)">All bookings</button></div>
-        <div class="panel" id="opsSessions"><div class="panel-hd"><h2>Upcoming sessions</h2>
+        <div class="seg" style="margin:0 0 14px"><button class="on" onclick="opsMode('overview',this)">Overview</button><button onclick="opsMode('sessions',this)">Upcoming sessions</button><button onclick="opsMode('bookings',this)">All bookings</button></div>
+        <div id="opsOverview"><div class="empty">Loading operations…</div></div>
+        <div class="panel" id="opsSessions" style="display:none"><div class="panel-hd"><h2>Upcoming sessions</h2>
           <input class="inp" id="opsSearch" placeholder="Filter course…" style="max-width:280px;margin-left:auto" oninput="renderOps()"/></div>
           <div class="panel-bd" id="opsList" style="max-height:none"></div>
         </div>
@@ -381,7 +382,7 @@
     document.getElementById('v-'+v).classList.add('on');
     document.getElementById('vTitle').textContent=TITLES[v][0];document.getElementById('vSub').textContent=TITLES[v][1];
     if(EMBED[v]){var f=document.querySelector('#v-'+v+' iframe[data-src]');if(f&&!f.getAttribute('src'))f.setAttribute('src',f.getAttribute('data-src'));return}
-    if(v==='inbox')renderInbox();if(v==='ops')renderOps();if(v==='cust'&&!document.getElementById('custSearch').value)browseFirms();if(v==='activity')loadActivity();if(v==='finance')loadFinance();
+    if(v==='inbox')renderInbox();if(v==='ops')renderOpsOverview();if(v==='cust'&&!document.getElementById('custSearch').value)browseFirms();if(v==='activity')loadActivity();if(v==='finance')loadFinance();
   };
   // ── finance / immutable ledger ──
   var finT;window.finSearch=function(){clearTimeout(finT);finT=setTimeout(loadFinance,250)};
@@ -518,7 +519,55 @@
   function sessRow(s){var cap=Number(s.capacity)||0,left=Number(s.seats_remaining)||0;return '<div class="row" onclick="openSession(\''+s.id+'\',\''+q1(s.course_title||'')+'\')"><div style="flex:1;min-width:0"><div class="ttl">'+esc(s.course_title||s.course_id||'—')+'</div><div class="sub">'+esc(s.provider_name||'')+' · '+fdate(s.scheduled_at)+'</div></div><span class="pill cat">'+(cap-left)+' booked · '+left+'/'+cap+'</span></div>'}
   window.renderOps=function(){var qv=(document.getElementById('opsSearch').value||'').toLowerCase().trim();var rows=SESS.filter(function(s){return !qv||((s.course_title||'').toLowerCase().indexOf(qv)>=0||(s.provider_name||'').toLowerCase().indexOf(qv)>=0)}).slice(0,120);document.getElementById('opsList').innerHTML=rows.length?rows.map(sessRow).join(''):'<div class="empty">No upcoming sessions.</div>'};
   // Operations has two modes: upcoming Sessions and the global Bookings ledger.
-  window.opsMode=function(m,el){if(el){el.parentNode.querySelectorAll('button').forEach(function(b){b.classList.remove('on')});el.classList.add('on')}var s=document.getElementById('opsSessions'),b=document.getElementById('opsBookings');if(m==='bookings'){s.style.display='none';b.style.display='';loadBookings()}else{b.style.display='none';s.style.display='';renderOps()}};
+  window.opsMode=function(m,el){if(el){el.parentNode.querySelectorAll('button').forEach(function(b){b.classList.remove('on')});el.classList.add('on')}var ov=document.getElementById('opsOverview'),s=document.getElementById('opsSessions'),b=document.getElementById('opsBookings');ov.style.display=m==='overview'?'':'none';s.style.display=m==='sessions'?'':'none';b.style.display=m==='bookings'?'':'none';if(m==='bookings')loadBookings();else if(m==='sessions')renderOps();else renderOpsOverview();};
+
+  // ── Operations overview: a live, graph-heavy read on service & market impact ──
+  window.renderOpsOverview=function(){
+    var host=document.getElementById('opsOverview');if(!host)return;
+    if(!host.dataset.loaded)host.innerHTML='<div class="empty">Loading operations…</div>';
+    Promise.all([
+      api('/api/v1/admin/oversight').catch(function(){return null}),
+      api('/api/v1/messages/happiness').catch(function(){return null}),
+      api('/api/v1/admin/activity?limit=8').catch(function(){return {rows:[]}})
+    ]).then(function(r){
+      var o=r[0]||{},h=r[1]||{},acts=(r[2]&&r[2].rows)||[];
+      var L=o.lawyers||{},S=o.sessions||{},B=o.bookings||{},A=o.accreditations||{};
+      host.dataset.loaded='1';
+      function n(x){return (x==null||isNaN(x))?'—':Number(x).toLocaleString()}
+      function mins(m){if(m==null)return '—';return m<60?Math.round(m)+' min':(m/60).toFixed(1)+' hr'}
+      function stars(v){return v==null?'—':v.toFixed(1)+' <span style="color:#f5b301">★</span>'}
+      var EY='font-family:monospace;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--slate3);font-weight:600';
+      function card(label,val,sub,accent){return '<div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px 17px"><div style="'+EY+';margin-bottom:9px">'+label+'</div><div style="font-size:28px;font-weight:300;line-height:1;color:'+(accent||'var(--ink)')+'">'+val+'</div><div style="font-size:11.5px;color:var(--slate2);margin-top:6px">'+(sub||'')+'</div></div>'}
+      function hbar(label,val,max,color){var pct=max>0?Math.min(100,Math.round(100*(val||0)/max)):0;return '<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--slate2)">'+label+'</span><span style="font-weight:600;font-family:monospace">'+n(val)+'</span></div><div style="height:8px;background:var(--line);border-radius:5px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:5px"></div></div></div>'}
+      function stacked(segs){var tot=segs.reduce(function(s,x){return s+(x.val||0)},0)||1;var bar=segs.map(function(x){return '<div title="'+x.label+': '+n(x.val)+'" style="width:'+(100*(x.val||0)/tot)+'%;background:'+x.color+'"></div>'}).join('');var leg=segs.map(function(x){return '<span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--slate2);margin-right:13px;margin-top:6px"><i style="width:9px;height:9px;border-radius:2px;background:'+x.color+';display:inline-block"></i>'+x.label+' '+n(x.val)+'</span>'}).join('');return '<div style="display:flex;height:16px;border-radius:6px;overflow:hidden;margin-bottom:4px">'+bar+'</div><div>'+leg+'</div>'}
+      function donut(segs,cl,cv){var tot=segs.reduce(function(s,x){return s+(x.val||0)},0)||1;var C=2*Math.PI*42,off=0;var arcs=segs.map(function(x){var len=C*(x.val||0)/tot;var s='<circle cx="56" cy="56" r="42" fill="none" stroke="'+x.color+'" stroke-width="13" stroke-dasharray="'+len+' '+(C-len)+'" stroke-dashoffset="'+(-off)+'" transform="rotate(-90 56 56)"/>';off+=len;return s}).join('');return '<div style="position:relative;width:112px;height:112px;flex-shrink:0"><svg width="112" height="112">'+arcs+'</svg><div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center"><div><div style="font-size:21px;font-weight:300">'+cv+'</div><div style="'+EY+';font-size:8px">'+cl+'</div></div></div></div>'}
+      var fastWait=(h.avgFirstResponseMins!=null&&h.avgFirstResponseMins<=60);
+      var maxAcc=Math.max(A.pending||0,A.approved||0,A.rejected||0,A.returned||0,1);
+      host.innerHTML=
+        '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px">'
+          +card('Conversations',n(h.conversations),(n(h.rated))+' rated')
+          +card('Avg wait time',mins(h.avgFirstResponseMins),'to first reply',fastWait?'var(--green)':'#d68a2a')
+          +card('Maryam resolved',(h.aiResolutionRate!=null?h.aiResolutionRate+'%':'—'),n(h.aiResolved)+'/'+n(h.aiHandled)+' AI chats')
+          +card('Happiness',stars(h.avgRating),'avg rating')
+          +card('Upcoming sessions',n(S.upcoming),n(S.lowSeat)+' low-seat')
+          +card('Accreditations',n(A.pending),'awaiting review')
+        +'</div>'
+        +'<div class="panel" style="margin-bottom:16px"><div class="panel-hd"><h2>Customer service &amp; wait times</h2></div><div style="padding:18px 20px;display:grid;grid-template-columns:1.1fr 1.3fr 1fr;gap:24px;align-items:center">'
+          +'<div><div style="'+EY+';margin-bottom:8px">FIRST-RESPONSE TIME</div><div style="font-size:34px;font-weight:300;color:'+(fastWait?'var(--green)':'#d68a2a')+'">'+mins(h.avgFirstResponseMins)+'</div><div style="font-size:12px;color:var(--slate2);margin-top:4px">average time a client waits for a first reply — Maryam or the team</div></div>'
+          +'<div style="display:flex;align-items:center;gap:16px">'+donut([{label:'Maryam',val:h.aiResolved,color:'#0d7377'},{label:'Escalated',val:h.escalated,color:'#f0a33a'}],'resolved',(h.aiResolutionRate!=null?h.aiResolutionRate+'%':'—'))+'<div style="font-size:12px;color:var(--slate2)"><div style="margin-bottom:7px"><b style="color:#0d7377;font-size:15px">'+n(h.aiResolved)+'</b> resolved by Maryam</div><div><b style="color:#f0a33a;font-size:15px">'+n(h.escalated)+'</b> escalated to a human</div></div></div>'
+          +'<div><div style="'+EY+';margin-bottom:12px">HAPPINESS · OUT OF 5</div>'+hbar('Maryam',(h.maryamRating&&h.maryamRating.avg)||0,5,'#9a6cff')+hbar('Human team',(h.teamRating&&h.teamRating.avg)||0,5,'#0d7377')+'</div>'
+        +'</div></div>'
+        +'<div class="panel" style="margin-bottom:16px"><div class="panel-hd"><h2>How we&#39;re helping the market</h2></div><div style="padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:28px">'
+          +'<div><div style="'+EY+';margin-bottom:12px">COMPLIANCE PACE · '+n(L.practising)+' PRACTITIONERS</div>'+stacked([{label:'Compliant',val:L.compliant,color:'#3aa76d'},{label:'On track',val:L.onTrack,color:'#1fb6a6'},{label:'At risk',val:L.atRisk,color:'#f0a33a'},{label:'Critical',val:L.critical,color:'#d65a5a'}])+'</div>'
+          +'<div><div style="'+EY+';margin-bottom:12px">BOOKING OUTCOMES'+(B.attendanceRate!=null?' · '+B.attendanceRate+'% ATTENDANCE':'')+'</div>'+hbar('Attended',B.attended,B.total||1,'#3aa76d')+hbar('No-show',B.noShow,B.total||1,'#d65a5a')+hbar('Cancelled',B.cancelled,B.total||1,'#9aa8a0')+'</div>'
+        +'</div></div>'
+        +'<div class="panel"><div class="panel-hd"><h2>Live operations</h2></div><div style="padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:28px">'
+          +'<div><div style="'+EY+';margin-bottom:12px">ACCREDITATION PIPELINE</div>'+hbar('Pending',A.pending,maxAcc,'#d68a2a')+hbar('Approved',A.approved,maxAcc,'#3aa76d')+hbar('Rejected',A.rejected,maxAcc,'#d65a5a')+hbar('Returned',A.returned,maxAcc,'#9aa8a0')
+            +'<div style="margin-top:14px;display:flex;gap:22px;font-size:11.5px;color:var(--slate2)"><div><b style="font-size:19px;color:var(--ink);font-weight:400">'+n(S.upcoming)+'</b><br>upcoming sessions</div><div><b style="font-size:19px;color:var(--ink);font-weight:400">'+n(S.openSeats)+'</b><br>open seats</div><div><b style="font-size:19px;color:'+(S.lowSeat>0?'#d68a2a':'var(--ink)')+';font-weight:400">'+n(S.lowSeat)+'</b><br>low-seat</div></div></div>'
+          +'<div><div style="'+EY+';margin-bottom:8px">RECENT ACTIVITY</div>'+(acts.length?acts.map(function(a){return '<div style="display:flex;gap:9px;padding:7px 0;border-bottom:1px solid var(--line)"><div style="flex:1;min-width:0"><div style="font-size:12.5px;color:var(--ink)">'+esc(a.summary||a.kind)+'</div><div style="font-size:11px;color:var(--slate3)">'+fdatetime(a.created_at)+(a.actor_name?' · '+esc(a.actor_name):'')+'</div></div></div>'}).join(''):'<div class="empty" style="padding:18px">No recent activity.</div>')+'</div>'
+        +'</div></div>';
+    }).catch(function(e){host.innerHTML='<div class="empty">'+esc(e.message||'Could not load operations')+'</div>'});
+  };
   var bkGT;window.bkSearchGo=function(){clearTimeout(bkGT);bkGT=setTimeout(loadBookings,250)};
   function loadBookings(){
     var qv=(document.getElementById('bkSearchG').value||'').trim();var st=document.getElementById('bkStatus').value;
