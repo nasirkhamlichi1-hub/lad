@@ -5,6 +5,10 @@
 <script src="lad-admin-guard.js" data-roles="lawyer"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>My CLPD — Government of Dubai</title>
+<!-- Single AI launcher: hide the old inline Lex fab (bottom-right) so it no longer
+     sits under the Messages button. Maryam stays reachable via the "Ask Maryam"
+     bar and the in-page "Ask Maryam" buttons. -->
+<style>#ladlex-fab,.ladlex-fab{display:none!important}</style>
 <!-- LAD CLPD — live API sync shim (multi-user persistence) -->
 <script src="runtime-config.js?v=render2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
