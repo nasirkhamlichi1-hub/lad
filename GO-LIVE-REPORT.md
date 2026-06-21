@@ -91,3 +91,31 @@ firm-compliance-portal, lad-crm, command-centre, lad-accreditation-review (uses 
 12. **Calendar + email/SMS integration** — push bookings + reminders to where lawyers already work.
 
 Highest ROI first: #1 (personal pace forecast), #7 (predictive DG view), #5 (real benchmarking).
+
+---
+
+## PRE-CUSTOMER-TESTING VERIFICATION (overnight, 21 Jun)
+
+Stood up a **fully seeded instance** (5,829 lawyers · 862 firms · 1,226 courses · 515 sessions · official Areas-of-Practice taxonomy) and ran real end-to-end tests.
+
+### Journeys — all green ✅
+- **Migrations**: 38 applied cleanly from an empty DB.
+- **Admin/CRM** (logged in as a real staff account): oversight, activity (+ per-admin filter), messages/admins, happiness, users, firms, anomalies, points-distribution, course-analytics, taxonomy, accreditations — **12/12 → 200**.
+- **Firm CO** (real login): firms/me, lawyers, insights, bookings, credits — **5/5 → 200**.
+- **Lawyer** (created a test account, real login): skills/me, lawyers/me, courses/upcoming — **3/3 → 200**.
+- **Public**: courses/upcoming, config, skills/taxonomy — green.
+
+### Security — verified empirically ✅
+- **Firm isolation (IDOR)**: a Galadari CO requesting `/firms/<another-firm>/lawyers` got back **their own** firm's 32 lawyers (param ignored by `effectiveFirmId`) — **no cross-firm leak**, proven by comparing counts + names.
+- **Password reset**: unknown user → 200 (no enumeration); weak pw → 400; reset → 200; **login with new password → 200**; token reuse → 400; bad token → 400.
+
+### Code health ✅
+- Every backend JS file parses (0 failures).
+- Every frontend page's scripts parse (27 files, 0 errors).
+
+### Blocker status update
+- 🔴→✅ **Password reset** — built, tested, merged (PR #67).
+- 🟥 still open: **Intelligence KPI deep-dive fabricated panels** (super-admin only, not customer-facing) — recommend wiring/blanking before any stakeholder demo of Intelligence.
+- 🟠 XSS escaping pass + CSP header (semi-trusted actors; the lawyer-catalogue titles were escaped as part of the calendar work).
+
+**Customer-facing readiness: GO.** The lawyer/firm journeys, auth (incl. reset), booking, messaging+rating, and firm-data isolation are all working and tested. Remaining items are internal/super-admin polish.
