@@ -353,6 +353,8 @@
   // finance). Operations analytics and Accreditation review are reserved for the
   // strategic tier (intelligence + super users).
   if(ME.role==='lad_admin'){['railOps','railAccred'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none'})}
+  // The Command Centre (digital-twin oversight) is super-admins only.
+  if(!IS_SUPER){var rc=document.getElementById('railCmd');if(rc)rc.style.display='none'}
 
   // ── shared state ──
   var CONV=[],SESS=[],FIRMS=[],TASKS_DUE=[];
