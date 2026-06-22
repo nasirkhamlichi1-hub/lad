@@ -1,0 +1,102 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 1180 1000] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 4630 >>
+stream
+0 0.42 0.247 rg 0 944 1180 56 re f
+BT /F2 20 Tf 1 1 1 rg 32 965 Td (CLPD Accreditation - Process Map) Tj ET
+BT /F1 11 Tf 0.749 0.890 0.812 rg 895 966 Td (Government of Dubai \267 Legal Affairs Department) Tj ET
+BT /F2 11 Tf 0.353 0.396 0.451 rg 40 880 Td (SUBMIT) Tj ET
+BT /F2 11 Tf 0.353 0.396 0.451 rg 40 700 Td (REVIEW) Tj ET
+BT /F2 11 Tf 0.353 0.396 0.451 rg 40 460 Td (DECISION) Tj ET
+BT /F2 11 Tf 0.353 0.396 0.451 rg 40 340 Td (GO-LIVE) Tj ET
+0.909 0.953 0.933 rg 0 0.42 0.247 RG 1 w 240 846 400 62 re B
+BT /F2 14 Tf 0.078 0.125 0.169 rg 289.85 882 Td (Provider or firm submits an application) Tj ET
+BT /F1 11 Tf 0.353 0.396 0.451 rg 310.75 862 Td (materials \267 objectives \267 audience \267 attachments) Tj ET
+0.909 0.953 0.933 rg 0 0.42 0.247 RG 1 w 240 754 400 62 re B
+BT /F2 14 Tf 0.078 0.125 0.169 rg 297.54999999999995 790 Td (Enters the LAD review queue - PENDING) Tj ET
+BT /F1 11 Tf 0.353 0.396 0.451 rg 308 770 Td (classified as Course/Activity or Provider/Entity) Tj ET
+0.890 0.945 0.941 rg 0.051 0.451 0.467 RG 1 w 240 662 400 62 re B
+BT /F2 14 Tf 0.078 0.125 0.169 rg 301.4 698 Td (Two LAD reviewers assigned - R1 & R2) Tj ET
+BT /F1 11 Tf 0.353 0.396 0.451 rg 283.25 678 Td (intelligence + super tier \267 plus Lex AI as a 3rd reviewer) Tj ET
+0.890 0.945 0.941 rg 0.051 0.451 0.467 RG 1 w 180 516 520 116 re B
+BT /F2 14 Tf 0.078 0.125 0.169 rg 220.54999999999998 608 Td (Each reviewer scores the rubric - pass >= 70% per section) Tj ET
+1 1 1 rg 0.796 0.827 0.863 RG 1 w 196 530 244 66 re B
+BT /F2 10.5 Tf 0.051 0.451 0.467 rg 268.9125 577 Td (COURSE / ACTIVITY) Tj ET
+BT /F1 11 Tf 0.353 0.396 0.451 rg 230 559 Td (Activity Review \267 5 criteria 0-4) Tj ET
+BT /F1 11 Tf 0.353 0.396 0.451 rg 227.25 543 Td (+ Trainer Review \267 4 criteria 0-5) Tj ET
+1 1 1 rg 0.796 0.827 0.863 RG 1 w 448 530 236 66 re B
+BT /F2 10.5 Tf 0.604 0.424 1 rg 516.9125 577 Td (PROVIDER / ENTITY) Tj ET
+BT /F1 11 Tf 0.353 0.396 0.451 rg 494.5 559 Td (Entity Review \267 8 criteria) Tj ET
+BT /F1 11 Tf 0.353 0.396 0.451 rg 475.25 543 Td (max 20 \267 institutional capability) Tj ET
+0.980 0.949 0.886 rg 0.788 0.569 0.227 RG 1 w 440 488 m 575 435 l 440 382 l 305 435 l B
+BT /F2 13 Tf 0.078 0.125 0.169 rg 372.075 440 Td (Both reviews >= 70%) Tj ET
+BT /F2 13 Tf 0.078 0.125 0.169 rg 379.225 422 Td (in every section?) Tj ET
+BT /F2 10.5 Tf 0 0.42 0.247 rg 452 352 Td (YES) Tj ET
+0.875 0.941 0.902 rg 0 0.42 0.247 RG 1 w 240 290 400 50 re B
+BT /F2 14 Tf 0.078 0.125 0.169 rg 301.4 310 Td (Approved - accreditation code issued) Tj ET
+0.875 0.941 0.902 rg 0 0.42 0.247 RG 1 w 240 226 400 46 re B
+BT /F2 14 Tf 0.078 0.125 0.169 rg 270.6 244 Td (Course published to the catalogue - bookable) Tj ET
+0.875 0.941 0.902 rg 0 0.42 0.247 RG 1 w 240 162 400 46 re B
+BT /F2 14 Tf 0.078 0.125 0.169 rg 324.5 180 Td (Lawyers book & attend sessions) Tj ET
+0 0.42 0.247 rg 240 98 400 46 re f
+BT /F2 14 Tf 1 1 1 rg 293.7 116 Td (Attendance filed -> CPD points awarded) Tj ET
+BT /F2 10.5 Tf 0.753 0.224 0.169 rg 598 444 Td (NO) Tj ET
+0.992 0.925 0.922 rg 0.753 0.224 0.169 RG 1 w 720 436 400 64 re B
+BT /F2 14 Tf 0.078 0.125 0.169 rg 862.25 474 Td (Request changes) Tj ET
+BT /F1 11 Tf 0.353 0.396 0.451 rg 799 454 Td (returns to the provider to revise & resubmit) Tj ET
+0.992 0.925 0.922 rg 0.753 0.224 0.169 RG 1 w 720 380 194 44 re B
+BT /F2 14 Tf 0.078 0.125 0.169 rg 793.9 397 Td (Reject) Tj ET
+0.980 0.949 0.886 rg 0.788 0.569 0.227 RG 1 w 926 380 194 44 re B
+BT /F2 14 Tf 0.078 0.125 0.169 rg 980.65 397 Td (Defer to DG) Tj ET
+0.353 0.396 0.451 RG 1.4 w 440 846 m 440 818 l S
+0.353 0.396 0.451 rg 440 818 m 436 826 l 444 826 l f
+0.353 0.396 0.451 RG 1.4 w 440 754 m 440 726 l S
+0.353 0.396 0.451 rg 440 726 m 436 734 l 444 734 l f
+0.353 0.396 0.451 RG 1.4 w 440 662 m 440 634 l S
+0.353 0.396 0.451 rg 440 634 m 436 642 l 444 642 l f
+0.353 0.396 0.451 RG 1.4 w 440 516 m 440 490 l S
+0.353 0.396 0.451 rg 440 490 m 436 498 l 444 498 l f
+0 0.42 0.247 RG 1.4 w 440 382 m 440 342 l S
+0 0.42 0.247 rg 440 342 m 436 350 l 444 350 l f
+0 0.42 0.247 RG 1.4 w 440 290 m 440 274 l S
+0 0.42 0.247 rg 440 274 m 436 282 l 444 282 l f
+0 0.42 0.247 RG 1.4 w 440 226 m 440 210 l S
+0 0.42 0.247 rg 440 210 m 436 218 l 444 218 l f
+0 0.42 0.247 RG 1.4 w 440 162 m 440 146 l S
+0 0.42 0.247 rg 440 146 m 436 154 l 444 154 l f
+0.753 0.224 0.169 RG 1.4 w 575 435 m 716 467 l S
+0.753 0.224 0.169 rg 716 467 m 709.0836826225559 461.3286197504958 l 707.3131053739303 469.1302257522527 l f
+0.753 0.224 0.169 RG 1.4 w [5 4] 0 d 720 480 m 640 530 640 820 644 876 c S [] 0 d
+0.753 0.224 0.169 rg 644 876 m 650.0438648137423 869.4066929304629 l 642.3516732326158 867.2089239072839 l f
+
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000253 00000 n 
+0000004935 00000 n 
+0000005032 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+5134
+%%EOF
