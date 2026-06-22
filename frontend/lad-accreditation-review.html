@@ -1174,12 +1174,20 @@ async function refreshReviewerOptions(){
     const r = await fetch(base + '/api/v1/accreditations/_/reviewers', { headers: _authHeaders(), cache: 'no-store' });
     if (!r.ok) return;
     const body = await r.json();
-    const reviewers = body.reviewers || body.data || [];
+    const reviewers = (body.reviewers || body.data || []).filter(Boolean);
+    // Feed the eligible reviewer staff into BOTH the R1/R2 assignment selects
+    // (the global REVIEWERS list) and the top "All reviewers" filter.
+    const before = REVIEWERS.length;
+    if (reviewers.length) REVIEWERS = Array.from(new Set([...REVIEWERS, ...reviewers])).sort();
     const sel = document.getElementById('reviewerFilter');
-    if (!sel) return;
-    const current = sel.value;
-    const allOptions = Array.from(new Set([...REVIEWERS, ...reviewers])).filter(Boolean).sort();
-    sel.innerHTML = '<option value="">All reviewers</option>' + allOptions.map(n => `<option value="${n}"${n === current ? ' selected' : ''}>${n}</option>`).join('');
+    if (sel) {
+      const current = sel.value;
+      sel.innerHTML = '<option value="">All reviewers</option>' + REVIEWERS.map(n => `<option value="${esc(n)}"${n === current ? ' selected' : ''}>${esc(n)}</option>`).join('');
+    }
+    // New reviewers appeared → re-render the open application so R1/R2 show them.
+    if (REVIEWERS.length !== before && typeof renderDetail === 'function' && typeof _selectedIdx === 'number') {
+      try { renderDetail(); } catch (_) {}
+    }
   } catch (_) { /* non-fatal */ }
 }
 
