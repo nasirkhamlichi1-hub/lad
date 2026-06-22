@@ -1308,37 +1308,75 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
       <section class="section" id="heatmap">
         <div class="section-hd">
           <div>
-            <div class="section-eyebrow gold" data-cfg="intel_sec_heatmap_eyebrow">COMPLIANCE INTELLIGENCE</div>
-            <h2 class="section-title" data-cfg-html="intel_sec_heatmap_title">Skill coverage <em>heatmap</em></h2>
-            <div class="section-desc" id="heatmapDesc">Profession-wide coverage by skill topic — where the bar is dark green, the obligation is well served; red shows gaps to close.</div>
-          </div>
-          <div class="section-actions">
-            <button class="btn btn-ghost btn-sm" onclick="switchHeatmap('courses')" id="hmBtnCourses" style="background:var(--ink);color:#fff;border-color:var(--ink)">Coverage</button>
-            <button class="btn btn-ghost btn-sm" onclick="switchHeatmap('trainers')" id="hmBtnTrainers">Upcoming demand</button>
+            <div class="section-eyebrow gold">PROVIDER PERFORMANCE</div>
+            <h2 class="section-title">Course &amp; trainer <em style="color:#C9913A">feedback</em></h2>
+            <div class="section-desc">Live participant feedback across every accredited course and provider — the same source the Command Centre ★ Feedback layer reads. <span id="fbSourceNote" style="color:var(--slate3)"></span></div>
           </div>
         </div>
-        <div class="heatmap-card" id="heatmapCard">
-          <div id="hmCourses">
-            <div id="hmCoverageGrid" class="heatmap-grid" style="grid-template-columns:2fr repeat(3,1fr)">
-              <div style="grid-column:1/-1;padding:34px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:12px">Building coverage map…</div>
-            </div>
-          </div>
-          <div id="hmTrainers" style="display:none">
-            <div id="hmDemandGrid" class="heatmap-grid" style="grid-template-columns:2fr repeat(3,1fr)">
-              <div style="grid-column:1/-1;padding:34px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:12px">Loading upcoming course demand…</div>
-            </div>
-          </div>
-          <div class="chart-legend" style="margin-top:18px">
-            <span style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-right:8px">ATTENDANCE SCALE</span>
-            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#8a1a1e"></div>&lt;50%</div>
-            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#c87838"></div>50–65%</div>
-            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#e0c890"></div>65–75%</div>
-            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#7ab088"></div>75–85%</div>
-            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#006B3F"></div>85–95%</div>
-            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#003820"></div>95%+</div>
-          </div>
-        </div>
+        <div id="fbDashboard"><div style="padding:42px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:12px">Loading participant feedback…</div></div>
       </section>
+      <script>
+      (function(){
+        var base=(window.LAD_API_BASE||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
+        function tok(){return localStorage.getItem('lad_token')||'';}
+        function eH(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+        function n(x){return (x==null||isNaN(x))?'—':Number(x).toLocaleString();}
+        function ratingColor(v){v=Number(v)||0;return v>=4.5?'#0c8a4a':v>=4?'#3aa76d':v>=3.5?'#C9913A':v>=3?'#d68a2a':'#d65a5a';}
+        function starRow(v){v=Number(v)||0;var full=Math.round(v),s='';for(var i=1;i<=5;i++)s+='<span style="color:'+(i<=full?'#f5b301':'#d8dee8')+';font-size:13px">★</span>';return s;}
+        function dimBar(label,val){var pct=Math.max(0,Math.min(100,(Number(val)||0)/5*100));return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px"><span style="color:var(--slate2)">'+label+'</span><span style="font-weight:600;font-family:var(--mono)">'+(val!=null?Number(val).toFixed(2):'—')+'</span></div><div style="height:7px;background:var(--paper2,#eef1f5);border-radius:5px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+ratingColor(val)+';border-radius:5px"></div></div></div>';}
+        var MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        function fdate(iso){if(!iso)return 'TBC';var d=new Date(iso);return isNaN(d)?'TBC':(d.getUTCDate()+' '+MO[d.getUTCMonth()]+' '+d.getUTCFullYear());}
+        var EY='font-family:var(--mono);font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--slate3);font-weight:600';
+        var CARD='background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px';
+        function paint(s, up){
+          var host=document.getElementById('fbDashboard'); if(!host) return;
+          if(!s||!Array.isArray(s.courses)||!s.courses.length){ host.innerHTML='<div style="'+CARD+';text-align:center;color:var(--slate2);padding:40px">No participant feedback recorded yet. As attendees submit feedback, this dashboard fills in.</div>'; return; }
+          var T=s.totals||{}, courses=s.courses.slice(), providers=(s.providers||[]).slice();
+          var tot=0,w=0; courses.forEach(function(c){if(c.overall!=null&&c.responses){tot+=c.overall*c.responses;w+=c.responses;}});
+          var overall=w?tot/w:null;
+          function dim(k){var t=0,ww=0;courses.forEach(function(c){if(c[k]!=null&&c.responses){t+=c[k]*c.responses;ww+=c.responses;}});return ww?t/ww:null;}
+          var rated=courses.filter(function(c){return c.responses>0&&c.overall!=null;}).sort(function(a,b){return b.overall-a.overall;});
+          var top=rated.slice(0,5), bottom=rated.slice(-5).reverse().filter(function(c){return top.indexOf(c)<0;});
+          providers.sort(function(a,b){return (b.stars||0)-(a.stars||0);});
+          var fbIds={}; courses.forEach(function(c){if(c.course_id)fbIds[c.course_id]=c;if(c.key)fbIds[c.key]=c;});
+          var future=(up||[]).map(function(u){var f=fbIds[u.id]||fbIds[u.course_key]||null;if(!f)return null;var nx=(u.sessions&&u.sessions[0])?u.sessions[0]:null;return {title:u.title,rating:f.overall,responses:f.responses,provider:f.provider_name,next:nx?(nx.scheduled_at||nx.date):null};}).filter(Boolean).sort(function(a,b){return (b.rating||0)-(a.rating||0);});
+          var note=document.getElementById('fbSourceNote'); if(note) note.textContent='· '+(s.totals&&s.totals.years?('cycles '+s.totals.years.join(' & ')):'');
+          function courseRow(c){return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)"><div style="flex:1;min-width:0"><div style="font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+eH(c.course_name)+'</div><div style="'+EY+'">'+eH(c.provider_name||'')+' · '+n(c.responses)+' responses</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:var(--serif);font-size:18px;color:'+ratingColor(c.overall)+'">'+(c.overall!=null?Number(c.overall).toFixed(2):'—')+'</div><div style="font-size:10px">'+starRow(c.overall)+'</div></div></div>';}
+          host.innerHTML=
+            '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">'
+              +'<div style="'+CARD+'"><div style="'+EY+';margin-bottom:9px">OVERALL RATING</div><div style="font-size:30px;font-weight:300;line-height:1;color:'+ratingColor(overall)+'">'+(overall!=null?overall.toFixed(2):'—')+'<em style="font-size:15px"> /5</em></div><div style="margin-top:6px">'+starRow(overall)+'</div></div>'
+              +'<div style="'+CARD+'"><div style="'+EY+';margin-bottom:9px">TOTAL RESPONSES</div><div style="font-size:30px;font-weight:300;line-height:1">'+n(T.responses)+'</div><div style="font-size:11.5px;color:var(--slate2);margin-top:6px">participant submissions</div></div>'
+              +'<div style="'+CARD+'"><div style="'+EY+';margin-bottom:9px">COURSES RATED</div><div style="font-size:30px;font-weight:300;line-height:1">'+n(T.courses_rated||rated.length)+'</div><div style="font-size:11.5px;color:var(--slate2);margin-top:6px">with participant feedback</div></div>'
+              +'<div style="'+CARD+'"><div style="'+EY+';margin-bottom:9px">PROVIDERS RATED</div><div style="font-size:30px;font-weight:300;line-height:1">'+n(T.providers_rated||providers.length)+'</div><div style="font-size:11.5px;color:var(--slate2);margin-top:6px">accredited providers</div></div>'
+            +'</div>'
+            +'<div style="'+CARD+';margin-bottom:16px"><div style="'+EY+';margin-bottom:14px">PROVIDER SCORECARD</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px">'
+              +providers.map(function(p){return '<div style="border:1px solid var(--line);border-radius:11px;padding:14px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div><div style="font-size:14px;font-weight:600;color:var(--ink)">'+eH(p.provider_name)+'</div><div style="'+EY+'">'+n(p.responses)+' responses</div></div><div style="text-align:right"><div style="font-family:var(--serif);font-size:20px;color:'+ratingColor(p.stars)+'">'+(p.stars!=null?Number(p.stars).toFixed(2):'—')+'</div><div style="font-size:10px">'+starRow(p.stars)+'</div></div></div>'+dimBar('Knowledge',p.knowledge)+dimBar('Clarity',p.clarity)+dimBar('Interaction',p.interaction)+'</div>';}).join('')
+            +'</div></div>'
+            +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">'
+              +'<div style="'+CARD+'"><div style="'+EY+';margin-bottom:12px;color:#0c8a4a">★ TOP RATED COURSES</div>'+(top.length?top.map(courseRow).join(''):'<div style="color:var(--slate3);font-size:12px">—</div>')+'</div>'
+              +'<div style="'+CARD+'"><div style="'+EY+';margin-bottom:12px;color:#d65a5a">LOWEST RATED COURSES</div>'+(bottom.length?bottom.map(courseRow).join(''):'<div style="color:var(--slate3);font-size:12px">—</div>')+'</div>'
+              +'<div style="'+CARD+'"><div style="'+EY+';margin-bottom:14px">RATING DIMENSIONS</div>'+dimBar('Content quality',dim('content'))+dimBar('Practical benefit',dim('benefits'))+dimBar('Applicability',dim('practical'))+dimBar('Overall',dim('overall'))+'<div style="font-size:11px;color:var(--slate3);margin-top:8px">weighted across '+n(T.responses)+' responses</div></div>'
+            +'</div>'
+            +'<div style="'+CARD+'"><div style="'+EY+';margin-bottom:6px">FUTURE COURSES REPRESENTED IN THIS DASHBOARD</div><div style="font-size:12px;color:var(--slate2);margin-bottom:12px">Upcoming scheduled courses that already carry participant feedback — so you can see the track record behind what\'s on offer next.</div>'
+              +(future.length?('<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">'+future.map(function(f){return '<div style="border:1px solid var(--line);border-left:3px solid '+ratingColor(f.rating)+';border-radius:9px;padding:11px 13px"><div style="font-size:13px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+eH(f.title)+'</div><div style="'+EY+';margin:3px 0 7px">'+eH(f.provider||'')+' · next '+fdate(f.next)+'</div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--serif);font-size:16px;color:'+ratingColor(f.rating)+'">'+(f.rating!=null?Number(f.rating).toFixed(2):'—')+'</span>'+starRow(f.rating)+'<span style="'+EY+';margin-left:auto">'+n(f.responses)+' resp.</span></div></div>';}).join('')+'</div>'):'<div style="color:var(--slate3);font-size:12.5px;padding:8px 0">No upcoming scheduled course yet matches a course with recorded feedback. Once a previously-rated course is scheduled again, it appears here.</div>')
+            +'</div>';
+        }
+        function load(){
+          var host=document.getElementById('fbDashboard'); if(!host) return;
+          Promise.all([
+            fetch(base+'/api/v1/admin/feedback',{headers:{Authorization:'Bearer '+tok()}}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+            fetch(base+'/api/v1/courses/upcoming').then(function(r){return r.ok?r.json():[];}).catch(function(){return [];})
+          ]).then(function(res){
+            var fb=res[0], up=Array.isArray(res[1])?res[1]:[];
+            if(fb&&Array.isArray(fb.courses)&&fb.courses.length){ paint(fb, up); return; }
+            // fall back to the static export if the API has none
+            fetch('feedback.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(j){ paint(j&&j.summary?j.summary:j, up); }).catch(function(){ paint(null, up); });
+          });
+        }
+        if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',load); else load();
+        setInterval(load, 120000);
+      })();
+      </script>
 
 
       <!-- ════ COURSE FEEDBACK INTELLIGENCE ════ -->
