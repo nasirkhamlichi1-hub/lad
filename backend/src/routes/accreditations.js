@@ -459,6 +459,15 @@ router.get('/', requireAuth, (req, res) => {
 router.get('/_/reviewers', requireAuth, (req, res) => {
   if (!isReviewer(req.user)) return res.status(403).json({ error: 'Reviewers only' });
   const set = new Set();
+  // The reviewer-eligible LAD staff (active) — the people who can be assigned R1/R2.
+  try {
+    const ph = REVIEWER_ROLES.map(() => '?').join(',');
+    for (const r of db.prepare(`SELECT first_name, last_name FROM staff WHERE COALESCE(LOWER(status),'active')='active' AND role IN (${ph})`).all(...REVIEWER_ROLES)) {
+      const n = `${r.first_name || ''} ${r.last_name || ''}`.trim();
+      if (n) set.add(n);
+    }
+  } catch (_) {}
+  // Plus any names already recorded on applications (legacy / no-longer-eligible).
   for (const r of db.prepare('SELECT DISTINCT reviewer1 r FROM accreditations WHERE reviewer1 IS NOT NULL').all()) set.add(r.r);
   for (const r of db.prepare('SELECT DISTINCT reviewer2 r FROM accreditations WHERE reviewer2 IS NOT NULL').all()) set.add(r.r);
   res.json({ reviewers: Array.from(set).filter(Boolean).sort() });

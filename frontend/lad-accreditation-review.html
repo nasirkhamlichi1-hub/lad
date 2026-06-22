@@ -614,7 +614,6 @@ function renderCenter(a){
             <option value="">— Unassigned</option>
             ${REVIEWERS.map(r => `<option value="${r}" ${r===a.reviewer1?'selected':''}>${r}</option>`).join('')}
           </select>
-          ${(window.CURRENT_USER_NAME && a.reviewer1 !== window.CURRENT_USER_NAME) ? `<button class="btn btn-xs btn-ghost" style="padding:3px 8px;font-size:10.5px" onclick="assignMe(${_selectedIdx}, 1)" title="Assign yourself as Reviewer 1">+ me</button>` : ''}
           ${(window.CURRENT_USER_NAME && a.reviewer1 === window.CURRENT_USER_NAME) ? `<span style="font-family:var(--mono);font-size:9.5px;color:var(--teal);font-weight:700;letter-spacing:.5px">YOU</span>` : ''}
         </div>
         <span style="color:var(--slate3)">·</span>
@@ -624,7 +623,6 @@ function renderCenter(a){
             <option value="">— Unassigned</option>
             ${REVIEWERS.map(r => `<option value="${r}" ${r===a.reviewer2?'selected':''}>${r}</option>`).join('')}
           </select>
-          ${(window.CURRENT_USER_NAME && a.reviewer2 !== window.CURRENT_USER_NAME) ? `<button class="btn btn-xs btn-ghost" style="padding:3px 8px;font-size:10.5px" onclick="assignMe(${_selectedIdx}, 2)" title="Assign yourself as Reviewer 2">+ me</button>` : ''}
           ${(window.CURRENT_USER_NAME && a.reviewer2 === window.CURRENT_USER_NAME) ? `<span style="font-family:var(--mono);font-size:9.5px;color:var(--teal);font-weight:700;letter-spacing:.5px">YOU</span>` : ''}
         </div>
         <span style="color:var(--purple);font-size:11px;margin-left:6px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase">+ Lex AI</span>
