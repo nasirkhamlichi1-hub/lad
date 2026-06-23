@@ -15,6 +15,10 @@ html.lad-embed .lgn,html.lad-embed .adm-brand,html.lad-embed .adm-stats,html.lad
 html.lad-embed .adm-topbar{position:static!important;top:auto!important;box-shadow:none;grid-template-columns:1fr;padding:8px 22px}
 html.lad-embed .adm-actions{justify-content:flex-end}
 html.lad-embed .adm-filterbar{top:0!important}
+/* In embed mode the topbar is static and the page-tabs are hidden, so the
+   content sub-tab bar must stick to the top of the frame, not 140px down
+   (otherwise it floats over the cards mid-screen). */
+html.lad-embed .adm-cnt-subtabs{top:0!important}
 </style>
 <!-- LAD CLPD — live API sync shim (multi-user persistence) -->
 <script src="runtime-config.js?v=render2"></script>
