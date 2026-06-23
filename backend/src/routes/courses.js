@@ -250,6 +250,96 @@ router.get('/:id', optionalAuth, (req, res) => {
   res.json(Object.assign({}, c, { tags: courseTopics(c.id) }));
 });
 
+// ─── Course materials (SCORM packages, slides, PDFs) ─────────────────
+const MATERIAL_ROLES = ['lad_admin', 'provider_admin', 'lad_super_admin', 'super_admin', 'dg'];
+const MAX_INLINE_BYTES = 10 * 1024 * 1024; // 10 MB inline cap; larger → use a link
+const _mid = () => 'MT-' + crypto.randomBytes(6).toString('hex').toUpperCase().slice(0, 10);
+const isMaterialAdmin = (u) => !!u && MATERIAL_ROLES.includes(u.role);
+
+// Can this user see/download a course's materials?  Admins always; a lawyer if
+// they have a (non-cancelled) booking for the course.
+function canAccessMaterials(courseId, user) {
+  if (isMaterialAdmin(user)) return true;
+  if (user && user.role === 'firm_compliance_officer') return true;
+  if (user && user.user_type === 'lawyer') {
+    try {
+      const b = db.prepare("SELECT 1 FROM bookings WHERE lawyer_id = ? AND course_id = ? AND status NOT IN ('cancelled','refunded') LIMIT 1").get(user.sub, courseId);
+      return !!b;
+    } catch (_) { return false; }
+  }
+  return false;
+}
+const materialMeta = (m) => ({
+  id: m.id, course_id: m.course_id, title: m.title, kind: m.kind,
+  url: m.kind === 'link' || m.kind === 'scorm' ? (m.url || null) : null,
+  file_name: m.file_name || null, mime: m.mime || null, size: Number(m.size) || 0,
+  has_file: !!m.data, created_at: m.created_at,
+});
+
+// GET materials list (metadata only — never the inline payload)
+router.get('/:id/materials', optionalAuth, (req, res) => {
+  const course = store.getCourseById(req.params.id);
+  if (!course) return res.status(404).json({ error: 'Course not found' });
+  if (!canAccessMaterials(req.params.id, req.user)) {
+    return res.status(403).json({ error: 'no_access', message: 'Book or complete this course to access its materials.' });
+  }
+  let rows = [];
+  try { rows = db.prepare('SELECT * FROM course_materials WHERE course_id = ? ORDER BY created_at').all(req.params.id); } catch (_) {}
+  res.json({ materials: rows.map(materialMeta) });
+});
+
+// POST add a material (admin) — a link/SCORM URL, or a small inline file
+router.post('/:id/materials', requireRole(...MATERIAL_ROLES), (req, res) => {
+  const course = store.getCourseById(req.params.id);
+  if (!course) return res.status(404).json({ error: 'Course not found' });
+  const title = (req.body.title || '').toString().trim();
+  if (!title) return res.status(400).json({ error: 'title is required' });
+  let kind = (req.body.kind || 'link').toString();
+  if (!['link', 'file', 'scorm'].includes(kind)) kind = 'link';
+  const url = (req.body.url || '').toString().trim() || null;
+  let data = req.body.data ? String(req.body.data) : null; // base64 (may be a data: URL)
+  if (data && data.indexOf('base64,') >= 0) data = data.split('base64,').pop();
+  if (!url && !data) return res.status(400).json({ error: 'Provide a url (link/SCORM) or an uploaded file.' });
+  let size = 0;
+  if (data) {
+    size = Math.floor(data.length * 3 / 4);
+    if (size > MAX_INLINE_BYTES) {
+      return res.status(413).json({ error: 'file_too_large', message: 'File over 10 MB — host it and add it as a link/SCORM URL instead.' });
+    }
+  }
+  const id = _mid();
+  try {
+    db.prepare(`INSERT INTO course_materials (id, course_id, title, kind, url, file_name, mime, size, data, created_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?)`)
+      .run(id, req.params.id, title, kind, url, (req.body.file_name || null), (req.body.mime || null), size, data, (req.user && req.user.sub) || null);
+  } catch (e) { return res.status(500).json({ error: 'save_failed', message: e.message }); }
+  const row = db.prepare('SELECT * FROM course_materials WHERE id = ?').get(id);
+  res.status(201).json(materialMeta(row));
+});
+
+// GET download a single material (inline file streamed, or redirect to the URL)
+router.get('/:id/materials/:mid/download', optionalAuth, (req, res) => {
+  if (!canAccessMaterials(req.params.id, req.user)) {
+    return res.status(403).json({ error: 'no_access', message: 'Book or complete this course to access its materials.' });
+  }
+  const m = db.prepare('SELECT * FROM course_materials WHERE id = ? AND course_id = ?').get(req.params.mid, req.params.id);
+  if (!m) return res.status(404).json({ error: 'Material not found' });
+  if (m.data) {
+    const buf = Buffer.from(m.data, 'base64');
+    res.setHeader('Content-Type', m.mime || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${(m.file_name || m.title || 'material').replace(/"/g, '')}"`);
+    return res.send(buf);
+  }
+  if (m.url) return res.redirect(m.url);
+  res.status(404).json({ error: 'No downloadable content' });
+});
+
+// DELETE a material (admin)
+router.delete('/:id/materials/:mid', requireRole(...MATERIAL_ROLES), (req, res) => {
+  const r = db.prepare('DELETE FROM course_materials WHERE id = ? AND course_id = ?').run(req.params.mid, req.params.id);
+  res.json({ deleted: r.changes });
+});
+
 // PUT /api/v1/courses/:id — CMS edit (LAD admin only)
 router.put('/:id', requireRole('lad_admin', 'provider_admin'), (req, res) => {
   const merged = { ...req.body, id: req.params.id };

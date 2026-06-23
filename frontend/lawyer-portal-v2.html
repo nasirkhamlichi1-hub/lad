@@ -3457,7 +3457,9 @@ function paintCompletedList(bookings) {
     return '<div style="display:grid;grid-template-columns:90px 1fr auto auto;gap:14px;align-items:center;padding:14px 18px;background:var(--white);border:1px solid var(--line);border-radius:12px;margin-bottom:8px">'
       + '<div style="font-family:var(--mono);font-size:11px;color:var(--slate3);letter-spacing:.4px">' + date + '</div>'
       + '<div><div style="font-weight:600;font-size:13.5px">' + (b.course_title || b.course_title_current || b.legacy_status || 'Course') + '</div>'
-      + (b.venue ? '<div style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-top:3px">' + b.venue + '</div>' : '') + '</div>'
+      + (b.venue ? '<div style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-top:3px">' + b.venue + '</div>' : '')
+      + (b.course_id ? '<button onclick="viewMaterials(\'' + b.course_id + '\',\'' + String(b.course_title || 'Course').replace(/'/g, "\\'") + '\')" style="margin-top:6px;background:none;border:none;padding:0;color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline">📚 Course materials</button>' : '')
+      + '</div>'
       + '<span style="background:var(--paper);padding:4px 10px;border-radius:6px;font-family:var(--mono);font-size:10px;color:' + statusColor + ';font-weight:600;text-transform:uppercase">' + statusLabel + '</span>'
       + '<span style="font-family:var(--serif);font-size:18px;color:var(--green);font-weight:500;min-width:60px;text-align:right">' + ptsHtml + '</span>'
       + action
@@ -4259,6 +4261,51 @@ async function confirmBooking(isElearn) {
   if (typeof loadMyAttendance === 'function') { Promise.resolve(loadMyAttendance()).then(goToMyBookings); }
   else { goToMyBookings(); }
   setTimeout(() => showToast('✦ Your skills graph has been updated'), 1800);
+}
+
+// Course materials viewer — lists SCORM/files for a course the lawyer is
+// enrolled in and lets them open links or download files (auth-gated).
+async function viewMaterials(courseId, title) {
+  var base = ((window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com').replace(/\/$/, '');
+  var token = localStorage.getItem('lad_token') || '';
+  var ov = document.getElementById('matOverlay') || (function () {
+    var d = document.createElement('div'); d.id = 'matOverlay';
+    d.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,32,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    d.onclick = function (e) { if (e.target === d) d.remove(); };
+    document.body.appendChild(d); return d;
+  })();
+  ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:540px;width:100%;max-height:80vh;overflow:auto;padding:24px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><h3 style="margin:0;font-size:18px">Course materials</h3><button onclick="document.getElementById(\'matOverlay\').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#8a96a3">×</button></div><div style="color:#5a6573;font-size:13px;margin-bottom:14px">' + (title || '') + '</div><div id="matBody" style="color:#5a6573;font-size:13.5px">Loading…</div></div>';
+  try {
+    var r = await fetch(base + '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials', { headers: { Authorization: 'Bearer ' + token } });
+    var body = document.getElementById('matBody');
+    if (r.status === 403) { body.innerHTML = 'Book or complete this course to access its materials.'; return; }
+    var j = await r.json(); var mats = (j && j.materials) || [];
+    if (!mats.length) { body.innerHTML = 'No materials have been published for this course yet.'; return; }
+    body.innerHTML = mats.map(function (m) {
+      var icon = m.kind === 'scorm' ? '📦' : m.kind === 'link' ? '🔗' : '📄';
+      var dl = base + '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials/' + m.id + '/download';
+      return '<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #eef1f4">'
+        + '<span style="font-size:18px">' + icon + '</span>'
+        + '<div style="flex:1"><div style="font-weight:600;color:#14202b">' + (m.title || 'Material') + '</div><div style="font-size:11px;color:#8a96a3;font-family:monospace">' + (m.kind || '').toUpperCase() + (m.size ? ' · ' + (m.size / 1024 / 1024).toFixed(2) + ' MB' : '') + '</div></div>'
+        + '<button onclick="downloadMaterial(\'' + dl + '\',' + (m.has_file ? 'true' : 'false') + ',\'' + (m.url ? encodeURIComponent(m.url) : '') + '\')" style="background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer">' + (m.has_file ? 'Download' : 'Open') + '</button>'
+        + '</div>';
+    }).join('');
+  } catch (e) { var b = document.getElementById('matBody'); if (b) b.innerHTML = 'Could not load materials — please try again.'; }
+}
+async function downloadMaterial(dlUrl, hasFile, encUrl) {
+  // Links/SCORM URLs open directly; inline files stream through the auth-gated
+  // endpoint, so fetch as a blob with the token then save.
+  if (!hasFile && encUrl) { window.open(decodeURIComponent(encUrl), '_blank'); return; }
+  var token = localStorage.getItem('lad_token') || '';
+  try {
+    var r = await fetch(dlUrl, { headers: { Authorization: 'Bearer ' + token } });
+    if (!r.ok) { showToast('Download failed.'); return; }
+    var blob = await r.blob();
+    var cd = r.headers.get('Content-Disposition') || '';
+    var name = (cd.match(/filename="?([^"]+)"?/) || [])[1] || 'material';
+    var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 1000);
+  } catch (e) { showToast('Download failed — please try again.'); }
 }
 
 // Bring the "My bookings" (completed/attendance) section into view.

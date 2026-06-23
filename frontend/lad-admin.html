@@ -1499,6 +1499,7 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
     <button class="adm-tab" data-tab="image" onclick="switchTab('image')">Image</button>
     <button class="adm-tab" data-tab="description" onclick="switchTab('description')">Description</button>
     <button class="adm-tab" data-tab="schedule" onclick="switchTab('schedule')">Schedule</button>
+    <button class="adm-tab" data-tab="materials" onclick="switchTab('materials')">Materials</button>
     <button class="adm-tab" data-tab="impact" onclick="switchTab('impact')">Impact</button>
     <button class="adm-tab" data-tab="tags" onclick="switchTab('tags')">Smart tags</button>
   </nav>
@@ -1530,15 +1531,15 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
           <label class="adm-label adm-label-required">Type</label>
           <div class="adm-radio-group">
             <label class="adm-radio">
-              <input type="radio" name="type" value="mandatory" onchange="updateImagePreview()"/>
+              <input type="radio" name="type" value="mandatory" onchange="updateImagePreview();toggleElearningUI()"/>
               <span class="adm-radio-label"><span class="adm-radio-dot" style="color:var(--red)"></span>Mandatory</span>
             </label>
             <label class="adm-radio">
-              <input type="radio" name="type" value="accredited" onchange="updateImagePreview()"/>
+              <input type="radio" name="type" value="accredited" onchange="updateImagePreview();toggleElearningUI()"/>
               <span class="adm-radio-label"><span class="adm-radio-dot" style="color:var(--blue)"></span>Accredited</span>
             </label>
             <label class="adm-radio">
-              <input type="radio" name="type" value="elearning" onchange="updateImagePreview()"/>
+              <input type="radio" name="type" value="elearning" onchange="updateImagePreview();toggleElearningUI()"/>
               <span class="adm-radio-label"><span class="adm-radio-dot" style="color:var(--purple)"></span>E-learning</span>
             </label>
           </div>
@@ -1678,6 +1679,29 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
         </div>
         <div id="bulkDatesMsg" style="font-size:12px;margin-top:9px;color:var(--slate3)"></div>
       </div>
+    </div>
+
+    <!-- MATERIALS — SCORM packages, slides, PDFs attendees download -->
+    <div class="adm-pane" data-pane="materials">
+      <div class="adm-hint" style="margin-bottom:14px;padding:11px 14px;background:var(--paper);border-left:3px solid var(--purple);border-radius:0 7px 7px 0">
+        Add the <strong>SCORM package</strong> and any course files (slides, PDFs, worksheets). Enrolled lawyers download these from their portal; e-learning learners use them to complete the course. Files up to 10 MB upload directly — host anything larger and add it as a link.
+      </div>
+      <div id="materialsList" style="margin-bottom:14px"></div>
+      <div id="materialsAddBox" style="background:var(--paper);border:1px solid var(--line2);border-radius:10px;padding:14px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div style="flex:2;min-width:180px"><label class="adm-label" style="margin-bottom:3px">Title</label><input id="matTitle" class="adm-input" placeholder="e.g. SCORM package / Slides" style="width:100%"/></div>
+          <div style="flex:1;min-width:130px"><label class="adm-label" style="margin-bottom:3px">Type</label><select id="matKind" class="adm-select-full" onchange="matKindChange()"><option value="scorm">SCORM (link)</option><option value="link">Link / URL</option><option value="file">Upload file</option></select></div>
+        </div>
+        <div id="matInputArea" style="margin-top:10px">
+          <div id="matUrlWrap"><label class="adm-label" style="margin-bottom:3px">URL</label><input id="matUrl" class="adm-input" placeholder="https://…/package.zip" style="width:100%"/></div>
+          <div id="matFileWrap" style="display:none"><label class="adm-label" style="margin-bottom:3px">File (≤ 10 MB)</label><input id="matFile" type="file" class="adm-input" style="width:100%;padding:8px"/></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+          <button type="button" id="matAddBtn" onclick="addMaterial()" style="background:var(--green,#006B3F);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer">+ Add material</button>
+          <span id="matMsg" style="font-size:12px;color:var(--slate3)"></span>
+        </div>
+      </div>
+      <div id="materialsSaveFirst" style="display:none;padding:18px;text-align:center;color:var(--slate2);font-size:13px;background:var(--paper);border:1px dashed var(--line2);border-radius:10px">Save the course first, then re-open it to attach materials.</div>
     </div>
 
     <!-- IMPACT -->
@@ -2631,6 +2655,7 @@ function switchTab(tab){
   document.querySelectorAll('.adm-pane').forEach(p => p.classList.toggle('active', p.dataset.pane === tab));
   if (tab === 'image') renderPresets();
   if (tab === 'schedule') renderSessions();
+  if (tab === 'materials') loadMaterials();
   if (tab === 'impact') renderImpact();
   if (tab === 'tags') { ensureTagsLoaded().then(() => { populateTagDropdown(); renderSmartTags(); }); }
 }
@@ -2808,12 +2833,97 @@ function updateImagePreview(){
   document.getElementById('imgPreviewTitle').textContent = title;
 }
 
+function isElearningCourse(){
+  var cb = document.getElementById('fElearning');
+  var typeEl = document.querySelector('input[name="type"]:checked');
+  return (cb && cb.checked) || (typeEl && typeEl.value === 'elearning');
+}
 function toggleElearningUI(){
-  const isEl = document.getElementById('fElearning').checked;
-  // E-learning courses typically have no sessions — gently hint
-  document.getElementById('scheduleHint').innerHTML = isEl
-    ? '<strong>E-learning is self-paced</strong> — no sessions needed. You can leave the schedule empty, or add a single "Self-paced · Online" row.'
+  const isEl = isElearningCourse();
+  // #3 — e-learning has no date/time, so hide the Schedule tab entirely; the
+  // learner just enrols. Materials carry the actual content.
+  var schedTab = document.querySelector('.adm-tab[data-tab="schedule"]');
+  if (schedTab) {
+    schedTab.style.display = isEl ? 'none' : '';
+    if (isEl && schedTab.classList.contains('active')) switchTab('materials');
+  }
+  var hint = document.getElementById('scheduleHint');
+  if (hint) hint.innerHTML = isEl
+    ? '<strong>E-learning is self-paced</strong> — no sessions needed.'
     : 'Add one row per session. Date format: e.g. <code>Wed 20 May 2026</code>. Time format: e.g. <code>12:00–14:00</code>.';
+}
+
+// ────────── MATERIALS (SCORM / files) ──────────
+function matKindChange(){
+  var kind = document.getElementById('matKind').value;
+  document.getElementById('matUrlWrap').style.display = kind === 'file' ? 'none' : '';
+  document.getElementById('matFileWrap').style.display = kind === 'file' ? '' : 'none';
+}
+function _matBaseReady(){
+  var base = _admBase().replace(/\/$/,''); var token = _admToken();
+  return (base && token && editingId) ? { base: base, token: token } : null;
+}
+async function loadMaterials(){
+  var list = document.getElementById('materialsList');
+  var addBox = document.getElementById('materialsAddBox');
+  var saveFirst = document.getElementById('materialsSaveFirst');
+  var ready = _matBaseReady();
+  if (!ready) { if(addBox)addBox.style.display='none'; if(saveFirst)saveFirst.style.display='block'; if(list)list.innerHTML=''; return; }
+  if(addBox)addBox.style.display=''; if(saveFirst)saveFirst.style.display='none';
+  if(list)list.innerHTML='<div style="color:var(--slate3);font-size:13px">Loading…</div>';
+  try{
+    var r = await fetch(ready.base+'/api/v1/courses/'+encodeURIComponent(editingDraft.id)+'/materials',{headers:{Authorization:'Bearer '+ready.token}});
+    var j = await r.json();
+    var mats = (j&&j.materials)||[];
+    if(!mats.length){ list.innerHTML='<div style="color:var(--slate3);font-size:13px;padding:8px 0">No materials yet — add a SCORM package or file below.</div>'; return; }
+    list.innerHTML = mats.map(function(m){
+      var icon = m.kind==='scorm'?'📦':m.kind==='link'?'🔗':'📄';
+      var meta = m.kind==='file'?((m.size/1024/1024).toFixed(2)+' MB'):(m.url||'');
+      return '<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border:1px solid var(--line);border-radius:9px;margin-bottom:7px">'
+        +'<span style="font-size:17px">'+icon+'</span>'
+        +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+escapeHtml(m.title)+'</div><div style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(m.kind.toUpperCase()+' · '+meta)+'</div></div>'
+        +'<button type="button" onclick="deleteMaterial(\''+m.id+'\')" style="background:none;border:1px solid var(--line2);border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;color:var(--red)">Remove</button>'
+        +'</div>';
+    }).join('');
+  }catch(e){ list.innerHTML='<div style="color:var(--red);font-size:13px">Could not load materials.</div>'; }
+}
+function _readFileAsBase64(file){
+  return new Promise(function(resolve,reject){
+    var fr=new FileReader();
+    fr.onload=function(){ resolve(String(fr.result||'').split('base64,').pop()); };
+    fr.onerror=reject; fr.readAsDataURL(file);
+  });
+}
+async function addMaterial(){
+  var ready=_matBaseReady(); if(!ready){ toast('Save the course first','error'); return; }
+  var title=(document.getElementById('matTitle').value||'').trim();
+  var kind=document.getElementById('matKind').value;
+  var msg=document.getElementById('matMsg'); var btn=document.getElementById('matAddBtn');
+  if(!title){ if(msg)msg.textContent='Add a title.'; return; }
+  var body={ title:title, kind:kind };
+  if(kind==='file'){
+    var f=(document.getElementById('matFile').files||[])[0];
+    if(!f){ if(msg)msg.textContent='Choose a file.'; return; }
+    if(f.size>10*1024*1024){ if(msg)msg.textContent='File over 10 MB — use a link instead.'; return; }
+    if(msg)msg.textContent='Reading file…';
+    body.data=await _readFileAsBase64(f); body.file_name=f.name; body.mime=f.type||'application/octet-stream';
+  } else {
+    var url=(document.getElementById('matUrl').value||'').trim();
+    if(!url){ if(msg)msg.textContent='Add a URL.'; return; }
+    body.url=url;
+  }
+  if(btn){btn.disabled=true;btn.textContent='Adding…';} if(msg)msg.textContent='';
+  try{
+    var r=await fetch(ready.base+'/api/v1/courses/'+encodeURIComponent(editingDraft.id)+'/materials',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ready.token},body:JSON.stringify(body)});
+    var j=await r.json().catch(function(){return{};});
+    if(!r.ok){ if(msg)msg.textContent=(j&&j.message)||'Could not add material.'; }
+    else { document.getElementById('matTitle').value=''; document.getElementById('matUrl').value=''; var ff=document.getElementById('matFile'); if(ff)ff.value=''; loadMaterials(); toast('✓ Material added'); }
+  }catch(e){ if(msg)msg.textContent='Upload failed — try a smaller file or a link.'; }
+  if(btn){btn.disabled=false;btn.textContent='+ Add material';}
+}
+async function deleteMaterial(mid){
+  var ready=_matBaseReady(); if(!ready)return;
+  try{ await fetch(ready.base+'/api/v1/courses/'+encodeURIComponent(editingDraft.id)+'/materials/'+mid,{method:'DELETE',headers:{Authorization:'Bearer '+ready.token}}); loadMaterials(); }catch(e){}
 }
 
 // ────────── SCHEDULE ──────────
