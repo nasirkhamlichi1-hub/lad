@@ -710,7 +710,10 @@
         +'<div class="tiles"><div class="tile"><div class="l">Points</div><div class="v">'+pts+'</div></div><div class="tile"><div class="l">Credits</div><div class="v">'+num(l.credits!=null?l.credits:l.credit_balance)+'</div></div><div class="tile"><div class="l">Bookings</div><div class="v">'+bookings.length+'</div></div></div>'
         +'<div class="qa"><button class="p" onclick="dwBookOpen()">'+ico('cal')+' Book onto course</button><button onclick="dwMessageOpen()">'+ico('mail')+' Message</button><button onclick="dwAiBrief()">'+ico('spark')+' AI brief</button>'+(REC.firm?'<button onclick="openFirm(\''+q1(REC.firm)+'\')">'+ico('firm')+' Firm</button>':'')+'<button onclick="dwNoteOpen()">'+ico('note')+' Note</button><button onclick="dwTaskOpen()">'+ico('task')+' Task</button><button onclick="dwCreditsOpen()">'+ico('card')+' Credits</button></div>'
         +'<div id="dwForm" style="display:none;padding:0 22px 14px;border-bottom:1px solid var(--line)"></div>'
-        +tabs([{id:'cmp',label:'Compliance'},{id:'bk',label:'Bookings ('+bookings.length+')'},{id:'tl',label:'Activity'},{id:'tk',label:'Tasks'},{id:'dt',label:'Details'}])
+        // Upcoming bookings surfaced up front so reschedule / mark-attended /
+        // cancel are one glance away — no need to dig into the Bookings tab.
+        +(pendingBk.length?'<div style="padding:12px 22px 4px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--slate3);text-transform:uppercase">Upcoming bookings — reschedule / attend / cancel</span><span class="pill cat">'+pendingBk.length+'</span></div>'+pendingBk.map(bookingCard).join('')+'</div>':'')
+        +tabs([{id:'cmp',label:'Compliance'},{id:'bk',label:'All bookings ('+bookings.length+')'},{id:'tl',label:'Activity'},{id:'tk',label:'Tasks'},{id:'dt',label:'Details'}])
         +'<div class="sec" data-tab="cmp">'+cmpHTML+'</div>'
         +'<div class="sec" data-tab="bk" style="display:none">'+(bookings.length?bookings.map(bookingCard).join(''):'<div class="sub">No bookings. Use “Book onto course”.</div>')+'</div>'
         +'<div class="sec" data-tab="tl" style="display:none">'+timeline(tl)+'</div>'
