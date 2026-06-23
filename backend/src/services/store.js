@@ -73,15 +73,15 @@ function getCourseById(id) {
 
 function upsertCourse(c) {
   db.prepare(`
-    INSERT INTO courses (id, title, category, type, format, pts, credits, provider_id, location, description, language, bg, icon, active, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    INSERT INTO courses (id, title, category, type, is_ethics, format, pts, credits, provider_id, location, description, language, bg, icon, active, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT (id) DO UPDATE SET
-      title=excluded.title, category=excluded.category, type=excluded.type, format=excluded.format,
+      title=excluded.title, category=excluded.category, type=excluded.type, is_ethics=excluded.is_ethics, format=excluded.format,
       pts=excluded.pts, credits=excluded.credits, provider_id=excluded.provider_id,
       location=excluded.location, description=excluded.description, language=excluded.language,
       bg=excluded.bg, icon=excluded.icon, active=excluded.active, updated_at=CURRENT_TIMESTAMP
   `).run(
-    c.id, c.title, c.category || null, c.type || null, c.format || null,
+    c.id, c.title, c.category || null, c.type || null, (c.is_ethics ? 1 : 0), c.format || null,
     c.pts || 0, c.credits || 5, c.provider_id || null, c.location || null,
     c.description || null, c.language || 'English', c.bg || null, c.icon || null,
     c.active !== undefined ? c.active : 1

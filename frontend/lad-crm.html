@@ -298,7 +298,7 @@
         <button class="subtab on" data-sub="catalogue" onclick="coursesSub('catalogue',this)"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Catalogue</button>
         <button class="subtab" data-sub="schedules" onclick="coursesSub('schedules',this)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedules</button>
         <button class="subtab" data-sub="trainer" onclick="coursesSub('trainer',this)"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>AI Trainer</button>
-        <button class="subtab" data-sub="hub" onclick="coursesSub('hub',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg>Knowledge Hub</button>
+        <button class="subtab" data-sub="hub" onclick="coursesSub('hub',this)"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Website content</button>
       </div>
       <div class="subbody">
         <iframe class="embed" id="admFrame" title="Course admin" data-src="lad-admin.html?embed=1&page=courses"></iframe>
@@ -630,12 +630,25 @@
     openDrawer();var dw=document.getElementById('dwInner');
     dw.innerHTML='<div class="hero"><button class="x" onclick="closeDrawer()">×</button><div class="hero-name">'+esc(title||'Session')+'</div><div class="hero-sub" id="sxSub">Loading…</div></div><div class="dw-bd"><div class="sec"><h4>Book a lawyer onto this session</h4><input id="sxSearch" class="inp" placeholder="Search lawyer by name or email…" oninput="sxSearch()"/><div id="sxRes" style="margin-top:10px"></div></div><div class="sec"><h4>Booked (<span id="sxN">…</span>)</h4><div id="sxBooked"></div></div><div class="sec" style="border-top:1px solid var(--line)"><h4>Cancel session</h4><div id="sxCancelBox"><button class="btn btn-r" onclick="sxCancel()">Cancel this session</button><div class="sub" style="margin-top:6px">Refunds credits and notifies every booked lawyer — in-app and by email.</div></div></div></div>';
     api('/api/v1/bookings/session/'+id).then(function(j){
-      window.__SX={id:id,course:j.session.course_id};
+      window.__SX={id:id,course:j.session.course_id,pts:Number(j.session.course_pts)||2};
       document.getElementById('sxSub').textContent=fdatetime(j.session.scheduled_at)+' · '+num(j.session.seats_remaining)+'/'+num(j.session.capacity)+' seats · '+(j.session.status||'');
       document.getElementById('sxN').textContent=(j.bookings||[]).length;
-      document.getElementById('sxBooked').innerHTML=(j.bookings||[]).length?j.bookings.map(function(b){return '<div class="kv" style="cursor:pointer" onclick="openLawyer(\''+q1(b.lawyer_id)+'\',\''+q1(b.name)+'\')"><span>'+esc(b.name)+'<div class="sub">'+esc(b.email||'')+(b.firm?' · '+esc(b.firm):'')+'</div></span><span class="pill cat">'+esc(b.status)+'</span></div>'}).join(''):'<div class="empty">No one booked yet.</div>';
+      document.getElementById('sxBooked').innerHTML=(j.bookings||[]).length?j.bookings.map(function(b){
+        var att=(b.status||'')==='attended';
+        var act=att
+          ? '<button class="btn btn-l btn-xs" onclick="event.stopPropagation();sxAttend(\''+b.id+'\',false,0)" title="Undo attendance and remove the awarded points">Undo ('+(b.points_earned||0)+' pts)</button>'
+          : '<button class="btn btn-g btn-xs" onclick="event.stopPropagation();sxAttend(\''+b.id+'\',true,'+(window.__SX.pts)+')" title="Mark attended and award the course points">Mark attended +'+(window.__SX.pts)+'</button>';
+        return '<div class="kv" style="cursor:pointer" onclick="openLawyer(\''+q1(b.lawyer_id)+'\',\''+q1(b.name)+'\')"><span>'+esc(b.name)+'<div class="sub">'+esc(b.email||'')+(b.firm?' · '+esc(b.firm):'')+'</div></span><span class="pill '+(att?'compliant':'cat')+'">'+esc(b.status)+'</span>'+act+'</div>';
+      }).join(''):'<div class="empty">No one booked yet.</div>';
       if((j.session.status||'')==='cancelled'){var cb=document.getElementById('sxCancelBox');if(cb)cb.innerHTML='<div class="sub">This session is already cancelled.</div>'}
     }).catch(function(e){var s=document.getElementById('sxSub');if(s)s.textContent='—';var bk=document.getElementById('sxN');if(bk)bk.textContent='0';var bd=document.getElementById('sxBooked');if(bd)bd.innerHTML='<div class="empty">Couldn’t load bookings — '+esc(e.message)+'</div>';toast(e.message)});
+  };
+  // Mark a booked lawyer attended and allocate the CPD points (or reverse it).
+  window.sxAttend=function(bookingId,attended,pts){
+    var body=attended?{status:'attended',points_earned:pts}:{status:'booked',points_earned:0};
+    api('/api/v1/bookings/'+bookingId,{method:'PATCH',body:JSON.stringify(body)}).then(function(){
+      toast(attended?('✓ Attended · '+pts+' points awarded'):'✓ Attendance reversed');openSession(window.__SX.id);
+    }).catch(function(e){toast(e.message)});
   };
   window.sxCancel=function(){var box=document.getElementById('sxCancelBox');if(!box)return;var n=(document.getElementById('sxN')||{}).textContent||'0';box.innerHTML='<div style="background:#fce8e4;color:var(--red);padding:10px 12px;border-radius:9px;font-size:12.5px;margin-bottom:8px">Cancel this session? <strong>'+n+'</strong> booked lawyer'+(n==='1'?'':'s')+' will be refunded and notified by email and in-app. This can’t be undone.</div><div style="display:flex;gap:8px"><button class="btn btn-r" onclick="sxCancelDo(this)">Yes, cancel &amp; refund all</button><button class="btn btn-l" onclick="openSession(window.__SX.id)">Keep session</button></div>'};
   window.sxCancelDo=function(btn){if(btn){btn.disabled=true;btn.textContent='Cancelling…'}api('/api/v1/courses/sessions/'+window.__SX.id+'/cancel',{method:'POST',body:JSON.stringify({})}).then(function(j){toast('✓ Session cancelled · '+(j.refunded||0)+' refunded · '+(j.emailed||0)+' emailed');closeDrawer();loadSessions().then(function(){if(document.getElementById('v-ops').classList.contains('on'))renderOps();if(document.getElementById('v-dash').classList.contains('on'))loadDash()})}).catch(function(e){toast(e.message);if(btn){btn.disabled=false;btn.textContent='Yes, cancel & refund all'}})};

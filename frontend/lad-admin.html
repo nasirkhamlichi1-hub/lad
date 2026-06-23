@@ -1542,6 +1542,10 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
               <span class="adm-radio-label"><span class="adm-radio-dot" style="color:var(--purple)"></span>E-learning</span>
             </label>
           </div>
+          <label class="adm-checkbox" style="margin-top:10px;display:flex;align-items:center;gap:8px;font-size:13px">
+            <input type="checkbox" id="cEthics"/>
+            <span>This is a <b>mandatory ethics</b> course (tracked separately in reporting)</span>
+          </label>
         </div>
       </div>
 
@@ -2655,6 +2659,7 @@ function populateForm(){
   const d = editingDraft;
   document.getElementById('fTitle').value = d.title || '';
   document.querySelector(`input[name="type"][value="${d.type}"]`).checked = true;
+  { const ce = document.getElementById('cEthics'); if (ce) ce.checked = !!(d.is_ethics || d.isEthics); }
   document.querySelector(`input[name="status"][value="${d.status || 'live'}"]`).checked = true;
   document.getElementById('fPts').value = d.pts || 2;
   document.getElementById('fCredits').value = d.credits ?? 5;
@@ -2672,6 +2677,7 @@ function collectForm(){
   if (!editingDraft) return;
   editingDraft.title = document.getElementById('fTitle').value.trim();
   editingDraft.type = document.querySelector('input[name="type"]:checked')?.value || 'mandatory';
+  editingDraft.is_ethics = !!(document.getElementById('cEthics') && document.getElementById('cEthics').checked);
   editingDraft.status = document.querySelector('input[name="status"]:checked')?.value || 'live';
   editingDraft.pts = parseInt(document.getElementById('fPts').value) || 2;
   editingDraft.credits = parseInt(document.getElementById('fCredits').value) ?? 5;
@@ -3053,7 +3059,7 @@ async function pushCourseToBackend(d){
   const base = _admBase().replace(/\/$/,''); const token = _admToken();
   if (!base || !token) return; // demo mode — local only
   const body = {
-    id: d.id, title: d.title, type: d.type,
+    id: d.id, title: d.title, type: d.type, is_ethics: d.is_ethics ? 1 : 0,
     format: d.elearning ? 'e-learning' : 'face-to-face',
     pts: d.pts, credits: d.credits, provider_id: null,
     location: d.location, description: d.desc, language: 'English',

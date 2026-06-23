@@ -100,7 +100,7 @@ router.get('/session/:id', requireAuth, (req, res) => {
   let s = null;
   try {
     s = db.prepare(
-      `SELECT s.id, s.course_id, s.scheduled_at, s.capacity, s.seats_remaining, s.status, s.venue, c.title AS course_title
+      `SELECT s.id, s.course_id, s.scheduled_at, s.capacity, s.seats_remaining, s.status, s.venue, c.title AS course_title, COALESCE(c.pts,2) AS course_pts
        FROM course_sessions s LEFT JOIN courses c ON c.id = s.course_id WHERE s.id = ?`
     ).get(sid);
   } catch (_) {}
@@ -116,11 +116,12 @@ router.get('/session/:id', requireAuth, (req, res) => {
     ).all(sid);
   } catch (_) {}
   res.json({
-    session: { id: s.id, course_id: s.course_id, course_title: s.course_title || s.course_id, scheduled_at: s.scheduled_at, capacity: s.capacity, seats_remaining: s.seats_remaining, status: s.status, venue: s.venue },
+    session: { id: s.id, course_id: s.course_id, course_title: s.course_title || s.course_id, scheduled_at: s.scheduled_at, capacity: s.capacity, seats_remaining: s.seats_remaining, status: s.status, venue: s.venue, course_pts: Number(s.course_pts) || 2 },
     bookings: rows.map((b) => ({
       id: b.id, lawyer_id: b.lawyer_id, name: `${b.first_name || ''} ${b.last_name || ''}`.trim() || b.lawyer_id,
       email: b.email || '', firm: b.firm_name || '', status: b.status || 'booked',
       credits_used: Number(b.credits_used) || 0, points: Number(b.lifetime_points) || 0,
+      points_earned: Number(b.points_earned) || 0,
     })),
   });
 });
@@ -459,6 +460,21 @@ router.patch('/:id', requireAuth, (req, res) => {
     skills.unrecordAttendance(updated.id);
     skillResult = skills.recordAttendance(updated.id);
   }
+
+  // ─── Award CPD points to the lawyer's compliance total ──────────────
+  // Setting points on a booking must actually move the lawyer's lifetime
+  // points. We apply the DELTA so marking attended adds them, un-attending
+  // removes them, and editing the points on an attended booking adjusts.
+  try {
+    const oldPts = Number(booking.points_earned) || 0;
+    const newPts = Number(updated.points_earned) || 0;
+    const oldAttended = (booking.status || '').toLowerCase() === 'attended';
+    const newAttended = (updated.status || '').toLowerCase() === 'attended';
+    const delta = (newAttended ? newPts : 0) - (oldAttended ? oldPts : 0);
+    if (delta !== 0 && booking.lawyer_id) {
+      store.awardCpdPoints({ lawyerId: booking.lawyer_id, points: delta, source: 'attendance', refId: booking.id });
+    }
+  } catch (_) {}
 
   // CRM timeline
   if (req.body.status && req.body.status !== booking.status) {
