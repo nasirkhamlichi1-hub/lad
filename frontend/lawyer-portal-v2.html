@@ -5403,12 +5403,12 @@ document.addEventListener('DOMContentLoaded', loadMyAttendance);
 <script>
 // ══ LAWYER CREDITS ══
 let lawyerCredits = 5;
-const CREDIT_RATE_L = 120;
+const CREDIT_RATE_L = 210;
 const PKGS = [
-  {credits:10, price:1200, per:120, save:0,  label:'Starter'},
-  {credits:25, price:2750, per:110, save:8,  label:'Value'},
-  {credits:50, price:5000, per:100, save:17, label:'Pro', popular:true},
-  {credits:100,price:9000, per:90,  save:25, label:'Premium'},
+  {credits:10, price:2100, per:210, save:0,  label:'Starter'},
+  {credits:25, price:4825, per:193, save:8,  label:'Value'},
+  {credits:50, price:8700, per:174, save:17, label:'Pro', popular:true},
+  {credits:100,price:15800,per:158, save:25, label:'Premium'},
 ];
 let selPkg = null;
 
@@ -5464,7 +5464,7 @@ function selLBMPkg(i) {
     if(el) { el.classList.toggle('on', j===i); }
   });
   const newBal = lawyerCredits + p.credits;
-  const savings = (120 - p.per) * p.credits;
+  const savings = (210 - p.per) * p.credits;
   document.getElementById('lbmCalcBox').style.display = '';
   document.getElementById('lbmCalcText').innerHTML = `After purchase you'll have <strong>${newBal} credits</strong> — enough for <strong>${Math.floor(newBal/5)} course bookings</strong>. ${savings>0?`You save <strong style="color:var(--green)">AED ${savings.toLocaleString()}</strong> vs buying at standard rate.`:''}`;
   document.getElementById('lbmSummary').innerHTML = `<strong>${p.label}</strong> · ${p.credits} credits · AED ${p.price.toLocaleString()}`;

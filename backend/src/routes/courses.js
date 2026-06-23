@@ -104,7 +104,7 @@ router.post('/sessions/:id/cancel', requireRole('lad_admin', 'lad_super_admin', 
   if (!s) return res.status(404).json({ error: 'Session not found' });
   const course = store.getCourseById(s.course_id);
   const cTitle = (course && course.title) || 'a course';
-  const PRICE = Number(process.env.CREDIT_PRICE_AED || 120);
+  const PRICE = Number(process.env.CREDIT_PRICE_AED || 210);
   // Capture who is booked BEFORE we cancel — otherwise the post-cancel notify
   // query (status NOT IN cancelled) would find nobody.
   const bks = db.prepare("SELECT * FROM bookings WHERE session_id = ? AND status NOT IN ('cancelled','refunded')").all(id);

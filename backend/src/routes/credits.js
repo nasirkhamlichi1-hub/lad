@@ -24,7 +24,7 @@ const { requireAuth } = require('../middleware/auth');
 
 const ADMIN_ROLES = ['lad_admin', 'lad_intelligence', 'lad_super_admin', 'super_admin', 'dg'];
 const isAdmin = (u) => !!u && ADMIN_ROLES.includes(u.role);
-const PRICE = Number(process.env.CREDIT_PRICE_AED || 120); // AED per credit
+const PRICE = Number(process.env.CREDIT_PRICE_AED || 210); // AED per credit
 const rid = (p) => p + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8);
 
 function lawyerOf(req) {

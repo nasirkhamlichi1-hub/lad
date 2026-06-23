@@ -374,7 +374,7 @@ router.patch('/:id', requireAuth, (req, res) => {
       const cost = Number(booking.credits_used) || 0;
       refundedCredits = cost > 0 && booking.lawyer_id ? cost : 0;
       if (cost > 0 && booking.lawyer_id) {
-        const PRICE = Number(process.env.CREDIT_PRICE_AED || 120);
+        const PRICE = Number(process.env.CREDIT_PRICE_AED || 210);
         const firmId = lawyer && lawyer.firm_id;
         // Where do the credits go back to? Firm-funded bookings return to the
         // firm POOL; self-funded ones to the lawyer's balance. An admin or firm
