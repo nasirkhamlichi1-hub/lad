@@ -176,13 +176,23 @@ router.post('/', requireAuth, (req, res) => {
   if (isPrivileged && ['public', 'internal', 'partner'].includes(req.body.booking_type)) {
     bookingType = req.body.booking_type;
   }
+  // #8 — where do the credits come from? A privileged booker (admin / firm CO)
+  // may charge the firm's shared pool instead of the lawyer's own balance.
+  let creditSource = 'lawyer';
+  if (isPrivileged && req.body.credit_source === 'firm' && lawyer.firm_id) creditSource = 'firm';
+  let firmPool = 0;
+  if (creditSource === 'firm') {
+    try { firmPool = Number(db.prepare('SELECT credit_pool FROM firms WHERE id = ?').get(lawyer.firm_id).credit_pool) || 0; } catch (_) { firmPool = 0; }
+  }
   const balance = Number(lawyer.credit_balance) || 0;
+  const fundLabel = creditSource === 'firm' ? 'the firm pool' : 'this lawyer';
+  const available = creditSource === 'firm' ? firmPool : balance;
 
   // ── Credit gate ──
-  if (balance < cost) {
+  if (available < cost) {
     return res.status(402).json({
-      error: 'insufficient_credits', needed: cost, balance, shortfall: cost - balance,
-      message: `This course costs ${cost} credits — you have ${balance}. Top up ${cost - balance} more to book.`,
+      error: 'insufficient_credits', needed: cost, balance: available, source: creditSource, shortfall: cost - available,
+      message: `This course costs ${cost} credits — ${fundLabel} has ${available}. Top up ${cost - available} more to book.`,
     });
   }
 
@@ -210,16 +220,28 @@ router.post('/', requireAuth, (req, res) => {
         }
       }
 
-      // ── Deduct credits + ledger ──
+      // ── Deduct credits + ledger (from the firm pool or the lawyer) ──
       if (cost > 0) {
-        db.prepare('UPDATE lawyers SET credit_balance = credit_balance - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(cost, lawyer_id);
-        try {
-          db.prepare(
-            `INSERT INTO credit_transactions (id, lawyer_id, type, amount, aed_amount, description, payment_method, status)
-             VALUES (?,?,?,?,?,?,?, 'completed')`
-          ).run(txId(), lawyer_id, 'use', -cost, 0,
-            'Course booking: ' + (req.body.course_title || (course && course.title) || req.body.course_id || ''), 'credits');
-        } catch (_) {}
+        const desc = 'Course booking: ' + (req.body.course_title || (course && course.title) || req.body.course_id || '');
+        if (creditSource === 'firm') {
+          // Charge the firm's shared pool. Guard against a concurrent oversell.
+          const upd = db.prepare('UPDATE firms SET credit_pool = credit_pool - ? WHERE id = ? AND credit_pool >= ?').run(cost, lawyer.firm_id, cost);
+          if (upd.changes !== 1) { const e = new Error('insufficient_credits'); e.code = 'insufficient_credits'; throw e; }
+          try {
+            db.prepare(
+              `INSERT INTO firm_credit_transactions (id, firm_id, type, amount, aed_amount, description, lawyer_id)
+               VALUES (?,?,?,?,?,?,?)`
+            ).run('FTX-' + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8), lawyer.firm_id, 'use', -cost, 0, desc, lawyer_id);
+          } catch (_) {}
+        } else {
+          db.prepare('UPDATE lawyers SET credit_balance = credit_balance - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(cost, lawyer_id);
+          try {
+            db.prepare(
+              `INSERT INTO credit_transactions (id, lawyer_id, type, amount, aed_amount, description, payment_method, status)
+               VALUES (?,?,?,?,?,?,?, 'completed')`
+            ).run(txId(), lawyer_id, 'use', -cost, 0, desc, 'credits');
+          } catch (_) {}
+        }
       }
 
       const booking = store.createBooking({
@@ -231,13 +253,29 @@ router.post('/', requireAuth, (req, res) => {
         scheduled_at: req.body.scheduled_at,
         language:     req.body.language || 'English',
         credits_used: cost,
-        booked_by:    u.user_type === 'lawyer' ? 'self' : 'firm',
+        booked_by:    creditSource === 'firm' ? 'firm' : (u.user_type === 'lawyer' ? 'self' : 'firm'),
         booking_type: bookingType,
       });
 
       const newBal = db.prepare('SELECT credit_balance FROM lawyers WHERE id = ?').get(lawyer_id).credit_balance;
-      return { booking, balance: Number(newBal) || 0, credits_used: cost, seats_remaining: seatsRemaining };
+      let newPool = null;
+      if (creditSource === 'firm') { try { newPool = Number(db.prepare('SELECT credit_pool FROM firms WHERE id = ?').get(lawyer.firm_id).credit_pool) || 0; } catch (_) {} }
+      return { booking, balance: Number(newBal) || 0, credits_used: cost, seats_remaining: seatsRemaining, credit_source: creditSource, firm_pool: newPool };
     })();
+
+    // #11 — record the booking on the activity/audit trail (creation, not just
+    // status changes), so the log reflects lawyer bookings alongside purchases.
+    try {
+      const who = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || lawyer_id;
+      const ct = req.body.course_title || (course && course.title) || req.body.course_id || 'a course';
+      const srcNote = result.credit_source === 'firm' ? ' · firm pool' : (cost > 0 ? '' : ' · free');
+      activity.logActivity({
+        lawyer_id, firm_id: lawyer.firm_id || activity.firmOfLawyer(lawyer_id), kind: 'booking',
+        actor_type: u.user_type === 'lawyer' ? 'lawyer' : 'admin', actor_id: u.sub, actor_name: u.name || who,
+        ref_type: 'booking', ref_id: result.booking && result.booking.id, aed: 0,
+        summary: `Booked ${who} onto "${ct}"${cost ? ` · ${cost} credits${srcNote}` : srcNote}`,
+      });
+    } catch (_) {}
 
     // Confirmation email (best-effort, queued — never blocks the response).
     if (lawyer.email) {
@@ -255,6 +293,7 @@ router.post('/', requireAuth, (req, res) => {
 
     res.status(201).json(result);
   } catch (e) {
+    if (e.code === 'insufficient_credits') return res.status(402).json({ error: 'insufficient_credits', message: 'The firm pool ran out of credits before this booking completed.' });
     if (e.code === 'sold_out') return res.status(409).json({ error: 'sold_out', message: 'This session is sold out — please choose another date.' });
     if (e.code === 'already_booked') return res.status(409).json({ error: 'already_booked', message: 'You have already booked this session.' });
     if (e.code === 'session_cancelled') return res.status(409).json({ error: 'session_cancelled', message: 'This session has been cancelled.' });
@@ -368,8 +407,14 @@ router.patch('/:id', requireAuth, (req, res) => {
   const fields = [];
   const values = [];
   if (req.body.status !== undefined) { fields.push('status = ?'); values.push(req.body.status); }
-  if (canAwardPoints && req.body.points_earned !== undefined) {
-    const p = Math.round(Number(req.body.points_earned));
+  // #4 — when an admin marks a booking attended without naming a points value,
+  // default to the course's own worth so completed courses always grant points.
+  let pointsToSet = req.body.points_earned;
+  if (canAwardPoints && pointsToSet === undefined && req.body.status === 'attended' && booking.status !== 'attended') {
+    try { const cp = db.prepare('SELECT pts FROM courses WHERE id = ?').get(booking.course_id); if (cp && cp.pts != null) pointsToSet = cp.pts; } catch (_) {}
+  }
+  if (canAwardPoints && pointsToSet !== undefined) {
+    const p = Math.round(Number(pointsToSet));
     if (!Number.isFinite(p) || p < 0 || p > 50) return res.status(400).json({ error: 'points_earned must be 0–50' });
     fields.push('points_earned = ?'); values.push(p);
   }
@@ -487,6 +532,45 @@ router.patch('/:id', requireAuth, (req, res) => {
   }
 
   res.json({ ...updated, skill_propagation: skillResult, refunded_credits: refundedCredits, refund_to: refundDest });
+});
+
+// POST /api/v1/bookings/:id/complete — mark an e-learning booking complete and
+// award the course's CPD points. A lawyer may self-complete their OWN e-learning
+// enrolment (there's no in-person attendance to file); admins/COs may complete any.
+router.post('/:id/complete', requireAuth, (req, res) => {
+  const u = req.user;
+  const booking = db.prepare('SELECT * FROM bookings WHERE id = ?').get(req.params.id);
+  if (!booking) return res.status(404).json({ error: 'Booking not found' });
+  const isOwner = u.user_type === 'lawyer' && u.sub === booking.lawyer_id;
+  const isLAD = isSuper(u.role) || u.role === 'lad_admin' || u.role === 'provider_admin';
+  const lawyer = store.getLawyerById(booking.lawyer_id);
+  const isFirmCO = u.role === 'firm_compliance_officer' && lawyer && lawyer.firm_id === u.firm_id;
+  if (!isOwner && !isLAD && !isFirmCO) return res.status(403).json({ error: 'Forbidden' });
+
+  const course = booking.course_id ? store.getCourseById(booking.course_id) : null;
+  const isElearn = !!course && /e-?learn/i.test(String(course.format || course.type || ''));
+  if (isOwner && !isElearn) {
+    return res.status(400).json({ error: 'not_elearning', message: 'Only e-learning courses can be self-completed — your firm files attendance for in-person sessions.' });
+  }
+  if ((booking.status || '').toLowerCase() === 'attended') {
+    return res.json({ ...booking, points_awarded: 0, already: true });
+  }
+  const pts = course && course.pts != null ? Math.max(0, Math.round(Number(course.pts))) : 0;
+  db.prepare("UPDATE bookings SET status = 'attended', points_earned = ? WHERE id = ?").run(pts, booking.id);
+  if (pts > 0 && booking.lawyer_id) {
+    try { store.awardCpdPoints({ lawyerId: booking.lawyer_id, points: pts, source: 'elearning', refId: booking.id }); } catch (_) {}
+  }
+  try { skills.recordAttendance(booking.id); } catch (_) {}
+  try {
+    activity.logActivity({
+      lawyer_id: booking.lawyer_id, firm_id: lawyer && lawyer.firm_id, kind: 'attended',
+      actor_type: isOwner ? 'lawyer' : 'admin', actor_id: u.sub, actor_name: u.name,
+      ref_type: 'booking', ref_id: booking.id,
+      summary: `Completed e-learning "${booking.course_title || (course && course.title) || ''}"${pts ? ` · +${pts} pts` : ''}`,
+    });
+  } catch (_) {}
+  const updated = db.prepare('SELECT * FROM bookings WHERE id = ?').get(booking.id);
+  res.json({ ...updated, points_awarded: pts });
 });
 
 // POST /api/v1/bookings/:id/reschedule { session_id } — move a booking to another
