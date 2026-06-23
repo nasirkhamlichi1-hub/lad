@@ -273,6 +273,14 @@
     <div class="view" id="v-finance"><div class="scroll" style="width:100%;padding:22px">
       <div style="max-width:1000px;margin:0 auto">
         <div class="dash" id="finCards" style="grid-template-columns:repeat(4,1fr);padding:0 0 16px"></div>
+        <div class="panel" style="margin-bottom:16px"><div class="panel-hd" style="flex-wrap:wrap;gap:8px"><h2>Reports</h2>
+          <input class="inp" type="month" id="repMonth" style="max-width:170px;margin-left:auto"/>
+          <button class="btn btn-l" onclick="dlReport('credits.csv')" title="Full credits ledger with revenue/VAT split">↓ Credits report</button>
+          <button class="btn btn-l" onclick="dlReport('vat.csv')" title="Net revenue, 5% VAT and gross per transaction">↓ VAT report</button>
+          <button class="btn btn-l" onclick="dlReport('course-drops.csv')" title="Cancellations/refunds to adjust revenue">↓ Course-drop report</button>
+        </div>
+        <div class="panel-bd" style="padding:10px 18px;font-size:12px;color:var(--slate2);max-height:none">Pick a month to scope the report (leave blank for all time). Amounts are split into net revenue and 5% VAT (prices are VAT-inclusive). Use the Transaction ID column to reconcile with bank statements.</div>
+        </div>
         <div class="panel"><div class="panel-hd" style="flex-wrap:wrap;gap:8px"><h2>Transactions</h2>
           <input class="inp" id="finSearch" placeholder="Search buyer, firm, reference…" style="max-width:280px;margin-left:auto" oninput="finSearch()"/>
           <select class="inp" id="finType" style="max-width:150px" onchange="finSearch()"><option value="">All types</option><option value="purchase">Purchases</option><option value="refund">Refunds</option><option value="transfer">Firm pool</option><option value="use">Bookings</option></select>
@@ -407,8 +415,35 @@
     var who=t.buyer||'';var open=t.lawyer_id?'openLawyer(\''+q1(t.lawyer_id)+'\',\''+q1(who)+'\')':(t.firm_id?'openFirm(\''+q1(t.firm_id)+'\')':'');
     var pillCls=t.kind==='refund'?'high':t.kind==='booking'?'cat':t.kind==='adjustment'?'closed':'pending';
     var aed=Number(t.aed)||0,cr=Number(t.credits)||0;
-    return '<div class="row"'+(open?' onclick="'+open+'"':'')+'><div style="flex:1;min-width:0"><div class="ttl" style="font-weight:500">'+esc(who)+(t.firm?' · <span class="sub">'+esc(t.firm)+'</span>':'')+'</div><div class="sub">'+esc(t.date)+' · '+esc(t.method)+(t.reference?' · '+esc(t.reference):'')+'</div></div><span class="pill '+pillCls+'">'+esc(t.type||t.kind)+'</span><span class="sub" style="font-family:monospace;margin:0 10px;white-space:nowrap">'+(cr>0?'+':'')+cr+' cr</span><span style="font-family:monospace;font-weight:600;white-space:nowrap;color:'+(aed<0?'var(--red)':'var(--ink)')+'">'+(aed<0?'−':'')+'AED '+num(Math.abs(aed))+'</span></div>';
+    // An invoice is only meaningful for an actual cash purchase.
+    var inv=(aed>0&&t.kind!=='booking')?'<button class="btn btn-l btn-xs" onclick="event.stopPropagation();openInvoice(\''+q1(t.id)+'\')" style="margin-left:8px">Invoice</button>':'';
+    return '<div class="row"'+(open?' onclick="'+open+'"':'')+'><div style="flex:1;min-width:0"><div class="ttl" style="font-weight:500">'+esc(who)+(t.firm?' · <span class="sub">'+esc(t.firm)+'</span>':'')+'</div><div class="sub" style="font-family:monospace">'+esc(t.id)+' · '+esc(t.date)+' · '+esc(t.method)+(t.reference?' · '+esc(t.reference):'')+'</div></div><span class="pill '+pillCls+'">'+esc(t.type||t.kind)+'</span><span class="sub" style="font-family:monospace;margin:0 10px;white-space:nowrap">'+(cr>0?'+':'')+cr+' cr</span><span style="font-family:monospace;font-weight:600;white-space:nowrap;color:'+(aed<0?'var(--red)':'var(--ink)')+'">'+(aed<0?'−':'')+'AED '+num(Math.abs(aed))+'</span>'+inv+'</div>';
   }
+  // Download a finance report CSV (auth header → blob → save).
+  window.dlReport=function(name){
+    var m=(document.getElementById('repMonth')||{}).value||'';
+    fetch(BASE+'/api/v1/admin/reports/'+name+(m?'?month='+encodeURIComponent(m):''),{headers:{Authorization:'Bearer '+tok()}}).then(function(r){
+      if(!r.ok)throw new Error('HTTP '+r.status);return r.blob();
+    }).then(function(b){
+      var u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='clpd-'+name.replace('.csv','')+(m?'-'+m:'')+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},1000);
+      toast('✓ Report downloaded');
+    }).catch(function(e){toast('Report failed: '+e.message)});
+  };
+  // Open a printable VAT invoice for a single transaction.
+  window.openInvoice=function(txId){
+    api('/api/v1/admin/reports/invoice/'+encodeURIComponent(txId)).then(function(d){
+      var w=window.open('','_blank');if(!w){toast('Allow pop-ups to view the invoice');return;}
+      var row=function(k,v){return '<tr><td style="padding:6px 10px;color:#5a6573">'+k+'</td><td style="padding:6px 10px;text-align:right;font-family:monospace">'+v+'</td></tr>';};
+      w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(d.invoice_no)+'</title><style>body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#14202b;max-width:720px;margin:32px auto;padding:0 24px}h1{font-size:22px;margin:0}.muted{color:#5a6573;font-size:13px}table{width:100%;border-collapse:collapse;margin-top:10px}.tot td{border-top:2px solid #14202b;font-weight:700}.box{border:1px solid #e8ecf1;border-radius:10px;padding:16px;margin-top:16px}@media print{.noprint{display:none}}</style></head><body>'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h1>Tax Invoice</h1><div class="muted">'+esc(d.invoice_no)+' · '+esc(d.date)+'</div></div><div style="text-align:right"><div style="font-weight:700">'+esc(d.issuer.name)+'</div><div class="muted">TRN '+esc(d.issuer.trn)+'</div><div class="muted">'+esc(d.issuer.address)+'</div></div></div>'
+        +'<div class="box"><div style="font-weight:700">Billed to</div><div>'+esc(d.buyer)+(d.firm?' · '+esc(d.firm):'')+'</div>'+(d.customer_trn?'<div class="muted">Customer TRN '+esc(d.customer_trn)+'</div>':'')+'</div>'
+        +'<div class="box"><table>'+row('Description',esc(d.description))+row('Credits',d.credits)+row('Transaction ID',esc(d.transaction_id))+(d.reference?row('Payment reference',esc(d.reference)):'')+row('Payment method',esc(d.payment_method||'—'))+'</table></div>'
+        +'<table style="margin-top:18px">'+row('Net (revenue)','AED '+d.net_aed)+row('VAT ('+esc(d.vat_rate)+')','AED '+d.vat_aed)+'<tr class="tot">'+row('Total (VAT inclusive)','AED '+d.gross_aed).replace(/^<tr>|<\/tr>$/g,'')+'</tr>'+'</table>'
+        +'<p class="muted" style="margin-top:24px">Computer-generated tax invoice. VAT-inclusive pricing. Issuer details are placeholders pending finalisation.</p>'
+        +'<button class="noprint" onclick="window.print()" style="margin-top:10px;padding:10px 18px;border:0;border-radius:8px;background:#006B3F;color:#fff;font-weight:600;cursor:pointer">Print / Save PDF</button>'
+        +'</body></html>');w.document.close();
+    }).catch(function(e){toast('Invoice failed: '+e.message)});
+  };
   // ── activity / audit trail ──
   var actT;window.actSearch=function(){clearTimeout(actT);actT=setTimeout(loadActivity,250)};
   // Populate the team-member filter once, so a super-admin can see exactly what
