@@ -255,7 +255,8 @@ function getAllFirms() {
 
 function getLawyerBookings(lawyerId) {
   return db.prepare(`
-    SELECT b.*, c.title AS course_title_current, p.name AS provider_name
+    SELECT b.*, c.title AS course_title_current, c.pts AS course_points, c.format AS course_format, c.type AS course_type,
+           p.name AS provider_name
     FROM bookings b
     LEFT JOIN courses c ON c.id = b.course_id
     LEFT JOIN providers p ON p.id = b.provider_id
