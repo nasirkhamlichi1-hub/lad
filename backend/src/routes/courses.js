@@ -10,6 +10,7 @@ const tagger = require('../services/coursetagger');
 const email = require('../services/email');
 const tpl = require('../services/email-templates');
 const activity = require('../services/activity');
+const blob = require('../services/blobStorage');
 const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth');
 
 const _nid = () => 'NT-' + crypto.randomBytes(6).toString('hex').toUpperCase().slice(0, 10);
@@ -273,7 +274,29 @@ const materialMeta = (m) => ({
   id: m.id, course_id: m.course_id, title: m.title, kind: m.kind,
   url: m.kind === 'link' || m.kind === 'scorm' ? (m.url || null) : null,
   file_name: m.file_name || null, mime: m.mime || null, size: Number(m.size) || 0,
-  has_file: !!m.data, created_at: m.created_at,
+  has_file: !!m.data || !!m.storage_key,
+  // How the lawyer downloads it: a cloud blob, an inline file, or an external link.
+  download_kind: m.storage_key ? 'blob' : (m.data ? 'inline' : 'link'),
+  created_at: m.created_at,
+});
+
+// POST get a direct-to-Azure upload URL (admin) for large files / SCORM zips.
+router.post('/:id/materials/upload-url', requireRole(...MATERIAL_ROLES), async (req, res) => {
+  if (!blob.isConfigured()) {
+    return res.status(501).json({ error: 'blob_not_configured', message: 'Cloud storage is not configured — upload files up to 10 MB inline, or add a link.' });
+  }
+  const course = store.getCourseById(req.params.id);
+  if (!course) return res.status(404).json({ error: 'Course not found' });
+  const fileName = (req.body.file_name || 'file').toString();
+  const mime = (req.body.mime || 'application/octet-stream').toString();
+  try {
+    await blob.ensureContainer();
+    const key = blob.makeKey(req.params.id, fileName);
+    const upload_url = blob.getUploadUrl(key, mime);
+    res.json({ upload_url, storage_key: key, blob_type: 'BlockBlob', expires_in_min: 30 });
+  } catch (e) {
+    res.status(500).json({ error: 'sas_failed', message: e.message });
+  }
 });
 
 // GET materials list (metadata only — never the inline payload)
@@ -285,7 +308,7 @@ router.get('/:id/materials', optionalAuth, (req, res) => {
   }
   let rows = [];
   try { rows = db.prepare('SELECT * FROM course_materials WHERE course_id = ? ORDER BY created_at').all(req.params.id); } catch (_) {}
-  res.json({ materials: rows.map(materialMeta) });
+  res.json({ materials: rows.map(materialMeta), blob_enabled: blob.isConfigured() });
 });
 
 // POST add a material (admin) — a link/SCORM URL, or a small inline file
@@ -297,21 +320,22 @@ router.post('/:id/materials', requireRole(...MATERIAL_ROLES), (req, res) => {
   let kind = (req.body.kind || 'link').toString();
   if (!['link', 'file', 'scorm'].includes(kind)) kind = 'link';
   const url = (req.body.url || '').toString().trim() || null;
+  const storageKey = (req.body.storage_key || '').toString().trim() || null; // already uploaded to Azure
   let data = req.body.data ? String(req.body.data) : null; // base64 (may be a data: URL)
   if (data && data.indexOf('base64,') >= 0) data = data.split('base64,').pop();
-  if (!url && !data) return res.status(400).json({ error: 'Provide a url (link/SCORM) or an uploaded file.' });
-  let size = 0;
+  if (!url && !data && !storageKey) return res.status(400).json({ error: 'Provide a url (link/SCORM), an uploaded file, or a cloud file.' });
+  let size = Number(req.body.size) || 0;
   if (data) {
     size = Math.floor(data.length * 3 / 4);
     if (size > MAX_INLINE_BYTES) {
-      return res.status(413).json({ error: 'file_too_large', message: 'File over 10 MB — host it and add it as a link/SCORM URL instead.' });
+      return res.status(413).json({ error: 'file_too_large', message: 'File over 10 MB — use the cloud upload, or host it and add it as a link.' });
     }
   }
   const id = _mid();
   try {
-    db.prepare(`INSERT INTO course_materials (id, course_id, title, kind, url, file_name, mime, size, data, created_by)
-                VALUES (?,?,?,?,?,?,?,?,?,?)`)
-      .run(id, req.params.id, title, kind, url, (req.body.file_name || null), (req.body.mime || null), size, data, (req.user && req.user.sub) || null);
+    db.prepare(`INSERT INTO course_materials (id, course_id, title, kind, url, file_name, mime, size, data, storage_key, created_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(id, req.params.id, title, kind, url, (req.body.file_name || null), (req.body.mime || null), size, data, storageKey, (req.user && req.user.sub) || null);
   } catch (e) { return res.status(500).json({ error: 'save_failed', message: e.message }); }
   const row = db.prepare('SELECT * FROM course_materials WHERE id = ?').get(id);
   res.status(201).json(materialMeta(row));
@@ -324,6 +348,12 @@ router.get('/:id/materials/:mid/download', optionalAuth, (req, res) => {
   }
   const m = db.prepare('SELECT * FROM course_materials WHERE id = ? AND course_id = ?').get(req.params.mid, req.params.id);
   if (!m) return res.status(404).json({ error: 'Material not found' });
+  // Blob-backed file → redirect to a short-lived Azure read SAS URL.
+  if (m.storage_key) {
+    if (!blob.isConfigured()) return res.status(503).json({ error: 'storage_unavailable' });
+    try { return res.redirect(blob.getDownloadUrl(m.storage_key, m.file_name || m.title)); }
+    catch (e) { return res.status(500).json({ error: 'sas_failed', message: e.message }); }
+  }
   if (m.data) {
     const buf = Buffer.from(m.data, 'base64');
     res.setHeader('Content-Type', m.mime || 'application/octet-stream');
@@ -334,9 +364,27 @@ router.get('/:id/materials/:mid/download', optionalAuth, (req, res) => {
   res.status(404).json({ error: 'No downloadable content' });
 });
 
-// DELETE a material (admin)
+// GET a fresh download URL (JSON) for a blob material — lets the browser open it
+// directly without sending the auth token to Azure.
+router.get('/:id/materials/:mid/download-url', optionalAuth, (req, res) => {
+  if (!canAccessMaterials(req.params.id, req.user)) {
+    return res.status(403).json({ error: 'no_access', message: 'Book or complete this course to access its materials.' });
+  }
+  const m = db.prepare('SELECT * FROM course_materials WHERE id = ? AND course_id = ?').get(req.params.mid, req.params.id);
+  if (!m) return res.status(404).json({ error: 'Material not found' });
+  if (m.storage_key && blob.isConfigured()) {
+    try { return res.json({ url: blob.getDownloadUrl(m.storage_key, m.file_name || m.title) }); }
+    catch (e) { return res.status(500).json({ error: 'sas_failed', message: e.message }); }
+  }
+  if (m.url) return res.json({ url: m.url });
+  res.status(404).json({ error: 'No direct URL for this material' });
+});
+
+// DELETE a material (admin) — also removes the underlying blob if any.
 router.delete('/:id/materials/:mid', requireRole(...MATERIAL_ROLES), (req, res) => {
+  const m = db.prepare('SELECT storage_key FROM course_materials WHERE id = ? AND course_id = ?').get(req.params.mid, req.params.id);
   const r = db.prepare('DELETE FROM course_materials WHERE id = ? AND course_id = ?').run(req.params.mid, req.params.id);
+  if (m && m.storage_key && blob.isConfigured()) { blob.deleteBlob(m.storage_key).catch(() => {}); }
   res.json({ deleted: r.changes });
 });
 

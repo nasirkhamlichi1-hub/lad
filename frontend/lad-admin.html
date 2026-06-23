@@ -2874,6 +2874,10 @@ async function loadMaterials(){
   try{
     var r = await fetch(ready.base+'/api/v1/courses/'+encodeURIComponent(editingDraft.id)+'/materials',{headers:{Authorization:'Bearer '+ready.token}});
     var j = await r.json();
+    window.__matBlobEnabled = !!(j && j.blob_enabled);
+    // Reflect cloud availability in the size hint + the upload field label.
+    var ff = document.getElementById('matFileWrap');
+    if (ff) { var lbl = ff.querySelector('.adm-label'); if (lbl) lbl.textContent = window.__matBlobEnabled ? 'File (cloud upload — large files OK)' : 'File (≤ 10 MB)'; }
     var mats = (j&&j.materials)||[];
     if(!mats.length){ list.innerHTML='<div style="color:var(--slate3);font-size:13px;padding:8px 0">No materials yet — add a SCORM package or file below.</div>'; return; }
     list.innerHTML = mats.map(function(m){
@@ -2901,24 +2905,36 @@ async function addMaterial(){
   var msg=document.getElementById('matMsg'); var btn=document.getElementById('matAddBtn');
   if(!title){ if(msg)msg.textContent='Add a title.'; return; }
   var body={ title:title, kind:kind };
-  if(kind==='file'){
-    var f=(document.getElementById('matFile').files||[])[0];
-    if(!f){ if(msg)msg.textContent='Choose a file.'; return; }
-    if(f.size>10*1024*1024){ if(msg)msg.textContent='File over 10 MB — use a link instead.'; return; }
-    if(msg)msg.textContent='Reading file…';
-    body.data=await _readFileAsBase64(f); body.file_name=f.name; body.mime=f.type||'application/octet-stream';
-  } else {
-    var url=(document.getElementById('matUrl').value||'').trim();
-    if(!url){ if(msg)msg.textContent='Add a URL.'; return; }
-    body.url=url;
-  }
   if(btn){btn.disabled=true;btn.textContent='Adding…';} if(msg)msg.textContent='';
   try{
+    if(kind==='file'){
+      var f=(document.getElementById('matFile').files||[])[0];
+      if(!f){ if(msg)msg.textContent='Choose a file.'; if(btn){btn.disabled=false;btn.textContent='+ Add material';} return; }
+      if(window.__matBlobEnabled){
+        // Large file → request a SAS URL and upload straight to Azure.
+        if(msg)msg.textContent='Preparing upload…';
+        var su=await fetch(ready.base+'/api/v1/courses/'+encodeURIComponent(editingDraft.id)+'/materials/upload-url',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ready.token},body:JSON.stringify({file_name:f.name,mime:f.type||'application/octet-stream'})});
+        var sj=await su.json().catch(function(){return{};});
+        if(!su.ok){ if(msg)msg.textContent=(sj&&sj.message)||'Could not start upload.'; if(btn){btn.disabled=false;btn.textContent='+ Add material';} return; }
+        if(msg)msg.textContent='Uploading '+(f.size/1024/1024).toFixed(1)+' MB…';
+        var put=await fetch(sj.upload_url,{method:'PUT',headers:{'x-ms-blob-type':'BlockBlob','Content-Type':f.type||'application/octet-stream'},body:f});
+        if(!put.ok){ if(msg)msg.textContent='Upload to storage failed ('+put.status+').'; if(btn){btn.disabled=false;btn.textContent='+ Add material';} return; }
+        body.storage_key=sj.storage_key; body.file_name=f.name; body.mime=f.type||'application/octet-stream'; body.size=f.size;
+      } else {
+        if(f.size>10*1024*1024){ if(msg)msg.textContent='File over 10 MB and cloud storage is off — add it as a link instead.'; if(btn){btn.disabled=false;btn.textContent='+ Add material';} return; }
+        if(msg)msg.textContent='Reading file…';
+        body.data=await _readFileAsBase64(f); body.file_name=f.name; body.mime=f.type||'application/octet-stream';
+      }
+    } else {
+      var url=(document.getElementById('matUrl').value||'').trim();
+      if(!url){ if(msg)msg.textContent='Add a URL.'; if(btn){btn.disabled=false;btn.textContent='+ Add material';} return; }
+      body.url=url;
+    }
     var r=await fetch(ready.base+'/api/v1/courses/'+encodeURIComponent(editingDraft.id)+'/materials',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ready.token},body:JSON.stringify(body)});
     var j=await r.json().catch(function(){return{};});
     if(!r.ok){ if(msg)msg.textContent=(j&&j.message)||'Could not add material.'; }
-    else { document.getElementById('matTitle').value=''; document.getElementById('matUrl').value=''; var ff=document.getElementById('matFile'); if(ff)ff.value=''; loadMaterials(); toast('✓ Material added'); }
-  }catch(e){ if(msg)msg.textContent='Upload failed — try a smaller file or a link.'; }
+    else { document.getElementById('matTitle').value=''; document.getElementById('matUrl').value=''; var ff2=document.getElementById('matFile'); if(ff2)ff2.value=''; if(msg)msg.textContent=''; loadMaterials(); toast('✓ Material added'); }
+  }catch(e){ if(msg)msg.textContent='Upload failed — try again or use a link.'; }
   if(btn){btn.disabled=false;btn.textContent='+ Add material';}
 }
 async function deleteMaterial(mid){
