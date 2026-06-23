@@ -280,12 +280,12 @@ function createBooking(b) {
   const id = b.id || `BK-${Date.now()}-${Math.floor(Math.random()*1000)}`;
   db.prepare(`INSERT INTO bookings
     (id, lawyer_id, session_id, course_id, course_title, provider_id, scheduled_at, status,
-     points_earned, credits_used, language, booked_by, booked_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`)
+     points_earned, credits_used, language, booked_by, booking_type, booked_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`)
     .run(id, b.lawyer_id, b.session_id || null, b.course_id, b.course_title || null,
          b.provider_id || null, b.scheduled_at, b.status || 'booked',
          b.points_earned || 0, b.credits_used || 0, b.language || 'English',
-         b.booked_by || 'self');
+         b.booked_by || 'self', b.booking_type || 'public');
   return db.prepare('SELECT * FROM bookings WHERE id = ?').get(id);
 }
 

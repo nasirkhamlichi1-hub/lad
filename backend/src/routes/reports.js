@@ -169,6 +169,51 @@ router.get('/course-drops.csv', requireRole(...ADMIN_ROLES), (req, res) => {
   ], rows);
 });
 
+// ── Bookings divided by channel: public / internal / partner ─────────
+router.get('/bookings.csv', requireRole(...ADMIN_ROLES), (req, res) => {
+  const win = dateWindow(req.query);
+  const where = ['1=1']; const args = [];
+  applyWindow(where, args, win, 'b.booked_at');
+  let rows = [];
+  try {
+    rows = db.prepare(
+      `SELECT b.id, b.booked_at, b.status, b.credits_used, b.points_earned, b.booked_by,
+              COALESCE(b.booking_type,'public') AS booking_type, b.course_title,
+              COALESCE(NULLIF(TRIM((l.first_name||' '||l.last_name)),''),'') AS lawyer, f.name AS firm
+       FROM bookings b LEFT JOIN lawyers l ON l.id=b.lawyer_id LEFT JOIN firms f ON f.id=l.firm_id
+       WHERE ${where.join(' AND ')} ORDER BY b.booked_at DESC`
+    ).all(...args);
+  } catch (_) {}
+  const out = rows.map((b) => ({
+    booking_id: b.id, date: (b.booked_at || '').slice(0, 10), channel: b.booking_type,
+    booked_by: b.booked_by || '', lawyer: b.lawyer, firm: b.firm || '', course: b.course_title || '',
+    credits: b.credits_used || 0, points: b.points_earned || 0, status: b.status || '',
+  }));
+  sendCsv(res, `clpd-bookings-${win.from || 'all'}-to-${win.to || 'now'}.csv`, [
+    { key: 'booking_id', label: 'Booking ID' }, { key: 'date', label: 'Date' },
+    { key: 'channel', label: 'Channel (public/internal/partner)' }, { key: 'booked_by', label: 'Booked by' },
+    { key: 'lawyer', label: 'Lawyer' }, { key: 'firm', label: 'Firm' }, { key: 'course', label: 'Course' },
+    { key: 'credits', label: 'Credits' }, { key: 'points', label: 'Points' }, { key: 'status', label: 'Status' },
+  ], out);
+});
+
+// Breakdown counts by channel (for the ops dashboard).
+router.get('/bookings-breakdown', requireRole(...ADMIN_ROLES), (req, res) => {
+  const win = dateWindow(req.query);
+  const where = ['1=1']; const args = [];
+  applyWindow(where, args, win, 'booked_at');
+  let rows = [];
+  try {
+    rows = db.prepare(
+      `SELECT COALESCE(booking_type,'public') AS channel, COUNT(*) n, COALESCE(SUM(credits_used),0) credits
+       FROM bookings WHERE ${where.join(' AND ')} GROUP BY COALESCE(booking_type,'public')`
+    ).all(...args);
+  } catch (_) {}
+  const out = { public: { n: 0, credits: 0 }, internal: { n: 0, credits: 0 }, partner: { n: 0, credits: 0 } };
+  rows.forEach((r) => { out[r.channel] = { n: r.n, credits: r.credits }; });
+  res.json({ breakdown: out, total: rows.reduce((a, r) => a + r.n, 0) });
+});
+
 // ── Invoice data for one transaction (JSON; frontend renders & prints) ──
 router.get('/invoice/:id', requireRole(...ADMIN_ROLES), (req, res) => {
   let t = db.prepare(

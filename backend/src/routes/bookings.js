@@ -159,9 +159,22 @@ router.post('/', requireAuth, (req, res) => {
   if (course && Number(course.private) && !store.canAccessCourse(course, req.user)) {
     return res.status(403).json({ error: 'course_private', message: 'This course is restricted to its firm.' });
   }
+  // Only LAD admins and a firm CO may set the price (e.g. a 0-credit partner/
+  // comp seat). A lawyer self-booking always pays the course's real price — they
+  // can't zero it out themselves.
+  const isPrivileged = ADMIN_BK_ROLES.includes(u.role) || u.role === 'firm_compliance_officer';
+  const baseCost = course && course.credits != null ? course.credits : DEFAULT_CREDIT_COST;
   const cost = Math.max(0, Math.round(Number(
-    req.body.credits_used != null ? req.body.credits_used
-      : (course && course.credits != null ? course.credits : DEFAULT_CREDIT_COST))));
+    (isPrivileged && req.body.credits_used != null) ? req.body.credits_used : baseCost)));
+
+  // Classify the booking: internal (firm's own private course), partner (a free
+  // comp/sponsored seat) or public (a normal paid course). Privileged bookers
+  // may set it explicitly.
+  const isInternal = course && Number(course.private) && course.owner_firm_id && course.owner_firm_id === lawyer.firm_id;
+  let bookingType = isInternal ? 'internal' : (cost === 0 ? 'partner' : 'public');
+  if (isPrivileged && ['public', 'internal', 'partner'].includes(req.body.booking_type)) {
+    bookingType = req.body.booking_type;
+  }
   const balance = Number(lawyer.credit_balance) || 0;
 
   // ── Credit gate ──
@@ -218,6 +231,7 @@ router.post('/', requireAuth, (req, res) => {
         language:     req.body.language || 'English',
         credits_used: cost,
         booked_by:    u.user_type === 'lawyer' ? 'self' : 'firm',
+        booking_type: bookingType,
       });
 
       const newBal = db.prepare('SELECT credit_balance FROM lawyers WHERE id = ?').get(lawyer_id).credit_balance;
@@ -270,6 +284,9 @@ router.post('/bulk', requireAuth, (req, res) => {
   const baseCost = Math.max(0, Math.round(Number(
     req.body.credits_used != null ? req.body.credits_used
       : (course && course.credits != null ? course.credits : DEFAULT_CREDIT_COST))));
+  const bulkType = ['public', 'internal', 'partner'].includes(req.body.booking_type)
+    ? req.body.booking_type
+    : (course && Number(course.private) ? 'internal' : (baseCost === 0 ? 'partner' : 'public'));
 
   const results = [];
   let booked = 0;
@@ -302,7 +319,7 @@ router.post('/bulk', requireAuth, (req, res) => {
           lawyer_id, course_id: req.body.course_id, session_id,
           course_title: req.body.course_title || (course && course.title) || null,
           provider_id: req.body.provider_id || null, scheduled_at: req.body.scheduled_at,
-          language: req.body.language || 'English', credits_used: baseCost, booked_by: 'admin',
+          language: req.body.language || 'English', credits_used: baseCost, booked_by: 'admin', booking_type: bulkType,
         });
         // Confirmation email (best-effort).
         if (lawyer.email) {
