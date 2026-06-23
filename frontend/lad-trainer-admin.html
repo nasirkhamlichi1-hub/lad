@@ -227,7 +227,19 @@ tr:hover td{background:var(--paper)}
           <select id="hubCourse" style="width:100%;max-width:420px"></select>
           <div class="hint" id="hubLessonsNote" style="margin-top:7px;font-size:12px;color:var(--slate2)"></div>
         </div>
+        <button id="hubNewBtn" class="btn btn-ghost btn-sm" style="align-self:flex-end">+ New course</button>
         <a id="hubPreview" class="btn btn-ghost btn-sm" target="_blank" rel="noopener" style="align-self:flex-end">↗ Preview hub</a>
+      </div>
+      <div class="card-b hidden" id="hubNewPanel" style="border-top:1px solid var(--line2);padding-top:14px">
+        <div class="field row" style="margin-bottom:0">
+          <div><label for="hubNewTitle">Course title</label><input type="text" id="hubNewTitle" placeholder="e.g. UAE Civil Code 2025"/></div>
+          <div><label for="hubNewId">Course ID <span class="hint">— short slug, matches the lessons</span></label><input type="text" id="hubNewId" placeholder="civil-code-2025"/></div>
+        </div>
+        <div class="bar" style="margin-top:12px">
+          <button type="button" class="btn btn-pri btn-sm" id="hubNewCreate">Create &amp; edit</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="hubNewCancel">Cancel</button>
+          <p class="note" style="flex:1;margin:0">Starts a blank hub for a brand-new course — you can add the trainer lessons under <b>Course materials</b> using the same Course ID, and they’ll flow straight in.</p>
+        </div>
       </div>
     </div>
 
@@ -497,21 +509,49 @@ tr:hover td{background:var(--paper)}
   // ─── Knowledge hub editor ──────────────────────────────────────────
   // One course = one upload. The trainer runs on the lessons; the hub adds the
   // reference layer (legislation + FAQ) on top of the SAME course content.
+  var DEFAULT_TRAINER_URL = 'https://nice-ocean-0a45eff10.7.azurestaticapps.net/ai-trainer-live.html';
   var hubState = { courses:[], course:null, loaded:false };
+
+  function hubOptions(){
+    var sel=el('hubCourse');
+    sel.innerHTML=hubState.courses.map(function(c){
+      var label=(c.title||c.course_id)+' ('+(c.active_lessons||0)+' lesson'+((c.active_lessons||0)===1?'':'s')+(c.isNew?' · new':(c.hasHub?(c.published?' · published':' · draft'):' · no hub yet'))+')';
+      return '<option value="'+esc(c.course_id)+'">'+esc(label)+'</option>';
+    }).join('');
+  }
 
   function loadHubCourses(){
     api.hubsOverview().then(function(r){
       hubState.courses = (r && r.courses) || [];
       var sel=el('hubCourse');
-      if(!hubState.courses.length){ sel.innerHTML='<option value="">No courses yet — upload lessons first</option>'; el('hubLessonsNote').textContent=''; return; }
-      sel.innerHTML=hubState.courses.map(function(c){
-        var label=(c.title||c.course_id)+' ('+(c.active_lessons||0)+' lesson'+((c.active_lessons||0)===1?'':'s')+(c.hasHub?(c.published?' · published':' · draft'):' · no hub yet')+')';
-        return '<option value="'+esc(c.course_id)+'">'+esc(label)+'</option>';
-      }).join('');
+      if(!hubState.courses.length){ sel.innerHTML='<option value="">No courses yet — create one or upload lessons</option>'; el('hubLessonsNote').textContent=''; return; }
+      hubOptions();
       sel.onchange=function(){ loadHub(sel.value); };
       loadHub(hubState.course || sel.value);
     }).catch(function(e){ handleAuth(e); });
   }
+
+  // ── New-course starter — create a hub before any lessons exist ──
+  function slugify(s){ return String(s||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
+  el('hubNewBtn').onclick=function(){ el('hubNewPanel').classList.toggle('hidden'); el('hubNewTitle').focus(); };
+  el('hubNewCancel').onclick=function(){ el('hubNewPanel').classList.add('hidden'); el('hubNewTitle').value=''; el('hubNewId').value=''; };
+  el('hubNewTitle').oninput=function(){ if(!el('hubNewId').dataset.touched) el('hubNewId').value=slugify(el('hubNewTitle').value); };
+  el('hubNewId').oninput=function(){ this.dataset.touched='1'; this.value=slugify(this.value); };
+  el('hubNewCreate').onclick=function(){
+    var title=el('hubNewTitle').value.trim(), id=slugify(el('hubNewId').value||title);
+    if(!title){ toast('Give the course a title.'); return; }
+    if(!id){ toast('A course ID is required.'); return; }
+    var existing=hubState.courses.filter(function(c){return c.course_id===id;})[0];
+    if(existing){ el('hubNewPanel').classList.add('hidden'); loadHub(id); toast('That course already exists — opened it.'); return; }
+    hubState.courses.unshift({ course_id:id, title:title, lessons:0, active_lessons:0, hasHub:false, published:false, isNew:true });
+    hubOptions();
+    hubState.course=id;
+    el('hubCourse').value=id;
+    el('hubLessonsNote').innerHTML='<b>0</b> lessons yet — add them under <b>Course materials</b> with Course ID <b>'+esc(id)+'</b>.';
+    el('hubPreview').href='hub.html?course='+encodeURIComponent(id);
+    fillHub({ course_id:id, title:title, eyebrow:'Continuing Legal Professional Development', cta_url:DEFAULT_TRAINER_URL });
+    el('hubNewPanel').classList.add('hidden'); el('hubNewTitle').value=''; el('hubNewId').value=''; delete el('hubNewId').dataset.touched;
+  };
 
   function loadHub(courseId){
     if(!courseId) return;
@@ -520,8 +560,9 @@ tr:hover td{background:var(--paper)}
     var c=hubState.courses.filter(function(x){return x.course_id===courseId;})[0]||{};
     el('hubLessonsNote').innerHTML='<b>'+(c.active_lessons||0)+'</b> active lesson'+((c.active_lessons||0)===1?'':'s')+' feed this hub’s “what you’ll cover”. Edit them under <b>Course materials</b>.';
     el('hubPreview').href='hub.html?course='+encodeURIComponent(courseId);
-    api.hubGet(courseId).then(function(h){ fillHub(h||{ course_id:courseId }); })
-      .catch(function(e){ if(e && e.status===404){ fillHub({ course_id:courseId }); } else handleAuth(e); });
+    var blank={ course_id:courseId, title:c.title||'', eyebrow:'Continuing Legal Professional Development', cta_url:DEFAULT_TRAINER_URL };
+    api.hubGet(courseId).then(function(h){ fillHub(h||blank); })
+      .catch(function(e){ if(e && e.status===404){ fillHub(blank); } else handleAuth(e); });
   }
 
   function fillHub(h){
@@ -606,7 +647,7 @@ tr:hover td{background:var(--paper)}
       toast(saved.published?'✓ Hub saved & published':'✓ Hub saved as draft');
       el('hubSavedAt').textContent=saved.updated_at?('Last saved '+fmtDate(saved.updated_at)):'Saved';
       var c=hubState.courses.filter(function(x){return x.course_id===hub.course_id;})[0];
-      if(c){ c.hasHub=true; c.published=!!saved.published; c.title=saved.title; }
+      if(c){ c.hasHub=true; c.published=!!saved.published; c.title=saved.title; c.isNew=false; hubOptions(); el('hubCourse').value=hub.course_id; }
     }).catch(function(e){ handleAuth(e); toast('Could not save: '+(e.message||e)); })
       .finally(function(){ el('hubSaveBtn').disabled=false; });
   };
