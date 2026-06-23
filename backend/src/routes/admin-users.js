@@ -111,6 +111,8 @@ function rowToUser(r, source) {
     name: `${r.first_name || ''} ${r.last_name || ''}`.trim(),
     role: source === 'lawyer' ? 'lawyer' : r.role,
     firm_id: r.firm_id || null,
+    roll_number: r.roll_number || null,
+    phone: r.phone || null,
     status: r.status || 'active',
     must_change_password: !!r.must_change_password,
     last_login_at: r.last_login_at || null,
@@ -152,10 +154,11 @@ router.get('/', requireRole('lad_super_admin', 'lad_admin', 'firm_compliance_off
   }
   if (search) {
     const q = `%${search.toLowerCase()}%`;
-    lawyerWhere.push('(LOWER(email) LIKE ? OR LOWER(first_name) LIKE ? OR LOWER(last_name) LIKE ?)');
-    lawyerParams.push(q, q, q);
-    staffWhere.push('(LOWER(email) LIKE ? OR LOWER(first_name) LIKE ? OR LOWER(last_name) LIKE ?)');
-    staffParams.push(q, q, q);
+    // Lawyers are also searchable by their internal id and their roll/lawyer ID.
+    lawyerWhere.push('(LOWER(email) LIKE ? OR LOWER(first_name) LIKE ? OR LOWER(last_name) LIKE ? OR LOWER(id) LIKE ? OR LOWER(COALESCE(roll_number,\'\')) LIKE ?)');
+    lawyerParams.push(q, q, q, q, q);
+    staffWhere.push('(LOWER(email) LIKE ? OR LOWER(first_name) LIKE ? OR LOWER(last_name) LIKE ? OR LOWER(id) LIKE ?)');
+    staffParams.push(q, q, q, q);
   }
 
   // Role filter routes us to one table or the other (or both)
@@ -170,7 +173,7 @@ router.get('/', requireRole('lad_super_admin', 'lad_admin', 'firm_compliance_off
   const out = [];
 
   if (includeLawyers) {
-    const sql = `SELECT id, email, first_name, last_name, firm_id, status, last_login_at,
+    const sql = `SELECT id, email, first_name, last_name, firm_id, roll_number, phone, status, last_login_at,
                         password_changed_at, must_change_password, created_at
                  FROM lawyers
                  ${lawyerWhere.length ? 'WHERE ' + lawyerWhere.join(' AND ') : ''}
@@ -202,7 +205,8 @@ router.get('/', requireRole('lad_super_admin', 'lad_admin', 'firm_compliance_off
 router.post('/', requireRole('lad_super_admin', 'lad_admin', 'firm_compliance_officer'), async (req, res) => {
   const actor = req.user;
   const body = req.body || {};
-  const { role, email, first_name, last_name, password, must_change_password } = body;
+  const { role, email, first_name, last_name, password, must_change_password,
+          roll_number, phone, emirates_id, nationality } = body;
   let { firm_id } = body;
 
   // Validate inputs
@@ -247,14 +251,15 @@ router.post('/', requireRole('lad_super_admin', 'lad_admin', 'firm_compliance_of
     if (role === 'lawyer') {
       const id = genLawyerId();
       db.prepare(`INSERT INTO lawyers
-        (id, email, first_name, last_name, firm_id, password_hash, status,
-         must_change_password, password_changed_at, created_by_id, created_by_type, credit_balance)
-        VALUES (?, ?, ?, ?, ?, ?, 'active', ?, CURRENT_TIMESTAMP, ?, ?, 0)`)
-        .run(id, email, first_name, last_name, firm_id, hash, mustChange ? 1 : 0,
-             actor.sub, actor.user_type || 'staff');
-      audit(actor, 'user.create', id, { role, email, firm_id });
+        (id, email, first_name, last_name, firm_id, roll_number, phone, emirates_id, nationality,
+         password_hash, status, must_change_password, password_changed_at, created_by_id, created_by_type, credit_balance)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, CURRENT_TIMESTAMP, ?, ?, 0)`)
+        .run(id, email, first_name, last_name, firm_id,
+             roll_number || null, phone || null, emirates_id || null, nationality || null,
+             hash, mustChange ? 1 : 0, actor.sub, actor.user_type || 'staff');
+      audit(actor, 'user.create', id, { role, email, firm_id, roll_number });
       return res.status(201).json({
-        user: { id, email, first_name, last_name, role, firm_id, status: 'active', must_change_password: mustChange },
+        user: { id, email, first_name, last_name, role, firm_id, roll_number: roll_number || null, status: 'active', must_change_password: mustChange },
         initial_password: finalPassword,  // shown ONCE to the admin; not stored anywhere
       });
     } else {
@@ -279,6 +284,7 @@ router.post('/', requireRole('lad_super_admin', 'lad_admin', 'firm_compliance_of
 // Helper — fetch the target user from either table
 function fetchTarget(id) {
   const lawyer = db.prepare(`SELECT id, email, first_name, last_name, firm_id, status,
+                                    roll_number, phone, emirates_id, nationality,
                                     'lawyer' AS role, must_change_password
                              FROM lawyers WHERE id = ?`).get(id);
   if (lawyer) return { ...lawyer, _source: 'lawyer' };
@@ -289,6 +295,16 @@ function fetchTarget(id) {
   return null;
 }
 
+// ─── GET /admin/users/:id — one user's full detail (for the edit form) ──
+router.get('/:id', requireRole('lad_super_admin', 'lad_admin', 'firm_compliance_officer'), (req, res) => {
+  const actor = req.user;
+  const target = fetchTarget(req.params.id);
+  if (!target) return res.status(404).json({ error: 'User not found' });
+  if (!canActorTouch(actor, target)) return res.status(403).json({ error: 'You cannot view this user' });
+  const { _source, ...user } = target;
+  res.json({ user: { ...user, user_type: _source } });
+});
+
 // ─── PATCH /admin/users/:id — update ────────────────────────────────────
 router.patch('/:id', requireRole('lad_super_admin', 'lad_admin', 'firm_compliance_officer'), (req, res) => {
   const actor = req.user;
@@ -296,12 +312,20 @@ router.patch('/:id', requireRole('lad_super_admin', 'lad_admin', 'firm_complianc
   if (!target) return res.status(404).json({ error: 'User not found' });
   if (!canActorTouch(actor, target)) return res.status(403).json({ error: 'You cannot modify this user' });
 
-  const { first_name, last_name, email, firm_id, role } = req.body || {};
+  const { first_name, last_name, email, firm_id, role,
+          roll_number, phone, emirates_id, nationality } = req.body || {};
   const updates = {};
   if (first_name !== undefined) updates.first_name = first_name;
   if (last_name  !== undefined) updates.last_name = last_name;
   if (email      !== undefined) updates.email = email;
   if (firm_id    !== undefined) updates.firm_id = firm_id || null;
+  // Lawyer-only profile fields (ignored for staff, whose table lacks them).
+  if (target._source === 'lawyer') {
+    if (roll_number !== undefined) updates.roll_number = roll_number || null;
+    if (phone       !== undefined) updates.phone = phone || null;
+    if (emirates_id !== undefined) updates.emirates_id = emirates_id || null;
+    if (nationality !== undefined) updates.nationality = nationality || null;
+  }
 
   // Role change — only super admin can change roles, and only into roles they're allowed to create
   if (role !== undefined && role !== target.role) {
@@ -380,8 +404,42 @@ router.get('/firms/list', requireRole('lad_super_admin', 'lad_admin', 'firm_comp
     const f = db.prepare('SELECT id, name FROM firms WHERE id = ?').get(actor.firm_id);
     return res.json({ firms: f ? [f] : [] });
   }
-  const firms = db.prepare('SELECT id, name FROM firms ORDER BY name').all();
+  const firms = db.prepare('SELECT id, name, trn FROM firms ORDER BY name').all();
   res.json({ firms });
+});
+
+// ─── GET /admin/users/firms/:id — firm account details (incl. TRN) ──────
+router.get('/firms/:id', requireRole('lad_super_admin', 'lad_admin', 'firm_compliance_officer'), (req, res) => {
+  const actor = req.user;
+  if (actor.role === 'firm_compliance_officer' && actor.firm_id !== req.params.id) {
+    return res.status(403).json({ error: 'You can only view your own firm' });
+  }
+  const f = db.prepare('SELECT id, name, full_name, abbreviation, trn, status FROM firms WHERE id = ?').get(req.params.id);
+  if (!f) return res.status(404).json({ error: 'Firm not found' });
+  res.json({ firm: f });
+});
+
+// ─── PATCH /admin/users/firms/:id — set a firm's TRN (and basics) ───────
+router.patch('/firms/:id', requireRole('lad_super_admin', 'lad_admin', 'firm_compliance_officer'), (req, res) => {
+  const actor = req.user;
+  if (actor.role === 'firm_compliance_officer' && actor.firm_id !== req.params.id) {
+    return res.status(403).json({ error: 'You can only edit your own firm' });
+  }
+  const f = db.prepare('SELECT id FROM firms WHERE id = ?').get(req.params.id);
+  if (!f) return res.status(404).json({ error: 'Firm not found' });
+  const { trn, name, full_name } = req.body || {};
+  const updates = {};
+  if (trn !== undefined) updates.trn = (trn || '').toString().trim() || null;
+  // Only LAD admins can rename a firm; a firm CO may only set the TRN.
+  if (actor.role !== 'firm_compliance_officer') {
+    if (name !== undefined && String(name).trim()) updates.name = String(name).trim();
+    if (full_name !== undefined) updates.full_name = (full_name || '').toString().trim() || null;
+  }
+  if (!Object.keys(updates).length) return res.status(400).json({ error: 'No changes provided' });
+  const setClause = Object.keys(updates).map((k) => `${k} = ?`).join(', ');
+  db.prepare(`UPDATE firms SET ${setClause} WHERE id = ?`).run(...Object.values(updates), req.params.id);
+  audit(actor, 'firm.update', req.params.id, updates);
+  res.json({ ok: true, updates });
 });
 
 module.exports = router;

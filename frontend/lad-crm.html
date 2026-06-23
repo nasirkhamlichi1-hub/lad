@@ -708,6 +708,19 @@
   window.dwNoteSave=function(){var v=(document.getElementById('ntText').value||'').trim();if(!v)return;var b=REC.type==='lawyer'?{lawyer_id:REC.id}:{firm_id:REC.id};b.summary=v;api('/api/v1/messages/activity',{method:'POST',body:JSON.stringify(b)}).then(function(){toast('✓ Note saved');reopenRec()}).catch(function(e){toast(e.message)})};
   window.dwTaskOpen=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>New task</h4><input id="tkText" class="inp" placeholder="e.g. Call back re: refund"/><input id="tkDue" type="date" class="inp" style="margin-top:8px"/><div style="margin-top:8px"><button class="btn btn-g" onclick="dwTaskSave()">Add task</button></div></div>'};
   window.dwTaskSave=function(){var v=(document.getElementById('tkText').value||'').trim();if(!v)return;var b=REC.type==='lawyer'?{lawyer_id:REC.id}:{firm_id:REC.id};b.title=v;b.due_at=document.getElementById('tkDue').value||null;api('/api/v1/tasks',{method:'POST',body:JSON.stringify(b)}).then(function(){toast('✓ Task added');reopenRec()}).catch(function(e){toast(e.message)})};
+  // Firm TRN (Tax Registration Number) — read + edit from the firm drawer.
+  window.dwTrnOpen=function(){
+    if(!REC||REC.type!=='firm')return;
+    api('/api/v1/admin/users/firms/'+REC.id).then(function(r){
+      var cur=(r.firm&&r.firm.trn)||'';var f=document.getElementById('dwForm');f.style.display='block';
+      f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Tax Registration Number</h4><input id="trnInput" class="inp" placeholder="e.g. 100123456700003" value="'+esc(cur)+'" style="width:100%;margin:8px 0"/><div style="display:flex;gap:8px"><button class="btn btn-g" onclick="dwTrnSave()">Save TRN</button><button class="btn btn-l" onclick="document.getElementById(\'dwForm\').style.display=\'none\'">Cancel</button></div></div>';
+      setTimeout(function(){var i=document.getElementById('trnInput');if(i)i.focus();},60);
+    }).catch(function(e){toast(e.message)});
+  };
+  window.dwTrnSave=function(){
+    var v=(document.getElementById('trnInput').value||'').trim();
+    api('/api/v1/admin/users/firms/'+REC.id,{method:'PATCH',body:JSON.stringify({trn:v})}).then(function(){toast('✓ TRN saved');openFirm(REC.id)}).catch(function(e){toast(e.message)});
+  };
   var CR_PRICE=210; // AED per credit — credits are prepaid money, never minted free.
   window.dwCreditsOpen=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Credits · balance '+REC.credits+' · AED '+num(REC.credits*CR_PRICE)+' value</h4><div class="seg" style="margin:0 0 12px"><button class="on" onclick="crMode(\'purchase\',this)">Record purchase</button><button onclick="crMode(\'refund\',this)">Refund</button><button onclick="crMode(\'adjust\',this)">Correction</button></div><div id="crBody"></div></div>';crMode('purchase')};
   window.crMode=function(mode,el){window.__crMode=mode;if(el){var sib=el.parentNode.querySelectorAll('button');for(var i=0;i<sib.length;i++)sib[i].classList.remove('on');el.classList.add('on')}var h=document.getElementById('crBody');if(!h)return;
@@ -743,6 +756,7 @@
       document.getElementById('dwInner').innerHTML=
         '<div class="hero"><button class="x" onclick="closeDrawer()">×</button><div style="display:flex;gap:14px;align-items:flex-start"><div class="av" style="width:56px;height:56px;font-size:20px;border-radius:15px;background:'+avColor(name)+'">'+initials(name)+'</div><div style="flex:1;min-width:0"><div class="hero-name">'+esc(name)+'</div><div class="hero-sub">'+num(laws.length)+' lawyers · '+comp+'% compliant</div><span class="hbadge" style="background:rgba(255,255,255,.14);color:'+col+'">'+(comp>=70?'Healthy':comp>=40?'Watch':'At risk')+'</span></div></div><div class="prog-l"><span>FIRM COMPLIANCE</span><span>'+comp+'%</span></div><div class="prog"><div style="width:'+comp+'%;background:'+col+'"></div></div></div>'
         +'<div class="dw-bd"><div class="tiles"><div class="tile"><div class="l">Lawyers</div><div class="v">'+num(laws.length)+'</div></div><div class="tile"><div class="l">Critical</div><div class="v" style="color:var(--red)">'+num(crit)+'</div></div><div class="tile"><div class="l">Credit pool</div><div class="v">'+num(f.credit_pool||f.pool)+'</div></div></div>'
+        +'<div class="kv" style="cursor:pointer" onclick="dwTrnOpen()"><span>TRN (Tax Registration Number)<div class="sub">For VAT invoicing — click to '+(f.trn?'edit':'add')+'</div></span><span style="font-family:monospace">'+(f.trn?esc(f.trn):'+ Add')+'</span></div>'
         +'<div class="qa"><button class="p" onclick="dwMessageOpen()">'+ico('mail')+' Message firm</button><button onclick="dwAiBrief()">'+ico('spark')+' AI brief</button><button onclick="dwNoteOpen()">'+ico('note')+' Note</button><button onclick="dwTaskOpen()">'+ico('task')+' Task</button></div>'
         +'<div id="dwForm" style="display:none;padding:0 22px 14px;border-bottom:1px solid var(--line)"></div>'
         +tabs([{id:'lw',label:'Lawyers ('+laws.length+')'},{id:'tl',label:'Activity'},{id:'tk',label:'Tasks'},{id:'cr',label:'Credits'}])

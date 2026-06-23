@@ -253,6 +253,7 @@
       const qs = filters ? '?' + Object.entries(filters).filter(([_,v]) => v).map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&') : '';
       return call('GET', '/api/v1/admin/users' + qs);
     },
+    getUser:       (id)           => call('GET',   '/api/v1/admin/users/' + encodeURIComponent(id)),
     createUser:    (data)         => call('POST',  '/api/v1/admin/users', data),
     updateUser:    (id, patch)    => call('PATCH', '/api/v1/admin/users/' + encodeURIComponent(id), patch),
     resetUserPassword: (id)       => call('POST',  '/api/v1/admin/users/' + encodeURIComponent(id) + '/reset-password'),
