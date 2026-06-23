@@ -136,6 +136,7 @@ tr:hover td{background:var(--paper)}
 
     <div class="tabs">
       <div class="tab active" data-tab="materials">Course materials</div>
+      <div class="tab" data-tab="hub">Knowledge hub</div>
       <div class="tab" data-tab="learners">Learners &amp; progress</div>
     </div>
   </div>
@@ -213,6 +214,60 @@ tr:hover td{background:var(--paper)}
           <p class="note">Saved lessons appear immediately in the lawyer's AI Trainer. Changes to material take
             effect on the next session; the trainer's teaching skills come from the fixed teaching charter.</p>
         </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB: KNOWLEDGE HUB -->
+  <section id="tab-hub" class="wrap hidden" style="padding-bottom:60px">
+    <div class="card" style="margin-bottom:18px">
+      <div class="card-b" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <label for="hubCourse" style="font-size:12px;font-weight:650;color:var(--slate);display:block;margin-bottom:6px">Course</label>
+          <select id="hubCourse" style="width:100%;max-width:420px"></select>
+          <div class="hint" id="hubLessonsNote" style="margin-top:7px;font-size:12px;color:var(--slate2)"></div>
+        </div>
+        <a id="hubPreview" class="btn btn-ghost btn-sm" target="_blank" rel="noopener" style="align-self:flex-end">↗ Preview hub</a>
+      </div>
+    </div>
+
+    <div class="card" id="hubCard">
+      <div class="card-h">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green2)" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+        <h3>Knowledge hub content</h3>
+        <div class="top-spacer" style="flex:1"></div>
+        <label class="check" style="margin:0"><input type="checkbox" id="hub-published"/> Published (live)</label>
+      </div>
+      <div class="card-b">
+        <p class="note" style="margin-bottom:16px">The hub is the reference page learners see <b>before</b> the AI trainer. Its
+          “What you’ll cover” list is built automatically from this course’s lessons, so you only add the
+          reference layer below. One save publishes the hub; the trainer already runs on the same lessons.</p>
+
+        <div class="field row">
+          <div><label for="hub-eyebrow">Kicker</label><input type="text" id="hub-eyebrow" placeholder="Continuing Legal Professional Development"/></div>
+          <div><label for="hub-cta-label">Button label</label><input type="text" id="hub-cta-label" placeholder="Start the AI Training"/></div>
+        </div>
+        <div class="field"><label for="hub-title">Title</label><input type="text" id="hub-title" placeholder="Litigation &amp; Arbitration in Aviation Law"/></div>
+        <div class="field"><label for="hub-intro">Intro <span class="hint">— the lede paragraph</span></label><textarea id="hub-intro" rows="3"></textarea></div>
+        <div class="field"><label for="hub-cta-url">Training link <span class="hint">— where the button goes (the live AI trainer)</span></label><input type="text" id="hub-cta-url" placeholder="https://…/ai-trainer-live.html"/></div>
+
+        <div class="field">
+          <label style="display:flex;align-items:center">Primary legislation
+            <button type="button" class="btn btn-ghost btn-sm" id="addLaw" style="margin-left:auto">+ Add entry</button></label>
+          <div id="lawRows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
+        </div>
+
+        <div class="field">
+          <label style="display:flex;align-items:center">FAQ
+            <button type="button" class="btn btn-ghost btn-sm" id="addFaq" style="margin-left:auto">+ Add question</button></label>
+          <div id="faqRows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
+        </div>
+
+        <div class="bar">
+          <button type="button" class="btn btn-pri" id="hubSaveBtn">Save &amp; publish hub</button>
+          <div class="top-spacer" style="flex:1"></div>
+          <span id="hubSavedAt" class="hint"></span>
+        </div>
       </div>
     </div>
   </section>
@@ -432,10 +487,129 @@ tr:hover td{background:var(--paper)}
       t.classList.add('active');
       var which=t.getAttribute('data-tab');
       el('tab-materials').classList.toggle('hidden', which!=='materials');
+      el('tab-hub').classList.toggle('hidden', which!=='hub');
       el('tab-learners').classList.toggle('hidden', which!=='learners');
       if(which==='learners') loadOverview();
+      else if(which==='hub') loadHubCourses();
     };
   });
+
+  // ─── Knowledge hub editor ──────────────────────────────────────────
+  // One course = one upload. The trainer runs on the lessons; the hub adds the
+  // reference layer (legislation + FAQ) on top of the SAME course content.
+  var hubState = { courses:[], course:null, loaded:false };
+
+  function loadHubCourses(){
+    api.hubsOverview().then(function(r){
+      hubState.courses = (r && r.courses) || [];
+      var sel=el('hubCourse');
+      if(!hubState.courses.length){ sel.innerHTML='<option value="">No courses yet — upload lessons first</option>'; el('hubLessonsNote').textContent=''; return; }
+      sel.innerHTML=hubState.courses.map(function(c){
+        var label=(c.title||c.course_id)+' ('+(c.active_lessons||0)+' lesson'+((c.active_lessons||0)===1?'':'s')+(c.hasHub?(c.published?' · published':' · draft'):' · no hub yet')+')';
+        return '<option value="'+esc(c.course_id)+'">'+esc(label)+'</option>';
+      }).join('');
+      sel.onchange=function(){ loadHub(sel.value); };
+      loadHub(hubState.course || sel.value);
+    }).catch(function(e){ handleAuth(e); });
+  }
+
+  function loadHub(courseId){
+    if(!courseId) return;
+    hubState.course=courseId;
+    el('hubCourse').value=courseId;
+    var c=hubState.courses.filter(function(x){return x.course_id===courseId;})[0]||{};
+    el('hubLessonsNote').innerHTML='<b>'+(c.active_lessons||0)+'</b> active lesson'+((c.active_lessons||0)===1?'':'s')+' feed this hub’s “what you’ll cover”. Edit them under <b>Course materials</b>.';
+    el('hubPreview').href='hub.html?course='+encodeURIComponent(courseId);
+    api.hubGet(courseId).then(function(h){ fillHub(h||{ course_id:courseId }); })
+      .catch(function(e){ if(e && e.status===404){ fillHub({ course_id:courseId }); } else handleAuth(e); });
+  }
+
+  function fillHub(h){
+    el('hub-eyebrow').value=h.eyebrow||'';
+    el('hub-title').value=h.title||'';
+    el('hub-intro').value=h.intro||'';
+    el('hub-cta-label').value=h.cta_label||'Start the AI Training';
+    el('hub-cta-url').value=h.cta_url||'';
+    el('hub-published').checked=!!h.published;
+    el('hubSavedAt').textContent=h.updated_at?('Last saved '+fmtDate(h.updated_at)):'Not saved yet';
+    renderLawRows(h.legislation||[]);
+    renderFaqRows(h.faq||[]);
+  }
+
+  function inp(val,ph,w){ return '<input type="text" value="'+esc(val||'')+'" placeholder="'+esc(ph||'')+'" data-w="'+(w||'')+'" style="flex:1;min-width:90px"/>'; }
+  function rowShell(inner){ var d=document.createElement('div'); d.className='hubrow'; d.style.cssText='border:1px solid var(--line2);border-radius:var(--r);padding:12px;background:var(--paper)'; d.innerHTML=inner; return d; }
+
+  function renderLawRows(list){
+    var host=el('lawRows'); host.innerHTML='';
+    (list||[]).forEach(function(d){ host.appendChild(lawRow(d)); });
+  }
+  function lawRow(d){
+    d=d||{};
+    var r=rowShell(
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">'
+      + '<select class="lw-group" style="width:130px"><option value="intl">International</option><option value="uae">UAE</option></select>'
+      + '<input class="lw-year" type="text" value="'+esc(d.year||'')+'" placeholder="Year / Law no." style="width:140px"/>'
+      + '<input class="lw-tag" type="text" value="'+esc(d.tag||'')+'" placeholder="Tag (e.g. Warsaw)" style="width:150px"/>'
+      + '<button type="button" class="btn btn-danger btn-sm lw-del" style="margin-left:auto">Remove</button></div>'
+      + '<input class="lw-title" type="text" value="'+esc(d.title||'')+'" placeholder="Title" style="width:100%;margin-bottom:8px"/>'
+      + '<input class="lw-sub" type="text" value="'+esc(d.subtitle||'')+'" placeholder="Subtitle" style="width:100%;margin-bottom:8px"/>'
+      + '<textarea class="lw-summary" rows="2" placeholder="One-paragraph summary" style="width:100%;margin-bottom:8px">'+esc(d.summary||'')+'</textarea>'
+      + '<textarea class="lw-points" rows="3" placeholder="Key points — one per line" style="width:100%">'+esc((d.points||[]).join('\n'))+'</textarea>'
+    );
+    r.querySelector('.lw-group').value=(d.group==='uae')?'uae':'intl';
+    r.querySelector('.lw-del').onclick=function(){ r.remove(); };
+    return r;
+  }
+
+  function renderFaqRows(list){
+    var host=el('faqRows'); host.innerHTML='';
+    (list||[]).forEach(function(q){ host.appendChild(faqRow(q)); });
+  }
+  function faqRow(q){
+    q=q||{};
+    var r=rowShell(
+      '<div style="display:flex;gap:8px;margin-bottom:8px"><input class="fq-q" type="text" value="'+esc(q.q||'')+'" placeholder="Question" style="flex:1"/>'
+      + '<button type="button" class="btn btn-danger btn-sm fq-del">Remove</button></div>'
+      + '<textarea class="fq-a" rows="3" placeholder="Answer (simple <b>bold</b> allowed)" style="width:100%">'+esc(q.a||'')+'</textarea>'
+    );
+    r.querySelector('.fq-del').onclick=function(){ r.remove(); };
+    return r;
+  }
+
+  el('addLaw').onclick=function(){ el('lawRows').appendChild(lawRow({group:'intl'})); };
+  el('addFaq').onclick=function(){ el('faqRows').appendChild(faqRow({})); };
+
+  function collectHub(){
+    var laws=[].map.call(el('lawRows').querySelectorAll('.hubrow'), function(r){
+      var pts=(r.querySelector('.lw-points').value||'').split('\n').map(function(s){return s.trim();}).filter(Boolean);
+      return { group:r.querySelector('.lw-group').value, year:r.querySelector('.lw-year').value.trim(), tag:r.querySelector('.lw-tag').value.trim(),
+        title:r.querySelector('.lw-title').value.trim(), subtitle:r.querySelector('.lw-sub').value.trim(),
+        summary:r.querySelector('.lw-summary').value.trim(), points:pts };
+    }).filter(function(d){ return d.title; });
+    var faqs=[].map.call(el('faqRows').querySelectorAll('.hubrow'), function(r){
+      return { q:r.querySelector('.fq-q').value.trim(), a:r.querySelector('.fq-a').value.trim() };
+    }).filter(function(q){ return q.q; });
+    return {
+      course_id: hubState.course,
+      eyebrow: el('hub-eyebrow').value.trim(), title: el('hub-title').value.trim(),
+      intro: el('hub-intro').value.trim(), cta_label: el('hub-cta-label').value.trim(),
+      cta_url: el('hub-cta-url').value.trim(), published: el('hub-published').checked,
+      legislation: laws, faq: faqs,
+    };
+  }
+
+  el('hubSaveBtn').onclick=function(){
+    var hub=collectHub();
+    if(!hub.title){ toast('Give the hub a title first.'); return; }
+    el('hubSaveBtn').disabled=true;
+    api.hubSave(hub.course_id, hub).then(function(saved){
+      toast(saved.published?'✓ Hub saved & published':'✓ Hub saved as draft');
+      el('hubSavedAt').textContent=saved.updated_at?('Last saved '+fmtDate(saved.updated_at)):'Saved';
+      var c=hubState.courses.filter(function(x){return x.course_id===hub.course_id;})[0];
+      if(c){ c.hasHub=true; c.published=!!saved.published; c.title=saved.title; }
+    }).catch(function(e){ handleAuth(e); toast('Could not save: '+(e.message||e)); })
+      .finally(function(){ el('hubSaveBtn').disabled=false; });
+  };
 
   // ─── Learners & progress ───────────────────────────────────────────
   function loadOverview(){
