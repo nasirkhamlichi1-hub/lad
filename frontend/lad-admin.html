@@ -2440,7 +2440,7 @@ async function loadLiveCourses(){
         provider:c.provider_id||'LAD Academy', location:c.location||'Dubai',
         bg:c.bg||(isMand?'linear-gradient(135deg,#241a38,#463a66)':'linear-gradient(135deg,#0a2040,#16386a)'),
         elearning:isElearn, status:'live', match:0, matchReason:'', desc:(c.title||'')+' — accredited CLPD course.',
-        sessions:(c.sessions||[]).map((s)=>({date:fd(s.scheduled_at),time:ft(s.scheduled_at)+(s.end_at?'–'+ft(s.end_at):''),seats:Number(s.seats_remaining)||0,lang:s.language||'English',sid:s.id,iso:s.scheduled_at})),
+        sessions:(c.sessions||[]).map((s)=>({date:fd(s.scheduled_at),time:ft(s.scheduled_at)+(s.end_at?'–'+ft(s.end_at):''),seats:Number(s.seats_remaining)||0,cap:Number(s.capacity)||0,lang:s.language||'English',sid:s.id,iso:s.scheduled_at})),
         impact:[] };
     });
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(courses)); } catch {}
@@ -2490,6 +2490,8 @@ function renderGrid(list){
   g.innerHTML = list.map(c => {
     const typePill = c.type === 'mandatory' ? 'pill-mandatory' : c.type === 'accredited' ? 'pill-accredited' : 'pill-elearning';
     const seatsTotal = (c.sessions || []).reduce((s,sess) => s + (parseInt(sess.seats)||0), 0);
+    const capTotal = (c.sessions || []).reduce((s,sess) => s + (parseInt(sess.cap)||0), 0);
+    const bookedTotal = Math.max(0, capTotal - seatsTotal); // lawyers booked across all sessions
     const sessCount = (c.sessions || []).length;
     const status = c.status || 'live';
     const bgStyle = c.bg && c.bg.startsWith('http')
@@ -2506,7 +2508,7 @@ function renderGrid(list){
         <div class="adm-card-title">${escape(c.title || 'Untitled')}</div>
         <div class="adm-card-meta">
           <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${sessCount} session${sessCount===1?'':'s'}</span>
-          <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>${seatsTotal} seats</span>
+          <span title="${bookedTotal} booked · ${seatsTotal} seats still open"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>${bookedTotal} booked · ${seatsTotal} open</span>
           <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>${escape(c.location || '—')}</span>
         </div>
       </div>
@@ -6120,12 +6122,14 @@ function admSessionsRender(){
     const cancelled = (s.status||'').toLowerCase()==='cancelled';
     const closed = (s.status||'').toLowerCase()==='closed';
     const seats = Number(s.seats_remaining)||0;
+    const cap = Number(s.capacity)||0;
+    const booked = Math.max(0, cap - seats); // how many lawyers are on this session
     const fmt = _admFmtOf(s)==='online'?'Online':'Face-to-face';
-    return '<div style="display:grid;grid-template-columns:34px 1.5fr 1fr 56px 78px 80px 210px;gap:0;border-bottom:1px solid var(--line);font-size:12.5px;align-items:center;'+(cancelled?'opacity:.5':'')+'">'
+    return '<div style="display:grid;grid-template-columns:34px 1.5fr 1fr 104px 78px 80px 210px;gap:0;border-bottom:1px solid var(--line);font-size:12.5px;align-items:center;'+(cancelled?'opacity:.5':'')+'">'
       +'<div style="padding:9px 0 9px 14px"><input type="checkbox" '+(ADM_SESS_SEL[s.id]?'checked':'')+' onchange="admSessSel(\''+escape(s.id)+'\',this.checked)"/></div>'
       +'<div style="padding:9px 14px;font-weight:500"><span style="cursor:pointer;border-bottom:1px dashed var(--green,#006B3F);color:var(--ink)" title="View bookings & add lawyers" onclick="admSessionBookings(\''+escape(s.id)+'\',\''+escapeAttr(String(s.course_title||''))+'\')">'+escape(s.course_title||s.course_id||'—')+'</span>'+(s.provider_name?'<span style="color:var(--slate3);font-weight:400"> · '+escape(s.provider_name)+'</span>':'')+'</div>'
       +'<div style="padding:9px 14px;color:var(--slate2);font-family:var(--mono);font-size:11px">'+_admSdate(s.scheduled_at)+'</div>'
-      +'<div style="padding:9px 14px;text-align:right;font-family:var(--mono)">'+(cancelled?'—':seats)+'</div>'
+      +'<div style="padding:9px 14px;text-align:right;font-family:var(--mono);line-height:1.25" title="'+booked+' booked of '+cap+' · '+seats+' seats left">'+(cancelled?'—':('<span style="font-weight:600;color:var(--ink)">'+booked+' booked</span><div style="font-size:10px;color:var(--slate3)">'+seats+' of '+cap+' left</div>'))+'</div>'
       +'<div style="padding:9px 14px;font-size:11px;color:var(--slate2)">'+fmt+'</div>'
       +'<div style="padding:9px 14px"><span style="font-size:10px;font-weight:600;text-transform:uppercase;color:'+(cancelled?'var(--red)':(closed?'var(--amber)':'var(--green)'))+'">'+escape(s.status||'scheduled')+'</span></div>'
       +'<div style="padding:9px 14px;text-align:right;display:flex;gap:6px;justify-content:flex-end">'
