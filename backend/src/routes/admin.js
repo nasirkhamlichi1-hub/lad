@@ -355,7 +355,7 @@ router.get('/course-analytics', requireAuth, (req, res) => {
   const bucketOf = (iso) => { const t = Date.parse(iso); if (isNaN(t)) return -1; const b = (WEEKS - 1) - Math.floor((now - t) / (7 * DAY)); return (b >= 0 && b < WEEKS) ? b : -1; };
   const weeks = []; for (let i = WEEKS - 1; i >= 0; i--) { const d = new Date(now - i * 7 * DAY); weeks.push(d.getUTCDate() + ' ' + MON[d.getUTCMonth()]); }
 
-  const courses = all("SELECT id, title, COALESCE(type,'accredited') type, COALESCE(pts,0) pts, COALESCE(credits,5) credits, category, provider_id FROM courses WHERE active = 1");
+  const courses = all("SELECT id, title, COALESCE(type,'accredited') type, COALESCE(is_ethics,0) is_ethics, COALESCE(pts,0) pts, COALESCE(credits,5) credits, category, provider_id FROM courses WHERE active = 1");
   const fillRows = all("SELECT course_id, SUM(capacity) cap, SUM(seats_remaining) seats, COUNT(*) sessions FROM course_sessions WHERE COALESCE(status,'open') NOT IN ('cancelled','closed') AND scheduled_at >= datetime('now') GROUP BY course_id");
   const fill = {}; fillRows.forEach((r) => { fill[r.course_id] = r; });
   const bk = all("SELECT course_id, created_at, status FROM bookings WHERE created_at >= datetime('now', ?)", '-' + (WEEKS * 7) + ' day');
@@ -365,9 +365,14 @@ router.get('/course-analytics', requireAuth, (req, res) => {
 
   const perCourse = {}; courses.forEach((c) => { perCourse[c.id] = new Array(WEEKS).fill(0); });
   const marketWeekly = new Array(WEEKS).fill(0);
-  let byMandatory = 0, byAccredited = 0;
-  const typeOf = {}; courses.forEach((c) => { typeOf[c.id] = (c.type || '').toLowerCase(); });
-  bk.forEach((r) => { const b = bucketOf(r.created_at); if (b < 0) return; if (perCourse[r.course_id]) perCourse[r.course_id][b]++; marketWeekly[b]++; if (typeOf[r.course_id] === 'mandatory') byMandatory++; else byAccredited++; });
+  let byMandatory = 0, byMandatoryEthics = 0, byAccredited = 0;
+  const typeOf = {}; const ethicsOf = {};
+  courses.forEach((c) => { typeOf[c.id] = (c.type || '').toLowerCase(); ethicsOf[c.id] = !!c.is_ethics; });
+  bk.forEach((r) => {
+    const b = bucketOf(r.created_at); if (b < 0) return;
+    if (perCourse[r.course_id]) perCourse[r.course_id][b]++; marketWeekly[b]++;
+    if (typeOf[r.course_id] === 'mandatory') { byMandatory++; if (ethicsOf[r.course_id]) byMandatoryEthics++; } else byAccredited++;
+  });
 
   const out = courses.map((c) => {
     const w = perCourse[c.id] || new Array(WEEKS).fill(0);
@@ -378,7 +383,7 @@ router.get('/course-analytics', requireAuth, (req, res) => {
     const prior = w.slice(WEEKS - 8, WEEKS - 4).reduce((s, x) => s + x, 0);
     const fr = ratingMap[c.id] || null;
     return {
-      id: c.id, title: c.title, type: c.type, points: c.pts, credits: c.credits,
+      id: c.id, title: c.title, type: c.type, isEthics: !!c.is_ethics, points: c.pts, credits: c.credits,
       topic: c.category || null, provider: c.provider_id || null,
       capacity: cap, seatsRemaining: seats, fillPct: cap ? Math.round(100 * (cap - seats) / cap) : null,
       upcomingSessions: Number(f.sessions) || 0,
@@ -396,7 +401,7 @@ router.get('/course-analytics', requireAuth, (req, res) => {
     market: {
       totalBookings: marketWeekly.reduce((s, x) => s + x, 0),
       weekly: marketWeekly,
-      mandatory: byMandatory, accredited: byAccredited,
+      mandatory: byMandatory, mandatoryEthics: byMandatoryEthics, accredited: byAccredited,
       topGrowing: ranked.slice(0, 5).map((c) => ({ id: c.id, title: c.title, momentum: c.momentum, total: c.totalBookings })),
       cooling: ranked.slice(-3).reverse().map((c) => ({ id: c.id, title: c.title, momentum: c.momentum, total: c.totalBookings })),
     },

@@ -241,12 +241,19 @@
     trainerImportBundled: (file) => ENABLED ? call('POST', '/api/v1/trainer/bundled-courses/' + encodeURIComponent(file) + '/import')
                                             : Promise.resolve({ imported: 0 }),
 
+    // ─── Knowledge hubs (one per course; same content as the trainer) ──
+    hubsOverview: () => ENABLED ? call('GET', '/api/v1/hubs') : Promise.resolve({ courses: [] }),
+    hubGet: (courseId) => ENABLED ? call('GET', '/api/v1/hubs/' + encodeURIComponent(courseId)) : Promise.resolve(null),
+    hubSave: (courseId, hub) => ENABLED ? call('PUT', '/api/v1/hubs/' + encodeURIComponent(courseId), hub)
+                                        : Promise.resolve(hub),
+
     // ─── Admin: user management ──────────────────────────────────────
     listUsers: (filters) => {
       if (!ENABLED) return Promise.resolve({ users: [], count: 0 });
       const qs = filters ? '?' + Object.entries(filters).filter(([_,v]) => v).map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&') : '';
       return call('GET', '/api/v1/admin/users' + qs);
     },
+    getUser:       (id)           => call('GET',   '/api/v1/admin/users/' + encodeURIComponent(id)),
     createUser:    (data)         => call('POST',  '/api/v1/admin/users', data),
     updateUser:    (id, patch)    => call('PATCH', '/api/v1/admin/users/' + encodeURIComponent(id), patch),
     resetUserPassword: (id)       => call('POST',  '/api/v1/admin/users/' + encodeURIComponent(id) + '/reset-password'),

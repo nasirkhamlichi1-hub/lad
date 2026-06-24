@@ -41,8 +41,8 @@
     { "route": "/ladstaff/*", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/staff", "statusCode": 302 },
     { "route": "/ladtrain", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/staff", "statusCode": 302 },
     { "route": "/ladtrain/*", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/staff", "statusCode": 302 },
-    { "route": "/servicehub", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/ai-trainer-live.html", "statusCode": 302 },
-    { "route": "/servicehub/*", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/ai-trainer-live.html", "statusCode": 302 },
+    { "route": "/servicehub", "redirect": "/hub.html?course=aviation-law", "statusCode": 302 },
+    { "route": "/servicehub/*", "redirect": "/hub.html?course=aviation-law", "statusCode": 302 },
     { "route": "/reception", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/", "statusCode": 302 },
     { "route": "/reception/*", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/", "statusCode": 302 },
     { "route": "/ai-trainer", "redirect": "https://nice-ocean-0a45eff10.7.azurestaticapps.net/ai-trainer-live.html", "statusCode": 302 }

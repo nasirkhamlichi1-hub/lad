@@ -220,7 +220,8 @@
         <div class="panel-hd"><h2>Inbox</h2><div class="seg" id="ibSeg">
           <button class="on" onclick="ibBox('unassigned',this)">Unassigned</button>
           <button onclick="ibBox('mine',this)">Mine</button>
-          <button onclick="ibBox('all',this)">All</button></div></div>
+          <button onclick="ibBox('all',this)">All</button>
+          <button onclick="ibBox('archived',this)">Archived</button></div></div>
         <div class="panel-bd" id="ibList" style="flex:1"></div>
       </div>
       <div class="inbox-thread" id="ibThread"><div class="empty">Select a conversation to read and reply.</div></div>
@@ -272,6 +273,14 @@
     <div class="view" id="v-finance"><div class="scroll" style="width:100%;padding:22px">
       <div style="max-width:1000px;margin:0 auto">
         <div class="dash" id="finCards" style="grid-template-columns:repeat(4,1fr);padding:0 0 16px"></div>
+        <div class="panel" style="margin-bottom:16px"><div class="panel-hd" style="flex-wrap:wrap;gap:8px"><h2>Reports</h2>
+          <input class="inp" type="month" id="repMonth" style="max-width:170px;margin-left:auto"/>
+          <button class="btn btn-l" onclick="dlReport('credits.csv')" title="Full credits ledger with revenue/VAT split">↓ Credits report</button>
+          <button class="btn btn-l" onclick="dlReport('vat.csv')" title="Net revenue, 5% VAT and gross per transaction">↓ VAT report</button>
+          <button class="btn btn-l" onclick="dlReport('course-drops.csv')" title="Cancellations/refunds to adjust revenue">↓ Course-drop report</button>
+        </div>
+        <div class="panel-bd" style="padding:10px 18px;font-size:12px;color:var(--slate2);max-height:none">Pick a month to scope the report (leave blank for all time). Amounts are split into net revenue and 5% VAT (prices are VAT-inclusive). Use the Transaction ID column to reconcile with bank statements.</div>
+        </div>
         <div class="panel"><div class="panel-hd" style="flex-wrap:wrap;gap:8px"><h2>Transactions</h2>
           <input class="inp" id="finSearch" placeholder="Search buyer, firm, reference…" style="max-width:280px;margin-left:auto" oninput="finSearch()"/>
           <select class="inp" id="finType" style="max-width:150px" onchange="finSearch()"><option value="">All types</option><option value="purchase">Purchases</option><option value="refund">Refunds</option><option value="transfer">Firm pool</option><option value="use">Bookings</option></select>
@@ -289,7 +298,7 @@
         <button class="subtab on" data-sub="catalogue" onclick="coursesSub('catalogue',this)"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Catalogue</button>
         <button class="subtab" data-sub="schedules" onclick="coursesSub('schedules',this)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedules</button>
         <button class="subtab" data-sub="trainer" onclick="coursesSub('trainer',this)"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>AI Trainer</button>
-        <button class="subtab" data-sub="hub" onclick="coursesSub('hub',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg>Knowledge Hub</button>
+        <button class="subtab" data-sub="hub" onclick="coursesSub('hub',this)"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Website content</button>
       </div>
       <div class="subbody">
         <iframe class="embed" id="admFrame" title="Course admin" data-src="lad-admin.html?embed=1&page=courses"></iframe>
@@ -406,8 +415,35 @@
     var who=t.buyer||'';var open=t.lawyer_id?'openLawyer(\''+q1(t.lawyer_id)+'\',\''+q1(who)+'\')':(t.firm_id?'openFirm(\''+q1(t.firm_id)+'\')':'');
     var pillCls=t.kind==='refund'?'high':t.kind==='booking'?'cat':t.kind==='adjustment'?'closed':'pending';
     var aed=Number(t.aed)||0,cr=Number(t.credits)||0;
-    return '<div class="row"'+(open?' onclick="'+open+'"':'')+'><div style="flex:1;min-width:0"><div class="ttl" style="font-weight:500">'+esc(who)+(t.firm?' · <span class="sub">'+esc(t.firm)+'</span>':'')+'</div><div class="sub">'+esc(t.date)+' · '+esc(t.method)+(t.reference?' · '+esc(t.reference):'')+'</div></div><span class="pill '+pillCls+'">'+esc(t.type||t.kind)+'</span><span class="sub" style="font-family:monospace;margin:0 10px;white-space:nowrap">'+(cr>0?'+':'')+cr+' cr</span><span style="font-family:monospace;font-weight:600;white-space:nowrap;color:'+(aed<0?'var(--red)':'var(--ink)')+'">'+(aed<0?'−':'')+'AED '+num(Math.abs(aed))+'</span></div>';
+    // An invoice is only meaningful for an actual cash purchase.
+    var inv=(aed>0&&t.kind!=='booking')?'<button class="btn btn-l btn-xs" onclick="event.stopPropagation();openInvoice(\''+q1(t.id)+'\')" style="margin-left:8px">Invoice</button>':'';
+    return '<div class="row"'+(open?' onclick="'+open+'"':'')+'><div style="flex:1;min-width:0"><div class="ttl" style="font-weight:500">'+esc(who)+(t.firm?' · <span class="sub">'+esc(t.firm)+'</span>':'')+'</div><div class="sub" style="font-family:monospace">'+esc(t.id)+' · '+esc(t.date)+' · '+esc(t.method)+(t.reference?' · '+esc(t.reference):'')+'</div></div><span class="pill '+pillCls+'">'+esc(t.type||t.kind)+'</span><span class="sub" style="font-family:monospace;margin:0 10px;white-space:nowrap">'+(cr>0?'+':'')+cr+' cr</span><span style="font-family:monospace;font-weight:600;white-space:nowrap;color:'+(aed<0?'var(--red)':'var(--ink)')+'">'+(aed<0?'−':'')+'AED '+num(Math.abs(aed))+'</span>'+inv+'</div>';
   }
+  // Download a finance report CSV (auth header → blob → save).
+  window.dlReport=function(name){
+    var m=(document.getElementById('repMonth')||{}).value||'';
+    fetch(BASE+'/api/v1/admin/reports/'+name+(m?'?month='+encodeURIComponent(m):''),{headers:{Authorization:'Bearer '+tok()}}).then(function(r){
+      if(!r.ok)throw new Error('HTTP '+r.status);return r.blob();
+    }).then(function(b){
+      var u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='clpd-'+name.replace('.csv','')+(m?'-'+m:'')+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},1000);
+      toast('✓ Report downloaded');
+    }).catch(function(e){toast('Report failed: '+e.message)});
+  };
+  // Open a printable VAT invoice for a single transaction.
+  window.openInvoice=function(txId){
+    api('/api/v1/admin/reports/invoice/'+encodeURIComponent(txId)).then(function(d){
+      var w=window.open('','_blank');if(!w){toast('Allow pop-ups to view the invoice');return;}
+      var row=function(k,v){return '<tr><td style="padding:6px 10px;color:#5a6573">'+k+'</td><td style="padding:6px 10px;text-align:right;font-family:monospace">'+v+'</td></tr>';};
+      w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(d.invoice_no)+'</title><style>body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#14202b;max-width:720px;margin:32px auto;padding:0 24px}h1{font-size:22px;margin:0}.muted{color:#5a6573;font-size:13px}table{width:100%;border-collapse:collapse;margin-top:10px}.tot td{border-top:2px solid #14202b;font-weight:700}.box{border:1px solid #e8ecf1;border-radius:10px;padding:16px;margin-top:16px}@media print{.noprint{display:none}}</style></head><body>'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h1>Tax Invoice</h1><div class="muted">'+esc(d.invoice_no)+' · '+esc(d.date)+'</div></div><div style="text-align:right"><div style="font-weight:700">'+esc(d.issuer.name)+'</div><div class="muted">TRN '+esc(d.issuer.trn)+'</div><div class="muted">'+esc(d.issuer.address)+'</div></div></div>'
+        +'<div class="box"><div style="font-weight:700">Billed to</div><div>'+esc(d.buyer)+(d.firm?' · '+esc(d.firm):'')+'</div>'+(d.customer_trn?'<div class="muted">Customer TRN '+esc(d.customer_trn)+'</div>':'')+'</div>'
+        +'<div class="box"><table>'+row('Description',esc(d.description))+row('Credits',d.credits)+row('Transaction ID',esc(d.transaction_id))+(d.reference?row('Payment reference',esc(d.reference)):'')+row('Payment method',esc(d.payment_method||'—'))+'</table></div>'
+        +'<table style="margin-top:18px">'+row('Net (revenue)','AED '+d.net_aed)+row('VAT ('+esc(d.vat_rate)+')','AED '+d.vat_aed)+'<tr class="tot">'+row('Total (VAT inclusive)','AED '+d.gross_aed).replace(/^<tr>|<\/tr>$/g,'')+'</tr>'+'</table>'
+        +'<p class="muted" style="margin-top:24px">Computer-generated tax invoice. VAT-inclusive pricing. Issuer details are placeholders pending finalisation.</p>'
+        +'<button class="noprint" onclick="window.print()" style="margin-top:10px;padding:10px 18px;border:0;border-radius:8px;background:#006B3F;color:#fff;font-weight:600;cursor:pointer">Print / Save PDF</button>'
+        +'</body></html>');w.document.close();
+    }).catch(function(e){toast('Invoice failed: '+e.message)});
+  };
   // ── activity / audit trail ──
   var actT;window.actSearch=function(){clearTimeout(actT);actT=setTimeout(loadActivity,250)};
   // Populate the team-member filter once, so a super-admin can see exactly what
@@ -512,13 +548,14 @@
     var th=document.getElementById('ibThread');th.innerHTML='<div class="empty">Loading…</div>';
     api('/api/v1/messages/conversations/'+id).then(function(j){
       var c=j.conversation;
-      var head='<div style="padding:16px 22px;border-bottom:1px solid var(--line);background:#fff"><button class="ib-back" onclick="ibBack()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" style="vertical-align:-2px"><polyline points="15 18 9 12 15 6"/></svg> Inbox</button><div style="display:flex;align-items:center;gap:10px"><div><div style="font-size:16px;font-weight:700">'+esc(c.subject||'Conversation')+'</div><div class="sub" style="cursor:pointer" onclick="'+(c.requester_type==='firm'?'openFirm(\''+q1(c.requester_id)+'\')':'openLawyer(\''+q1(c.requester_id)+'\',\''+q1(c.requester_name)+'\')')+'">'+esc(c.requester_name||'')+' · '+esc(c.requester_type||'')+' →</div></div><div style="margin-left:auto;display:flex;gap:6px;align-items:center"><span class="pill '+esc(c.status)+'">'+esc(c.status)+'</span>'+(c.assigned_to===ME.sub?'':'<button class="btn btn-g btn-xs" onclick="takeConv(\''+id+'\');openConv(\''+id+'\')">Take ownership</button>')+(c.status!=='resolved'?'<button class="btn btn-l btn-xs" onclick="convStatus(\''+id+'\',\'resolved\')">Resolve</button>':'')+'</div></div></div>';
+      var head='<div style="padding:16px 22px;border-bottom:1px solid var(--line);background:#fff"><button class="ib-back" onclick="ibBack()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" style="vertical-align:-2px"><polyline points="15 18 9 12 15 6"/></svg> Inbox</button><div style="display:flex;align-items:center;gap:10px"><div><div style="font-size:16px;font-weight:700">'+esc(c.subject||'Conversation')+'</div><div class="sub" style="cursor:pointer" onclick="'+(c.requester_type==='firm'?'openFirm(\''+q1(c.requester_id)+'\')':'openLawyer(\''+q1(c.requester_id)+'\',\''+q1(c.requester_name)+'\')')+'">'+esc(c.requester_name||'')+' · '+esc(c.requester_type||'')+' →</div></div><div style="margin-left:auto;display:flex;gap:6px;align-items:center"><span class="pill '+esc(c.status)+'">'+esc(c.status)+'</span>'+(c.assigned_to===ME.sub?'':'<button class="btn btn-g btn-xs" onclick="takeConv(\''+id+'\');openConv(\''+id+'\')">Take ownership</button>')+(c.status!=='resolved'?'<button class="btn btn-l btn-xs" onclick="convStatus(\''+id+'\',\'resolved\')">Resolve</button>':'')+(c.archived?'<button class="btn btn-l btn-xs" onclick="archiveConv(\''+id+'\',false)">Restore</button>':'<button class="btn btn-l btn-xs" onclick="archiveConv(\''+id+'\',true)">Archive</button>')+'</div></div></div>';
       var msgs=(c.messages||[]).map(function(m){var mine=m.sender_side==='admin';return '<div class="msg '+(mine?'me':'them')+'"><div class="who2">'+esc(m.sender_name||(mine?'CLPD':'User'))+' · '+ago(m.created_at)+'</div>'+esc(m.body)+'</div>'}).join('');
       th.innerHTML=head+'<div style="flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column">'+msgs+'</div>'+'<div style="padding:14px 22px;border-top:1px solid var(--line);background:#fff"><textarea id="ibReply" class="inp" rows="2" placeholder="Reply to '+esc(c.requester_name||'')+'…"></textarea><div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-l" id="ibDraftBtn" onclick="ibDraft(\''+id+'\')">'+ico('spark')+' Draft with AI</button><button class="btn btn-g" style="margin-left:auto" onclick="ibSend(\''+id+'\')">Send reply</button></div></div>';
     }).catch(function(e){th.innerHTML='<div class="empty">'+esc(e.message)+'</div>'});
   };
   window.ibSend=function(id){var t=document.getElementById('ibReply');var b=(t.value||'').trim();if(!b)return;api('/api/v1/messages/conversations/'+id+'/messages',{method:'POST',body:JSON.stringify({body:b})}).then(function(){openConv(id);renderInbox()}).catch(function(e){toast(e.message)})};
   window.convStatus=function(id,s){api('/api/v1/messages/conversations/'+id+'/status',{method:'POST',body:JSON.stringify({status:s})}).then(function(){toast('✓ '+s);openConv(id);renderInbox();loadDash()}).catch(function(e){toast(e.message)})};
+  window.archiveConv=function(id,on){api('/api/v1/messages/conversations/'+id+'/archive',{method:'POST',body:JSON.stringify({archived:on})}).then(function(){toast(on?'✓ Archived':'✓ Restored');ibBack();renderInbox();refreshInboxBadge()}).catch(function(e){toast(e.message)})};
 
   // ── operations / sessions ──
   function loadSessions(){return api('/api/v1/courses/sessions/all').then(function(all){var now=new Date().toISOString();SESS=(Array.isArray(all)?all:[]).filter(function(s){return s&&s.scheduled_at&&s.scheduled_at>=now&&(s.status||'')!=='cancelled'}).sort(function(a,b){return String(a.scheduled_at).localeCompare(String(b.scheduled_at))});window.__SESS=SESS}).catch(function(){})}
@@ -593,12 +630,26 @@
     openDrawer();var dw=document.getElementById('dwInner');
     dw.innerHTML='<div class="hero"><button class="x" onclick="closeDrawer()">×</button><div class="hero-name">'+esc(title||'Session')+'</div><div class="hero-sub" id="sxSub">Loading…</div></div><div class="dw-bd"><div class="sec"><h4>Book a lawyer onto this session</h4><input id="sxSearch" class="inp" placeholder="Search lawyer by name or email…" oninput="sxSearch()"/><div id="sxRes" style="margin-top:10px"></div></div><div class="sec"><h4>Booked (<span id="sxN">…</span>)</h4><div id="sxBooked"></div></div><div class="sec" style="border-top:1px solid var(--line)"><h4>Cancel session</h4><div id="sxCancelBox"><button class="btn btn-r" onclick="sxCancel()">Cancel this session</button><div class="sub" style="margin-top:6px">Refunds credits and notifies every booked lawyer — in-app and by email.</div></div></div></div>';
     api('/api/v1/bookings/session/'+id).then(function(j){
-      window.__SX={id:id,course:j.session.course_id};
-      document.getElementById('sxSub').textContent=fdatetime(j.session.scheduled_at)+' · '+num(j.session.seats_remaining)+'/'+num(j.session.capacity)+' seats · '+(j.session.status||'');
+      window.__SX={id:id,course:j.session.course_id,pts:Number(j.session.course_pts)||2};
+      var _cap=Number(j.session.capacity)||0,_left=Number(j.session.seats_remaining)||0;
+      document.getElementById('sxSub').textContent=fdatetime(j.session.scheduled_at)+' · '+num(_cap-_left)+' booked · '+num(_left)+' of '+num(_cap)+' seats left · '+(j.session.status||'');
       document.getElementById('sxN').textContent=(j.bookings||[]).length;
-      document.getElementById('sxBooked').innerHTML=(j.bookings||[]).length?j.bookings.map(function(b){return '<div class="kv" style="cursor:pointer" onclick="openLawyer(\''+q1(b.lawyer_id)+'\',\''+q1(b.name)+'\')"><span>'+esc(b.name)+'<div class="sub">'+esc(b.email||'')+(b.firm?' · '+esc(b.firm):'')+'</div></span><span class="pill cat">'+esc(b.status)+'</span></div>'}).join(''):'<div class="empty">No one booked yet.</div>';
+      document.getElementById('sxBooked').innerHTML=(j.bookings||[]).length?j.bookings.map(function(b){
+        var att=(b.status||'')==='attended';
+        var act=att
+          ? '<button class="btn btn-l btn-xs" onclick="event.stopPropagation();sxAttend(\''+b.id+'\',false,0)" title="Undo attendance and remove the awarded points">Undo ('+(b.points_earned||0)+' pts)</button>'
+          : '<button class="btn btn-g btn-xs" onclick="event.stopPropagation();sxAttend(\''+b.id+'\',true,'+(window.__SX.pts)+')" title="Mark attended and award the course points">Mark attended +'+(window.__SX.pts)+'</button>';
+        return '<div class="kv" style="cursor:pointer" onclick="openLawyer(\''+q1(b.lawyer_id)+'\',\''+q1(b.name)+'\')"><span>'+esc(b.name)+'<div class="sub">'+esc(b.email||'')+(b.firm?' · '+esc(b.firm):'')+'</div></span><span class="pill '+(att?'compliant':'cat')+'">'+esc(b.status)+'</span>'+act+'</div>';
+      }).join(''):'<div class="empty">No one booked yet.</div>';
       if((j.session.status||'')==='cancelled'){var cb=document.getElementById('sxCancelBox');if(cb)cb.innerHTML='<div class="sub">This session is already cancelled.</div>'}
     }).catch(function(e){var s=document.getElementById('sxSub');if(s)s.textContent='—';var bk=document.getElementById('sxN');if(bk)bk.textContent='0';var bd=document.getElementById('sxBooked');if(bd)bd.innerHTML='<div class="empty">Couldn’t load bookings — '+esc(e.message)+'</div>';toast(e.message)});
+  };
+  // Mark a booked lawyer attended and allocate the CPD points (or reverse it).
+  window.sxAttend=function(bookingId,attended,pts){
+    var body=attended?{status:'attended',points_earned:pts}:{status:'booked',points_earned:0};
+    api('/api/v1/bookings/'+bookingId,{method:'PATCH',body:JSON.stringify(body)}).then(function(){
+      toast(attended?('✓ Attended · '+pts+' points awarded'):'✓ Attendance reversed');openSession(window.__SX.id);
+    }).catch(function(e){toast(e.message)});
   };
   window.sxCancel=function(){var box=document.getElementById('sxCancelBox');if(!box)return;var n=(document.getElementById('sxN')||{}).textContent||'0';box.innerHTML='<div style="background:#fce8e4;color:var(--red);padding:10px 12px;border-radius:9px;font-size:12.5px;margin-bottom:8px">Cancel this session? <strong>'+n+'</strong> booked lawyer'+(n==='1'?'':'s')+' will be refunded and notified by email and in-app. This can’t be undone.</div><div style="display:flex;gap:8px"><button class="btn btn-r" onclick="sxCancelDo(this)">Yes, cancel &amp; refund all</button><button class="btn btn-l" onclick="openSession(window.__SX.id)">Keep session</button></div>'};
   window.sxCancelDo=function(btn){if(btn){btn.disabled=true;btn.textContent='Cancelling…'}api('/api/v1/courses/sessions/'+window.__SX.id+'/cancel',{method:'POST',body:JSON.stringify({})}).then(function(j){toast('✓ Session cancelled · '+(j.refunded||0)+' refunded · '+(j.emailed||0)+' emailed');closeDrawer();loadSessions().then(function(){if(document.getElementById('v-ops').classList.contains('on'))renderOps();if(document.getElementById('v-dash').classList.contains('on'))loadDash()})}).catch(function(e){toast(e.message);if(btn){btn.disabled=false;btn.textContent='Yes, cancel & refund all'}})};
@@ -659,7 +710,10 @@
         +'<div class="tiles"><div class="tile"><div class="l">Points</div><div class="v">'+pts+'</div></div><div class="tile"><div class="l">Credits</div><div class="v">'+num(l.credits!=null?l.credits:l.credit_balance)+'</div></div><div class="tile"><div class="l">Bookings</div><div class="v">'+bookings.length+'</div></div></div>'
         +'<div class="qa"><button class="p" onclick="dwBookOpen()">'+ico('cal')+' Book onto course</button><button onclick="dwMessageOpen()">'+ico('mail')+' Message</button><button onclick="dwAiBrief()">'+ico('spark')+' AI brief</button>'+(REC.firm?'<button onclick="openFirm(\''+q1(REC.firm)+'\')">'+ico('firm')+' Firm</button>':'')+'<button onclick="dwNoteOpen()">'+ico('note')+' Note</button><button onclick="dwTaskOpen()">'+ico('task')+' Task</button><button onclick="dwCreditsOpen()">'+ico('card')+' Credits</button></div>'
         +'<div id="dwForm" style="display:none;padding:0 22px 14px;border-bottom:1px solid var(--line)"></div>'
-        +tabs([{id:'cmp',label:'Compliance'},{id:'bk',label:'Bookings ('+bookings.length+')'},{id:'tl',label:'Activity'},{id:'tk',label:'Tasks'},{id:'dt',label:'Details'}])
+        // Upcoming bookings surfaced up front so reschedule / mark-attended /
+        // cancel are one glance away — no need to dig into the Bookings tab.
+        +(pendingBk.length?'<div style="padding:12px 22px 4px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--slate3);text-transform:uppercase">Upcoming bookings — reschedule / attend / cancel</span><span class="pill cat">'+pendingBk.length+'</span></div>'+pendingBk.map(bookingCard).join('')+'</div>':'')
+        +tabs([{id:'cmp',label:'Compliance'},{id:'bk',label:'All bookings ('+bookings.length+')'},{id:'tl',label:'Activity'},{id:'tk',label:'Tasks'},{id:'dt',label:'Details'}])
         +'<div class="sec" data-tab="cmp">'+cmpHTML+'</div>'
         +'<div class="sec" data-tab="bk" style="display:none">'+(bookings.length?bookings.map(bookingCard).join(''):'<div class="sub">No bookings. Use “Book onto course”.</div>')+'</div>'
         +'<div class="sec" data-tab="tl" style="display:none">'+timeline(tl)+'</div>'
@@ -675,7 +729,7 @@
     return '<div class="bk" style="'+(dead?'opacity:.55':'')+'"><div class="bk-top"><div style="flex:1"><div style="font-weight:600;font-size:13.5px">'+esc(title)+'</div><div class="sub">'+fdatetime(b.scheduled_at)+' · '+(Number(b.credits_used)||0)+' credits</div></div><span class="pill '+(done?'compliant':dead?'closed':'cat')+'">'+esc(st)+'</span></div>'
       +(dead?'':'<div class="bk-acts">'+(done?'':'<button class="btn btn-l btn-xs" onclick="bkAttend(\''+b.id+'\')">✓ Mark attended</button>')+'<button class="btn btn-l btn-xs" onclick="bkResched(\''+b.id+'\',\''+q1(b.course_id)+'\')">↻ Reschedule</button><button class="btn btn-r btn-xs" onclick="bkCancel(\''+b.id+'\',\''+(Number(b.credits_used)||0)+'\')">✕ Cancel &amp; refund</button></div>')+'</div>';
   }
-  window.bkAttend=function(id){api('/api/v1/bookings/'+id,{method:'PATCH',body:JSON.stringify({status:'attended',points_earned:2})}).then(function(){toast('✓ Marked attended');reopenRec()}).catch(function(e){toast(e.message)})};
+  window.bkAttend=function(id){api('/api/v1/bookings/'+id,{method:'PATCH',body:JSON.stringify({status:'attended'})}).then(function(){toast('✓ Marked attended · course points awarded');reopenRec()}).catch(function(e){toast(e.message)})};
   window.bkCancel=function(id,cost){
     var f=document.getElementById('dwForm');f.style.display='block';f.scrollIntoView&&f.scrollIntoView({behavior:'smooth',block:'nearest'});
     var firmBtn=REC.firm?'<button class="btn btn-l" onclick="bkCancelDo(\''+id+'\',\'firm\')">'+ico('refund')+' Refund '+cost+' cr to firm pool</button>':'';
@@ -700,13 +754,30 @@
     var rows=SESS.filter(function(s){return s.scheduled_at&&(!qv||(s.course_title||'').toLowerCase().indexOf(qv)>=0||(s.provider_name||'').toLowerCase().indexOf(qv)>=0)}).slice(0,25);
     h.innerHTML=rows.length?rows.map(function(s){return '<div class="kv"><span>'+esc(s.course_title||'')+'<div class="sub">'+fdate(s.scheduled_at)+' · '+(Number(s.seats_remaining)||0)+' seats'+(s.provider_name?' · '+esc(s.provider_name):'')+'</div></span><button class="btn btn-g btn-xs" onclick="dwBookConfirm(\''+s.id+'\',\''+q1(s.course_id)+'\',\''+q1(s.course_title||'')+'\',\''+fdate(s.scheduled_at)+'\','+(Number(s.seats_remaining)||0)+')">Select</button></div>'}).join(''):'<div class="sub">No sessions match “'+esc(qv)+'”.</div>'}
   var bkT;window.dwBookSearch=function(){clearTimeout(bkT);bkT=setTimeout(function(){dwBookRender(document.getElementById('bkSearch').value)},180)};
-  window.dwBookConfirm=function(sid,cid,title,date,seats){var cost=5,bal=REC.credits,short=cost-bal;var f=document.getElementById('dwForm');f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Confirm booking</h4><div class="bk"><div style="font-weight:600">'+esc(title)+'</div><div class="sub">'+date+' · '+seats+' seats</div></div><div class="kv"><span class="k">Course cost</span><span>'+cost+' credits</span></div><div class="kv"><span class="k">'+esc(REC.name)+'’s balance</span><span>'+bal+' credits</span></div>'+(short>0?'<div style="background:#fce8e4;color:var(--red);padding:10px 12px;border-radius:9px;margin:10px 0;font-size:12.5px">Short by '+short+' credit'+(short===1?'':'s')+'. Credits are prepaid — add them by recording a purchase, then book.</div><div style="display:flex;gap:8px"><button class="btn btn-g" onclick="dwCreditsOpen()">'+ico('card')+' Add credits</button><button class="btn btn-l" onclick="dwBookOpen()">Back</button></div>':'<div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-g" onclick="dwBookDo(\''+sid+'\',\''+cid+'\',this)">Book — uses '+cost+' of their '+bal+' credits</button><button class="btn btn-l" onclick="dwBookOpen()">Back</button></div>')+'</div>'};
-  window.dwBookDo=function(sid,cid,btn){if(btn){btn.disabled=true;btn.textContent='Booking…'}api('/api/v1/bookings',{method:'POST',body:JSON.stringify({lawyer_id:REC.id,session_id:sid,course_id:cid})}).then(function(){toast('✓ Booked');reopenRec()}).catch(function(e){toast(e.message);if(btn){btn.disabled=false;btn.textContent='Book'}})};
+  window.dwBookConfirm=function(sid,cid,title,date,seats){var cost=5,bal=REC.credits;var f=document.getElementById('dwForm');
+    // #8 — let the admin choose whether the credits come from the lawyer's own
+    // balance or the firm's shared pool.
+    var srcChoice=REC.firm?'<div class="kv"><span class="k">Charge to</span><span style="display:flex;gap:14px"><label style="cursor:pointer"><input type="radio" name="bkSrc" value="lawyer" checked> Lawyer’s credits</label><label style="cursor:pointer"><input type="radio" name="bkSrc" value="firm"> Firm pool</label></span></div>':'';
+    f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Confirm booking</h4><div class="bk"><div style="font-weight:600">'+esc(title)+'</div><div class="sub">'+date+' · '+seats+' seats</div></div><div class="kv"><span class="k">Course cost</span><span>'+cost+' credits</span></div><div class="kv"><span class="k">'+esc(REC.name)+'’s balance</span><span>'+bal+' credits</span></div>'+srcChoice+'<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn btn-g" onclick="dwBookDo(\''+sid+'\',\''+cid+'\',this,false)">Book — '+cost+' credits</button><button class="btn btn-l" onclick="dwBookDo(\''+sid+'\',\''+cid+'\',this,true)" title="Complimentary / partner seat — no credits charged">Book FREE (partner seat)</button><button class="btn btn-l" onclick="dwBookOpen()">Back</button></div><div class="sub" style="margin-top:8px">If the chosen balance is short, you’ll be prompted to top up.</div></div>'};
+  window.dwBookDo=function(sid,cid,btn,free){if(btn){btn.disabled=true;btn.textContent='Booking…'}var src=(document.querySelector('input[name="bkSrc"]:checked')||{}).value||'lawyer';var body={lawyer_id:REC.id,session_id:sid,course_id:cid};if(free){body.credits_used=0;body.booking_type='partner'}else if(src==='firm'){body.credit_source='firm'}api('/api/v1/bookings',{method:'POST',body:JSON.stringify(body)}).then(function(r){toast(free?'✓ Booked free (partner)':('✓ Booked'+((r&&r.credit_source)==='firm'?' · charged to firm pool':'')));reopenRec()}).catch(function(e){toast(e.message);if(btn){btn.disabled=false;btn.textContent='Book'}})};
   window.dwNoteOpen=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Add note</h4><textarea id="ntText" class="inp" rows="2" placeholder="Internal note…"></textarea><div style="margin-top:8px"><button class="btn btn-g" onclick="dwNoteSave()">Save</button></div></div>'};
   window.dwNoteSave=function(){var v=(document.getElementById('ntText').value||'').trim();if(!v)return;var b=REC.type==='lawyer'?{lawyer_id:REC.id}:{firm_id:REC.id};b.summary=v;api('/api/v1/messages/activity',{method:'POST',body:JSON.stringify(b)}).then(function(){toast('✓ Note saved');reopenRec()}).catch(function(e){toast(e.message)})};
   window.dwTaskOpen=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>New task</h4><input id="tkText" class="inp" placeholder="e.g. Call back re: refund"/><input id="tkDue" type="date" class="inp" style="margin-top:8px"/><div style="margin-top:8px"><button class="btn btn-g" onclick="dwTaskSave()">Add task</button></div></div>'};
   window.dwTaskSave=function(){var v=(document.getElementById('tkText').value||'').trim();if(!v)return;var b=REC.type==='lawyer'?{lawyer_id:REC.id}:{firm_id:REC.id};b.title=v;b.due_at=document.getElementById('tkDue').value||null;api('/api/v1/tasks',{method:'POST',body:JSON.stringify(b)}).then(function(){toast('✓ Task added');reopenRec()}).catch(function(e){toast(e.message)})};
-  var CR_PRICE=120; // AED per credit — credits are prepaid money, never minted free.
+  // Firm TRN (Tax Registration Number) — read + edit from the firm drawer.
+  window.dwTrnOpen=function(){
+    if(!REC||REC.type!=='firm')return;
+    api('/api/v1/admin/users/firms/'+REC.id).then(function(r){
+      var cur=(r.firm&&r.firm.trn)||'';var f=document.getElementById('dwForm');f.style.display='block';
+      f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Tax Registration Number</h4><input id="trnInput" class="inp" placeholder="e.g. 100123456700003" value="'+esc(cur)+'" style="width:100%;margin:8px 0"/><div style="display:flex;gap:8px"><button class="btn btn-g" onclick="dwTrnSave()">Save TRN</button><button class="btn btn-l" onclick="document.getElementById(\'dwForm\').style.display=\'none\'">Cancel</button></div></div>';
+      setTimeout(function(){var i=document.getElementById('trnInput');if(i)i.focus();},60);
+    }).catch(function(e){toast(e.message)});
+  };
+  window.dwTrnSave=function(){
+    var v=(document.getElementById('trnInput').value||'').trim();
+    api('/api/v1/admin/users/firms/'+REC.id,{method:'PATCH',body:JSON.stringify({trn:v})}).then(function(){toast('✓ TRN saved');openFirm(REC.id)}).catch(function(e){toast(e.message)});
+  };
+  var CR_PRICE=210; // AED per credit — credits are prepaid money, never minted free.
   window.dwCreditsOpen=function(){var f=document.getElementById('dwForm');f.style.display='block';f.innerHTML='<div class="sec" style="padding:14px 0"><h4>Credits · balance '+REC.credits+' · AED '+num(REC.credits*CR_PRICE)+' value</h4><div class="seg" style="margin:0 0 12px"><button class="on" onclick="crMode(\'purchase\',this)">Record purchase</button><button onclick="crMode(\'refund\',this)">Refund</button><button onclick="crMode(\'adjust\',this)">Correction</button></div><div id="crBody"></div></div>';crMode('purchase')};
   window.crMode=function(mode,el){window.__crMode=mode;if(el){var sib=el.parentNode.querySelectorAll('button');for(var i=0;i<sib.length;i++)sib[i].classList.remove('on');el.classList.add('on')}var h=document.getElementById('crBody');if(!h)return;
     if(mode==='purchase'){h.innerHTML='<div class="sub" style="margin-bottom:8px">Adds credits <strong>against money received</strong> ('+CR_PRICE+' AED / credit). Every credit ties to a payment.</div><input id="crCredits" type="number" min="1" class="inp" placeholder="Credits purchased" oninput="crAedSync()"/><input id="crAed" type="number" min="0" class="inp" placeholder="AED received" style="margin-top:8px" oninput="this.dataset.touched=1"/><input id="crRef" class="inp" placeholder="Payment reference (receipt / transfer ID)" style="margin-top:8px"/><button class="btn btn-g" style="margin-top:10px" onclick="crSubmit(\'purchase\')">Record purchase</button>'}
@@ -741,6 +812,7 @@
       document.getElementById('dwInner').innerHTML=
         '<div class="hero"><button class="x" onclick="closeDrawer()">×</button><div style="display:flex;gap:14px;align-items:flex-start"><div class="av" style="width:56px;height:56px;font-size:20px;border-radius:15px;background:'+avColor(name)+'">'+initials(name)+'</div><div style="flex:1;min-width:0"><div class="hero-name">'+esc(name)+'</div><div class="hero-sub">'+num(laws.length)+' lawyers · '+comp+'% compliant</div><span class="hbadge" style="background:rgba(255,255,255,.14);color:'+col+'">'+(comp>=70?'Healthy':comp>=40?'Watch':'At risk')+'</span></div></div><div class="prog-l"><span>FIRM COMPLIANCE</span><span>'+comp+'%</span></div><div class="prog"><div style="width:'+comp+'%;background:'+col+'"></div></div></div>'
         +'<div class="dw-bd"><div class="tiles"><div class="tile"><div class="l">Lawyers</div><div class="v">'+num(laws.length)+'</div></div><div class="tile"><div class="l">Critical</div><div class="v" style="color:var(--red)">'+num(crit)+'</div></div><div class="tile"><div class="l">Credit pool</div><div class="v">'+num(f.credit_pool||f.pool)+'</div></div></div>'
+        +'<div class="kv" style="cursor:pointer" onclick="dwTrnOpen()"><span>TRN (Tax Registration Number)<div class="sub">For VAT invoicing — click to '+(f.trn?'edit':'add')+'</div></span><span style="font-family:monospace">'+(f.trn?esc(f.trn):'+ Add')+'</span></div>'
         +'<div class="qa"><button class="p" onclick="dwMessageOpen()">'+ico('mail')+' Message firm</button><button onclick="dwAiBrief()">'+ico('spark')+' AI brief</button><button onclick="dwNoteOpen()">'+ico('note')+' Note</button><button onclick="dwTaskOpen()">'+ico('task')+' Task</button></div>'
         +'<div id="dwForm" style="display:none;padding:0 22px 14px;border-bottom:1px solid var(--line)"></div>'
         +tabs([{id:'lw',label:'Lawyers ('+laws.length+')'},{id:'tl',label:'Activity'},{id:'tk',label:'Tasks'},{id:'cr',label:'Credits'}])

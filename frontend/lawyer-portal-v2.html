@@ -1208,6 +1208,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
             <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px">Credit balance</div>
             <div style="font-family:var(--serif);font-size:36px;line-height:1;letter-spacing:-.02em;font-weight:500;color:var(--green)" id="kpiCreditsNum">—</div>
             <div style="font-size:12.5px;color:var(--slate2);margin-top:8px" id="kpiCreditsSub">credits available to book</div>
+            <button onclick="openBuyCredits()" style="margin-top:14px;width:100%;background:var(--green);color:#fff;border:none;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Buy credits</button>
           </div>
           <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px">
             <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:10px">Next session</div>
@@ -3429,21 +3430,61 @@ function paintCompletedList(bookings) {
     holder.innerHTML = '<div style="padding:24px;text-align:center;background:var(--paper);border-radius:12px;color:var(--slate2);font-size:13.5px;line-height:1.6">No CLPD attendance on your record yet.<br><span style="font-size:12px;color:var(--slate3)">Book a course from the catalogue and your firm will file attendance after the session.</span></div>';
     return;
   }
-  holder.innerHTML = bookings.map(function (b) {
-    var date = (b.booked_at || b.starts_at || '').slice(0, 10) || '—';
-    var status = b.status || 'confirmed';
-    var pts = Number(b.course_points || b.points_received) || 0;
-    var statusColor = status === 'completed' || status === 'approved' ? 'var(--green)'
-                    : status === 'cancelled' ? 'var(--red)'
-                    : 'var(--slate2)';
+  // Active/upcoming bookings first, then completed, then cancelled — newest first.
+  var rank = function (s) { s = (s || '').toLowerCase(); return s === 'booked' ? 0 : (s === 'attended' || s === 'completed' || s === 'approved') ? 1 : 2; };
+  var sorted = bookings.slice().sort(function (a, b) {
+    var ra = rank(a.status), rb = rank(b.status); if (ra !== rb) return ra - rb;
+    return String(b.booked_at || b.scheduled_at || '').localeCompare(String(a.booked_at || a.scheduled_at || ''));
+  });
+  holder.innerHTML = sorted.map(function (b) {
+    var date = (b.scheduled_at || b.booked_at || b.starts_at || '').slice(0, 10) || '—';
+    var status = (b.status || 'confirmed').toLowerCase();
+    var done = status === 'attended' || status === 'completed' || status === 'approved';
+    var awarded = Number(b.points_earned) || 0;
+    var worth = Number(b.course_points) || 0;
+    // Show points awarded once completed; otherwise show what the course is worth.
+    var ptsHtml = done
+      ? (awarded ? '+' + awarded + ' pts' : (worth ? '+' + worth + ' pts' : '—'))
+      : (worth ? '<span style="font-size:12px;color:var(--slate3)">worth ' + worth + ' pts</span>' : '—');
+    var fmt = String(b.course_format || b.course_type || '').toLowerCase();
+    var isElearn = /e-?learn/.test(fmt);
+    var statusLabel = done ? 'completed' : (status === 'booked' ? (isElearn ? 'enrolled' : 'confirmed') : status);
+    var statusColor = done ? 'var(--green)' : status === 'cancelled' ? 'var(--red)' : 'var(--blue)';
+    // E-learning the lawyer has enrolled in but not finished → let them complete it.
+    var action = (isElearn && status === 'booked')
+      ? '<button onclick="completeElearning(\'' + b.id + '\',this)" style="grid-column:1/-1;margin-top:10px;justify-self:start;background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12.5px;font-weight:600;cursor:pointer">✓ Mark complete &amp; claim ' + (worth || 0) + ' pts</button>'
+      : '';
     return '<div style="display:grid;grid-template-columns:90px 1fr auto auto;gap:14px;align-items:center;padding:14px 18px;background:var(--white);border:1px solid var(--line);border-radius:12px;margin-bottom:8px">'
       + '<div style="font-family:var(--mono);font-size:11px;color:var(--slate3);letter-spacing:.4px">' + date + '</div>'
-      + '<div><div style="font-weight:600;font-size:13.5px">' + (b.course_title || b.legacy_status || 'Course') + '</div>'
-      + (b.venue ? '<div style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-top:3px">' + b.venue + '</div>' : '') + '</div>'
-      + '<span style="background:var(--paper);padding:4px 10px;border-radius:6px;font-family:var(--mono);font-size:10px;color:' + statusColor + ';font-weight:600;text-transform:uppercase">' + status + '</span>'
-      + '<span style="font-family:var(--serif);font-size:18px;color:var(--green);font-weight:500;min-width:60px;text-align:right">' + (pts ? '+' + pts + ' pts' : '—') + '</span>'
+      + '<div><div style="font-weight:600;font-size:13.5px">' + (b.course_title || b.course_title_current || b.legacy_status || 'Course') + '</div>'
+      + (b.venue ? '<div style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-top:3px">' + b.venue + '</div>' : '')
+      + (b.course_id ? '<button onclick="viewMaterials(\'' + b.course_id + '\',\'' + String(b.course_title || 'Course').replace(/'/g, "\\'") + '\')" style="margin-top:6px;background:none;border:none;padding:0;color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline">📚 Course materials</button>' : '')
+      + '</div>'
+      + '<span style="background:var(--paper);padding:4px 10px;border-radius:6px;font-family:var(--mono);font-size:10px;color:' + statusColor + ';font-weight:600;text-transform:uppercase">' + statusLabel + '</span>'
+      + '<span style="font-family:var(--serif);font-size:18px;color:var(--green);font-weight:500;min-width:60px;text-align:right">' + ptsHtml + '</span>'
+      + action
       + '</div>';
   }).join('');
+}
+
+// E-learning self-completion — marks the course complete and claims its CPD points.
+async function completeElearning(bookingId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    var base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com';
+    var token = localStorage.getItem('lad_token') || '';
+    var r = await fetch(base.replace(/\/$/, '') + '/api/v1/bookings/' + encodeURIComponent(bookingId) + '/complete', {
+      method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+    });
+    var d = await r.json().catch(function () { return {}; });
+    if (!r.ok) { showToast((d && d.message) || 'Could not complete the course.'); if (btn) { btn.disabled = false; btn.textContent = '✓ Mark complete'; } return; }
+    showToast('✓ Course completed — ' + (d.points_awarded || 0) + ' CPD points added.');
+    await loadMyAttendance();
+    if (typeof refreshCredits === 'function') { try { refreshCredits(); } catch (_) {} }
+  } catch (e) {
+    showToast('Could not complete the course — please try again.');
+    if (btn) { btn.disabled = false; btn.textContent = '✓ Mark complete'; }
+  }
 }
 document.addEventListener('DOMContentLoaded', loadMyAttendance);
 
@@ -4157,7 +4198,7 @@ async function confirmBooking(isElearn) {
     showToast('Please select a session date first');
     return;
   }
-  if (c.booked) { showToast('Already booked — check your calendar'); closeBooking(); return; }
+  if (c.booked) { showToast('Already booked — see it under “My bookings”.'); closeBooking(); goToMyBookings(); return; }
 
   const isF2F = !isElearn && !c.elearning;
   const sIdx = isF2F ? selectedSessionIdx : null;
@@ -4215,7 +4256,74 @@ async function confirmBooking(isElearn) {
     ? `✓ Enrolled in "${c.title}" — start anytime. ${d.credits_used || c.credits} credits used.`
     : `✓ Booking confirmed for "${c.title}" — check your email. ${d.credits_used || c.credits} credits used.`);
   closeBooking();
+  // #6 — surface the new booking at the top of "My bookings" rather than
+  // leaving the lawyer stranded at the bottom of the page.
+  if (typeof loadMyAttendance === 'function') { Promise.resolve(loadMyAttendance()).then(goToMyBookings); }
+  else { goToMyBookings(); }
   setTimeout(() => showToast('✦ Your skills graph has been updated'), 1800);
+}
+
+// Course materials viewer — lists SCORM/files for a course the lawyer is
+// enrolled in and lets them open links or download files (auth-gated).
+async function viewMaterials(courseId, title) {
+  var base = ((window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com').replace(/\/$/, '');
+  var token = localStorage.getItem('lad_token') || '';
+  var ov = document.getElementById('matOverlay') || (function () {
+    var d = document.createElement('div'); d.id = 'matOverlay';
+    d.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,32,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    d.onclick = function (e) { if (e.target === d) d.remove(); };
+    document.body.appendChild(d); return d;
+  })();
+  ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:540px;width:100%;max-height:80vh;overflow:auto;padding:24px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><h3 style="margin:0;font-size:18px">Course materials</h3><button onclick="document.getElementById(\'matOverlay\').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#8a96a3">×</button></div><div style="color:#5a6573;font-size:13px;margin-bottom:14px">' + (title || '') + '</div><div id="matBody" style="color:#5a6573;font-size:13.5px">Loading…</div></div>';
+  try {
+    var r = await fetch(base + '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials', { headers: { Authorization: 'Bearer ' + token } });
+    var body = document.getElementById('matBody');
+    if (r.status === 403) { body.innerHTML = 'Book or complete this course to access its materials.'; return; }
+    var j = await r.json(); var mats = (j && j.materials) || [];
+    if (!mats.length) { body.innerHTML = 'No materials have been published for this course yet.'; return; }
+    body.innerHTML = mats.map(function (m) {
+      var icon = m.kind === 'scorm' ? '📦' : m.kind === 'link' ? '🔗' : '📄';
+      var dk = m.download_kind || (m.has_file ? 'inline' : 'link');
+      var label = (dk === 'link') ? 'Open' : 'Download';
+      return '<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #eef1f4">'
+        + '<span style="font-size:18px">' + icon + '</span>'
+        + '<div style="flex:1"><div style="font-weight:600;color:#14202b">' + (m.title || 'Material') + '</div><div style="font-size:11px;color:#8a96a3;font-family:monospace">' + (m.kind || '').toUpperCase() + (m.size ? ' · ' + (m.size / 1024 / 1024).toFixed(2) + ' MB' : '') + '</div></div>'
+        + '<button onclick="dlMaterial(\'' + courseId + '\',\'' + m.id + '\',\'' + dk + '\',\'' + (m.url ? encodeURIComponent(m.url) : '') + '\')" style="background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer">' + label + '</button>'
+        + '</div>';
+    }).join('');
+  } catch (e) { var b = document.getElementById('matBody'); if (b) b.innerHTML = 'Could not load materials — please try again.'; }
+}
+async function dlMaterial(courseId, mid, kind, encUrl) {
+  var base = ((window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || 'https://lad-clpd-backend.onrender.com').replace(/\/$/, '');
+  var token = localStorage.getItem('lad_token') || '';
+  // External links / SCORM URLs open straight away.
+  if (kind === 'link') { if (encUrl) window.open(decodeURIComponent(encUrl), '_blank'); else showToast('No link available.'); return; }
+  // Cloud (blob) files: ask the backend (auth) for a short-lived signed URL,
+  // then open it directly — the token never goes to Azure.
+  if (kind === 'blob') {
+    try {
+      var r = await fetch(base + '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials/' + mid + '/download-url', { headers: { Authorization: 'Bearer ' + token } });
+      var j = await r.json();
+      if (r.ok && j && j.url) window.open(j.url, '_blank'); else showToast('Download unavailable — please try again.');
+    } catch (e) { showToast('Download failed — please try again.'); }
+    return;
+  }
+  // Inline files stream through the auth-gated endpoint → fetch as a blob & save.
+  try {
+    var rr = await fetch(base + '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials/' + mid + '/download', { headers: { Authorization: 'Bearer ' + token } });
+    if (!rr.ok) { showToast('Download failed.'); return; }
+    var blob = await rr.blob();
+    var cd = rr.headers.get('Content-Disposition') || '';
+    var name = (cd.match(/filename="?([^"]+)"?/) || [])[1] || 'material';
+    var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 1000);
+  } catch (e) { showToast('Download failed — please try again.'); }
+}
+
+// Bring the "My bookings" (completed/attendance) section into view.
+function goToMyBookings() {
+  var el = document.getElementById('completed');
+  if (el) { try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (_) { el.scrollIntoView(); } }
 }
 
 // ═══════════════════════════════════════════════
@@ -5403,12 +5511,12 @@ document.addEventListener('DOMContentLoaded', loadMyAttendance);
 <script>
 // ══ LAWYER CREDITS ══
 let lawyerCredits = 5;
-const CREDIT_RATE_L = 120;
+const CREDIT_RATE_L = 210;
 const PKGS = [
-  {credits:10, price:1200, per:120, save:0,  label:'Starter'},
-  {credits:25, price:2750, per:110, save:8,  label:'Value'},
-  {credits:50, price:5000, per:100, save:17, label:'Pro', popular:true},
-  {credits:100,price:9000, per:90,  save:25, label:'Premium'},
+  {credits:10, price:2100, per:210, save:0,  label:'Starter'},
+  {credits:25, price:4825, per:193, save:8,  label:'Value'},
+  {credits:50, price:8700, per:174, save:17, label:'Pro', popular:true},
+  {credits:100,price:15800,per:158, save:25, label:'Premium'},
 ];
 let selPkg = null;
 
@@ -5464,7 +5572,7 @@ function selLBMPkg(i) {
     if(el) { el.classList.toggle('on', j===i); }
   });
   const newBal = lawyerCredits + p.credits;
-  const savings = (120 - p.per) * p.credits;
+  const savings = (210 - p.per) * p.credits;
   document.getElementById('lbmCalcBox').style.display = '';
   document.getElementById('lbmCalcText').innerHTML = `After purchase you'll have <strong>${newBal} credits</strong> — enough for <strong>${Math.floor(newBal/5)} course bookings</strong>. ${savings>0?`You save <strong style="color:var(--green)">AED ${savings.toLocaleString()}</strong> vs buying at standard rate.`:''}`;
   document.getElementById('lbmSummary').innerHTML = `<strong>${p.label}</strong> · ${p.credits} credits · AED ${p.price.toLocaleString()}`;

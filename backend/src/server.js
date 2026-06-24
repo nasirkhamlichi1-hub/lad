@@ -42,6 +42,8 @@ const adminUsersRoutes = require('./routes/admin-users');
 const adminRoutes = require('./routes/admin');
 const assistantRoutes = require('./routes/assistant');
 const trainerRoutes = require('./routes/trainer');
+const hubsRoutes = require('./routes/hubs');
+const reportsRoutes = require('./routes/reports');
 const accreditationsRoutes = require('./routes/accreditations');
 const cpdRoutes = require('./routes/cpd');
 const notificationsRoutes = require('./routes/notifications');
@@ -99,6 +101,7 @@ app.use(compression());
 // Accreditation submissions carry base64 file attachments — allow a larger body
 // for that endpoint only; everything else stays at the tight 2mb DoS guard.
 app.use('/api/v1/accreditations', express.json({ limit: '12mb' }));
+app.use('/api/v1/courses', express.json({ limit: '16mb' })); // inline course-material uploads
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
@@ -184,9 +187,11 @@ app.use('/api/v1/stats',    statsRoutes);
 app.use('/api/v1/lex',      lexRoutes);
 app.use('/api/v1/skills',   skillsRoutes);
 app.use('/api/v1/admin/users', adminUsersRoutes);
+app.use('/api/v1/admin/reports', reportsRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/assistant', assistantRoutes);
 app.use('/api/v1/trainer',  trainerRoutes);
+app.use('/api/v1/hubs',     hubsRoutes);
 app.use('/api/v1/accreditations', accreditationsRoutes);
 app.use('/api/v1/cpd',      cpdRoutes);
 app.use('/api/v1/notifications', notificationsRoutes);

@@ -177,7 +177,7 @@
   </div>
 
   <div class="filterbar">
-    <input type="search" id="searchInput" placeholder="Search by name or email…" oninput="onFilterChange()">
+    <input type="search" id="searchInput" placeholder="Search by name, email or lawyer ID…" oninput="onFilterChange()">
     <select id="roleFilter" onchange="onFilterChange()">
       <option value="">All roles</option>
       <option value="lawyer">Lawyer</option>
@@ -232,10 +232,11 @@
       <div id="addErr" class="err-text" style="display:none"></div>
 
       <div class="field">
-        <label>Role</label>
+        <label>Account type / role</label>
         <select id="addRole" onchange="onRoleChange()">
           <!-- populated dynamically based on current admin's permissions -->
         </select>
+        <div class="field-help">Pick what kind of user this is — a <b>Lawyer</b>, a <b>Firm CO</b> (firm compliance officer), a <b>Provider</b>, or LAD staff. Lawyer accounts ask for the firm and lawyer ID below.</div>
       </div>
 
       <div class="field row">
@@ -259,6 +260,29 @@
         <select id="addFirm"></select>
       </div>
 
+      <!-- Lawyer-only profile fields (shown when the account type is Lawyer) -->
+      <div id="lawyerFields">
+        <div class="field">
+          <label>Lawyer ID / roll number</label>
+          <input type="text" id="addRoll" placeholder="e.g. DXB-12345">
+          <div class="field-help">The Dubai legal-consultant ID / roll number. Searchable from the users list.</div>
+        </div>
+        <div class="field row">
+          <div>
+            <label>Phone</label>
+            <input type="text" id="addPhone" placeholder="+971 50 000 0000">
+          </div>
+          <div>
+            <label>Nationality</label>
+            <input type="text" id="addNationality" placeholder="e.g. UAE">
+          </div>
+        </div>
+        <div class="field">
+          <label>Emirates ID</label>
+          <input type="text" id="addEmiratesId" placeholder="784-YYYY-NNNNNNN-N">
+        </div>
+      </div>
+
       <div class="field">
         <label>Initial password</label>
         <div class="pw-row">
@@ -276,6 +300,38 @@
     <div class="modal-f">
       <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
       <button class="btn btn-g" id="addSubmitBtn" onclick="submitAdd()">Create user</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit user modal -->
+<div class="modal" id="editModal">
+  <div class="modal-card">
+    <div class="modal-h">
+      <div><h3>Edit user</h3><div class="desc" id="editSub">Update this account's details.</div></div>
+      <button class="modal-x" onclick="closeEditModal()">×</button>
+    </div>
+    <div class="modal-b">
+      <div id="editErr" class="err-text" style="display:none"></div>
+      <input type="hidden" id="editId">
+      <div class="field row">
+        <div><label>First name</label><input type="text" id="editFirst"></div>
+        <div><label>Last name</label><input type="text" id="editLast"></div>
+      </div>
+      <div class="field"><label>Email</label><input type="email" id="editEmail"></div>
+      <div class="field" id="editFirmField"><label>Firm</label><select id="editFirm"></select></div>
+      <div id="editLawyerFields">
+        <div class="field"><label>Lawyer ID / roll number</label><input type="text" id="editRoll" placeholder="e.g. DXB-12345"></div>
+        <div class="field row">
+          <div><label>Phone</label><input type="text" id="editPhone"></div>
+          <div><label>Nationality</label><input type="text" id="editNationality"></div>
+        </div>
+        <div class="field"><label>Emirates ID</label><input type="text" id="editEmiratesId" placeholder="784-YYYY-NNNNNNN-N"></div>
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+      <button class="btn btn-g" id="editSubmitBtn" onclick="submitEdit()">Save changes</button>
     </div>
   </div>
 </div>
@@ -427,7 +483,7 @@
       const canTouch = canTouchUser(u);
       return `
         <tr data-id="${escapeHtml(u.id)}">
-          <td class="name">${escapeHtml(u.name || (u.first_name + ' ' + u.last_name))} ${u.must_change_password ? '<span class="badge mustchg">must change pw</span>' : ''}</td>
+          <td class="name">${escapeHtml(u.name || (u.first_name + ' ' + u.last_name))} ${u.must_change_password ? '<span class="badge mustchg">must change pw</span>' : ''}${u.roll_number ? `<span class="muted-mono" style="display:block;font-size:11px">ID ${escapeHtml(u.roll_number)}</span>` : ''}</td>
           <td class="muted">${escapeHtml(u.email)}</td>
           <td>${ROLE_LABELS[u.role] || u.role}</td>
           <td class="muted">${escapeHtml(firmName)}</td>
@@ -435,6 +491,7 @@
           <td class="muted-mono">${lastLogin}</td>
           <td class="row-actions">
             ${canTouch ? `
+              <button class="btn btn-ghost btn-sm" onclick="openEdit('${escapeHtml(u.id)}')">Edit</button>
               <button class="btn btn-ghost btn-sm" onclick="resetPw('${escapeHtml(u.id)}', '${escapeHtml(u.name || u.email)}')">Reset pw</button>
               ${u.status === 'active'
                 ? `<button class="btn btn-ghost btn-sm" onclick="suspend('${escapeHtml(u.id)}', '${escapeHtml(u.name || u.email)}')" style="color:var(--red)">Suspend</button>`
@@ -468,6 +525,7 @@
     document.getElementById('addEmail').value = '';
     document.getElementById('addPassword').value = '';
     document.getElementById('addMustChange').checked = true;
+    ['addRoll','addPhone','addNationality','addEmiratesId'].forEach(function(id){ document.getElementById(id).value = ''; });
 
     // Populate role select based on what current user can create
     const roleSel = document.getElementById('addRole');
@@ -497,11 +555,9 @@
     const role = document.getElementById('addRole').value;
     const firmField = document.getElementById('firmField');
     // Firm is required for lawyer + firm_compliance_officer
-    if (['lawyer','firm_compliance_officer'].includes(role)) {
-      firmField.style.display = '';
-    } else {
-      firmField.style.display = 'none';
-    }
+    firmField.style.display = ['lawyer','firm_compliance_officer'].includes(role) ? '' : 'none';
+    // Lawyer ID / phone / Emirates ID / nationality only apply to lawyer accounts.
+    document.getElementById('lawyerFields').style.display = (role === 'lawyer') ? '' : 'none';
   };
 
   window.generatePw = function () {
@@ -533,6 +589,12 @@
         password: document.getElementById('addPassword').value,  // backend auto-generates if blank
         must_change_password: document.getElementById('addMustChange').checked,
       };
+      if (data.role === 'lawyer') {
+        data.roll_number = document.getElementById('addRoll').value.trim();
+        data.phone = document.getElementById('addPhone').value.trim();
+        data.nationality = document.getElementById('addNationality').value.trim();
+        data.emirates_id = document.getElementById('addEmiratesId').value.trim();
+      }
       if (!data.first_name || !data.last_name || !data.email) {
         throw new Error('Please fill in name and email');
       }
@@ -545,6 +607,73 @@
       errBox.style.display = '';
     } finally {
       btn.disabled = false; btn.textContent = 'Create user';
+    }
+  };
+
+  // ─── Edit user ────────────────────────────────────────────────────────
+  window.openEdit = async function (id) {
+    const errBox = document.getElementById('editErr');
+    errBox.style.display = 'none';
+    try {
+      const res = await window.LAD.getUser(id);
+      const u = res.user || {};
+      document.getElementById('editId').value = u.id;
+      document.getElementById('editFirst').value = u.first_name || '';
+      document.getElementById('editLast').value = u.last_name || '';
+      document.getElementById('editEmail').value = u.email || '';
+      // Firm picker (lawyers / firm COs)
+      const isLawyer = (u.user_type === 'lawyer') || (u.role === 'lawyer');
+      const showFirm = isLawyer || u.role === 'firm_compliance_officer';
+      document.getElementById('editFirmField').style.display = showFirm ? '' : 'none';
+      const firmSel = document.getElementById('editFirm');
+      firmSel.innerHTML = FIRMS.map(f => `<option value="${escapeHtml(f.id)}">${escapeHtml(f.name)}</option>`).join('');
+      if (u.firm_id) firmSel.value = u.firm_id;
+      firmSel.disabled = (CURRENT_ROLE === 'firm_compliance_officer');
+      // Lawyer-only fields
+      document.getElementById('editLawyerFields').style.display = isLawyer ? '' : 'none';
+      document.getElementById('editRoll').value = u.roll_number || '';
+      document.getElementById('editPhone').value = u.phone || '';
+      document.getElementById('editNationality').value = u.nationality || '';
+      document.getElementById('editEmiratesId').value = u.emirates_id || '';
+      document.getElementById('editSub').textContent = `${u.first_name || ''} ${u.last_name || ''}`.trim() + ' · ' + (u.id || '');
+      document.getElementById('editModal').classList.add('on');
+    } catch (e) {
+      toast(e.message || 'Could not load user', true);
+    }
+  };
+  window.closeEditModal = function () { document.getElementById('editModal').classList.remove('on'); };
+  window.submitEdit = async function () {
+    const errBox = document.getElementById('editErr');
+    errBox.style.display = 'none';
+    const btn = document.getElementById('editSubmitBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const id = document.getElementById('editId').value;
+      const isLawyer = document.getElementById('editLawyerFields').style.display !== 'none';
+      const patch = {
+        first_name: document.getElementById('editFirst').value.trim(),
+        last_name: document.getElementById('editLast').value.trim(),
+        email: document.getElementById('editEmail').value.trim(),
+      };
+      if (document.getElementById('editFirmField').style.display !== 'none') {
+        patch.firm_id = document.getElementById('editFirm').value || null;
+      }
+      if (isLawyer) {
+        patch.roll_number = document.getElementById('editRoll').value.trim();
+        patch.phone = document.getElementById('editPhone').value.trim();
+        patch.nationality = document.getElementById('editNationality').value.trim();
+        patch.emirates_id = document.getElementById('editEmiratesId').value.trim();
+      }
+      if (!patch.first_name || !patch.last_name || !patch.email) throw new Error('Name and email are required');
+      await window.LAD.updateUser(id, patch);
+      closeEditModal();
+      toast('Saved');
+      await loadUsers();
+    } catch (e) {
+      errBox.textContent = e.message || 'Failed to save';
+      errBox.style.display = '';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Save changes';
     }
   };
 

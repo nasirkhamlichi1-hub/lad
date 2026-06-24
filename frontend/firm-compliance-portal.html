@@ -1807,14 +1807,14 @@ body{padding-top:var(--lad-nav-h)}
 
 // ════════════════════════════════════════════
 let firmCredits = 0; // unassigned pool — real balance loads from /api/v1/credits/firm (was a fabricated demo value)
-const CREDIT_RATE = 120; // AED per credit
+const CREDIT_RATE = 210; // AED per credit
 const COURSE_CREDITS = 5; // all courses cost 5 credits
 
 const CREDIT_PACKAGES = [
-  {credits:50,  price:6000,  perCredit:120, save:0,  label:'Starter'},
-  {credits:100, price:11000, perCredit:110, save:8,  label:'Team',    popular:false},
-  {credits:200, price:20000, perCredit:100, save:17, label:'Growth',  popular:true},
-  {credits:500, price:45000, perCredit:90,  save:25, label:'Enterprise'},
+  {credits:50,  price:10500, perCredit:210, save:0,  label:'Starter'},
+  {credits:100, price:19300, perCredit:193, save:8,  label:'Team',    popular:false},
+  {credits:200, price:34800, perCredit:174, save:17, label:'Growth',  popular:true},
+  {credits:500, price:79000, perCredit:158, save:25, label:'Enterprise'},
 ];
 
 // Fabricated demo ledger removed — real transactions load from /api/v1/credits/firm
@@ -1961,7 +1961,7 @@ function selectBuyPkg(idx) {
   });
 
   const newBal = firmCredits + p.credits;
-  const savings = (120 - p.perCredit) * p.credits;
+  const savings = (210 - p.perCredit) * p.credits;
 
   // Order summary
   document.getElementById('buyOrderSummary').innerHTML = `
@@ -2264,7 +2264,7 @@ function renderFirmSnapshot(){
     var subEl=document.querySelector('[data-cfg="firm_stat'+i+'_sub"]');
     if(!valEl)return;
     var lab=((labelEl&&labelEl.textContent)||'').toLowerCase();var v,sub,relabel;
-    var rate=(typeof CREDIT_RATE!=='undefined'?CREDIT_RATE:120);
+    var rate=(typeof CREDIT_RATE!=='undefined'?CREDIT_RATE:210);
     if(/complianc/.test(lab)){ v=pct+'%'; sub=(onPace?'on track':'behind pace')+' · '+totalPtsHeld.toLocaleString()+'/'+requiredTotal.toLocaleString()+' pts, '+elapsedPct+'% of year'; }
     else if(/below\s*8|critical/.test(lab)){ v=critical; relabel='Lawyers critical'; sub='well behind pace for 31 Dec'; }
     else if(/at.?risk/.test(lab)) v=atRisk;
@@ -2806,7 +2806,7 @@ async function refreshCoursesFromBackend() {
       provider: c.provider_id || 'LAD Academy',
       location: c.location || (c.elearning ? 'Online · Self-paced' : 'Dubai'),
       cost: (Number(c.credits) || COURSE_CREDITS) + ' credits',
-      costNum: (Number(c.credits) || COURSE_CREDITS) * 120,
+      costNum: (Number(c.credits) || COURSE_CREDITS) * 210,
       elearning: !!c.elearning,
       // Participant feedback rating (\u2605) \u2014 carried through from /upcoming so the
       // card can show the course's quality score.

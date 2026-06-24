@@ -1711,7 +1711,6 @@ ladCarInit();
 
       <!-- Participant feedback ratings (from past attendees) -->
       <div id="cdRatings" style="display:none;margin-bottom:20px"></div>
-      <a id="cdRateLink" href="#" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--green);text-decoration:none;font-weight:600;margin-bottom:18px">★ Attended this course? Rate it →</a>
 
       <!-- Low credit warning -->
       <div id="cdLowCredit" style="display:none;background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:10px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
@@ -1937,14 +1936,14 @@ let selectedPkg = null;
 let currentCourse = null;
 let selectedSession = null;
 
-const CREDIT_RATE = 120;
+const CREDIT_RATE = 210;
 const COURSE_CREDITS = 5;
 
 const PACKAGES = [
-  {credits:50,  price:6000,  per:120, save:0,  label:'Starter'},
-  {credits:100, price:11000, per:110, save:8,  label:'Team'},
-  {credits:200, price:20000, per:100, save:17, label:'Growth', popular:true},
-  {credits:500, price:45000, per:90,  save:25, label:'Enterprise'},
+  {credits:50,  price:10500, per:210, save:0,  label:'Starter'},
+  {credits:100, price:19300, per:193, save:8,  label:'Team'},
+  {credits:200, price:34800, per:174, save:17, label:'Growth', popular:true},
+  {credits:500, price:79000, per:158, save:25, label:'Enterprise'},
 ];
 
 // Fallback catalogue, used ONLY if the live API can't be reached. The real
@@ -2711,7 +2710,6 @@ function openCourse(id) {
   document.getElementById('cdProv').textContent = c.provider;
   document.getElementById('cdLoc').textContent = c.location;
   document.getElementById('cdDesc').textContent = c.desc;
-  var rl = document.getElementById('cdRateLink'); if (rl) rl.href = 'rate-course.html?course=' + encodeURIComponent(c.id);
   renderCourseRatings(c);
   // Credit balance
   const balEl = document.getElementById('cdBalAmt');
@@ -2814,7 +2812,7 @@ function renderBuyPkgs() {
       <div style="font-family:var(--serif);font-size:28px;color:var(--gold);margin-bottom:4px">${p.credits}</div>
       <div style="font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">credits</div>
       <div style="font-weight:700;font-size:14px;color:var(--ink)">AED ${p.price.toLocaleString()}</div>
-      <div style="font-family:var(--mono);font-size:9px;color:${p.per<120?'var(--green)':'var(--slate3)'};margin-top:3px">AED ${p.per}/credit</div>
+      <div style="font-family:var(--mono);font-size:9px;color:${p.per<210?'var(--green)':'var(--slate3)'};margin-top:3px">AED ${p.per}/credit</div>
       <div style="font-size:11px;color:var(--slate2);margin-top:6px">= ${Math.floor(p.credits/5)} courses</div>
     </div>`).join('');
 }
@@ -2823,7 +2821,7 @@ function selectPkg(i) {
   selectedPkg = i;
   const p = PACKAGES[i];
   PACKAGES.forEach((_,j)=>{ const el=document.getElementById('pkg-'+j); if(el&&!PACKAGES[j].popular){el.style.borderColor=j===i?'var(--gold)':'var(--line2)';el.style.background=j===i?'var(--gold-bg)':'';} else if(el&&j!==i){el.style.borderColor='var(--line2)';el.style.background='';} });
-  const savings = (120-p.per)*p.credits;
+  const savings = (210-p.per)*p.credits;
   document.getElementById('buyOrderSummary').innerHTML = `
     <div style="font-size:13px;color:var(--ink);font-weight:700;margin-bottom:5px">${p.label} — ${p.credits} credits</div>
     <div style="font-size:12px;color:var(--slate2)">AED ${p.per}/credit${savings>0?` · Save AED ${savings.toLocaleString()} vs standard`:''}.</div>`;

@@ -400,8 +400,12 @@ router.get('/conversations', requireAuth, (req, res) => {
   try {
     if (admin) {
       const status = (req.query.status || '').toString();
-      const box = (req.query.box || '').toString(); // mine | unassigned | all
+      const box = (req.query.box || '').toString(); // mine | unassigned | all | archived
       const where = ['1=1']; const args = [];
+      // Archived threads are hidden from every working box and only surface in
+      // the dedicated "archived" view, so the live inbox stays short.
+      if (box === 'archived') { where.push('c.archived = 1'); }
+      else { where.push('COALESCE(c.archived,0) = 0'); }
       if (status && status !== 'all') { where.push('c.status = ?'); args.push(status); }
       if (box === 'mine') { where.push('c.assigned_to = ?'); args.push(reader); }
       else if (box === 'unassigned') { where.push('c.assigned_to IS NULL'); }
@@ -434,6 +438,7 @@ router.get('/conversations', requireAuth, (req, res) => {
       last_message_at: c.last_message_at, last_sender: c.last_sender,
       preview: clip(c.last_body, 140), unread: isUnread,
       ai_handled: !!c.ai_handled, escalated: !!c.escalated, category: c.category || null, priority: c.priority || 'normal',
+      archived: !!c.archived,
     };
   });
   res.json({ conversations, unread, admin });
@@ -452,6 +457,7 @@ function getConversation(id, u) {
     firm_id: c.firm_id, assigned_to: c.assigned_to, assigned_name: c.assigned_name,
     ai_handled: !!c.ai_handled, escalated: !!c.escalated, category: c.category || null, priority: c.priority || 'normal',
     rating: c.rating != null ? Number(c.rating) : null,
+    archived: !!c.archived,
     created_at: c.created_at, last_message_at: c.last_message_at, last_sender: c.last_sender,
     messages,
   };
@@ -550,6 +556,23 @@ router.post('/conversations/:id/status', requireAuth, (req, res) => {
   res.json({ ok: true, status });
 });
 
+// ─── Archive / restore (admin only) ──────────────────────────────────
+// Archiving lifts a thread out of the working inbox without deleting it — it
+// stays fully readable in the "Archived" view and can be restored any time.
+router.post('/conversations/:id/archive', requireAuth, (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admins only' });
+  const c = db.prepare('SELECT * FROM conversations WHERE id = ?').get(req.params.id);
+  if (!c) return res.status(404).json({ error: 'Conversation not found' });
+  // Default action is to archive; pass { archived:false } to restore.
+  const archive = !(req.body && req.body.archived === false);
+  const ts = now();
+  db.prepare('UPDATE conversations SET archived = ?, archived_at = ?, updated_at = ? WHERE id = ?')
+    .run(archive ? 1 : 0, archive ? ts : null, ts, c.id);
+  logActivity({ ...convScope(c), kind: archive ? 'archived' : 'unarchived', actor_type: 'admin', actor_id: req.user.sub, actor_name: req.user.name, ref_id: c.id,
+    summary: `${req.user.name || 'An admin'} ${archive ? 'archived' : 'restored'} "${c.subject || ''}"` });
+  res.json({ ok: true, archived: archive });
+});
+
 // ─── Mark read ───────────────────────────────────────────────────────
 router.post('/conversations/:id/read', requireAuth, (req, res) => {
   const c = db.prepare('SELECT * FROM conversations WHERE id = ?').get(req.params.id);
@@ -584,7 +607,7 @@ router.get('/unread', requireAuth, (req, res) => {
       rows = db.prepare(
         `SELECT c.last_sender, c.last_message_at, c.assigned_to, r.last_read_at
          FROM conversations c LEFT JOIN conversation_reads r ON r.conversation_id = c.id AND r.reader_id = ?
-         WHERE c.status != 'closed'`
+         WHERE c.status != 'closed' AND COALESCE(c.archived,0) = 0`
       ).all(reader);
     } else {
       const ctx = requesterCtx(req.user);

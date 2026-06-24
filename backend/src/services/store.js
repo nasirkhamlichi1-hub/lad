@@ -73,15 +73,15 @@ function getCourseById(id) {
 
 function upsertCourse(c) {
   db.prepare(`
-    INSERT INTO courses (id, title, category, type, format, pts, credits, provider_id, location, description, language, bg, icon, active, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    INSERT INTO courses (id, title, category, type, is_ethics, format, pts, credits, provider_id, location, description, language, bg, icon, active, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT (id) DO UPDATE SET
-      title=excluded.title, category=excluded.category, type=excluded.type, format=excluded.format,
+      title=excluded.title, category=excluded.category, type=excluded.type, is_ethics=excluded.is_ethics, format=excluded.format,
       pts=excluded.pts, credits=excluded.credits, provider_id=excluded.provider_id,
       location=excluded.location, description=excluded.description, language=excluded.language,
       bg=excluded.bg, icon=excluded.icon, active=excluded.active, updated_at=CURRENT_TIMESTAMP
   `).run(
-    c.id, c.title, c.category || null, c.type || null, c.format || null,
+    c.id, c.title, c.category || null, c.type || null, (c.is_ethics ? 1 : 0), c.format || null,
     c.pts || 0, c.credits || 5, c.provider_id || null, c.location || null,
     c.description || null, c.language || 'English', c.bg || null, c.icon || null,
     c.active !== undefined ? c.active : 1
@@ -255,7 +255,8 @@ function getAllFirms() {
 
 function getLawyerBookings(lawyerId) {
   return db.prepare(`
-    SELECT b.*, c.title AS course_title_current, p.name AS provider_name
+    SELECT b.*, c.title AS course_title_current, c.pts AS course_points, c.format AS course_format, c.type AS course_type,
+           p.name AS provider_name
     FROM bookings b
     LEFT JOIN courses c ON c.id = b.course_id
     LEFT JOIN providers p ON p.id = b.provider_id
@@ -280,12 +281,12 @@ function createBooking(b) {
   const id = b.id || `BK-${Date.now()}-${Math.floor(Math.random()*1000)}`;
   db.prepare(`INSERT INTO bookings
     (id, lawyer_id, session_id, course_id, course_title, provider_id, scheduled_at, status,
-     points_earned, credits_used, language, booked_by, booked_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`)
+     points_earned, credits_used, language, booked_by, booking_type, booked_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`)
     .run(id, b.lawyer_id, b.session_id || null, b.course_id, b.course_title || null,
          b.provider_id || null, b.scheduled_at, b.status || 'booked',
          b.points_earned || 0, b.credits_used || 0, b.language || 'English',
-         b.booked_by || 'self');
+         b.booked_by || 'self', b.booking_type || 'public');
   return db.prepare('SELECT * FROM bookings WHERE id = ?').get(id);
 }
 
