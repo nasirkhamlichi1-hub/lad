@@ -1,9 +1,21 @@
 name: azure-swa
 
-# Deploys ./frontend to Azure Static Web App (clpd-frontend) on every push to
-# main that touches frontend code. This is the sole frontend deploy path.
+# Deploys ./frontend to Azure Static Web App (clpd-frontend). This is the SOLE
+# frontend deploy path — Netlify is retired (see frontend/netlify.toml).
+#
+#  • push to main      → deploys to the live (production) environment
+#  • pull request       → deploys to a per-PR PREVIEW environment on Azure and
+#                         comments the staging URL on the PR, so changes can be
+#                         reviewed on Azure before they go live
+#  • PR closed/merged   → tears the preview environment down
 on:
   push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/azure-swa.yml'
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
     branches: [main]
     paths:
       - 'frontend/**'
@@ -11,7 +23,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build_and_deploy:
+    if: github.event_name != 'pull_request' || github.event.action != 'closed'
     runs-on: ubuntu-latest
     name: deploy frontend to Azure SWA
     steps:
@@ -28,3 +41,14 @@ jobs:
           # SWA-bundled Azure Functions. SWA still serves the static frontend.
           output_location: ''
           skip_app_build: true
+
+  close_preview:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: tear down PR preview environment
+    steps:
+      - name: Close Azure SWA preview environment
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_SWA_API_TOKEN }}
+          action: close

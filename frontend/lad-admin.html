@@ -27,22 +27,31 @@ html.lad-embed .adm-cnt-subtabs{top:0!important}
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 :root{
-  --serif:'Instrument Serif',serif;
-  --sans:'Inter',system-ui,sans-serif;
-  --mono:'JetBrains Mono',monospace;
-  --ink:#0a0f1a; --slate:#3a4554; --slate2:#5b6878; --slate3:#8a98aa; --slate4:#aeb9c8;
-  --line:#e8ecf1; --line2:#d2dae3; --paper:#f7f9fb; --paper2:#eef2f6; --white:#fff;
-  --green:#006B3F; --green-l:#00925A; --green-bg:#e6f4ee; --green-border:#b8dccc;
-  --gold:#C9913A; --gold-l:#E5A94A; --gold-bg:#fdf6e9; --gold-border:#ead9b0;
-  --red:#dc2626; --red-l:#ef4444; --red-bg:#fef2f2; --red-border:#fecaca;
-  --blue:#2563eb; --blue-l:#3b82f6; --blue-bg:#eef4ff; --blue-border:#c5d8f7;
-  --purple:#7c3aed; --purple-l:#9333ea; --purple-bg:#f3e8ff; --purple-border:#d8b4fe;
-  --amber:#d97706; --teal:#0d9488;
-  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:18px; --r-2xl:22px;
-  --sh-sm:0 1px 2px rgba(15,23,42,.04),0 2px 4px rgba(15,23,42,.04);
-  --sh-md:0 4px 8px rgba(15,23,42,.06),0 8px 16px rgba(15,23,42,.06);
-  --sh-lg:0 10px 20px rgba(15,23,42,.08),0 20px 40px rgba(15,23,42,.08);
-  --sh-xl:0 25px 50px rgba(15,23,42,.15);
+  /* Typeface — Salesforce-style: one clean sans everywhere. The old serif
+     heading token now points at Inter, so headings read as enterprise UI,
+     not a marketing page. */
+  --serif:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+  /* Neutral grays (Salesforce Lightning) */
+  --ink:#181818; --slate:#3e3e3c; --slate2:#5c5c5c; --slate3:#747474; --slate4:#939393;
+  --line:#e5e5e5; --line2:#dddbda; --paper:#f3f3f3; --paper2:#ecebea; --white:#fff;
+  /* Brand accent = Salesforce blue. --green is the platform's brand token, so it
+     now resolves to blue (buttons, tabs, links, focus). Real success green lives
+     in --success below. */
+  --green:#0176d3; --green-l:#1b96ff; --green-bg:#eef4fb; --green-border:#c9e0f8;
+  --brand:#0176d3; --brand-l:#1b96ff; --brand-d:#014486; --brand-bg:#eef4fb; --brand-border:#c9e0f8;
+  --gold:#a86403; --gold-l:#c47e1a; --gold-bg:#fef5e7; --gold-border:#f3d9a6;
+  --red:#ba0517; --red-l:#ea001e; --red-bg:#fef1f1; --red-border:#f5c6c6;
+  --blue:#0176d3; --blue-l:#1b96ff; --blue-bg:#eef4fb; --blue-border:#c9e0f8;
+  --purple:#5867e8; --purple-l:#7b87f0; --purple-bg:#eef0fd; --purple-border:#cdd3f8;
+  --amber:#a86403; --teal:#0b827c;
+  --success:#2e844a; --success-l:#3ba55c; --success-bg:#ebf7ee; --success-border:#bfe3c9;
+  --r-sm:3px; --r-md:4px; --r-lg:6px; --r-xl:8px; --r-2xl:12px;
+  --sh-sm:0 1px 2px rgba(0,0,0,.05);
+  --sh-md:0 2px 4px rgba(0,0,0,.07);
+  --sh-lg:0 4px 10px rgba(0,0,0,.10);
+  --sh-xl:0 8px 24px rgba(0,0,0,.16);
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;font-family:var(--sans);color:var(--ink);background:var(--paper);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
@@ -50,23 +59,23 @@ button{font-family:inherit;cursor:pointer}
 input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 
 /* ─── TOP BAR ─── */
-.adm-topbar{background:linear-gradient(135deg,#0a2040 0%,#1c3a5e 100%);color:#fff;padding:9px 24px;display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.adm-topbar{background:var(--white);color:var(--ink);padding:9px 24px;display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:center;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--line2);box-shadow:0 1px 2px rgba(0,0,0,.05)}
 .adm-brand{display:flex;align-items:center;gap:11px}
-.adm-brand-logo{width:34px;height:34px;background:linear-gradient(135deg,var(--gold),var(--gold-l));border-radius:9px;display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:700;color:#0a2040}
-.adm-brand-eyebrow{font-family:var(--mono);font-size:8.5px;letter-spacing:1.6px;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:600;margin-bottom:1px}
-.adm-brand-title{font-family:var(--serif);font-size:16px;letter-spacing:-.014em;line-height:1}
+.adm-brand-logo{width:32px;height:32px;background:var(--brand);border-radius:var(--r-md);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:700;color:#fff}
+.adm-brand-eyebrow{font-family:var(--mono);font-size:8.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--slate3);font-weight:600;margin-bottom:1px}
+.adm-brand-title{font-family:var(--serif);font-size:16px;font-weight:600;letter-spacing:-.01em;line-height:1;color:var(--ink)}
 /* The big course-stat row is decorative chrome (the same numbers live on the
    course pages) — hidden so the working area starts higher up the screen. */
 .adm-stats{display:none}
 .adm-stat{text-align:center}
-.adm-stat-num{font-family:var(--serif);font-size:26px;color:#fff;line-height:1;letter-spacing:-.012em}
-.adm-stat-lbl{font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;margin-top:4px;font-weight:600}
+.adm-stat-num{font-family:var(--serif);font-size:26px;font-weight:600;color:var(--ink);line-height:1;letter-spacing:-.012em}
+.adm-stat-lbl{font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;margin-top:4px;font-weight:600}
 .adm-actions{display:flex;gap:8px}
-.adm-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;padding:9px 14px;border-radius:9px;font-size:12.5px;font-weight:600;letter-spacing:.1px;display:flex;align-items:center;gap:6px;transition:all .15s}
-.adm-btn:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3)}
-.adm-btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-l));border-color:transparent;color:#0a2040;font-weight:700}
-.adm-btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(201,145,58,.4)}
-.adm-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2}
+.adm-btn{background:var(--white);border:1px solid var(--line2);color:var(--slate);padding:8px 14px;border-radius:var(--r-md);font-size:12.5px;font-weight:600;letter-spacing:.1px;display:flex;align-items:center;gap:6px;transition:background .12s,border-color .12s}
+.adm-btn:hover{background:var(--paper);border-color:var(--slate4)}
+.adm-btn-primary{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.adm-btn-primary:hover{background:var(--brand-d);border-color:var(--brand-d);box-shadow:none}
+.adm-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
 
 /* ─── FILTERS ─── */
 .adm-filterbar{background:var(--white);border-bottom:1px solid var(--line);padding:14px 28px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:84px;z-index:90}
@@ -96,7 +105,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-sch-format{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px;font-family:var(--mono);font-size:11.5px;color:var(--slate);line-height:1.7;white-space:pre;overflow-x:auto;margin-bottom:14px}
 .adm-sch-format strong{color:var(--ink);font-weight:700}
 .adm-sch-paste{width:100%;min-height:160px;padding:14px;border:1.5px solid var(--line2);border-radius:10px;background:var(--paper);font-size:12.5px;color:var(--ink);outline:none;font-family:var(--mono);line-height:1.6;resize:vertical;transition:all .15s}
-.adm-sch-paste:focus{border-color:var(--green);background:var(--white);box-shadow:0 0 0 3px rgba(0,107,63,.08)}
+.adm-sch-paste:focus{border-color:var(--green);background:var(--white);box-shadow:0 0 0 3px rgba(1,118,211,.14)}
 .adm-sch-actions{display:flex;gap:8px;margin-top:14px;align-items:center;flex-wrap:wrap}
 .adm-sch-preview{margin-top:18px;border-top:1px solid var(--line);padding-top:18px}
 .adm-sch-preview-table{width:100%;border-collapse:collapse;font-size:12.5px}
@@ -124,9 +133,9 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-sync-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px 28px 28px}
 .adm-sync-card{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;box-shadow:var(--sh-sm);display:flex;flex-direction:column;gap:12px}
 .adm-sync-card-icon{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;color:#fff}
-.adm-sync-card-icon.green{background:linear-gradient(135deg,var(--green),var(--green-l))}
-.adm-sync-card-icon.blue{background:linear-gradient(135deg,var(--blue),var(--blue-l))}
-.adm-sync-card-icon.gold{background:linear-gradient(135deg,var(--gold),var(--gold-l))}
+.adm-sync-card-icon.green{background:var(--brand)}
+.adm-sync-card-icon.blue{background:var(--blue)}
+.adm-sync-card-icon.gold{background:var(--gold)}
 .adm-sync-card-icon svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2}
 .adm-sync-card-h{font-family:var(--serif);font-size:19px;color:var(--ink);letter-spacing:-.014em;margin:0}
 .adm-sync-card-p{font-size:12.5px;color:var(--slate);line-height:1.55;margin:0;flex:1}
@@ -139,7 +148,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-azure-status{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.5px;padding:5px 10px;border-radius:5px;background:rgba(255,255,255,.18);text-transform:uppercase}
 .adm-search{flex:1;min-width:280px;position:relative}
 .adm-search input{width:100%;padding:9px 14px 9px 38px;border:1.5px solid var(--line2);border-radius:9px;font-size:13.5px;background:var(--paper);outline:none;transition:all .15s}
-.adm-search input:focus{border-color:var(--green);background:#fff;box-shadow:0 0 0 3px rgba(0,107,63,.08)}
+.adm-search input:focus{border-color:var(--green);background:#fff;box-shadow:0 0 0 3px rgba(1,118,211,.14)}
 .adm-search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--slate3);stroke:currentColor;fill:none;stroke-width:2}
 .adm-select{padding:9px 14px;border:1.5px solid var(--line2);border-radius:9px;background:var(--paper);font-size:13px;color:var(--ink);outline:none;cursor:pointer;font-weight:500}
 .adm-select:focus{border-color:var(--green);background:#fff}
@@ -151,9 +160,9 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-card:hover{border-color:var(--line2);box-shadow:var(--sh-md);transform:translateY(-2px)}
 .adm-card-art{height:108px;position:relative;display:flex;align-items:flex-start;padding:12px;background-size:cover;background-position:center}
 .adm-card-pill{font-family:var(--mono);font-size:8.5px;font-weight:700;color:#fff;letter-spacing:1.2px;text-transform:uppercase;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);padding:3px 8px;border-radius:5px}
-.adm-card-pts{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;background:rgba(0,107,63,.85);padding:4px 9px;border-radius:6px;letter-spacing:.3px}
+.adm-card-pts{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;background:rgba(46,132,74,.92);padding:4px 9px;border-radius:6px;letter-spacing:.3px}
 .adm-card-status{position:absolute;bottom:12px;left:12px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.5px;padding:3px 8px;border-radius:5px;display:flex;align-items:center;gap:5px;backdrop-filter:blur(8px)}
-.adm-card-status.live{background:rgba(0,107,63,.85);color:#fff;border:1px solid rgba(255,255,255,.25)}
+.adm-card-status.live{background:rgba(46,132,74,.92);color:#fff;border:1px solid rgba(255,255,255,.25)}
 .adm-card-status.draft{background:rgba(217,119,6,.85);color:#fff;border:1px solid rgba(255,255,255,.25)}
 .adm-card-status::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
 .adm-card-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:7px}
@@ -178,7 +187,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-editor-backdrop.on{opacity:1;visibility:visible}
 .adm-editor{position:fixed;top:0;right:0;bottom:0;width:min(720px,100%);background:var(--white);box-shadow:var(--sh-xl);z-index:201;transform:translateX(100%);transition:transform .3s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column}
 .adm-editor.on{transform:translateX(0)}
-.adm-editor-head{padding:20px 26px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#0a2040,#1c3a5e);color:#fff}
+.adm-editor-head{padding:18px 26px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:14px;background:#032d60;color:#fff}
 .adm-editor-head-eyebrow{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.55);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:3px}
 .adm-editor-head-title{font-family:var(--serif);font-size:22px;letter-spacing:-.014em;line-height:1.1;flex:1}
 .adm-editor-close{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;display:grid;place-items:center;font-size:15px}
@@ -204,7 +213,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-label{display:block;font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;margin-bottom:5px}
 .adm-label-required::after{content:' *';color:var(--red)}
 .adm-input,.adm-textarea,.adm-select-full{width:100%;padding:10px 13px;border:1.5px solid var(--line2);border-radius:9px;font-size:13.5px;color:var(--ink);outline:none;background:var(--white);font-family:var(--sans);transition:all .15s}
-.adm-input:focus,.adm-textarea:focus,.adm-select-full:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,107,63,.08)}
+.adm-input:focus,.adm-textarea:focus,.adm-select-full:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(1,118,211,.14)}
 .adm-textarea{min-height:90px;resize:vertical;line-height:1.55}
 .adm-hint{font-size:11.5px;color:var(--slate3);margin-top:4px;line-height:1.4}
 
@@ -235,7 +244,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-preset-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .adm-preset{height:64px;border-radius:9px;cursor:pointer;border:2px solid transparent;transition:all .15s;position:relative;background-size:cover}
 .adm-preset:hover{transform:scale(1.03)}
-.adm-preset.selected{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,107,63,.2)}
+.adm-preset.selected{border-color:var(--green);box-shadow:0 0 0 3px rgba(1,118,211,.25)}
 .adm-preset.selected::after{content:'✓';position:absolute;top:6px;right:6px;width:18px;height:18px;background:var(--green);color:#fff;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700}
 
 .adm-color-input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -328,7 +337,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-cnt-section.active{display:block}
 
 /* ─── CONTENT EDITOR ─── */
-.adm-section{background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px 30px;margin:18px 28px;box-shadow:none}
+.adm-section{background:#fff;border:1px solid var(--line);border-radius:8px;padding:28px 30px;margin:18px 28px;box-shadow:none}
 .adm-section-head{margin-bottom:22px}
 .adm-section-eyebrow{font-family:var(--mono);font-size:10.5px;color:var(--gold);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:6px}
 .adm-section-title{font-family:var(--serif);font-size:24px;color:var(--ink);letter-spacing:-.016em;line-height:1.2;font-weight:500}
@@ -356,7 +365,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 
 /* ─── SYNC PAGE ─── */
 .adm-sync-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:0 0 18px}
-.adm-sync-card{background:linear-gradient(135deg,#0a2040 0%,#1c3a5e 100%);border-radius:var(--r-lg);padding:22px;color:#fff;display:flex;flex-direction:column;gap:14px;box-shadow:var(--sh-md)}
+.adm-sync-card{background:#032d60;border-radius:var(--r-lg);padding:22px;color:#fff;display:flex;flex-direction:column;gap:14px;box-shadow:var(--sh-sm)}
 .adm-sync-card.outline{background:#fff;color:var(--ink);border:1px solid var(--line)}
 .adm-sync-card-eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;font-weight:700;opacity:.7}
 .adm-sync-card-title{font-family:var(--serif);font-size:22px;letter-spacing:-.014em;line-height:1.2}
@@ -487,7 +496,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 
 /* Firm/course detail table */
 .sup-firm-card { background: var(--white); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 18px 20px; margin-bottom: 12px; transition: all .15s; cursor: pointer; }
-.sup-firm-card:hover { border-color: var(--green); box-shadow: 0 2px 12px rgba(0,107,63,.08); }
+.sup-firm-card:hover { border-color: var(--green); box-shadow: 0 2px 12px rgba(1,118,211,.14); }
 .sup-firm-card.selected { border-color: var(--green); background: var(--green-bg); }
 .sup-firm-card-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .sup-firm-card-name { font-family: var(--serif); font-size: 18px; color: var(--ink); letter-spacing: -.01em; }
@@ -503,9 +512,9 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .sup-dist-label { font-family: var(--mono); font-size: 11px; color: var(--slate2); text-align: right; font-weight: 600; }
 .sup-dist-bar-wrap { background: var(--paper); border-radius: 5px; height: 24px; overflow: hidden; position: relative; }
 .sup-dist-bar { height: 100%; border-radius: 5px; transition: width .5s ease-out; display: flex; align-items: center; padding: 0 8px; color: #fff; font-family: var(--mono); font-size: 11px; font-weight: 700; }
-.sup-dist-bar.red { background: linear-gradient(90deg, var(--red), #ef4444); }
-.sup-dist-bar.amber { background: linear-gradient(90deg, var(--amber), #f59e0b); }
-.sup-dist-bar.green { background: linear-gradient(90deg, var(--green), #10b981); }
+.sup-dist-bar.red { background: var(--red); }
+.sup-dist-bar.amber { background: var(--amber); }
+.sup-dist-bar.green { background: var(--success); }
 .sup-dist-count { font-family: var(--mono); font-size: 11px; color: var(--slate2); font-weight: 600; }
 
 /* Book modal */
@@ -529,10 +538,10 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 
 <style id="lgn-styles">
 /* ═════════ LAD Global Nav ═════════ */
-.lgn{position:sticky;top:0;z-index:600;height:54px;background:linear-gradient(90deg,#0a1e3a 0%,#1c3a5e 100%);display:flex;align-items:center;gap:6px;padding:0 18px;box-shadow:0 2px 12px rgba(0,0,0,.2);color:#fff;font-family:'Inter','IBM Plex Sans',system-ui,sans-serif;font-size:13px;letter-spacing:-.005em}
+.lgn{position:sticky;top:0;z-index:600;height:54px;background:#032d60;display:flex;align-items:center;gap:6px;padding:0 18px;box-shadow:0 1px 0 rgba(0,0,0,.12);color:#fff;font-family:var(--sans);font-size:13px;letter-spacing:-.005em}
 .lgn a{text-decoration:none}
 .lgn-brand{display:flex;gap:11px;align-items:center;color:#fff;padding-right:18px;margin-right:6px;border-right:1px solid rgba(255,255,255,.15);min-width:0}
-.lgn-emblem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#C9913A,#d9a85a);color:#1c1f2e;display:grid;place-items:center;font-family:'Crimson Pro',Georgia,serif;font-size:17px;font-weight:700;flex-shrink:0}
+.lgn-emblem{width:32px;height:32px;border-radius:var(--r-md);background:#fff;color:#032d60;display:grid;place-items:center;font-family:var(--serif);font-size:16px;font-weight:700;flex-shrink:0}
 .lgn-brand-text{line-height:1.15;min-width:0}
 .lgn-brand-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lgn-brand-sub{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:rgba(255,255,255,.55);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px;white-space:nowrap}
@@ -568,7 +577,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
   </a>
   <span class="lgn-group-label" style="margin-left:0">LAD ADMIN</span>
   <div class="lgn-group">
-    <a class="lgn-pill" href="lad-crm.html" style="cursor:pointer;background:var(--green,#006B3F);color:#fff" title="Customer CRM · data centre">★ CRM</a>
+    <a class="lgn-pill" href="lad-crm.html" style="cursor:pointer;background:var(--green,#0176d3);color:#fff" title="Customer CRM · data centre">★ CRM</a>
     <a class="lgn-pill on" onclick="switchPage('bookings')" style="cursor:pointer">Bookings</a>
     <a class="lgn-pill" onclick="switchPage('purchases')" style="cursor:pointer">Purchases</a>
     <a class="lgn-pill" onclick="switchPage('schedules')" style="cursor:pointer">Schedules</a>
@@ -810,7 +819,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
       <div><div style="font-size:11px;color:var(--slate3);margin-bottom:4px">Top up a lawyer by email</div>
         <input id="admTopEmail" type="email" placeholder="lawyer@firm.ae" style="padding:9px 11px;border:1.5px solid var(--line);border-radius:9px;font-size:13px;min-width:220px"/></div>
       <input id="admTopCredits" type="number" min="1" placeholder="Credits" style="padding:9px 11px;border:1.5px solid var(--line);border-radius:9px;font-size:13px;max-width:110px"/>
-      <button onclick="adminTopup()" style="background:var(--green,#006B3F);color:#fff;border:0;border-radius:9px;padding:10px 16px;cursor:pointer;font-size:13px;font-weight:600">Grant credits</button>
+      <button onclick="adminTopup()" style="background:var(--green,#0176d3);color:#fff;border:0;border-radius:9px;padding:10px 16px;cursor:pointer;font-size:13px;font-weight:600">Grant credits</button>
     </div>
   </div>
   <script>
@@ -825,7 +834,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
         if(!j){box.innerHTML='<div style="color:#c0392b;font-size:12.5px">Sign in as LAD Admin to view requests.</div>';return;}
         var reqs=j.requests||[]; if(cnt)cnt.textContent=reqs.length+' pending';
         box.innerHTML=reqs.length?reqs.map(function(x){
-          return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #eef1f4"><div style="flex:1"><b>'+esc(x.email)+'</b> · '+esc(x.credits)+' credits <span style="color:#8a98aa">(AED '+esc(x.aed_amount)+')</span><div style="font-size:11px;color:#8a98aa">'+esc((x.created_at||'').slice(0,16).replace('T',' '))+'</div></div><button onclick="confirmCreditRequest(\''+esc(x.id)+'\')" style="background:#006B3F;color:#fff;border:0;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12.5px;font-weight:600">Confirm</button></div>';
+          return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #eef1f4"><div style="flex:1"><b>'+esc(x.email)+'</b> · '+esc(x.credits)+' credits <span style="color:#8a98aa">(AED '+esc(x.aed_amount)+')</span><div style="font-size:11px;color:#8a98aa">'+esc((x.created_at||'').slice(0,16).replace('T',' '))+'</div></div><button onclick="confirmCreditRequest(\''+esc(x.id)+'\')" style="background:#0176d3;color:#fff;border:0;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12.5px;font-weight:600">Confirm</button></div>';
         }).join(''):'<div style="color:#8a98aa;font-size:12.5px;padding:6px 0">No pending requests.</div>';
       }).catch(function(){box.innerHTML='<div style="color:#c0392b;font-size:12.5px">Could not load requests.</div>';});
     };
@@ -884,7 +893,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
   </div>
 
   <!-- Live sessions manager — cancel / move scheduled sessions -->
-  <div style="background:var(--white);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:20px">
+  <div style="background:var(--white);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:20px">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:10px">
       <div><div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--slate3);font-weight:700">LIVE SESSIONS</div><div style="font-size:15px;font-weight:600;margin-top:2px">Manage scheduled sessions</div></div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -1064,7 +1073,7 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
   <div class="adm-cnt-section" data-cnt-section="lawyer">
     <div class="adm-cnt-grid">
 
-      <div class="adm-cnt-card" style="grid-column:1/-1;background:linear-gradient(135deg,#0a0e14,#1a2330);color:#fff;border-color:#2a3548">
+      <div class="adm-cnt-card" style="grid-column:1/-1;background:#032d60;color:#fff;border-color:#2a3548">
         <div class="adm-cnt-card-eyebrow" style="color:#a78bfa">WELCOME PANEL · TOP OF PAGE</div>
         <h3 class="adm-cnt-card-title" style="color:#fff">"Welcome back" hero card</h3>
         <p style="font-size:12px;color:rgba(255,255,255,.5);margin:0 0 14px">Shown on first visit and in the modal when Yousef clicks the "what is Lex" button.</p>
@@ -1451,7 +1460,7 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
     <script>(function(){function chk(){var el=document.getElementById('admBackendStatus');if(!el)return;var base=(typeof _admBase==='function'?_admBase():(window.LAD_API_BASE||'')).replace(/\/$/,'');if(!base){el.innerHTML='<span style="color:var(--red)">●</span> Not configured';return;}fetch(base+'/api/v1/health').then(function(r){return r.ok?r.json():null;}).then(function(){el.innerHTML='<span style="color:var(--green)">●</span> Connected · '+base;}).catch(function(){el.innerHTML='<span style="color:var(--amber)">●</span> '+base+' (waking…)';});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',chk);else chk();})();</script>
 
     <div class="adm-sync-card">
-      <div class="adm-sync-card-icon" style="background:linear-gradient(135deg,#475569,#1e293b);color:#fff">
+      <div class="adm-sync-card-icon" style="background:#5c5c5c;color:#fff">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       </div>
       <h3 class="adm-sync-card-h">Sync status</h3>
@@ -1462,7 +1471,7 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
   </div>
 
   <div style="padding:0 28px 28px">
-    <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px">
+    <div style="background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:20px">
       <div class="adm-cnt-card-eyebrow" style="margin-bottom:8px">AZURE MIGRATION · ENDPOINT MAP</div>
       <h3 style="font-family:var(--serif);font-size:18px;color:var(--ink);margin:0 0 14px">When you wire up Azure Functions, these are the endpoints to implement:</h3>
       <table class="adm-sch-preview-table">
@@ -1674,7 +1683,7 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
           <div><label class="adm-label" style="margin-bottom:3px">Time</label><input id="bulkTime" class="adm-input" value="14:30–16:30" style="width:140px"/></div>
           <div><label class="adm-label" style="margin-bottom:3px">Seats</label><input id="bulkSeats" class="adm-input" type="number" min="0" value="30" style="width:80px"/></div>
           <div><label class="adm-label" style="margin-bottom:3px">Lang</label><select id="bulkLang" class="adm-select-full" style="width:120px"><option>English</option><option>Arabic</option></select></div>
-          <button type="button" onclick="applyBulkDates()" style="margin-left:auto;background:var(--green,#006B3F);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer">Add dates →</button>
+          <button type="button" onclick="applyBulkDates()" style="margin-left:auto;background:var(--green,#0176d3);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer">Add dates →</button>
           <button type="button" onclick="document.getElementById('bulkDatesPanel').style.display='none'" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;color:var(--slate2)">Cancel</button>
         </div>
         <div id="bulkDatesMsg" style="font-size:12px;margin-top:9px;color:var(--slate3)"></div>
@@ -1697,7 +1706,7 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
           <div id="matFileWrap" style="display:none"><label class="adm-label" style="margin-bottom:3px">File (≤ 10 MB)</label><input id="matFile" type="file" class="adm-input" style="width:100%;padding:8px"/></div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
-          <button type="button" id="matAddBtn" onclick="addMaterial()" style="background:var(--green,#006B3F);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer">+ Add material</button>
+          <button type="button" id="matAddBtn" onclick="addMaterial()" style="background:var(--green,#0176d3);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer">+ Add material</button>
           <span id="matMsg" style="font-size:12px;color:var(--slate3)"></span>
         </div>
       </div>
@@ -1810,19 +1819,19 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
 
   <!-- KPI strip (sourced from /audit/_/summary) -->
   <div style="padding:0 28px 0;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px">
-    <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+    <div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px 20px">
       <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:8px">Total events on record</div>
       <div style="font-family:var(--serif);font-size:32px;letter-spacing:-.02em;font-weight:500" id="audKpiTotal">—</div>
     </div>
-    <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+    <div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px 20px">
       <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:8px">Distinct actions (30d)</div>
       <div style="font-family:var(--serif);font-size:32px;letter-spacing:-.02em;font-weight:500" id="audKpiActions">—</div>
     </div>
-    <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+    <div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px 20px">
       <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:8px">Failed logins (7d)</div>
       <div style="font-family:var(--serif);font-size:32px;letter-spacing:-.02em;font-weight:500;color:var(--red)" id="audKpiFailedLogins">—</div>
     </div>
-    <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+    <div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px 20px">
       <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:8px">Active actors (30d)</div>
       <div style="font-family:var(--serif);font-size:32px;letter-spacing:-.02em;font-weight:500" id="audKpiActors">—</div>
     </div>
@@ -1973,17 +1982,17 @@ async function loadAuditTable() {
 
   <!-- KPI strip -->
   <div style="padding:0 28px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px">
-    <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+    <div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px 20px">
       <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:8px">Practising on the roll</div>
       <div style="font-family:var(--serif);font-size:32px;letter-spacing:-.02em;font-weight:500;color:var(--green)" id="statKpiPract">—</div>
       <div style="font-size:12px;color:var(--slate2);margin-top:4px">Subject to 16-point CLPD obligation</div>
     </div>
-    <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+    <div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px 20px">
       <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:8px">Non-practising on the roll</div>
       <div style="font-family:var(--serif);font-size:32px;letter-spacing:-.02em;font-weight:500;color:var(--slate2)" id="statKpiNon">—</div>
       <div style="font-size:12px;color:var(--slate2);margin-top:4px">Admin / support / LAD staff / retired</div>
     </div>
-    <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px">
+    <div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px 20px">
       <div style="font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:8px">Total on the roll</div>
       <div style="font-family:var(--serif);font-size:32px;letter-spacing:-.02em;font-weight:500" id="statKpiTotal">—</div>
       <div style="font-size:12px;color:var(--slate2);margin-top:4px">Across all firms</div>
@@ -3029,7 +3038,7 @@ function applyBulkDates(){
     else bad.push(line);
   });
   const msg = document.getElementById('bulkDatesMsg');
-  if (msg) msg.innerHTML = (added ? '<span style="color:var(--green,#006B3F);font-weight:600">' + added + ' session' + (added === 1 ? '' : 's') + ' added.</span>' : 'No valid dates found.')
+  if (msg) msg.innerHTML = (added ? '<span style="color:var(--green,#0176d3);font-weight:600">' + added + ' session' + (added === 1 ? '' : 's') + ' added.</span>' : 'No valid dates found.')
     + (bad.length ? ' Couldn\'t read: ' + bad.map(b => escapeAttr(b)).join(', ') : '');
   if (added) { document.getElementById('bulkDatesText').value = ''; renderSessions(); }
 }
@@ -4313,7 +4322,7 @@ function supBand(pts) {
 // Avatar color from firm — consistent per firm
 function supAvatarColor(firmId) {
   const palette = {
-    altamimi: '#006B3F', galadari: '#1c3a5e', hadef: '#7c2d12',
+    altamimi: '#0176d3', galadari: '#1c3a5e', hadef: '#7c2d12',
     clyde: '#0c4a6e', mulla: '#5b21b6', dla: '#155e75',
   };
   return palette[firmId] || '#475569';
@@ -4416,7 +4425,7 @@ async function admBookOpen() {
     +'<label style="'+lbl+'">Course</label><select id="admBkCourse" style="'+inp+'" onchange="admBkFillSessions()">'+courseOpts+'</select>'
     +'<label style="'+lbl+'">Session</label><select id="admBkSession" style="'+inp+'"><option value="">Select a course first…</option></select>'
     +'<div id="admBkNote" style="font-size:12px;color:#64748b"></div>',
-    'Book course', '#006B3F', async function(){
+    'Book course', '#0176d3', async function(){
       const who=(document.getElementById('admBkLawyer').value||'').trim();
       const ci=document.getElementById('admBkCourse').value; const si=document.getElementById('admBkSession').value;
       const note=document.getElementById('admBkNote');
@@ -4454,11 +4463,11 @@ function admBookEdit(id) {
   m.style.cssText = 'position:fixed;inset:0;background:rgba(10,20,15,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:2000;padding:24px';
   const aBtn = 'display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--line,#e3e9e4);border-radius:10px;background:#fff;cursor:pointer;font-size:13.5px;font-weight:600;font-family:inherit;transition:all .15s';
   m.innerHTML =
-    '<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.32);overflow:hidden">'
+    '<div style="background:#fff;border-radius:8px;max-width:460px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.32);overflow:hidden">'
     + '<div style="background:#13231b;color:#fff;padding:18px 22px"><div style="font-family:var(--serif,Georgia);font-size:21px;font-weight:600">Manage booking</div>'
     +   '<div style="font-family:var(--mono);font-size:10.5px;opacity:.72;margin-top:3px">' + _bkEsc(b.id) + (b.lawyer?(' · '+_bkEsc(b.lawyer)):'') + (b.course?(' · '+_bkEsc(b.course)):'') + '</div></div>'
     + '<div style="padding:18px 22px;display:flex;flex-direction:column;gap:9px">'
-    +   '<button style="'+aBtn+'" onmouseover="this.style.borderColor=\'#006B3F\'" onmouseout="this.style.borderColor=\'var(--line,#e3e9e4)\'" onclick="admBookAction(\''+_bkEsc(b.id)+'\',\'attended\')"><span style="color:#006B3F">✓</span> Mark attended <span style="color:var(--slate3,#aab8af);font-weight:400;font-size:12px">· awards CPD points</span></button>'
+    +   '<button style="'+aBtn+'" onmouseover="this.style.borderColor=\'#0176d3\'" onmouseout="this.style.borderColor=\'var(--line,#e3e9e4)\'" onclick="admBookAction(\''+_bkEsc(b.id)+'\',\'attended\')"><span style="color:#0176d3">✓</span> Mark attended <span style="color:var(--slate3,#aab8af);font-weight:400;font-size:12px">· awards CPD points</span></button>'
     +   '<button style="'+aBtn+'" onmouseover="this.style.borderColor=\'#c2703d\'" onmouseout="this.style.borderColor=\'var(--line,#e3e9e4)\'" onclick="admBookAction(\''+_bkEsc(b.id)+'\',\'no-show\')"><span style="color:#c2703d">⃠</span> Mark no-show</button>'
     +   '<button style="'+aBtn+';color:#c0392b" onmouseover="this.style.borderColor=\'#c0392b\'" onmouseout="this.style.borderColor=\'var(--line,#e3e9e4)\'" onclick="admBookAction(\''+_bkEsc(b.id)+'\',\'cancelled\')">✕ Cancel &amp; refund credits</button>'
     + '</div>'
@@ -4564,7 +4573,7 @@ function admPurchaseInspect(id) {
   const row = (k,v) => '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px"><span style="color:#64748b">'+k+'</span><span style="font-weight:600;color:#0f172a">'+escape(v==null||v===''?'—':String(v))+'</span></div>';
   admMiniModal('Transaction ' + escape(t.id || id),
     row('Type', t.kind) + row('Buyer', t.buyer) + row('Credits', (t.credits>0?'+':'')+(t.credits!=null?t.credits:'—')) + row('Amount', t.aed!=null?('AED '+Number(t.aed).toLocaleString()):'—') + row('Method', t.method) + row('Date', t.date) + row('Status', t.status),
-    'Close', '#006B3F', function(){ return true; });
+    'Close', '#0176d3', function(){ return true; });
 }
 function admPurchasesExport() {
   const rows = window.__admPurchases || [];
@@ -6048,7 +6057,7 @@ function renderMigrateResult(res, isDryRun) {
   }
 
   block.innerHTML = `
-    <div style="background:var(--white);border:1px solid var(--line);border-left:4px solid ${headerColor};border-radius:14px;padding:24px 26px">
+    <div style="background:var(--white);border:1px solid var(--line);border-left:4px solid ${headerColor};border-radius:8px;padding:24px 26px">
       <div style="font-family:var(--mono);font-size:10px;color:${headerColor};letter-spacing:1.3px;text-transform:uppercase;font-weight:700;margin-bottom:16px">4. ${headerLabel} · ${res.entity}</div>
       ${tiles}
       ${errs.length ? `
@@ -6127,7 +6136,7 @@ function admSessionsRender(){
     const fmt = _admFmtOf(s)==='online'?'Online':'Face-to-face';
     return '<div style="display:grid;grid-template-columns:34px 1.5fr 1fr 104px 78px 80px 210px;gap:0;border-bottom:1px solid var(--line);font-size:12.5px;align-items:center;'+(cancelled?'opacity:.5':'')+'">'
       +'<div style="padding:9px 0 9px 14px"><input type="checkbox" '+(ADM_SESS_SEL[s.id]?'checked':'')+' onchange="admSessSel(\''+escape(s.id)+'\',this.checked)"/></div>'
-      +'<div style="padding:9px 14px;font-weight:500"><span style="cursor:pointer;border-bottom:1px dashed var(--green,#006B3F);color:var(--ink)" title="View bookings & add lawyers" onclick="admSessionBookings(\''+escape(s.id)+'\',\''+escapeAttr(String(s.course_title||''))+'\')">'+escape(s.course_title||s.course_id||'—')+'</span>'+(s.provider_name?'<span style="color:var(--slate3);font-weight:400"> · '+escape(s.provider_name)+'</span>':'')+'</div>'
+      +'<div style="padding:9px 14px;font-weight:500"><span style="cursor:pointer;border-bottom:1px dashed var(--green,#0176d3);color:var(--ink)" title="View bookings & add lawyers" onclick="admSessionBookings(\''+escape(s.id)+'\',\''+escapeAttr(String(s.course_title||''))+'\')">'+escape(s.course_title||s.course_id||'—')+'</span>'+(s.provider_name?'<span style="color:var(--slate3);font-weight:400"> · '+escape(s.provider_name)+'</span>':'')+'</div>'
       +'<div style="padding:9px 14px;color:var(--slate2);font-family:var(--mono);font-size:11px">'+_admSdate(s.scheduled_at)+'</div>'
       +'<div style="padding:9px 14px;text-align:right;font-family:var(--mono);line-height:1.25" title="'+booked+' booked of '+cap+' · '+seats+' seats left">'+(cancelled?'—':('<span style="font-weight:600;color:var(--ink)">'+booked+' booked</span><div style="font-size:10px;color:var(--slate3)">'+seats+' of '+cap+' left</div>'))+'</div>'
       +'<div style="padding:9px 14px;font-size:11px;color:var(--slate2)">'+fmt+'</div>'
@@ -6146,7 +6155,7 @@ function admSessionBookings(id, title){
   m=document.createElement('div'); m.id='sbModal';
   m.style.cssText='position:fixed;inset:0;background:rgba(10,20,15,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:3000;padding:24px';
   m.onclick=function(e){ if(e.target===m) m.remove(); };
-  m.innerHTML='<div style="background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.32);overflow:hidden">'
+  m.innerHTML='<div style="background:#fff;border-radius:8px;max-width:640px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.32);overflow:hidden">'
     +'<div style="background:#13231b;color:#fff;padding:16px 22px;display:flex;align-items:center;gap:12px">'
       +'<div style="flex:1;min-width:0"><div style="font-family:var(--serif,Georgia);font-size:19px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="sbTitle">'+escape(title||'Session')+'</div><div style="font-family:var(--mono);font-size:10.5px;opacity:.72;margin-top:2px" id="sbSub">Loading…</div></div>'
       +'<button onclick="document.getElementById(\'sbModal\').remove()" style="background:rgba(255,255,255,.12);border:none;color:#fff;width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:17px;line-height:1">×</button>'
@@ -6197,7 +6206,7 @@ async function sbSearch(){
       const pts=l.points!=null?l.points:(l.lifetime_points!=null?l.lifetime_points:'');
       return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line,#eef)">'
         +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+escape(name)+'</div><div style="font-size:11px;color:var(--slate3,#9aa)">'+escape(l.email||'')+(pts!==''?(' · '+pts+'/16 pts'):'')+'</div></div>'
-        +'<button onclick="sbBook(\''+escape(l.id)+'\',this)" style="background:var(--green,#006B3F);color:#fff;border:none;border-radius:7px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer">Book</button></div>';
+        +'<button onclick="sbBook(\''+escape(l.id)+'\',this)" style="background:var(--green,#0176d3);color:#fff;border:none;border-radius:7px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer">Book</button></div>';
     }).join('');
   }catch(e){ host.innerHTML='<div style="color:#c0392b;font-size:12px">'+escape(e.message)+'</div>'; }
 }
@@ -6232,7 +6241,7 @@ function admSessExport(){
 function admMiniModal(title, bodyHtml, confirmLabel, color, onConfirm){
   let m=document.getElementById('admMiniModal'); if(!m){ m=document.createElement('div'); m.id='admMiniModal'; document.body.appendChild(m); }
   m.style.cssText='position:fixed;inset:0;background:rgba(10,20,15,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:2200;padding:24px';
-  m.innerHTML='<div style="background:#fff;border-radius:16px;max-width:450px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.34);overflow:hidden">'
+  m.innerHTML='<div style="background:#fff;border-radius:8px;max-width:450px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.34);overflow:hidden">'
     +'<div style="background:#13231b;color:#fff;padding:16px 20px;font-size:19px;font-weight:600">'+escape(title)+'</div>'
     +'<div style="padding:18px 20px;font-family:-apple-system,sans-serif">'+bodyHtml+'</div>'
     +'<div style="padding:0 20px 18px;display:flex;gap:10px;justify-content:flex-end;align-items:center">'
@@ -6262,7 +6271,7 @@ function admSessionMove(id, title){
     '<div style="font-size:13px;color:#475569;margin-bottom:14px">Reschedule <strong>'+escape(title)+'</strong>. Everyone booked keeps their seat and is notified.</div>'
     +'<label style="'+lbl+'">New date &amp; time</label><input type="datetime-local" id="admMoveDt" style="'+inp+'"/>'
     +'<label style="'+lbl+'">Venue (optional)</label><input id="admMoveVenue" style="'+inp+'" placeholder="e.g. DIFC Gate Village"/>',
-    'Move & notify', '#006B3F', async function(){
+    'Move & notify', '#0176d3', async function(){
       const dt=document.getElementById('admMoveDt').value;
       const venue=document.getElementById('admMoveVenue').value;
       if(!dt){ toast('Pick a new date and time','error'); return false; }
@@ -6295,8 +6304,8 @@ document.addEventListener('DOMContentLoaded', loadAdmSessions);
 
 <!-- ══════ MESSAGE THE PROFESSION · dedicated composer ══════ -->
 <div id="admMsgOv" style="position:fixed;inset:0;background:rgba(8,18,12,.6);backdrop-filter:blur(8px);z-index:2300;display:none;align-items:flex-start;justify-content:center;padding:70px 20px">
-  <div style="background:#fff;border-radius:18px;max-width:600px;width:100%;box-shadow:0 40px 100px rgba(0,0,0,.4);overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
-    <div style="background:linear-gradient(135deg,#0a3a28,#0d5a4a);color:#fff;padding:18px 22px;display:flex;align-items:center;justify-content:space-between">
+  <div style="background:#fff;border-radius:10px;max-width:600px;width:100%;box-shadow:0 40px 100px rgba(0,0,0,.4);overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+    <div style="background:#032d60;color:#fff;padding:18px 22px;display:flex;align-items:center;justify-content:space-between">
       <div><div style="font-size:21px;font-weight:600">Message the profession</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;opacity:.8;margin-top:2px">In-system notification · lawyers receive it instantly</div></div>
       <button onclick="admMsgClose()" style="width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.18);border:0;color:#fff;cursor:pointer;font-size:15px">✕</button>
     </div>
@@ -6347,31 +6356,31 @@ async function admMsgSend(){
 
 <!-- ══════ AI ADMIN CONSOLE · ⌘K command bar + notifications composer ══════ -->
 <style>
-#aicFab{position:fixed;left:22px;bottom:22px;z-index:1400;background:linear-gradient(135deg,#0a3a28,#0d5a4a);color:#fff;border:0;border-radius:30px;padding:13px 20px;font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(10,58,40,.4);display:flex;align-items:center;gap:8px;font-family:inherit}
+#aicFab{position:fixed;left:22px;bottom:22px;z-index:1400;background:#032d60;color:#fff;border:0;border-radius:30px;padding:13px 20px;font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(10,58,40,.4);display:flex;align-items:center;gap:8px;font-family:inherit}
 #aicFab:hover{transform:translateY(-2px)}
 #aicFab .kbd{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(255,255,255,.18);padding:2px 6px;border-radius:5px}
 #aicOverlay{position:fixed;inset:0;background:rgba(8,18,12,.55);backdrop-filter:blur(8px);z-index:1500;display:none;align-items:flex-start;justify-content:center;padding:80px 20px}
 #aicOverlay.on{display:flex}
-.aic-panel{background:#fff;border-radius:18px;max-width:680px;width:100%;box-shadow:0 40px 100px rgba(0,0,0,.4);overflow:hidden;max-height:80vh;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.aic-panel{background:#fff;border-radius:10px;max-width:680px;width:100%;box-shadow:0 40px 100px rgba(0,0,0,.4);overflow:hidden;max-height:80vh;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 .aic-head{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid #eef2ee}
 .aic-head .spark{font-size:18px}
 .aic-input{flex:1;border:0;outline:0;font-size:16px;color:#0d1b14;font-family:inherit;background:none}
 .aic-esc{font-family:'JetBrains Mono',monospace;font-size:10px;color:#8a9a90;background:#f1f4f1;border:1px solid #e3e9e4;border-radius:6px;padding:3px 7px;cursor:pointer}
 .aic-tabs{display:flex;gap:4px;padding:10px 16px 0}
 .aic-tab{background:none;border:0;border-bottom:2px solid transparent;padding:6px 10px;font-size:12.5px;font-weight:600;color:#8a9a90;cursor:pointer;font-family:inherit}
-.aic-tab.on{color:#006B3F;border-bottom-color:#006B3F}
+.aic-tab.on{color:#0176d3;border-bottom-color:#0176d3}
 .aic-body{padding:16px 18px;overflow-y:auto}
-.aic-chip{display:inline-block;background:#f1f4f1;border:1px solid #e3e9e4;border-radius:18px;padding:7px 13px;font-size:12.5px;color:#3a4a40;margin:0 6px 8px 0;cursor:pointer}
-.aic-chip:hover{border-color:#006B3F;color:#006B3F}
+.aic-chip{display:inline-block;background:#f1f4f1;border:1px solid #e3e9e4;border-radius:10px;padding:7px 13px;font-size:12.5px;color:#3a4a40;margin:0 6px 8px 0;cursor:pointer}
+.aic-chip:hover{border-color:#0176d3;color:#0176d3}
 .aic-answer{font-size:14px;line-height:1.65;color:#1a2a20;white-space:pre-wrap;background:#f6f8f6;border:1px solid #e3e9e4;border-left:3px solid #0d7377;border-radius:10px;padding:15px 17px;margin-top:6px}
 .aic-engine{font-family:'JetBrains Mono',monospace;font-size:9px;color:#aab8af;letter-spacing:.5px;margin-top:8px;text-transform:uppercase}
 .aic-field{margin-bottom:12px}
 .aic-label{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:#8a9a90;font-weight:700;margin-bottom:6px;display:block}
 .aic-sel,.aic-inp,.aic-ta{width:100%;border:1.5px solid #d6ddd7;border-radius:9px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:#0d1b14;outline:0}
-.aic-sel:focus,.aic-inp:focus,.aic-ta:focus{border-color:#006B3F}
+.aic-sel:focus,.aic-inp:focus,.aic-ta:focus{border-color:#0176d3}
 .aic-ta{resize:vertical;min-height:84px}
-.aic-btn{background:#006B3F;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
-.aic-btn.alt{background:#fff;color:#006B3F;border:1px solid #006B3F}
+.aic-btn{background:#0176d3;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.aic-btn.alt{background:#fff;color:#0176d3;border:1px solid #0176d3}
 .aic-btn:disabled{opacity:.5;cursor:not-allowed}
 </style>
 <button id="aicFab" onclick="aicOpen()">✦ Ask AI <span class="kbd">⌘K</span></button>
@@ -6455,7 +6464,7 @@ async function admMsgSend(){
     if(!convo.length){ out.innerHTML=''; return; }
     var html='<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><span class="aic-esc" style="cursor:pointer" onclick="aicReset()">＋ New chat</span></div>';
     convo.forEach(function(m,idx){
-      if(m.role==='user'){ html+='<div style="text-align:right;margin:10px 0 4px"><span style="display:inline-block;background:#006B3F;color:#fff;border-radius:14px 14px 4px 14px;padding:9px 13px;font-size:13.5px;line-height:1.5;max-width:85%;text-align:left;white-space:pre-wrap">'+esc(m.content)+'</span></div>'; return; }
+      if(m.role==='user'){ html+='<div style="text-align:right;margin:10px 0 4px"><span style="display:inline-block;background:#0176d3;color:#fff;border-radius:8px 14px 4px 14px;padding:9px 13px;font-size:13.5px;line-height:1.5;max-width:85%;text-align:left;white-space:pre-wrap">'+esc(m.content)+'</span></div>'; return; }
       if(m.pending){ html+='<div class="aic-answer">Thinking…</div>'; return; }
       if(m.plan){
         var d=m.plan, color=d.intent==='cancel_session'?'#c0392b':'#0d7377';
