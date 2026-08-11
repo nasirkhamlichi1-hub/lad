@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Study Buddy — Year 10 Study App</title>
+<style>
+  :root{
+    --bg:#f6f7fb; --card:#ffffff; --ink:#1d2230; --muted:#6a7285;
+    --line:#e6e8ef; --brand:#4f6ef2; --brand-ink:#fff;
+    --ok:#2e9e6b; --bad:#d64550; --warn:#d08a1e;
+    --shadow:0 6px 22px rgba(30,40,80,.08);
+    --radius:16px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0f1220; --card:#171b2c; --ink:#eef0f8; --muted:#9aa2b8;
+      --line:#262b41; --shadow:0 6px 22px rgba(0,0,0,.35); }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:840px;margin:0 auto;padding:16px 16px 120px}
+  header.top{
+    position:sticky;top:0;z-index:20;background:var(--bg);
+    display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);
+  }
+  header.top .logo{font-size:22px}
+  header.top h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.2px}
+  header.top .spacer{flex:1}
+  .btn{
+    border:1px solid var(--line);background:var(--card);color:var(--ink);
+    padding:9px 14px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;
+    transition:.15s; display:inline-flex;align-items:center;gap:7px;
+  }
+  .btn:hover{border-color:var(--brand)}
+  .btn.primary{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .btn.ghost{background:transparent}
+  .btn.sm{padding:6px 10px;font-size:13px;border-radius:10px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px;box-shadow:var(--shadow);cursor:pointer;transition:.15s;position:relative;overflow:hidden;
+  }
+  .card:hover{transform:translateY(-2px);border-color:var(--brand)}
+  .card .ic{font-size:30px}
+  .card h3{margin:10px 0 4px;font-size:17px}
+  .card p{margin:0;color:var(--muted);font-size:13px}
+  .card .bar{position:absolute;left:0;top:0;height:4px;width:100%}
+  .pill{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:999px;
+    padding:2px 10px;font-size:12px;color:var(--muted);margin-top:10px}
+
+  h2.section{font-size:15px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:26px 4px 12px}
+  .back{background:none;border:none;color:var(--brand);font-weight:700;cursor:pointer;font-size:14px;padding:6px 0}
+
+  .topicrow{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;
+    display:flex;align-items:center;gap:14px;cursor:pointer;transition:.15s;box-shadow:var(--shadow)
+  }
+  .topicrow:hover{border-color:var(--brand)}
+  .topicrow .t{flex:1}
+  .topicrow h3{margin:0 0 3px;font-size:16px}
+  .topicrow p{margin:0;color:var(--muted);font-size:13px}
+  .topicrow .chev{color:var(--muted);font-size:20px}
+  .done-tag{color:var(--ok);font-size:12px;font-weight:700}
+
+  .modes{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:16px 0}
+  .mode{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;transition:.15s;box-shadow:var(--shadow)}
+  .mode:hover{border-color:var(--brand);transform:translateY(-2px)}
+  .mode .ic{font-size:24px}
+  .mode h4{margin:8px 0 3px;font-size:15px}
+  .mode p{margin:0;color:var(--muted);font-size:12.5px}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-top:14px}
+  .notes h3{margin:18px 0 6px;font-size:16px;color:var(--brand)}
+  .notes h3:first-child{margin-top:0}
+  .notes p{margin:0 0 6px;font-size:15px}
+  .notes .seg.reading{background:rgba(79,110,242,.12);border-radius:6px}
+
+  /* Listening */
+  .listen-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+  .rate{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+  input[type=range]{accent-color:var(--brand)}
+
+  /* Quiz */
+  .q-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .q-head .count{color:var(--muted);font-size:13px;font-weight:600}
+  .q-type{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+    padding:2px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
+  .q-text{font-size:17px;font-weight:600;margin:10px 0 14px}
+  .opt{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:13px 15px;margin-bottom:10px;cursor:pointer;font-size:15px;transition:.12s;color:var(--ink)}
+  .opt:hover{border-color:var(--brand)}
+  .opt.correct{border-color:var(--ok);background:rgba(46,158,107,.12)}
+  .opt.wrong{border-color:var(--bad);background:rgba(214,69,80,.12)}
+  .opt.disabled{cursor:default}
+  textarea.answer{width:100%;min-height:110px;border:1px solid var(--line);border-radius:12px;
+    padding:12px;font-size:15px;font-family:inherit;background:var(--bg);color:var(--ink);resize:vertical}
+  .feedback{margin-top:14px;border-radius:12px;padding:14px;font-size:14.5px;border:1px solid var(--line)}
+  .feedback.model{background:var(--bg)}
+  .feedback h5{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .quiz-nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+  .score-big{font-size:40px;font-weight:800;text-align:center;margin:6px 0}
+  .center{text-align:center}
+
+  /* Chat */
+  .chat{display:flex;flex-direction:column;gap:12px;min-height:40vh}
+  .msg{max-width:88%;padding:11px 14px;border-radius:14px;font-size:15px;white-space:pre-wrap;line-height:1.5}
+  .msg.user{align-self:flex-end;background:var(--brand);color:#fff;border-bottom-right-radius:4px}
+  .msg.bot{align-self:flex-start;background:var(--bg);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .msg.bot.thinking{color:var(--muted);font-style:italic}
+  .chat-input{display:flex;gap:10px;margin-top:14px;position:sticky;bottom:0}
+  .chat-input textarea{flex:1;min-height:48px;max-height:160px;border:1px solid var(--line);border-radius:14px;
+    padding:12px 14px;font-size:15px;font-family:inherit;background:var(--card);color:var(--ink);resize:none}
+  .suggest{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .suggest button{font-size:13px;border:1px dashed var(--line);background:transparent;color:var(--muted);
+    padding:7px 11px;border-radius:999px;cursor:pointer}
+  .suggest button:hover{border-color:var(--brand);color:var(--brand)}
+
+  /* Modal */
+  .overlay{position:fixed;inset:0;background:rgba(10,14,30,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+  .overlay.open{display:flex}
+  .modal{background:var(--card);border:1px solid var(--line);border-radius:18px;max-width:480px;width:100%;padding:22px;box-shadow:var(--shadow);max-height:88vh;overflow:auto}
+  .modal h3{margin:0 0 4px}
+  .modal p.sub{margin:0 0 16px;color:var(--muted);font-size:14px}
+  label.fld{display:block;font-size:13px;font-weight:600;margin:12px 0 6px}
+  input.in,select.in{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:15px;background:var(--bg);color:var(--ink);font-family:inherit}
+  .hint{font-size:12.5px;color:var(--muted);margin-top:6px}
+  .hint a{color:var(--brand)}
+  .row{display:flex;gap:10px;margin-top:18px}
+  .row .btn{flex:1;justify-content:center}
+  .warnbox{background:rgba(208,138,30,.12);border:1px solid rgba(208,138,30,.4);border-radius:12px;padding:12px;font-size:13px;margin-top:14px;color:var(--ink)}
+
+  .empty{color:var(--muted);text-align:center;padding:30px}
+  .fade{animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .hero{background:linear-gradient(135deg,#4f6ef2,#7a5cd0);color:#fff;border-radius:var(--radius);padding:20px;margin-bottom:8px}
+  .hero h2{margin:0 0 4px;font-size:20px}
+  .hero p{margin:0;opacity:.9;font-size:14px}
+  .statline{display:flex;gap:18px;margin-top:14px;flex-wrap:wrap}
+  .stat b{font-size:20px;display:block}
+  .stat span{font-size:12px;opacity:.85}
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="logo">🎓</span>
+  <h1>Study Buddy</h1>
+  <div class="spacer"></div>
+  <button class="btn sm ghost" id="btnReset" title="Reset progress">↺</button>
+  <button class="btn sm" id="btnSettings">⚙️ AI Setup</button>
+</header>
+
+<div class="wrap" id="app"></div>
+
+<!-- Settings modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3>Connect your AI tutor</h3>
+    <p class="sub">Study Buddy uses Claude to power the teacher, tutor chat and written‑answer feedback. Paste your own Anthropic API key — it's stored only on this device.</p>
+
+    <label class="fld">Anthropic API key</label>
+    <input class="in" id="apiKey" type="password" placeholder="sk-ant-..." autocomplete="off" />
+    <div class="hint">Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. Your key never leaves your browser except to talk to Claude directly.</div>
+
+    <label class="fld">Model</label>
+    <select class="in" id="model">
+      <option value="claude-haiku-4-5">Haiku 4.5 — fastest & cheapest</option>
+      <option value="claude-sonnet-5" selected>Sonnet 5 — smart & balanced (recommended)</option>
+      <option value="claude-opus-5">Opus 5 — most capable</option>
+    </select>
+    <div class="hint">Haiku is great for quick questions; Sonnet gives the best all‑round tutoring.</div>
+
+    <div class="warnbox">The app fully works without a key — study notes, listening mode and multiple‑choice quizzes all run offline. A key only unlocks the AI teacher/tutor chat and marking of written answers.</div>
+
+    <div class="row">
+      <button class="btn ghost" id="btnCloseSettings">Close</button>
+      <button class="btn primary" id="btnSaveSettings">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="curriculum.js"></script>
+<script>
+/* ---------------- State & storage ---------------- */
+const LS = {
+  key:  ()=>localStorage.getItem('sb_apikey')||'',
+  model:()=>localStorage.getItem('sb_model')||'claude-sonnet-5',
+  prog: ()=>{ try{return JSON.parse(localStorage.getItem('sb_progress')||'{}')}catch(e){return {}} },
+  setProg:(p)=>localStorage.setItem('sb_progress',JSON.stringify(p)),
+};
+const state = { view:'home', subject:null, topic:null, mode:null };
+const app = document.getElementById('app');
+const C = window.CURRICULUM;
+
+function markDone(subjKey, topicId, kind){
+  const p = LS.prog();
+  p[subjKey] = p[subjKey] || {};
+  p[subjKey][topicId] = p[subjKey][topicId] || {};
+  p[subjKey][topicId][kind] = true;
+  LS.setProg(p);
+}
+function topicDone(subjKey, topicId){
+  const p = LS.prog();
+  return !!(p[subjKey] && p[subjKey][topicId] && (p[subjKey][topicId].study || p[subjKey][topicId].quiz));
+}
+function saveScore(subjKey, topicId, score, total){
+  const p = LS.prog();
+  p[subjKey]=p[subjKey]||{}; p[subjKey][topicId]=p[subjKey][topicId]||{};
+  p[subjKey][topicId].quiz = true;
+  p[subjKey][topicId].best = Math.max(p[subjKey][topicId].best||0, Math.round(100*score/total));
+  LS.setProg(p);
+}
+function stats(){
+  const p = LS.prog(); let studied=0, quizzed=0, total=0;
+  for(const sk in C){ for(const t of C[sk].topics){ total++;
+    const r=(p[sk]||{})[t.id]; if(r&&r.study) studied++; if(r&&r.quiz) quizzed++; } }
+  return {studied,quizzed,total};
+}
+
+/* ---------------- Router ---------------- */
+function go(view, opts={}){ Object.assign(state,{view},opts); render(); window.scrollTo(0,0); }
+
+function render(){
+  if(state.view==='home') return renderHome();
+  if(state.view==='subject') return renderSubject();
+  if(state.view==='topic') return renderTopic();
+  if(state.view==='study') return renderStudy();
+  if(state.view==='listen') return renderListen();
+  if(state.view==='quiz') return renderQuiz();
+  if(state.view==='teacher') return renderChat('teacher');
+  if(state.view==='tutor') return renderChat('tutor');
+}
+
+/* ---------------- Home ---------------- */
+function renderHome(){
+  stopSpeech();
+  const s = stats();
+  let cards='';
+  for(const key in C){
+    const subj=C[key];
+    const p=LS.prog()[key]||{};
+    const done=Object.values(p).filter(x=>x.study||x.quiz).length;
+    cards+=`<div class="card fade" data-subj="${key}">
+      <div class="bar" style="background:${subj.colour}"></div>
+      <div class="ic">${subj.icon}</div>
+      <h3>${subj.name}</h3>
+      <p>${subj.blurb}</p>
+      <span class="pill">${subj.topics.length} topics · ${done} done</span>
+    </div>`;
+  }
+  app.innerHTML=`
+    <div class="hero fade">
+      <h2>Hi! Ready to study? 👋</h2>
+      <p>Pick a subject, choose a mode, and learn your way — read, listen, test yourself, or chat with your AI teacher.</p>
+      <div class="statline">
+        <div class="stat"><b>${s.studied}/${s.total}</b><span>topics read</span></div>
+        <div class="stat"><b>${s.quizzed}/${s.total}</b><span>quizzes done</span></div>
+        <div class="stat"><b>${LS.key()?'On':'Off'}</b><span>AI tutor</span></div>
+      </div>
+    </div>
+    <h2 class="section">Your subjects</h2>
+    <div class="grid">${cards}</div>
+    <h2 class="section">Ask anything</h2>
+    <div class="mode fade" id="quickTutor" style="grid-column:1/-1">
+      <div class="ic">💬</div>
+      <h4>Open AI Tutor</h4>
+      <p>Stuck on homework? Ask your tutor about any subject, any time.</p>
+    </div>`;
+  app.querySelectorAll('[data-subj]').forEach(el=>
+    el.onclick=()=>go('subject',{subject:el.dataset.subj}));
+  document.getElementById('quickTutor').onclick=()=>go('tutor',{subject:null,topic:null});
+}
+
+/* ---------------- Subject ---------------- */
+function renderSubject(){
+  stopSpeech();
+  const subj=C[state.subject];
+  let rows='';
+  subj.topics.forEach(t=>{
+    const done=topicDone(state.subject,t.id);
+    const best=(LS.prog()[state.subject]||{})[t.id]||{};
+    rows+=`<div class="topicrow fade" data-topic="${t.id}" style="margin-bottom:12px">
+      <div class="ic" style="font-size:22px">${subj.icon}</div>
+      <div class="t">
+        <h3>${t.title}</h3>
+        <p>${t.summary}</p>
+      </div>
+      <div style="text-align:right">
+        ${done?'<div class="done-tag">✓ studied</div>':''}
+        ${best.best?`<div class="done-tag" style="color:var(--brand)">Best ${best.best}%</div>`:''}
+        <div class="chev">›</div>
+      </div>
+    </div>`;
+  });
+  app.innerHTML=`
+    <button class="back" id="back">‹ All subjects</button>
+    <h2 class="section" style="color:${subj.colour}">${subj.icon} ${subj.name}</h2>
+    ${rows}`;
+  document.getElementById('back').onclick=()=>go('home');
+  app.querySelectorAll('[data-topic]').forEach(el=>
+    el.onclick=()=>go('topic',{topic:el.dataset.topic}));
+}
+
+/* ---------------- Topic (mode picker) ---------------- */
+function renderTopic(){
+  stopSpeech();
+  const subj=C[state.subject];
+  const topic=subj.topics.find(t=>t.id===state.topic);
+  app.innerHTML=`
+    <button class="back" id="back">‹ ${subj.name}</button>
+    <div class="panel fade" style="margin-top:10px">
+      <h2 style="margin:0 0 4px">${topic.title}</h2>
+      <p style="margin:0;color:var(--muted)">${topic.summary}</p>
+    </div>
+    <h2 class="section">Choose how to learn</h2>
+    <div class="modes">
+      <div class="mode" data-mode="study"><div class="ic">📚</div><h4>Study Mode</h4><p>Read clear, exam‑ready notes.</p></div>
+      <div class="mode" data-mode="listen"><div class="ic">🎧</div><h4>Listening Mode</h4><p>Have the notes read aloud to you.</p></div>
+      <div class="mode" data-mode="quiz"><div class="ic">✏️</div><h4>Question Mode</h4><p>Multiple choice & written questions.</p></div>
+      <div class="mode" data-mode="teacher"><div class="ic">👩‍🏫</div><h4>Teacher Mode</h4><p>Learn this topic with an AI teacher.</p></div>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('subject');
+  app.querySelectorAll('[data-mode]').forEach(el=>el.onclick=()=>{
+    const m=el.dataset.mode;
+    if(m==='study')go('study');
+    else if(m==='listen')go('listen');
+    else if(m==='quiz')go('quiz');
+    else go('teacher');
+  });
+}
+
+function topicHeader(topic, extra=''){
+  const subj=C[state.subject];
+  return `<button class="back" id="back">‹ ${topic.title}</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:6px 0 4px">
+      <h2 style="margin:0">${subj.icon} ${topic.title}</h2>${extra}
+    </div>`;
+}
+
+/* ---------------- Study ---------------- */
+function renderStudy(){
+  stopSpeech();
+  const subj=C[state.subject];
+  const topic=subj.topics.find(t=>t.id===state.topic);
+  markDone(state.subject,topic.id,'study');
+  let notes='';
+  topic.notes.forEach(n=> notes+=`<h3>${n.h}</h3><p>${n.p}</p>`);
+  app.innerHTML=`
+    ${topicHeader(topic)}
+    <div class="panel notes fade">${notes}</div>
+    <div class="quiz-nav">
+      <button class="btn" id="listenBtn">🎧 Listen instead</button>
+      <button class="btn primary" id="quizBtn">Test yourself ✏️</button>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('topic');
+  document.getElementById('listenBtn').onclick=()=>go('listen');
+  document.getElementById('quizBtn').onclick=()=>go('quiz');
+}
+
+/* ---------------- Listening (TTS) ---------------- */
+let speaking=false, segs=[], segIndex=0, rate=1;
+function stopSpeech(){ if(window.speechSynthesis){window.speechSynthesis.cancel();} speaking=false; }
+function renderListen(){
+  stopSpeech();
+  const subj=C[state.subject];
+  const topic=subj.topics.find(t=>t.id===state.topic);
+  markDone(state.subject,topic.id,'study');
+  // Build spoken segments
+  segs=[];
+  topic.notes.forEach(n=>{
+    segs.push({text:n.h+'.', html:`<h3>${n.h}</h3>`});
+    segs.push({text:stripHtml(n.p), html:`<p>${n.p}</p>`});
+  });
+  segIndex=0;
+  const supported = 'speechSynthesis' in window;
+  app.innerHTML=`
+    ${topicHeader(topic)}
+    <div class="panel fade">
+      ${supported?`
+      <div class="listen-controls">
+        <button class="btn primary" id="play">▶️ Play</button>
+        <button class="btn" id="pause" disabled>⏸ Pause</button>
+        <button class="btn" id="stop" disabled>⏹ Stop</button>
+        <div class="rate">Speed
+          <input type="range" id="rate" min="0.6" max="1.4" step="0.1" value="1" style="width:110px">
+          <span id="rateVal">1.0×</span>
+        </div>
+      </div>`:`<div class="warnbox">Your browser doesn't support speech. Try Study Mode to read the notes.</div>`}
+      <div class="notes" id="lnotes">${segs.map((s,i)=>`<div class="seg" data-i="${i}">${s.html}</div>`).join('')}</div>
+    </div>
+    <div class="quiz-nav">
+      <button class="btn" id="readBtn">📚 Read instead</button>
+      <button class="btn primary" id="quizBtn">Test yourself ✏️</button>
+    </div>`;
+  document.getElementById('back').onclick=()=>{stopSpeech();go('topic');};
+  document.getElementById('readBtn').onclick=()=>go('study');
+  document.getElementById('quizBtn').onclick=()=>go('quiz');
+  if(!supported) return;
+  const rEl=document.getElementById('rate'), rv=document.getElementById('rateVal');
+  rEl.oninput=()=>{rate=parseFloat(rEl.value);rv.textContent=rate.toFixed(1)+'×';};
+  document.getElementById('play').onclick=playFrom;
+  document.getElementById('pause').onclick=()=>{ if(speechSynthesis.speaking&&!speechSynthesis.paused){speechSynthesis.pause();} else {speechSynthesis.resume();} };
+  document.getElementById('stop').onclick=()=>{stopSpeech();clearHi();setBtns(false);};
+}
+function setBtns(on){
+  const p=document.getElementById('play'),pa=document.getElementById('pause'),st=document.getElementById('stop');
+  if(!p)return; p.disabled=on; pa.disabled=!on; st.disabled=!on;
+}
+function clearHi(){ document.querySelectorAll('#lnotes .seg').forEach(e=>e.classList.remove('reading')); }
+function playFrom(){
+  if(segIndex>=segs.length) segIndex=0;
+  setBtns(true); speaking=true; speakSeg();
+}
+function speakSeg(){
+  if(segIndex>=segs.length){ speaking=false; setBtns(false); clearHi(); segIndex=0; return; }
+  clearHi();
+  const el=document.querySelector(`#lnotes .seg[data-i="${segIndex}"]`);
+  if(el){el.classList.add('reading'); el.scrollIntoView({block:'center',behavior:'smooth'});}
+  const u=new SpeechSynthesisUtterance(segs[segIndex].text);
+  u.rate=rate; u.pitch=1;
+  u.onend=()=>{ if(!speaking)return; segIndex++; speakSeg(); };
+  window.speechSynthesis.speak(u);
+}
+function stripHtml(h){ const d=document.createElement('div'); d.innerHTML=h; return d.textContent||''; }
+
+/* ---------------- Question Mode ---------------- */
+let quiz={items:[],idx:0,score:0,answered:[]};
+function renderQuiz(){
+  stopSpeech();
+  const subj=C[state.subject];
+  const topic=subj.topics.find(t=>t.id===state.topic);
+  quiz={items:topic.questions.slice(),idx:0,score:0,answered:[]};
+  showQuestion();
+}
+function showQuestion(){
+  const subj=C[state.subject];
+  const topic=subj.topics.find(t=>t.id===state.topic);
+  if(quiz.idx>=quiz.items.length) return showResults();
+  const q=quiz.items[quiz.idx];
+  const total=quiz.items.length;
+  let body='';
+  if(q.type==='mcq'){
+    body=q.options.map((o,i)=>`<button class="opt" data-i="${i}">${o}</button>`).join('');
+  } else {
+    body=`<textarea class="answer" id="ans" placeholder="Type your answer here…"></textarea>
+      <div class="quiz-nav">
+        <span></span>
+        <button class="btn primary" id="mark">${LS.key()?'Mark with AI ✨':'Show model answer'}</button>
+      </div>`;
+  }
+  app.innerHTML=`
+    ${topicHeader(topic,`<span class="q-type">${q.type==='mcq'?'Multiple choice':'Written · '+(q.marks||'')+' marks'}</span>`)}
+    <div class="panel fade">
+      <div class="q-head"><span class="count">Question ${quiz.idx+1} of ${total}</span><span class="count">Score ${quiz.score}</span></div>
+      <div class="q-text">${q.q}</div>
+      <div id="qbody">${body}</div>
+      <div id="fb"></div>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('topic');
+  if(q.type==='mcq'){
+    app.querySelectorAll('.opt').forEach(el=>el.onclick=()=>answerMcq(el,q));
+  } else {
+    document.getElementById('mark').onclick=()=>markWritten(q);
+  }
+}
+function answerMcq(el,q){
+  const chosen=parseInt(el.dataset.i);
+  app.querySelectorAll('.opt').forEach((o,i)=>{
+    o.classList.add('disabled'); o.onclick=null;
+    if(i===q.answerIndex)o.classList.add('correct');
+    if(i===chosen&&chosen!==q.answerIndex)o.classList.add('wrong');
+  });
+  const ok=chosen===q.answerIndex;
+  if(ok)quiz.score++;
+  document.getElementById('fb').innerHTML=`
+    <div class="feedback" style="border-color:${ok?'var(--ok)':'var(--bad)'};background:${ok?'rgba(46,158,107,.1)':'rgba(214,69,80,.1)'}">
+      <b>${ok?'✅ Correct!':'❌ Not quite.'}</b> ${ok?'':'The right answer is highlighted in green.'}
+    </div>
+    <div class="quiz-nav"><span></span><button class="btn primary" id="next">Next ›</button></div>`;
+  document.getElementById('next').onclick=()=>{quiz.idx++;showQuestion();};
+}
+async function markWritten(q){
+  const ans=(document.getElementById('ans').value||'').trim();
+  const fb=document.getElementById('fb');
+  document.getElementById('mark').disabled=true;
+  if(LS.key() && ans){
+    fb.innerHTML=`<div class="feedback"><span class="thinking" style="color:var(--muted);font-style:italic">✨ Your AI teacher is marking your answer…</span></div>`;
+    const subj=C[state.subject];
+    const topic=subj.topics.find(t=>t.id===state.topic);
+    const sys=`You are a warm, encouraging GCSE (Year 10) ${subj.name} teacher marking a student's written answer. Be concise and supportive.
+Question: "${q.q}" (worth ${q.marks} marks).
+Model answer for reference: "${q.modelAnswer}".
+Mark the student's answer out of ${q.marks}. Reply in this exact plain format:
+Mark: X/${q.marks}
+What was good: <one or two short points>
+To improve: <one or two specific tips>
+Keep it under 90 words. No markdown symbols.`;
+    let out='';
+    const box=document.createElement('div');
+    box.className='feedback'; box.style.borderColor='var(--brand)';
+    fb.innerHTML=''; fb.appendChild(box);
+    try{
+      await callClaude({system:sys,messages:[{role:'user',content:ans}],onToken:t=>{out+=t;box.textContent=out;}});
+    }catch(e){ box.textContent='Could not reach the AI ('+e.message+'). Here is the model answer instead:\n\n'+q.modelAnswer; }
+    appendModelAnswer(fb,q);
+  } else {
+    if(!ans && LS.key()) { /* fall through to model answer */ }
+    fb.innerHTML='';
+    appendModelAnswer(fb,q, !LS.key()? 'Add your Anthropic key in ⚙️ AI Setup to get your own answer marked. For now, here is the model answer:' : (ans?'':'Write an answer first to get it marked. Model answer:'));
+  }
+  quiz.score++; // written answers count as attempted
+  const nav=document.createElement('div');
+  nav.className='quiz-nav'; nav.innerHTML='<span></span><button class="btn primary" id="next">Next ›</button>';
+  fb.appendChild(nav);
+  document.getElementById('next').onclick=()=>{quiz.idx++;showQuestion();};
+}
+function appendModelAnswer(fb,q,note){
+  const m=document.createElement('div');
+  m.className='feedback model';
+  m.innerHTML=`<h5>Model answer${q.marks?' ('+q.marks+' marks)':''}</h5>${note?`<p style="margin:0 0 8px;color:var(--muted)">${note}</p>`:''}<div>${q.modelAnswer}</div>`;
+  fb.appendChild(m);
+}
+function showResults(){
+  const subj=C[state.subject];
+  const topic=subj.topics.find(t=>t.id===state.topic);
+  const total=quiz.items.length;
+  saveScore(state.subject,topic.id,quiz.score,total);
+  const pct=Math.round(100*quiz.score/total);
+  const msg = pct>=80?'Brilliant work! 🌟' : pct>=50?'Good effort — keep going! 💪' : 'Keep practising — you\'ve got this! 📈';
+  app.innerHTML=`
+    ${topicHeader(topic)}
+    <div class="panel fade center">
+      <div class="score-big">${quiz.score}/${total}</div>
+      <p style="margin:0 0 4px;font-size:16px;font-weight:600">${msg}</p>
+      <p style="color:var(--muted)">You scored ${pct}% on ${topic.title}.</p>
+      <div class="quiz-nav" style="justify-content:center;gap:12px;margin-top:20px">
+        <button class="btn" id="again">↺ Try again</button>
+        <button class="btn" id="learn">👩‍🏫 Ask the teacher</button>
+        <button class="btn primary" id="done">Done</button>
+      </div>
+    </div>`;
+  document.getElementById('back').onclick=()=>go('topic');
+  document.getElementById('again').onclick=()=>go('quiz');
+  document.getElementById('learn').onclick=()=>go('teacher');
+  document.getElementById('done').onclick=()=>go('topic');
+}
+
+/* ---------------- Chat (Teacher / Tutor) ---------------- */
+let chatHistory=[];
+function renderChat(kind){
+  stopSpeech();
+  chatHistory=[];
+  const isTeacher = kind==='teacher';
+  const subj = state.subject?C[state.subject]:null;
+  const topic = (subj&&state.topic)?subj.topics.find(t=>t.id===state.topic):null;
+  const title = isTeacher ? `👩‍🏫 Teacher · ${topic?topic.title:''}` : '💬 AI Tutor';
+  const back = isTeacher ? ()=>go('topic') : ()=>go('home');
+
+  const suggestions = isTeacher && topic ? [
+    `Explain ${topic.title} simply`,
+    `Give me an example`,
+    `Quiz me on this`,
+    `Why does this matter?`
+  ] : [
+    'Help me with my homework',
+    'Explain photosynthesis',
+    'How do I structure an essay?',
+    'Give me a study tip'
+  ];
+
+  app.innerHTML=`
+    <button class="back" id="back">‹ Back</button>
+    <h2 style="margin:6px 0 2px">${title}</h2>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:14px">${isTeacher?'Ask your teacher to explain, give examples, or test you on this topic.':'Your personal tutor for any subject. Ask anything!'}</p>
+    ${!LS.key()?`<div class="warnbox">Add your Anthropic API key in <b>⚙️ AI Setup</b> to start chatting. It's free to create a key and stays on your device.</div>`:''}
+    <div class="suggest" id="suggest">${suggestions.map(s=>`<button data-q="${s}">${s}</button>`).join('')}</div>
+    <div class="chat" id="chat"></div>
+    <div class="chat-input">
+      <textarea id="msg" placeholder="${LS.key()?'Type your message…':'Add your AI key first (⚙️)'}" ${LS.key()?'':'disabled'}></textarea>
+      <button class="btn primary" id="send" ${LS.key()?'':'disabled'}>Send</button>
+    </div>`;
+  document.getElementById('back').onclick=back;
+
+  const sys = isTeacher
+    ? `You are a friendly, patient GCSE (Year 10, ages 14-15) ${subj?subj.name:''} teacher helping a student learn "${topic?topic.title:''}".
+Here are the notes you are teaching from:
+${topic?topic.notes.map(n=>n.h+': '+stripHtml(n.p)).join('\n'):''}
+Teach clearly using simple language and short paragraphs. Give relatable examples. Check understanding by occasionally asking a question. If asked to quiz them, ask one question at a time and wait. Stay encouraging. Keep replies focused and not too long. Avoid markdown symbols like ** or #; write in plain sentences.`
+    : `You are Study Buddy, a friendly and encouraging AI tutor for a UK Year 10 student (ages 14-15) studying Science, Maths, English, Geography, Business and Design & Technology.
+Explain things simply and clearly with examples a teenager relates to. Break problems into steps. For maths, show the working. Be supportive and positive, and keep answers focused. If a question is off-topic or unsafe, gently steer back to studying. Avoid markdown symbols like ** or #; use plain sentences and simple lists.`;
+
+  const chat=document.getElementById('chat');
+  const input=document.getElementById('msg');
+  const sendBtn=document.getElementById('send');
+
+  function addMsg(role,text){
+    const d=document.createElement('div');
+    d.className='msg '+(role==='user'?'user':'bot');
+    d.textContent=text; chat.appendChild(d); chat.scrollIntoView({block:'end'});
+    window.scrollTo(0,document.body.scrollHeight);
+    return d;
+  }
+  async function send(text){
+    text=(text||input.value).trim();
+    if(!text||!LS.key())return;
+    document.getElementById('suggest').style.display='none';
+    addMsg('user',text);
+    input.value=''; input.style.height='auto';
+    chatHistory.push({role:'user',content:text});
+    const botEl=addMsg('bot',''); botEl.classList.add('thinking'); botEl.textContent='thinking…';
+    sendBtn.disabled=true;
+    let out='';
+    try{
+      await callClaude({system:sys, messages:chatHistory.slice(-12), onToken:t=>{
+        if(botEl.classList.contains('thinking')){botEl.classList.remove('thinking');botEl.textContent='';}
+        out+=t; botEl.textContent=out; window.scrollTo(0,document.body.scrollHeight);
+      }});
+      chatHistory.push({role:'assistant',content:out||'(no reply)'});
+    }catch(e){
+      botEl.classList.remove('thinking');
+      botEl.textContent='⚠️ '+e.message+(e.message.includes('401')?' — check your API key in ⚙️ AI Setup.':'');
+    }
+    sendBtn.disabled=false; input.focus();
+  }
+  sendBtn.onclick=()=>send();
+  input.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} });
+  input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,160)+'px';});
+  document.querySelectorAll('#suggest button').forEach(b=>b.onclick=()=>send(b.dataset.q));
+  if(isTeacher && LS.key()) send('Please introduce this topic to me in a couple of friendly sentences, then ask if I want an explanation or a quiz.');
+}
+
+/* ---------------- Claude API (browser, streaming) ---------------- */
+async function callClaude({system, messages, onToken}){
+  const key=LS.key();
+  if(!key) throw new Error('No API key set');
+  let res;
+  try{
+    res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'content-type':'application/json',
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:LS.model(),
+        max_tokens:1024,
+        stream:true,
+        system,
+        messages
+      })
+    });
+  }catch(netErr){
+    throw new Error("Couldn't reach the AI. If you opened this from the claude.ai link, the AI chat is blocked there — download study-app and open index.html on your own device for the AI teacher/tutor. (Notes, listening and multiple-choice quizzes work here.)");
+  }
+  if(!res.ok){
+    let msg='HTTP '+res.status;
+    try{const j=await res.json(); if(j.error&&j.error.message) msg=res.status+': '+j.error.message;}catch(e){}
+    throw new Error(msg);
+  }
+  const reader=res.body.getReader();
+  const dec=new TextDecoder();
+  let buf='';
+  while(true){
+    const {done,value}=await reader.read();
+    if(done)break;
+    buf+=dec.decode(value,{stream:true});
+    const lines=buf.split('\n');
+    buf=lines.pop();
+    for(const line of lines){
+      const l=line.trim();
+      if(!l.startsWith('data:'))continue;
+      const data=l.slice(5).trim();
+      if(data==='[DONE]')continue;
+      try{
+        const ev=JSON.parse(data);
+        if(ev.type==='content_block_delta'&&ev.delta&&ev.delta.type==='text_delta'){
+          onToken(ev.delta.text);
+        }
+        if(ev.type==='error'&&ev.error){ throw new Error(ev.error.message||'stream error'); }
+      }catch(e){ /* ignore keep-alive / partial */ }
+    }
+  }
+}
+
+/* ---------------- Settings modal ---------------- */
+const overlay=document.getElementById('overlay');
+function openSettings(){
+  document.getElementById('apiKey').value=LS.key();
+  document.getElementById('model').value=LS.model();
+  overlay.classList.add('open');
+}
+function closeSettings(){overlay.classList.remove('open');}
+document.getElementById('btnSettings').onclick=openSettings;
+document.getElementById('btnCloseSettings').onclick=closeSettings;
+overlay.onclick=e=>{if(e.target===overlay)closeSettings();};
+document.getElementById('btnSaveSettings').onclick=()=>{
+  localStorage.setItem('sb_apikey',document.getElementById('apiKey').value.trim());
+  localStorage.setItem('sb_model',document.getElementById('model').value);
+  closeSettings(); render();
+};
+document.getElementById('btnReset').onclick=()=>{
+  if(confirm('Reset all your study progress? (Your API key is kept.)')){
+    localStorage.removeItem('sb_progress'); render();
+  }
+};
+
+/* ---------------- Boot ---------------- */
+render();
+if(!LS.key()) setTimeout(()=>{ if(!LS.key()) openSettings(); }, 600);
+</script>
+</body>
+</html>
