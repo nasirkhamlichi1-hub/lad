@@ -79,15 +79,16 @@ function deleteLesson(id) {
 
 // ─── Sessions (one per live conversation) ────────────────────────────
 
-function createSession({ conversationId, conversationUrl, lessonId, lawyerId, status, progressId, resumedFromId, engine }) {
+function createSession({ conversationId, conversationUrl, lessonId, lawyerId, status, progressId, resumedFromId, engine, botId }) {
   const id = genId('st');
   db.prepare(`
     INSERT INTO trainer_sessions
-      (id, conversation_id, conversation_url, lesson_id, lawyer_id, status, events, progress_id, resumed_from_id, engine)
-    VALUES (?, ?, ?, ?, ?, ?, '[]', ?, ?, ?)
+      (id, conversation_id, conversation_url, lesson_id, lawyer_id, status, events, progress_id, resumed_from_id, engine, bot_id)
+    VALUES (?, ?, ?, ?, ?, ?, '[]', ?, ?, ?, ?)
   `).run(
     id, conversationId || null, conversationUrl || null, lessonId || null, lawyerId || null,
-    status || 'active', progressId || null, resumedFromId || null, engine || 'browser'
+    status || 'active', progressId || null, resumedFromId || null, engine || 'browser',
+    botId || 'clpd-trainer'
   );
   return getSession(id);
 }

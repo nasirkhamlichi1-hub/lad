@@ -79,6 +79,19 @@ module.exports = {
     avatarId: process.env.ANAM_AVATAR_ID || '6cc28442-cccd-42a8-b6e4-24b7210a09c5',
     voiceId:  process.env.ANAM_VOICE_ID || '',            // optional specific Anam voice
     name:     process.env.ANAM_AVATAR_NAME || 'CLPD Trainer',
+    // Which brain answers the learner. 'CUSTOMER_CLIENT_V1' switches Anam's own
+    // hosted LLM OFF so OUR Claude brain is the only thing that speaks — without
+    // it Anam answers too and the learner hears two replies. It also keeps the
+    // inline personaConfig from being rejected as a legacy token.
+    // Override only if Anam changes this sentinel; '' omits the field entirely.
+    llmId:    process.env.ANAM_LLM_ID !== undefined ? process.env.ANAM_LLM_ID : 'CUSTOMER_CLIENT_V1',
+  },
+
+  // ─── Avatar learning bots ────────────────────────────────────────────
+  // Definitions live in backend/bots/*.json — see services/botRegistry.js.
+  // Adding a bot is a config action; this only names the fallback.
+  trainerBots: {
+    defaultId: process.env.TRAINER_DEFAULT_BOT || 'clpd-trainer',
   },
 
   // MorphCast Emotion AI — optional in-browser perception ("eyes") provider.

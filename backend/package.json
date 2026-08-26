@@ -13,6 +13,7 @@
     "seed:if-needed": "node scripts/seed-if-needed.js",
     "seed:demo": "node scripts/create-account.js --seed-demo",
     "create-account": "node scripts/create-account.js",
+    "new-bot": "node scripts/new-bot.js",
     "bootstrap": "bash scripts/bootstrap.sh",
     "check-env": "NODE_ENV=production node -e \"require('./src/validateEnv').validateEnv()\""
   },

@@ -8,12 +8,14 @@ This bundle contains everything needed to deploy the platform to production:
 .
 ├── backend/                  Node.js + SQLite API
 │   ├── src/                  Express app, validation, structured logs
+│   ├── bots/                 Avatar learning bots — one JSON file each
 │   ├── migrations/           Versioned schema migrations
 │   ├── scripts/              bootstrap.sh, migrate.js, seed.js
 │   ├── Dockerfile            Multi-stage, non-root, health-checked
 │   └── package.json
 ├── frontend/                 Static HTML/CSS/JS, deployed to Azure Static Web Apps
 │   ├── runtime-config.js     One file to point at staging vs production
+│   ├── learning-bot.html     One page, every avatar bot (?bot=<id>)
 │   ├── *.html                Portal pages per role
 ├── .github/workflows/
 │   ├── backend.yml           Build & push container on every push to main
@@ -50,6 +52,23 @@ python3 -m http.server 8080
 ```
 
 The default `.env` runs everything in demo mode (no UAE Pass, no Anthropic). Edit `.env` to wire in real services.
+
+## Avatar learning bots
+
+Each AI teacher — a photoreal Anam face and voice, a persona, a teaching charter
+— is one JSON file in `backend/bots/`. They share the lesson library, the Claude
+brain, progress tracking, the CPD award, and one page.
+
+Adding a bot is a config action, not a code change:
+
+```sh
+cd backend
+npm run new-bot -- --id=contract-coach --name="Layla" --avatar=<anam-avatar-id>
+# restart the API, then open /learning-bot.html?bot=contract-coach
+```
+
+See `backend/bots/README.md` for every field, and `CLAUDE.md` for the Anam
+integration rules.
 
 ## Support
 

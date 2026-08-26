@@ -197,7 +197,15 @@
     // In demo mode (no backend) we serve one clearly-labelled sample lesson
     // from localStorage so the experience is previewable offline.
     trainerStatus: () => ENABLED ? call('GET', '/api/v1/trainer/status')
-                                 : Promise.resolve({ premium: false, lessonCount: 1, engines: { anam: false, brain: false, morphcast: false } }),
+                                 : Promise.resolve({ premium: false, lessonCount: 1, botCount: 1, defaultBotId: 'clpd-trainer', engines: { anam: false, brain: false, morphcast: false } }),
+
+    // ─── Learning bots (one avatar + persona each) ───────────────────
+    // Every bot shares the lessons, brain and progress tracking below; only
+    // the face, voice and persona change. Defined in backend/bots/*.json.
+    trainerBots: () => ENABLED ? call('GET', '/api/v1/trainer/bots')
+                               : Promise.resolve([{ id: 'clpd-trainer', name: 'CLPD Trainer', tagline: 'Demo mode — connect a backend', avatarId: '', voiceId: '', avatarPending: true, perception: true, active: true }]),
+    trainerBot: (id) => ENABLED ? call('GET', '/api/v1/trainer/bots/' + encodeURIComponent(id))
+                                : api.trainerBots().then(list => list.find(b => b.id === id) || list[0]),
     trainerLessons: () => ENABLED ? call('GET', '/api/v1/trainer/lessons')
                                   : Promise.resolve(lsGet('lad_trainer_lessons', [{
                                       id: 'demo-ethics',
@@ -217,11 +225,13 @@
     trainerStartSession: (lessonId) => ENABLED ? call('POST', '/api/v1/trainer/sessions', { lessonId })
                                                : Promise.resolve({ demo: true, sessionId: 'demo', conversationUrl: null, resumed: false }),
     // Scalable browser engine: start a session, drive turns, mint an Anam token.
-    trainerStartBrowserSession: (lessonId) => ENABLED ? call('POST', '/api/v1/trainer/sessions', { lessonId, engine: 'browser' })
-                                                      : Promise.resolve({ engine: 'browser', sessionId: 'demo', face: 'stylised', brain: 'fallback', lesson: null, resumed: false }),
+    trainerStartBrowserSession: (lessonId, botId) => ENABLED ? call('POST', '/api/v1/trainer/sessions', { lessonId, botId, engine: 'browser' })
+                                                             : Promise.resolve({ engine: 'browser', sessionId: 'demo', face: 'stylised', brain: 'fallback', lesson: null, resumed: false }),
     trainerTurn: (sessionId, history, perception) => ENABLED ? call('POST', '/api/v1/trainer/turn', { sessionId, history, perception })
                                                             : Promise.resolve({ say: 'Connect a backend to run the live trainer.', complete: false, coverage: { done: 0, total: 0 }, brain: 'offline' }),
-    trainerAnamToken: () => ENABLED ? call('POST', '/api/v1/trainer/anam/session-token') : Promise.reject(new Error('offline')),
+    // Pass the sessionId so the face matches that session's bot. The Anam API
+    // key never reaches the browser — the server mints a short-lived token.
+    trainerAnamToken: (opts) => ENABLED ? call('POST', '/api/v1/trainer/anam/session-token', opts || {}) : Promise.reject(new Error('offline')),
     // Pause keeps progress so the lesson can be resumed later; end completes it.
     trainerPauseSession: (id, info) => ENABLED ? call('POST', '/api/v1/trainer/sessions/' + encodeURIComponent(id) + '/pause', info || {})
                                                : Promise.resolve({ ok: true, status: 'paused' }),

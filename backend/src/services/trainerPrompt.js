@@ -1,10 +1,18 @@
 'use strict';
 
-// The trainer's teaching charter and lesson framing.
+// The teaching charter and lesson framing for every learning bot.
 // ---------------------------------------------------------------------
-// The SINGLE source of truth for HOW the AI expert teaches and how it reacts to
+// The SINGLE source of truth for HOW an AI expert teaches and how it reacts to
 // what the camera sees. Used by the Claude brain (services/trainerBrain.js).
-// Only the lesson material (lesson body + objectives) changes per course.
+//
+// Three things vary, in widening order of rarity:
+//   • the lesson       — body + objectives, per course
+//   • the persona      — WHO the bot is, per bot (services/botRegistry.js)
+//   • the charter      — HOW it teaches; almost always the shared one below
+//
+// A bot names its charter by key ('clpd-trainer'), or supplies its own text.
+// Defaulting to the shared charter is deliberate: the training skills are
+// constant, so a new bot inherits a trainer that already knows how to teach.
 
 const SYSTEM_PROMPT = [
   'You are a professional one-to-one continuing legal professional development (CLPD)',
@@ -89,9 +97,36 @@ function buildLessonContext(lesson) {
   ].filter(Boolean).join('\n\n');
 }
 
+// ─── Charters — HOW a bot teaches ────────────────────────────────────
+// Keyed so a bot definition can say "charter": "clpd-trainer" instead of
+// carrying a copy of the text. Add a key here only when a bot genuinely needs
+// to teach differently; most never will.
+const CHARTERS = {
+  'clpd-trainer': SYSTEM_PROMPT,
+};
+
+function charterFor(bot) {
+  if (!bot || !bot.charter) return SYSTEM_PROMPT;
+  // A charter is either a known key or the literal charter text itself.
+  return CHARTERS[bot.charter] || (bot.charter.includes(' ') ? bot.charter : SYSTEM_PROMPT);
+}
+
+// Compose the full system prompt for one bot: who it is, then how it teaches.
+// The persona goes FIRST so the model reads its identity before its method,
+// and so a bot with no persona is byte-identical to the pre-registry prompt.
+function buildSystemPrompt(bot) {
+  const charter = charterFor(bot);
+  const persona = bot && bot.persona ? bot.persona.trim() : '';
+  if (!persona) return charter;
+  return [persona, '', charter].join('\n');
+}
+
 module.exports = {
   SYSTEM_PROMPT,
+  CHARTERS,
   AMBIENT_AWARENESS_QUERIES,
   PERCEPTION_ANALYSIS_QUERIES,
   buildLessonContext,
+  buildSystemPrompt,
+  charterFor,
 };

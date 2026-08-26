@@ -4,6 +4,8 @@
 // One model: photoreal Anam face (with Anam's own voice) + Claude brain + perception.
 //
 //   GET  /api/v1/trainer/status               public — which pieces are configured
+//   GET  /api/v1/trainer/bots                 public — the learning bots on offer
+//   GET  /api/v1/trainer/bots/:id             public — one bot
 //   GET  /api/v1/trainer/lessons              public — uploaded lessons (active)
 //   PUT  /api/v1/trainer/lessons              admin  — upload/replace lessons
 //   DELETE /api/v1/trainer/lessons/:id        admin  — remove a lesson
@@ -28,6 +30,7 @@ const router = express.Router();
 
 const trainerBrain = require('../services/trainerBrain');
 const anam = require('../services/anam');
+const botRegistry = require('../services/botRegistry');
 const trainerStore = require('../services/trainerStore');
 const store = require('../services/store');
 const config = require('../config');
@@ -48,6 +51,8 @@ router.get('/status', (_req, res) => {
     // "premium" = the full photoreal + Claude experience is configured.
     premium: anamOn && brainOn,
     lessonCount: trainerStore.listLessons().length,
+    botCount: botRegistry.list().length,
+    defaultBotId: (botRegistry.defaultBot() || {}).id || null,
     engines: {
       anam: anamOn,                         // photoreal face + voice
       brain: brainOn,                       // Claude brain (else scripted fallback)
@@ -56,6 +61,20 @@ router.get('/status', (_req, res) => {
     // Client-side MorphCast licence key (safe to expose; used by browser SDK).
     morphcastKey: config.morphcast.licenseKey || null,
   });
+});
+
+// ─── Bots (the AI teachers) ──────────────────────────────────────────
+// A bot is one avatar + persona + charter. They all share the lesson library,
+// the Claude brain and the progress tracking below, so adding a bot never
+// touches this file — see services/botRegistry.js.
+router.get('/bots', (_req, res) => {
+  res.json(botRegistry.list());
+});
+
+router.get('/bots/:id', (req, res) => {
+  const bot = botRegistry.get(req.params.id);
+  if (!bot) return res.status(404).json({ error: 'Bot not found' });
+  res.json(botRegistry.publicView(bot));
 });
 
 // ─── Lessons (the knowledge base) ────────────────────────────────────
@@ -152,9 +171,15 @@ function sessionSeconds(session, bodySeconds) {
 // learning, so many lawyers can study the same material independently.
 router.post('/sessions', requireAuth, async (req, res, next) => {
   try {
-    const { lessonId } = req.body || {};
+    const { lessonId, botId } = req.body || {};
     const lesson = lessonId ? trainerStore.getLesson(lessonId) : null;
     if (lessonId && !lesson) return res.status(404).json({ error: 'Lesson not found' });
+
+    // Which AI teacher is running this session. Resolved (and validated) once
+    // here, then persisted — every later turn reads it back from the session
+    // rather than trusting a bot id sent by the browser.
+    const bot = botRegistry.resolve(botId);
+    if (!bot) return res.status(404).json({ error: 'Bot not found' });
 
     const lawyerId = userId(req);
     let lawyer = null;
@@ -177,13 +202,18 @@ router.post('/sessions', requireAuth, async (req, res, next) => {
       lessonId: lesson ? lesson.id : null, lawyerId, status: 'active', engine: 'browser',
       progressId: progress ? progress.id : null,
       resumedFromId: resuming ? progress.last_session_id : null,
+      botId: bot.id,
     });
     if (progress) trainerStore.touchProgressOnStart(progress.id, session.id);
 
-    log.info('trainer_session_started', { sessionId: session.id, lessonId: lesson ? lesson.id : null, resumed: resuming });
+    log.info('trainer_session_started', {
+      sessionId: session.id, botId: bot.id,
+      lessonId: lesson ? lesson.id : null, resumed: resuming,
+    });
     res.json({
       engine: 'browser',
       sessionId: session.id,
+      bot: botRegistry.publicView(bot),
       lesson,
       resumed: resuming,
       face: anam.isConfigured() ? 'anam' : 'stylised',
@@ -269,6 +299,9 @@ router.post('/turn', requireAuth, async (req, res, next) => {
     }
 
     const lesson = session.lesson_id ? trainerStore.getLesson(session.lesson_id) : null;
+    // The persona comes from the session's own bot_id, never from the request
+    // body — the browser cannot swap teacher mid-session.
+    const bot = botRegistry.resolve(session.bot_id);
     let resume = null;
     if (session.progress_id) {
       const p = trainerStore.getProgressById(session.progress_id);
@@ -277,7 +310,7 @@ router.post('/turn', requireAuth, async (req, res, next) => {
       }
     }
 
-    const turn = await trainerBrain.nextTurn({ lesson, history, perception, resume });
+    const turn = await trainerBrain.nextTurn({ lesson, history, perception, resume, bot });
 
     // Persist coverage → progress (hard key-element tracking).
     const total = (lesson && Array.isArray(lesson.objectives)) ? lesson.objectives.length : 0;
@@ -293,21 +326,36 @@ router.post('/turn', requireAuth, async (req, res, next) => {
       say: turn.say,
       complete: !!turn.complete,
       coverage,
+      botId: bot ? bot.id : null,
       brain: turn.engine || 'claude',
     });
   } catch (e) { next(e); }
 });
 
 // Mint a short-lived Anam session token for the browser SDK (key stays server-side).
+// Pass `sessionId` to get the face belonging to that session's bot (preferred),
+// or `botId` to mint one before a session exists. Neither → the default bot.
 router.post('/anam/session-token', requireAuth, async (req, res, next) => {
   try {
     if (!anam.isConfigured()) {
       return res.status(503).json({ error: 'Anam not configured', face: 'stylised' });
     }
-    let lawyer = null;
-    try { lawyer = store.getLawyerById(userId(req)); } catch { /* optional */ }
-    const name = lawyer ? [lawyer.first_name, lawyer.last_name].filter(Boolean).join(' ') : undefined;
-    const token = await anam.createSessionToken({ name });
+    const { sessionId, botId } = req.body || {};
+
+    let wanted = botId;
+    if (sessionId) {
+      const session = trainerStore.getSession(sessionId);
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+      if (session.lawyer_id && session.lawyer_id !== userId(req) && !isAdmin(req)) {
+        return res.status(403).json({ error: 'Not your session' });
+      }
+      wanted = session.bot_id;
+    }
+
+    const bot = botRegistry.resolve(wanted);
+    if (!bot) return res.status(404).json({ error: 'Bot not found' });
+
+    const token = await anam.createSessionToken({ bot });
     res.json(token);
   } catch (e) { next(e); }
 });

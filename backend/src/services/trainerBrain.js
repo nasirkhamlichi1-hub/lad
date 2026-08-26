@@ -19,7 +19,7 @@ const axios = require('axios');
 const config = require('../config');
 const log = require('../logger');
 const aimodel = require('./aimodel');
-const { SYSTEM_PROMPT, buildLessonContext } = require('./trainerPrompt');
+const { buildSystemPrompt, buildLessonContext } = require('./trainerPrompt');
 
 const A = config.anthropic;
 const B = config.trainerBrain;
@@ -42,11 +42,11 @@ function perceptionNote(p) {
   return `[What you can see on camera right now: ${bits.join('; ')}.]`;
 }
 
-// The per-turn instruction appended to the shared teaching charter.
-function systemFor(lesson, resume) {
+// The per-turn instruction appended to the bot's persona + teaching charter.
+function systemFor(lesson, resume, bot) {
   const total = (lesson && Array.isArray(lesson.objectives)) ? lesson.objectives.length : 0;
   const parts = [
-    SYSTEM_PROMPT,
+    buildSystemPrompt(bot),
     '',
     buildLessonContext(lesson),
   ];
@@ -131,14 +131,21 @@ function fallbackTurn({ lesson, history, perception }) {
 }
 
 // ─── Main entry ──────────────────────────────────────────────────────
-async function nextTurn({ lesson, history, perception, resume }) {
+async function nextTurn({ lesson, history, perception, resume, bot }) {
   const total = (lesson && Array.isArray(lesson.objectives)) ? lesson.objectives.length : 0;
+
+  // A bot may script its own opening line. Only the very first turn of a fresh
+  // session uses it — after that the brain is in charge.
+  const opening = bot && bot.greeting && !(history || []).length && !(resume && resume.context);
+  if (opening) {
+    return { say: bot.greeting, covered: [], complete: false, engine: 'greeting' };
+  }
 
   if (!isConfigured()) {
     return { ...fallbackTurn({ lesson, history, perception }), engine: 'fallback' };
   }
 
-  const system = systemFor(lesson, resume);
+  const system = systemFor(lesson, resume, bot);
   const messages = toMessages(history, perception);
 
   // ─── Preferred: AiModel ───────────────────────────────────────────
