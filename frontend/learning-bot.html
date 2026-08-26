@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Learning Bot · CLPD — Government of Dubai</title>
+
+<!-- The Anam SDK has one bare dependency ("buffer"); the /+esm build inlines it
+     but the dist build resolves it through this map. -->
+<script type="importmap">
+{ "imports": { "buffer": "https://cdn.jsdelivr.net/npm/buffer@6.0.3/+esm" } }
+</script>
+
+<!-- Time-to-first-frame: warm the Anam connection and fetch the SDK while the
+     learner is still choosing a lesson, so the Begin click only has to attach
+     media. Serialising the import onto the click costs seconds. -->
+<link rel="preconnect" href="https://api.anam.ai">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@anam-ai/js-sdk@4.15.0/+esm">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{
+  --green:#006B3F;--green2:#008549;--green-d:#004d2e;--green-l:#00a85e;--green-bg:#f0f9f4;--green-border:#b8d8c5;
+  --gold:#C9913A;--gold-bg:#fdf6e8;--gold-border:#e8c878;
+  --ink:#0a0e14;--slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;
+  --line:#e8ecf1;--line2:#d8dfe7;--paper:#f8fafb;--paper2:#f1f4f7;--white:#fff;
+  --red:#c0392b;--red-bg:#fdeae8;--red-border:#f0aaaa;--amber:#92540a;--amber-bg:#fef3e2;--amber-border:#f0c878;--blue:#1a4d80;--blue-bg:#eef4fb;
+  --serif:'Instrument Serif',Georgia,serif;--sans:'Inter',system-ui,sans-serif;
+  --r-sm:8px;--r:12px;--r-lg:18px;--sh:0 2px 4px rgba(10,14,20,.06),0 8px 24px rgba(10,14,20,.06);--sh-lg:0 8px 16px rgba(10,14,20,.1),0 32px 64px rgba(10,14,20,.1);
+}
+html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+a{color:var(--green2);text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.top{background:rgba(255,255,255,.85);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.top-in{display:flex;align-items:center;gap:14px;height:62px}
+.emblem{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:10px;display:grid;place-items:center;flex-shrink:0}
+.emblem svg{width:20px;height:24px}
+.brand-t{font-family:var(--serif);font-size:18px;line-height:1.05}
+.brand-s{font-family:monospace;font-size:8.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:2px}
+.top-spacer{flex:1}
+.pill{font-family:monospace;font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:5px 10px;border-radius:999px;border:1px solid}
+.pill-live{background:var(--green-bg);color:var(--green-d);border-color:var(--green-border)}
+.pill-demo{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border)}
+.ghost-link{font-size:12.5px;color:var(--slate2);font-weight:500}
+.hero{padding:34px 0 8px}
+.eyebrow{font-family:monospace;font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em;line-height:1.05}
+.lede{font-size:15px;color:var(--slate);max-width:640px;margin-top:12px}
+.grid{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start;padding:24px 0 60px}
+@media(max-width:880px){.grid{grid-template-columns:1fr}}
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh);overflow:hidden}
+.card-h{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+.card-h h3{font-size:13.5px;font-weight:650}
+.card-b{padding:18px}
+.lessons{display:flex;flex-direction:column;gap:10px}
+.lesson{border:1.5px solid var(--line2);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s}
+.lesson:hover{border-color:var(--green-border);background:var(--green-bg)}
+.lesson.sel{border-color:var(--green2);background:var(--green-bg);box-shadow:0 0 0 3px rgba(0,107,63,.08)}
+.lesson-t{font-size:14px;font-weight:650}
+.lesson-s{font-size:12.5px;color:var(--slate2);margin-top:4px}
+.lesson-m{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.tag{font-family:monospace;font-size:9.5px;font-weight:600;padding:3px 7px;border-radius:6px;background:var(--paper2);color:var(--slate2);border:1px solid var(--line)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600;padding:12px 20px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;transition:all .15s}
+.btn-pri{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;box-shadow:0 2px 10px rgba(0,107,63,.25)}
+.btn-pri:hover{transform:translateY(-1px)}
+.btn-pri:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-danger{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+.btn-ghost{background:var(--white);color:var(--slate);border-color:var(--line2)}
+.btn-block{width:100%}
+.note{font-size:11px;color:var(--slate3);margin-top:12px;line-height:1.5}
+.banner{display:flex;gap:10px;align-items:flex-start;background:var(--blue-bg);border:1px solid #cfe0f0;border-radius:var(--r);padding:11px 13px;margin:14px 0;font-size:12px;color:var(--slate);line-height:1.5}
+.banner.warn{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)}
+/* Bot identity */
+.bot-id{display:flex;gap:13px;align-items:flex-start}
+.bot-av{width:46px;height:46px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;font-family:var(--serif);font-size:21px;color:#fff;background:linear-gradient(135deg,var(--green),var(--green-l))}
+.bot-nm{font-size:15px;font-weight:650}
+.bot-tg{font-size:12.5px;color:var(--slate2);margin-top:2px}
+.bot-ds{font-size:12.5px;color:var(--slate);margin-top:9px;line-height:1.55}
+/* Stage */
+.stage-wrap{display:none}
+.stage{position:relative;background:linear-gradient(160deg,#0d1b14,#0a0e14);border-radius:var(--r-lg);overflow:hidden;aspect-ratio:16/9;box-shadow:var(--sh-lg);border:1px solid #000;display:grid;place-items:center}
+.stage video#anamVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.selfcam{position:absolute;right:12px;bottom:12px;width:132px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,.5);box-shadow:0 4px 16px rgba(0,0,0,.4);background:#000;z-index:4}
+.selfcam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.cap{position:absolute;left:0;right:0;bottom:0;padding:30px 18px 16px;background:linear-gradient(to top,rgba(0,0,0,.78),transparent);color:#fff;font-size:16px;line-height:1.45;z-index:3;min-height:60px}
+.cap b{color:var(--gold)}
+.stage-bar{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
+.rec{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--slate2);font-weight:500}
+.rec .dot{width:9px;height:9px;border-radius:50%;background:var(--red);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.5)}70%{box-shadow:0 0 0 8px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
+.replybox{display:flex;gap:8px;margin-top:10px}
+.replybox input{flex:1;font-family:var(--sans);font-size:14px;border:1.5px solid var(--line2);border-radius:var(--r-sm);padding:10px 12px}
+.replybox input:focus{outline:none;border-color:var(--green2)}
+/* Stylised fallback face */
+.face{width:62%;max-width:340px;filter:drop-shadow(0 12px 30px rgba(0,0,0,.4))}
+.face .mouth{transform-origin:center;transform-box:fill-box;transition:transform .08s}
+.face.speaking .mouth{animation:talk .26s infinite alternate}
+@keyframes talk{from{transform:scaleY(.35)}to{transform:scaleY(1.15)}}
+.face .lid{transform-origin:center;transform-box:fill-box;animation:blink 5s infinite}
+@keyframes blink{0%,96%,100%{transform:scaleY(0)}98%{transform:scaleY(1)}}
+/* Perception */
+.perc-list{display:flex;flex-direction:column;gap:9px}
+.perc{display:flex;gap:11px;align-items:flex-start;padding:11px 12px;border-radius:var(--r);border:1px solid var(--line);background:var(--paper);transition:all .25s}
+.perc.hot{background:var(--amber-bg);border-color:var(--amber-border)}
+.perc.good{background:var(--green-bg);border-color:var(--green-border)}
+.perc-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;background:var(--white);border:1px solid var(--line);font-size:15px}
+.perc-tx{font-size:12.5px;color:var(--slate)}.perc-tx b{color:var(--ink);font-weight:650}
+.prog{height:8px;background:var(--paper2);border-radius:999px;overflow:hidden;margin-top:4px}
+.prog>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green2),var(--green-l));transition:width .4s}
+.kpi{display:flex;justify-content:space-between;font-size:12px;color:var(--slate2);margin-top:14px}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh-lg);z-index:50;opacity:0;transition:opacity .2s}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <div class="emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="#fff" opacity=".95"/></svg></div>
+    <div><div class="brand-t" id="brandName">Learning Bot</div><div class="brand-s">Dubai Legal Affairs Department</div></div>
+    <div class="top-spacer"></div>
+    <span id="enginePill" class="pill pill-demo">Checking…</span>
+    <a class="ghost-link" href="lawyer-portal-v2.html">← My CLPD</a>
+  </div>
+</header>
+
+<main>
+  <section id="setup">
+    <div class="wrap hero">
+      <div class="eyebrow" id="heroEyebrow">Photoreal face · Claude brain · Your voice</div>
+      <h1 id="heroTitle">Loading…</h1>
+      <p class="lede" id="heroLede"></p>
+    </div>
+    <div class="wrap grid">
+      <div class="card">
+        <div class="card-h"><h3>Choose today's lesson</h3></div>
+        <div class="card-b"><div id="lessons" class="lessons"><div class="note">Loading lessons…</div></div></div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-h"><h3>Your teacher</h3></div>
+          <div class="card-b">
+            <div class="bot-id">
+              <div class="bot-av" id="botAvatar">·</div>
+              <div style="min-width:0">
+                <div class="bot-nm" id="botName">…</div>
+                <div class="bot-tg" id="botTagline"></div>
+              </div>
+            </div>
+            <div class="bot-ds" id="botDescription"></div>
+            <div class="banner warn hidden" id="botPending">
+              This bot has no avatar of its own yet, so it borrows the platform default.
+              Set its <code>avatarId</code> to give it its own face.
+            </div>
+            <div id="botSwitch" class="note"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h3>Start your session</h3></div>
+          <div class="card-b">
+            <p style="font-size:13px;color:var(--slate);line-height:1.55">Your teacher uses your
+              <b>camera and microphone</b> to talk with you and read the room. Speak your answers
+              naturally, or type them.</p>
+            <div class="banner" id="engineNote"></div>
+            <button id="startBtn" class="btn btn-pri btn-block" disabled>Begin session</button>
+            <p class="note" id="setupNote">Select a lesson to begin.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="session" class="stage-wrap">
+    <div class="wrap" style="padding:26px 0 60px"><div class="grid">
+      <div>
+        <div class="stage" id="stage">
+          <video id="anamVideo" autoplay playsinline class="hidden"></video>
+          <svg id="stylisedFace" class="face" viewBox="0 0 220 240">
+            <ellipse cx="110" cy="120" rx="86" ry="104" fill="#f1c9a5"/>
+            <path d="M24 110a86 104 0 0 1 172 0v6a86 104 0 0 1-172 0z" fill="#e9b892"/>
+            <path d="M40 70c10-34 130-34 140 0 6 20 0 30-6 26-14-44-114-44-128 0-6 4-12-6-6-26z" fill="#3a2c22"/>
+            <ellipse cx="78" cy="112" rx="12" ry="13" fill="#fff"/><ellipse cx="142" cy="112" rx="12" ry="13" fill="#fff"/>
+            <circle cx="78" cy="114" r="6" fill="#2a1c12"/><circle cx="142" cy="114" r="6" fill="#2a1c12"/>
+            <ellipse class="lid" cx="78" cy="112" rx="13" ry="13" fill="#f1c9a5"/><ellipse class="lid" cx="142" cy="112" rx="13" ry="13" fill="#f1c9a5"/>
+            <path d="M64 92c8-6 20-6 28 0M128 92c8-6 20-6 28 0" stroke="#3a2c22" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <path d="M104 122l-6 26h18l-6-26z" fill="#e0a87f"/>
+            <ellipse class="mouth" cx="110" cy="170" rx="26" ry="13" fill="#7a2f2f"/>
+          </svg>
+          <div class="cap" id="caption">Connecting you to your teacher…</div>
+        </div>
+        <div class="stage-bar">
+          <span class="rec"><span class="dot"></span> <span id="recLabel">Live session</span></span>
+          <div class="top-spacer"></div>
+          <button id="pauseBtn" class="btn btn-ghost">Pause &amp; save</button>
+          <button id="endBtn" class="btn btn-danger">End session</button>
+        </div>
+        <div class="replybox">
+          <input id="replyInput" placeholder="Or type your answer and press Enter…" autocomplete="off"/>
+          <button id="sendBtn" class="btn btn-ghost">Send</button>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-h"><h3>Lesson progress</h3></div>
+          <div class="card-b">
+            <div class="prog"><i id="progBar"></i></div>
+            <div class="kpi"><span id="progLabel">0 of 0 key elements</span><span id="progPct">0%</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h3>What your teacher can see</h3></div>
+          <div class="card-b">
+            <div class="perc-list">
+              <div class="perc" data-k="attention"><div class="perc-ic">👀</div><div class="perc-tx"><b>Attention</b><br><span class="v">—</span></div></div>
+              <div class="perc" data-k="phone"><div class="perc-ic">📱</div><div class="perc-tx"><b>Phone</b><br><span class="v">—</span></div></div>
+              <div class="perc" data-k="presence"><div class="perc-ic">🪑</div><div class="perc-tx"><b>Presence</b><br><span class="v">—</span></div></div>
+            </div>
+            <p class="note" id="percNote">Perception runs entirely in your browser — no video is uploaded.</p>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="runtime-config.js"></script>
+<script src="api-client.js"></script>
+<script>
+(function(){
+  'use strict';
+  var api = window.LAD;
+  function el(id){return document.getElementById(id);}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function toast(m){var t=el('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3200);}
+
+  // ─── State ───────────────────────────────────────────────────────────
+  var S = {
+    botId:null, bot:null, bots:[], lessons:[], selected:null,
+    session:null, client:null, talkStream:null, face:'stylised',
+    history:[], perception:{attention:'engaged',phone:false,present:true},
+    listening:false, busy:false, ended:false, startedAt:0,
+    stream:null, reco:null, detector:null, detLoop:null,
+    sdk:null, tokenPromise:null
+  };
+
+  // ─── Which bot is this page? ─────────────────────────────────────────
+  // Every bot uses THIS page — the only difference is ?bot=<id>. Adding a bot
+  // never means adding a page.
+  function botIdFromUrl(){
+    var m = /[?&]bot=([^&]+)/.exec(window.location.search);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
+  // ─── Boot ────────────────────────────────────────────────────────────
+  function boot(){
+    S.botId = botIdFromUrl();
+
+    // Warm the SDK immediately. The learner is reading the lesson list while
+    // this downloads, so the Begin click only has to attach media.
+    S.sdk = loadAnamSDK().catch(function(){ return null; });
+
+    Promise.all([
+      api.trainerStatus().catch(function(){return {engines:{}};}),
+      api.trainerBots().catch(function(){return [];}),
+      api.trainerLessons().catch(function(){return [];})
+    ]).then(function(r){
+      var status = r[0], bots = r[1], lessons = r[2];
+      S.bots = bots || [];
+      S.lessons = lessons || [];
+
+      S.bot = S.botId ? S.bots.filter(function(b){return b.id===S.botId;})[0] : null;
+      if(!S.bot) S.bot = S.bots.filter(function(b){return b.id===status.defaultBotId;})[0] || S.bots[0] || null;
+      if(!S.bot){
+        el('heroTitle').textContent = 'No learning bots are configured.';
+        el('heroLede').textContent = 'Add a definition to backend/bots/ (or run npm run new-bot) and restart the API.';
+        return;
+      }
+      S.botId = S.bot.id;
+
+      renderBot(status);
+      renderLessons();
+
+      // Prefetch the Anam session token now — it is valid for about an hour,
+      // so there is no reason to make the learner wait for it on click.
+      if(status.engines && status.engines.anam){
+        S.tokenPromise = api.trainerAnamToken({ botId: S.botId }).catch(function(){ return null; });
+      }
+    });
+
+    el('startBtn').addEventListener('click', start);
+    el('sendBtn').addEventListener('click', function(){ submitReply(el('replyInput').value); });
+    el('replyInput').addEventListener('keydown', function(e){ if(e.key==='Enter') submitReply(el('replyInput').value); });
+    el('pauseBtn').addEventListener('click', function(){ finish(false); });
+    el('endBtn').addEventListener('click', function(){ finish(true); });
+  }
+
+  function renderBot(status){
+    var b = S.bot;
+    document.title = b.name + ' · CLPD — Government of Dubai';
+    el('brandName').textContent = b.name;
+    el('botName').textContent = b.name;
+    el('botTagline').textContent = b.tagline || '';
+    el('botDescription').textContent = b.description || '';
+    el('botAvatar').textContent = (b.name || '?').trim().charAt(0).toUpperCase();
+    el('heroTitle').textContent = b.name + ' is ready to teach.';
+    el('heroLede').textContent = b.description || b.tagline || '';
+    if(b.avatarPending) el('botPending').classList.remove('hidden');
+
+    var eng = status.engines || {};
+    var realFace = !!eng.anam, realBrain = !!eng.brain;
+    el('enginePill').className = 'pill ' + (realFace && realBrain ? 'pill-live' : 'pill-demo');
+    el('enginePill').textContent = realFace && realBrain ? '● Photoreal · Claude'
+                                 : realBrain ? 'Animated · Claude' : 'Demo mode';
+    var msgs = [];
+    msgs.push(realFace ? 'Photoreal face and voice are configured.' : 'Anam is not configured — using an animated face and the browser voice.');
+    msgs.push(realBrain ? 'The Claude brain is live.' : 'No brain key set — a scripted fallback will teach the objectives.');
+    el('engineNote').innerHTML = '<span>' + msgs.join(' ') + '</span>';
+
+    // Sibling bots — the same page, a different ?bot=.
+    var others = S.bots.filter(function(x){ return x.id !== b.id; });
+    if(others.length){
+      el('botSwitch').innerHTML = 'Other teachers: ' + others.map(function(x){
+        return '<a href="learning-bot.html?bot=' + encodeURIComponent(x.id) + '">' + esc(x.name) + '</a>';
+      }).join(' · ');
+    }
+  }
+
+  function renderLessons(){
+    var host = el('lessons');
+    // A bot may be scoped to one course; otherwise it teaches the whole library.
+    var list = S.bot && S.bot.courseId
+      ? S.lessons.filter(function(l){ return l.course_id === S.bot.courseId; })
+      : S.lessons;
+
+    if(!list.length){
+      host.innerHTML = '<div class="note">No lessons are available yet. An administrator can upload them in the trainer admin.</div>';
+      return;
+    }
+    host.innerHTML = list.map(function(l){
+      var meta = [];
+      if(l.duration_min) meta.push(l.duration_min + ' min');
+      if(l.cpd_points) meta.push(l.cpd_points + ' CPD');
+      if(l.objectives && l.objectives.length) meta.push(l.objectives.length + ' key elements');
+      return '<div class="lesson" data-id="' + esc(l.id) + '">' +
+        '<div class="lesson-t">' + esc(l.title) + '</div>' +
+        (l.summary ? '<div class="lesson-s">' + esc(l.summary) + '</div>' : '') +
+        '<div class="lesson-m">' + meta.map(function(m){return '<span class="tag">' + esc(m) + '</span>';}).join('') + '</div>' +
+        '</div>';
+    }).join('');
+    Array.prototype.forEach.call(host.querySelectorAll('.lesson'), function(n){
+      n.addEventListener('click', function(){
+        Array.prototype.forEach.call(host.querySelectorAll('.lesson'), function(x){ x.classList.remove('sel'); });
+        n.classList.add('sel');
+        S.selected = list.filter(function(l){ return l.id === n.getAttribute('data-id'); })[0];
+        el('startBtn').disabled = false;
+        el('setupNote').textContent = 'Ready — “' + S.selected.title + '”.';
+      });
+    });
+  }
+
+  // ─── The Anam SDK ────────────────────────────────────────────────────
+  function loadAnamSDK(){
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/@anam-ai/js-sdk@4.15.0/+esm',
+      'https://unpkg.com/@anam-ai/js-sdk@4.15.0/dist/module/index.js'
+    ];
+    var i = 0;
+    function tryNext(lastErr){
+      if(i >= sources.length) return Promise.reject(lastErr || new Error('Anam SDK failed to load'));
+      var url = sources[i++];
+      return import(url).then(function(m){
+        return (m && m.createClient) ? m : tryNext(new Error('SDK at ' + url + ' has no createClient'));
+      }, function(e){ return tryNext(e); });
+    }
+    return tryNext();
+  }
+
+  // ─── Start ───────────────────────────────────────────────────────────
+  function start(){
+    if(!S.selected) return;
+    el('startBtn').disabled = true;
+    el('setupNote').textContent = 'Starting…';
+
+    api.trainerStartBrowserSession(S.selected.id, S.botId).then(function(session){
+      S.session = session;
+      S.startedAt = Date.now();
+      if(session.bot) { S.bot = session.bot; }
+      el('setup').style.display = 'none';
+      el('session').style.display = 'block';
+      el('recLabel').textContent = 'Live with ' + S.bot.name;
+      el('caption').innerHTML = '<b>' + esc(S.bot.name) + ':</b> connecting…';
+
+      if(session.face === 'anam'){
+        initAnam().catch(function(e){
+          showStylised();
+          toast('Photoreal face unavailable — continuing with the animated one.');
+          if(window.console && console.error) console.error('[Anam]', e);
+        }).then(begin);
+      } else {
+        showStylised();
+        begin();
+      }
+    }).catch(function(e){
+      el('startBtn').disabled = false;
+      el('setupNote').textContent = 'Could not start: ' + (e.message || e);
+    });
+  }
+
+  function begin(){
+    if(S.bot.perception !== false) startCamera();
+    nextTurn();
+  }
+
+  function showStylised(){
+    S.face = 'stylised';
+    el('anamVideo').classList.add('hidden');
+    el('stylisedFace').classList.remove('hidden');
+  }
+
+  function initAnam(){
+    // Both the SDK and the token were started at page load — by now they are
+    // usually already resolved, so the click costs only streamToVideoElement.
+    var tokenP = S.tokenPromise || api.trainerAnamToken({ sessionId: S.session.sessionId });
+    return Promise.all([S.sdk, tokenP]).then(function(r){
+      var mod = r[0], tok = r[1];
+      if(!mod) throw new Error('Anam SDK unavailable');
+      if(!tok || !tok.sessionToken) throw new Error('No Anam session token');
+
+      var client = mod.createClient(tok.sessionToken);
+      S.client = client;
+
+      var on = function(ev, cb){ try{ client.addListener(ev, cb); }catch(_){ } };
+      on('CONNECTION_CLOSED', function(code){
+        if(S.face === 'anam' && !S.ended){
+          showStylised();
+          el('percNote').textContent = 'Photoreal stream closed (' + code + ') — switched to the animated face so the lesson continues.';
+        }
+      });
+      // The learner talked over the avatar. Anam drops the current stream, so
+      // the buffered turn is dead — bin it and let them lead.
+      on('TALK_STREAM_INTERRUPTED', function(){
+        S.talkStream = null;
+        setFaceSpeaking(false);
+        startListening();
+      });
+
+      return client.streamToVideoElement('anamVideo').then(function(){
+        var v = el('anamVideo');
+        v.classList.remove('hidden');
+        el('stylisedFace').classList.add('hidden');
+        S.face = 'anam';
+        // Muted autoplay always succeeds; unmuting may not. If the browser
+        // blocks it, ask for one tap rather than showing a silent face.
+        v.muted = true; try{ v.play && v.play(); }catch(e){}
+        v.muted = false;
+        var p = v.play && v.play();
+        if(p && p.catch){
+          p.catch(function(){
+            v.muted = true; try{ v.play && v.play(); }catch(_){}
+            el('caption').innerHTML = '<b>🔊 Tap anywhere to enable the voice.</b>';
+            document.addEventListener('click', function unmute(){
+              v.muted = false; v.play && v.play();
+              document.removeEventListener('click', unmute);
+            }, { once:true });
+          });
+        }
+      });
+    });
+  }
+
+  // ─── Speaking ────────────────────────────────────────────────────────
+  // Anam speaks the text OUR brain wrote — we never play our own TTS over it.
+  //
+  // We use the talk-message stream rather than talk() because it is the API
+  // that reports interruption. It is sent as a single chunk today because the
+  // brain returns one finished JSON turn ({say, covered, complete}); streaming
+  // its raw output would feed JSON syntax to the avatar. Making the first
+  // syllable arrive sooner means teaching the brain to emit `say` incrementally,
+  // separately from its coverage metadata — then this loop streams chunk by
+  // chunk with no other change here.
+  function speak(text, done){
+    if(!text){ done && done(); return; }
+    setFaceSpeaking(true);
+
+    if(S.client && S.face === 'anam'){
+      try{
+        var stream = S.client.createTalkMessageStream();
+        S.talkStream = stream;
+        stream.streamMessageChunk(text, false);
+        stream.endMessage();
+        // Anam does not tell us when the audio finishes, so hold the mic for
+        // roughly as long as the line takes to say.
+        setTimeout(function(){
+          if(S.talkStream === stream){ S.talkStream = null; setFaceSpeaking(false); done && done(); }
+        }, estMs(text));
+        return;
+      }catch(e){
+        if(window.console && console.warn) console.warn('[Anam talk stream]', e);
+        // fall through to the browser voice
+      }
+    }
+
+    if(window.speechSynthesis){
+      var u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.02;
+      u.onend = function(){ setFaceSpeaking(false); done && done(); };
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+      return;
+    }
+    setTimeout(function(){ setFaceSpeaking(false); done && done(); }, estMs(text));
+  }
+
+  function estMs(t){ return Math.max(1400, Math.min(18000, String(t).split(/\s+/).length / 2.6 * 1000)); }
+  function setFaceSpeaking(on){ el('stylisedFace').classList.toggle('speaking', !!on); }
+
+  // ─── Listening ───────────────────────────────────────────────────────
+  function startListening(){
+    if(S.ended || S.listening) return;
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){ el('replyInput').focus(); return; }
+    try{
+      var r = new SR();
+      r.lang = 'en-US'; r.interimResults = false; r.continuous = false;
+      r.onresult = function(e){
+        var t = e.results[0] && e.results[0][0] && e.results[0][0].transcript;
+        if(t) submitReply(t);
+      };
+      r.onend = function(){ S.listening = false; };
+      r.onerror = function(){ S.listening = false; };
+      S.reco = r; S.listening = true; r.start();
+    }catch(e){ S.listening = false; }
+  }
+  function stopListening(){
+    S.listening = false;
+    if(S.reco){ try{ S.reco.stop(); }catch(e){} S.reco = null; }
+  }
+
+  // ─── The turn loop ───────────────────────────────────────────────────
+  function nextTurn(){
+    if(S.busy || S.ended) return;
+    S.busy = true; stopListening();
+    api.trainerTurn(S.session.sessionId, S.history, S.perception).then(function(r){
+      S.busy = false;
+      S.history.push({ role:'trainer', text:r.say });
+      el('caption').innerHTML = '<b>' + esc(S.bot.name) + ':</b> ' + esc(r.say);
+      updateProgress(r.coverage);
+      speak(r.say, function(){
+        if(r.complete) finish(true);
+        else startListening();
+      });
+    }).catch(function(e){
+      S.busy = false;
+      toast('Teacher error: ' + (e.message || e));
+      startListening();
+    });
+  }
+
+  function submitReply(text){
+    text = (text || '').trim();
+    if(!text || S.busy || S.ended) return;
+    el('replyInput').value = '';
+    S.history.push({ role:'lawyer', text:text });
+    el('caption').innerHTML = '<b>You:</b> ' + esc(text);
+    nextTurn();
+  }
+
+  function updateProgress(cov){
+    if(!cov) return;
+    var pct = cov.total ? Math.round(cov.done / cov.total * 100) : 0;
+    el('progBar').style.width = pct + '%';
+    el('progPct').textContent = pct + '%';
+    el('progLabel').textContent = cov.done + ' of ' + cov.total + ' key elements';
+  }
+
+  // ─── Camera + in-browser perception ──────────────────────────────────
+  function startCamera(){
+    navigator.mediaDevices.getUserMedia({ video:true, audio:false }).then(function(stream){
+      S.stream = stream;
+      var sc = document.createElement('div'); sc.className = 'selfcam';
+      var v = document.createElement('video');
+      v.autoplay = true; v.muted = true; v.playsInline = true; v.srcObject = stream;
+      sc.appendChild(v); el('stage').appendChild(sc);
+      loadPerception(v);
+    }).catch(function(){
+      el('percNote').textContent = 'Camera not granted — perception is off, but the lesson still runs.';
+    });
+  }
+
+  function loadPerception(video){
+    el('percNote').textContent = 'Loading the in-browser perception model…';
+    var s1 = document.createElement('script');
+    s1.src = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js';
+    s1.onload = function(){
+      var s2 = document.createElement('script');
+      s2.src = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js';
+      s2.onload = function(){
+        window.cocoSsd.load().then(function(model){
+          S.detector = model;
+          el('percNote').textContent = 'Perception runs locally in your browser — nothing is uploaded.';
+          runDetect(video);
+        }).catch(function(){ el('percNote').textContent = 'Perception model unavailable; the lesson still runs.'; });
+      };
+      s2.onerror = function(){ el('percNote').textContent = 'Perception model unavailable; the lesson still runs.'; };
+      document.head.appendChild(s2);
+    };
+    s1.onerror = function(){ el('percNote').textContent = 'Perception unavailable; the lesson still runs.'; };
+    document.head.appendChild(s1);
+  }
+
+  function runDetect(video){
+    if(S.ended) return;
+    S.detLoop = setInterval(function(){
+      if(!S.detector || video.readyState < 2) return;
+      S.detector.detect(video).then(function(preds){
+        var person = preds.filter(function(p){ return p.class==='person' && p.score>0.5; })[0];
+        var phone  = preds.filter(function(p){ return p.class==='cell phone' && p.score>0.45; })[0];
+        S.perception.phone = !!phone;
+        S.perception.present = !!person;
+        if(!person){ S.perception.attention = 'away'; }
+        else {
+          var cx = person.bbox[0] + person.bbox[2]/2;
+          var vw = video.videoWidth || 640;
+          var centred = cx > vw*0.25 && cx < vw*0.75;
+          var big = person.bbox[3] > (video.videoHeight || 480) * 0.45;
+          S.perception.attention = (centred && big) ? 'engaged' : 'distracted';
+        }
+        paintPerception();
+      }).catch(function(){});
+    }, 1500);
+  }
+
+  function paintPerception(){
+    var a = S.perception.attention;
+    setPerc('attention', a==='engaged'?'Engaged':a==='away'?'Away':'Distracted', a!=='engaged', a==='engaged');
+    setPerc('phone', S.perception.phone?'In hand':'Not in hand', S.perception.phone, false);
+    setPerc('presence', S.perception.present?'In frame':'Out of frame', !S.perception.present, S.perception.present);
+  }
+  function setPerc(k,v,hot,good){
+    var n = document.querySelector('.perc[data-k="'+k+'"]');
+    if(!n) return;
+    n.querySelector('.v').textContent = v;
+    n.classList.toggle('hot', !!hot);
+    n.classList.toggle('good', !!good);
+  }
+
+  // ─── Finish ──────────────────────────────────────────────────────────
+  function finish(complete){
+    if(S.ended) return;
+    S.ended = true;
+    var seconds = Math.max(0, Math.round((Date.now() - S.startedAt) / 1000));
+    var info = { seconds:seconds, transcript:S.history };
+    var p = complete
+      ? api.trainerEndSession(S.session.sessionId, info)
+      : api.trainerPauseSession(S.session.sessionId, info);
+
+    teardown();
+    p.then(function(r){
+      var cpd = r && r.cpdAwarded;
+      el('caption').innerHTML = complete
+        ? '<b>Session complete.</b> ' + (cpd ? cpd + ' CPD point(s) awarded.' : 'Well done.')
+        : '<b>Saved.</b> You can resume this lesson later.';
+      setTimeout(function(){ window.location.href = 'lawyer-portal-v2.html'; }, 2600);
+    }).catch(function(e){ toast('Could not save the session: ' + (e.message || e)); });
+  }
+
+  function teardown(){
+    stopListening();
+    if(window.speechSynthesis) window.speechSynthesis.cancel();
+    if(S.detLoop) clearInterval(S.detLoop);
+    if(S.stream) S.stream.getTracks().forEach(function(t){ t.stop(); });
+    if(S.client){ try{ S.client.stopStreaming && S.client.stopStreaming(); }catch(e){} }
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>

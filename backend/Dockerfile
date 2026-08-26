@@ -30,6 +30,8 @@ COPY --chown=app:app package*.json ./
 COPY --chown=app:app src ./src
 COPY --chown=app:app scripts ./scripts
 COPY --chown=app:app migrations ./migrations
+# Learning bot definitions — read at boot by services/botRegistry.js
+COPY --chown=app:app bots ./bots
 
 # Persistent data — mounted at runtime, never baked in
 RUN mkdir -p /app/data && chown -R app:app /app/data
