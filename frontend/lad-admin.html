@@ -3761,6 +3761,9 @@ function switchPage(page) {
   else if (realPage === 'support' && typeof supEnsureLoaded === 'function') supEnsureLoaded();
   else if (realPage === 'bookings' && typeof admBookingsRender === 'function') admBookingsRender();
   else if (realPage === 'purchases' && typeof admPurchasesRender === 'function') admPurchasesRender();
+  // The Activity screen fetched nothing on open — its loader existed but no
+  // path here ever called it, so the audit trail rendered empty for ever.
+  else if (realPage === 'audit' && typeof loadAuditDashboard === 'function') loadAuditDashboard();
 
   // Hide / show the filter bar (only courses page needs it)
   const fb = document.querySelector('.adm-filterbar');

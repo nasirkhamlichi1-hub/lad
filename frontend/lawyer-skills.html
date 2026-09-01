@@ -373,10 +373,16 @@ async function load() {
   let skills, recommendations, name = 'Your Skill Map', lawyerId = '';
   try {
     if (window.LAD && window.LAD.enabled) {
-      const data = await window.LAD.call ? window.LAD.call('GET', '/api/v1/skills/me') :
-                   await fetch(window.LAD_API_BASE + '/api/v1/skills/me', {
-                     headers: { Authorization: 'Bearer ' + (localStorage.getItem('lad_token') || '') }
-                   }).then(r => r.json());
+      // The old form awaited the FUNCTION, not the call — precedence put the
+      // ternary outside the await, so `data` was a pending Promise and
+      // data.skills was always undefined. Every load then crashed at
+      // renderKPIs(undefined) below, outside this try.
+      const data = window.LAD.call
+        ? await window.LAD.call('GET', '/api/v1/skills/me')
+        : await fetch(window.LAD_API_BASE + '/api/v1/skills/me', {
+            headers: { Authorization: 'Bearer ' + (localStorage.getItem('lad_token') || '') }
+          }).then(r => r.json());
+      if (!data || !Array.isArray(data.skills)) throw new Error('no_skill_data');
       skills = data.skills;
       recommendations = data.recommendations;
       lawyerId = data.lawyer_id;
@@ -389,6 +395,14 @@ async function load() {
     recommendations = DEMO_RECO;
     name = localStorage.getItem('lad_name') || 'Your Skill Map';
     lawyerId = '';
+    // Demo numbers must never pass as the real record.
+    try {
+      var note = document.createElement('div');
+      note.style.cssText = 'background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:8px;padding:8px 14px;margin:0 0 14px;font-size:12.5px;font-weight:600';
+      note.textContent = 'Showing sample data — your live skill record could not be loaded.';
+      var host = document.querySelector('main, .wrap, body');
+      host.insertBefore(note, host.firstChild);
+    } catch (_) {}
   }
 
   document.getElementById('lawyer-name').textContent = name;

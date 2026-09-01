@@ -369,10 +369,21 @@ async function load() {
       const data = await fetch(window.LAD_API_BASE + '/api/v1/skills/heatmap', {
         headers: { Authorization: 'Bearer ' + (localStorage.getItem('lad_token') || '') }
       }).then(r => r.json());
+      // An error body has no topics array; without this check the page
+      // crashed at renderKPIs(undefined) instead of falling back.
+      if (!data || !Array.isArray(data.topics)) throw new Error('no_heatmap_data');
       topics = data.topics;
     } else { throw new Error('offline'); }
   } catch (e) {
     topics = DEMO_TOPICS;
+    // Sample data must announce itself — this page briefs regulators.
+    try {
+      var note = document.createElement('div');
+      note.style.cssText = 'background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:8px;padding:8px 14px;margin:0 0 14px;font-size:12.5px;font-weight:600';
+      note.textContent = 'Showing sample data — the live heatmap could not be loaded.';
+      var host = document.querySelector('main, .wrap, body');
+      host.insertBefore(note, host.firstChild);
+    } catch (_) {}
   }
   allTopics = topics;
   renderKPIs(topics);
