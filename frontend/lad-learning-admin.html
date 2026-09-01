@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learning Progress — LAD CLPD</title>
+<!--
+  LAD's master view of learning progress.
+
+  Left: every topic, with how its cohort is doing. Right: the enrolled
+  lawyers, and where each one has got to. Selecting a lawyer opens their
+  full record, built from the attempt log — the same evidence a progress
+  report would cite.
+
+  ?embed=1 drops the page header so this can sit inside the admin portal.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="runtime-config.js"></script>
+<script src="api-client.js"></script>
+<script src="auth-bridge.js"></script>
+<style>
+:root{
+  --serif:'Instrument Serif',serif; --sans:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
+  --ink:#0a0f1a; --slate:#3a4554; --slate2:#5b6878; --slate3:#8a98aa; --slate4:#aeb9c8;
+  --line:#e8ecf1; --line2:#d2dae3; --paper:#f7f9fb; --paper2:#eef2f6; --white:#fff;
+  --green:#006B3F; --green-l:#00925A; --green-bg:#e6f4ee; --green-border:#b8dccc;
+  --gold:#C9913A; --gold-bg:#fdf6e9; --gold-border:#ead9b0;
+  --red:#dc2626; --red-bg:#fef2f2; --red-border:#fecaca;
+  --blue:#2563eb; --blue-bg:#eef4ff; --blue-border:#c5d8f7;
+  --purple:#7c3aed; --purple-bg:#f3e8ff; --purple-border:#d8b4fe;
+  --amber:#d97706;
+  --r-lg:14px; --sh-sm:0 1px 2px rgba(15,23,42,.04),0 2px 4px rgba(15,23,42,.04);
+  --sh-md:0 4px 8px rgba(15,23,42,.06),0 8px 16px rgba(15,23,42,.06);
+  --sh-lg:0 10px 20px rgba(15,23,42,.08),0 20px 40px rgba(15,23,42,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--paper);font-size:14px;
+  line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+.wrap{max-width:1280px;margin:0 auto;padding:22px 24px 60px}
+html.lad-embed .page-head{display:none}
+
+.page-head{padding:14px 0 12px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:9.5px;color:var(--gold);letter-spacing:1.4px;
+  text-transform:uppercase;font-weight:600;margin-bottom:3px}
+.title{font-family:var(--serif);font-size:26px;letter-spacing:-.02em;margin:0 0 4px;font-weight:500;line-height:1.1}
+.desc{font-size:12.5px;color:var(--slate);max-width:800px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
+.stat{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);
+  box-shadow:var(--sh-sm);padding:14px 16px}
+.stat .v{font-family:var(--serif);font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
+.stat .v.green{color:var(--green)}
+.stat .v.gold{color:var(--gold)}
+.stat .l{font-family:var(--mono);font-size:9px;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--slate3);font-weight:600;margin-top:6px}
+
+.cols{display:grid;grid-template-columns:290px 1fr;gap:16px;align-items:start}
+@media (max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);
+  box-shadow:var(--sh-sm);padding:18px 20px}
+.ptitle{font-family:var(--serif);font-size:17px;font-weight:500;margin:0 0 3px;letter-spacing:-.01em}
+.hint{font-size:11.5px;color:var(--slate3);margin:0 0 12px}
+
+.tlist{display:flex;flex-direction:column;gap:6px}
+.trow{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:var(--white);
+  border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;color:inherit;font:inherit;transition:all .15s}
+.trow:hover{border-color:var(--line2);box-shadow:var(--sh-sm)}
+.trow[aria-current="true"]{border-color:var(--green);background:var(--green-bg)}
+.trow .n{font-weight:600;font-size:13px}
+.trow .c{font-family:var(--mono);font-size:10px;color:var(--slate3)}
+.grow{flex:1;min-width:0}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--slate3);text-align:left;padding:8px 10px;background:var(--paper);border-bottom:1px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--paper)}
+.scroll{overflow-x:auto;margin:0 -20px;padding:0 20px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12px}
+.mini{width:80px;height:6px;background:var(--paper2);border-radius:99px;overflow:hidden;display:inline-block;
+  vertical-align:middle;margin-right:8px}
+.mini i{display:block;height:100%;background:var(--green);border-radius:99px}
+.pill{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;
+  padding:4px 9px;border-radius:99px;white-space:nowrap;border:1px solid transparent}
+.p-active{background:var(--gold-bg);color:var(--gold);border-color:var(--gold-border)}
+.p-completed{background:var(--green);color:#fff}
+.p-withdrawn{background:var(--paper2);color:var(--slate3)}
+.p-not_started{background:var(--paper2);color:var(--slate3)}
+.p-in_progress{background:var(--gold-bg);color:var(--gold);border-color:var(--gold-border)}
+.p-passed{background:var(--green);color:#fff}
+.p-failed{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+.link{background:none;border:none;color:var(--green);font-weight:600;font-size:12.5px;padding:0;text-decoration:underline}
+
+.stall{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
+.stall:first-of-type{border-top:none}
+.stall .b{font-family:var(--mono);font-size:11px;color:var(--slate3);font-variant-numeric:tabular-nums}
+.empty{color:var(--slate3);font-size:12.5px;font-style:italic;padding:14px 0}
+.err{background:var(--red-bg);border:1px solid var(--red-border);color:#9b1c1c;border-radius:10px;
+  padding:11px 15px;font-size:12.5px;margin-bottom:14px}
+
+dialog{border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-lg);background:var(--white);
+  color:var(--ink);padding:24px;max-width:720px;width:94vw;max-height:88vh;font-family:var(--sans)}
+dialog::backdrop{background:rgba(10,15,26,.45)}
+dialog h3{font-family:var(--serif);font-size:20px;font-weight:500;margin:0 0 2px}
+dialog .k{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:.6px;
+  text-transform:uppercase;margin:0 0 18px}
+.row{display:flex;gap:8px;margin-top:18px}
+.btn{background:var(--green);color:#fff;border:none;padding:9px 16px;border-radius:9px;font-size:13px;font-weight:600}
+.btn-light{background:var(--white);border:1.5px solid var(--line2);color:var(--ink);padding:9px 16px;
+  border-radius:9px;font-size:13px;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="page-head">
+    <div class="eyebrow">Legal Affairs Department · CLPD</div>
+    <h1 class="title">Learning Progress</h1>
+    <p class="desc">Every topic, its cohort, and where each lawyer has got to. Figures are derived from the attempt log, so any number here can be traced back to what a learner actually did.</p>
+  </div>
+
+  <div id="stats"></div>
+  <div id="err"></div>
+
+  <div class="cols">
+    <div class="panel">
+      <h2 class="ptitle">Topics</h2>
+      <p class="hint">Select one to see its cohort.</p>
+      <div class="tlist" id="tlist"><div class="empty">Loading…</div></div>
+    </div>
+    <div id="detail"><div class="panel"><div class="empty">Choose a topic.</div></div></div>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <h3 id="dName"></h3>
+  <p class="k" id="dSub"></p>
+  <div id="dBody"></div>
+  <div class="row"><button class="btn-light" id="dClose">Close</button></div>
+</dialog>
+
+<script>
+(function(){
+'use strict';
+var api=window.LAD, $=function(id){return document.getElementById(id);};
+var selected=null, TOPICS=[];
+if(/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('lad-embed');
+
+var KIND={ai_lesson:'AI session',scorm:'SCORM',document:'Material',link:'Material',video:'Video'};
+var LABEL={not_started:'not started',in_progress:'in progress',completed:'completed',
+  passed:'passed',failed:'failed',active:'in progress',withdrawn:'withdrawn'};
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function mins(s){return s?Math.round(s/60)+' min':'—';}
+function nameOf(e){return (e.lawyer_name&&e.lawyer_name.trim())||e.lawyer_id;}
+
+async function boot(){
+  try{ TOPICS=(await api.listTopics()).topics||[]; }
+  catch(e){ $('err').innerHTML='<div class="err">Could not load topics: '+esc(e.message)+'</div>'; return; }
+
+  var learners=TOPICS.reduce(function(n,t){return n+t.learners;},0);
+  var live=TOPICS.filter(function(t){return t.published>0;}).length;
+  $('stats').innerHTML='<div class="stats">'+
+    '<div class="stat"><div class="v">'+TOPICS.length+'</div><div class="l">Topics</div></div>'+
+    '<div class="stat"><div class="v green">'+live+'</div><div class="l">Published</div></div>'+
+    '<div class="stat"><div class="v">'+learners+'</div><div class="l">Enrolments</div></div>'+
+    '<div class="stat"><div class="v gold">'+TOPICS.reduce(function(n,t){return n+(t.activities-t.published);},0)+
+      '</div><div class="l">Draft steps</div></div>'+
+  '</div>';
+
+  if(!TOPICS.length){ $('tlist').innerHTML='<div class="empty">No topics yet.</div>'; return; }
+  renderList();
+  open(TOPICS[0].topic_id);
+}
+
+function renderList(){
+  $('tlist').innerHTML=TOPICS.map(function(t){
+    return '<button class="trow" data-t="'+esc(t.topic_id)+'"'+(selected===t.topic_id?' aria-current="true"':'')+'>'+
+      '<div class="grow"><div class="n">'+esc(t.title)+'</div>'+
+      '<div class="c">'+t.activities+' steps · '+t.learners+' enrolled</div></div></button>';
+  }).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('[data-t]'),function(b){
+    b.onclick=function(){ open(b.dataset.t); };
+  });
+}
+
+async function open(id){
+  selected=id; renderList();
+  var data;
+  try{ data=await api.courseCohort(id); }
+  catch(e){ $('detail').innerHTML='<div class="panel"><div class="err">'+esc(e.message)+'</div></div>'; return; }
+
+  var t=TOPICS.filter(function(x){return x.topic_id===id;})[0]||{title:id};
+  var rows=data.enrolments||[];
+  var done=rows.filter(function(e){return e.status==='completed';}).length;
+  var avg=rows.length?Math.round(rows.reduce(function(n,e){return n+e.percent;},0)/rows.length):0;
+
+  $('detail').innerHTML=
+    '<div class="panel">'+
+      '<h2 class="ptitle">'+esc(t.title)+'</h2>'+
+      '<p class="hint">'+rows.length+' enrolled · '+done+' finished · '+avg+'% average progress</p>'+
+      (rows.length?
+        '<div class="scroll"><table><thead><tr>'+
+          '<th>Lawyer</th><th>Progress</th><th>Steps</th><th>Time</th><th>Status</th><th></th>'+
+        '</tr></thead><tbody>'+
+        rows.map(function(e){
+          return '<tr>'+
+            '<td><b>'+esc(nameOf(e))+'</b>'+(e.lawyer_email?'<br><span class="num" style="color:var(--slate3)">'+esc(e.lawyer_email)+'</span>':'')+'</td>'+
+            '<td><span class="mini"><i style="width:'+e.percent+'%"></i></span><span class="num">'+e.percent+'%</span></td>'+
+            '<td class="num">'+e.required_done+'/'+e.required_total+'</td>'+
+            '<td class="num">'+mins(e.total_seconds)+'</td>'+
+            '<td><span class="pill p-'+e.status+'">'+(LABEL[e.status]||e.status)+'</span></td>'+
+            '<td><button class="link" data-l="'+esc(e.lawyer_id)+'" data-n="'+esc(nameOf(e))+'">Record</button></td>'+
+          '</tr>';
+        }).join('')+'</tbody></table></div>'
+        :'<div class="empty">Nobody is enrolled on this topic yet.</div>')+
+    '</div>'+
+    (data.stalls&&data.stalls.length?
+      '<div class="panel" style="margin-top:14px">'+
+        '<h2 class="ptitle">Where people stall</h2>'+
+        '<p class="hint">Required steps ranked by how many lawyers started but did not finish them. A high number here usually means the step is wrong, not the learners.</p>'+
+        data.stalls.map(function(s){
+          return '<div class="stall"><div class="grow"><b>'+esc(s.title)+'</b> '+
+            '<span class="b">· '+(KIND[s.kind]||s.kind)+'</span></div>'+
+            '<span class="b">'+(s.stalled||0)+' stalled · '+(s.finished||0)+' finished</span></div>';
+        }).join('')+
+      '</div>':'');
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-l]'),function(b){
+    b.onclick=function(){ openLearner(b.dataset.l,b.dataset.n); };
+  });
+}
+
+async function openLearner(lawyerId,name){
+  $('dName').textContent=name;
+  $('dSub').textContent='Full learning record';
+  $('dBody').innerHTML='<div class="empty">Loading…</div>';
+  $('dlg').showModal();
+
+  var r;
+  try{ r=await api.learnerReport(lawyerId); }
+  catch(e){ $('dBody').innerHTML='<div class="err">'+esc(e.message)+'</div>'; return; }
+
+  var acts=r.activities||[], atts=r.attempts||[];
+  $('dBody').innerHTML=
+    '<div class="stats" style="margin-bottom:14px">'+
+      '<div class="stat"><div class="v">'+(r.enrolments||[]).length+'</div><div class="l">Topics</div></div>'+
+      '<div class="stat"><div class="v green">'+acts.filter(function(a){
+        return a.status==='completed'||a.status==='passed';}).length+'</div><div class="l">Steps done</div></div>'+
+      '<div class="stat"><div class="v">'+atts.length+'</div><div class="l">Attempts</div></div>'+
+    '</div>'+
+    '<div class="scroll"><table><thead><tr><th>Step</th><th>Type</th><th>Score</th><th>Time</th><th>Status</th></tr></thead><tbody>'+
+    (acts.length?acts.map(function(a){
+      return '<tr><td>'+esc(a.title)+'</td><td class="num">'+(KIND[a.kind]||a.kind)+'</td>'+
+        '<td class="num">'+(a.score===null||a.score===undefined?'—':a.score)+'</td>'+
+        '<td class="num">'+mins(a.total_seconds)+'</td>'+
+        '<td><span class="pill p-'+a.status+'">'+(LABEL[a.status]||a.status)+'</span></td></tr>';
+    }).join('')
+    :'<tr><td colspan="5" class="empty">No activity recorded yet.</td></tr>')+
+    '</tbody></table></div>';
+}
+$('dClose').onclick=function(){ $('dlg').close(); };
+
+boot();
+})();
+</script>
+</body>
+</html>

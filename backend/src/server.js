@@ -42,6 +42,7 @@ const adminUsersRoutes = require('./routes/admin-users');
 const adminRoutes = require('./routes/admin');
 const assistantRoutes = require('./routes/assistant');
 const trainerRoutes = require('./routes/trainer');
+const learningRoutes = require('./routes/learning');
 const hubsRoutes = require('./routes/hubs');
 const reportsRoutes = require('./routes/reports');
 const accreditationsRoutes = require('./routes/accreditations');
@@ -191,6 +192,7 @@ app.use('/api/v1/admin/reports', reportsRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/assistant', assistantRoutes);
 app.use('/api/v1/trainer',  trainerRoutes);
+app.use('/api/v1/learning', learningRoutes);
 app.use('/api/v1/hubs',     hubsRoutes);
 app.use('/api/v1/accreditations', accreditationsRoutes);
 app.use('/api/v1/cpd',      cpdRoutes);
@@ -211,6 +213,46 @@ app.get('/api/v1/config', async (_req, res, next) => {
     res.json({ version: pkg.version, generated: new Date().toISOString(), courses, content, faq, stats });
   } catch (e) { next(e); }
 });
+
+// ─── Local playground (development only) ────────────────────────────
+// A single page for exercising the learning spine by hand against the
+// real API. Mounted only when NODE_ENV is not production, so it cannot
+// appear on a deployed instance. The API serves no other HTML, hence the
+// per-response CSP override — the global policy is default-src 'none'.
+if (config.isDev) {
+  const path = require('path');
+  const PLAYGROUND = path.join(__dirname, '..', 'playground');
+  const FRONTEND = path.join(__dirname, '..', '..', 'frontend');
+
+  // Serve the real portals from the API in development, so the whole
+  // platform runs on one origin and one command. Nothing to install, no
+  // second server, and no CORS in the way. In production the frontend is
+  // a separate Azure Static Web App and this never runs.
+  const fs = require('fs');
+  if (fs.existsSync(FRONTEND)) {
+    app.use('/app', express.static(FRONTEND, {
+      setHeaders: (res) => {
+        // The portals are ordinary pages with inline script and styles;
+        // the API's default-src 'none' policy would break them.
+        res.setHeader('Content-Security-Policy',
+          "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; " +
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+          "connect-src 'self' https:; font-src 'self' data: https:; media-src 'self' blob: https:");
+      },
+    }));
+    log.info('frontend_mounted', { url: `http://localhost:${config.port}/app/` });
+  }
+  app.get('/playground', (_req, res) => {
+    res.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'");
+    res.sendFile(path.join(PLAYGROUND, 'spine.html'));
+  });
+  app.get('/playground/demo-session.json', (_req, res) => {
+    res.sendFile(path.join(PLAYGROUND, 'demo-session.json'), (err) => {
+      if (err) res.status(404).json({ error: 'Run `npm run seed:demo-spine` first.' });
+    });
+  });
+  log.info('playground_enabled', { url: `http://localhost:${config.port}/playground` });
+}
 
 // 404
 app.use((req, res) => {

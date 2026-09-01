@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learning hub — CLPD</title>
+<!--
+  The learner's course hub.
+
+  One page per topic. It shows the journey in order, launches every kind of
+  activity from the same place, and reports each sitting back to the
+  learning spine so the completion figure is derived rather than asserted.
+
+  Launch behaviour by kind:
+    ai_lesson → ai-trainer.html?lesson=<id>  (the Anam + Claude trainer;
+                it reports its own session, and the server mirrors it here)
+    scorm     → opens the package; the attempt is recorded here until the
+                SCORM runtime lands and reports cmi data itself
+    document  → downloads or opens the material, and marks it read
+    link      → opens the URL
+    video     → opens the material
+
+  Usage:  course-hub.html?topic=AML-AND-CFT-ESSENTIALS
+-->
+<script src="runtime-config.js"></script>
+<script src="api-client.js"></script>
+<script src="auth-bridge.js"></script>
+<style>
+  :root {
+    --ground:#FBFAF7; --surface:#FFFFFF; --alt:#F3F2ED;
+    --line:#DFDDD4; --line-soft:#EAE8E1;
+    --ink:#191C19; --ink2:#4A4F4A; --ink3:#767B74;
+    --accent:#2F5D50; --accent-soft:#E3ECE7;
+    --warn:#9A6A22; --warn-soft:#F5EDDC;
+    --crit:#8E3F2E; --lock:#9A9E98;
+    --s1:6px; --s2:10px; --s3:16px; --s4:24px; --s5:38px; --s6:56px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:#101310; --surface:#171B17; --alt:#1D221D;
+      --line:#2E342E; --line-soft:#242A24;
+      --ink:#E8EAE6; --ink2:#B0B6AE; --ink3:#838A81;
+      --accent:#7FBFA8; --accent-soft:#1B2A25;
+      --warn:#D4A459; --warn-soft:#2A2416;
+      --crit:#D98B76; --lock:#6B716A;
+    }
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font:15.5px/1.58 "Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width:960px; margin:0 auto; padding:var(--s5) var(--s4) var(--s6); }
+
+  a.back {
+    font-size:13px; color:var(--accent); text-decoration:none;
+    display:inline-block; margin-bottom:var(--s3);
+  }
+  a.back:hover { text-decoration:underline; }
+  h1 { font-size:clamp(24px,4vw,32px); line-height:1.12; letter-spacing:-.02em; margin:0 0 var(--s2); text-wrap:balance; }
+  .lede { color:var(--ink2); margin:0; max-width:62ch; }
+
+  .bar {
+    display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap;
+    background:var(--surface); border:1px solid var(--line); border-radius:8px;
+    padding:var(--s3) var(--s4); margin:var(--s4) 0 var(--s5);
+  }
+  .pct { font-size:32px; font-weight:700; line-height:1; font-variant-numeric:tabular-nums; color:var(--accent); min-width:74px; }
+  .track { flex:1; min-width:140px; height:8px; background:var(--alt); border-radius:99px; overflow:hidden; }
+  .fill { height:100%; background:var(--accent); width:0; transition:width .4s cubic-bezier(.4,0,.2,1); }
+  .barmeta { font-size:13px; color:var(--ink3); font-variant-numeric:tabular-nums; }
+  .barmeta b { color:var(--ink2); }
+
+  h2 { font-size:18px; margin:var(--s5) 0 2px; letter-spacing:-.01em; }
+  h2:first-of-type { margin-top:0; }
+  .gate { font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink3);
+          font-family:ui-monospace,"SF Mono",Menlo,monospace; margin:0 0 var(--s3); }
+
+  .act {
+    display:flex; align-items:center; gap:var(--s3);
+    background:var(--surface); border:1px solid var(--line); border-radius:8px;
+    padding:14px var(--s3); margin-bottom:8px;
+  }
+  .act.locked { opacity:.5; }
+  .icon {
+    width:38px; height:38px; flex:none; border-radius:8px; background:var(--alt);
+    display:grid; place-items:center; font-size:17px;
+  }
+  .act.done .icon { background:var(--accent-soft); }
+  .grow { flex:1; min-width:0; }
+  .title { font-weight:600; }
+  .meta { font-size:12.5px; color:var(--ink3); font-variant-numeric:tabular-nums; }
+
+  .pill {
+    font:600 10px/1 ui-monospace,"SF Mono",Menlo,monospace; letter-spacing:.07em;
+    text-transform:uppercase; padding:5px 9px; border-radius:99px; white-space:nowrap;
+  }
+  .s-not_started { background:var(--alt); color:var(--ink3); }
+  .s-in_progress { background:var(--accent-soft); color:var(--accent); }
+  .s-completed, .s-passed { background:var(--accent); color:var(--surface); }
+  .s-failed { background:var(--crit); color:#fff; }
+  .s-lock { background:transparent; color:var(--lock); border:1px dashed var(--line); }
+
+  button {
+    font:600 13px/1 inherit; padding:10px 14px; border-radius:6px; cursor:pointer;
+    border:1px solid var(--accent); background:var(--accent); color:var(--ground);
+  }
+  button.ghost { background:transparent; color:var(--accent); }
+  button:disabled { opacity:.35; cursor:not-allowed; }
+  button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+  .msg {
+    background:var(--warn-soft); border:1px solid var(--line); border-radius:8px;
+    padding:var(--s3) var(--s4); margin-bottom:var(--s4); font-size:14px; color:var(--ink2);
+  }
+  .msg.err { border-color:var(--crit); color:var(--crit); background:transparent; }
+  .skel { color:var(--ink3); font-style:italic; }
+
+  dialog {
+    border:1px solid var(--line); border-radius:10px; background:var(--surface);
+    color:var(--ink); padding:var(--s4); max-width:420px; width:92vw; font:inherit;
+  }
+  dialog::backdrop { background:rgba(0,0,0,.5); }
+  dialog h3 { margin:0 0 4px; font-size:17px; }
+  dialog p { margin:0 0 var(--s3); color:var(--ink2); font-size:14px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:var(--s4); }
+  @media (prefers-reduced-motion:reduce) { .fill { transition:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="lawyer-portal-v2.html">← My CLPD</a>
+  <h1 id="title">Learning hub</h1>
+  <p class="lede" id="lede"></p>
+
+  <div class="bar">
+    <div class="pct" id="pct">—</div>
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <div class="barmeta" id="barmeta">Loading…</div>
+  </div>
+
+  <div id="msg"></div>
+  <div id="body"><p class="skel">Loading your hub…</p></div>
+</div>
+
+<dialog id="dlg">
+  <h3 id="dlgTitle"></h3>
+  <p id="dlgBody"></p>
+  <div class="row">
+    <button id="dlgGo">Open</button>
+    <button class="ghost" id="dlgDone">Mark as done</button>
+    <button class="ghost" id="dlgClose">Close</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  'use strict';
+
+  var api = window.LAD;
+  var TOPIC = new URLSearchParams(location.search).get('topic') || '';
+  var current = null, openedAt = 0, openAttempt = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  var ICON = {
+    ai_lesson: '🗣', scorm: '📦', document: '📄',
+    link: '🔗', video: '▶', assessment: '✎'
+  };
+  var LABEL = {
+    not_started: 'not started', in_progress: 'in progress',
+    completed: 'completed', passed: 'passed', failed: 'failed'
+  };
+
+  function note(text, isError) {
+    $('msg').innerHTML = text ? '<div class="msg' + (isError ? ' err' : '') + '">' + text + '</div>' : '';
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  function metaLine(a) {
+    var p = a.progress || {}, bits = [];
+    if (!a.required) bits.push('optional');
+    if (p.score !== null && p.score !== undefined) bits.push('score ' + p.score);
+    if (a.pass_score) bits.push('pass mark ' + a.pass_score);
+    if (p.total_seconds) bits.push(Math.round(p.total_seconds / 60) + ' min');
+    if (p.attempt_count) bits.push(p.attempt_count + (p.attempt_count === 1 ? ' attempt' : ' attempts'));
+    if (a.cpd_minutes) bits.push(a.cpd_minutes + ' CPD min');
+    return bits.join(' · ');
+  }
+
+  async function load() {
+    if (!TOPIC) {
+      note('No topic specified. Open this page from your CLPD dashboard, or add <code>?topic=…</code> to the address.', true);
+      $('body').innerHTML = '';
+      return;
+    }
+
+    var data;
+    try {
+      data = await api.courseOutline(TOPIC);
+    } catch (e) {
+      note('Could not load this hub: ' + esc(e.message), true);
+      $('body').innerHTML = '';
+      return;
+    }
+
+    // Enrol on first visit so progress has somewhere to land.
+    if (!data.enrolment) {
+      try { await api.enrolMe(TOPIC); data = await api.courseOutline(TOPIC); }
+      catch (e) { /* anonymous preview — still render the outline */ }
+    }
+
+    var enr = data.enrolment;
+    $('title').textContent = (data.sections[0] && data.sections[0].title) || TOPIC;
+    $('lede').textContent = (data.sections[0] && data.sections[0].summary) || '';
+
+    $('pct').textContent = enr ? enr.percent + '%' : '—';
+    $('fill').style.width = (enr ? enr.percent : 0) + '%';
+    $('barmeta').innerHTML = enr
+      ? '<b>' + enr.required_done + ' of ' + enr.required_total + '</b> required parts complete' +
+        (enr.total_seconds ? ' · ' + Math.round(enr.total_seconds / 60) + ' min recorded' : '') +
+        (enr.status === 'completed' ? ' · <b>finished</b>' : '')
+      : 'Sign in to track your progress';
+
+    var visible = data.sections.filter(function (s) { return s.activities.length; });
+    if (!visible.length) {
+      $('body').innerHTML = '<p class="skel">Nothing has been published in this topic yet.</p>';
+      return;
+    }
+
+    $('body').innerHTML = visible.map(function (s) {
+      return '<h2>' + esc(s.title) + '</h2>' +
+        '<p class="gate">' + (s.gate === 'sequential'
+          ? 'Work through these in order'
+          : 'Take these in any order') + '</p>' +
+        s.activities.map(function (a) {
+          var p = a.progress || {};
+          var done = p.status === 'completed' || p.status === 'passed';
+          var pill = a.locked
+            ? '<span class="pill s-lock">locked</span>'
+            : '<span class="pill s-' + p.status + '">' + LABEL[p.status] + '</span>';
+          var label = done ? 'Revisit' : (p.status === 'in_progress' ? 'Resume' : 'Start');
+          return '<div class="act' + (a.locked ? ' locked' : '') + (done ? ' done' : '') + '">' +
+            '<div class="icon">' + (ICON[a.kind] || '•') + '</div>' +
+            '<div class="grow"><div class="title">' + esc(a.title) + '</div>' +
+            '<div class="meta">' + esc(metaLine(a)) + '</div></div>' +
+            pill +
+            '<button data-id="' + a.id + '"' + (a.locked ? ' disabled' : '') + '>' + label + '</button>' +
+            '</div>';
+        }).join('');
+    }).join('');
+
+    var acts = [];
+    visible.forEach(function (s) { acts = acts.concat(s.activities); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-id]'), function (b) {
+      b.onclick = function () {
+        var a = acts.filter(function (x) { return x.id === b.dataset.id; })[0];
+        if (a) launch(a);
+      };
+    });
+  }
+
+  // ─── Launching ─────────────────────────────────────────────────
+  // The AI trainer runs its own session and the server mirrors it onto
+  // the spine, so this page must NOT also open an attempt for it —
+  // that would double-count. Everything else is tracked from here.
+
+  async function launch(a) {
+    if (a.kind === 'ai_lesson') {
+      if (!a.lesson_id) { note('This session has no teaching material attached yet.', true); return; }
+      location.href = 'ai-trainer.html?lesson=' + encodeURIComponent(a.lesson_id) +
+                      '&return=' + encodeURIComponent(location.pathname + location.search);
+      return;
+    }
+
+    current = a;
+    openedAt = Date.now();
+    openAttempt = null;
+
+    try {
+      var started = await api.startActivity(a.id, {});
+      openAttempt = started.attempt;
+    } catch (e) {
+      note('Could not start this activity: ' + esc(e.message), true);
+      return;
+    }
+
+    $('dlgTitle').textContent = a.title;
+    $('dlgBody').innerHTML = a.kind === 'scorm'
+      ? 'Opens the package in a new tab. Until the SCORM runtime is connected, tell the hub when you have finished it — after that the package will report its own score.'
+      : 'Opens in a new tab. Mark it done when you have read it and the hub will record the time you spent.';
+    $('dlg').showModal();
+  }
+
+  async function openMaterial() {
+    if (!current) return;
+    if (!current.material_id) { note('No file is attached to this item yet.', true); return; }
+    try {
+      var r = await api.materialDownloadUrl
+        ? await api.materialDownloadUrl(current.course_id, current.material_id)
+        : null;
+      window.open(r && r.url ? r.url : buildDownloadUrl(current), '_blank', 'noopener');
+    } catch (e) {
+      window.open(buildDownloadUrl(current), '_blank', 'noopener');
+    }
+  }
+
+  function buildDownloadUrl(a) {
+    return (window.LAD_API_BASE || '') + '/api/v1/courses/' +
+      encodeURIComponent(a.course_id) + '/materials/' + encodeURIComponent(a.material_id) + '/download';
+  }
+
+  async function finish() {
+    if (!openAttempt) { $('dlg').close(); return; }
+    var seconds = Math.max(30, Math.round((Date.now() - openedAt) / 1000));
+    try {
+      await api.closeAttempt(openAttempt.id, { completed: true, seconds: seconds });
+      $('dlg').close();
+      note('');
+      await load();
+    } catch (e) {
+      note('Could not record that: ' + esc(e.message), true);
+    }
+  }
+
+  async function abandon() {
+    if (openAttempt) {
+      var seconds = Math.max(5, Math.round((Date.now() - openedAt) / 1000));
+      try { await api.closeAttempt(openAttempt.id, { completed: false, abandoned: true, seconds: seconds }); }
+      catch (e) { /* leaving it open is acceptable — it reads as in progress */ }
+    }
+    $('dlg').close();
+    await load();
+  }
+
+  $('dlgGo').onclick = openMaterial;
+  $('dlgDone').onclick = finish;
+  $('dlgClose').onclick = abandon;
+
+  load();
+})();
+</script>
+</body>
+</html>

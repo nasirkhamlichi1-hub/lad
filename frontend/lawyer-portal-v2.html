@@ -1038,6 +1038,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
       <a class="sb-link active" onclick="goToSection('overview',event)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Overview<span class="sb-link-dot"></span></a>
       <a class="sb-link" onclick="goToSection('coach',event)"><svg viewBox="0 0 24 24"><path d="M12 2a8 8 0 0 0-8 8c0 1.5.4 3 1 4l-1 4 4-1c1.2.6 2.6 1 4 1a8 8 0 0 0 0-16z"/><path d="M9 11h6M12 8v6"/></svg>Maryam coach</a>
       <a class="sb-link" style="display:none" onclick="goToSection('calendar',event)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>Smart calendar<span class="sb-link-badge amber">!</span></a>
+      <a class="sb-link" onclick="goToSection('learning',event)"><svg viewBox="0 0 24 24"><path d="M2 7l10-5 10 5-10 5z"/><path d="M6 10v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg>My learning<span class="sb-link-badge green" id="navLearningBadge" style="display:none">0</span></a>
       <a class="sb-link" onclick="goToSection('skills',event)"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Skill graph</a>
       <a class="sb-link" onclick="goToSection('peers',event)"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>Peer benchmark</a>
 
@@ -2860,6 +2861,28 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         </div>
       </section>
 
+      <!-- ═══ MY LEARNING ═══ -->
+      <!-- Topics from the learning spine: every journey this lawyer is on,
+           with the steps inside it. Percentages come back derived from the
+           attempt log — this page never sends one, because no endpoint
+           accepts one. Hidden entirely when there are no topics, so the
+           dashboard is unchanged for anyone not yet enrolled. -->
+      <section class="section" id="learning" style="display:none">
+        <div class="section-hd">
+          <div>
+            <div class="section-eyebrow green">LEARNING JOURNEYS</div>
+            <h2 class="section-title">Your <em>learning progress</em></h2>
+            <div class="section-desc" id="learningSubtitle">Loading your learning…</div>
+          </div>
+          <div class="section-actions">
+            <button class="btn btn-ghost btn-sm" onclick="loadMyLearning()">↻ Refresh</button>
+          </div>
+        </div>
+        <div id="learningBody">
+          <div style="padding:24px;text-align:center;color:var(--slate3);font-family:var(--mono);font-size:11px">Loading…</div>
+        </div>
+      </section>
+
       <!-- ═══ COMPLETED ═══ -->
       <section class="section" id="completed">
         <div class="section-hd">
@@ -3487,6 +3510,124 @@ async function completeElearning(bookingId, btn) {
   }
 }
 document.addEventListener('DOMContentLoaded', loadMyAttendance);
+
+// ─── My Learning ─────────────────────────────────────────────────────
+// Topics from the learning spine. Every figure here is read from the
+// server, never computed in the page and never sent to it: the API has
+// no endpoint that accepts a percentage, which is what makes the number
+// a lawyer sees the same one a regulator would be shown.
+//
+// The section hides itself when the lawyer is on no topics, so the
+// dashboard is untouched for anyone the rollout has not reached.
+async function loadMyLearning() {
+  var section = document.getElementById('learning');
+  var body = document.getElementById('learningBody');
+  var sub = document.getElementById('learningSubtitle');
+  var navLink = document.getElementById('navLearningBadge');
+  if (!section || !body) return;
+
+  var base = (window.LAD_API_BASE) || (window.LAD_SYNC && window.LAD_SYNC.base) || '';
+  var token = (function () { try { return localStorage.getItem('lad_token') || ''; } catch (_) { return ''; } })();
+  if (!base || !token) { section.style.display = 'none'; return; }
+
+  var api = function (path) {
+    return fetch(base.replace(/\/$/, '') + path, { headers: { Authorization: 'Bearer ' + token } })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+  };
+
+  var report;
+  try { report = await api('/api/v1/learning/report/mine'); }
+  catch (e) {
+    // The learning routes are new; an older backend simply has none.
+    console.info('[lawyer-portal] learning spine unavailable:', e.message);
+    section.style.display = 'none';
+    return;
+  }
+
+  var enrolments = (report && report.enrolments) || [];
+  if (!enrolments.length) { section.style.display = 'none'; return; }
+
+  section.style.display = '';
+  var open = enrolments.filter(function (e) { return e.status !== 'completed'; }).length;
+  if (navLink && open) { navLink.textContent = open; navLink.style.display = ''; }
+  if (sub) {
+    var done = enrolments.length - open;
+    sub.textContent = enrolments.length + ' topic' + (enrolments.length === 1 ? '' : 's') +
+      ' · ' + done + ' completed · ' + open + ' in progress';
+  }
+
+  var KIND = { ai_lesson: 'AI SESSION', scorm: 'SCORM', document: 'MATERIAL', link: 'MATERIAL', video: 'VIDEO' };
+  var TONE = {
+    not_started: 'background:var(--paper2);color:var(--slate2)',
+    in_progress: 'background:var(--gold-bg);color:var(--gold)',
+    completed:   'background:var(--green);color:#fff',
+    passed:      'background:var(--green);color:#fff',
+    failed:      'background:var(--red-bg);color:var(--red)'
+  };
+  var LABEL = { not_started: 'not started', in_progress: 'in progress', completed: 'completed', passed: 'passed', failed: 'failed' };
+  var esc = function (t) {
+    return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  };
+  var mins = function (s) { return s ? Math.round(s / 60) + ' min' : '—'; };
+
+  var html = '';
+  for (var i = 0; i < enrolments.length; i++) {
+    var e = enrolments[i];
+    var outline = null;
+    try { outline = await api('/api/v1/learning/courses/' + encodeURIComponent(e.course_id) + '/outline'); }
+    catch (err) { continue; }
+
+    var steps = [];
+    (outline.sections || []).forEach(function (sec) { steps = steps.concat(sec.activities); });
+    steps.sort(function (a, b) { return a.position - b.position; });
+    var title = (outline.sections[0] && outline.sections[0].title) || e.course_id;
+
+    html += '<div style="background:var(--white);border:1px solid var(--line);border-radius:14px;' +
+      'padding:18px 20px;margin-bottom:12px">' +
+      '<div class="bar-row" style="margin-bottom:14px">' +
+        '<div class="bar-hd"><span style="font-family:var(--serif);font-size:16px;color:var(--ink)">' +
+          esc(title) + '</span>' +
+          '<span style="font-family:var(--mono);font-weight:600;color:var(--green)">' + e.percent + '%</span></div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + e.percent + '%;background:var(--green)"></div></div>' +
+        '<div class="activity-meta" style="margin-top:6px">' + e.required_done + ' of ' + e.required_total +
+          ' required steps · ' + mins(e.total_seconds) + ' recorded' +
+          (e.status === 'completed' ? ' · finished' : '') + '</div>' +
+      '</div>' +
+      '<div class="activity-list">' +
+      steps.map(function (a, n) {
+        var p = a.progress || { status: 'not_started' };
+        var bits = [];
+        if (p.score !== null && p.score !== undefined) bits.push('score ' + p.score);
+        if (a.pass_score) bits.push('pass ' + a.pass_score);
+        if (p.total_seconds) bits.push(mins(p.total_seconds));
+        if (p.attempt_count) bits.push(p.attempt_count + '×');
+        return '<div style="display:flex;align-items:center;gap:11px;padding:9px 0;' +
+          'border-top:1px solid var(--line)">' +
+          '<span style="font-family:var(--mono);font-size:10px;color:var(--slate3);min-width:18px;text-align:right">' +
+            (n + 1) + '</span>' +
+          '<span class="pill" style="background:var(--paper2);color:var(--slate2);min-width:78px;justify-content:center">' +
+            (KIND[a.kind] || 'STEP') + '</span>' +
+          '<div class="activity-info"><div class="activity-title" style="font-size:14px">' + esc(a.title) + '</div>' +
+          '<div class="activity-meta">' + esc(bits.join(' · ')) + '</div></div>' +
+          '<span class="pill" style="' + (TONE[p.status] || TONE.not_started) + '">' +
+            (LABEL[p.status] || p.status) + '</span></div>';
+      }).join('') +
+      '</div>' +
+      '<div style="margin-top:14px">' +
+        '<a class="btn btn-sm" href="course-hub.html?topic=' + encodeURIComponent(e.course_id) + '">' +
+          (e.status === 'completed' ? 'Revisit this topic' : 'Continue this topic') + ' →</a>' +
+      '</div>' +
+      '</div>';
+  }
+
+  body.innerHTML = html || '<div style="padding:24px;text-align:center;color:var(--slate3)">Nothing recorded yet.</div>';
+}
+
+document.addEventListener('DOMContentLoaded', loadMyLearning);
+
+
 
 // ════════════════════════════════════════════════════════════════
 // Replace the hardcoded course catalogue with whatever is currently

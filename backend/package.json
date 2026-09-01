@@ -9,12 +9,17 @@
     "init-db": "node scripts/init-db.js",
     "migrate": "node scripts/migrate.js",
     "migrate:status": "node scripts/migrate.js status",
+    "backfill:spine": "node scripts/backfill-learning-spine.js",
+    "test:spine": "node scripts/test-learning-spine.js",
     "seed": "node scripts/seed.js",
     "seed:if-needed": "node scripts/seed-if-needed.js",
     "seed:demo": "node scripts/create-account.js --seed-demo",
     "create-account": "node scripts/create-account.js",
     "bootstrap": "bash scripts/bootstrap.sh",
-    "check-env": "NODE_ENV=production node -e \"require('./src/validateEnv').validateEnv()\""
+    "check-env": "NODE_ENV=production node -e \"require('./src/validateEnv').validateEnv()\"",
+    "seed:demo-spine": "node scripts/seed-spine-demo.js",
+    "test:topics": "node scripts/test-topics.js",
+    "test:learning": "node scripts/test-learning-spine.js && node scripts/test-topics.js"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.32.0",

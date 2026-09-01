@@ -23,3 +23,5 @@ npm-debug.log*
 # Build output
 dist/
 build/
+playground/demo-session.json
+start-log.txt
