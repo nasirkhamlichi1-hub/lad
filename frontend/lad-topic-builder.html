@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Topic Builder — LAD CLPD</title>
+<!--
+  Build a learning journey as an ordered sequence.
+
+  A topic is a list of steps in whatever order the author wants — AI,
+  SCORM, AI, AI, material, SCORM is as ordinary as three of each. Steps
+  are added one at a time or in bulk, inserted anywhere, moved, and
+  removed. Nothing reaches a learner until every step has content.
+
+  Styled to the CLPD admin portal: same tokens, same components.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="runtime-config.js"></script>
+<script src="api-client.js"></script>
+<script src="auth-bridge.js"></script>
+<style>
+:root{
+  --serif:'Instrument Serif',serif;
+  --sans:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --ink:#0a0f1a; --slate:#3a4554; --slate2:#5b6878; --slate3:#8a98aa; --slate4:#aeb9c8;
+  --line:#e8ecf1; --line2:#d2dae3; --paper:#f7f9fb; --paper2:#eef2f6; --white:#fff;
+  --green:#006B3F; --green-l:#00925A; --green-bg:#e6f4ee; --green-border:#b8dccc;
+  --gold:#C9913A; --gold-l:#E5A94A; --gold-bg:#fdf6e9; --gold-border:#ead9b0;
+  --red:#dc2626; --red-bg:#fef2f2; --red-border:#fecaca;
+  --blue:#2563eb; --blue-bg:#eef4ff; --blue-border:#c5d8f7;
+  --purple:#7c3aed; --purple-bg:#f3e8ff; --purple-border:#d8b4fe;
+  --amber:#d97706; --teal:#0d9488;
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:18px;
+  --sh-sm:0 1px 2px rgba(15,23,42,.04),0 2px 4px rgba(15,23,42,.04);
+  --sh-md:0 4px 8px rgba(15,23,42,.06),0 8px 16px rgba(15,23,42,.06);
+  --sh-lg:0 10px 20px rgba(15,23,42,.08),0 20px 40px rgba(15,23,42,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--paper);
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+
+.adm-wrap{max-width:1240px;margin:0 auto;padding:22px 24px 60px}
+.adm-page-head{padding:14px 0 12px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.adm-page-eyebrow{font-family:var(--mono);font-size:9.5px;color:var(--gold);letter-spacing:1.4px;
+  text-transform:uppercase;font-weight:600;margin-bottom:3px}
+.adm-page-title{font-family:var(--serif);font-size:26px;color:var(--ink);letter-spacing:-.02em;
+  margin:0 0 4px;font-weight:500;line-height:1.1}
+.adm-page-desc{font-size:12.5px;color:var(--slate);line-height:1.5;max-width:780px}
+
+.adm-panel{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);
+  box-shadow:var(--sh-sm);padding:20px}
+.adm-panel+.adm-panel{margin-top:14px}
+.adm-panel-title{font-family:var(--serif);font-size:17px;font-weight:500;margin:0 0 3px;letter-spacing:-.01em}
+.adm-hint{font-size:11.5px;color:var(--slate3);margin:0 0 14px;line-height:1.45}
+
+.adm-cols{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
+@media (max-width:960px){.adm-cols{grid-template-columns:1fr}}
+
+.adm-label{display:block;font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;
+  text-transform:uppercase;font-weight:600;margin-bottom:5px}
+.adm-field{margin-bottom:14px}
+.adm-input,.adm-select,.adm-textarea{width:100%;font-family:var(--sans);font-size:13px;color:var(--ink);
+  background:var(--white);border:1.5px solid var(--line2);border-radius:9px;padding:9px 11px;transition:border-color .15s}
+.adm-input:focus,.adm-select:focus,.adm-textarea:focus{outline:none;border-color:var(--green)}
+.adm-textarea{min-height:96px;resize:vertical;line-height:1.55}
+
+.adm-btn-green{background:var(--green);color:#fff;border:none;padding:9px 18px;border-radius:9px;
+  font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.adm-btn-green:hover{background:var(--green-l)}
+.adm-btn-green:disabled{background:var(--slate4);cursor:not-allowed}
+.adm-btn-light{background:var(--white);border:1.5px solid var(--line2);color:var(--ink);padding:9px 16px;
+  border-radius:9px;font-size:13px;font-weight:600}
+.adm-btn-light:hover{background:var(--paper)}
+.adm-btn-light:disabled{opacity:.4;cursor:not-allowed}
+.adm-btn-sm{padding:6px 11px;font-size:12px;border-radius:7px}
+.adm-btn-icon{width:28px;height:28px;padding:0;display:inline-grid;place-items:center;
+  background:var(--white);border:1.5px solid var(--line2);border-radius:7px;color:var(--slate2);font-size:13px}
+.adm-btn-icon:hover:not(:disabled){background:var(--paper);border-color:var(--slate4);color:var(--ink)}
+.adm-btn-icon:disabled{opacity:.3;cursor:not-allowed}
+.adm-btn-danger{color:var(--red);border-color:var(--red-border)}
+.adm-btn-danger:hover:not(:disabled){background:var(--red-bg)}
+
+/* topic list */
+.adm-tlist{display:flex;flex-direction:column;gap:6px}
+.adm-trow{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:var(--white);
+  border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;color:inherit;font:inherit;transition:all .15s}
+.adm-trow:hover{border-color:var(--line2);box-shadow:var(--sh-sm)}
+.adm-trow[aria-current="true"]{border-color:var(--green);background:var(--green-bg)}
+.adm-trow .n{font-weight:600;font-size:13px}
+.adm-trow .c{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:.2px}
+.adm-grow{flex:1;min-width:0}
+
+/* sequence */
+.adm-step{display:flex;align-items:center;gap:11px;background:var(--white);border:1px solid var(--line);
+  border-left:3px solid var(--line2);border-radius:11px;padding:10px 12px;margin-bottom:6px;transition:all .15s}
+.adm-step.ready{border-left-color:var(--green)}
+.adm-step.blocked{border-left-color:var(--gold)}
+.adm-step:hover{box-shadow:var(--sh-sm)}
+.adm-idx{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--slate4);
+  min-width:22px;text-align:right;font-variant-numeric:tabular-nums}
+.adm-kind{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;
+  padding:5px 8px;border-radius:6px;white-space:nowrap;min-width:74px;text-align:center}
+.k-ai{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
+.k-scorm{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.k-doc{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border)}
+.adm-step .t{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-step .s{font-size:11.5px;color:var(--slate3);margin-top:1px}
+.adm-step .s.needs{color:var(--amber)}
+.adm-chip{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;
+  padding:4px 8px;border-radius:5px;background:var(--paper2);color:var(--slate2);white-space:nowrap}
+.adm-chip.live{background:var(--green);color:#fff}
+.adm-tools{display:flex;gap:4px}
+
+/* add-step bar */
+.adm-addbar{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;background:var(--paper);
+  border:1px dashed var(--line2);border-radius:11px;padding:12px 14px;margin-top:10px}
+.adm-addbar .f{min-width:120px}
+.adm-addbar .f.narrow{min-width:76px;max-width:88px}
+
+.adm-banner{border-radius:10px;padding:11px 15px;margin-bottom:14px;font-size:12.5px;line-height:1.5;
+  border:1px solid}
+.adm-banner.warn{background:var(--gold-bg);border-color:var(--gold-border);color:#7a5a20}
+.adm-banner.ok{background:var(--green-bg);border-color:var(--green-border);color:#0a5236}
+.adm-banner.err{background:var(--red-bg);border-color:var(--red-border);color:#9b1c1c}
+
+.adm-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.adm-toolbar .adm-panel-title{flex:1;margin:0}
+.adm-empty{color:var(--slate3);font-size:12.5px;font-style:italic;padding:6px 0}
+.adm-count{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:.3px}
+
+dialog{border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-lg);background:var(--white);
+  color:var(--ink);padding:22px;max-width:560px;width:94vw;font-family:var(--sans);max-height:88vh}
+dialog::backdrop{background:rgba(10,15,26,.45)}
+dialog h3{font-family:var(--serif);font-size:19px;font-weight:500;margin:0 0 2px;letter-spacing:-.01em}
+dialog .k{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:.6px;
+  text-transform:uppercase;margin:0 0 16px}
+.adm-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="adm-wrap">
+  <div class="adm-page-head">
+    <div class="adm-page-eyebrow">Legal Affairs Department · CLPD</div>
+    <h1 class="adm-page-title">Topic Builder</h1>
+    <p class="adm-page-desc">A topic is an ordered journey. Add steps in whatever order you want, insert or move them at any point, and attach the content. Nothing reaches a lawyer until every step has something behind it.</p>
+  </div>
+
+  <div class="adm-cols">
+    <div>
+      <div class="adm-panel">
+        <h2 class="adm-panel-title">New topic</h2>
+        <p class="adm-hint">Create it with a title, then build the sequence step by step.</p>
+        <div class="adm-field">
+          <label class="adm-label" for="f-title">Title</label>
+          <input class="adm-input" id="f-title" placeholder="e.g. AML and CFT essentials">
+        </div>
+        <div class="adm-field">
+          <label class="adm-label" for="f-sum">What it covers</label>
+          <textarea class="adm-textarea" id="f-sum" style="min-height:60px" placeholder="One or two lines the lawyer sees."></textarea>
+        </div>
+        <div class="adm-field">
+          <label class="adm-label" for="f-gate">Order</label>
+          <select class="adm-select" id="f-gate">
+            <option value="sequential">In sequence — each unlocks the next</option>
+            <option value="none">Any order</option>
+          </select>
+        </div>
+        <div class="adm-field">
+          <label class="adm-label" for="f-first">Start with</label>
+          <select class="adm-select" id="f-first">
+            <option value="document">A reading</option>
+            <option value="ai_lesson">An AI session</option>
+            <option value="scorm">A SCORM package</option>
+          </select>
+        </div>
+        <button class="adm-btn-green" id="create" style="width:100%;justify-content:center">Create topic</button>
+      </div>
+
+      <div class="adm-panel">
+        <h2 class="adm-panel-title">Topics</h2>
+        <p class="adm-hint">Select one to edit its sequence.</p>
+        <div class="adm-tlist" id="tlist"><div class="adm-empty">Loading…</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div id="banner"></div>
+      <div class="adm-panel" id="detail"><div class="adm-empty">Create a topic, or choose one from the list.</div></div>
+    </div>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <h3 id="dTitle"></h3>
+  <p class="k" id="dKind"></p>
+  <div id="dFields"></div>
+  <div class="adm-row">
+    <button class="adm-btn-green" id="dSave">Save</button>
+    <button class="adm-btn-light" id="dCancel">Cancel</button>
+  </div>
+</dialog>
+
+<script>
+(function(){
+'use strict';
+var api=window.LAD, selected=null, TOPIC=null, editing=null;
+var $=function(id){return document.getElementById(id);};
+
+var KIND={
+  ai_lesson:{label:'AI session',cls:'k-ai'},
+  scorm:{label:'SCORM',cls:'k-scorm'},
+  document:{label:'Material',cls:'k-doc'},
+  link:{label:'Material',cls:'k-doc'},
+  video:{label:'Video',cls:'k-doc'}
+};
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function banner(t,k){ $('banner').innerHTML=t?'<div class="adm-banner '+(k||'warn')+'">'+t+'</div>':''; }
+
+// ─── topic list ────────────────────────────────────────────────
+async function loadTopics(){
+  try{
+    var r=await api.listTopics();
+    if(!r.topics.length){ $('tlist').innerHTML='<div class="adm-empty">No topics yet.</div>'; return; }
+    $('tlist').innerHTML=r.topics.map(function(t){
+      return '<button class="adm-trow" data-t="'+esc(t.topic_id)+'"'+(selected===t.topic_id?' aria-current="true"':'')+'>'+
+        '<div class="adm-grow"><div class="n">'+esc(t.title)+'</div>'+
+        '<div class="c">'+t.activities+' steps · '+t.learners+' enrolled</div></div>'+
+        '<span class="adm-chip'+(t.published===t.activities&&t.activities?' live':'')+'">'+t.published+'/'+t.activities+'</span>'+
+      '</button>';
+    }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-t]'),function(b){
+      b.onclick=function(){ open(b.dataset.t); };
+    });
+  }catch(e){ $('tlist').innerHTML='<div class="adm-empty">'+esc(e.message)+'</div>'; }
+}
+
+async function open(id){
+  selected=id;
+  try{ TOPIC=await api.getTopic(id); }
+  catch(e){ banner('Could not open that topic: '+esc(e.message),'err'); return; }
+  await loadTopics();
+  renderDetail();
+}
+
+// ─── the sequence ──────────────────────────────────────────────
+function renderDetail(){
+  var t=TOPIC;
+  var steps=t.activities.slice().sort(function(a,b){return a.position-b.position;});
+  var ready=steps.filter(function(a){return a.ready;}).length;
+
+  $('detail').innerHTML=
+    '<div class="adm-toolbar">'+
+      '<h2 class="adm-panel-title">'+esc(t.title)+'</h2>'+
+      '<span class="adm-count">'+steps.length+' steps · '+ready+' ready · '+t.published+' live</span>'+
+      '<button class="adm-btn-light adm-btn-sm" id="preview">Preview hub</button>'+
+      '<button class="adm-btn-green adm-btn-sm" id="publish"'+(t.outstanding?' disabled':'')+'>Publish</button>'+
+    '</div>'+
+    (t.outstanding
+      ? '<div class="adm-banner warn"><b>'+t.outstanding+' of '+steps.length+'</b> steps still need content. Publishing stays locked until they have some — a lawyer should never open an empty step.</div>'
+      : (t.published===steps.length && steps.length
+          ? '<div class="adm-banner ok">Every step is published and live in the hub.</div>'
+          : '<div class="adm-banner ok">All steps are ready. Publish when you want lawyers to see them.</div>'))+
+    '<div id="steps">'+steps.map(function(a,i){
+      var k=KIND[a.kind]||KIND.document;
+      return '<div class="adm-step '+(a.ready?'ready':'blocked')+'">'+
+        '<span class="adm-idx">'+(i+1)+'</span>'+
+        '<span class="adm-kind '+k.cls+'">'+k.label+'</span>'+
+        '<div class="adm-grow"><div class="t">'+esc(a.title)+'</div>'+
+        (a.ready?'<div class="s">Ready'+(a.pass_score?' · pass mark '+a.pass_score:'')+'</div>'
+                :'<div class="s needs">'+esc(a.needs)+'</div>')+'</div>'+
+        '<span class="adm-chip'+(a.published?' live':'')+'">'+(a.published?'live':'draft')+'</span>'+
+        '<div class="adm-tools">'+
+          '<button class="adm-btn-icon" data-up="'+a.id+'"'+(i===0?' disabled':'')+' title="Move up">&#9650;</button>'+
+          '<button class="adm-btn-icon" data-down="'+a.id+'"'+(i===steps.length-1?' disabled':'')+' title="Move down">&#9660;</button>'+
+          '<button class="adm-btn-light adm-btn-sm" data-edit="'+a.id+'">'+(a.kind==='ai_lesson'?'Teach':'Attach')+'</button>'+
+          '<button class="adm-btn-icon adm-btn-danger" data-del="'+a.id+'" title="Remove">&times;</button>'+
+        '</div></div>';
+    }).join('')+'</div>'+
+    '<div class="adm-addbar">'+
+      '<div class="f"><label class="adm-label" for="a-kind">Add step</label>'+
+        '<select class="adm-select" id="a-kind">'+
+          '<option value="ai_lesson">AI session</option>'+
+          '<option value="scorm">SCORM package</option>'+
+          '<option value="document">Material</option></select></div>'+
+      '<div class="f narrow"><label class="adm-label" for="a-count">How many</label>'+
+        '<input class="adm-input" id="a-count" type="number" min="1" max="40" value="1"></div>'+
+      '<div class="f"><label class="adm-label" for="a-at">Insert</label>'+
+        '<select class="adm-select" id="a-at">'+
+          '<option value="">At the end</option>'+
+          steps.map(function(a,i){return '<option value="'+i+'">Before step '+(i+1)+'</option>';}).join('')+
+        '</select></div>'+
+      '<button class="adm-btn-green" id="a-go">Add</button>'+
+    '</div>';
+
+  $('preview').onclick=function(){ window.open('course-hub.html?topic='+encodeURIComponent(t.topic_id),'_blank','noopener'); };
+  $('publish').onclick=doPublish;
+  $('a-go').onclick=doAdd;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-up]'),function(b){
+    b.onclick=function(){ move(b.dataset.up,-1); }; });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-down]'),function(b){
+    b.onclick=function(){ move(b.dataset.down,1); }; });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-edit]'),function(b){
+    b.onclick=function(){ openEdit(b.dataset.edit); }; });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-del]'),function(b){
+    b.onclick=function(){ remove(b.dataset.del); }; });
+}
+
+async function doAdd(){
+  var at=$('a-at').value;
+  try{
+    TOPIC=await api.addTopicSteps(TOPIC.topic_id,{
+      kind:$('a-kind').value,
+      count:Number($('a-count').value)||1,
+      at:at===''?null:Number(at)
+    });
+    banner('');
+    await loadTopics(); renderDetail();
+  }catch(e){ banner('Could not add that: '+esc(e.message),'err'); }
+}
+
+async function move(id,delta){
+  var steps=TOPIC.activities.slice().sort(function(a,b){return a.position-b.position;});
+  var i=steps.findIndex(function(a){return a.id===id;});
+  var to=i+delta;
+  if(to<0||to>=steps.length) return;
+  try{ TOPIC=await api.moveTopicStep(TOPIC.topic_id,id,to); renderDetail(); }
+  catch(e){ banner('Could not move that step: '+esc(e.message),'err'); }
+}
+
+async function remove(id){
+  try{
+    var r=await api.removeTopicStep(TOPIC.topic_id,id);
+    TOPIC=r.topic;
+    banner(r.mode==='retired'
+      ? 'That step had learner attempts against it, so it was retired rather than deleted — the record of what they did is kept.'
+      : '', r.mode==='retired'?'warn':'ok');
+    await loadTopics(); renderDetail();
+  }catch(e){ banner('Could not remove that step: '+esc(e.message),'err'); }
+}
+
+async function doPublish(){
+  try{
+    var r=await api.publishTopic(TOPIC.topic_id,false);
+    banner('Published '+r.published+' step'+(r.published===1?'':'s')+'. Lawyers can see them in the hub now.','ok');
+    TOPIC=await api.getTopic(TOPIC.topic_id);
+    await loadTopics(); renderDetail();
+  }catch(e){ banner('Could not publish: '+esc(e.message),'err'); }
+}
+
+// ─── attaching content ─────────────────────────────────────────
+function openEdit(id){
+  var a=TOPIC.activities.filter(function(x){return x.id===id;})[0];
+  editing=a;
+  $('dTitle').textContent=a.title;
+  $('dKind').textContent=(KIND[a.kind]||KIND.document).label;
+
+  if(a.kind==='ai_lesson'){
+    var L=a.lesson||{};
+    $('dFields').innerHTML=
+      '<div class="adm-field"><label class="adm-label" for="x-title">Session title</label>'+
+        '<input class="adm-input" id="x-title" value="'+esc(a.title)+'"></div>'+
+      '<div class="adm-field"><label class="adm-label" for="x-body">What the bot teaches from</label>'+
+        '<textarea class="adm-textarea" id="x-body" placeholder="The material the AI trainer teaches from."></textarea>'+
+        '<p class="adm-hint">This is the trainer lesson body — the same content your Anam and Claude trainer uses.</p></div>'+
+      '<div class="adm-field"><label class="adm-label" for="x-obj">Objectives, one per line</label>'+
+        '<textarea class="adm-textarea" id="x-obj" style="min-height:70px"></textarea></div>';
+    // Body lives on the trainer lesson, so fetch it rather than guessing.
+    api.trainerLessons().then(function(list){
+      var l=(list||[]).filter(function(x){return x.id===a.lesson_id;})[0];
+      if(!l) return api.trainerAllLessons().then(function(all){
+        return (all||[]).filter(function(x){return x.id===a.lesson_id;})[0];
+      });
+      return l;
+    }).then(function(l){
+      if(!l) return;
+      $('x-body').value=l.body||'';
+      $('x-obj').value=(l.objectives||[]).join('\n');
+    }).catch(function(){});
+  }else{
+    $('dFields').innerHTML=
+      '<div class="adm-field"><label class="adm-label" for="x-title">Title</label>'+
+        '<input class="adm-input" id="x-title" value="'+esc(a.title)+'"></div>'+
+      '<div class="adm-field"><label class="adm-label" for="x-url">'+
+        (a.kind==='scorm'?'SCORM package URL':'File or link URL')+'</label>'+
+        '<input class="adm-input" id="x-url" placeholder="https://…"></div>'+
+      (a.kind==='scorm'
+        ? '<div class="adm-field"><label class="adm-label" for="x-pass">Pass mark</label>'+
+          '<input class="adm-input" id="x-pass" type="number" min="0" max="100" value="'+(a.pass_score===null?80:a.pass_score)+'"></div>'
+        : '');
+  }
+  $('dlg').showModal();
+}
+
+$('dSave').onclick=async function(){
+  var a=editing; if(!a) return;
+  try{
+    if(a.kind==='ai_lesson'){
+      await api.trainerSaveLessons([{
+        id:a.lesson_id,
+        title:$('x-title').value.trim()||a.title,
+        body:$('x-body').value,
+        objectives:$('x-obj').value.split('\n').map(function(s){return s.trim();}).filter(Boolean),
+        course_id:TOPIC.topic_id,
+        duration_min:30,
+        active:false
+      }]);
+      await api.saveActivities(TOPIC.topic_id,[Object.assign({},a,{title:$('x-title').value.trim()||a.title})]);
+    }else{
+      var url=$('x-url').value.trim();
+      if(!url){ banner('Give it a URL, or upload the file in Course Admin and paste the link.','err'); return; }
+      var mat=await api.addCourseMaterial(TOPIC.topic_id,{
+        title:$('x-title').value.trim()||a.title,
+        kind:a.kind==='scorm'?'scorm':'link',
+        url:url
+      });
+      var patch=Object.assign({},a,{
+        title:$('x-title').value.trim()||a.title,
+        material_id:(mat&&(mat.id||(mat.material&&mat.material.id)))||a.material_id
+      });
+      if($('x-pass')) patch.pass_score=Number($('x-pass').value);
+      await api.saveActivities(TOPIC.topic_id,[patch]);
+    }
+    $('dlg').close();
+    TOPIC=await api.getTopic(TOPIC.topic_id);
+    banner(''); await loadTopics(); renderDetail();
+  }catch(e){ banner('Could not save: '+esc(e.message),'err'); }
+};
+$('dCancel').onclick=function(){ $('dlg').close(); };
+
+// ─── create ────────────────────────────────────────────────────
+$('create').onclick=async function(){
+  var title=$('f-title').value.trim();
+  if(!title){ banner('Give the topic a title first.','err'); $('f-title').focus(); return; }
+  try{
+    var t=await api.createTopic({
+      title:title,
+      summary:$('f-sum').value.trim()||null,
+      gate:$('f-gate').value,
+      steps:[{kind:$('f-first').value}]
+    });
+    $('f-title').value=''; $('f-sum').value='';
+    TOPIC=t; selected=t.topic_id;
+    banner('Created <b>'+esc(t.title)+'</b>. Add the rest of the sequence below.','ok');
+    await loadTopics(); renderDetail();
+  }catch(e){ banner('Could not create the topic: '+esc(e.message),'err'); }
+};
+
+loadTopics();
+})();
+</script>
+</body>
+</html>

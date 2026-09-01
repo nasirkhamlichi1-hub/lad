@@ -261,6 +261,37 @@
     reactivateUser: (id)          => call('POST',  '/api/v1/admin/users/' + encodeURIComponent(id) + '/reactivate'),
     listFirmsForAdmin: ()         => call('GET',   '/api/v1/admin/users/firms/list'),
 
+    // ─── Learning spine ────────────────────────────────────────────
+    // Topics (authoring) and the course hub (learners). Completion and
+    // percentages are always read from the server, never sent to it —
+    // there is no endpoint that would accept one.
+    listTopics:      ()            => call('GET',  '/api/v1/learning/topics'),
+    createTopic:     (spec)        => call('POST', '/api/v1/learning/topics', spec),
+    getTopic:        (id)          => call('GET',  '/api/v1/learning/topics/' + encodeURIComponent(id)),
+    addToTopic:      (id, spec)    => call('POST', '/api/v1/learning/topics/' + encodeURIComponent(id) + '/add', spec),
+    // A journey is an ordered list: insert before an index, move to an
+    // index, remove and close the gap. count:10 adds ten in one call.
+    addTopicSteps:   (id, spec)    => call('POST', '/api/v1/learning/topics/' + encodeURIComponent(id) + '/steps', spec),
+    moveTopicStep:   (id, act, to) => call('POST', '/api/v1/learning/topics/' + encodeURIComponent(id) + '/steps/' + encodeURIComponent(act) + '/move', { to }),
+    removeTopicStep: (id, act)     => call('DELETE', '/api/v1/learning/topics/' + encodeURIComponent(id) + '/steps/' + encodeURIComponent(act)),
+    addCourseMaterial: (courseId, m) => call('POST', '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials', m),
+    publishTopic:    (id, force)   => call('POST', '/api/v1/learning/topics/' + encodeURIComponent(id) + '/publish', { force: !!force }),
+
+    courseOutline:   (courseId)    => call('GET',  '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/outline'),
+    courseStructure: (courseId)    => call('GET',  '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/structure'),
+    saveActivities:  (courseId, a) => call('PUT',  '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/activities', a),
+    reorderActivities: (courseId, ids) => call('POST', '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/activities/reorder', { ids }),
+    retireActivity:  (id)          => call('DELETE', '/api/v1/learning/activities/' + encodeURIComponent(id)),
+    enrolMe:         (courseId)    => call('POST', '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/enrol'),
+    myEnrolments:    ()            => call('GET',  '/api/v1/learning/enrolments/mine'),
+
+    startActivity:   (id, info)    => call('POST', '/api/v1/learning/activities/' + encodeURIComponent(id) + '/attempts', info || {}),
+    closeAttempt:    (id, info)    => call('POST', '/api/v1/learning/attempts/' + encodeURIComponent(id) + '/close', info || {}),
+
+    courseCohort:    (courseId)    => call('GET',  '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/cohort'),
+    learnerReport:   (lawyerId)    => call('GET',  '/api/v1/learning/learners/' + encodeURIComponent(lawyerId) + '/report'),
+    myLearningReport: ()           => call('GET',  '/api/v1/learning/report/mine'),
+
     // Self-service password change (used by the first-login flow)
     changeMyPassword: (oldPassword, newPassword) =>
       call('POST', '/api/v1/auth/change-password', { currentPassword: oldPassword, newPassword }),
