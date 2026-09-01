@@ -88,9 +88,17 @@ const ALWAYS_ALLOW = [
   'https://icy-mud-07d00dc03.7.azurestaticapps.net',
   'https://nice-ocean-0a45eff10.7.azurestaticapps.net',
 ];
+// In development the API also serves the portals at /app, so the browser
+// posts from localhost back to this same server. Chrome sends an Origin
+// header on those POSTs, and without this every admin action in the local
+// playground fails preflight — the portals load, then nothing saves.
+// Never true in production: config.isDev is false there.
+const isLocalOrigin = (o) => config.isDev && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o);
+
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin) return cb(null, true); // mobile apps, server-to-server, curl
+    if (isLocalOrigin(origin)) return cb(null, true);
     if (ALWAYS_ALLOW.includes(origin) || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) return cb(null, true);
     log.warn('cors_rejected', { origin });
     cb(new Error('CORS: origin ' + origin + ' not allowed'));
@@ -234,10 +242,16 @@ if (config.isDev) {
       setHeaders: (res) => {
         // The portals are ordinary pages with inline script and styles;
         // the API's default-src 'none' policy would break them.
+        // The portals load Google Fonts, and runtime-config points the API at
+        // an absolute localhost origin in development — which is not 'self'
+        // when the page is opened on 127.0.0.1, and is http rather than https.
+        // Both have to be allowed or every portal loads unstyled and blank.
         res.setHeader('Content-Security-Policy',
-          "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; " +
+          "default-src 'self'; img-src 'self' data: https:; " +
+          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
           "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
-          "connect-src 'self' https:; font-src 'self' data: https:; media-src 'self' blob: https:");
+          "connect-src 'self' http://localhost:* http://127.0.0.1:* https:; " +
+          "font-src 'self' data: https://fonts.gstatic.com https:; media-src 'self' blob: https:");
       },
     }));
     log.info('frontend_mounted', { url: `http://localhost:${config.port}/app/` });

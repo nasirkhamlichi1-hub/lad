@@ -16,6 +16,8 @@ const express = require('express');
 const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth');
 const store = require('../lms/store');
 const topics = require('../lms/topics');
+const aimodel = require('../services/aimodel');
+const log = require('../logger');
 
 const router = express.Router();
 
@@ -92,6 +94,103 @@ router.post('/topics/:topicId/publish', requireRole(...ADMIN_ROLES), async (req,
     const result = await topics.publishTopic(req.params.topicId, { force: (req.body || {}).force === true });
     if (result.blocked.length) return res.status(409).json(result);
     res.json(result);
+  } catch (e) { next(e); }
+});
+
+// ─── Drafting a lesson from uploaded material ────────────────────────
+// The author uploads a document; the browser extracts its text; this turns
+// that text into a teaching summary and a set of key elements.
+//
+// The rule that makes it usable: every objective must be QUOTED from the
+// source. The model returns a quote alongside each one, we check the quote
+// actually appears in the text, and anything it cannot ground is dropped
+// before the author ever sees it. A hallucinated learning objective would be
+// taught as fact to a room of practising lawyers and recorded as CPD, so the
+// cost of a wrong one is much higher than the cost of missing one.
+//
+// It never writes anything. The author reviews, edits and saves.
+
+const DRAFT_MAX_CHARS = 60000;
+
+// Loose containment test: the model reformats whitespace and quotes, so
+// compare on lowercase alphanumerics only.
+const normalise = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+router.post('/draft-lesson', requireRole(...ADMIN_ROLES), async (req, res, next) => {
+  try {
+    if (!aimodel.configured()) {
+      return res.status(501).json({
+        error: 'ai_not_configured',
+        message: 'No AI model is configured on this server, so material cannot be drafted automatically. Write the key elements by hand — everything else works.',
+      });
+    }
+
+    const title = String((req.body && req.body.title) || '').trim();
+    const raw = String((req.body && req.body.text) || '');
+    const text = raw.slice(0, DRAFT_MAX_CHARS);
+    if (text.trim().length < 200) {
+      return res.status(400).json({ error: 'too_short', message: 'There is not enough text in that document to draft from — at least a couple of paragraphs are needed.' });
+    }
+
+    const system = [
+      'You prepare training material for the Dubai Legal Affairs Department.',
+      'You are given the text of a document. Produce the key elements a lawyer must',
+      'be able to demonstrate after being taught from it.',
+      '',
+      'Rules:',
+      '- Draw ONLY on the supplied text. Never add law, obligations or examples that',
+      '  are not in it, however well known they are to you.',
+      '- Every objective MUST be supported by a verbatim quote copied exactly from the',
+      '  text. If you cannot quote it, do not write the objective.',
+      '- Write objectives as things the lawyer can DO ("State when the reporting duty',
+      '  arises"), not topics ("Reporting duties").',
+      '- Between 3 and 8 objectives. Fewer good ones beats more thin ones.',
+      '',
+      'Reply with JSON only, no prose, in exactly this shape:',
+      '{"summary":"one or two sentences","objectives":[{"text":"...","quote":"verbatim from the document"}]}',
+    ].join('\n');
+
+    const answer = await aimodel.chat({
+      system,
+      messages: [{ role: 'user', content: (title ? `Document title: ${title}\n\n` : '') + text }],
+      maxTokens: 1500,
+      temperature: 0,
+    });
+
+    let parsed;
+    try {
+      const m = String(answer || '').match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(m ? m[0] : answer);
+    } catch (e) {
+      log.error('draft_lesson_unparseable', { error: e.message });
+      return res.status(502).json({ error: 'bad_draft', message: 'The model did not return usable JSON. Try again, or write the key elements by hand.' });
+    }
+
+    const haystack = normalise(text);
+    const all = Array.isArray(parsed.objectives) ? parsed.objectives : [];
+    const kept = [];
+    let dropped = 0;
+    for (const o of all) {
+      const objective = String((o && o.text) || '').trim();
+      const quote = String((o && o.quote) || '').trim();
+      if (!objective) continue;
+      // A quote of a few words proves nothing; require enough of it to be real.
+      const nq = normalise(quote);
+      if (nq.length < 25 || !haystack.includes(nq)) { dropped++; continue; }
+      kept.push({ text: objective, quote });
+    }
+
+    log.info('draft_lesson', { chars: text.length, proposed: all.length, kept: kept.length, dropped });
+
+    res.json({
+      summary: String(parsed.summary || '').trim() || null,
+      objectives: kept,
+      dropped,
+      truncated: raw.length > DRAFT_MAX_CHARS,
+      note: dropped
+        ? `${dropped} suggestion${dropped === 1 ? ' was' : 's were'} dropped because ${dropped === 1 ? 'it could' : 'they could'} not be quoted from the document.`
+        : null,
+    });
   } catch (e) { next(e); }
 });
 

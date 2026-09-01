@@ -257,6 +257,16 @@ const MAX_INLINE_BYTES = 10 * 1024 * 1024; // 10 MB inline cap; larger → use a
 const _mid = () => 'MT-' + crypto.randomBytes(6).toString('hex').toUpperCase().slice(0, 10);
 const isMaterialAdmin = (u) => !!u && MATERIAL_ROLES.includes(u.role);
 
+// A course id here may be a scheduled course from the catalogue OR a topic
+// authored in the learning spine, which has activities but no `courses` row.
+// Both own materials, so both have to resolve — otherwise uploading a document
+// to a topic fails with "Course not found".
+function courseOrTopicExists(id) {
+  if (store.getCourseById(id)) return true;
+  try { return !!db.prepare('SELECT 1 FROM activity WHERE course_id = ? LIMIT 1').get(id); }
+  catch (_) { return false; }
+}
+
 // Can this user see/download a course's materials?  Admins always; a lawyer if
 // they have a (non-cancelled) booking for the course.
 function canAccessMaterials(courseId, user) {
@@ -265,7 +275,13 @@ function canAccessMaterials(courseId, user) {
   if (user && user.user_type === 'lawyer') {
     try {
       const b = db.prepare("SELECT 1 FROM bookings WHERE lawyer_id = ? AND course_id = ? AND status NOT IN ('cancelled','refunded') LIMIT 1").get(user.sub, courseId);
-      return !!b;
+      if (b) return true;
+    } catch (_) { /* fall through to the enrolment check */ }
+    // Enrolled on the topic through the learning spine — the same claim on the
+    // material as a booking gives on a scheduled course.
+    try {
+      const e = db.prepare("SELECT 1 FROM enrolment WHERE lawyer_id = ? AND course_id = ? LIMIT 1").get(user.sub, courseId);
+      return !!e;
     } catch (_) { return false; }
   }
   return false;
@@ -285,8 +301,7 @@ router.post('/:id/materials/upload-url', requireRole(...MATERIAL_ROLES), async (
   if (!blob.isConfigured()) {
     return res.status(501).json({ error: 'blob_not_configured', message: 'Cloud storage is not configured — upload files up to 10 MB inline, or add a link.' });
   }
-  const course = store.getCourseById(req.params.id);
-  if (!course) return res.status(404).json({ error: 'Course not found' });
+  if (!courseOrTopicExists(req.params.id)) return res.status(404).json({ error: 'Course not found' });
   const fileName = (req.body.file_name || 'file').toString();
   const mime = (req.body.mime || 'application/octet-stream').toString();
   try {
@@ -301,8 +316,7 @@ router.post('/:id/materials/upload-url', requireRole(...MATERIAL_ROLES), async (
 
 // GET materials list (metadata only — never the inline payload)
 router.get('/:id/materials', optionalAuth, (req, res) => {
-  const course = store.getCourseById(req.params.id);
-  if (!course) return res.status(404).json({ error: 'Course not found' });
+  if (!courseOrTopicExists(req.params.id)) return res.status(404).json({ error: 'Course not found' });
   if (!canAccessMaterials(req.params.id, req.user)) {
     return res.status(403).json({ error: 'no_access', message: 'Book or complete this course to access its materials.' });
   }
@@ -313,8 +327,7 @@ router.get('/:id/materials', optionalAuth, (req, res) => {
 
 // POST add a material (admin) — a link/SCORM URL, or a small inline file
 router.post('/:id/materials', requireRole(...MATERIAL_ROLES), (req, res) => {
-  const course = store.getCourseById(req.params.id);
-  if (!course) return res.status(404).json({ error: 'Course not found' });
+  if (!courseOrTopicExists(req.params.id)) return res.status(404).json({ error: 'Course not found' });
   const title = (req.body.title || '').toString().trim();
   if (!title) return res.status(400).json({ error: 'title is required' });
   let kind = (req.body.kind || 'link').toString();

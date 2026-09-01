@@ -1,0 +1,26 @@
+-- ─────────────────────────────────────────────────────────────────────
+-- 049 — Teaching brief, and material as a teaching source
+-- ─────────────────────────────────────────────────────────────────────
+-- Until now every AI session was taught the same way. trainerPrompt.js held
+-- one constant charter — short turns, cover every objective, react to the
+-- camera — and the only thing an author could change was the lesson body and
+-- its objectives. A criminal-procedure refresher for senior counsel and a
+-- first-week orientation for a newly admitted lawyer were taught identically.
+--
+-- `teaching_brief` is a JSON object of per-session directions that TUNE that
+-- charter: who the trainer is, how deep to go, how often to check, what a
+-- wrong answer means, how hard to be before an objective counts as understood,
+-- and free-text house rules.
+--
+-- It deliberately cannot loosen the parts of the charter that make the record
+-- meaningful. buildSystemPrompt() composes the brief UNDER the charter and
+-- restates, after it, that every key element must still be covered and
+-- confirmed. An author can change the teaching; they cannot switch off the
+-- checking, because a completion that was never verified would corrupt the
+-- CPD record the spine exists to defend.
+--
+-- `source_material_id` records which uploaded file the body was extracted
+-- from, so an admin can see where the teaching text came from and re-extract
+-- if the document is replaced.
+ALTER TABLE trainer_lessons ADD COLUMN teaching_brief TEXT;
+ALTER TABLE trainer_lessons ADD COLUMN source_material_id TEXT;

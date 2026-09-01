@@ -18,7 +18,14 @@ function parse(value, dflt) {
 
 function hydrateLesson(row) {
   if (!row) return null;
-  return { ...row, objectives: parse(row.objectives, []), active: !!row.active };
+  return {
+    ...row,
+    objectives: parse(row.objectives, []),
+    // A brief the author never set is null, not {} — buildSystemPrompt then
+    // leaves the charter untouched rather than composing an empty section.
+    teaching_brief: row.teaching_brief ? parse(row.teaching_brief, null) : null,
+    active: !!row.active,
+  };
 }
 
 function hydrateProgress(row) {
@@ -49,13 +56,16 @@ function upsertLesson(lesson, createdById) {
   const id = lesson.id || genId('lsn');
   db.prepare(`
     INSERT INTO trainer_lessons
-      (id, title, summary, body, objectives, course_id, language, duration_min, cpd_points, active, created_by_id, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      (id, title, summary, body, objectives, course_id, language, duration_min, cpd_points, active,
+       teaching_brief, source_material_id, created_by_id, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
     ON CONFLICT (id) DO UPDATE SET
       title=excluded.title, summary=excluded.summary, body=excluded.body,
       objectives=excluded.objectives, course_id=excluded.course_id,
       language=excluded.language, duration_min=excluded.duration_min,
       cpd_points=excluded.cpd_points, active=excluded.active,
+      teaching_brief=excluded.teaching_brief,
+      source_material_id=excluded.source_material_id,
       updated_at=datetime('now')
   `).run(
     id,
@@ -68,6 +78,10 @@ function upsertLesson(lesson, createdById) {
     Number.isFinite(lesson.duration_min) ? lesson.duration_min : 15,
     Number.isFinite(lesson.cpd_points) ? lesson.cpd_points : 0,
     lesson.active === false ? 0 : 1,
+    lesson.teaching_brief && typeof lesson.teaching_brief === 'object'
+      ? JSON.stringify(lesson.teaching_brief)
+      : null,
+    lesson.source_material_id || null,
     createdById || null
   );
   return getLesson(id);

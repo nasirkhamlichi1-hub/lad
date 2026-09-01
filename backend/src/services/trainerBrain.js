@@ -19,7 +19,7 @@ const axios = require('axios');
 const config = require('../config');
 const log = require('../logger');
 const aimodel = require('./aimodel');
-const { SYSTEM_PROMPT, buildLessonContext } = require('./trainerPrompt');
+const { buildSystemPrompt, buildLessonContext } = require('./trainerPrompt');
 
 const A = config.anthropic;
 const B = config.trainerBrain;
@@ -46,7 +46,8 @@ function perceptionNote(p) {
 function systemFor(lesson, resume) {
   const total = (lesson && Array.isArray(lesson.objectives)) ? lesson.objectives.length : 0;
   const parts = [
-    SYSTEM_PROMPT,
+    // The charter, plus this lesson's teaching brief if its author set one.
+    buildSystemPrompt(lesson),
     '',
     buildLessonContext(lesson),
   ];
