@@ -298,11 +298,13 @@
         <button class="subtab on" data-sub="catalogue" onclick="coursesSub('catalogue',this)"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Catalogue</button>
         <button class="subtab" data-sub="schedules" onclick="coursesSub('schedules',this)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedules</button>
         <button class="subtab" data-sub="trainer" onclick="coursesSub('trainer',this)"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>AI Trainer</button>
+        <button class="subtab" data-sub="topics" onclick="coursesSub('topics',this)"><svg viewBox="0 0 24 24"><path d="M2 7l10-5 10 5-10 5z"/><path d="M6 10v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg>Topics</button>
         <button class="subtab" data-sub="hub" onclick="coursesSub('hub',this)"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Website content</button>
       </div>
       <div class="subbody">
         <iframe class="embed" id="admFrame" title="Course admin" data-src="lad-admin.html?embed=1&page=courses"></iframe>
         <iframe class="embed" id="trnFrame" title="AI Trainer" data-src="lad-trainer-admin.html?embed=1" style="display:none"></iframe>
+        <iframe class="embed" id="topFrame" title="Topics" data-src="lad-topic-builder.html?embed=1" style="display:none"></iframe>
       </div>
     </div></div>
     <div class="view" id="v-accred"><iframe class="embed" title="Accreditation" data-src="lad-accreditation-review.html?embed=1"></iframe></div>
@@ -375,9 +377,19 @@
   // Courses hub — one embedded admin frame driven by message, plus the trainer.
   window.coursesSub=function(sub,el){
     document.querySelectorAll('#v-courses .subtab').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-sub')===sub)});
-    var adm=document.getElementById('admFrame'),trn=document.getElementById('trnFrame');
-    if(sub==='trainer'){if(trn&&!trn.getAttribute('src'))trn.setAttribute('src',trn.getAttribute('data-src'));if(trn)trn.style.display='';if(adm)adm.style.display='none';return}
-    if(trn)trn.style.display='none';if(adm)adm.style.display='';
+    var adm=document.getElementById('admFrame'),trn=document.getElementById('trnFrame'),top=document.getElementById('topFrame');
+    // AI Trainer and Topics are whole pages of their own; the rest are views
+    // inside the course-admin frame, selected by postMessage below.
+    var own={trainer:trn,topics:top};
+    if(own[sub]){
+      var f=own[sub];
+      if(f&&!f.getAttribute('src'))f.setAttribute('src',f.getAttribute('data-src'));
+      [trn,top].forEach(function(x){if(x)x.style.display=(x===f?'':'none')});
+      if(adm)adm.style.display='none';
+      return;
+    }
+    [trn,top].forEach(function(x){if(x)x.style.display='none'});
+    if(adm)adm.style.display='';
     if(!adm)return;
     // Track the wanted page and (re)deliver it on load — covers the race where
     // a sub-tab is clicked before the frame has finished loading.

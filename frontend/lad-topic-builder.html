@@ -132,13 +132,37 @@ button{font-family:inherit;cursor:pointer}
 .adm-empty{color:var(--slate3);font-size:12.5px;font-style:italic;padding:6px 0}
 .adm-count{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:.3px}
 
-dialog{border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-lg);background:var(--white);
-  color:var(--ink);padding:22px;max-width:660px;width:94vw;font-family:var(--sans);max-height:88vh;overflow:auto}
-dialog::backdrop{background:rgba(10,15,26,.45)}
-dialog h3{font-family:var(--serif);font-size:19px;font-weight:500;margin:0 0 2px;letter-spacing:-.01em}
-dialog .k{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:.6px;
-  text-transform:uppercase;margin:0 0 16px}
+/* ─── Step editor: the same right-hand sheet the course editor uses ─── */
+.adm-editor-backdrop{position:fixed;inset:0;background:rgba(10,15,26,.5);backdrop-filter:blur(4px);
+  z-index:200;opacity:0;visibility:hidden;transition:all .25s}
+.adm-editor-backdrop.on{opacity:1;visibility:visible}
+.adm-editor{position:fixed;top:0;right:0;bottom:0;width:min(720px,100%);background:var(--white);
+  box-shadow:var(--sh-lg);z-index:201;transform:translateX(100%);
+  transition:transform .3s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column}
+.adm-editor.on{transform:translateX(0)}
+.adm-editor-head{padding:20px 26px;border-bottom:1px solid var(--line);display:flex;align-items:center;
+  gap:14px;background:linear-gradient(135deg,#0a2040,#1c3a5e);color:#fff}
+.adm-editor-head-eyebrow{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.55);
+  letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:3px}
+.adm-editor-head-title{font-family:var(--serif);font-size:22px;letter-spacing:-.014em;line-height:1.1;flex:1}
+.adm-editor-close{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.18);color:#fff;display:grid;place-items:center;font-size:15px;cursor:pointer}
+.adm-editor-close:hover{background:rgba(255,255,255,.2)}
+.adm-tabs{display:flex;gap:0;border-bottom:1px solid var(--line);background:var(--paper);padding:0 26px;overflow-x:auto}
+.adm-tab{padding:11px 16px;background:transparent;border:none;border-bottom:2px solid transparent;
+  font-size:12.5px;font-weight:600;color:var(--slate2);letter-spacing:.2px;transition:all .15s;white-space:nowrap}
+.adm-tab:hover{color:var(--ink)}
+.adm-tab.active{color:var(--green);border-bottom-color:var(--green)}
+.adm-editor-body{flex:1;overflow-y:auto;padding:24px 26px}
+.adm-pane{display:none}
+.adm-pane.active{display:block}
+.adm-editor-foot{padding:14px 26px;border-top:1px solid var(--line);background:var(--paper);
+  display:flex;gap:8px;align-items:center}
+.adm-editor-foot .spacer{flex:1}
+.adm-editor-foot .st{font-family:var(--mono);font-size:11px;color:var(--slate3)}
 .adm-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+html.lad-embed .adm-page-head{display:none}
+html.lad-embed .adm-wrap{padding-top:14px}
 
 /* upload well */
 .adm-drop{border:1.5px dashed var(--line2);border-radius:11px;background:var(--paper);
@@ -157,6 +181,7 @@ dialog .k{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spac
 @media (max-width:560px){.adm-brief{grid-template-columns:1fr}}
 .adm-brief .adm-field{margin-bottom:0}
 .adm-sect{border-top:1px solid var(--line);margin:18px 0 14px;padding-top:16px}
+.adm-pane > .adm-sect:first-child{border-top:none;margin-top:0;padding-top:0}
 .adm-sect h4{font-family:var(--serif);font-size:15px;font-weight:500;margin:0 0 2px}
 .adm-sect p{font-size:11.5px;color:var(--slate3);margin:0 0 12px;line-height:1.45}
 .adm-obj{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
@@ -217,20 +242,32 @@ dialog .k{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spac
   </div>
 </div>
 
-<dialog id="dlg">
-  <h3 id="dTitle"></h3>
-  <p class="k" id="dKind"></p>
-  <div id="dFields"></div>
-  <div class="adm-row">
+<div class="adm-editor-backdrop" id="dlgBackdrop"></div>
+<aside class="adm-editor" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+  <div class="adm-editor-head">
+    <div style="flex:1;min-width:0">
+      <div class="adm-editor-head-eyebrow" id="dKind"></div>
+      <div class="adm-editor-head-title" id="dTitle"></div>
+    </div>
+    <button class="adm-editor-close" id="dClose" aria-label="Close">&times;</button>
+  </div>
+  <div class="adm-tabs" id="dTabs"></div>
+  <div class="adm-editor-body" id="dFields"></div>
+  <div class="adm-editor-foot">
     <button class="adm-btn-green" id="dSave">Save</button>
     <button class="adm-btn-light" id="dCancel">Cancel</button>
+    <span class="spacer"></span>
+    <span class="st" id="dStatus"></span>
   </div>
-</dialog>
+</aside>
 
 <script>
 (function(){
 'use strict';
 var api=window.LAD, selected=null, TOPIC=null, editing=null, pending=null;
+// Inside the CRM this page is an iframe under Courses, which already draws
+// the heading — so drop ours rather than showing two.
+if(/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('lad-embed');
 var $=function(id){return document.getElementById(id);};
 
 var KIND={
@@ -525,42 +562,116 @@ function readBrief(){
 }
 
 // ─── attaching content ─────────────────────────────────────────
+// ─── The step editor ───────────────────────────────────────────────
+// The same right-hand sheet the course editor uses: a hero head, a tab
+// strip, one pane per tab, and a sticky footer. Splitting the work across
+// tabs matters more here than it looks — material, key elements and
+// teaching style are three different jobs, often done at different times,
+// and stacking them in one scrolling dialog made the last two easy to miss.
+
+var TABS = {
+  ai_lesson: [['material','Material'],['elements','Key elements'],['teaching','Teaching']],
+  scorm:     [['file','Package'],['marking','Marking']],
+  other:     [['file','File']]
+};
+
+function paneMaterial(a){
+  return '<div class="adm-field"><label class="adm-label" for="x-title">Session title</label>'+
+      '<input class="adm-input" id="x-title" value="'+esc(a.title)+'"></div>'+
+    '<div class="adm-sect"><h4>What the bot teaches from</h4>'+
+    '<p>Upload the source document and its text becomes the material the AI teaches from — the same text you can read and edit below. PDF, Word (.docx) or plain text. A scanned page has no text in it and will come back empty.</p>'+
+    '<div class="adm-drop" id="x-drop"><div class="big">Drop a document here, or choose a file</div>'+
+      '<div class="sm">The original is also saved for lawyers to download</div></div>'+
+    '<input type="file" id="x-file" style="display:none" accept=".pdf,.docx,.txt,.md,.csv,.json,.htm,.html">'+
+    '<div id="x-filemeta"></div><div class="adm-busy" id="x-busy"></div>'+
+    '<div class="adm-field" style="margin-top:10px">'+
+      '<textarea class="adm-textarea" id="x-body" style="min-height:220px" placeholder="Upload a document, or type the material here."></textarea></div>'+
+    '</div>';
+}
+
+function paneElements(){
+  return '<div class="adm-sect"><h4>Key elements</h4>'+
+    '<p>What the lawyer must be able to do afterwards. The bot teaches these one at a time and will not close the session until each is understood. Draft them from the material and edit whatever you disagree with.</p>'+
+    '<button class="adm-btn-light adm-btn-sm" id="x-draft" type="button">Draft from the material</button>'+
+    '<div id="x-drafted"></div>'+
+    '<div class="adm-field" style="margin-top:12px">'+
+      '<label class="adm-label" for="x-obj">One per line</label>'+
+      '<textarea class="adm-textarea" id="x-obj" style="min-height:150px"></textarea></div>'+
+    '</div>';
+}
+
+function paneTeaching(a){
+  return '<div class="adm-sect"><h4>How it is taught</h4>'+
+    '<p>The trainer already keeps every session conversational, covers each element and reacts to what the camera sees. This is where you shape the rest of it for this course.</p>'+
+    briefControls(a.lesson && a.lesson.teaching_brief)+'</div>';
+}
+
+function paneFile(a){
+  var isScorm=a.kind==='scorm';
+  return '<div class="adm-field"><label class="adm-label" for="x-title">Title</label>'+
+      '<input class="adm-input" id="x-title" value="'+esc(a.title)+'"></div>'+
+    '<div class="adm-drop" id="x-drop"><div class="big">Drop the '+(isScorm?'SCORM package':'file')+' here, or choose one</div>'+
+      '<div class="sm">Up to 10 MB here; larger files need cloud storage, or add a link below</div></div>'+
+    '<input type="file" id="x-file" style="display:none"'+(isScorm?' accept=".zip"':'')+'>'+
+    '<div id="x-filemeta"></div><div class="adm-busy" id="x-busy"></div>'+
+    '<div class="adm-field" style="margin-top:14px"><label class="adm-label" for="x-url">'+
+      (isScorm?'…or a SCORM package URL':'…or a link')+'</label>'+
+      '<input class="adm-input" id="x-url" placeholder="https://…"></div>';
+}
+
+function paneMarking(a){
+  return '<div class="adm-sect"><h4>Marking</h4>'+
+    '<p>The score the lawyer has to reach for this package to count as passed. Below it the step reads as failed and the topic stays open.</p>'+
+    '<div class="adm-field" style="max-width:200px"><label class="adm-label" for="x-pass">Pass mark</label>'+
+    '<input class="adm-input" id="x-pass" type="number" min="0" max="100" value="'+(a.pass_score===null?80:a.pass_score)+'"></div></div>';
+}
+
+function stepTab(which){
+  Array.prototype.forEach.call(document.querySelectorAll('#dTabs .adm-tab'),function(t){
+    t.classList.toggle('active', t.dataset.tab===which);
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#dFields .adm-pane'),function(p){
+    p.classList.toggle('active', p.dataset.pane===which);
+  });
+}
+
+function closeEditor(){
+  $('dlg').classList.remove('on');
+  $('dlgBackdrop').classList.remove('on');
+  editing=null; pending=null;
+  $('dStatus').textContent='';
+}
+
 function openEdit(id){
   var a=TOPIC.activities.filter(function(x){return x.id===id;})[0];
   editing=a; pending=null;
+  var kind=(KIND[a.kind]||KIND.document);
+  $('dKind').textContent=kind.label+' · step '+(a.position+1);
   $('dTitle').textContent=a.title;
-  $('dKind').textContent=(KIND[a.kind]||KIND.document).label;
+  $('dStatus').textContent='';
+
+  var tabs = TABS[a.kind] || (a.kind==='scorm' ? TABS.scorm : TABS.other);
+  $('dTabs').innerHTML = tabs.length>1
+    ? tabs.map(function(t,i){ return '<button class="adm-tab'+(i===0?' active':'')+'" type="button" data-tab="'+t[0]+'">'+esc(t[1])+'</button>'; }).join('')
+    : '';
+  $('dTabs').style.display = tabs.length>1 ? '' : 'none';
+
+  var panes = {};
+  if(a.kind==='ai_lesson'){
+    panes.material=paneMaterial(a); panes.elements=paneElements(); panes.teaching=paneTeaching(a);
+  } else {
+    panes.file=paneFile(a);
+    if(a.kind==='scorm') panes.marking=paneMarking(a);
+  }
+  $('dFields').innerHTML = tabs.map(function(t,i){
+    return '<div class="adm-pane'+(i===0?' active':'')+'" data-pane="'+t[0]+'">'+panes[t[0]]+'</div>';
+  }).join('');
+
+  Array.prototype.forEach.call(document.querySelectorAll('#dTabs .adm-tab'),function(t){
+    t.onclick=function(){ stepTab(t.dataset.tab); };
+  });
 
   if(a.kind==='ai_lesson'){
-    $('dFields').innerHTML=
-      '<div class="adm-field"><label class="adm-label" for="x-title">Session title</label>'+
-        '<input class="adm-input" id="x-title" value="'+esc(a.title)+'"></div>'+
-
-      '<div class="adm-sect" style="margin-top:14px"><h4>What the bot teaches from</h4>'+
-      '<p>Upload the source document and its text becomes the material the AI teaches from — the same text you can read and edit below. PDF, Word (.docx) or plain text. A scanned page has no text in it and will come back empty.</p>'+
-      '<div class="adm-drop" id="x-drop"><div class="big">Drop a document here, or choose a file</div>'+
-        '<div class="sm">The original is also saved for lawyers to download</div></div>'+
-      '<input type="file" id="x-file" style="display:none" accept=".pdf,.docx,.txt,.md,.csv,.json,.htm,.html">'+
-      '<div id="x-filemeta"></div>'+
-      '<div class="adm-busy" id="x-busy"></div>'+
-      '<div class="adm-field" style="margin-top:10px">'+
-        '<textarea class="adm-textarea" id="x-body" style="min-height:130px" placeholder="Upload a document, or type the material here."></textarea></div>'+
-      '</div>'+
-
-      '<div class="adm-sect"><h4>Key elements</h4>'+
-      '<p>What the lawyer must be able to do afterwards. The bot teaches these one at a time and will not close the session until each is understood. Draft them from the material and edit whatever you disagree with.</p>'+
-      '<button class="adm-btn-light adm-btn-sm" id="x-draft" type="button">Draft from the material</button>'+
-      '<div id="x-drafted"></div>'+
-      '<div class="adm-field" style="margin-top:10px">'+
-        '<label class="adm-label" for="x-obj">One per line</label>'+
-        '<textarea class="adm-textarea" id="x-obj" style="min-height:80px"></textarea></div>'+
-      '</div>'+
-
-      '<div class="adm-sect"><h4>How it is taught</h4>'+
-      '<p>The trainer already keeps every session conversational, covers each element and reacts to what the camera sees. This is where you shape the rest of it for this course.</p>'+
-      briefControls(a.lesson && a.lesson.teaching_brief)+
-      '</div>';
-
     // The body and objectives live on the trainer lesson, so read them rather
     // than guessing from the activity.
     api.trainerAllLessons().then(function(all){
@@ -573,30 +684,14 @@ function openEdit(id){
         if(l.teaching_brief.house_rules && $('b-house')) $('b-house').value=l.teaching_brief.house_rules;
       }
     }).catch(function(){});
-
-    wireDrop('x-drop','x-file',onTeachingFile);
     $('x-draft').onclick=draftFromMaterial;
-
-  }else{
-    var isScorm=a.kind==='scorm';
-    $('dFields').innerHTML=
-      '<div class="adm-field"><label class="adm-label" for="x-title">Title</label>'+
-        '<input class="adm-input" id="x-title" value="'+esc(a.title)+'"></div>'+
-      '<div class="adm-drop" id="x-drop"><div class="big">Drop the '+(isScorm?'SCORM package':'file')+' here, or choose one</div>'+
-        '<div class="sm">Up to 10 MB here; larger files need cloud storage, or add a link below</div></div>'+
-      '<input type="file" id="x-file" style="display:none"'+(isScorm?' accept=".zip"':'')+'>'+
-      '<div id="x-filemeta"></div>'+
-      '<div class="adm-busy" id="x-busy"></div>'+
-      '<div class="adm-field" style="margin-top:12px"><label class="adm-label" for="x-url">'+
-        (isScorm?'…or a SCORM package URL':'…or a link')+'</label>'+
-        '<input class="adm-input" id="x-url" placeholder="https://…"></div>'+
-      (isScorm
-        ? '<div class="adm-field"><label class="adm-label" for="x-pass">Pass mark</label>'+
-          '<input class="adm-input" id="x-pass" type="number" min="0" max="100" value="'+(a.pass_score===null?80:a.pass_score)+'"></div>'
-        : '');
+    wireDrop('x-drop','x-file',onTeachingFile);
+  } else {
     wireDrop('x-drop','x-file',onAttachFile);
   }
-  $('dlg').showModal();
+
+  $('dlgBackdrop').classList.add('on');
+  $('dlg').classList.add('on');
 }
 
 // A file chosen for an AI session: read its text for the bot, and keep the
@@ -667,7 +762,7 @@ $('dSave').onclick=async function(){
   try{
     if(a.kind==='ai_lesson'){
       var body=($('x-body').value||'').trim();
-      if(body.length<40){ banner('Give the bot something to teach from — upload a document or paste the material.','err'); return; }
+      if(body.length<40){ $('dStatus').textContent='Nothing to teach from yet.'; stepTab('material'); banner('Give the bot something to teach from — upload a document or paste the material.','err'); return; }
 
       // Keep the source document alongside the lesson, so a lawyer can read
       // what they were taught from and an admin can see where it came from.
@@ -693,7 +788,7 @@ $('dSave').onclick=async function(){
 
     }else{
       var url=($('x-url')&&$('x-url').value.trim())||'';
-      if(!pending && !url){ banner('Upload a file or give it a URL.','err'); return; }
+      if(!pending && !url){ $('dStatus').textContent='No file or link yet.'; banner('Upload a file or give it a URL.','err'); return; }
 
       var m;
       if(pending){
@@ -714,14 +809,18 @@ $('dSave').onclick=async function(){
       await api.saveActivities(TOPIC.topic_id,[patch]);
     }
 
-    pending=null;
-    $('dlg').close();
+    closeEditor();
     TOPIC=await api.getTopic(TOPIC.topic_id);
     banner(''); await loadTopics(); renderDetail();
   }catch(e){ banner('Could not save: '+esc(e.message),'err'); }
   finally{ btn.disabled=false; btn.textContent=was; }
 };
-$('dCancel').onclick=function(){ $('dlg').close(); };
+$('dCancel').onclick=closeEditor;
+$('dClose').onclick=closeEditor;
+$('dlgBackdrop').onclick=closeEditor;
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape' && $('dlg').classList.contains('on')) closeEditor();
+});
 
 // ─── create ────────────────────────────────────────────────────
 $('create').onclick=async function(){

@@ -1701,6 +1701,30 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
           <span id="matMsg" style="font-size:12px;color:var(--slate3)"></span>
         </div>
       </div>
+      <!-- Turn a document into something the AI trainer can teach from. The
+           same machinery the topic builder uses: extract in the browser, draft
+           key elements the server has checked against the source, review, save. -->
+      <div id="teachBox" style="display:none;margin-top:18px;border-top:1px solid var(--line);padding-top:18px">
+        <div style="font-family:var(--serif);font-size:16px;font-weight:500;margin-bottom:2px">Teach this with the AI trainer</div>
+        <p class="adm-hint" style="margin-bottom:12px">Pick one of the documents above — or a new one — and its text becomes the material the AI trainer teaches from for this course. PDF, Word (.docx) or plain text; a scan has no text in it and will come back empty.</p>
+        <div id="teachDrop" style="border:1.5px dashed var(--line2);border-radius:11px;background:var(--paper);padding:16px;text-align:center;cursor:pointer">
+          <div style="font-weight:600;font-size:13.5px;margin-bottom:2px">Drop a document here, or choose a file</div>
+          <div style="font-size:11.5px;color:var(--slate3)">Read in your browser — the file is not uploaded again unless you add it above</div>
+        </div>
+        <input type="file" id="teachFile" style="display:none" accept=".pdf,.docx,.txt,.md,.csv,.json,.htm,.html">
+        <div id="teachMsg" style="font-family:var(--mono);font-size:11px;color:var(--slate3);margin-top:8px"></div>
+        <div class="adm-field" style="margin-top:10px"><label class="adm-label" style="margin-bottom:3px">Teaching material</label>
+          <textarea id="teachBody" class="adm-textarea" style="width:100%;min-height:130px" placeholder="Upload a document, or paste the material here."></textarea></div>
+        <button type="button" id="teachDraftBtn" onclick="teachDraft()" class="adm-btn-light" style="border:1.5px solid var(--line2);background:#fff;border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer">Draft key elements</button>
+        <div id="teachDrafted"></div>
+        <div class="adm-field" style="margin-top:12px"><label class="adm-label" style="margin-bottom:3px">Key elements — one per line</label>
+          <textarea id="teachObj" class="adm-textarea" style="width:100%;min-height:90px" placeholder="What the lawyer must be able to do afterwards."></textarea></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button type="button" id="teachSaveBtn" onclick="teachSave()" style="background:var(--green,#006B3F);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer">Save teaching material</button>
+          <span id="teachSaveMsg" style="font-size:12px;color:var(--slate3)"></span>
+        </div>
+      </div>
+
       <div id="materialsSaveFirst" style="display:none;padding:18px;text-align:center;color:var(--slate2);font-size:13px;background:var(--paper);border:1px dashed var(--line2);border-radius:10px">Save the course first, then re-open it to attach materials.</div>
     </div>
 
@@ -2870,8 +2894,10 @@ async function loadMaterials(){
   var addBox = document.getElementById('materialsAddBox');
   var saveFirst = document.getElementById('materialsSaveFirst');
   var ready = _matBaseReady();
-  if (!ready) { if(addBox)addBox.style.display='none'; if(saveFirst)saveFirst.style.display='block'; if(list)list.innerHTML=''; return; }
+  var teachBox = document.getElementById('teachBox');
+  if (!ready) { if(addBox)addBox.style.display='none'; if(teachBox)teachBox.style.display='none'; if(saveFirst)saveFirst.style.display='block'; if(list)list.innerHTML=''; return; }
   if(addBox)addBox.style.display=''; if(saveFirst)saveFirst.style.display='none';
+  if(teachBox){ teachBox.style.display=''; teachInit(); }
   if(list)list.innerHTML='<div style="color:var(--slate3);font-size:13px">Loading…</div>';
   try{
     var r = await fetch(ready.base+'/api/v1/courses/'+encodeURIComponent(editingDraft.id)+'/materials',{headers:{Authorization:'Bearer '+ready.token}});
@@ -2942,6 +2968,143 @@ async function addMaterial(){
 async function deleteMaterial(mid){
   var ready=_matBaseReady(); if(!ready)return;
   try{ await fetch(ready.base+'/api/v1/courses/'+encodeURIComponent(editingDraft.id)+'/materials/'+mid,{method:'DELETE',headers:{Authorization:'Bearer '+ready.token}}); loadMaterials(); }catch(e){}
+}
+
+// ────────── TEACHING MATERIAL (AI trainer) ──────────
+// A course document only becomes teaching material once something reads it.
+// Extraction happens here in the browser: no server-side parser, and the
+// admin sees exactly the text the bot will teach from before saving it.
+
+var TEACH_CDN = {
+  pdf:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+  pdfw:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+  mammoth:'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js'
+};
+function teachScript(src){
+  return new Promise(function(ok,fail){
+    if(document.querySelector('script[data-src="'+src+'"]'))return ok();
+    var el=document.createElement('script'); el.src=src; el.setAttribute('data-src',src);
+    el.onload=function(){ok();};
+    el.onerror=function(){fail(new Error('Could not load the reader for this file type.'));};
+    document.head.appendChild(el);
+  });
+}
+async function teachExtract(file){
+  var n=(file.name||'').toLowerCase();
+  if(/\.(txt|md|markdown|csv|json|html?|xml)$/.test(n)) return await file.text();
+  if(/\.pdf$/.test(n)){
+    await teachScript(TEACH_CDN.pdf);
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc=TEACH_CDN.pdfw;
+    var doc=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise, out=[];
+    for(var i=1;i<=doc.numPages;i++){
+      var pg=await doc.getPage(i), tc=await pg.getTextContent();
+      out.push(tc.items.map(function(it){return it.str;}).join(' ').replace(/\s+/g,' ').trim());
+    }
+    return out.filter(Boolean).join('\n\n');
+  }
+  if(/\.docx$/.test(n)){
+    await teachScript(TEACH_CDN.mammoth);
+    var r=await window.mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});
+    return (r&&r.value)||'';
+  }
+  throw new Error('That file type cannot be read. Use a PDF, a Word .docx or plain text — or paste the material in.');
+}
+
+var _teachWired=false, _teachLessonId=null;
+function teachInit(){
+  if(!_teachWired){
+    var zone=document.getElementById('teachDrop'), inp=document.getElementById('teachFile');
+    zone.onclick=function(){inp.click();};
+    inp.onchange=function(){ if(inp.files&&inp.files[0]) teachRead(inp.files[0]); };
+    ['dragenter','dragover'].forEach(function(ev){zone.addEventListener(ev,function(e){e.preventDefault();zone.style.borderColor='var(--green)';});});
+    ['dragleave','drop'].forEach(function(ev){zone.addEventListener(ev,function(e){e.preventDefault();zone.style.borderColor='var(--line2)';});});
+    zone.addEventListener('drop',function(e){var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(f)teachRead(f);});
+    _teachWired=true;
+  }
+  // Load whatever is already being taught for this course, so re-opening the
+  // course shows the real material rather than an empty box.
+  var ready=_matBaseReady(); if(!ready) return;
+  fetch(ready.base+'/api/v1/trainer/lessons?all=1',{headers:{Authorization:'Bearer '+ready.token}})
+    .then(function(r){return r.json();})
+    .then(function(j){
+      var list=(j&&(j.lessons||j))||[];
+      var l=list.filter(function(x){return x.course_id===editingDraft.id;})[0];
+      if(!l) return;
+      _teachLessonId=l.id;
+      if(!document.getElementById('teachBody').value) document.getElementById('teachBody').value=l.body||'';
+      if(!document.getElementById('teachObj').value) document.getElementById('teachObj').value=(l.objectives||[]).join('\n');
+    }).catch(function(){});
+}
+
+async function teachRead(file){
+  var msg=document.getElementById('teachMsg');
+  msg.textContent='Reading '+file.name+'…';
+  try{
+    var text=await teachExtract(file);
+    if(!text||text.trim().length<40){ msg.textContent='No text could be read — if that is a scan, the words are an image. Paste the material in instead.'; return; }
+    document.getElementById('teachBody').value=text.trim();
+    msg.textContent='Read '+text.trim().length.toLocaleString()+' characters from '+file.name+'.';
+  }catch(e){ msg.textContent=e.message; }
+}
+
+async function teachDraft(){
+  var ready=_matBaseReady(); if(!ready)return;
+  var text=(document.getElementById('teachBody').value||'').trim();
+  var btn=document.getElementById('teachDraftBtn');
+  if(text.length<200){ document.getElementById('teachMsg').textContent='Not enough material to draft from yet.'; return; }
+  btn.disabled=true; btn.textContent='Reading the material…';
+  try{
+    var r=await fetch(ready.base+'/api/v1/learning/draft-lesson',{method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+ready.token},
+      body:JSON.stringify({title:(editingDraft&&editingDraft.title)||'',text:text})});
+    var j=await r.json().catch(function(){return{};});
+    if(!r.ok){ document.getElementById('teachMsg').textContent=(j&&j.message)||'Could not draft from the material.'; return; }
+    var objs=j.objectives||[];
+    if(!objs.length){
+      document.getElementById('teachMsg').textContent='Nothing could be drafted that was quotable from this material — write the key elements by hand.';
+      return;
+    }
+    document.getElementById('teachObj').value=objs.map(function(o){return o.text;}).join('\n');
+    document.getElementById('teachDrafted').innerHTML='<div style="margin-top:10px">'+objs.map(function(o){
+      return '<div style="padding:8px 0;border-top:1px solid var(--line);font-size:12.5px"><b>'+escapeHtml(o.text)+'</b>'+
+        '<div style="font-size:11px;color:var(--slate3);font-style:italic;margin-top:3px">from the document: “'+escapeHtml(o.quote)+'”</div></div>';
+    }).join('')+'</div>';
+    document.getElementById('teachMsg').textContent='Drafted '+objs.length+' key element'+(objs.length===1?'':'s')+', each quoted from the document. '+(j.note||'');
+  }catch(e){ document.getElementById('teachMsg').textContent='Could not draft from the material.'; }
+  finally{ btn.disabled=false; btn.textContent='Draft key elements'; }
+}
+
+async function teachSave(){
+  var ready=_matBaseReady(); if(!ready)return;
+  var body=(document.getElementById('teachBody').value||'').trim();
+  var msg=document.getElementById('teachSaveMsg'), btn=document.getElementById('teachSaveBtn');
+  if(body.length<40){ msg.textContent='Add the material first.'; return; }
+  btn.disabled=true; btn.textContent='Saving…'; msg.textContent='';
+  try{
+    var lesson={
+      title:(editingDraft&&editingDraft.title)||'AI training session',
+      body:body,
+      objectives:(document.getElementById('teachObj').value||'').split('\n').map(function(x){return x.trim();}).filter(Boolean),
+      course_id:editingDraft.id,
+      duration_min:30,
+      // Inactive until someone deliberately turns it on in the AI Trainer admin —
+      // a lesson nobody has read should not start teaching lawyers on save.
+      active:false
+    };
+    if(_teachLessonId) lesson.id=_teachLessonId;
+    var r=await fetch(ready.base+'/api/v1/trainer/lessons',{method:'PUT',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+ready.token},
+      body:JSON.stringify([lesson])});
+    var j=await r.json().catch(function(){return{};});
+    if(!r.ok){ msg.textContent=(j&&j.message)||'Could not save.'; }
+    else {
+      var saved=(j&&j.lessons&&j.lessons[0])||null;
+      if(saved&&saved.id) _teachLessonId=saved.id;
+      msg.textContent='Saved — activate it in AI Trainer when you are ready.';
+      toast('✓ Teaching material saved');
+    }
+  }catch(e){ msg.textContent='Could not save — try again.'; }
+  finally{ btn.disabled=false; btn.textContent='Save teaching material'; }
 }
 
 // ────────── SCHEDULE ──────────
