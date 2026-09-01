@@ -139,7 +139,12 @@ dialog .k{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spac
   <h3 id="dName"></h3>
   <p class="k" id="dSub"></p>
   <div id="dBody"></div>
-  <div class="row"><button class="btn-light" id="dClose">Close</button></div>
+  <div class="row">
+    <button class="btn" id="dPrint">Print report</button>
+    <button class="btn-light" id="dCsv">Export CSV</button>
+    <span style="flex:1"></span>
+    <button class="btn-light" id="dClose">Close</button>
+  </div>
 </dialog>
 
 <script>
@@ -156,6 +161,104 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function mins(s){return s?Math.round(s/60)+' min':'—';}
 function nameOf(e){return (e.lawyer_name&&e.lawyer_name.trim())||e.lawyer_id;}
+
+// ─── CSV export ────────────────────────────────────────────────
+// Built client-side from the same rows the screen shows, so the file the
+// LAD sends onward matches exactly what they were looking at.
+function csvCell(v){
+  var s=String(v==null?'':v);
+  return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+}
+function downloadCSV(filename,rows){
+  var text=rows.map(function(r){return r.map(csvCell).join(',');}).join('\r\n');
+  // BOM so Excel opens UTF-8 (Arabic names included) correctly.
+  var blob=new Blob(['﻿'+text],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
+}
+function stamp(){ return new Date().toISOString().slice(0,10); }
+
+var CURRENT=null;  // { topic, rows } for the open cohort
+var LEARNER=null;  // { name, report } for the open learner record
+
+function exportCohortCSV(){
+  if(!CURRENT||!CURRENT.rows.length) return;
+  var rows=[['Lawyer','Email','Lawyer ID','Progress %','Steps done','Steps required',
+             'Minutes recorded','Status','Started','Last active','Completed']];
+  CURRENT.rows.forEach(function(e){
+    rows.push([nameOf(e),e.lawyer_email||'',e.lawyer_id,e.percent,
+      e.required_done,e.required_total,Math.round((e.total_seconds||0)/60),
+      LABEL[e.status]||e.status,e.started_at||'',e.last_active_at||'',e.completed_at||'']);
+  });
+  downloadCSV('cohort-'+CURRENT.topic.topic_id+'-'+stamp()+'.csv',rows);
+}
+
+function exportLearnerCSV(){
+  if(!LEARNER) return;
+  var r=LEARNER.report;
+  var rows=[['Learner',LEARNER.name],['Generated',r.generated_at||new Date().toISOString()],[],
+    ['TOPICS'],['Topic','Progress %','Steps done','Steps required','Minutes','Status','Completed']];
+  (r.enrolments||[]).forEach(function(e){
+    rows.push([e.course_id,e.percent,e.required_done,e.required_total,
+      Math.round((e.total_seconds||0)/60),LABEL[e.status]||e.status,e.completed_at||'']);
+  });
+  rows.push([],['STEPS'],['Step','Type','Topic','Score','Minutes','Attempts','Status','Completed']);
+  (r.activities||[]).forEach(function(a){
+    rows.push([a.title,KIND[a.kind]||a.kind,a.act_course||a.course_id||'',
+      a.score===null||a.score===undefined?'':a.score,
+      Math.round((a.total_seconds||0)/60),a.attempt_count||0,
+      LABEL[a.status]||a.status,a.completed_at||'']);
+  });
+  rows.push([],['ATTEMPT LOG'],['Started','Ended','Step','Outcome','Score','Seconds']);
+  (r.attempts||[]).forEach(function(a){
+    rows.push([a.started_at||'',a.ended_at||'',a.title||a.activity_id,a.status,
+      a.score===null||a.score===undefined?'':a.score,a.seconds||0]);
+  });
+  downloadCSV('learner-'+(r.lawyer_id||'record')+'-'+stamp()+'.csv',rows);
+}
+
+// A clean printable record: department header, the learner, the evidence.
+function printLearnerReport(){
+  if(!LEARNER) return;
+  var r=LEARNER.report;
+  // No 'noopener' here: it makes window.open return null, and we need the
+  // handle to write the report into the new window.
+  var w=window.open('','_blank','width=900,height=700');
+  if(!w){ alert('Allow pop-ups to print the report.'); return; }
+  function row(cells,tag){
+    return '<tr>'+cells.map(function(c){return '<'+(tag||'td')+'>'+esc(c)+'</'+(tag||'td')+'>';}).join('')+'</tr>';
+  }
+  var html='<!doctype html><html><head><meta charset="utf-8"><title>Learning record — '+esc(LEARNER.name)+'</title>'+
+    '<style>body{font:13px/1.5 Georgia,serif;color:#111;margin:40px;max-width:800px}'+
+    'h1{font-size:22px;margin:0 0 2px}h2{font-size:15px;margin:26px 0 8px;border-bottom:1px solid #999;padding-bottom:3px}'+
+    '.k{font:600 10px monospace;letter-spacing:1px;text-transform:uppercase;color:#666}'+
+    'table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}'+
+    'th{font:600 9.5px monospace;text-transform:uppercase;letter-spacing:.6px;text-align:left;'+
+    'border-bottom:1.5px solid #333;padding:5px 8px}td{border-bottom:1px solid #ddd;padding:5px 8px}'+
+    '.foot{margin-top:34px;font-size:11px;color:#666;border-top:1px solid #999;padding-top:8px}'+
+    '@media print{body{margin:12mm}}</style></head><body>'+
+    '<div class="k">Government of Dubai · Legal Affairs Department · Continuing Legal Professional Development</div>'+
+    '<h1>Learning record — '+esc(LEARNER.name)+'</h1>'+
+    '<div class="k">Generated '+esc(r.generated_at||new Date().toISOString())+' · Lawyer ID '+esc(r.lawyer_id||'')+'</div>'+
+    '<h2>Topics</h2><table><thead>'+row(['Topic','Progress','Steps','Minutes','Status','Completed'],'th')+'</thead><tbody>'+
+    ((r.enrolments||[]).map(function(e){
+      return row([e.course_id,e.percent+'%',e.required_done+'/'+e.required_total,
+        Math.round((e.total_seconds||0)/60),LABEL[e.status]||e.status,e.completed_at||'—']);
+    }).join('')||row(['No enrolments recorded.','','','','','']))+'</tbody></table>'+
+    '<h2>Steps</h2><table><thead>'+row(['Step','Type','Score','Minutes','Attempts','Status'],'th')+'</thead><tbody>'+
+    ((r.activities||[]).map(function(a){
+      return row([a.title,KIND[a.kind]||a.kind,
+        a.score===null||a.score===undefined?'—':a.score,
+        Math.round((a.total_seconds||0)/60),a.attempt_count||0,LABEL[a.status]||a.status]);
+    }).join('')||row(['No activity recorded.','','','','','']))+'</tbody></table>'+
+    '<div class="foot">Every figure in this record is derived from the append-only attempt log and can be traced to the sitting that produced it. Percentages are computed by the server and cannot be set by any user.</div>'+
+    '<scr'+'ipt>window.onload=function(){window.print();};</scr'+'ipt></body></html>';
+  w.document.write(html);
+  w.document.close();
+}
 
 async function boot(){
   try{ TOPICS=(await api.listTopics()).topics||[]; }
@@ -193,14 +296,18 @@ async function open(id){
   try{ data=await api.courseCohort(id); }
   catch(e){ $('detail').innerHTML='<div class="panel"><div class="err">'+esc(e.message)+'</div></div>'; return; }
 
-  var t=TOPICS.filter(function(x){return x.topic_id===id;})[0]||{title:id};
+  var t=TOPICS.filter(function(x){return x.topic_id===id;})[0]||{title:id,topic_id:id};
   var rows=data.enrolments||[];
+  CURRENT={topic:t,rows:rows};
   var done=rows.filter(function(e){return e.status==='completed';}).length;
   var avg=rows.length?Math.round(rows.reduce(function(n,e){return n+e.percent;},0)/rows.length):0;
 
   $('detail').innerHTML=
     '<div class="panel">'+
-      '<h2 class="ptitle">'+esc(t.title)+'</h2>'+
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
+        '<h2 class="ptitle" style="flex:1;margin:0">'+esc(t.title)+'</h2>'+
+        (rows.length?'<button class="btn-light" id="cohortCsv" style="padding:6px 12px;font-size:12px">Export CSV</button>':'')+
+      '</div>'+
       '<p class="hint">'+rows.length+' enrolled · '+done+' finished · '+avg+'% average progress</p>'+
       (rows.length?
         '<div class="scroll"><table><thead><tr>'+
@@ -232,6 +339,7 @@ async function open(id){
   Array.prototype.forEach.call(document.querySelectorAll('[data-l]'),function(b){
     b.onclick=function(){ openLearner(b.dataset.l,b.dataset.n); };
   });
+  if($('cohortCsv')) $('cohortCsv').onclick=exportCohortCSV;
 }
 
 async function openLearner(lawyerId,name){
@@ -240,9 +348,11 @@ async function openLearner(lawyerId,name){
   $('dBody').innerHTML='<div class="empty">Loading…</div>';
   $('dlg').showModal();
 
+  LEARNER=null;
   var r;
   try{ r=await api.learnerReport(lawyerId); }
   catch(e){ $('dBody').innerHTML='<div class="err">'+esc(e.message)+'</div>'; return; }
+  LEARNER={name:name,report:r};
 
   var acts=r.activities||[], atts=r.attempts||[];
   $('dBody').innerHTML=
@@ -263,6 +373,8 @@ async function openLearner(lawyerId,name){
     '</tbody></table></div>';
 }
 $('dClose').onclick=function(){ $('dlg').close(); };
+$('dCsv').onclick=exportLearnerCSV;
+$('dPrint').onclick=printLearnerReport;
 
 boot();
 })();
