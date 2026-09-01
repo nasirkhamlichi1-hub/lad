@@ -287,6 +287,7 @@
 
     courseOutline:   (courseId)    => call('GET',  '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/outline'),
     courseStructure: (courseId)    => call('GET',  '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/structure'),
+    saveTopicModules: (courseId, m) => call('PUT',  '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/modules', m),
     saveActivities:  (courseId, a) => call('PUT',  '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/activities', a),
     reorderActivities: (courseId, ids) => call('POST', '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/activities/reorder', { ids }),
     retireActivity:  (id)          => call('DELETE', '/api/v1/learning/activities/' + encodeURIComponent(id)),

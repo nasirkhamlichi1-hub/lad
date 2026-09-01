@@ -211,6 +211,10 @@ html.lad-embed .adm-wrap{padding-top:14px}
           <textarea class="adm-textarea" id="f-sum" style="min-height:60px" placeholder="One or two lines the lawyer sees."></textarea>
         </div>
         <div class="adm-field">
+          <label class="adm-label" for="f-wel">Welcome message <span style="font-weight:400;color:var(--adm-muted,#8a8f98)">(shown at the top of the learner's hub)</span></label>
+          <textarea class="adm-textarea" id="f-wel" style="min-height:60px" placeholder="Your words to the learner — why this topic matters and what the journey gives them."></textarea>
+        </div>
+        <div class="adm-field">
           <label class="adm-label" for="f-gate">Order</label>
           <select class="adm-select" id="f-gate">
             <option value="sequential">In sequence — each unlocks the next</option>
@@ -325,6 +329,12 @@ function renderDetail(){
       : (t.published===steps.length && steps.length
           ? '<div class="adm-banner ok">Every step is published and live in the hub.</div>'
           : '<div class="adm-banner ok">All steps are ready. Publish when you want lawyers to see them.</div>'))+
+    '<div class="adm-field" style="margin:12px 0 16px">'+
+      '<label class="adm-label" for="hub-wel">Hub message — your words to the learner, shown at the top of their journey</label>'+
+      '<textarea class="adm-textarea" id="hub-wel" style="min-height:64px" placeholder="Welcome the learner. Say why this topic matters and what the journey will give them.">'+esc(t.welcome||'')+'</textarea>'+
+      '<div style="display:flex;justify-content:flex-end;margin-top:6px">'+
+        '<button class="adm-btn-light adm-btn-sm" id="hub-wel-save">Save message</button></div>'+
+    '</div>'+
     '<div id="steps">'+steps.map(function(a,i){
       var k=KIND[a.kind]||KIND.document;
       return '<div class="adm-step '+(a.ready?'ready':'blocked')+'">'+
@@ -358,6 +368,23 @@ function renderDetail(){
     '</div>';
 
   $('preview').onclick=function(){ window.open('course-hub.html?topic='+encodeURIComponent(t.topic_id),'_blank','noopener'); };
+  $('hub-wel-save').onclick=async function(){
+    var btn=$('hub-wel-save'), was=btn.textContent;
+    btn.disabled=true; btn.textContent='Saving…';
+    try{
+      var m=(t.modules&&t.modules[0])||null;
+      if(!m) throw new Error('this topic has no section to hold the message yet');
+      // upsertModule replaces every field, so send the whole existing row
+      // with only the welcome changed — anything omitted would be wiped.
+      await api.saveTopicModules(t.topic_id,[Object.assign({},m,{welcome:$('hub-wel').value.trim()||null})]);
+      TOPIC=await api.getTopic(t.topic_id);
+      banner('Hub message saved — lawyers see it at the top of the journey.','ok');
+      renderDetail();
+    }catch(e){
+      banner('Could not save the message: '+esc(e.message),'err');
+      btn.disabled=false; btn.textContent=was;
+    }
+  };
   $('publish').onclick=doPublish;
   $('a-go').onclick=doAdd;
   Array.prototype.forEach.call(document.querySelectorAll('[data-up]'),function(b){
@@ -830,10 +857,11 @@ $('create').onclick=async function(){
     var t=await api.createTopic({
       title:title,
       summary:$('f-sum').value.trim()||null,
+      welcome:$('f-wel').value.trim()||null,
       gate:$('f-gate').value,
       steps:[{kind:$('f-first').value}]
     });
-    $('f-title').value=''; $('f-sum').value='';
+    $('f-title').value=''; $('f-sum').value=''; $('f-wel').value='';
     TOPIC=t; selected=t.topic_id;
     banner('Created <b>'+esc(t.title)+'</b>. Add the rest of the sequence below.','ok');
     await loadTopics(); renderDetail();

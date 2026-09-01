@@ -5,141 +5,228 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Learning hub — CLPD</title>
 <!--
-  The learner's course hub.
+  The learner's course hub — the journey, made visible.
 
-  One page per topic. It shows the journey in order, launches every kind of
-  activity from the same place, and reports each sitting back to the
-  learning spine so the completion figure is derived rather than asserted.
+  One page per topic. The author's own welcome explains what this course of
+  study is; the pathway lays the steps out in order with the learner's state
+  on each; the ring at the top is the single honest number, derived on the
+  server from the attempt log. This page never sends a percentage — there is
+  no endpoint that would accept one.
 
   Launch behaviour by kind:
     ai_lesson → ai-trainer.html?lesson=<id>  (the Anam + Claude trainer;
                 it reports its own session, and the server mirrors it here)
     scorm     → opens the package; the attempt is recorded here until the
                 SCORM runtime lands and reports cmi data itself
-    document  → downloads or opens the material, and marks it read
-    link      → opens the URL
-    video     → opens the material
+    document / link / video → opens the material, and marks it read
 
   Usage:  course-hub.html?topic=AML-AND-CFT-ESSENTIALS
 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script src="runtime-config.js"></script>
 <script src="api-client.js"></script>
 <script src="auth-bridge.js"></script>
 <style>
   :root {
-    --ground:#FBFAF7; --surface:#FFFFFF; --alt:#F3F2ED;
-    --line:#DFDDD4; --line-soft:#EAE8E1;
-    --ink:#191C19; --ink2:#4A4F4A; --ink3:#767B74;
-    --accent:#2F5D50; --accent-soft:#E3ECE7;
-    --warn:#9A6A22; --warn-soft:#F5EDDC;
-    --crit:#8E3F2E; --lock:#9A9E98;
-    --s1:6px; --s2:10px; --s3:16px; --s4:24px; --s5:38px; --s6:56px;
+    --ground:#F7F6F1; --surface:#FFFFFF; --alt:#EFEDE6;
+    --line:#E0DDD2; --line-soft:#EAE8DF;
+    --ink:#171A17; --ink2:#484D48; --ink3:#757A73;
+    --green:#0E5C44; --green-deep:#083D2D; --green-soft:#E2EEE8; --green-line:#BCD8CB;
+    --gold:#B98A36; --gold-soft:#F6EEDD;
+    --crit:#8E3F2E; --crit-soft:#F6E4DF;
+    --lock:#9A9E98;
+    --hero-a:#07130E; --hero-b:#0C2A1E; --hero-c:#0E4430;
+    --ring-track:rgba(255,255,255,.14);
+    --serif:'Instrument Serif',Georgia,serif;
+    --sans:'Public Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --ground:#101310; --surface:#171B17; --alt:#1D221D;
-      --line:#2E342E; --line-soft:#242A24;
-      --ink:#E8EAE6; --ink2:#B0B6AE; --ink3:#838A81;
-      --accent:#7FBFA8; --accent-soft:#1B2A25;
-      --warn:#D4A459; --warn-soft:#2A2416;
-      --crit:#D98B76; --lock:#6B716A;
+      --ground:#0F120F; --surface:#161A16; --alt:#1C211C;
+      --line:#2C332C; --line-soft:#232923;
+      --ink:#E8EAE6; --ink2:#B2B8B0; --ink3:#848A82;
+      --green:#7FC2A6; --green-deep:#0B241A; --green-soft:#182620; --green-line:#2B4A3C;
+      --gold:#D3A65A; --gold-soft:#2A2315;
+      --crit:#D98B76; --crit-soft:#2B1B16;
+      --lock:#6B716A;
+      --hero-a:#05100B; --hero-b:#0A2118; --hero-c:#0C3626;
     }
   }
   * { box-sizing:border-box; }
-  body {
-    margin:0; background:var(--ground); color:var(--ink);
-    font:15.5px/1.58 "Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
-    -webkit-font-smoothing:antialiased;
-  }
-  .wrap { max-width:960px; margin:0 auto; padding:var(--s5) var(--s4) var(--s6); }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:var(--ground); color:var(--ink);
+    font:15.5px/1.6 var(--sans); -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:900px; margin:0 auto; padding:0 22px 72px; }
 
-  a.back {
-    font-size:13px; color:var(--accent); text-decoration:none;
-    display:inline-block; margin-bottom:var(--s3);
+  /* ─── Hero: the journey's front door ─────────────────────────── */
+  .hero {
+    background:
+      radial-gradient(1100px 420px at 85% -60%, rgba(185,138,54,.28), transparent 60%),
+      radial-gradient(900px 500px at -10% 120%, rgba(23,94,68,.55), transparent 55%),
+      linear-gradient(135deg, var(--hero-a) 0%, var(--hero-b) 55%, var(--hero-c) 100%);
+    color:#fff; padding:38px 0 34px; position:relative; overflow:hidden;
   }
-  a.back:hover { text-decoration:underline; }
-  h1 { font-size:clamp(24px,4vw,32px); line-height:1.12; letter-spacing:-.02em; margin:0 0 var(--s2); text-wrap:balance; }
-  .lede { color:var(--ink2); margin:0; max-width:62ch; }
+  .hero::after { /* faint rule pattern, like a ledger */
+    content:''; position:absolute; inset:0; pointer-events:none; opacity:.05;
+    background-image:repeating-linear-gradient(0deg, #fff 0 1px, transparent 1px 28px);
+  }
+  .hero .wrap { padding-bottom:0; position:relative; z-index:1; }
+  a.back { font-size:13px; color:rgba(255,255,255,.75); text-decoration:none;
+    display:inline-flex; align-items:center; gap:6px; margin-bottom:22px; }
+  a.back:hover { color:#fff; }
+  .eyebrow { font:600 10px/1 var(--mono); letter-spacing:.22em; text-transform:uppercase;
+    color:rgba(255,255,255,.55); margin-bottom:10px; }
+  .hero-grid { display:flex; gap:34px; align-items:center; }
+  .hero-main { flex:1; min-width:0; }
+  h1 { font-family:var(--serif); font-weight:400; font-size:clamp(30px,5vw,44px);
+    line-height:1.06; letter-spacing:-.015em; margin:0 0 14px; text-wrap:balance; }
+  .welcome { color:rgba(255,255,255,.82); max-width:58ch; margin:0; font-size:16px; }
+  .welcome.quiet { color:rgba(255,255,255,.6); font-style:italic; }
 
-  .bar {
-    display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap;
-    background:var(--surface); border:1px solid var(--line); border-radius:8px;
-    padding:var(--s3) var(--s4); margin:var(--s4) 0 var(--s5);
-  }
-  .pct { font-size:32px; font-weight:700; line-height:1; font-variant-numeric:tabular-nums; color:var(--accent); min-width:74px; }
-  .track { flex:1; min-width:140px; height:8px; background:var(--alt); border-radius:99px; overflow:hidden; }
-  .fill { height:100%; background:var(--accent); width:0; transition:width .4s cubic-bezier(.4,0,.2,1); }
-  .barmeta { font-size:13px; color:var(--ink3); font-variant-numeric:tabular-nums; }
-  .barmeta b { color:var(--ink2); }
+  /* the ring — the one honest number */
+  .ringbox { flex:none; text-align:center; }
+  .ring { width:148px; height:148px; }
+  .ring circle { fill:none; stroke-width:9; }
+  .ring .track { stroke:var(--ring-track); }
+  .ring .fill  { stroke:url(#ringGrad); stroke-linecap:round;
+    transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1); }
+  .ring text { fill:#fff; font:700 30px var(--sans); }
+  .ring .sub { font:600 9.5px var(--mono); fill:rgba(255,255,255,.6); letter-spacing:.08em; }
+  .ringmeta { margin-top:8px; font:600 11px var(--mono); letter-spacing:.06em;
+    color:rgba(255,255,255,.65); text-transform:uppercase; }
 
-  h2 { font-size:18px; margin:var(--s5) 0 2px; letter-spacing:-.01em; }
-  h2:first-of-type { margin-top:0; }
-  .gate { font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink3);
-          font-family:ui-monospace,"SF Mono",Menlo,monospace; margin:0 0 var(--s3); }
+  .hero-stats { display:flex; gap:26px; margin-top:26px; flex-wrap:wrap; }
+  .hstat .v { font:700 21px var(--sans); }
+  .hstat .l { font:600 9.5px var(--mono); letter-spacing:.14em; text-transform:uppercase;
+    color:rgba(255,255,255,.55); margin-top:2px; }
+  .done-banner { display:none; margin-top:22px; background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.25); border-radius:10px; padding:12px 18px;
+    font-size:14.5px; }
+  .done-banner b { color:#fff; }
 
-  .act {
-    display:flex; align-items:center; gap:var(--s3);
-    background:var(--surface); border:1px solid var(--line); border-radius:8px;
-    padding:14px var(--s3); margin-bottom:8px;
-  }
-  .act.locked { opacity:.5; }
-  .icon {
-    width:38px; height:38px; flex:none; border-radius:8px; background:var(--alt);
-    display:grid; place-items:center; font-size:17px;
-  }
-  .act.done .icon { background:var(--accent-soft); }
+  @media (max-width:640px){ .hero-grid{flex-direction:column-reverse; align-items:flex-start;} .ringbox{align-self:center;} }
+
+  /* ─── How this journey works ─────────────────────────────────── */
+  .how { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px;
+    margin:-26px 0 40px; position:relative; z-index:2; }
+  .how-card { background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:16px 18px; box-shadow:0 8px 24px rgba(10,20,15,.07); }
+  .how-card .ic { width:34px; height:34px; border-radius:9px; display:grid; place-items:center;
+    font-size:16px; margin-bottom:10px; background:var(--green-soft); }
+  .how-card b { display:block; font-size:14px; margin-bottom:3px; }
+  .how-card span { font-size:12.5px; color:var(--ink3); line-height:1.5; display:block; }
+
+  /* ─── The pathway ────────────────────────────────────────────── */
+  .section-title { font-family:var(--serif); font-weight:400; font-size:24px;
+    letter-spacing:-.01em; margin:38px 0 4px; }
+  .gate-note { font:600 10.5px var(--mono); letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink3); margin:0 0 20px; }
+
+  .path { position:relative; padding-left:52px; }
+  .path::before { content:''; position:absolute; left:19px; top:8px; bottom:8px; width:3px;
+    border-radius:2px; background:var(--line); }
+  .path .flow { position:absolute; left:19px; top:8px; width:3px; border-radius:2px;
+    background:linear-gradient(180deg, var(--green), var(--green)); transition:height 1s ease; }
+
+  .node { position:relative; margin-bottom:14px; }
+  .dot { position:absolute; left:-52px; top:14px; width:40px; height:40px; border-radius:50%;
+    display:grid; place-items:center; font:700 14px var(--sans);
+    background:var(--surface); border:3px solid var(--line); color:var(--ink3); z-index:1; }
+  .node.done .dot { background:var(--green); border-color:var(--green); color:#fff; }
+  .node.current .dot { border-color:var(--green); color:var(--green); box-shadow:0 0 0 6px var(--green-soft); }
+  .node.locked .dot { color:var(--lock); }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 6px var(--green-soft);} 50%{box-shadow:0 0 0 11px var(--green-soft);} }
+  .node.current .dot { animation:pulse 2.4s ease-in-out infinite; }
+
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:16px 18px; display:flex; gap:16px; align-items:center; transition:border-color .15s, box-shadow .15s; }
+  .node.current .card { border-color:var(--green-line); box-shadow:0 10px 26px rgba(14,92,68,.10); }
+  .node.locked .card { opacity:.55; }
+  .kind { font:600 9.5px var(--mono); letter-spacing:.1em; text-transform:uppercase;
+    padding:5px 9px; border-radius:6px; white-space:nowrap; background:var(--alt); color:var(--ink3); }
+  .kind.ai   { background:var(--green-soft); color:var(--green); }
+  .kind.test { background:var(--gold-soft); color:var(--gold); }
   .grow { flex:1; min-width:0; }
-  .title { font-weight:600; }
-  .meta { font-size:12.5px; color:var(--ink3); font-variant-numeric:tabular-nums; }
+  .t { font-weight:600; font-size:15.5px; }
+  .m { font-size:12.5px; color:var(--ink3); margin-top:2px; font-variant-numeric:tabular-nums; }
+  .continue-tag { display:none; font:700 10px var(--mono); letter-spacing:.12em; color:var(--green);
+    text-transform:uppercase; margin-bottom:3px; }
+  .node.current .continue-tag { display:block; }
 
-  .pill {
-    font:600 10px/1 ui-monospace,"SF Mono",Menlo,monospace; letter-spacing:.07em;
-    text-transform:uppercase; padding:5px 9px; border-radius:99px; white-space:nowrap;
-  }
+  .pill { font:600 10px var(--mono); letter-spacing:.08em; text-transform:uppercase;
+    padding:5px 10px; border-radius:99px; white-space:nowrap; }
   .s-not_started { background:var(--alt); color:var(--ink3); }
-  .s-in_progress { background:var(--accent-soft); color:var(--accent); }
-  .s-completed, .s-passed { background:var(--accent); color:var(--surface); }
-  .s-failed { background:var(--crit); color:#fff; }
+  .s-in_progress { background:var(--gold-soft); color:var(--gold); }
+  .s-completed, .s-passed { background:var(--green); color:#fff; }
+  .s-failed { background:var(--crit-soft); color:var(--crit); }
   .s-lock { background:transparent; color:var(--lock); border:1px dashed var(--line); }
 
-  button {
-    font:600 13px/1 inherit; padding:10px 14px; border-radius:6px; cursor:pointer;
-    border:1px solid var(--accent); background:var(--accent); color:var(--ground);
-  }
-  button.ghost { background:transparent; color:var(--accent); }
+  button { font:600 13.5px/1 var(--sans); padding:11px 16px; border-radius:8px; cursor:pointer;
+    border:1px solid var(--green); background:var(--green); color:#fff; }
+  button:hover { background:var(--green-deep); border-color:var(--green-deep); }
+  @media (prefers-color-scheme: dark){ button{color:#0F120F;} button:hover{background:var(--green);opacity:.88;} }
+  button.ghost { background:transparent; color:var(--green); }
+  button.ghost:hover { background:var(--green-soft); color:var(--green); }
   button:disabled { opacity:.35; cursor:not-allowed; }
-  button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  button:focus-visible { outline:2px solid var(--green); outline-offset:2px; }
 
-  .msg {
-    background:var(--warn-soft); border:1px solid var(--line); border-radius:8px;
-    padding:var(--s3) var(--s4); margin-bottom:var(--s4); font-size:14px; color:var(--ink2);
-  }
+  .msg { background:var(--gold-soft); border:1px solid var(--line); border-radius:10px;
+    padding:14px 18px; margin:20px 0; font-size:14px; color:var(--ink2); }
   .msg.err { border-color:var(--crit); color:var(--crit); background:transparent; }
-  .skel { color:var(--ink3); font-style:italic; }
+  .skel { color:var(--ink3); font-style:italic; padding:30px 0; }
 
-  dialog {
-    border:1px solid var(--line); border-radius:10px; background:var(--surface);
-    color:var(--ink); padding:var(--s4); max-width:420px; width:92vw; font:inherit;
-  }
-  dialog::backdrop { background:rgba(0,0,0,.5); }
+  dialog { border:1px solid var(--line); border-radius:12px; background:var(--surface);
+    color:var(--ink); padding:24px; max-width:430px; width:92vw; font:inherit; }
+  dialog::backdrop { background:rgba(4,10,7,.55); }
   dialog h3 { margin:0 0 4px; font-size:17px; }
-  dialog p { margin:0 0 var(--s3); color:var(--ink2); font-size:14px; }
-  .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:var(--s4); }
-  @media (prefers-reduced-motion:reduce) { .fill { transition:none; } }
+  dialog p { margin:0 0 14px; color:var(--ink2); font-size:14px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:20px; }
+  @media (prefers-reduced-motion:reduce){ .ring .fill{transition:none} .node.current .dot{animation:none} .path .flow{transition:none} }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <a class="back" href="lawyer-portal-v2.html">← My CLPD</a>
-  <h1 id="title">Learning hub</h1>
-  <p class="lede" id="lede"></p>
 
-  <div class="bar">
-    <div class="pct" id="pct">—</div>
-    <div class="track"><div class="fill" id="fill"></div></div>
-    <div class="barmeta" id="barmeta">Loading…</div>
+<header class="hero">
+  <div class="wrap">
+    <a class="back" href="lawyer-portal-v2.html">← My CLPD</a>
+    <div class="eyebrow">Legal Affairs Department · Learning journey</div>
+    <div class="hero-grid">
+      <div class="hero-main">
+        <h1 id="title">Learning hub</h1>
+        <p class="welcome quiet" id="welcome">Loading your journey…</p>
+        <div class="hero-stats" id="heroStats" style="display:none">
+          <div class="hstat"><div class="v" id="stDone">–</div><div class="l">Steps complete</div></div>
+          <div class="hstat"><div class="v" id="stLeft">–</div><div class="l">Still to do</div></div>
+          <div class="hstat"><div class="v" id="stMin">–</div><div class="l">Minutes recorded</div></div>
+        </div>
+        <div class="done-banner" id="doneBanner">
+          <b>Journey complete.</b> Every required step is done and verified — this now stands on your CLPD record.
+        </div>
+      </div>
+      <div class="ringbox">
+        <svg class="ring" viewBox="0 0 120 120" role="img" aria-label="Progress">
+          <defs>
+            <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#63C39D"/><stop offset="1" stop-color="#B98A36"/>
+            </linearGradient>
+          </defs>
+          <circle class="track" cx="60" cy="60" r="52"/>
+          <circle class="fill" id="ringFill" cx="60" cy="60" r="52"
+                  stroke-dasharray="326.7" stroke-dashoffset="326.7" transform="rotate(-90 60 60)"/>
+          <text id="ringPct" x="60" y="60" text-anchor="middle" dominant-baseline="central">–</text>
+          <text class="sub" x="60" y="80" text-anchor="middle">COMPLETE</text>
+        </svg>
+        <div class="ringmeta" id="ringMeta"></div>
+      </div>
+    </div>
   </div>
+</header>
 
+<div class="wrap">
+  <div class="how" id="how" style="display:none"></div>
   <div id="msg"></div>
   <div id="body"><p class="skel">Loading your hub…</p></div>
 </div>
@@ -161,25 +248,20 @@
   var api = window.LAD;
   var TOPIC = new URLSearchParams(location.search).get('topic') || '';
   var current = null, openedAt = 0, openAttempt = null;
-
   var $ = function (id) { return document.getElementById(id); };
 
-  var ICON = {
-    ai_lesson: '🗣', scorm: '📦', document: '📄',
-    link: '🔗', video: '▶', assessment: '✎'
-  };
-  var LABEL = {
-    not_started: 'not started', in_progress: 'in progress',
-    completed: 'completed', passed: 'passed', failed: 'failed'
-  };
+  var KINDCLS = { ai_lesson:'ai', scorm:'test', assessment:'test' };
+  var KINDTXT = { ai_lesson:'AI session', scorm:'Assessment', document:'Reading',
+                  link:'Reading', video:'Video', assessment:'Assessment' };
+  var LABEL = { not_started:'not started', in_progress:'in progress',
+                completed:'completed', passed:'passed', failed:'failed' };
 
   function note(text, isError) {
     $('msg').innerHTML = text ? '<div class="msg' + (isError ? ' err' : '') + '">' + text + '</div>' : '';
   }
-
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c];
     });
   }
 
@@ -194,67 +276,109 @@
     return bits.join(' · ');
   }
 
-  async function load() {
-    if (!TOPIC) {
-      note('No topic specified. Open this page from your CLPD dashboard, or add <code>?topic=…</code> to the address.', true);
-      $('body').innerHTML = '';
-      return;
-    }
+  function isDone(a) { var s = (a.progress || {}).status; return s === 'completed' || s === 'passed'; }
 
-    var data;
-    try {
-      data = await api.courseOutline(TOPIC);
-    } catch (e) {
-      note('Could not load this hub: ' + esc(e.message), true);
-      $('body').innerHTML = '';
-      return;
-    }
-
-    // Enrol on first visit so progress has somewhere to land.
-    if (!data.enrolment) {
-      try { await api.enrolMe(TOPIC); data = await api.courseOutline(TOPIC); }
-      catch (e) { /* anonymous preview — still render the outline */ }
-    }
-
+  // ─── The hero: ring, stats, welcome ─────────────────────────────
+  function renderHero(data) {
     var enr = data.enrolment;
-    $('title').textContent = (data.sections[0] && data.sections[0].title) || TOPIC;
-    $('lede').textContent = (data.sections[0] && data.sections[0].summary) || '';
+    var first = data.sections[0] || {};
+    $('title').textContent = first.title || TOPIC;
 
-    $('pct').textContent = enr ? enr.percent + '%' : '—';
-    $('fill').style.width = (enr ? enr.percent : 0) + '%';
-    $('barmeta').innerHTML = enr
-      ? '<b>' + enr.required_done + ' of ' + enr.required_total + '</b> required parts complete' +
-        (enr.total_seconds ? ' · ' + Math.round(enr.total_seconds / 60) + ' min recorded' : '') +
-        (enr.status === 'completed' ? ' · <b>finished</b>' : '')
-      : 'Sign in to track your progress';
+    var w = $('welcome');
+    if (first.welcome) { w.textContent = first.welcome; w.classList.remove('quiet'); }
+    else if (first.summary) { w.textContent = first.summary; w.classList.remove('quiet'); }
+    else { w.textContent = 'Work through the steps below in order — your progress is recorded as you go.'; }
 
+    var pct = enr ? enr.percent : 0;
+    var C = 326.7;
+    $('ringFill').style.strokeDashoffset = String(C - (C * pct / 100));
+    $('ringPct').textContent = pct + '%';
+    $('ringMeta').textContent = enr
+      ? (enr.required_done + ' of ' + enr.required_total + ' required')
+      : 'sign in to track';
+
+    if (enr) {
+      $('heroStats').style.display = '';
+      $('stDone').textContent = enr.required_done;
+      $('stLeft').textContent = Math.max(0, enr.required_total - enr.required_done);
+      $('stMin').textContent = Math.round((enr.total_seconds || 0) / 60);
+      if (enr.status === 'completed') $('doneBanner').style.display = 'block';
+    }
+  }
+
+  // ─── "How this journey works", from what it is made of ──────────
+  function renderHow(acts, gated) {
+    var reads = acts.filter(function (a) { return ['document','link','video'].indexOf(a.kind) >= 0; }).length;
+    var ai = acts.filter(function (a) { return a.kind === 'ai_lesson'; }).length;
+    var tests = acts.filter(function (a) { return a.kind === 'scorm' || a.kind === 'assessment'; }).length;
+    var cards = [];
+    if (reads) cards.push(['📖', reads + (reads === 1 ? ' reading' : ' readings'),
+      'The source material — open each one and mark it done when you have read it.']);
+    if (ai) cards.push(['🗣', ai + (ai === 1 ? ' AI-taught session' : ' AI-taught sessions'),
+      'A one-to-one conversation with the trainer. It teaches, asks, and will not sign a session off until you have shown you understood.']);
+    if (tests) cards.push(['✓', tests + (tests === 1 ? ' assessment' : ' assessments'),
+      'Score at or above the pass mark for it to count. Your best score stands across attempts.']);
+    cards.push(['📊', 'Progress that is earned',
+      gated ? 'Steps unlock in order, and the figure above comes from what you have actually completed — it cannot be set by anyone.'
+            : 'Take the steps in any order — the figure above comes from what you have actually completed, and cannot be set by anyone.']);
+    $('how').innerHTML = cards.map(function (c) {
+      return '<div class="how-card"><div class="ic">' + c[0] + '</div><b>' + esc(c[1]) + '</b><span>' + c[2] + '</span></div>';
+    }).join('');
+    $('how').style.display = '';
+  }
+
+  // ─── The pathway ────────────────────────────────────────────────
+  function renderPath(data) {
     var visible = data.sections.filter(function (s) { return s.activities.length; });
     if (!visible.length) {
-      $('body').innerHTML = '<p class="skel">Nothing has been published in this topic yet.</p>';
+      $('body').innerHTML = '<p class="skel">Nothing has been published in this topic yet — check back soon.</p>';
       return;
     }
 
-    $('body').innerHTML = visible.map(function (s) {
-      return '<h2>' + esc(s.title) + '</h2>' +
-        '<p class="gate">' + (s.gate === 'sequential'
-          ? 'Work through these in order'
-          : 'Take these in any order') + '</p>' +
-        s.activities.map(function (a) {
-          var p = a.progress || {};
-          var done = p.status === 'completed' || p.status === 'passed';
-          var pill = a.locked
-            ? '<span class="pill s-lock">locked</span>'
-            : '<span class="pill s-' + p.status + '">' + LABEL[p.status] + '</span>';
-          var label = done ? 'Revisit' : (p.status === 'in_progress' ? 'Resume' : 'Start');
-          return '<div class="act' + (a.locked ? ' locked' : '') + (done ? ' done' : '') + '">' +
-            '<div class="icon">' + (ICON[a.kind] || '•') + '</div>' +
-            '<div class="grow"><div class="title">' + esc(a.title) + '</div>' +
-            '<div class="meta">' + esc(metaLine(a)) + '</div></div>' +
+    var currentMarked = false;
+    var n = 0;
+    $('body').innerHTML = visible.map(function (s, si) {
+      var head = (visible.length > 1 || si > 0)
+        ? '<h2 class="section-title">' + esc(s.title) + '</h2>' +
+          '<p class="gate-note">' + (s.gate === 'sequential' ? 'In order — each step unlocks the next' : 'Any order') + '</p>' +
+          (s.welcome && si > 0 ? '' : '')
+        : '<h2 class="section-title">The pathway</h2>' +
+          '<p class="gate-note">' + (s.gate === 'sequential' ? 'In order — each step unlocks the next' : 'Any order') + '</p>';
+      var nodes = s.activities.map(function (a) {
+        n++;
+        var done = isDone(a);
+        var st = (a.progress || {}).status || 'not_started';
+        var cls = done ? 'done' : (a.locked ? 'locked' : '');
+        if (!done && !a.locked && !currentMarked) { cls = 'current'; currentMarked = true; }
+        var pill = a.locked
+          ? '<span class="pill s-lock">locked</span>'
+          : '<span class="pill s-' + st + '">' + LABEL[st] + '</span>';
+        var btn = done ? 'Revisit' : (st === 'in_progress' ? 'Resume' : 'Start');
+        return '<div class="node ' + cls + '" ' + (cls === 'current' ? 'id="currentNode"' : '') + '>' +
+          '<div class="dot">' + (done ? '✓' : (a.locked ? '🔒' : n)) + '</div>' +
+          '<div class="card">' +
+            '<span class="kind ' + (KINDCLS[a.kind] || '') + '">' + (KINDTXT[a.kind] || a.kind) + '</span>' +
+            '<div class="grow"><div class="continue-tag">Continue here</div>' +
+              '<div class="t">' + esc(a.title) + '</div>' +
+              '<div class="m">' + esc(metaLine(a)) + '</div></div>' +
             pill +
-            '<button data-id="' + a.id + '"' + (a.locked ? ' disabled' : '') + '>' + label + '</button>' +
-            '</div>';
-        }).join('');
+            '<button data-id="' + a.id + '"' + (a.locked ? ' disabled' : '') + '>' + btn + '</button>' +
+          '</div></div>';
+      }).join('');
+      return head + '<div class="path" data-sec="' + si + '"><div class="flow"></div>' + nodes + '</div>';
     }).join('');
+
+    // fill each section's progress line up to its last completed node
+    Array.prototype.forEach.call(document.querySelectorAll('.path'), function (path) {
+      var nodes = path.querySelectorAll('.node');
+      var lastDone = -1;
+      nodes.forEach(function (nd, i) { if (nd.classList.contains('done')) lastDone = i; });
+      var flow = path.querySelector('.flow');
+      if (lastDone >= 0 && nodes.length) {
+        var target = nodes[lastDone];
+        flow.style.height = (target.offsetTop + 34) + 'px';
+      } else { flow.style.height = '0px'; }
+    });
 
     var acts = [];
     visible.forEach(function (s) { acts = acts.concat(s.activities); });
@@ -264,13 +388,32 @@
         if (a) launch(a);
       };
     });
+    renderHow(acts, visible.some(function (s) { return s.gate === 'sequential'; }));
   }
 
-  // ─── Launching ─────────────────────────────────────────────────
-  // The AI trainer runs its own session and the server mirrors it onto
-  // the spine, so this page must NOT also open an attempt for it —
-  // that would double-count. Everything else is tracked from here.
+  async function load() {
+    if (!TOPIC) {
+      note('No topic specified. Open this page from your CLPD dashboard, or add <code>?topic=…</code> to the address.', true);
+      $('body').innerHTML = '';
+      return;
+    }
+    var data;
+    try { data = await api.courseOutline(TOPIC); }
+    catch (e) { note('Could not load this hub: ' + esc(e.message), true); $('body').innerHTML = ''; return; }
 
+    // Enrol on first visit so progress has somewhere to land.
+    if (!data.enrolment) {
+      try { await api.enrolMe(TOPIC); data = await api.courseOutline(TOPIC); }
+      catch (e) { /* anonymous preview — still render the outline */ }
+    }
+    renderHero(data);
+    renderPath(data);
+  }
+
+  // ─── Launching ──────────────────────────────────────────────────
+  // The AI trainer runs its own session and the server mirrors it onto the
+  // spine, so this page must NOT also open an attempt for it — that would
+  // double-count. Everything else is tracked from here.
   async function launch(a) {
     if (a.kind === 'ai_lesson') {
       if (!a.lesson_id) { note('This session has no teaching material attached yet.', true); return; }
@@ -278,18 +421,11 @@
                       '&return=' + encodeURIComponent(location.pathname + location.search);
       return;
     }
-
-    current = a;
-    openedAt = Date.now();
-    openAttempt = null;
-
+    current = a; openedAt = Date.now(); openAttempt = null;
     try {
       var started = await api.startActivity(a.id, {});
       openAttempt = started.attempt;
-    } catch (e) {
-      note('Could not start this activity: ' + esc(e.message), true);
-      return;
-    }
+    } catch (e) { note('Could not start this activity: ' + esc(e.message), true); return; }
 
     $('dlgTitle').textContent = a.title;
     $('dlgBody').innerHTML = a.kind === 'scorm'
@@ -301,16 +437,8 @@
   async function openMaterial() {
     if (!current) return;
     if (!current.material_id) { note('No file is attached to this item yet.', true); return; }
-    try {
-      var r = await api.materialDownloadUrl
-        ? await api.materialDownloadUrl(current.course_id, current.material_id)
-        : null;
-      window.open(r && r.url ? r.url : buildDownloadUrl(current), '_blank', 'noopener');
-    } catch (e) {
-      window.open(buildDownloadUrl(current), '_blank', 'noopener');
-    }
+    window.open(buildDownloadUrl(current), '_blank', 'noopener');
   }
-
   function buildDownloadUrl(a) {
     return (window.LAD_API_BASE || '') + '/api/v1/courses/' +
       encodeURIComponent(a.course_id) + '/materials/' + encodeURIComponent(a.material_id) + '/download';
@@ -321,14 +449,10 @@
     var seconds = Math.max(30, Math.round((Date.now() - openedAt) / 1000));
     try {
       await api.closeAttempt(openAttempt.id, { completed: true, seconds: seconds });
-      $('dlg').close();
-      note('');
+      $('dlg').close(); note('');
       await load();
-    } catch (e) {
-      note('Could not record that: ' + esc(e.message), true);
-    }
+    } catch (e) { note('Could not record that: ' + esc(e.message), true); }
   }
-
   async function abandon() {
     if (openAttempt) {
       var seconds = Math.max(5, Math.round((Date.now() - openedAt) / 1000));
