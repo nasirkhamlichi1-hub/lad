@@ -172,6 +172,8 @@ async function createTopic(input = {}, userId = null) {
   const moduleRow = await store.upsertModule(courseId, {
     title: input.module_title || title,
     summary: input.summary || null,
+    // The author's own words to the learner — rendered at the top of the hub.
+    welcome: input.welcome || null,
     position: 0,
     gate,
   });
@@ -266,6 +268,7 @@ async function getTopic(courseId) {
     topic_id: courseId,
     title: modules.length ? modules[0].title : courseId,
     summary: modules.length ? modules[0].summary : null,
+    welcome: modules.length ? (modules[0].welcome || null) : null,
     gate: modules.length ? modules[0].gate : 'none',
     modules,
     activities: decorated,

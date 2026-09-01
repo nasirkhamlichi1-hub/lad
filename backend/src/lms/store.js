@@ -74,11 +74,12 @@ async function upsertModule(courseId, input = {}) {
   const id = input.id || db.genId('mod');
   const ts = db.now();
   await db.run(
-    `INSERT INTO course_module (id, course_id, title, summary, position, gate, published, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO course_module (id, course_id, title, summary, welcome, position, gate, published, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (id) DO UPDATE SET
        title = excluded.title,
        summary = excluded.summary,
+       welcome = excluded.welcome,
        position = excluded.position,
        gate = excluded.gate,
        published = excluded.published,
@@ -88,6 +89,7 @@ async function upsertModule(courseId, input = {}) {
       courseId,
       String(input.title || 'Untitled section').slice(0, 200),
       input.summary || null,
+      input.welcome === undefined ? null : (input.welcome || null),
       Number(input.position) || 0,
       input.gate === 'sequential' ? 'sequential' : 'none',
       input.published === false ? 0 : 1,
