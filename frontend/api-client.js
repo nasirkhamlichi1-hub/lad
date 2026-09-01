@@ -80,9 +80,11 @@
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const err = new Error(data.error || res.statusText);
+      // Prefer the human sentence the API sends. `error` is a machine code on
+      // most routes ("ai_not_configured"), which is no use in a banner.
+      const err = new Error(data.message || data.error || res.statusText);
       err.status = res.status;
-      err.code = data.code;
+      err.code = data.code || data.error;
       throw err;
     }
     return data;
@@ -275,6 +277,12 @@
     moveTopicStep:   (id, act, to) => call('POST', '/api/v1/learning/topics/' + encodeURIComponent(id) + '/steps/' + encodeURIComponent(act) + '/move', { to }),
     removeTopicStep: (id, act)     => call('DELETE', '/api/v1/learning/topics/' + encodeURIComponent(id) + '/steps/' + encodeURIComponent(act)),
     addCourseMaterial: (courseId, m) => call('POST', '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials', m),
+    // A short-lived write SAS so a large file goes straight to Azure Blob and
+    // never passes through the API.
+    materialUploadUrl: (courseId, spec) => call('POST', '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials/upload-url', spec),
+    // Propose key elements from uploaded material. The server drops anything
+    // it cannot quote from the document, so what comes back is grounded.
+    draftLesson:     (spec)        => call('POST', '/api/v1/learning/draft-lesson', spec),
     publishTopic:    (id, force)   => call('POST', '/api/v1/learning/topics/' + encodeURIComponent(id) + '/publish', { force: !!force }),
 
     courseOutline:   (courseId)    => call('GET',  '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/outline'),

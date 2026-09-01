@@ -133,12 +133,35 @@ button{font-family:inherit;cursor:pointer}
 .adm-count{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:.3px}
 
 dialog{border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-lg);background:var(--white);
-  color:var(--ink);padding:22px;max-width:560px;width:94vw;font-family:var(--sans);max-height:88vh}
+  color:var(--ink);padding:22px;max-width:660px;width:94vw;font-family:var(--sans);max-height:88vh;overflow:auto}
 dialog::backdrop{background:rgba(10,15,26,.45)}
 dialog h3{font-family:var(--serif);font-size:19px;font-weight:500;margin:0 0 2px;letter-spacing:-.01em}
 dialog .k{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:.6px;
   text-transform:uppercase;margin:0 0 16px}
 .adm-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+
+/* upload well */
+.adm-drop{border:1.5px dashed var(--line2);border-radius:11px;background:var(--paper);
+  padding:16px;text-align:center;transition:all .15s;cursor:pointer}
+.adm-drop:hover,.adm-drop.over{border-color:var(--green);background:var(--green-bg)}
+.adm-drop .big{font-weight:600;font-size:13.5px;margin-bottom:2px}
+.adm-drop .sm{font-size:11.5px;color:var(--slate3)}
+.adm-file{display:flex;align-items:center;gap:9px;background:var(--white);border:1px solid var(--line);
+  border-radius:9px;padding:9px 11px;margin-top:8px;font-size:12.5px}
+.adm-file .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.adm-file .sz{font-family:var(--mono);font-size:10.5px;color:var(--slate3)}
+.adm-busy{font-family:var(--mono);font-size:11px;color:var(--slate3);margin-top:8px}
+
+/* teaching brief */
+.adm-brief{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+@media (max-width:560px){.adm-brief{grid-template-columns:1fr}}
+.adm-brief .adm-field{margin-bottom:0}
+.adm-sect{border-top:1px solid var(--line);margin:18px 0 14px;padding-top:16px}
+.adm-sect h4{font-family:var(--serif);font-size:15px;font-weight:500;margin:0 0 2px}
+.adm-sect p{font-size:11.5px;color:var(--slate3);margin:0 0 12px;line-height:1.45}
+.adm-obj{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
+.adm-obj:first-of-type{border-top:none}
+.adm-obj .q{font-size:11px;color:var(--slate3);font-style:italic;margin-top:3px;line-height:1.4}
 </style>
 </head>
 <body>
@@ -207,7 +230,7 @@ dialog .k{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spac
 <script>
 (function(){
 'use strict';
-var api=window.LAD, selected=null, TOPIC=null, editing=null;
+var api=window.LAD, selected=null, TOPIC=null, editing=null, pending=null;
 var $=function(id){return document.getElementById(id);};
 
 var KIND={
@@ -352,83 +375,351 @@ async function doPublish(){
   }catch(e){ banner('Could not publish: '+esc(e.message),'err'); }
 }
 
+// ─── Material → teaching source ────────────────────────────────────
+// The document the author uploads has two jobs: the lawyer downloads it, and
+// the AI teaches from it. So we do both — store the original as a course
+// material, and extract its text into the lesson body.
+//
+// Extraction runs in the browser. That keeps large files off the API, needs
+// no server-side parser, and means the author sees exactly what the bot will
+// read before anything is saved. Scanned pages have no text layer and will
+// come back empty — the UI says so rather than saving a blank lesson.
+
+var MAX_INLINE = 10 * 1024 * 1024;
+var CDN = {
+  pdf:    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+  pdfw:   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+  mammoth:'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js'
+};
+
+function ensureScript(src){
+  return new Promise(function(ok,fail){
+    if(document.querySelector('script[data-src="'+src+'"]')) return ok();
+    var el=document.createElement('script');
+    el.src=src; el.setAttribute('data-src',src);
+    el.onload=function(){ok();};
+    el.onerror=function(){fail(new Error('Could not load the reader for this file type.'));};
+    document.head.appendChild(el);
+  });
+}
+
+function fmtSize(n){
+  if(n<1024) return n+' B';
+  if(n<1024*1024) return Math.round(n/1024)+' KB';
+  return (n/1024/1024).toFixed(1)+' MB';
+}
+
+async function extractText(file){
+  var name=(file.name||'').toLowerCase();
+  if(/\.(txt|md|markdown|csv|json|html?|xml)$/.test(name)) return await file.text();
+
+  if(/\.pdf$/.test(name)){
+    await ensureScript(CDN.pdf);
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc=CDN.pdfw;
+    var doc=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+    var pages=[];
+    for(var i=1;i<=doc.numPages;i++){
+      var page=await doc.getPage(i);
+      var tc=await page.getTextContent();
+      pages.push(tc.items.map(function(it){return it.str;}).join(' ').replace(/\s+/g,' ').trim());
+    }
+    return pages.filter(Boolean).join('\n\n');
+  }
+
+  if(/\.docx$/.test(name)){
+    await ensureScript(CDN.mammoth);
+    var r=await window.mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});
+    return (r&&r.value)||'';
+  }
+
+  throw new Error('That file type cannot be read for teaching text. Use a PDF, a Word .docx, or a plain text file — or paste the text in yourself.');
+}
+
+// Store the original file against the topic so learners can download it.
+// Small files go inline; anything larger needs cloud storage configured.
+async function uploadMaterial(courseId, file, kind){
+  if(file.size>MAX_INLINE){
+    var sas;
+    try{ sas=await api.materialUploadUrl(courseId,{file_name:file.name,mime:file.type||'application/octet-stream'}); }
+    catch(e){ throw new Error('That file is over 10 MB and cloud storage is not set up on this server, so it cannot be stored here. Host it and add it as a link instead.'); }
+    var put=await fetch(sas.upload_url,{method:'PUT',
+      headers:{'x-ms-blob-type':'BlockBlob','Content-Type':file.type||'application/octet-stream'},body:file});
+    if(!put.ok) throw new Error('The upload to cloud storage failed ('+put.status+').');
+    return api.addCourseMaterial(courseId,{title:file.name,kind:kind,file_name:file.name,
+      mime:file.type||null,size:file.size,storage_key:sas.storage_key});
+  }
+  var b64=await new Promise(function(ok,fail){
+    var r=new FileReader();
+    r.onload=function(){ok(String(r.result).split('base64,').pop());};
+    r.onerror=function(){fail(new Error('Could not read that file.'));};
+    r.readAsDataURL(file);
+  });
+  return api.addCourseMaterial(courseId,{title:file.name,kind:kind,file_name:file.name,
+    mime:file.type||null,size:file.size,data:b64});
+}
+
+// A drop target that also works as a plain file picker.
+function wireDrop(zoneId, inputId, onFile){
+  var zone=$(zoneId), input=$(inputId);
+  if(!zone||!input) return;
+  zone.onclick=function(){ input.click(); };
+  input.onchange=function(){ if(input.files&&input.files[0]) onFile(input.files[0]); };
+  ['dragenter','dragover'].forEach(function(ev){
+    zone.addEventListener(ev,function(e){ e.preventDefault(); zone.classList.add('over'); });
+  });
+  ['dragleave','drop'].forEach(function(ev){
+    zone.addEventListener(ev,function(e){ e.preventDefault(); zone.classList.remove('over'); });
+  });
+  zone.addEventListener('drop',function(e){
+    var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+    if(f) onFile(f);
+  });
+}
+
+// ─── The teaching brief ────────────────────────────────────────────
+// How this session is taught, as opposed to what it teaches. Kept in the
+// same order the server renders them so the form reads like the prompt.
+// Every field is optional: an empty brief leaves the trainer's standard
+// charter exactly as it is.
+
+var BRIEF = [
+  ['persona','You are',[['','Standard trainer'],['practitioner','A senior practitioner — teaches from experience'],
+    ['regulator','A regulator — precise about obligations'],['examiner','An examiner — probing, exact'],
+    ['mentor','A mentor — patient, alongside a colleague']]],
+  ['expertise_level','They are',[['','Unspecified'],['new','Newly admitted'],['practising','In practice'],['senior','Senior']]],
+  ['depth','Depth',[['','Unspecified'],['orientation','Orientation'],['working','Working knowledge'],['deep','Deep treatment']]],
+  ['turn_length','Turn length',[['','Standard'],['very_short','Very short — a sentence or two'],
+    ['short','Short — two or three'],['moderate','Moderate — up to five']]],
+  ['check_frequency','Check understanding',[['','Standard'],['every_point','After every idea'],
+    ['few_points','Every two or three ideas'],['section_ends','At the end of each element']]],
+  ['question_style','Ask',[['','Standard'],['recall','Recall — state the rule'],['applied','Applied — use the rule'],
+    ['scenario','Scenario — decide on real facts'],['mixed','Mixed — recall then scenario']]],
+  ['on_wrong_answer','Wrong answers',[['','Standard'],['reteach','Correct and re-teach'],
+    ['hint','One hint, let them retry'],['socratic','Narrow the question until they see it']]],
+  ['strictness','Before it counts',[['','Standard'],['coaching','Broadly right is enough'],
+    ['standard','Correct and unprompted'],['exacting','Correct AND applied to fresh facts']]],
+  ['pass_criteria','To close',[['','Standard'],['explain_back','Summarise it back'],
+    ['apply','Talk through applying it'],['cite','Say where each obligation comes from']]],
+  ['language','Language',[['','English'],['english','English'],['arabic','Arabic'],
+    ['english_ar','English with Arabic legal terms']]]
+];
+
+function briefControls(current){
+  var b=current||{};
+  return '<div class="adm-brief">'+BRIEF.map(function(f){
+    return '<div class="adm-field"><label class="adm-label" for="b-'+f[0]+'">'+esc(f[1])+'</label>'+
+      '<select class="adm-select" id="b-'+f[0]+'">'+f[2].map(function(o){
+        return '<option value="'+o[0]+'"'+(String(b[f[0]]||'')===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';
+      }).join('')+'</select></div>';
+  }).join('')+'</div>'+
+  '<div class="adm-field" style="margin-top:12px"><label class="adm-label" for="b-house">House rules — your own words</label>'+
+  '<textarea class="adm-textarea" id="b-house" style="min-height:70px" placeholder="e.g. Use Dubai Courts examples only. Never give advice on a live matter. Always give the Arabic term for a limitation period.">'+esc(b.house_rules||'')+'</textarea>'+
+  '<p class="adm-hint">These tune how the session is taught. They cannot switch off coverage or the check that the lawyer actually understood each element — a completion nobody verified would not be worth recording.</p></div>';
+}
+
+function readBrief(){
+  var out={};
+  BRIEF.forEach(function(f){ var el=$('b-'+f[0]); if(el&&el.value) out[f[0]]=el.value; });
+  var h=$('b-house'); if(h&&h.value.trim()) out.house_rules=h.value.trim();
+  return Object.keys(out).length?out:null;
+}
+
 // ─── attaching content ─────────────────────────────────────────
 function openEdit(id){
   var a=TOPIC.activities.filter(function(x){return x.id===id;})[0];
-  editing=a;
+  editing=a; pending=null;
   $('dTitle').textContent=a.title;
   $('dKind').textContent=(KIND[a.kind]||KIND.document).label;
 
   if(a.kind==='ai_lesson'){
-    var L=a.lesson||{};
     $('dFields').innerHTML=
       '<div class="adm-field"><label class="adm-label" for="x-title">Session title</label>'+
         '<input class="adm-input" id="x-title" value="'+esc(a.title)+'"></div>'+
-      '<div class="adm-field"><label class="adm-label" for="x-body">What the bot teaches from</label>'+
-        '<textarea class="adm-textarea" id="x-body" placeholder="The material the AI trainer teaches from."></textarea>'+
-        '<p class="adm-hint">This is the trainer lesson body — the same content your Anam and Claude trainer uses.</p></div>'+
-      '<div class="adm-field"><label class="adm-label" for="x-obj">Objectives, one per line</label>'+
-        '<textarea class="adm-textarea" id="x-obj" style="min-height:70px"></textarea></div>';
-    // Body lives on the trainer lesson, so fetch it rather than guessing.
-    api.trainerLessons().then(function(list){
-      var l=(list||[]).filter(function(x){return x.id===a.lesson_id;})[0];
-      if(!l) return api.trainerAllLessons().then(function(all){
-        return (all||[]).filter(function(x){return x.id===a.lesson_id;})[0];
-      });
-      return l;
-    }).then(function(l){
+
+      '<div class="adm-sect" style="margin-top:14px"><h4>What the bot teaches from</h4>'+
+      '<p>Upload the source document and its text becomes the material the AI teaches from — the same text you can read and edit below. PDF, Word (.docx) or plain text. A scanned page has no text in it and will come back empty.</p>'+
+      '<div class="adm-drop" id="x-drop"><div class="big">Drop a document here, or choose a file</div>'+
+        '<div class="sm">The original is also saved for lawyers to download</div></div>'+
+      '<input type="file" id="x-file" style="display:none" accept=".pdf,.docx,.txt,.md,.csv,.json,.htm,.html">'+
+      '<div id="x-filemeta"></div>'+
+      '<div class="adm-busy" id="x-busy"></div>'+
+      '<div class="adm-field" style="margin-top:10px">'+
+        '<textarea class="adm-textarea" id="x-body" style="min-height:130px" placeholder="Upload a document, or type the material here."></textarea></div>'+
+      '</div>'+
+
+      '<div class="adm-sect"><h4>Key elements</h4>'+
+      '<p>What the lawyer must be able to do afterwards. The bot teaches these one at a time and will not close the session until each is understood. Draft them from the material and edit whatever you disagree with.</p>'+
+      '<button class="adm-btn-light adm-btn-sm" id="x-draft" type="button">Draft from the material</button>'+
+      '<div id="x-drafted"></div>'+
+      '<div class="adm-field" style="margin-top:10px">'+
+        '<label class="adm-label" for="x-obj">One per line</label>'+
+        '<textarea class="adm-textarea" id="x-obj" style="min-height:80px"></textarea></div>'+
+      '</div>'+
+
+      '<div class="adm-sect"><h4>How it is taught</h4>'+
+      '<p>The trainer already keeps every session conversational, covers each element and reacts to what the camera sees. This is where you shape the rest of it for this course.</p>'+
+      briefControls(a.lesson && a.lesson.teaching_brief)+
+      '</div>';
+
+    // The body and objectives live on the trainer lesson, so read them rather
+    // than guessing from the activity.
+    api.trainerAllLessons().then(function(all){
+      var l=(all||[]).filter(function(x){return x.id===a.lesson_id;})[0];
       if(!l) return;
       $('x-body').value=l.body||'';
       $('x-obj').value=(l.objectives||[]).join('\n');
+      if(l.teaching_brief){
+        BRIEF.forEach(function(f){ var el=$('b-'+f[0]); if(el&&l.teaching_brief[f[0]]) el.value=l.teaching_brief[f[0]]; });
+        if(l.teaching_brief.house_rules && $('b-house')) $('b-house').value=l.teaching_brief.house_rules;
+      }
     }).catch(function(){});
+
+    wireDrop('x-drop','x-file',onTeachingFile);
+    $('x-draft').onclick=draftFromMaterial;
+
   }else{
+    var isScorm=a.kind==='scorm';
     $('dFields').innerHTML=
       '<div class="adm-field"><label class="adm-label" for="x-title">Title</label>'+
         '<input class="adm-input" id="x-title" value="'+esc(a.title)+'"></div>'+
-      '<div class="adm-field"><label class="adm-label" for="x-url">'+
-        (a.kind==='scorm'?'SCORM package URL':'File or link URL')+'</label>'+
+      '<div class="adm-drop" id="x-drop"><div class="big">Drop the '+(isScorm?'SCORM package':'file')+' here, or choose one</div>'+
+        '<div class="sm">Up to 10 MB here; larger files need cloud storage, or add a link below</div></div>'+
+      '<input type="file" id="x-file" style="display:none"'+(isScorm?' accept=".zip"':'')+'>'+
+      '<div id="x-filemeta"></div>'+
+      '<div class="adm-busy" id="x-busy"></div>'+
+      '<div class="adm-field" style="margin-top:12px"><label class="adm-label" for="x-url">'+
+        (isScorm?'…or a SCORM package URL':'…or a link')+'</label>'+
         '<input class="adm-input" id="x-url" placeholder="https://…"></div>'+
-      (a.kind==='scorm'
+      (isScorm
         ? '<div class="adm-field"><label class="adm-label" for="x-pass">Pass mark</label>'+
           '<input class="adm-input" id="x-pass" type="number" min="0" max="100" value="'+(a.pass_score===null?80:a.pass_score)+'"></div>'
         : '');
+    wireDrop('x-drop','x-file',onAttachFile);
   }
   $('dlg').showModal();
 }
 
+// A file chosen for an AI session: read its text for the bot, and keep the
+// original for the lawyer. The upload happens on Save, not now, so cancelling
+// leaves nothing behind.
+async function onTeachingFile(file){
+  pending=file;
+  $('x-filemeta').innerHTML='<div class="adm-file"><span class="nm">'+esc(file.name)+
+    '</span><span class="sz">'+fmtSize(file.size)+'</span></div>';
+  $('x-busy').textContent='Reading the document…';
+  try{
+    var text=await extractText(file);
+    if(!text || text.trim().length<40){
+      $('x-busy').textContent='';
+      banner('No text could be read from that file. If it is a scan or a photo of a page, the words are an image — type or paste the material in instead.','warn');
+      return;
+    }
+    $('x-body').value=text.trim();
+    $('x-busy').textContent='Read '+text.trim().length.toLocaleString()+' characters. Check it below, then draft the key elements.';
+    banner('');
+  }catch(e){
+    $('x-busy').textContent='';
+    banner(esc(e.message),'err');
+  }
+}
+
+// A file chosen for a material or SCORM step — nothing to extract.
+function onAttachFile(file){
+  pending=file;
+  $('x-filemeta').innerHTML='<div class="adm-file"><span class="nm">'+esc(file.name)+
+    '</span><span class="sz">'+fmtSize(file.size)+'</span></div>';
+  $('x-busy').textContent=file.size>MAX_INLINE
+    ? 'Over 10 MB — this will go to cloud storage if it is configured.'
+    : 'Ready to save.';
+}
+
+// Ask the server to propose key elements from the material. Anything it
+// cannot quote from the document is dropped before it reaches this page.
+async function draftFromMaterial(){
+  var text=($('x-body').value||'').trim();
+  if(text.length<200){ banner('There is not enough material to draft from yet — upload a document or paste the text first.','err'); return; }
+  var btn=$('x-draft');
+  btn.disabled=true; btn.textContent='Reading the material…';
+  try{
+    var r=await api.draftLesson({title:$('x-title').value||editing.title,text:text});
+    var objs=(r.objectives||[]);
+    if(!objs.length){
+      banner('Nothing could be drafted that was actually quotable from this material. Write the key elements by hand.','warn');
+    }else{
+      $('x-obj').value=objs.map(function(o){return o.text;}).join('\n');
+      $('x-drafted').innerHTML='<div style="margin-top:10px">'+objs.map(function(o){
+        return '<div class="adm-obj"><div class="adm-grow"><b>'+esc(o.text)+'</b>'+
+          '<div class="q">from the document: “'+esc(o.quote)+'”</div></div></div>';
+      }).join('')+'</div>';
+      banner('Drafted '+objs.length+' key element'+(objs.length===1?'':'s')+
+        ', each quoted from the document. '+(r.note||'')+' Edit them below — they are yours, not the model\'s.','ok');
+    }
+  }catch(e){
+    banner('Could not draft from the material: '+esc(e.message),'err');
+  }finally{
+    btn.disabled=false; btn.textContent='Draft from the material';
+  }
+}
+
 $('dSave').onclick=async function(){
   var a=editing; if(!a) return;
+  var btn=$('dSave'); btn.disabled=true; var was=btn.textContent; btn.textContent='Saving…';
   try{
     if(a.kind==='ai_lesson'){
+      var body=($('x-body').value||'').trim();
+      if(body.length<40){ banner('Give the bot something to teach from — upload a document or paste the material.','err'); return; }
+
+      // Keep the source document alongside the lesson, so a lawyer can read
+      // what they were taught from and an admin can see where it came from.
+      var materialId=null;
+      if(pending){
+        $('x-busy').textContent='Storing the document…';
+        var mat=await uploadMaterial(TOPIC.topic_id,pending,'file');
+        materialId=(mat&&(mat.id||(mat.material&&mat.material.id)))||null;
+      }
+
       await api.trainerSaveLessons([{
         id:a.lesson_id,
         title:$('x-title').value.trim()||a.title,
-        body:$('x-body').value,
+        body:body,
         objectives:$('x-obj').value.split('\n').map(function(s){return s.trim();}).filter(Boolean),
         course_id:TOPIC.topic_id,
         duration_min:30,
-        active:false
+        active:false,
+        teaching_brief:readBrief(),
+        source_material_id:materialId
       }]);
       await api.saveActivities(TOPIC.topic_id,[Object.assign({},a,{title:$('x-title').value.trim()||a.title})]);
+
     }else{
-      var url=$('x-url').value.trim();
-      if(!url){ banner('Give it a URL, or upload the file in Course Admin and paste the link.','err'); return; }
-      var mat=await api.addCourseMaterial(TOPIC.topic_id,{
-        title:$('x-title').value.trim()||a.title,
-        kind:a.kind==='scorm'?'scorm':'link',
-        url:url
-      });
+      var url=($('x-url')&&$('x-url').value.trim())||'';
+      if(!pending && !url){ banner('Upload a file or give it a URL.','err'); return; }
+
+      var m;
+      if(pending){
+        $('x-busy').textContent='Uploading…';
+        m=await uploadMaterial(TOPIC.topic_id,pending,a.kind==='scorm'?'scorm':'file');
+      }else{
+        m=await api.addCourseMaterial(TOPIC.topic_id,{
+          title:$('x-title').value.trim()||a.title,
+          kind:a.kind==='scorm'?'scorm':'link',
+          url:url
+        });
+      }
       var patch=Object.assign({},a,{
         title:$('x-title').value.trim()||a.title,
-        material_id:(mat&&(mat.id||(mat.material&&mat.material.id)))||a.material_id
+        material_id:(m&&(m.id||(m.material&&m.material.id)))||a.material_id
       });
       if($('x-pass')) patch.pass_score=Number($('x-pass').value);
       await api.saveActivities(TOPIC.topic_id,[patch]);
     }
+
+    pending=null;
     $('dlg').close();
     TOPIC=await api.getTopic(TOPIC.topic_id);
     banner(''); await loadTopics(); renderDetail();
   }catch(e){ banner('Could not save: '+esc(e.message),'err'); }
+  finally{ btn.disabled=false; btn.textContent=was; }
 };
 $('dCancel').onclick=function(){ $('dlg').close(); };
 
