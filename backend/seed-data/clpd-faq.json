@@ -1,0 +1,110 @@
+[
+  {
+    "question": "To whom do the CLPD Regulations apply?",
+    "answer": "If you are a Legal Consultant registered on the Department's roll in the practising category, the CLPD Regulations apply to you. Non-practising consultants and those employed by government entities that do not provide legal services to the public are exempt.",
+    "category": "SCOPE OF APPLICATION",
+    "display_order": 10
+  },
+  {
+    "question": "How do I find out when CLPD courses are held?",
+    "answer": "Visit the Training Calendar on this portal for all scheduled sessions, dates, times, seat availability, and locations.",
+    "category": "SCOPE OF APPLICATION",
+    "display_order": 20
+  },
+  {
+    "question": "How do I pay for training courses?",
+    "answer": "Payments for Mandatory Activities are made online by purchasing credits (1 credit = AED 120). All mandatory and e-learning courses cost 5 credits each (AED 600). For Accredited Activities from external providers, payment terms vary — check directly with the provider.",
+    "category": "SCOPE OF APPLICATION",
+    "display_order": 30
+  },
+  {
+    "question": "Do I need to pay before I can attend?",
+    "answer": "Yes. You will not be admitted to a course without advance payment. If you experience difficulty with online payment, contact +971 4 353 3337 or email Training.Development@legal.dubai.gov.ae.",
+    "category": "SCOPE OF APPLICATION",
+    "display_order": 40
+  },
+  {
+    "question": "Why do I need to participate in CLPD courses?",
+    "answer": "Completing CLPD requirements improves your skills and working experience, which advances the quality of legal services in Dubai and ensures continued public confidence in the profession.",
+    "category": "SCOPE OF APPLICATION",
+    "display_order": 50
+  },
+  {
+    "question": "What are the mandatory points?",
+    "answer": "Eight (8) points from mandatory training courses covering core subjects. A minimum of 2 sessions must be attended face-to-face. Up to 50% (4 pts) can now be completed online in 2026.",
+    "category": "SCOPE OF APPLICATION",
+    "display_order": 60
+  },
+  {
+    "question": "I comply with CLPD obligations in my home jurisdiction — do I need to here also?",
+    "answer": "Yes. However, if your home jurisdiction is recognised by the Department, courses there may count for a maximum of 2 points towards your non-mandatory Accredited Points.",
+    "category": "SCOPE OF APPLICATION",
+    "display_order": 70
+  },
+  {
+    "question": "Can I carry over excess points to the next filing period?",
+    "answer": "Yes. You may carry over a maximum of 2 excess points to count towards Accredited Points in the subsequent filing period. No carry-over applies for mandatory points.",
+    "category": "SCOPE OF APPLICATION",
+    "display_order": 80
+  },
+  {
+    "question": "What is a block session?",
+    "answer": "A block session allows a firm to book a course for a group of legal consultants. Minimum 16 attendees, maximum 40. Available any day except Friday, 9 AM–6 PM. Contact CLPDadmin@creativeword.ae to arrange.",
+    "category": "SCOPE OF APPLICATION",
+    "display_order": 90
+  },
+  {
+    "question": "Can a firm manager block book sessions for staff?",
+    "answer": "Yes, through the web portal under a firm account. Managers can allocate sessions to individual lawyers. Call +971 4 353 3337 for assistance.",
+    "category": "SCOPE OF APPLICATION",
+    "display_order": 100
+  },
+  {
+    "question": "Who keeps a record of CLPD?",
+    "answer": "Each Legal Consultant must maintain a complete record of all CLPD courses undertaken in each filing period. The record must be filed with the Department within 30 days of the filing period lapsing.",
+    "category": "COMPLIANCE & FILING",
+    "display_order": 110
+  },
+  {
+    "question": "What happens if I fail to file my CLPD record?",
+    "answer": "The CLPD Affairs Committee will send a notice. Continued non-compliance results in non-renewal of registration and fines under Executive Council Resolution No. 22 of 2011.",
+    "category": "COMPLIANCE & FILING",
+    "display_order": 120
+  },
+  {
+    "question": "Can I renew my registration if I haven't completed CLPD requirements?",
+    "answer": "No. You will not be able to renew your registration with the Department if you have not completed CLPD requirements within the filing period.",
+    "category": "COMPLIANCE & FILING",
+    "display_order": 130
+  },
+  {
+    "question": "How long must I keep CLPD records?",
+    "answer": "For audit purposes, each Legal Consultant must keep CLPD records and documentation for a minimum of 5 years from the end of the relevant filing period.",
+    "category": "COMPLIANCE & FILING",
+    "display_order": 140
+  },
+  {
+    "question": "Can CLPD requirements be amended?",
+    "answer": "Yes, as per the corresponding procedures set by the Department. Amendments are made on a case-by-case basis through the CLPD Affairs Committee.",
+    "category": "COMPLIANCE & FILING",
+    "display_order": 150
+  },
+  {
+    "question": "How can I enrol in Accredited (non-mandatory) CLPD courses?",
+    "answer": "Register with CLPD course providers approved by the Department. Verify that the provider is accredited before booking — no CLPD points will be awarded for non-accredited providers.",
+    "category": "ACCREDITED ACTIVITIES",
+    "display_order": 160
+  },
+  {
+    "question": "What are \"focused\" sessions?",
+    "answer": "Focused sessions are moderated discussions looking in further detail at a specific element of a mandatory subject. They are aimed at Legal Consultants with extensive experience, or who have already completed the overview course.",
+    "category": "ACCREDITED ACTIVITIES",
+    "display_order": 170
+  },
+  {
+    "question": "Will mandatory courses change?",
+    "answer": "Yes. The Department's ethos is that Mandatory Courses will develop and change each filing period to reflect the needs of the profession and legal work in the Emirate.",
+    "category": "ACCREDITED ACTIVITIES",
+    "display_order": 180
+  }
+]
