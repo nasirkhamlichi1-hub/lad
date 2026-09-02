@@ -50,15 +50,15 @@
   .topics { display:flex; flex-wrap: wrap; gap:6px; }
   .topic { padding: 5px 10px; border-radius: 6px; font-size: 12.5px; font-weight: 500;
            border: 1px solid transparent; cursor: default; }
-  .topic.advanced     { background: #064e3b; color: #d1fae5; border-color: #064e3b; }
-  .topic.intermediate { background: #065f46; color: #ecfdf5; border-color: #047857; }
-  .topic.beginner     { background: #ecfdf5; color: #065f46; border-color: #6ee7b7; }
+  .topic.advanced     { background: #70550F; color: #26CB84; border-color: #70550F; }
+  .topic.intermediate { background: #9D7714; color: #ecfdf5; border-color: #70550F; }
+  .topic.beginner     { background: #ecfdf5; color: #9D7714; border-color: #26CB84; }
   .topic.introductory { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
   .topic.stale       { opacity: 0.7; border-style: dashed; }
   .topic.critically_stale { opacity: 0.55; border-style: dashed; }
   .topic .freshness-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%;
                            margin-right: 6px; vertical-align: middle; }
-  .topic .freshness-dot.current { background: #10b981; }
+  .topic .freshness-dot.current { background: #C9A24A; }
   .topic .freshness-dot.stale { background: #f59e0b; }
   .topic .freshness-dot.critically_stale { background: #ef4444; }
 
@@ -73,7 +73,7 @@
   .skill-row:last-child { border-bottom: 0; }
   .skill-row .name { font-size: 14px; font-weight: 500; }
   .skill-row .domain-tag { font-size: 11px; color: #64748b; margin-top: 2px; }
-  .skill-row .depth { font-size: 13px; font-weight: 600; color: #047857; }
+  .skill-row .depth { font-size: 13px; font-weight: 600; color: #70550F; }
   .skill-row .depth .small { font-size: 11px; font-weight: 500; color: #64748b; }
 
   /* Recommendations */
@@ -87,13 +87,16 @@
 
   .empty { text-align: center; color: #94a3b8; padding: 40px 20px; font-size: 14px; }
 </style>
+  <!-- Government of Dubai Legal Affairs Department identity -->
+  <link rel="stylesheet" href="lad-brand.css">
+  <script src="lad-brand.js" defer></script>
 </head>
 <body>
 
 <style>
 :root{--lad-nav-h:58px}
 .lad-shared-nav{background:#1c1f2e;height:var(--lad-nav-h);display:flex;align-items:center;padding:0 24px;gap:20px;position:sticky;top:0;z-index:500;box-shadow:0 2px 12px rgba(0,0,0,.35);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-.lad-portal-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;background:rgba(0,107,63,.2);border:1px solid rgba(0,171,100,.4);color:rgba(100,220,150,.9)}
+.lad-portal-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;background:rgba(157,119,20,.2);border:1px solid rgba(201,162,74,.4);color:rgba(38,203,132,.9)}
 .lad-snl{color:rgba(255,255,255,.75);font-size:12.5px;font-weight:500;padding:6px 12px;border-radius:6px;cursor:pointer;transition:all .15s;white-space:nowrap;text-decoration:none}
 .lad-snl:hover{background:rgba(255,255,255,.1);color:#fff}
 .lad-snl.active{background:rgba(255,255,255,.1);color:#fff}
@@ -153,12 +156,12 @@
           <div class="empty">Building your skill graph…</div>
         </div>
         <div class="legend">
-          <span><span class="swatch" style="background:#064e3b"></span>Advanced</span>
-          <span><span class="swatch" style="background:#047857"></span>Intermediate</span>
-          <span><span class="swatch" style="background:#ecfdf5;border:1px solid #6ee7b7"></span>Beginner</span>
+          <span><span class="swatch" style="background:#70550F"></span>Advanced</span>
+          <span><span class="swatch" style="background:#70550F"></span>Intermediate</span>
+          <span><span class="swatch" style="background:#ecfdf5;border:1px solid #26CB84"></span>Beginner</span>
           <span><span class="swatch" style="background:#f1f5f9;border:1px solid #cbd5e1"></span>Introductory</span>
           <span>· · ·</span>
-          <span><span class="freshness-dot current" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;margin-right:3px"></span>Current</span>
+          <span><span class="freshness-dot current" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#C9A24A;margin-right:3px"></span>Current</span>
           <span><span class="freshness-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f59e0b;margin-right:3px"></span>Stale (2+ yrs)</span>
           <span><span class="freshness-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;margin-right:3px"></span>Critically stale (4+ yrs)</span>
         </div>

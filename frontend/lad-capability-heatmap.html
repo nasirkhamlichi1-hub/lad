@@ -51,11 +51,11 @@
   .heat .name { font-size: 12.5px; font-weight: 500; line-height: 1.25; }
   .heat .val { font-size: 13px; font-weight: 700; }
   .heat.cov-0 { background: rgba(248,113,113,0.05); color: #94a3b8; }
-  .heat.cov-1 { background: rgba(34,197,94,0.08); color: #d1fae5; }
-  .heat.cov-2 { background: rgba(34,197,94,0.18); color: #d1fae5; }
-  .heat.cov-3 { background: rgba(34,197,94,0.32); color: #ecfdf5; }
-  .heat.cov-4 { background: rgba(34,197,94,0.52); color: #fff; }
-  .heat.cov-5 { background: rgba(34,197,94,0.75); color: #fff; }
+  .heat.cov-1 { background: rgba(201,162,74,0.08); color: #26CB84; }
+  .heat.cov-2 { background: rgba(201,162,74,0.18); color: #26CB84; }
+  .heat.cov-3 { background: rgba(201,162,74,0.32); color: #ecfdf5; }
+  .heat.cov-4 { background: rgba(201,162,74,0.52); color: #fff; }
+  .heat.cov-5 { background: rgba(201,162,74,0.75); color: #fff; }
   .heat.stale { border-style: dashed; }
 
   /* Side lists */
@@ -66,7 +66,7 @@
   .list-row .meta { font-size: 11px; color: #94a3b8; margin-top: 2px; }
   .list-row .pct { font-size: 14px; font-weight: 700; color: #fbbf24; }
   .list-row.bad .pct { color: #f87171; }
-  .list-row.good .pct { color: #4ade80; }
+  .list-row.good .pct { color: #26CB84; }
 
   .legend { display:flex; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #334155;
             font-size: 11px; color: #94a3b8; flex-wrap: wrap; align-items: center; }
@@ -79,7 +79,7 @@
   .filter-row button { padding: 7px 14px; border-radius: 7px; border: 1px solid #334155;
                         background: #1e293b; color: #cbd5e1; font-size: 12.5px; cursor: pointer; }
   .filter-row button:hover { background: #334155; }
-  .filter-row button.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+  .filter-row button.active { background: #202A50; border-color: #202A50; color: #fff; }
 </style>
 
 <style id="lgn-styles">
@@ -87,7 +87,7 @@
 .lgn{position:sticky;top:0;z-index:600;height:54px;background:linear-gradient(90deg,#0a1e3a 0%,#1c3a5e 100%);display:flex;align-items:center;gap:6px;padding:0 18px;box-shadow:0 2px 12px rgba(0,0,0,.2);color:#fff;font-family:'Inter','IBM Plex Sans',system-ui,sans-serif;font-size:13px;letter-spacing:-.005em}
 .lgn a{text-decoration:none}
 .lgn-brand{display:flex;gap:11px;align-items:center;color:#fff;padding-right:18px;margin-right:6px;border-right:1px solid rgba(255,255,255,.15);min-width:0}
-.lgn-emblem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#C9913A,#d9a85a);color:#1c1f2e;display:grid;place-items:center;font-family:'Crimson Pro',Georgia,serif;font-size:17px;font-weight:700;flex-shrink:0}
+.lgn-emblem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#9D7714,#d9a85a);color:#1c1f2e;display:grid;place-items:center;font-family:'Crimson Pro',Georgia,serif;font-size:17px;font-weight:700;flex-shrink:0}
 .lgn-brand-text{line-height:1.15;min-width:0}
 .lgn-brand-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lgn-brand-sub{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:rgba(255,255,255,.55);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px;white-space:nowrap}
@@ -110,6 +110,9 @@
 .lgn ~ .adm-web-subtabs,.lgn ~ * .adm-web-subtabs{top:54px !important}
 @media (max-width:760px){.lgn{padding:0 10px;gap:2px}.lgn-pill{padding:6px 8px;font-size:11.5px}.lgn-emblem{width:28px;height:28px;font-size:15px}}
 </style>
+  <!-- Government of Dubai Legal Affairs Department identity -->
+  <link rel="stylesheet" href="lad-brand.css">
+  <script src="lad-brand.js" defer></script>
 </head>
 <body>
 <!-- ═════════ Unified LAD nav ═════════ -->
@@ -177,10 +180,10 @@
         <div class="legend">
           <span>Coverage:</span>
           <span><span class="swatch" style="background:rgba(248,113,113,0.1)"></span>0%</span>
-          <span><span class="swatch" style="background:rgba(34,197,94,0.18)"></span>1–10%</span>
-          <span><span class="swatch" style="background:rgba(34,197,94,0.32)"></span>10–25%</span>
-          <span><span class="swatch" style="background:rgba(34,197,94,0.52)"></span>25–40%</span>
-          <span><span class="swatch" style="background:rgba(34,197,94,0.75)"></span>40%+</span>
+          <span><span class="swatch" style="background:rgba(201,162,74,0.18)"></span>1–10%</span>
+          <span><span class="swatch" style="background:rgba(201,162,74,0.32)"></span>10–25%</span>
+          <span><span class="swatch" style="background:rgba(201,162,74,0.52)"></span>25–40%</span>
+          <span><span class="swatch" style="background:rgba(201,162,74,0.75)"></span>40%+</span>
         </div>
       </div>
     </div>
@@ -338,7 +341,7 @@ function renderSideLists(topics) {
         <div class="label">${t.label}</div>
         <div class="meta">${DOMAIN_NAMES[t.domain] || t.domain} · ${t.lawyers_with_skill.toLocaleString()} lawyers</div>
       </div>
-      <div class="pct" style="color:#4ade80">${t.coverage_pct.toFixed(1)}%</div>
+      <div class="pct" style="color:#26CB84">${t.coverage_pct.toFixed(1)}%</div>
     </div>`).join('');
 
   const gaps = topics.filter(t => t.coverage_pct < 5 && t.level === 3).slice(0, 8);

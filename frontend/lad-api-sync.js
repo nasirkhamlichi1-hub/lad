@@ -119,7 +119,7 @@
     if (sessionStorage.getItem('lad_sync_banner_shown')) return;
     sessionStorage.setItem('lad_sync_banner_shown', '1');
     const el = document.createElement('div');
-    el.style.cssText = 'position:fixed;bottom:16px;right:16px;background:#006B3F;color:#fff;padding:10px 16px;border-radius:8px;font-family:system-ui,sans-serif;font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,.2);';
+    el.style.cssText = 'position:fixed;bottom:16px;right:16px;background:#9D7714;color:#fff;padding:10px 16px;border-radius:8px;font-family:system-ui,sans-serif;font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,.2);';
     el.textContent = '✓ Live sync active — multi-user persistence on';
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 3500);

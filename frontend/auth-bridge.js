@@ -117,7 +117,7 @@
       var btn = document.createElement('button');
       btn.textContent = 'Sign in';
       btn.setAttribute('style',
-        'background:#00925A;color:#fff;border:none;border-radius:8px;' +
+        'background:#B08A28;color:#fff;border:none;border-radius:8px;' +
         "padding:8px 18px;font:600 13px Inter,system-ui,sans-serif;cursor:pointer");
       btn.onclick = function () {
         try {

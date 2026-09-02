@@ -40,11 +40,11 @@
   function injectCSS() {
     if (document.getElementById('ladMsgCSS')) return;
     const css = `
-    #ladMsgBtn{position:fixed;right:20px;bottom:20px;z-index:99998;background:#0d7377;color:#fff;border:none;border-radius:30px;padding:12px 18px;font:600 13px/1 -apple-system,Segoe UI,Roboto,sans-serif;box-shadow:0 6px 22px rgba(13,115,119,.45);cursor:pointer;display:flex;align-items:center;gap:8px}
-    #ladMsgBtn:hover{background:#0a5d61}
+    #ladMsgBtn{position:fixed;right:20px;bottom:20px;z-index:99998;background:#9D7714;color:#fff;border:none;border-radius:30px;padding:12px 18px;font:600 13px/1 -apple-system,Segoe UI,Roboto,sans-serif;box-shadow:0 6px 22px rgba(157,119,20,.45);cursor:pointer;display:flex;align-items:center;gap:8px}
+    #ladMsgBtn:hover{background:#70550F}
     #ladMsgBtn .ladmsg-badge{background:#ff4d6d;color:#fff;border-radius:10px;min-width:18px;height:18px;padding:0 5px;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center}
     #ladMsgBtn .ladmsg-badge.on{display:flex}
-    @keyframes ladmsgPulse{0%,100%{box-shadow:0 6px 22px rgba(13,115,119,.45)}50%{box-shadow:0 6px 22px rgba(255,77,109,.55),0 0 0 5px rgba(255,77,109,.22)}}
+    @keyframes ladmsgPulse{0%,100%{box-shadow:0 6px 22px rgba(157,119,20,.45)}50%{box-shadow:0 6px 22px rgba(255,77,109,.55),0 0 0 5px rgba(255,77,109,.22)}}
     #ladMsgBtn.has-unread{animation:ladmsgPulse 1.7s ease-in-out infinite}
     #ladMsgBtn.has-unread .ladmsg-badge{animation:ladmsgPulse 1.7s ease-in-out infinite}
     #ladMsgPanel{position:fixed;right:0;top:0;height:100vh;width:420px;max-width:100vw;background:#0f1626;color:#e7ecf5;z-index:99999;box-shadow:-8px 0 40px rgba(0,0,0,.5);transform:translateX(102%);transition:transform .26s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif}
@@ -57,10 +57,10 @@
     .ladmsg-hd{padding:15px 18px;border-bottom:1px solid #232c40;display:flex;align-items:center;gap:10px;flex-shrink:0}
     .ladmsg-hd h3{margin:0;font-size:15px;font-weight:700;flex:1}
     .ladmsg-x{background:none;border:none;color:#9aa6bf;font-size:22px;cursor:pointer;line-height:1}
-    .ladmsg-back{background:none;border:none;color:#5fd0c8;cursor:pointer;font-size:13px;padding:0;display:flex;align-items:center;gap:4px}
+    .ladmsg-back{background:none;border:none;color:#26CB84;cursor:pointer;font-size:13px;padding:0;display:flex;align-items:center;gap:4px}
     .ladmsg-filters{display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid #232c40;flex-shrink:0}
     .ladmsg-filters button{background:#1a2336;border:1px solid #2b364f;color:#aeb9d4;border-radius:14px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:inherit}
-    .ladmsg-filters button.on{background:#0d7377;border-color:#0d7377;color:#fff}
+    .ladmsg-filters button.on{background:#9D7714;border-color:#9D7714;color:#fff}
     .ladmsg-filters button.needs b{background:#ff4d6d;color:#fff;border-radius:9px;padding:0 5px;margin-left:5px;font-size:11px}
     .ladmsg-filters button.needs.on b{background:rgba(255,255,255,.25)}
     .ladmsg-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:8px 0}
@@ -74,13 +74,13 @@
     .ladmsg-prev{font-size:12px;color:#8b97b0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .ladmsg-pill{font-size:9.5px;font-weight:700;letter-spacing:.4px;padding:2px 7px;border-radius:6px;text-transform:uppercase}
     .ladmsg-pill.open{background:rgba(255,184,77,.18);color:#ffb84d}
-    .ladmsg-pill.pending{background:rgba(95,208,200,.16);color:#5fd0c8}
-    .ladmsg-pill.resolved,.ladmsg-pill.closed{background:rgba(61,240,160,.16);color:#3df0a0}
+    .ladmsg-pill.pending{background:rgba(220,200,148,.16);color:#26CB84}
+    .ladmsg-pill.resolved,.ladmsg-pill.closed{background:rgba(38,203,132,.16);color:#26CB84}
     .ladmsg-meta{font-size:11px;color:#6b7794}
     .ladmsg-thread{flex:1 1 auto;min-height:0;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
     .ladmsg-msg{max-width:82%;padding:9px 13px;border-radius:13px;font-size:13.5px;line-height:1.45}
     .ladmsg-msg.them{background:#1c2740;align-self:flex-start;border-bottom-left-radius:4px}
-    .ladmsg-msg.me{background:#0d7377;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+    .ladmsg-msg.me{background:#9D7714;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
     .ladmsg-msg .ladmsg-who{font-size:10.5px;opacity:.7;margin-bottom:3px}
     .ladmsg-typing .ladmsg-dots{display:inline-flex;gap:4px;align-items:center;height:14px}
     .ladmsg-typing .ladmsg-dots i{width:6px;height:6px;border-radius:50%;background:#9fb0cc;display:inline-block;animation:ladmsgBlink 1.2s infinite ease-in-out}
@@ -89,22 +89,22 @@
     .ladmsg-compose{border-top:1px solid #232c40;padding:10px 14px;flex-shrink:0;background:#0f1626}
     .ladmsg-compose textarea,.ladmsg-compose input{width:100%;background:#1a2336;border:1px solid #2b364f;color:#eef2fa;border-radius:9px;padding:9px 11px;font:13.5px/1.4 inherit;resize:none;box-sizing:border-box}
     .ladmsg-compose .row{display:flex;gap:8px;margin-top:8px;align-items:center}
-    .ladmsg-send{background:#0d7377;border:none;color:#fff;border-radius:9px;padding:9px 16px;font-weight:600;cursor:pointer;font-family:inherit}
+    .ladmsg-send{background:#9D7714;border:none;color:#fff;border-radius:9px;padding:9px 16px;font-weight:600;cursor:pointer;font-family:inherit}
     .ladmsg-send:disabled{opacity:.5;cursor:default}
     .ladmsg-empty{text-align:center;color:#6b7794;padding:40px 24px;font-size:13px}
     .ladmsg-sat{border-top:1px solid #232c40;padding:12px 14px;flex-shrink:0;background:#111a2c;text-align:center}
     .ladmsg-sat-q{font-size:12.5px;color:#c7d2e6;margin-bottom:9px}
     .ladmsg-sat-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
     .ladmsg-sat-yes,.ladmsg-sat-no{border:1px solid #2c3a55;background:#1a2740;color:#e7ecf5;border-radius:9px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
-    .ladmsg-sat-yes{background:#0d7377;border-color:#0d7377;color:#fff}
-    .ladmsg-sat-yes:hover{background:#0a5d61}.ladmsg-sat-no:hover{border-color:#5fd0c8;color:#fff}
+    .ladmsg-sat-yes{background:#9D7714;border-color:#9D7714;color:#fff}
+    .ladmsg-sat-yes:hover{background:#70550F}.ladmsg-sat-no:hover{border-color:#26CB84;color:#fff}
     .ladmsg-stars{display:flex;gap:4px;justify-content:center}
     .ladmsg-star{background:none;border:none;font-size:30px;line-height:1;color:#33405c;cursor:pointer;padding:0 2px;transition:color .1s}
     .ladmsg-star.on,.ladmsg-star:hover{color:#f5b301}
-    .ladmsg-sat-thanks{font-size:13px;color:#5fd0c8;font-weight:600;padding:4px 0}
+    .ladmsg-sat-thanks{font-size:13px;color:#26CB84;font-weight:600;padding:4px 0}
     .ladmsg-assign{display:flex;gap:6px;align-items:center;padding:9px 16px;border-bottom:1px solid #232c40;background:#131c2e;flex-wrap:wrap}
     .ladmsg-assign select{background:#1a2336;border:1px solid #2b364f;color:#eef2fa;border-radius:7px;padding:5px 8px;font-size:12px;font-family:inherit}
-    .ladmsg-newbtn{background:#0d7377;border:none;color:#fff;border-radius:8px;padding:7px 13px;font-weight:600;cursor:pointer;font-size:12.5px;font-family:inherit}
+    .ladmsg-newbtn{background:#9D7714;border:none;color:#fff;border-radius:8px;padding:7px 13px;font-weight:600;cursor:pointer;font-size:12.5px;font-family:inherit}
     `;
     const s = document.createElement('style'); s.id = 'ladMsgCSS'; s.textContent = css; document.head.appendChild(s);
   }
@@ -183,7 +183,7 @@
           <span class="ladmsg-pill ${c.status}">${esc(c.status)}</span>
           ${ST.admin && c.priority === 'high' ? '<span class="ladmsg-pill" style="background:rgba(255,77,109,.22);color:#ff8a9e">high</span>' : ''}
           ${ST.admin && c.category ? '<span class="ladmsg-pill" style="background:rgba(120,150,210,.18);color:#9fb4dc">' + esc(c.category) + '</span>' : ''}
-          ${ST.admin && c.escalated ? '<span class="ladmsg-pill" style="background:rgba(255,77,109,.18);color:#ff7a93">needs human</span>' : (ST.admin && c.ai_handled ? '<span class="ladmsg-pill" style="background:rgba(95,208,200,.16);color:#5fd0c8">Maryam</span>' : '')}
+          ${ST.admin && c.escalated ? '<span class="ladmsg-pill" style="background:rgba(255,77,109,.18);color:#ff7a93">needs human</span>' : (ST.admin && c.ai_handled ? '<span class="ladmsg-pill" style="background:rgba(220,200,148,.16);color:#26CB84">Maryam</span>' : '')}
           ${ST.admin ? `<span class="ladmsg-meta">${esc(c.requester_name || '')}${c.assigned_name ? ' · → ' + esc(c.assigned_name) : ''}</span>` : (c.assigned_name ? `<span class="ladmsg-meta">CLPD · ${esc(c.assigned_name)}</span>` : '<span class="ladmsg-meta">CLPD Admin</span>')}
         </div>
       </div>`).join('') : `<div class="ladmsg-empty">${ST.admin ? 'No conversations in this view.' : 'No messages yet.<br>Start a conversation with CLPD Admin.'}</div>`;

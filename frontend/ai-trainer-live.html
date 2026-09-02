@@ -16,11 +16,11 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
 :root{
-  --green:#006B3F;--green2:#008549;--green-d:#004d2e;--green-l:#00a85e;--green-bg:#f0f9f4;--green-border:#b8d8c5;
-  --gold:#C9913A;--gold-bg:#fdf6e8;--gold-border:#e8c878;
+  --green:#9D7714;--green2:#9D7714;--green-d:#70550F;--green-l:#B08A28;--green-bg:#f0f9f4;--green-border:#26CB84;
+  --gold:#9D7714;--gold-bg:#fdf6e8;--gold-border:#e8c878;
   --ink:#0a0e14;--slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;
   --line:#e8ecf1;--line2:#d8dfe7;--paper:#f8fafb;--paper2:#f1f4f7;--white:#fff;
-  --red:#c0392b;--red-bg:#fdeae8;--red-border:#f0aaaa;--amber:#92540a;--amber-bg:#fef3e2;--amber-border:#f0c878;--blue:#1a4d80;--blue-bg:#eef4fb;
+  --red:#c0392b;--red-bg:#fdeae8;--red-border:#f0aaaa;--amber:#92540a;--amber-bg:#fef3e2;--amber-border:#f0c878;--blue:#9D7714;--blue-bg:#eef4fb;
   --serif:'Instrument Serif',Georgia,serif;--sans:'Inter',system-ui,sans-serif;
   --r-sm:8px;--r:12px;--r-lg:18px;--sh:0 2px 4px rgba(10,14,20,.06),0 8px 24px rgba(10,14,20,.06);--sh-lg:0 8px 16px rgba(10,14,20,.1),0 32px 64px rgba(10,14,20,.1);
 }
@@ -51,13 +51,13 @@ h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em
 .lessons{display:flex;flex-direction:column;gap:10px;max-height:62vh;overflow:auto}
 .lesson{border:1.5px solid var(--line2);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s}
 .lesson:hover{border-color:var(--green-border);background:var(--green-bg)}
-.lesson.sel{border-color:var(--green2);background:var(--green-bg);box-shadow:0 0 0 3px rgba(0,107,63,.08)}
+.lesson.sel{border-color:var(--green2);background:var(--green-bg);box-shadow:0 0 0 3px rgba(157,119,20,.08)}
 .lesson-t{font-size:14px;font-weight:650}
 .lesson-s{font-size:12.5px;color:var(--slate2);margin-top:4px}
 .lesson-m{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
 .tag{font-family:monospace;font-size:9.5px;font-weight:600;padding:3px 7px;border-radius:6px;background:var(--paper2);color:var(--slate2);border:1px solid var(--line)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600;padding:12px 20px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;transition:all .15s}
-.btn-pri{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;box-shadow:0 2px 10px rgba(0,107,63,.25)}
+.btn-pri{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;box-shadow:0 2px 10px rgba(157,119,20,.25)}
 .btn-pri:hover{transform:translateY(-1px)}
 .btn-pri:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .btn-danger{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
@@ -102,6 +102,9 @@ input.key:focus{outline:none;border-color:var(--green2)}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh-lg);z-index:50;opacity:0;transition:opacity .2s}
 .toast.show{opacity:1}
 </style>
+  <!-- Government of Dubai Legal Affairs Department identity -->
+  <link rel="stylesheet" href="lad-brand.css">
+  <script src="lad-brand.js" defer></script>
 </head>
 <body>
 <header class="top">

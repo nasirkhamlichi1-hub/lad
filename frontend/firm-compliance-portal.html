@@ -17,15 +17,15 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;-webkit-tap-highlight-color:transparent}
 :root{
-  --green:#006B3F;--green2:#008549;--green-l:#00a85e;--green-bg:#f0f9f4;--green-border:#b8d8c5;
-  --gold:#C9913A;--gold2:#dba84e;--gold-l:#f0cc88;--gold-bg:#fdf6e8;--gold-border:#e8c878;
+  --green:#9D7714;--green2:#9D7714;--green-l:#B08A28;--green-bg:#f0f9f4;--green-border:#26CB84;
+  --gold:#9D7714;--gold2:#B08A28;--gold-l:#DCC894;--gold-bg:#fdf6e8;--gold-border:#e8c878;
   --ink:#0a0e14;--ink2:#1a2330;--slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;--slate4:#b8c4d2;
   --line:#e8ecf1;--line2:#d8dfe7;--paper:#f8fafb;--paper2:#f1f4f7;--white:#ffffff;
   --red:#c0392b;--red-l:#e74c3c;--red-bg:#fdeae8;--red-border:#f0aaaa;
   --amber:#92540a;--amber-l:#d4830f;--amber-bg:#fef3e2;--amber-border:#f0c878;
-  --blue:#1a4d80;--blue-l:#2563eb;--blue-bg:#eef4fb;--blue-border:#a8c4e0;
-  --purple:#5b21b6;--purple-l:#7c3aed;--purple-bg:#f3edff;--purple-border:#c4b5fd;
-  --teal:#0d7377;--teal-l:#14b8a6;--teal-bg:#e6f4f1;--teal-border:#9fd4cf;
+  --blue:#9D7714;--blue-l:#202A50;--blue-bg:#eef4fb;--blue-border:#a8c4e0;
+  --purple:#5b21b6;--purple-l:#202A50;--purple-bg:#f3edff;--purple-border:#c4b5fd;
+  --teal:#9D7714;--teal-l:#B08A28;--teal-bg:#e6f4f1;--teal-border:#26CB84;
   --serif:'Instrument Serif',Georgia,serif;
   --sans:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
   --mono:'JetBrains Mono','SF Mono',Menlo,monospace;
@@ -44,7 +44,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
 .sidebar{width:248px;background:rgba(255,255,255,.75);backdrop-filter:saturate(180%) blur(40px);border-right:1px solid var(--line);position:sticky;top:var(--lad-nav-h);height:calc(100vh - var(--lad-nav-h));overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column;z-index:20}
 .sb-brand{padding:18px 16px 14px;border-bottom:1px solid var(--line)}
 .sb-logo{display:flex;align-items:center;gap:10px}
-.sb-emblem{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:10px;display:grid;place-items:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,107,63,.2)}
+.sb-emblem{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:10px;display:grid;place-items:center;flex-shrink:0;box-shadow:0 2px 8px rgba(157,119,20,.2)}
 .sb-emblem svg{width:18px;height:22px}
 .sb-firm{font-family:var(--serif);font-size:15px;color:var(--ink);letter-spacing:-.016em;line-height:1.15}
 .sb-sub{font-family:var(--mono);font-size:8px;color:var(--slate3);letter-spacing:1.4px;text-transform:uppercase;margin-top:3px}
@@ -68,7 +68,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
 .sb-badge{margin-left:auto;color:#fff;font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:var(--red)}
 .sb-badge.g{background:var(--green)}
 .sb-foot{padding:13px 14px;border-top:1px solid var(--line);display:flex;align-items:center;gap:9px;cursor:pointer}
-.sb-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1a4d80,#2563eb);display:grid;place-items:center;font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#9D7714,#202A50);display:grid;place-items:center;font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
 .sb-uname{font-size:12px;font-weight:600;color:var(--ink)}
 .sb-urole{font-size:10px;color:var(--slate3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px}
 
@@ -122,7 +122,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
 .pt{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-border)}
 .pgh{background:var(--paper2);color:var(--slate);border:1px solid var(--line)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:9px;font-size:12.5px;font-weight:600;font-family:var(--sans);cursor:pointer;border:none;letter-spacing:-.005em;transition:all .15s;white-space:nowrap}
-.btn-g{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(0,107,63,.22)}.btn-g:hover{background:var(--green2);transform:translateY(-1px)}
+.btn-g{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(157,119,20,.22)}.btn-g:hover{background:var(--green2);transform:translateY(-1px)}
 .btn-ink{background:var(--ink);color:#fff}.btn-ink:hover{background:var(--ink2);transform:translateY(-1px)}
 .btn-gh{background:var(--white);color:var(--slate);border:1px solid var(--line)}.btn-gh:hover{background:var(--paper2);color:var(--ink);border-color:var(--line2)}
 .btn-b{background:var(--blue);color:#fff}.btn-b:hover{background:var(--blue-l);transform:translateY(-1px)}
@@ -203,7 +203,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
 .c-price.free{color:var(--green)}
 
 /* ── Match badge ── */
-.match-badge{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#7c3aed,#14b8a6);color:#fff;font-family:var(--mono);font-size:8.5px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.3px}
+.match-badge{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#202A50,#B08A28);color:#fff;font-family:var(--mono);font-size:8.5px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.3px}
 
 /* ── Progress arc ── */
 .arc-wrap{position:relative;flex-shrink:0}
@@ -252,6 +252,9 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
 /* Ensure sticky elements clear the shared nav */
 .sticky, [style*="position:sticky"], [style*="position: sticky"] { top: var(--lad-nav-h, 58px) !important; }
 </style>
+  <!-- Government of Dubai Legal Affairs Department identity -->
+  <link rel="stylesheet" href="lad-brand.css">
+  <script src="lad-brand.js" defer></script>
 </head>
 <body>
 
@@ -379,7 +382,7 @@ body{padding-top:var(--lad-nav-h)}
   </div>
 
   <!-- Portal identity chip -->
-  <div class="lad-portal-chip" style="background:rgba(96,165,250,.15);border:1px solid rgba(96,165,250,.35);color:rgba(147,197,253,.9)">
+  <div class="lad-portal-chip" style="background:rgba(96,165,250,.15);border:1px solid rgba(96,165,250,.35);color:rgba(220,200,148,.9)">
     <span style="width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8;flex-shrink:0"></span>
     FIRM COMPLIANCE
   </div>
@@ -397,7 +400,7 @@ body{padding-top:var(--lad-nav-h)}
   <div class="lad-shared-right">
     <a class="lad-snl" onclick="scrollS('internal')" style="cursor:pointer;background:rgba(255,200,80,.18);color:#ffd166;font-weight:600;border:1px solid rgba(255,200,80,.35);margin-right:6px">Apply for accreditation →</a>
     <div class="lad-user-chip" id="sharedUserChip" style="display:none">
-      <div class="lad-user-dot" id="sharedUserDot" style="background:#006b3f">SA</div>
+      <div class="lad-user-dot" id="sharedUserDot" style="background:#9D7714">SA</div>
       <span id="sharedUserName"></span>
     </div>
     <a class="lad-snl" href="users-admin.html" style="cursor:pointer;font-size:11.5px;color:rgba(255,255,255,.65)" title="Manage lawyers in your firm">Users</a>
@@ -546,7 +549,7 @@ body{padding-top:var(--lad-nav-h)}
     <!-- Panel header -->
     <div id="spHead" style="padding:18px 20px 0;flex-shrink:0;border-bottom:1px solid var(--line)">
       <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
-        <div id="spAvatar" style="width:50px;height:50px;border-radius:13px;background:linear-gradient(135deg,#1a4d80,#2563eb);display:grid;place-items:center;font-family:var(--mono);font-size:14px;font-weight:700;color:#fff;flex-shrink:0;margin-top:2px"></div>
+        <div id="spAvatar" style="width:50px;height:50px;border-radius:13px;background:linear-gradient(135deg,#9D7714,#202A50);display:grid;place-items:center;font-family:var(--mono);font-size:14px;font-weight:700;color:#fff;flex-shrink:0;margin-top:2px"></div>
         <div style="flex:1;min-width:0">
           <div id="spRole" style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:4px"></div>
           <div id="spName" style="font-family:var(--serif);font-size:22px;color:var(--ink);letter-spacing:-.018em;line-height:1.2"></div>
@@ -556,7 +559,7 @@ body{padding-top:var(--lad-nav-h)}
       </div>
       <!-- Action bar -->
       <div style="display:flex;gap:7px;padding-bottom:13px;flex-wrap:wrap">
-        <button class="btn btn-xs" style="background:linear-gradient(135deg,#7c3aed,#14b8a6);color:#fff;border:none" onclick="runAI()">✦ AI recommendation</button>
+        <button class="btn btn-xs" style="background:linear-gradient(135deg,#202A50,#B08A28);color:#fff;border:none" onclick="runAI()">✦ AI recommendation</button>
         <button class="btn btn-xs btn-gh" onclick="openBookForLawyer()"> Book a course</button>
         <button class="btn btn-xs btn-gh" onclick="openOR()">✉ Message lawyer</button>
       </div>
@@ -918,7 +921,7 @@ body{padding-top:var(--lad-nav-h)}
         <!-- Credit wallet overview -->
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:11px;margin-bottom:16px">
           <div style="background:linear-gradient(135deg,#3a2a08,#1a1208);border-radius:var(--r-lg);padding:18px;position:relative;overflow:hidden;box-shadow:var(--sh-md)">
-            <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(201,145,58,.15)"></div>
+            <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(157,119,20,.15)"></div>
             <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.5);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:6px">FIRM POOL</div>
             <div style="font-family:var(--serif);font-size:36px;color:var(--gold-l);line-height:1;margin-bottom:4px" id="firmCreditDisplay">—</div>
             <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.45)">credits available</div>
@@ -1085,13 +1088,13 @@ body{padding-top:var(--lad-nav-h)}
         <div data-adv-panel="chat" style="display:none">
         <div style="background:linear-gradient(135deg,#0a0e14,#1a2330);border-radius:var(--r-lg);overflow:hidden">
           <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:11px">
-            <div style="width:36px;height:36px;background:linear-gradient(135deg,#7c3aed,#14b8a6);border-radius:9px;display:grid;place-items:center;font-size:16px">✦</div>
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,#202A50,#B08A28);border-radius:9px;display:grid;place-items:center;font-size:16px">✦</div>
             <div><div style="font-family:var(--serif);font-size:17px;color:#fff">Lex <em style="color:#a5b4fc">agent</em></div><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px">POWERED BY AIMODEL · FIRM MODE</div></div>
           </div>
           <div id="lexMsgs" style="padding:14px 20px;min-height:160px;max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:11px"></div>
           <div style="padding:11px 14px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:8px">
-            <input id="lexInp" type="text" placeholder="Which of my lawyers needs a course most urgently? Recommend a learning path for a Tax associate…" style="flex:1;padding:9px 13px;border:1px solid rgba(255,255,255,.14);border-radius:9px;font-size:13px;font-family:var(--sans);color:#fff;outline:none;background:rgba(255,255,255,.06)" onfocus="this.style.borderColor='rgba(124,58,237,.6)'" onblur="this.style.borderColor='rgba(255,255,255,.14)'" onkeydown="if(event.key==='Enter')sendLex()"/>
-            <button onclick="sendLex()" style="width:36px;height:36px;background:linear-gradient(135deg,#7c3aed,#14b8a6);border:none;border-radius:9px;cursor:pointer;color:#fff;font-size:15px;display:grid;place-items:center;flex-shrink:0">→</button>
+            <input id="lexInp" type="text" placeholder="Which of my lawyers needs a course most urgently? Recommend a learning path for a Tax associate…" style="flex:1;padding:9px 13px;border:1px solid rgba(255,255,255,.14);border-radius:9px;font-size:13px;font-family:var(--sans);color:#fff;outline:none;background:rgba(255,255,255,.06)" onfocus="this.style.borderColor='rgba(32,42,80,.6)'" onblur="this.style.borderColor='rgba(255,255,255,.14)'" onkeydown="if(event.key==='Enter')sendLex()"/>
+            <button onclick="sendLex()" style="width:36px;height:36px;background:linear-gradient(135deg,#202A50,#B08A28);border:none;border-radius:9px;cursor:pointer;color:#fff;font-size:15px;display:grid;place-items:center;flex-shrink:0">→</button>
           </div>
           <div style="padding:6px 14px 12px;display:flex;gap:6px;flex-wrap:wrap">
             <button onclick="quickLex('Which of my lawyers is most at risk of missing the deadline?')" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:4px 10px;font-size:10px;color:rgba(255,255,255,.65);cursor:pointer;font-family:var(--mono)">Most at risk</button>
@@ -1127,7 +1130,7 @@ body{padding-top:var(--lad-nav-h)}
   <div style="background:var(--white);border-radius:var(--r-2xl);box-shadow:var(--sh-xl);width:min(100%,780px);max-height:92vh;display:flex;flex-direction:column;overflow:hidden">
 
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,var(--teal),#0d5a5e);padding:20px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0">
+    <div style="background:linear-gradient(135deg,var(--teal),#9D7714);padding:20px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0">
       <div style="width:44px;height:44px;background:rgba(255,255,255,.18);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.25);border-radius:11px;display:grid;place-items:center;font-size:20px;flex-shrink:0"></div>
       <div style="flex:1">
         <div style="font-family:var(--serif);font-size:20px;color:#fff;letter-spacing:-.016em">Upload internal training session</div>
@@ -1253,7 +1256,7 @@ body{padding-top:var(--lad-nav-h)}
 <style>
 #buyModal{display:none !important}#buyModal.on{display:flex !important}
 #assignModal{display:none !important}#assignModal.on{display:flex !important}
-.credit-pkg.pkg-sel{border-color:var(--gold) !important;background:var(--gold-bg) !important;box-shadow:0 0 0 3px rgba(201,145,58,.15)}
+.credit-pkg.pkg-sel{border-color:var(--gold) !important;background:var(--gold-bg) !important;box-shadow:0 0 0 3px rgba(157,119,20,.15)}
 
 /* ═══════════════════════════════════════
    MOBILE RESPONSIVE SYSTEM
@@ -1271,7 +1274,7 @@ body{padding-top:var(--lad-nav-h)}
 /* Bottom nav (mobile only) */
 .mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:190;background:rgba(255,255,255,.95);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:1px solid var(--line,rgba(0,0,0,.1));padding:8px 0 max(8px,env(safe-area-inset-bottom));flex-direction:row;align-items:stretch}
 .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:4px 6px;border:none;background:transparent;color:var(--slate3,#8a98aa);font-family:var(--mono,'JetBrains Mono',monospace);font-size:8.5px;letter-spacing:.5px;text-transform:uppercase;font-weight:600;transition:color .15s;-webkit-tap-highlight-color:transparent}
-.mob-nav-btn.on{color:var(--green,#006B3F)}
+.mob-nav-btn.on{color:var(--green,#9D7714)}
 .mob-nav-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;margin-bottom:1px}
 .mob-nav-btn span{line-height:1}
 
@@ -1589,7 +1592,7 @@ body{padding-top:var(--lad-nav-h)}
 <div id="accredModal" style="position:fixed;inset:0;z-index:1300;background:rgba(10,14,20,.7);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:20px;overflow-y:auto" onclick="if(event.target===this)closeAccredApp()">
   <div style="background:var(--white);border-radius:var(--r-2xl);box-shadow:var(--sh-xl);width:min(100%,700px);max-height:92vh;display:flex;flex-direction:column;overflow:hidden">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,var(--teal),#0d5a5e);padding:22px 26px;display:flex;align-items:center;gap:14px;flex-shrink:0">
+    <div style="background:linear-gradient(135deg,var(--teal),#9D7714);padding:22px 26px;display:flex;align-items:center;gap:14px;flex-shrink:0">
       <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
       </div>
@@ -1695,7 +1698,7 @@ body{padding-top:var(--lad-nav-h)}
 <div id="sessionSubmitModal" style="position:fixed;inset:0;z-index:1300;background:rgba(10,14,20,.7);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:20px;overflow-y:auto" onclick="if(event.target===this)closeSessionSubmit()">
   <div style="background:var(--white);border-radius:var(--r-2xl);box-shadow:var(--sh-xl);width:min(100%,860px);max-height:92vh;display:flex;flex-direction:column;overflow:hidden">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,var(--teal),#0d5a5e);padding:20px 24px;display:flex;align-items:center;gap:13px;flex-shrink:0">
+    <div style="background:linear-gradient(135deg,var(--teal),#9D7714);padding:20px 24px;display:flex;align-items:center;gap:13px;flex-shrink:0">
       <div style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;flex-shrink:0">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
       </div>
@@ -1734,7 +1737,7 @@ body{padding-top:var(--lad-nav-h)}
             </div>
             <div style="grid-column:1/-1">
               <label style="font-family:var(--mono);font-size:10px;color:var(--ink);letter-spacing:.8px;text-transform:uppercase;font-weight:700;display:block;margin-bottom:5px">SESSION DATE <span style="color:var(--red,#c0392b);font-size:11px">· required</span></label>
-              <input id="ss-date" type="date" required style="width:100%;padding:11px 13px;border:1.5px solid var(--teal);border-radius:9px;font-size:14px;font-family:var(--sans);color:var(--ink);outline:none;background:var(--teal-bg,#e8f4f4)" onchange="updateSessionImpact()" onfocus="this.style.borderColor='var(--teal)';this.style.boxShadow='0 0 0 3px rgba(20,184,166,.15)'" onblur="this.style.boxShadow=''"/>
+              <input id="ss-date" type="date" required style="width:100%;padding:11px 13px;border:1.5px solid var(--teal);border-radius:9px;font-size:14px;font-family:var(--sans);color:var(--ink);outline:none;background:var(--teal-bg,#e8f4f4)" onchange="updateSessionImpact()" onfocus="this.style.borderColor='var(--teal)';this.style.boxShadow='0 0 0 3px rgba(176,138,40,.15)'" onblur="this.style.boxShadow=''"/>
               <div id="ss-date-hint" style="font-size:11px;color:var(--slate3);margin-top:5px;line-height:1.5">Date the session was actually held. Attendance must be filed within 30 days of the session.</div>
             </div>
             <!-- Hidden field kept so submit handler keeps working without restructuring -->
@@ -2865,7 +2868,7 @@ async function loadInternalAccreditedCourses() {
           ref: x.ref,
           title: p.courseTitle || p.course || x.ref,
           icon: '',
-          bg: 'linear-gradient(135deg,#0b3a3e,#0d5a5e)',
+          bg: 'linear-gradient(135deg,#0b3a3e,#9D7714)',
           type: 'internal',
           internal: true,
           pts,
@@ -2910,7 +2913,7 @@ function courseCategory(c){
 const COURSE_COLORS = {
   mandatory: { bg:'linear-gradient(135deg,#241a38,#463a66)', tag:'#574a86', dot:'#9d8cc7', label:'Mandatory' },
   external:  { bg:'linear-gradient(135deg,#0a2040,#16386a)', tag:'#1e3a8a', dot:'#3b82f6', label:'Accredited · external' },
-  internal:  { bg:'linear-gradient(135deg,#0b3a3e,#0f5f63)', tag:'#0d5a5e', dot:'#14b8a6', label:'Accredited · internal' },
+  internal:  { bg:'linear-gradient(135deg,#0b3a3e,#9D7714)', tag:'#9D7714', dot:'#B08A28', label:'Accredited · internal' },
 };
 function courseArtBg(c){ return (COURSE_COLORS[courseCategory(c)] || COURSE_COLORS.external).bg; }
 function courseTagBg(c){ return (COURSE_COLORS[courseCategory(c)] || COURSE_COLORS.external).tag; }
@@ -2949,7 +2952,7 @@ function renderCourseCards() {
         ${c.icon ? `<div class="c-art-ico">${c.icon}</div>` : ``}
         <div style="position:absolute;bottom:10px;left:12px;display:flex;gap:5px;align-items:center">
           <span style="background:rgba(255,255,255,.18);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.22);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:5px"> ${credits} credits</span>
-          <span style="background:rgba(0,107,63,.85);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:5px">+${c.pts} pts</span>
+          <span style="background:rgba(157,119,20,.85);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:5px">+${c.pts} pts</span>
         </div>
       </div>
       <div class="c-body">
@@ -3192,8 +3195,8 @@ async function renderInsights() {
     }
   }
   if (!cards) cards = computeInsights(); // client-side fallback on failure
-  const badge = engine === 'aimodel' ? '<span style="font-family:var(--mono);font-size:8px;font-weight:700;color:#7c3aed;background:#f3e8ff;border:1px solid #e9d5ff;border-radius:5px;padding:2px 7px;letter-spacing:.6px;white-space:nowrap">\u2726 LIVE AI</span>' : (engine ? '<span style="font-family:var(--mono);font-size:8px;font-weight:700;color:var(--slate3);letter-spacing:.6px;white-space:nowrap">LIVE ANALYSIS</span>' : '');
-  const sumHtml = summary ? `<div style="grid-column:1/-1;display:flex;align-items:center;gap:11px;padding:13px 16px;background:linear-gradient(135deg,#faf5ff,#f0fdfa);border:1px solid #e9d5ff;border-radius:12px;margin-bottom:6px"><div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#7c3aed,#14b8a6);display:grid;place-items:center;color:#fff;font-family:var(--serif);font-size:15px;flex-shrink:0">M</div><div style="flex:1;font-size:13px;color:var(--ink);line-height:1.5">${summary}</div>${badge}</div>` : '';
+  const badge = engine === 'aimodel' ? '<span style="font-family:var(--mono);font-size:8px;font-weight:700;color:#202A50;background:#f3e8ff;border:1px solid #e9d5ff;border-radius:5px;padding:2px 7px;letter-spacing:.6px;white-space:nowrap">\u2726 LIVE AI</span>' : (engine ? '<span style="font-family:var(--mono);font-size:8px;font-weight:700;color:var(--slate3);letter-spacing:.6px;white-space:nowrap">LIVE ANALYSIS</span>' : '');
+  const sumHtml = summary ? `<div style="grid-column:1/-1;display:flex;align-items:center;gap:11px;padding:13px 16px;background:linear-gradient(135deg,#faf5ff,#f0fdfa);border:1px solid #e9d5ff;border-radius:12px;margin-bottom:6px"><div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#202A50,#B08A28);display:grid;place-items:center;color:#fff;font-family:var(--serif);font-size:15px;flex-shrink:0">M</div><div style="flex:1;font-size:13px;color:var(--ink);line-height:1.5">${summary}</div>${badge}</div>` : '';
   host.innerHTML = sumHtml + cards.map(ins => `
     <div style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:17px;box-shadow:var(--sh-sm);border-top:3px solid ${ins.color}">
       <div style="display:flex;align-items:center;gap:9px;margin-bottom:11px">
@@ -3312,13 +3315,13 @@ async function loadLawyerCompleted(l) {
       const sm = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       const escS = (x) => String(x == null ? '' : x).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
       const fullDate = (iso) => { if (!iso) return 'Date TBC'; const d = new Date(iso); return isNaN(d) ? 'Date TBC' : d.getUTCDate() + ' ' + sm[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
-      const cal = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#2563eb" stroke-width="2" style="flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>';
+      const cal = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#202A50" stroke-width="2" style="flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>';
       const scheduled = att.filter(a => (a.status || '').toLowerCase() === 'booked');
       schedWrap.innerHTML = scheduled.length ? scheduled.map(a =>
         '<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:#eef3fb;border:1px solid #d6e4f7;border-radius:8px">'
         + cal
         + '<div style="flex:1;font-size:12px;color:var(--ink)">' + escS(a.course_title || 'CLPD course') + '</div>'
-        + '<span style="font-family:var(--mono);font-size:10px;color:#2563eb;font-weight:700">' + fullDate(a.date_held) + '</span>'
+        + '<span style="font-family:var(--mono);font-size:10px;color:#202A50;font-weight:700">' + fullDate(a.date_held) + '</span>'
         + '</div>'
       ).join('') : emptySched;
     }
@@ -3632,7 +3635,7 @@ function lexMsg(role, text) {
   const isU=role==='user';
   const d=document.createElement('div');
   d.style.cssText=`display:flex;gap:9px;align-items:flex-start;${isU?'flex-direction:row-reverse':''}`;
-  d.innerHTML=`<div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:11px;${isU?'background:linear-gradient(135deg,#1a4d80,#2563eb);color:#fff;font-weight:700;font-family:var(--mono)':'background:linear-gradient(135deg,#7c3aed,#14b8a6);color:#fff;font-size:13px'}">${isU?'SA':'✦'}</div><div style="max-width:84%;background:${isU?'var(--ink)':'rgba(255,255,255,.08)'};color:${isU?'#fff':'rgba(255,255,255,.85)'};border:1px solid ${isU?'var(--ink)':'rgba(255,255,255,.12)'};border-radius:${isU?'11px 3px 11px 11px':'3px 11px 11px 11px'};padding:9px 12px;font-size:12.5px;line-height:1.65">${text.replace(/\n/g,'<br>')}</div>`;
+  d.innerHTML=`<div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:11px;${isU?'background:linear-gradient(135deg,#9D7714,#202A50);color:#fff;font-weight:700;font-family:var(--mono)':'background:linear-gradient(135deg,#202A50,#B08A28);color:#fff;font-size:13px'}">${isU?'SA':'✦'}</div><div style="max-width:84%;background:${isU?'var(--ink)':'rgba(255,255,255,.08)'};color:${isU?'#fff':'rgba(255,255,255,.85)'};border:1px solid ${isU?'var(--ink)':'rgba(255,255,255,.12)'};border-radius:${isU?'11px 3px 11px 11px':'3px 11px 11px 11px'};padding:9px 12px;font-size:12.5px;line-height:1.65">${text.replace(/\n/g,'<br>')}</div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
   lexHistory.push({role,content:text});
 }
@@ -3641,7 +3644,7 @@ async function sendLex(){
   const inp=document.getElementById('lexInp');const t=inp.value.trim();if(!t)return;
   inp.value='';lexMsg('user',t);
   const tid='lt'+Date.now();const td=document.createElement('div');td.id=tid;td.style.cssText='display:flex;gap:9px;align-items:center';
-  td.innerHTML=`<div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#14b8a6);display:grid;place-items:center;color:#fff;font-size:13px;flex-shrink:0">✦</div><div style="padding:8px 12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:3px 11px 11px 11px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4)">Lex is thinking…</div>`;
+  td.innerHTML=`<div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#202A50,#B08A28);display:grid;place-items:center;color:#fff;font-size:13px;flex-shrink:0">✦</div><div style="padding:8px 12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:3px 11px 11px 11px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4)">Lex is thinking…</div>`;
   document.getElementById('lexMsgs').appendChild(td);document.getElementById('lexMsgs').scrollTop=99999;
   const h=lexHistory.slice(-8).map(m=>({role:m.role,content:m.content}));
   const res=await callClaude(h);document.getElementById(tid)?.remove();lexMsg('assistant',res);
@@ -3830,7 +3833,7 @@ function renderInternalCards() {
              : isPending  ? 'PENDING REVIEW'
              : 'PENDING ACCRED';
     return `<div style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-sm);display:flex;flex-direction:column;transition:all .22s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--sh-md)'" onmouseout="this.style.transform='';this.style.boxShadow='var(--sh-sm)'">
-      <div style="background:linear-gradient(135deg,var(--teal),#0d5a5e);padding:14px;position:relative">
+      <div style="background:linear-gradient(135deg,var(--teal),#9D7714);padding:14px;position:relative">
         <div style="font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.55);letter-spacing:.8px;margin-bottom:3px">${s.date}${s.time?' · '+s.time:''}</div>
         <div style="font-family:var(--serif);font-size:15px;color:#fff;line-height:1.3">${s.title}</div>
         <span style="position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:8px;font-weight:700;color:#fff;background:${sc};padding:3px 8px;border-radius:5px;letter-spacing:.5px">${sl}</span>
@@ -4070,7 +4073,7 @@ function showSubmitConfirmation(ref, title, email) {
   if (!banner) {
     banner = document.createElement('div');
     banner.id = 'submitConfirmBanner';
-    banner.style.cssText = 'position:fixed;top:90px;right:24px;left:24px;max-width:560px;margin-left:auto;background:linear-gradient(135deg,#006B3F,#008549);color:#fff;padding:18px 22px;border-radius:14px;box-shadow:0 20px 60px rgba(0,107,63,.35);z-index:9999;font-family:var(--sans,system-ui);';
+    banner.style.cssText = 'position:fixed;top:90px;right:24px;left:24px;max-width:560px;margin-left:auto;background:linear-gradient(135deg,#9D7714,#9D7714);color:#fff;padding:18px 22px;border-radius:14px;box-shadow:0 20px 60px rgba(157,119,20,.35);z-index:9999;font-family:var(--sans,system-ui);';
     document.body.appendChild(banner);
   }
   banner.innerHTML = `
@@ -4284,7 +4287,7 @@ async function loadMyApplications() {
     const statusBadge = (s) => {
       const map = {
         pending:  ['#fef3e2', '#92540a', 'pending review'],
-        approved: ['#e3f0ea', '#006B3F', 'approved'],
+        approved: ['#e3f0ea', '#9D7714', 'approved'],
         rejected: ['#fdeae8', '#c0392b', 'rejected'],
         returned: ['#fef3e2', '#92540a', 'returned for changes'],
       };
@@ -4299,7 +4302,7 @@ async function loadMyApplications() {
         <div style="padding:12px 14px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:8px">
           <div>
             <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px">${title}</div>
-            <div style="font-family:var(--mono,monospace);font-size:10.5px;color:var(--slate3)">${row.ref}${code ? ' · code <strong style="color:var(--green,#006B3F)">' + code + '</strong>' : ''} · submitted ${row.submitted_at?.split(' ')[0] || ''}</div>
+            <div style="font-family:var(--mono,monospace);font-size:10.5px;color:var(--slate3)">${row.ref}${code ? ' · code <strong style="color:var(--green,#9D7714)">' + code + '</strong>' : ''} · submitted ${row.submitted_at?.split(' ')[0] || ''}</div>
           </div>
           <div style="text-align:right">
             ${statusBadge(row.status)}
@@ -4596,7 +4599,7 @@ function updateSessionImpact() {
 
   if(!count || !pts) {
     document.getElementById('ss-impact').innerHTML = '<div style="font-size:12.5px;color:var(--slate2);padding:16px;text-align:center;border:1px dashed var(--line2);border-radius:9px">Select a course and lawyers to preview impact</div>';
-    document.getElementById('ss-payload-preview').innerHTML = '<span style="color:#7dd3a8">// Payload preview appears<br>// after you select lawyers</span>';
+    document.getElementById('ss-payload-preview').innerHTML = '<span style="color:#26CB84">// Payload preview appears<br>// after you select lawyers</span>';
     return;
   }
 
@@ -4834,13 +4837,13 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
 
   const PORTALS = {
     hub:    { name: 'CLPD Hub',           short: 'Hub',         file: 'lad-super-system.html',       icon: '⚖️', color: '#1c3a5e' },
-    lawyer: { name: 'Lawyer Portal',      short: 'Lawyer',      file: 'lawyer-portal-v2.html',       icon: '👤', color: '#006B3F' },
-    firm:   { name: 'Firm Compliance',    short: 'Firm',        file: 'firm-compliance-portal.html', icon: '🏢', color: '#C9913A' },
+    lawyer: { name: 'Lawyer Portal',      short: 'Lawyer',      file: 'lawyer-portal-v2.html',       icon: '👤', color: '#9D7714' },
+    firm:   { name: 'Firm Compliance',    short: 'Firm',        file: 'firm-compliance-portal.html', icon: '🏢', color: '#9D7714' },
     intel:  { name: 'LAD Intelligence',   short: 'Intelligence',file: 'lad-crm.html#intel',    icon: '🛡️', color: '#1c3a5e' },
   };
 
   const CSS = `
-    .ladnav-bar { position: fixed; top: 0; left: 0; right: 0; height: 44px; background: linear-gradient(90deg,#0a1e3a 0%,#1c3a5e 50%,#254d7a 100%); color: #fff; display: flex; align-items: center; padding: 0 18px; gap: 14px; z-index: 9999; font-family: 'Inter','IBM Plex Sans',system-ui,sans-serif; font-size: 13px; box-shadow: 0 2px 12px rgba(10,30,58,.25); letter-spacing: -.005em; }
+    .ladnav-bar { position: fixed; top: 0; left: 0; right: 0; height: 44px; background: linear-gradient(90deg,#0a1e3a 0%,#1c3a5e 50%,#9D7714 100%); color: #fff; display: flex; align-items: center; padding: 0 18px; gap: 14px; z-index: 9999; font-family: 'Inter','IBM Plex Sans',system-ui,sans-serif; font-size: 13px; box-shadow: 0 2px 12px rgba(10,30,58,.25); letter-spacing: -.005em; }
     .ladnav-bar.compact { padding: 0 12px; gap: 10px; }
     body.has-ladnav { padding-top: 44px !important; }
     /* Push sticky/fixed topbars in child portals below our nav so they don't overlap */
@@ -4865,7 +4868,7 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
     .ladnav-icon-btn:hover { background: rgba(255,255,255,.15); }
     .ladnav-icon-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.7; }
     .ladnav-user { display: flex; align-items: center; gap: 8px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.18); }
-    .ladnav-avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg,#C9913A,#dba84e); color: #fff; display: grid; place-items: center; font-weight: 600; font-size: 10px; letter-spacing: .2px; font-family: 'JetBrains Mono', monospace; }
+    .ladnav-avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg,#9D7714,#B08A28); color: #fff; display: grid; place-items: center; font-weight: 600; font-size: 10px; letter-spacing: .2px; font-family: 'JetBrains Mono', monospace; }
     .ladnav-user-info { display: flex; flex-direction: column; gap: 1px; line-height: 1.1; }
     .ladnav-user-name { font-size: 11.5px; font-weight: 500; letter-spacing: -.005em; }
     .ladnav-user-role { font-size: 9px; color: rgba(255,255,255,.55); font-family: 'JetBrains Mono', monospace; letter-spacing: .3px; }
@@ -4879,14 +4882,14 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
     }
 
     /* ───── Lex Claude AI panel ───── */
-    .ladlex-fab { position: fixed; bottom: 24px; left: 24px; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg,#006B3F,#008549); color: #fff; border: none; cursor: pointer; box-shadow: 0 8px 28px rgba(0,107,63,.4); display: grid; place-items: center; z-index: 9998; transition: all .25s; }
-    .ladlex-fab:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 12px 36px rgba(0,107,63,.5); }
+    .ladlex-fab { position: fixed; bottom: 24px; left: 24px; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg,#9D7714,#9D7714); color: #fff; border: none; cursor: pointer; box-shadow: 0 8px 28px rgba(157,119,20,.4); display: grid; place-items: center; z-index: 9998; transition: all .25s; }
+    .ladlex-fab:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 12px 36px rgba(157,119,20,.5); }
     .ladlex-fab svg { width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 1.6; }
-    .ladlex-fab-dot { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; background: #C9913A; border-radius: 50%; border: 2px solid #006B3F; }
+    .ladlex-fab-dot { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; background: #9D7714; border-radius: 50%; border: 2px solid #9D7714; }
     .ladlex-panel { position: fixed; bottom: 90px; left: 24px; width: 420px; max-width: calc(100vw - 48px); height: 580px; max-height: calc(100vh - 130px); background: #fff; border-radius: 16px; box-shadow: 0 24px 80px rgba(10,30,58,.25), 0 4px 16px rgba(10,30,58,.1); display: none; flex-direction: column; overflow: hidden; z-index: 9997; font-family: 'Inter','IBM Plex Sans',system-ui,sans-serif; border: 1px solid rgba(10,30,58,.08); }
     .ladlex-panel.open { display: flex; animation: lexSlideUp .25s ease-out; }
     @keyframes lexSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .ladlex-hd { background: linear-gradient(135deg,#006B3F 0%,#008549 100%); color: #fff; padding: 16px 18px; display: flex; align-items: center; gap: 12px; }
+    .ladlex-hd { background: linear-gradient(135deg,#9D7714 0%,#9D7714 100%); color: #fff; padding: 16px 18px; display: flex; align-items: center; gap: 12px; }
     .ladlex-hd-ico { width: 32px; height: 32px; background: rgba(255,255,255,.18); border-radius: 8px; display: grid; place-items: center; flex-shrink: 0; }
     .ladlex-hd-ico svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 1.6; }
     .ladlex-hd-text { flex: 1; min-width: 0; }
@@ -4895,20 +4898,20 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
     .ladlex-hd-close { background: rgba(255,255,255,.12); border: none; color: #fff; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; display: grid; place-items: center; transition: all .12s; }
     .ladlex-hd-close:hover { background: rgba(255,255,255,.22); }
     .ladlex-hd-close svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
-    .ladlex-status { padding: 8px 18px; background: #f0f9f4; border-bottom: 1px solid #b8d8c5; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #006B3F; letter-spacing: .5px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .ladlex-status { padding: 8px 18px; background: #f0f9f4; border-bottom: 1px solid #26CB84; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #9D7714; letter-spacing: .5px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
     .ladlex-status.warn { background: #fef0e0; border-color: #e8c070; color: #8a4e08; }
     .ladlex-status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; }
     .ladlex-msgs { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 14px; background: #fafbfc; }
     .ladlex-msg { display: flex; gap: 10px; max-width: 92%; }
     .ladlex-msg.user { align-self: flex-end; flex-direction: row-reverse; }
     .ladlex-msg-av { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
-    .ladlex-msg.assistant .ladlex-msg-av { background: linear-gradient(135deg,#006B3F,#008549); color: #fff; }
-    .ladlex-msg.user .ladlex-msg-av { background: linear-gradient(135deg,#C9913A,#dba84e); color: #fff; }
+    .ladlex-msg.assistant .ladlex-msg-av { background: linear-gradient(135deg,#9D7714,#9D7714); color: #fff; }
+    .ladlex-msg.user .ladlex-msg-av { background: linear-gradient(135deg,#9D7714,#B08A28); color: #fff; }
     .ladlex-msg-body { padding: 11px 14px; border-radius: 11px; font-size: 13px; line-height: 1.55; color: #1a2330; letter-spacing: -.005em; white-space: pre-wrap; word-wrap: break-word; }
     .ladlex-msg.assistant .ladlex-msg-body { background: #fff; border: 1px solid #e8ecf1; }
     .ladlex-msg.user .ladlex-msg-body { background: #1c3a5e; color: #fff; }
     .ladlex-msg-body strong { font-weight: 600; }
-    .ladlex-msg-body em { font-style: italic; color: #006B3F; }
+    .ladlex-msg-body em { font-style: italic; color: #9D7714; }
     .ladlex-msg-body code { background: #f1f4f7; padding: 1px 5px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
     .ladlex-typing { display: inline-flex; gap: 3px; align-items: center; }
     .ladlex-typing span { width: 6px; height: 6px; border-radius: 50%; background: #5a6878; animation: lexBlink 1.4s infinite; }
@@ -4917,14 +4920,14 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
     @keyframes lexBlink { 0%, 60%, 100% { opacity: .3; } 30% { opacity: 1; } }
     .ladlex-input-row { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid #e8ecf1; background: #fff; align-items: flex-end; }
     .ladlex-input { flex: 1; resize: none; padding: 10px 12px; border: 1px solid #d8dfe7; border-radius: 9px; font-family: inherit; font-size: 13px; line-height: 1.5; color: #1a2330; outline: none; transition: border-color .15s; max-height: 100px; min-height: 38px; letter-spacing: -.005em; }
-    .ladlex-input:focus { border-color: #006B3F; box-shadow: 0 0 0 3px rgba(0,107,63,.1); }
-    .ladlex-send { background: #006B3F; color: #fff; border: none; width: 38px; height: 38px; border-radius: 9px; cursor: pointer; display: grid; place-items: center; transition: all .12s; flex-shrink: 0; }
-    .ladlex-send:hover:not(:disabled) { background: #004d2e; }
+    .ladlex-input:focus { border-color: #9D7714; box-shadow: 0 0 0 3px rgba(157,119,20,.1); }
+    .ladlex-send { background: #9D7714; color: #fff; border: none; width: 38px; height: 38px; border-radius: 9px; cursor: pointer; display: grid; place-items: center; transition: all .12s; flex-shrink: 0; }
+    .ladlex-send:hover:not(:disabled) { background: #70550F; }
     .ladlex-send:disabled { opacity: .4; cursor: not-allowed; }
     .ladlex-send svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
     .ladlex-suggestions { padding: 8px 14px 12px; display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid #e8ecf1; background: #fff; }
     .ladlex-suggestion { background: #f1f4f7; border: 1px solid #d8dfe7; color: #2e3f54; padding: 5px 11px; border-radius: 14px; font-size: 11.5px; cursor: pointer; transition: all .12s; font-family: inherit; letter-spacing: -.005em; }
-    .ladlex-suggestion:hover { background: #e6f4ee; border-color: #9fd4b8; color: #006B3F; }
+    .ladlex-suggestion:hover { background: #e6f4ee; border-color: #26CB84; color: #9D7714; }
 
     /* ───── API key modal ───── */
     .ladlex-modal { position: fixed; inset: 0; background: rgba(10,30,58,.6); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 20px; }
@@ -4935,15 +4938,15 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
     .ladlex-modal-sub { font-size: 13px; color: #5a6878; line-height: 1.5; margin-bottom: 22px; letter-spacing: -.005em; }
     .ladlex-modal-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #5a6878; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 600; margin-bottom: 7px; }
     .ladlex-modal-input { width: 100%; padding: 11px 13px; border: 1px solid #d8dfe7; border-radius: 9px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: #1a2330; outline: none; transition: border-color .15s; margin-bottom: 14px; letter-spacing: .2px; }
-    .ladlex-modal-input:focus { border-color: #006B3F; box-shadow: 0 0 0 3px rgba(0,107,63,.1); }
+    .ladlex-modal-input:focus { border-color: #9D7714; box-shadow: 0 0 0 3px rgba(157,119,20,.1); }
     .ladlex-modal-hint { font-size: 11.5px; color: #68788a; line-height: 1.5; margin-bottom: 18px; letter-spacing: -.005em; }
-    .ladlex-modal-hint a { color: #006B3F; text-decoration: underline; }
+    .ladlex-modal-hint a { color: #9D7714; text-decoration: underline; }
     .ladlex-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
     .ladlex-modal-btn { padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all .12s; font-family: inherit; letter-spacing: -.005em; }
     .ladlex-modal-btn.ghost { background: transparent; color: #5a6878; }
     .ladlex-modal-btn.ghost:hover { background: #f1f4f7; color: #0d1b2a; }
-    .ladlex-modal-btn.primary { background: #006B3F; color: #fff; }
-    .ladlex-modal-btn.primary:hover { background: #004d2e; }
+    .ladlex-modal-btn.primary { background: #9D7714; color: #fff; }
+    .ladlex-modal-btn.primary:hover { background: #70550F; }
     .ladlex-modal-btn.danger { background: #fde6e6; color: #b81c24; }
     .ladlex-modal-btn.danger:hover { background: #f9c8c8; }
   `;
@@ -4991,7 +4994,7 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
       <div class="ladnav-brand" onclick="location.href='/'" style="cursor:pointer" title="Home">
         <svg class="ladnav-emblem" viewBox="0 0 38 44" fill="none">
           <path d="M19 4L6 10V24C6 33 12 39 19 42C26 39 32 33 32 24V10Z" fill="rgba(255,255,255,.92)"/>
-          <path d="M19 8L10 13V24C10 30 14 35 19 38C24 35 28 30 28 24V13Z" fill="#C9913A"/>
+          <path d="M19 8L10 13V24C10 30 14 35 19 38C24 35 28 30 28 24V13Z" fill="#9D7714"/>
         </svg>
         <div class="ladnav-brand-text">
           <div class="ladnav-brand-title">Legal Affairs Department</div>

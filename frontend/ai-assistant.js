@@ -23,7 +23,7 @@
     if (document.getElementById('aia-style')) return;
     var s=document.createElement('style'); s.id='aia-style';
     s.textContent =
-      '#aia-fab{position:fixed;left:20px;bottom:20px;z-index:9997;background:linear-gradient(135deg,#0a3a28,#0d5a4a);color:#fff;border:0;border-radius:26px;padding:11px 17px;font:700 13px/1 -apple-system,sans-serif;cursor:pointer;box-shadow:0 8px 26px rgba(10,58,40,.38);display:flex;align-items:center;gap:8px}'
+      '#aia-fab{position:fixed;left:20px;bottom:20px;z-index:9997;background:linear-gradient(135deg,#70550F,#9D7714);color:#fff;border:0;border-radius:26px;padding:11px 17px;font:700 13px/1 -apple-system,sans-serif;cursor:pointer;box-shadow:0 8px 26px rgba(112,85,15,.38);display:flex;align-items:center;gap:8px}'
       +'#aia-fab .k{font-family:"JetBrains Mono",monospace;font-size:10px;background:rgba(255,255,255,.18);padding:2px 6px;border-radius:5px}'
       +'#aia-ov{position:fixed;inset:0;background:rgba(8,18,12,.55);backdrop-filter:blur(8px);z-index:9999;display:none;align-items:flex-start;justify-content:center;padding:64px 20px}'
       +'#aia-ov.on{display:flex}'
@@ -31,25 +31,25 @@
       +'.aia-h{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid #eef2ee;flex:0 0 auto}'
       +'.aia-title{font-weight:700;font-size:13px;color:#0d1b14;display:flex;align-items:center;gap:7px}'
       +'.aia-new{margin-left:auto;font-size:11px;color:#8a9a90;background:#f1f4f1;border:1px solid #e3e9e4;border-radius:6px;padding:4px 9px;cursor:pointer}'
-      +'.aia-new:hover{color:#006B3F;border-color:#006B3F}'
+      +'.aia-new:hover{color:#9D7714;border-color:#9D7714}'
       +'.aia-esc{font-family:"JetBrains Mono",monospace;font-size:10px;color:#8a9a90;background:#f1f4f1;border:1px solid #e3e9e4;border-radius:6px;padding:4px 7px;cursor:pointer}'
       +'.aia-thread{flex:1 1 auto;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px}'
       +'.aia-chip{display:inline-block;background:#f1f4f1;border:1px solid #e3e9e4;border-radius:18px;padding:7px 13px;font-size:12.5px;color:#3a4a40;margin:0 6px 8px 0;cursor:pointer}'
-      +'.aia-chip:hover{border-color:#006B3F;color:#006B3F}'
+      +'.aia-chip:hover{border-color:#9D7714;color:#9D7714}'
       +'.aia-intro{font-size:13px;color:#5a6a60;line-height:1.6;margin-bottom:4px}'
       +'.aia-row{display:flex;flex-direction:column;max-width:90%}'
       +'.aia-row.u{align-self:flex-end;align-items:flex-end}'
       +'.aia-row.a{align-self:flex-start;align-items:flex-start}'
-      +'.aia-msg-u{background:#006B3F;color:#fff;border-radius:14px 14px 4px 14px;padding:10px 14px;font-size:13.5px;line-height:1.5;white-space:pre-wrap}'
-      +'.aia-msg-a{background:#f6f8f6;border:1px solid #e3e9e4;border-left:3px solid #0d7377;color:#1a2a20;border-radius:4px 14px 14px 14px;padding:12px 15px;font-size:14px;line-height:1.65;white-space:pre-wrap}'
+      +'.aia-msg-u{background:#9D7714;color:#fff;border-radius:14px 14px 4px 14px;padding:10px 14px;font-size:13.5px;line-height:1.5;white-space:pre-wrap}'
+      +'.aia-msg-a{background:#f6f8f6;border:1px solid #e3e9e4;border-left:3px solid #9D7714;color:#1a2a20;border-radius:4px 14px 14px 14px;padding:12px 15px;font-size:14px;line-height:1.65;white-space:pre-wrap}'
       +'.aia-eng{font-family:"JetBrains Mono",monospace;font-size:9px;color:#aab8af;letter-spacing:.5px;margin-top:6px;text-transform:uppercase}'
       +'.aia-foot{flex:0 0 auto;border-top:1px solid #eef2ee;padding:12px 16px;display:flex;align-items:center;gap:9px}'
       +'.aia-in{flex:1;border:1px solid #e3e9e4;outline:0;font-size:14px;color:#0d1b14;font-family:inherit;background:#fafbfa;border-radius:11px;padding:11px 13px}'
-      +'.aia-in:focus{border-color:#006B3F;background:#fff}'
-      +'.aia-send{background:#006B3F;color:#fff;border:0;border-radius:11px;width:42px;height:42px;font-size:16px;cursor:pointer;flex:0 0 auto}'
+      +'.aia-in:focus{border-color:#9D7714;background:#fff}'
+      +'.aia-send{background:#9D7714;color:#fff;border:0;border-radius:11px;width:42px;height:42px;font-size:16px;cursor:pointer;flex:0 0 auto}'
       +'.aia-send:disabled{opacity:.5;cursor:default}'
-      +'.aia-btn{background:#006B3F;color:#fff;border:0;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}'
-      +'.aia-btn.alt{background:#fff;color:#006B3F;border:1px solid #006B3F}'
+      +'.aia-btn{background:#9D7714;color:#fff;border:0;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}'
+      +'.aia-btn.alt{background:#fff;color:#9D7714;border:1px solid #9D7714}'
       +'.aia-typing{display:inline-flex;gap:4px;align-items:center}'
       +'.aia-typing i{width:6px;height:6px;border-radius:50%;background:#9bb0a4;display:inline-block;animation:aiablink 1.2s infinite}'
       +'.aia-typing i:nth-child(2){animation-delay:.2s}.aia-typing i:nth-child(3){animation-delay:.4s}'
@@ -67,7 +67,7 @@
   function reset(){ convo=[]; render(); var i=document.getElementById('aia-in'); if(i){ i.value=''; i.focus(); } }
 
   function planLabel(intent){ return ({cancel_session:'Cancel session',reschedule_session:'Reschedule session',notify:'Send notification',notify_firm:'Message your firm',book_course:'Book a course'})[intent]||'Action'; }
-  function planColor(intent){ return intent==='cancel_session' ? '#c0392b' : '#0d7377'; }
+  function planColor(intent){ return intent==='cancel_session' ? '#c0392b' : '#9D7714'; }
   function planDetail(d){
     if(d.intent==='cancel_session'||d.intent==='reschedule_session'){ var s=(d.params&&d.params.session)||{}; return '<div style="margin-top:8px;font-size:12.5px;color:#475569"><strong>'+esc(s.title||'')+'</strong> · '+(s.booked||0)+' booked'+(d.params.scheduled_at?(' → '+esc(new Date(d.params.scheduled_at).toUTCString())):'')+'</div>'; }
     if(d.intent==='book_course'){ var bs=(d.params&&d.params.session)||{}; return '<div style="margin-top:8px;font-size:12.5px;color:#475569"><strong>'+esc(bs.title||'')+'</strong>'+(bs.scheduled_at?(' · '+esc(new Date(bs.scheduled_at).toUTCString())):'')+' · '+(bs.credits||5)+' credits</div>'; }
@@ -148,7 +148,7 @@
         if(d.intent==='notify'||d.intent==='notify_firm') msg='✓ '+(x.jd.message||'Sent.');
         else if(d.intent==='book_course') msg='✓ Booked'+(x.jd.balance!=null?(' · '+x.jd.balance+' credits left'):'');
         else msg='✓ Done'+(x.jd.refunded!=null?(' · '+x.jd.refunded+' refunded'):'')+(x.jd.notified!=null?(' · '+x.jd.notified+' notified'):'');
-        m.result='<span style="color:#16a34a;font-weight:600">'+esc(msg)+'</span>';
+        m.result='<span style="color:#B08A28;font-weight:600">'+esc(msg)+'</span>';
         if(d.intent==='book_course') setTimeout(function(){ try{ location.reload(); }catch(_){} }, 1400);
       }
       else if(x.status===402){ m.result='<span style="color:#c2703d">'+esc(x.jd.message||'Not enough credits — top up to book.')+'</span>'; }

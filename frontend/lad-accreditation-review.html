@@ -20,13 +20,13 @@ html.lad-embed .page-hd{top:0!important}
 :root{
   --ink:#0a0e14; --slate:#5a6878; --slate2:#8492a3; --slate3:#a5b1c0;
   --paper:#f8fafb; --paper2:#f2f5f8; --line:#e8ecf1; --line2:#dfe5ec; --white:#fff;
-  --green:#006B3F; --green-l:#008a4f; --green-bg:#e9f5ee; --green-border:#b8d8c4;
-  --gold:#C9913A; --gold-l:#d9a85a;
+  --green:#9D7714; --green-l:#B08A28; --green-bg:#e9f5ee; --green-border:#26CB84;
+  --gold:#9D7714; --gold-l:#d9a85a;
   --amber:#d97706; --amber-l:#f59e0b; --amber-bg:#fef3e2; --amber-border:#f7d499;
   --red:#c0392b; --red-l:#dc2626; --red-bg:#fdecea; --red-border:#f1b8b0;
   --blue:#1d4ed8; --blue-l:#3b82f6; --blue-bg:#e7eeff; --blue-border:#b7c8f0;
-  --purple:#7c3aed; --purple-l:#a855f7; --purple-bg:#f3e8ff; --purple-border:#d8b4fe;
-  --teal:#14b8a6;
+  --purple:#202A50; --purple-l:#a855f7; --purple-bg:#f3e8ff; --purple-border:#d8b4fe;
+  --teal:#B08A28;
   --serif:'Crimson Pro',Georgia,serif; --sans:'Inter',sans-serif; --mono:'JetBrains Mono',monospace;
   --r-sm:8px; --r-md:10px; --r-lg:14px; --r-xl:18px;
   --sh-sm:0 1px 3px rgba(10,14,20,.04); --sh-md:0 4px 16px rgba(10,14,20,.06); --sh-lg:0 12px 40px rgba(10,14,20,.1); --sh-xl:0 20px 60px rgba(10,14,20,.14);
@@ -153,7 +153,7 @@ em{font-style:italic;color:var(--gold)}
 /* AI panel */
 .ai-strip{padding:14px 16px;background:linear-gradient(135deg,#f3e8ff,#fdf4ff);border-radius:10px;margin-bottom:14px;border:1px solid var(--purple-border)}
 .ai-strip-hd{display:flex;align-items:center;gap:9px;margin-bottom:8px}
-.ai-avatar{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#7c3aed,#14b8a6);display:grid;place-items:center;color:#fff;font-size:13px;font-weight:600;font-family:var(--serif)}
+.ai-avatar{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#202A50,#B08A28);display:grid;place-items:center;color:#fff;font-size:13px;font-weight:600;font-family:var(--serif)}
 .ai-strip-title{font-family:var(--serif);font-size:14px;color:var(--ink);font-weight:600}
 .ai-strip-sub{font-family:var(--mono);font-size:9px;color:var(--purple);letter-spacing:1.2px;text-transform:uppercase;margin-top:1px}
 .ai-strip-body{font-size:12.5px;color:var(--ink);line-height:1.6}
@@ -209,7 +209,7 @@ em{font-style:italic;color:var(--gold)}
 .lgn{position:sticky;top:0;z-index:600;height:54px;background:linear-gradient(90deg,#0a1e3a 0%,#1c3a5e 100%);display:flex;align-items:center;gap:6px;padding:0 18px;box-shadow:0 2px 12px rgba(0,0,0,.2);color:#fff;font-family:'Inter','IBM Plex Sans',system-ui,sans-serif;font-size:13px;letter-spacing:-.005em}
 .lgn a{text-decoration:none}
 .lgn-brand{display:flex;gap:11px;align-items:center;color:#fff;padding-right:18px;margin-right:6px;border-right:1px solid rgba(255,255,255,.15);min-width:0}
-.lgn-emblem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#C9913A,#d9a85a);color:#1c1f2e;display:grid;place-items:center;font-family:'Crimson Pro',Georgia,serif;font-size:17px;font-weight:700;flex-shrink:0}
+.lgn-emblem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#9D7714,#d9a85a);color:#1c1f2e;display:grid;place-items:center;font-family:'Crimson Pro',Georgia,serif;font-size:17px;font-weight:700;flex-shrink:0}
 .lgn-brand-text{line-height:1.15;min-width:0}
 .lgn-brand-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lgn-brand-sub{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:rgba(255,255,255,.55);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px;white-space:nowrap}
@@ -242,6 +242,9 @@ em{font-style:italic;color:var(--gold)}
   .page-hd{flex-wrap:wrap;gap:10px}
 }
 </style>
+  <!-- Government of Dubai Legal Affairs Department identity -->
+  <link rel="stylesheet" href="lad-brand.css">
+  <script src="lad-brand.js" defer></script>
 </head>
 <body>
 <!-- ═════════ Unified LAD nav ═════════ -->

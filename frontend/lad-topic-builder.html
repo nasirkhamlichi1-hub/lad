@@ -27,12 +27,12 @@
   --mono:'JetBrains Mono',monospace;
   --ink:#0a0f1a; --slate:#3a4554; --slate2:#5b6878; --slate3:#8a98aa; --slate4:#aeb9c8;
   --line:#e8ecf1; --line2:#d2dae3; --paper:#f7f9fb; --paper2:#eef2f6; --white:#fff;
-  --green:#006B3F; --green-l:#00925A; --green-bg:#e6f4ee; --green-border:#b8dccc;
-  --gold:#C9913A; --gold-l:#E5A94A; --gold-bg:#fdf6e9; --gold-border:#ead9b0;
+  --green:#9D7714; --green-l:#B08A28; --green-bg:#e6f4ee; --green-border:#26CB84;
+  --gold:#9D7714; --gold-l:#B08A28; --gold-bg:#fdf6e9; --gold-border:#ead9b0;
   --red:#dc2626; --red-bg:#fef2f2; --red-border:#fecaca;
-  --blue:#2563eb; --blue-bg:#eef4ff; --blue-border:#c5d8f7;
-  --purple:#7c3aed; --purple-bg:#f3e8ff; --purple-border:#d8b4fe;
-  --amber:#d97706; --teal:#0d9488;
+  --blue:#202A50; --blue-bg:#eef4ff; --blue-border:#c5d8f7;
+  --purple:#202A50; --purple-bg:#f3e8ff; --purple-border:#d8b4fe;
+  --amber:#d97706; --teal:#B08A28;
   --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:18px;
   --sh-sm:0 1px 2px rgba(15,23,42,.04),0 2px 4px rgba(15,23,42,.04);
   --sh-md:0 4px 8px rgba(15,23,42,.06),0 8px 16px rgba(15,23,42,.06);
@@ -132,7 +132,7 @@ button{font-family:inherit;cursor:pointer}
 .adm-banner{border-radius:10px;padding:11px 15px;margin-bottom:14px;font-size:12.5px;line-height:1.5;
   border:1px solid}
 .adm-banner.warn{background:var(--gold-bg);border-color:var(--gold-border);color:#7a5a20}
-.adm-banner.ok{background:var(--green-bg);border-color:var(--green-border);color:#0a5236}
+.adm-banner.ok{background:var(--green-bg);border-color:var(--green-border);color:#9D7714}
 .adm-banner.err{background:var(--red-bg);border-color:var(--red-border);color:#9b1c1c}
 
 .adm-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
@@ -196,6 +196,9 @@ html.lad-embed .adm-wrap{padding-top:14px}
 .adm-obj:first-of-type{border-top:none}
 .adm-obj .q{font-size:11px;color:var(--slate3);font-style:italic;margin-top:3px;line-height:1.4}
 </style>
+  <!-- Government of Dubai Legal Affairs Department identity -->
+  <link rel="stylesheet" href="lad-brand.css">
+  <script src="lad-brand.js" defer></script>
 </head>
 <body>
 <div class="adm-wrap">
@@ -551,7 +554,7 @@ async function loadLookAdmin(){
   try{ LOOK_HUB=await api.hubGet(TOPIC.topic_id); }catch(e){ LOOK_HUB=null; }
   var accent=(LOOK_HUB&&LOOK_HUB.accent)||'';
   if(/^#[0-9a-fA-F]{6}$/.test(accent)) $('look-accent').value=accent.toLowerCase();
-  else $('look-accent').value='#0e5c44';   // the platform green, as shipped
+  else $('look-accent').value='#9D7714';   // the platform green, as shipped
   var bits=[];
   bits.push((LOOK_HUB&&LOOK_HUB.hero_url)?'A photo is set.':'No photo yet — the title band uses the plain colour.');
   bits.push(accent?('Accent '+esc(accent)+'.'):'Using the default CLPD green.');

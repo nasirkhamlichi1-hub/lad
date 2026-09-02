@@ -14,9 +14,9 @@
 :root{
   --ink:#0d1b14;--slate:#5a6b62;--slate2:#8a9a90;--slate3:#aab8af;
   --paper:#f6f8f6;--paper2:#eef2ee;--line:#e3e9e4;--line2:#d6ddd7;--white:#fff;
-  --green:#006B3F;--green-l:#06864f;--green-d:#004a2a;--green-bg:#e9f5ee;
-  --gold:#C9913A;--gold-l:#dcae5e;--gold-bg:#fbf3e2;
-  --teal:#0d7377;--red:#c0392b;
+  --green:#9D7714;--green-l:#B08A28;--green-d:#70550F;--green-bg:#e9f5ee;
+  --gold:#9D7714;--gold-l:#dcae5e;--gold-bg:#fbf3e2;
+  --teal:#9D7714;--red:#c0392b;
   --serif:'Cormorant Garamond',Georgia,serif;--sans:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
   --sh:0 1px 3px rgba(13,27,20,.05);--sh-md:0 8px 30px rgba(13,27,20,.08);--sh-lg:0 20px 60px rgba(13,27,20,.16);
 }
@@ -28,7 +28,7 @@ em{font-style:italic}
 .nav{background:#0e1f17;height:58px;display:flex;align-items:center;gap:20px;padding:0 26px;position:sticky;top:0;z-index:500;box-shadow:0 2px 12px rgba(0,0,0,.3)}
 .nav-logos{display:flex;align-items:center;gap:12px;padding-right:18px;border-right:1px solid rgba(255,255,255,.12)}
 .nav-logos img{height:34px}
-.nav-chip{display:flex;align-items:center;gap:7px;padding:4px 12px;border-radius:20px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;background:rgba(201,145,58,.16);border:1px solid rgba(201,145,58,.4);color:#e7c98a}
+.nav-chip{display:flex;align-items:center;gap:7px;padding:4px 12px;border-radius:20px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;background:rgba(157,119,20,.16);border:1px solid rgba(157,119,20,.4);color:#e7c98a}
 .nav-chip .dot{width:6px;height:6px;border-radius:50%;background:#e7c98a}
 .nav-right{margin-left:auto;display:flex;align-items:center;gap:14px}
 .nav-user{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:4px 12px;color:#fff;font-size:12.5px;font-weight:600}
@@ -36,8 +36,8 @@ em{font-style:italic}
 .nav-link{color:rgba(255,255,255,.6);font-size:12px;cursor:pointer}
 .nav-link:hover{color:#fff}
 /* ── Hero ── */
-.hero{background:linear-gradient(135deg,#06311f 0%,#0a4a2e 55%,#0d5a4a 100%);color:#fff;position:relative;overflow:hidden}
-.hero::after{content:'';position:absolute;top:-30%;right:-6%;width:520px;height:520px;background:radial-gradient(circle,rgba(201,145,58,.16),transparent 68%);pointer-events:none}
+.hero{background:linear-gradient(135deg,#70550F 0%,#70550F 55%,#9D7714 100%);color:#fff;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;top:-30%;right:-6%;width:520px;height:520px;background:radial-gradient(circle,rgba(157,119,20,.16),transparent 68%);pointer-events:none}
 .hero-wrap{max-width:1180px;margin:0 auto;padding:48px 30px 42px;position:relative;z-index:1}
 .hero-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#e7c98a;font-weight:600;margin-bottom:12px}
 .hero h1{font-family:var(--serif);font-size:46px;font-weight:500;line-height:1.08;letter-spacing:-.02em;margin-bottom:14px}
@@ -106,6 +106,9 @@ em{font-style:italic}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .empty{grid-column:1/-1;padding:42px;text-align:center;color:var(--slate2);background:var(--paper);border:1px dashed var(--line2);border-radius:14px;font-size:14px}
 </style>
+  <!-- Government of Dubai Legal Affairs Department identity -->
+  <link rel="stylesheet" href="lad-brand.css">
+  <script src="lad-brand.js" defer></script>
 </head>
 <body>
 <div class="nav">
@@ -146,7 +149,7 @@ em{font-style:italic}
   </div>
   <div class="icards">
     <div class="icard">
-      <div class="icard-art" style="background:linear-gradient(135deg,#0a3a28,#0d5a4a)">
+      <div class="icard-art" style="background:linear-gradient(135deg,#70550F,#9D7714)">
         <span class="tag">E-LEARNING · RECEPTION</span><span class="emoji">🛎️</span>
       </div>
       <div class="icard-body">
@@ -160,7 +163,7 @@ em{font-style:italic}
       </div>
     </div>
     <div class="icard">
-      <div class="icard-art" style="background:linear-gradient(135deg,#16263f,#22466e)">
+      <div class="icard-art" style="background:linear-gradient(135deg,#16263f,#70550F)">
         <span class="tag">E-LEARNING · AVIATION</span><span class="emoji">✈️</span>
       </div>
       <div class="icard-body">

@@ -1,0 +1,213 @@
+/* ═══════════════════════════════════════════════════════════════════════
+ * lad-brand.css — the Government of Dubai Legal Affairs Department identity
+ * ═══════════════════════════════════════════════════════════════════════
+ * One stylesheet, loaded by every page in the system.
+ *
+ * The 32 pages of this platform were each built with their own palette —
+ * most on a #006B3F green with a #C9913A gold, neither of which is the
+ * Department's. Rather than rewrite 2.7 MB of hand-written CSS, this file
+ * re-points the custom properties those pages ALREADY use at the real LAD
+ * tokens. A page that says "background:var(--green)" therefore renders in
+ * LAD gold without a line of it changing.
+ *
+ * The remap block uses "root:root" (specificity 0,2,0) so it wins over a
+ * page's own "root" no matter which stylesheet the browser reads first —
+ * an inline <style> in <head> would otherwise beat a linked file.
+ *
+ * Load order on every page:
+ *     <link rel="stylesheet" href="lad-brand.css">
+ *     <script src="lad-brand.js" defer></script>
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Dubai Font ──────────────────────────────────────────────────────
+ * The mandated Government of Dubai typeface; one family covers Latin and
+ * Arabic. Local files are tried first so that dropping the four .woff2
+ * into frontend/fonts/ silently upgrades every page from the CDN copy to
+ * a self-hosted one. legal.dubai.gov.ae serves these without an
+ * Access-Control-Allow-Origin header, so it cannot be used cross-origin.
+ * If both sources fail the stack falls to Segoe UI, which the brand
+ * sanctions as the substitute. Never Calibri, never Times. */
+@font-face{font-family:'Dubai';font-style:normal;font-weight:300;font-display:swap;
+  src:url('fonts/Dubai-Light.woff2') format('woff2'),
+      url('https://cdn.jsdelivr.net/npm/dubai-font@1.1.1/dubai-font/fonts/Dubai-Light.woff2') format('woff2');}
+@font-face{font-family:'Dubai';font-style:normal;font-weight:400;font-display:swap;
+  src:url('fonts/Dubai-Regular.woff2') format('woff2'),
+      url('https://cdn.jsdelivr.net/npm/dubai-font@1.1.1/dubai-font/fonts/Dubai-Regular.woff2') format('woff2');}
+@font-face{font-family:'Dubai';font-style:normal;font-weight:500;font-display:swap;
+  src:url('fonts/Dubai-Medium.woff2') format('woff2'),
+      url('https://cdn.jsdelivr.net/npm/dubai-font@1.1.1/dubai-font/fonts/Dubai-Medium.woff2') format('woff2');}
+@font-face{font-family:'Dubai';font-style:normal;font-weight:700;font-display:swap;
+  src:url('fonts/Dubai-Bold.woff2') format('woff2'),
+      url('https://cdn.jsdelivr.net/npm/dubai-font@1.1.1/dubai-font/fonts/Dubai-Bold.woff2') format('woff2');}
+
+/* ─── The tokens ──────────────────────────────────────────────────── */
+:root{
+  --lad-gold:#9D7714; --lad-gold-dark:#70550F; --lad-gold-logo:#9C782C;
+  --lad-gold-soft:#F6F0E0; --lad-gold-line:#DCC894; --lad-gold-cream:#FFFCEF;
+  --lad-navy:#202A50; --lad-navy-deep:#161D38; --lad-navy-soft:#E7E9F0;
+  --lad-ink:#000000;
+  --lad-grey-700:#575757; --lad-grey-400:#999999; --lad-grey-300:#CCCCCC;
+  --lad-grey-200:#E8E8E8; --lad-grey-100:#F5F5F5; --lad-white:#FFFFFF;
+  --lad-success:#26CB84; --lad-warning:#F58C1F; --lad-error:#DC3131;
+  --lad-uae-red:#ED1C24; --lad-uae-green:#056633; --lad-uae-black:#231F20;
+
+  --lad-font:'Dubai','Dubai W23','Segoe UI',Tahoma,Arial,sans-serif;
+  --lad-radius:8px;
+  --lad-shadow:0 2px 12px rgba(0,0,0,.08);
+  --lad-max:1200px;
+  --lad-bar-h:46px;
+}
+
+/* ─── Re-pointing the platform's own variables ─────────────────────────
+ * Left column: names the 32 pages already use. Right column: where they
+ * now resolve. Green was the platform's brand accent, so it becomes gold;
+ * true status meaning is carried by the red/amber/success tokens below,
+ * which keep their jobs. */
+:root:root{
+  /* the accent formerly known as green */
+  --green:var(--lad-gold);        --green2:var(--lad-gold);
+  --green-l:var(--lad-gold-dark); --green-d:var(--lad-gold-dark);
+  --green-deep:var(--lad-gold-dark);
+  --green-bg:var(--lad-gold-soft);   --green-bg2:var(--lad-gold-cream);
+  --green-soft:var(--lad-gold-soft); --green-border:var(--lad-gold-line);
+  --green-line:var(--lad-gold-line);
+
+  /* gold was close but not the Department's gold */
+  --gold:var(--lad-gold);      --gold2:var(--lad-gold);
+  --gold-l:var(--lad-gold-dark);
+  --gold-bg:var(--lad-gold-soft);  --gold-soft:var(--lad-gold-soft);
+  --gold-border:var(--lad-gold-line);
+
+  /* structure and type colour */
+  --ink:var(--lad-ink);  --ink2:var(--lad-grey-700); --ink3:var(--lad-grey-700);
+  --slate:var(--lad-grey-700);  --slate2:var(--lad-grey-700);
+  --slate3:var(--lad-grey-400); --slate4:var(--lad-grey-300);
+  --lock:var(--lad-grey-400);
+  --line:var(--lad-grey-200);   --line2:var(--lad-grey-300);
+  --line3:var(--lad-grey-300);  --line-soft:var(--lad-grey-200);
+
+  /* grounds — white or #F5F5F5, never a coloured page */
+  --white:var(--lad-white);   --surface:var(--lad-white);  --card:var(--lad-white);
+  --paper:var(--lad-grey-100); --paper2:var(--lad-grey-100); --paper3:var(--lad-grey-200);
+  --ground:var(--lad-grey-100); --bg:var(--lad-grey-100);   --alt:var(--lad-grey-200);
+  --rail:var(--lad-navy);
+
+  /* the hero band reads navy, the Department's dark colour */
+  --hero-a:var(--lad-navy-deep); --hero-b:var(--lad-navy); --hero-c:#2C3765;
+  --ring-track:rgba(255,255,255,.16);
+
+  /* status stays functional, in the brand's status colours */
+  --red:var(--lad-error);   --red-l:#E85A5A; --red-bg:#FBEAEA; --red-border:#F3C2C2;
+  --crit:var(--lad-error);  --crit-soft:#FBEAEA;
+  --amber:#B4670E;          --amber-l:var(--lad-warning); --amber-bg:#FDF1E3; --amber-border:#F5D3AA;
+
+  /* decorative hues collapse into the LAD system — the brand has no
+     blue, purple or teal, and off-palette accents are what make a
+     government service look like a consumer app */
+  --blue:var(--lad-navy);   --blue-l:#2C3765; --blue-bg:var(--lad-navy-soft); --blue-border:#BFC5D8;
+  --purple:var(--lad-navy); --purple-l:#2C3765; --purple-bg:var(--lad-navy-soft); --purple-border:#BFC5D8;
+  --teal:var(--lad-gold);   --teal-l:var(--lad-gold-dark); --teal-bg:var(--lad-gold-soft); --teal-border:var(--lad-gold-line);
+
+  /* one family for headings, body and labels */
+  --sans:var(--lad-font); --serif:var(--lad-font); --mono:var(--lad-font);
+  --title:var(--lad-font); --head:var(--lad-font);
+
+  /* nothing sharper than 8px, nothing rounder than 12px on a rectangle */
+  --r-sm:6px; --r-md:8px; --r-lg:8px; --r-xl:12px; --r-2xl:12px;
+
+  /* a single shadow level */
+  --sh:var(--lad-shadow); --sh-sm:var(--lad-shadow); --sh-md:var(--lad-shadow);
+  --sh-lg:var(--lad-shadow); --sh2:var(--lad-shadow);
+}
+
+/* Several pages define a dark scheme. Keep it working: the same names,
+   re-pointed to the dark end of the LAD palette rather than the light. */
+@media (prefers-color-scheme: dark){
+  :root:root{
+    --ink:#F2F2F2; --ink2:#C9C9C9; --ink3:#A5A5A5;
+    --slate:#C9C9C9; --slate2:#A5A5A5; --slate3:#8A8A8A; --slate4:#6B6B6B;
+    --white:#14182B; --surface:#14182B; --card:#14182B;
+    --paper:#0E1120; --paper2:#0E1120; --paper3:#1B2038;
+    --ground:#0E1120; --bg:#0E1120; --alt:#1B2038;
+    --line:#2A3050; --line2:#333B60; --line3:#333B60; --line-soft:#2A3050;
+    --green:#C9A24A; --green2:#C9A24A; --green-l:#DDBA6A;
+    --green-bg:#2A2412; --green-soft:#2A2412; --green-border:#4A3F1D; --green-line:#4A3F1D;
+    --gold:#C9A24A; --gold-l:#DDBA6A; --gold-bg:#2A2412; --gold-soft:#2A2412; --gold-border:#4A3F1D;
+    --hero-a:#0A0D18; --hero-b:#161D38; --hero-c:#202A50;
+  }
+}
+
+/* ─── Base ────────────────────────────────────────────────────────── */
+body{ font-family:var(--lad-font); }
+.lad-eyebrow{ font-size:13px; font-weight:500; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--lad-gold-dark); }
+
+/* Gold below 18px on white is 4.9:1 — fine for UI, thin for small prose.
+   Anything small and gold darkens automatically. */
+small, .caption, figcaption{ color:var(--lad-grey-700); }
+
+/* Keep numbers aligned now that labels are set in a proportional face. */
+table, .num, [class*="stat"], [class*="kpi"], [class*="metric"]{
+  font-variant-numeric:tabular-nums; }
+
+/* ─── The two marks ───────────────────────────────────────────────────
+ * The crest and the wordmark appear together, never one alone, and swap
+ * corners in RTL. Injected by lad-brand.js so no page markup changes. */
+.lad-brandbar{
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  height:var(--lad-bar-h); box-sizing:border-box;
+  padding-inline:24px; background:var(--lad-white);
+  border-block-end:1px solid var(--lad-grey-200);
+  position:relative; z-index:2147483000; width:100%;
+}
+.lad-brandbar a{ display:flex; align-items:center; text-decoration:none; }
+.lad-brandbar img{ display:block; height:26px; width:auto; }
+.lad-brandbar .lad-wordmark img{ height:30px; }
+/* If the Department's artwork cannot be reached, a typographic lockup
+   stands in — a broken image is worse than no image on official material. */
+.lad-lockup{ font-size:12px; line-height:1.25; font-weight:500;
+  color:var(--lad-navy); letter-spacing:.01em; white-space:nowrap; }
+.lad-lockup b{ display:block; font-weight:700; color:var(--lad-gold-dark);
+  font-size:11px; letter-spacing:.06em; text-transform:uppercase; }
+@media (max-width:640px){
+  .lad-brandbar{ padding-inline:14px; }
+  .lad-brandbar img{ height:20px; }
+  .lad-brandbar .lad-wordmark img{ height:24px; }
+  .lad-lockup{ font-size:10.5px; }
+}
+@media (prefers-color-scheme: dark){
+  .lad-brandbar{ background:#0E1120; border-block-end-color:#2A3050; }
+  .lad-lockup{ color:#E7E9F0; }
+}
+
+/* ─── Footer ──────────────────────────────────────────────────────── */
+.lad-footer{
+  margin-block-start:48px; padding:28px 24px;
+  background:var(--lad-navy); color:#FFFFFF;
+  font-family:var(--lad-font); font-size:13px; line-height:1.6;
+}
+.lad-footer-in{ max-width:var(--lad-max); margin-inline:auto;
+  display:flex; flex-wrap:wrap; gap:12px 32px; align-items:center;
+  justify-content:space-between; }
+.lad-footer a{ color:#E5D6AE; text-decoration:none; }
+.lad-footer a:hover{ text-decoration:underline; }
+.lad-footer .lad-foot-name{ font-weight:500; }
+.lad-footer .lad-foot-meta{ color:#B9BFD4; }
+.lad-footer .lad-rule{ width:100%; height:1px; background:rgba(255,255,255,.16); margin:4px 0 16px; }
+
+/* ─── Print: documents carry the marks and the copyright line ─────── */
+@media print{
+  .lad-brandbar{ border-block-end:1px solid var(--lad-grey-200); }
+  .lad-footer{ background:none; color:var(--lad-grey-700);
+    border-block-start:1px solid var(--lad-grey-200); }
+  .lad-footer a{ color:var(--lad-grey-700); }
+  .lad-footer .lad-foot-meta{ color:var(--lad-grey-700); }
+}
+
+/* ─── RTL ─────────────────────────────────────────────────────────────
+ * Logical properties do most of the mirroring. Arabic reads smaller at a
+ * matched size, so it steps up one; the crest and the wordmark are never
+ * flipped, and neither are numerals. */
+[dir="rtl"] body{ font-size:17px; }
+[dir="rtl"] .lad-brandbar img,
+[dir="rtl"] .lad-footer img{ transform:none; }

@@ -16,9 +16,9 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;-webkit-tap-highlight-color:transparent}
 :root{
   /* Apple Vision-style government palette */
-  --green:#006B3F; --green2:#008549; --green-d:#004d2e; --green-l:#00a85e;
-  --green-bg:#f0f9f4; --green-bg2:#e3f0ea; --green-border:#b8d8c5;
-  --gold:#C9913A; --gold2:#dba84e; --gold-l:#f0cc88;
+  --green:#9D7714; --green2:#9D7714; --green-d:#70550F; --green-l:#B08A28;
+  --green-bg:#f0f9f4; --green-bg2:#e3f0ea; --green-border:#26CB84;
+  --gold:#9D7714; --gold2:#B08A28; --gold-l:#DCC894;
   --gold-bg:#fdf6e8; --gold-border:#e8c878;
   --ink:#0a0e14; --ink2:#1a2330; --ink3:#2a3548;
   --slate:#3a4554; --slate2:#5a6878; --slate3:#8a98aa; --slate4:#b8c4d2;
@@ -27,9 +27,9 @@
   --white:#ffffff;
   --red:#c0392b; --red-l:#e74c3c; --red-bg:#fdeae8; --red-border:#f0aaaa;
   --amber:#92540a; --amber-l:#d4830f; --amber-bg:#fef3e2; --amber-border:#f0c878;
-  --blue:#1a4d80; --blue-l:#2563eb; --blue-bg:#eef4fb; --blue-border:#a8c4e0;
-  --purple:#5b21b6; --purple-l:#7c3aed; --purple-bg:#f3edff; --purple-border:#c4b5fd;
-  --teal:#0d7377; --teal-l:#14b8a6; --teal-bg:#e6f4f1; --teal-border:#9fd4cf;
+  --blue:#9D7714; --blue-l:#202A50; --blue-bg:#eef4fb; --blue-border:#a8c4e0;
+  --purple:#5b21b6; --purple-l:#202A50; --purple-bg:#f3edff; --purple-border:#c4b5fd;
+  --teal:#9D7714; --teal-l:#B08A28; --teal-bg:#e6f4f1; --teal-border:#26CB84;
   --serif:'Instrument Serif',Georgia,serif;
   --sans:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
   --mono:'JetBrains Mono','SF Mono',Menlo,monospace;
@@ -42,8 +42,8 @@
   --sh-md:0 4px 8px rgba(10,14,20,.08),0 16px 40px rgba(10,14,20,.08);
   --sh-lg:0 8px 16px rgba(10,14,20,.1),0 32px 64px rgba(10,14,20,.1);
   --sh-xl:0 16px 32px rgba(10,14,20,.12),0 48px 96px rgba(10,14,20,.14);
-  --sh-glow-green:0 0 0 1px rgba(0,107,63,.12),0 12px 40px rgba(0,107,63,.15);
-  --sh-glow-gold:0 0 0 1px rgba(201,145,58,.15),0 12px 40px rgba(201,145,58,.2);
+  --sh-glow-green:0 0 0 1px rgba(157,119,20,.12),0 12px 40px rgba(157,119,20,.15);
+  --sh-glow-gold:0 0 0 1px rgba(157,119,20,.15),0 12px 40px rgba(157,119,20,.2);
   --sh-glow-red:0 0 0 1px rgba(192,57,43,.15),0 12px 40px rgba(192,57,43,.18);
 }
 
@@ -63,7 +63,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 .sidebar{width:240px;background:rgba(255,255,255,.72);backdrop-filter:saturate(180%) blur(40px);-webkit-backdrop-filter:saturate(180%) blur(40px);border-right:1px solid var(--line);position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column;z-index:20}
 .sb-brand{padding:20px 18px 16px;border-bottom:1px solid var(--line)}
 .sb-brand-row{display:flex;align-items:center;gap:11px}
-.sb-emblem{width:36px;height:36px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:9px;display:grid;place-items:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,107,63,.2)}
+.sb-emblem{width:36px;height:36px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:9px;display:grid;place-items:center;flex-shrink:0;box-shadow:0 2px 8px rgba(157,119,20,.2)}
 .sb-emblem svg{width:18px;height:22px}
 .sb-brand-text{min-width:0}
 .sb-brand-title{font-family:var(--serif);font-size:16px;font-weight:400;color:var(--ink);letter-spacing:-.018em;line-height:1.1}
@@ -164,13 +164,13 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 .pill-teal{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-border)}
 .pill-ink{background:var(--ink);color:#fff;border:1px solid var(--ink)}
 .pill-ghost{background:var(--paper2);color:var(--slate);border:1px solid var(--line)}
-.pill-glow{box-shadow:0 0 0 3px rgba(0,107,63,.1)}
+.pill-glow{box-shadow:0 0 0 3px rgba(157,119,20,.1)}
 
 /* Buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:9px;font-size:12.5px;font-weight:600;font-family:var(--sans);cursor:pointer;border:none;letter-spacing:-.005em;transition:all .15s;white-space:nowrap}
-.btn-green{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(0,107,63,.22)}
-.btn-green:hover{background:var(--green2);transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,107,63,.3)}
-.btn-gold{background:var(--gold);color:#fff;box-shadow:0 2px 8px rgba(201,145,58,.25)}
+.btn-green{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(157,119,20,.22)}
+.btn-green:hover{background:var(--green2);transform:translateY(-1px);box-shadow:0 4px 14px rgba(157,119,20,.3)}
+.btn-gold{background:var(--gold);color:#fff;box-shadow:0 2px 8px rgba(157,119,20,.25)}
 .btn-gold:hover{background:var(--gold2);transform:translateY(-1px)}
 .btn-ink{background:var(--ink);color:#fff}
 .btn-ink:hover{background:var(--ink2);transform:translateY(-1px)}
@@ -202,15 +202,15 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 
 /* AI Briefing Cards */
 .ai-briefing{background:linear-gradient(135deg,#0a0e14 0%,#1a2330 50%,#2a3548 100%);border-radius:var(--r-2xl);padding:26px 28px;color:#fff;position:relative;overflow:hidden;box-shadow:var(--sh-lg)}
-.ai-briefing::before{content:'';position:absolute;top:-30%;right:-20%;width:60%;height:140%;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,.18) 0%,transparent 70%);pointer-events:none}
-.ai-briefing::after{content:'';position:absolute;bottom:-30%;left:-10%;width:50%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(20,184,166,.12) 0%,transparent 70%);pointer-events:none}
+.ai-briefing::before{content:'';position:absolute;top:-30%;right:-20%;width:60%;height:140%;border-radius:50%;background:radial-gradient(circle,rgba(32,42,80,.18) 0%,transparent 70%);pointer-events:none}
+.ai-briefing::after{content:'';position:absolute;bottom:-30%;left:-10%;width:50%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(176,138,40,.12) 0%,transparent 70%);pointer-events:none}
 .ai-hd{display:flex;align-items:center;gap:11px;margin-bottom:18px;position:relative}
-.ai-avatar{width:44px;height:44px;background:linear-gradient(135deg,#7c3aed 0%,#14b8a6 100%);border-radius:11px;display:grid;place-items:center;font-size:20px;flex-shrink:0;box-shadow:0 4px 16px rgba(124,58,237,.4);position:relative}
-.ai-avatar::before{content:'';position:absolute;inset:-2px;border-radius:13px;background:linear-gradient(135deg,#7c3aed,#14b8a6);z-index:-1;opacity:.4;filter:blur(8px)}
+.ai-avatar{width:44px;height:44px;background:linear-gradient(135deg,#202A50 0%,#B08A28 100%);border-radius:11px;display:grid;place-items:center;font-size:20px;flex-shrink:0;box-shadow:0 4px 16px rgba(32,42,80,.4);position:relative}
+.ai-avatar::before{content:'';position:absolute;inset:-2px;border-radius:13px;background:linear-gradient(135deg,#202A50,#B08A28);z-index:-1;opacity:.4;filter:blur(8px)}
 .ai-name{font-family:var(--serif);font-size:20px;color:#fff;letter-spacing:-.018em;line-height:1.1;font-weight:400}
 .ai-name em{color:#a5b4fc;font-style:italic}
 .ai-tagline{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.55);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:3px;display:flex;align-items:center;gap:6px}
-.ai-tagline-dot{width:5px;height:5px;background:#14b8a6;border-radius:50%;box-shadow:0 0 6px #14b8a6}
+.ai-tagline-dot{width:5px;height:5px;background:#B08A28;border-radius:50%;box-shadow:0 0 6px #B08A28}
 .ai-status{margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:24px;padding:5px 11px;font-family:var(--mono);font-size:10px;color:#a5b4fc;font-weight:600;letter-spacing:.2px}
 .ai-summary{font-size:14px;line-height:1.6;color:rgba(255,255,255,.85);position:relative;margin-bottom:18px;letter-spacing:-.005em}
 .ai-summary em{color:#a5b4fc;font-family:var(--serif);font-style:italic;font-size:16px}
@@ -224,8 +224,8 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 .ai-actions-row{display:flex;gap:8px;position:relative;flex-wrap:wrap}
 .ai-action{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:9px;padding:9px 14px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;backdrop-filter:blur(20px);letter-spacing:-.005em}
 .ai-action:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.28);transform:translateY(-1px)}
-.ai-action-primary{background:linear-gradient(135deg,#7c3aed,#14b8a6);border-color:transparent;box-shadow:0 4px 14px rgba(124,58,237,.4)}
-.ai-action-primary:hover{box-shadow:0 6px 20px rgba(124,58,237,.5)}
+.ai-action-primary{background:linear-gradient(135deg,#202A50,#B08A28);border-color:transparent;box-shadow:0 4px 14px rgba(32,42,80,.4)}
+.ai-action-primary:hover{box-shadow:0 6px 20px rgba(32,42,80,.5)}
 
 /* AI Insights cards */
 .ai-insights{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
@@ -239,8 +239,8 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 .ai-insight-body{font-size:12px;color:var(--slate);line-height:1.55;margin-bottom:11px;letter-spacing:-.005em}
 .ai-insight-foot{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--line);font-size:10.5px}
 .ai-insight-impact{color:var(--slate3);font-family:var(--mono);font-weight:600;letter-spacing:.2px}
-.ai-i-1{--accent-1:#7c3aed;--accent-2:#a855f7}
-.ai-i-2{--accent-1:#0d7377;--accent-2:#14b8a6}
+.ai-i-1{--accent-1:#202A50;--accent-2:#a855f7}
+.ai-i-2{--accent-1:#9D7714;--accent-2:#B08A28}
 .ai-i-3{--accent-1:#c0392b;--accent-2:#e74c3c}
 
 /* Chart container */
@@ -274,7 +274,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 .map-pin-label{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-family:var(--mono);font-size:10px;font-weight:600;padding:5px 9px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;letter-spacing:.2px}
 .map-pin:hover .map-pin-label{opacity:1}
 .map-pin-label::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--ink)}
-.map-region{position:absolute;background:rgba(0,107,63,.05);border:1px dashed rgba(0,107,63,.3);border-radius:50%;font-family:var(--mono);font-size:9px;color:var(--slate2);text-transform:uppercase;letter-spacing:1px;font-weight:700;display:grid;place-items:center;text-align:center;pointer-events:none}
+.map-region{position:absolute;background:rgba(157,119,20,.05);border:1px dashed rgba(157,119,20,.3);border-radius:50%;font-family:var(--mono);font-size:9px;color:var(--slate2);text-transform:uppercase;letter-spacing:1px;font-weight:700;display:grid;place-items:center;text-align:center;pointer-events:none}
 .map-controls{position:absolute;top:14px;right:14px;display:flex;flex-direction:column;gap:4px;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);border:1px solid var(--line);border-radius:9px;padding:5px;box-shadow:var(--sh-sm)}
 .map-ctrl{width:30px;height:30px;background:none;border:none;border-radius:6px;color:var(--slate);cursor:pointer;display:grid;place-items:center;font-size:14px;font-weight:600;transition:background .15s}
 .map-ctrl:hover{background:var(--paper2);color:var(--ink)}
@@ -327,8 +327,8 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 .heatmap-th-row{font-size:11.5px;color:var(--ink);font-weight:500;font-family:var(--sans);letter-spacing:-.005em;padding:8px 4px;text-transform:none;text-align:left}
 .heatmap-cell{aspect-ratio:1.2/1;border-radius:5px;display:grid;place-items:center;font-family:var(--mono);font-size:11px;font-weight:700;color:#fff;cursor:pointer;transition:all .15s;letter-spacing:.2px}
 .heatmap-cell:hover{transform:scale(1.06);z-index:2;box-shadow:var(--sh-md)}
-.hm-100{background:#003820} .hm-95{background:#005c34} .hm-90{background:#006B3F} .hm-85{background:#22824f}
-.hm-80{background:#4a9968} .hm-75{background:#7ab088} .hm-70{background:#a3c5a4;color:#1a2a1a}
+.hm-100{background:#70550F} .hm-95{background:#9D7714} .hm-90{background:#9D7714} .hm-85{background:#B08A28}
+.hm-80{background:#B08A28} .hm-75{background:#C9A24A} .hm-70{background:#26CB84;color:#1a2a1a}
 .hm-65{background:#c8d6c0;color:#1a2a1a} .hm-60{background:#e0c890;color:#3a2810} .hm-55{background:#d4a060;color:#fff}
 .hm-50{background:#c87838;color:#fff} .hm-45{background:#b85020} .hm-40{background:#a23028} .hm-35{background:#8a1a1e}
 
@@ -340,7 +340,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 .sim-label{font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:7px}
 .sim-input-row{display:flex;align-items:center;gap:11px}
 .sim-slider{flex:1;-webkit-appearance:none;appearance:none;height:5px;border-radius:50px;background:var(--paper2);outline:none}
-.sim-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--green);cursor:pointer;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,107,63,.3)}
+.sim-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--green);cursor:pointer;border:3px solid #fff;box-shadow:0 2px 8px rgba(157,119,20,.3)}
 .sim-value{font-family:var(--serif);font-size:22px;color:var(--ink);letter-spacing:-.02em;line-height:1;min-width:64px;text-align:right;font-weight:400}
 .sim-output{background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:18px}
 .sim-output-label{font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:8px}
@@ -432,7 +432,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 .lgn{position:sticky;top:0;z-index:600;height:54px;background:linear-gradient(90deg,#0a1e3a 0%,#1c3a5e 100%);display:flex;align-items:center;gap:6px;padding:0 18px;box-shadow:0 2px 12px rgba(0,0,0,.2);color:#fff;font-family:'Inter','IBM Plex Sans',system-ui,sans-serif;font-size:13px;letter-spacing:-.005em}
 .lgn a{text-decoration:none}
 .lgn-brand{display:flex;gap:11px;align-items:center;color:#fff;padding-right:18px;margin-right:6px;border-right:1px solid rgba(255,255,255,.15);min-width:0}
-.lgn-emblem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#C9913A,#d9a85a);color:#1c1f2e;display:grid;place-items:center;font-family:'Crimson Pro',Georgia,serif;font-size:17px;font-weight:700;flex-shrink:0}
+.lgn-emblem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#9D7714,#d9a85a);color:#1c1f2e;display:grid;place-items:center;font-family:'Crimson Pro',Georgia,serif;font-size:17px;font-weight:700;flex-shrink:0}
 .lgn-brand-text{line-height:1.15;min-width:0}
 .lgn-brand-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lgn-brand-sub{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:rgba(255,255,255,.55);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px;white-space:nowrap}
@@ -455,6 +455,9 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 .lgn ~ .adm-web-subtabs,.lgn ~ * .adm-web-subtabs{top:54px !important}
 @media (max-width:760px){.lgn{padding:0 10px;gap:2px}.lgn-pill{padding:6px 8px;font-size:11.5px}.lgn-emblem{width:28px;height:28px;font-size:15px}}
 </style>
+  <!-- Government of Dubai Legal Affairs Department identity -->
+  <link rel="stylesheet" href="lad-brand.css">
+  <script src="lad-brand.js" defer></script>
 </head>
 <body>
 <!-- ═════════ Unified LAD nav ═════════ -->
@@ -552,7 +555,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 </style>
 
 <div class="lad-user-chip" id="sharedUserChip" style="display:none">
-      <div class="lad-user-dot" id="sharedUserDot" style="background:#006b3f">SA</div>
+      <div class="lad-user-dot" id="sharedUserDot" style="background:#9D7714">SA</div>
       <span id="sharedUserName"></span>
     </div>
   </div>
@@ -564,14 +567,14 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 <div id="lexChatOverlay" style="position:fixed;inset:0;z-index:1100;background:rgba(10,14,20,.65);backdrop-filter:blur(10px);align-items:flex-end;justify-content:flex-end;padding:20px">
   <div style="background:var(--white);border-radius:var(--r-2xl);box-shadow:var(--sh-xl);width:min(100%,500px);height:min(70vh,620px);display:flex;flex-direction:column;overflow:hidden">
     <div style="background:linear-gradient(135deg,#0a0e14,#1a2330);padding:16px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0">
-      <div style="width:38px;height:38px;background:linear-gradient(135deg,#7c3aed,#14b8a6);border-radius:10px;display:grid;place-items:center;font-size:17px;flex-shrink:0">✦</div>
+      <div style="width:38px;height:38px;background:linear-gradient(135deg,#202A50,#B08A28);border-radius:10px;display:grid;place-items:center;font-size:17px;flex-shrink:0">✦</div>
       <div style="flex:1"><div style="font-family:var(--serif);font-size:17px;color:#fff;letter-spacing:-.014em">Mar<em style="color:#a5b4fc;font-style:italic">yam</em></div><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px">POWERED BY AIMODEL · ACTIVE</div></div>
       <button onclick="closeLexChat()" style="width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);cursor:pointer;color:#fff;font-size:14px;display:grid;place-items:center">✕</button>
     </div>
     <div id="lexMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:0;background:var(--paper)"></div>
     <div style="padding:12px 14px;border-top:1px solid var(--line);display:flex;gap:8px;flex-shrink:0;background:var(--white)">
       <input id="lexInput" type="text" placeholder="Ask Maryam anything about compliance, firms, courses…" style="flex:1;padding:9px 13px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);outline:none;color:var(--ink);background:var(--paper)" onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--line2)'" onkeydown="if(event.key==='Enter')sendLexMessage()"/>
-      <button onclick="sendLexMessage()" style="width:38px;height:38px;background:linear-gradient(135deg,#7c3aed,#14b8a6);border:none;border-radius:9px;cursor:pointer;color:#fff;font-size:16px;display:grid;place-items:center;flex-shrink:0">→</button>
+      <button onclick="sendLexMessage()" style="width:38px;height:38px;background:linear-gradient(135deg,#202A50,#B08A28);border:none;border-radius:9px;cursor:pointer;color:#fff;font-size:16px;display:grid;place-items:center;flex-shrink:0">→</button>
     </div>
     <div style="padding:6px 14px 10px;text-align:center;font-family:var(--mono);font-size:9px;color:var(--slate3);background:var(--white)">Powered by AiModel · anthropic.com</div>
   </div>
@@ -581,7 +584,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 <div id="dgReportOverlay" style="position:fixed;inset:0;z-index:1100;background:rgba(10,14,20,.7);backdrop-filter:blur(10px);align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeDGReport()">
   <div style="background:var(--white);border-radius:var(--r-2xl);box-shadow:var(--sh-xl);width:min(100%,720px);max-height:88vh;display:flex;flex-direction:column;overflow:hidden">
     <div style="background:linear-gradient(135deg,#0a2040,#1a3a60);padding:20px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0">
-      <div style="width:44px;height:44px;background:linear-gradient(135deg,#C9913A,#9a6e1c);border-radius:11px;display:grid;place-items:center;font-size:20px;flex-shrink:0"></div>
+      <div style="width:44px;height:44px;background:linear-gradient(135deg,#9D7714,#9a6e1c);border-radius:11px;display:grid;place-items:center;font-size:20px;flex-shrink:0"></div>
       <div style="flex:1"><div style="font-family:var(--serif);font-size:20px;color:#fff;letter-spacing:-.016em">Director General Briefing</div><div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1.2px;text-transform:uppercase;margin-top:3px">GOVERNMENT OF DUBAI · LAD INTELLIGENCE · <span id="dgReportDate">—</span></div></div>
       <button onclick="closeDGReport()" style="width:30px;height:30px;border-radius:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);cursor:pointer;color:#fff;font-size:14px;display:grid;place-items:center">✕</button>
     </div>
@@ -632,7 +635,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
       </div>
       <!-- Action bar -->
       <div style="display:flex;gap:7px;padding-bottom:14px;flex-wrap:wrap">
-        <button id="spAiBtn" class="btn btn-xs" style="background:linear-gradient(135deg,#7c3aed,#14b8a6);color:#fff;border:none" onclick="runSpAiAnalysis()">✦ AI Analysis</button>
+        <button id="spAiBtn" class="btn btn-xs" style="background:linear-gradient(135deg,#202A50,#B08A28);color:#fff;border:none" onclick="runSpAiAnalysis()">✦ AI Analysis</button>
         <button id="spOutreachBtn" class="btn btn-xs btn-ghost" onclick="openOutreachFromPanel()" style="display:none">✉ Draft outreach</button>
         <button id="spExportBtn" class="btn btn-xs btn-ghost" onclick="showToast('Exporting detail…')">⬇ Export</button>
       </div>
@@ -780,7 +783,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         <button style="width:32px;height:32px;background:rgba(0,0,0,.06);border:1px solid var(--line);border-radius:8px;cursor:pointer;display:grid;place-items:center;color:var(--slate);transition:all .15s;font-size:14px" title="Platform launcher" onclick="window.open('index.html','_self')" onmouseover="this.style.background='var(--paper2)'" onmouseout="this.style.background='rgba(0,0,0,.06)'">⌂</button>
         <button class="tb-btn" onclick="showToast('Notifications · 5 new')" style="position:relative"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="tb-btn-dot"></span></button>
         <button class="tb-btn" onclick="showToast('Settings')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-        <a href="command-centre.html" class="btn btn-sm xnav" title="3D Legal Ecosystem Digital Twin" style="background:linear-gradient(110deg,#0b1a3a,#15324f);color:#7fe7ff;border:1px solid rgba(52,225,255,.4);text-decoration:none;display:inline-flex;align-items:center;gap:6px;box-shadow:0 0 16px rgba(52,225,255,.2)">✦ Command Centre</a>
+        <a href="command-centre.html" class="btn btn-sm xnav" title="3D Legal Ecosystem Digital Twin" style="background:linear-gradient(110deg,#0b1a3a,#15324f);color:#26CB84;border:1px solid rgba(220,200,148,.4);text-decoration:none;display:inline-flex;align-items:center;gap:6px;box-shadow:0 0 16px rgba(220,200,148,.2)">✦ Command Centre</a>
         <button class="btn btn-ink btn-sm" onclick="openExportReport()"><svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>DG Report</button>
       </div>
     </div>
@@ -796,7 +799,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
             <div style="font-size:14px;color:var(--slate);line-height:1.55">Live data across <span id="ovDgFirms">499</span> firms, <span id="ovDgLawyers">4,411</span> lawyers and <span id="ovDgProviders">11</span> accredited providers · refreshes live</div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-            <a href="command-centre.html" class="btn btn-sm xnav" title="Open the 3D Legal Ecosystem Digital Twin" style="background:linear-gradient(110deg,#0b1a3a,#15324f);color:#7fe7ff;border:1px solid rgba(52,225,255,.4);font-weight:600;padding:9px 15px;text-decoration:none;display:inline-flex;align-items:center;gap:7px;border-radius:9px;box-shadow:0 0 18px rgba(52,225,255,.22)">✦ Command Centre</a>
+            <a href="command-centre.html" class="btn btn-sm xnav" title="Open the 3D Legal Ecosystem Digital Twin" style="background:linear-gradient(110deg,#0b1a3a,#15324f);color:#26CB84;border:1px solid rgba(220,200,148,.4);font-weight:600;padding:9px 15px;text-decoration:none;display:inline-flex;align-items:center;gap:7px;border-radius:9px;box-shadow:0 0 18px rgba(220,200,148,.22)">✦ Command Centre</a>
             <a href="lad-crm.html" class="btn btn-sm xnav" style="background:var(--gold);color:#fff;border:none;font-weight:600;padding:9px 16px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;border-radius:9px">Admin →</a>
           </div>
         </div>
@@ -1309,7 +1312,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         <div class="section-hd">
           <div>
             <div class="section-eyebrow gold">PROVIDER PERFORMANCE</div>
-            <h2 class="section-title">Course &amp; trainer <em style="color:#C9913A">feedback</em></h2>
+            <h2 class="section-title">Course &amp; trainer <em style="color:#9D7714">feedback</em></h2>
             <div class="section-desc">Live participant feedback across every accredited course and provider — the same source the Command Centre ★ Feedback layer reads. <span id="fbSourceNote" style="color:var(--slate3)"></span></div>
           </div>
         </div>
@@ -1321,7 +1324,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
         function tok(){return localStorage.getItem('lad_token')||'';}
         function eH(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
         function n(x){return (x==null||isNaN(x))?'—':Number(x).toLocaleString();}
-        function ratingColor(v){v=Number(v)||0;return v>=4.5?'#0c8a4a':v>=4?'#3aa76d':v>=3.5?'#C9913A':v>=3?'#d68a2a':'#d65a5a';}
+        function ratingColor(v){v=Number(v)||0;return v>=4.5?'#B08A28':v>=4?'#C9A24A':v>=3.5?'#9D7714':v>=3?'#d68a2a':'#d65a5a';}
         function starRow(v){v=Number(v)||0;var full=Math.round(v),s='';for(var i=1;i<=5;i++)s+='<span style="color:'+(i<=full?'#f5b301':'#d8dee8')+';font-size:13px">★</span>';return s;}
         function dimBar(label,val){var pct=Math.max(0,Math.min(100,(Number(val)||0)/5*100));return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px"><span style="color:var(--slate2)">'+label+'</span><span style="font-weight:600;font-family:var(--mono)">'+(val!=null?Number(val).toFixed(2):'—')+'</span></div><div style="height:7px;background:var(--paper2,#eef1f5);border-radius:5px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+ratingColor(val)+';border-radius:5px"></div></div></div>';}
         var MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1353,7 +1356,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
               +providers.map(function(p){return '<div style="border:1px solid var(--line);border-radius:11px;padding:14px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div><div style="font-size:14px;font-weight:600;color:var(--ink)">'+eH(p.provider_name)+'</div><div style="'+EY+'">'+n(p.responses)+' responses</div></div><div style="text-align:right"><div style="font-family:var(--serif);font-size:20px;color:'+ratingColor(p.stars)+'">'+(p.stars!=null?Number(p.stars).toFixed(2):'—')+'</div><div style="font-size:10px">'+starRow(p.stars)+'</div></div></div>'+dimBar('Knowledge',p.knowledge)+dimBar('Clarity',p.clarity)+dimBar('Interaction',p.interaction)+'</div>';}).join('')
             +'</div></div>'
             +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">'
-              +'<div style="'+CARD+'"><div style="'+EY+';margin-bottom:12px;color:#0c8a4a">★ TOP RATED COURSES</div>'+(top.length?top.map(courseRow).join(''):'<div style="color:var(--slate3);font-size:12px">—</div>')+'</div>'
+              +'<div style="'+CARD+'"><div style="'+EY+';margin-bottom:12px;color:#B08A28">★ TOP RATED COURSES</div>'+(top.length?top.map(courseRow).join(''):'<div style="color:var(--slate3);font-size:12px">—</div>')+'</div>'
               +'<div style="'+CARD+'"><div style="'+EY+';margin-bottom:12px;color:#d65a5a">LOWEST RATED COURSES</div>'+(bottom.length?bottom.map(courseRow).join(''):'<div style="color:var(--slate3);font-size:12px">—</div>')+'</div>'
               +'<div style="'+CARD+'"><div style="'+EY+';margin-bottom:14px">RATING DIMENSIONS</div>'+dimBar('Content quality',dim('content'))+dimBar('Practical benefit',dim('benefits'))+dimBar('Applicability',dim('practical'))+dimBar('Overall',dim('overall'))+'<div style="font-size:11px;color:var(--slate3);margin-top:8px">weighted across '+n(T.responses)+' responses</div></div>'
             +'</div>'
@@ -1889,7 +1892,7 @@ function renderFirms(){
     const critical=f.critical||0;
     const trend=f.trend||[];
     const status=compliance>=85?'compliant':compliance>=70?'at-risk':'critical';
-    const accent=status==='compliant'?'#006B3F':status==='at-risk'?'#92540a':'#c0392b';
+    const accent=status==='compliant'?'#9D7714':status==='at-risk'?'#92540a':'#c0392b';
     const trendBars=trend.map((v,idx)=>{
       const max=Math.max(...trend);const h=(v/max*100);const op=idx===trend.length-1?'1':'.5';
       return `<div class="ft-trend-bar" style="height:${h}%;background:${accent};opacity:${op}"></div>`;
@@ -1904,7 +1907,7 @@ function renderFirms(){
       </div>
       <div class="ft-num" style="text-align:center">${f.size}</div>
       <div class="ft-num" style="text-align:center;color:${accent}">${hasCompliance?compliance.toFixed(1)+'<em>%</em>':'—'}</div>
-      <div class="ft-num" style="text-align:center;color:${critical>5?'#c0392b':critical>2?'#92540a':'#006B3F'}">${critical}</div>
+      <div class="ft-num" style="text-align:center;color:${critical>5?'#c0392b':critical>2?'#92540a':'#9D7714'}">${critical}</div>
       <div class="ft-num" style="text-align:center;color:${ptsMissing>50?'#c0392b':ptsMissing>20?'#92540a':'#5a6878'}">${ptsMissing.toLocaleString()}</div>
       <div class="ft-trend">${trendBars}</div>
       <div onclick="event.stopPropagation()" style="display:flex;gap:5px;justify-content:flex-end;align-items:center">
@@ -2224,7 +2227,7 @@ function openFirmDeepDive(firmName){
   const critical=firm.critical||0;
   const complianceDisp=hasCompliance?compliance.toFixed(1)+'%':'—';
   const status=compliance>=85?'compliant':compliance>=70?'at-risk':'critical';
-  const accent=status==='compliant'?'#006B3F':status==='at-risk'?'#92540a':'#c0392b';
+  const accent=status==='compliant'?'#9D7714':status==='at-risk'?'#92540a':'#c0392b';
   const ptsMissing=hasCompliance?Math.round((100-compliance)/100*16*firm.size):0;
   const members=FIRM_MEMBERS[firmName]||[]; // no fabricated people
   const membersHtml=!members.length
@@ -2442,7 +2445,7 @@ function appendLexMessage(role, text) {
   const div = document.createElement('div');
   div.style.cssText = `display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;${isUser?'flex-direction:row-reverse':''}`;
   div.innerHTML = `
-    <div style="width:32px;height:32px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:12px;${isUser?'background:linear-gradient(135deg,#C9913A,#9a6e1c);color:#fff;font-weight:700;font-family:var(--mono)':'background:linear-gradient(135deg,#7c3aed,#14b8a6);color:#fff;font-size:14px'}">
+    <div style="width:32px;height:32px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:12px;${isUser?'background:linear-gradient(135deg,#9D7714,#9a6e1c);color:#fff;font-weight:700;font-family:var(--mono)':'background:linear-gradient(135deg,#202A50,#B08A28);color:#fff;font-size:14px'}">
       ${isUser ? 'DH' : '✦'}
     </div>
     <div style="max-width:82%;background:${isUser?'var(--ink)':'var(--white)'};color:${isUser?'#fff':'var(--ink)'};border:1px solid ${isUser?'var(--ink)':'var(--line)'};border-radius:${isUser?'14px 4px 14px 14px':'4px 14px 14px 14px'};padding:11px 14px;font-size:13px;line-height:1.65;letter-spacing:-.005em">${text.replace(/\n/g,'<br>')}</div>`;
@@ -2461,7 +2464,7 @@ async function sendLexMessage() {
   const typingDiv = document.createElement('div');
   typingDiv.id = typingId;
   typingDiv.style.cssText = 'display:flex;gap:10px;align-items:center;margin-bottom:14px';
-  typingDiv.innerHTML = `<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#14b8a6);display:grid;place-items:center;color:#fff;font-size:14px;flex-shrink:0">✦</div><div style="padding:10px 14px;background:var(--white);border:1px solid var(--line);border-radius:4px 14px 14px 14px"><span style="font-family:var(--mono);font-size:10px;color:var(--slate3)">Maryam is thinking</span><span style="animation:pulse 1s infinite"> ●</span></div>`;
+  typingDiv.innerHTML = `<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#202A50,#B08A28);display:grid;place-items:center;color:#fff;font-size:14px;flex-shrink:0">✦</div><div style="padding:10px 14px;background:var(--white);border:1px solid var(--line);border-radius:4px 14px 14px 14px"><span style="font-family:var(--mono);font-size:10px;color:var(--slate3)">Maryam is thinking</span><span style="animation:pulse 1s infinite"> ●</span></div>`;
   document.getElementById('lexMessages').appendChild(typingDiv);
   document.getElementById('lexMessages').scrollTop = 99999;
   const history = lexMessages.slice(-10).map(m => ({role:m.role,content:m.content}));
@@ -2481,13 +2484,13 @@ const DIFC_LAWYERS = [];
 function openInsightDive(insightId) {
   const configs = {
     'solo':{
-      title:'Solo Practitioner Compliance Gap',tag:'PATTERN INSIGHT',icon:'',iconBg:'linear-gradient(135deg,#7c3aed,#a855f7)',
+      title:'Solo Practitioner Compliance Gap',tag:'PATTERN INSIGHT',icon:'',iconBg:'linear-gradient(135deg,#202A50,#a855f7)',
       summary:'Smaller firms and solo practitioners tend to lag larger firms on compliance. Use the live firm league to target the lowest-ranked firms for outreach.',
       lawyers: SOLO_LAWYERS, label:'SOLO PRACTITIONERS BELOW THRESHOLD',
       aiContext:'Solo and small-firm practitioners typically lag larger firms; prioritise outreach using the live firm compliance ranking.'
     },
     'difc':{
-      title:'Capacity Opportunity',tag:'OPPORTUNITY',icon:'',iconBg:'linear-gradient(135deg,#0d7377,#14b8a6)',
+      title:'Capacity Opportunity',tag:'OPPORTUNITY',icon:'',iconBg:'linear-gradient(135deg,#9D7714,#B08A28)',
       summary:'Under-subscribed upcoming sessions are high-leverage capacity — filling them moves at-risk practitioners toward compliance. See live low-seat sessions in the anomaly feed.',
       lawyers: DIFC_LAWYERS, label:'AT-RISK PRACTITIONERS',
       aiContext:'Under-subscribed upcoming sessions are the highest-leverage capacity to fill; check the live low-seat sessions.'
@@ -2655,7 +2658,7 @@ async function exportDGReport() {
   const _kFc = (_f && _f.projectedRate!=null) ? _f.projectedRate+'%' : '—';
   const _kCrit = (_L.critical!=null?_L.critical.toLocaleString():'—');
   const _cycle = (_o && _o.cycleYear) || 2026;
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>LAD Intelligence Briefing — Director General — ${_today}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Georgia',serif;font-size:13.5pt;line-height:1.75;color:#0a0e14;background:#fff;padding:60px 80px;max-width:820px;margin:0 auto}.hdr{border-bottom:2px solid #006B3F;padding-bottom:22px;margin-bottom:28px}.gov{font-family:Arial,sans-serif;font-size:8.5pt;font-weight:700;color:#006B3F;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}.ttl{font-size:22pt;font-weight:400;color:#0a0e14;margin-bottom:3px}.sub{font-size:10pt;color:#5a6878}.meta{display:flex;gap:40px;padding:14px 0;border-bottom:1px solid #e8ecf1;margin-bottom:26px;font-family:Arial,sans-serif}.ml{font-size:8pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8a98aa;margin-bottom:3px}.mv{font-size:11pt;font-weight:600;color:#0a0e14}.krow{display:flex;gap:14px;margin:22px 0}.kbox{flex:1;border:1px solid #e8ecf1;border-radius:8px;padding:14px;text-align:center;border-top:3px solid #006B3F}.kn{font-family:Georgia,serif;font-size:24pt;font-weight:400;color:#006B3F;line-height:1}.kl{font-family:Arial,sans-serif;font-size:7.5pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8a98aa;margin-top:4px}p{margin-bottom:16px}.ftr{margin-top:44px;padding-top:16px;border-top:1px solid #e8ecf1;font-family:Arial,sans-serif;font-size:8pt;color:#8a98aa;display:flex;justify-content:space-between;align-items:center}.stamp{background:#006B3F;color:#fff;padding:5px 12px;border-radius:4px;font-weight:700;letter-spacing:1px}
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>LAD Intelligence Briefing — Director General — ${_today}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Georgia',serif;font-size:13.5pt;line-height:1.75;color:#0a0e14;background:#fff;padding:60px 80px;max-width:820px;margin:0 auto}.hdr{border-bottom:2px solid #9D7714;padding-bottom:22px;margin-bottom:28px}.gov{font-family:Arial,sans-serif;font-size:8.5pt;font-weight:700;color:#9D7714;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}.ttl{font-size:22pt;font-weight:400;color:#0a0e14;margin-bottom:3px}.sub{font-size:10pt;color:#5a6878}.meta{display:flex;gap:40px;padding:14px 0;border-bottom:1px solid #e8ecf1;margin-bottom:26px;font-family:Arial,sans-serif}.ml{font-size:8pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8a98aa;margin-bottom:3px}.mv{font-size:11pt;font-weight:600;color:#0a0e14}.krow{display:flex;gap:14px;margin:22px 0}.kbox{flex:1;border:1px solid #e8ecf1;border-radius:8px;padding:14px;text-align:center;border-top:3px solid #9D7714}.kn{font-family:Georgia,serif;font-size:24pt;font-weight:400;color:#9D7714;line-height:1}.kl{font-family:Arial,sans-serif;font-size:7.5pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8a98aa;margin-top:4px}p{margin-bottom:16px}.ftr{margin-top:44px;padding-top:16px;border-top:1px solid #e8ecf1;font-family:Arial,sans-serif;font-size:8pt;color:#8a98aa;display:flex;justify-content:space-between;align-items:center}.stamp{background:#9D7714;color:#fff;padding:5px 12px;border-radius:4px;font-weight:700;letter-spacing:1px}
 /* ═══════════════════════════════════════
    MOBILE RESPONSIVE SYSTEM
 ═══════════════════════════════════════ */
@@ -2672,7 +2675,7 @@ async function exportDGReport() {
 /* Bottom nav (mobile only) */
 .mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:190;background:rgba(255,255,255,.95);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:1px solid var(--line,rgba(0,0,0,.1));padding:8px 0 max(8px,env(safe-area-inset-bottom));flex-direction:row;align-items:stretch}
 .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:4px 6px;border:none;background:transparent;color:var(--slate3,#8a98aa);font-family:var(--mono,'JetBrains Mono',monospace);font-size:8.5px;letter-spacing:.5px;text-transform:uppercase;font-weight:600;transition:color .15s;-webkit-tap-highlight-color:transparent}
-.mob-nav-btn.on{color:var(--green,#006B3F)}
+.mob-nav-btn.on{color:var(--green,#9D7714)}
 .mob-nav-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;margin-bottom:1px}
 .mob-nav-btn span{line-height:1}
 
@@ -3213,13 +3216,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const PORTALS = {
     hub:    { name: 'CLPD Hub',           short: 'Hub',         file: 'lad-super-system.html',       icon: '⚖️', color: '#1c3a5e' },
-    lawyer: { name: 'Lawyer Portal',      short: 'Lawyer',      file: 'lawyer-portal-v2.html',       icon: '👤', color: '#006B3F' },
-    firm:   { name: 'Firm Compliance',    short: 'Firm',        file: 'firm-compliance-portal.html', icon: '🏢', color: '#C9913A' },
+    lawyer: { name: 'Lawyer Portal',      short: 'Lawyer',      file: 'lawyer-portal-v2.html',       icon: '👤', color: '#9D7714' },
+    firm:   { name: 'Firm Compliance',    short: 'Firm',        file: 'firm-compliance-portal.html', icon: '🏢', color: '#9D7714' },
     intel:  { name: 'LAD Intelligence',   short: 'Intelligence',file: 'lad-crm.html#intel',    icon: '🛡️', color: '#1c3a5e' },
   };
 
   const CSS = `
-    .ladnav-bar { position: fixed; top: 0; left: 0; right: 0; height: 44px; background: linear-gradient(90deg,#0a1e3a 0%,#1c3a5e 50%,#254d7a 100%); color: #fff; display: flex; align-items: center; padding: 0 18px; gap: 14px; z-index: 9999; font-family: 'Inter','IBM Plex Sans',system-ui,sans-serif; font-size: 13px; box-shadow: 0 2px 12px rgba(10,30,58,.25); letter-spacing: -.005em; }
+    .ladnav-bar { position: fixed; top: 0; left: 0; right: 0; height: 44px; background: linear-gradient(90deg,#0a1e3a 0%,#1c3a5e 50%,#9D7714 100%); color: #fff; display: flex; align-items: center; padding: 0 18px; gap: 14px; z-index: 9999; font-family: 'Inter','IBM Plex Sans',system-ui,sans-serif; font-size: 13px; box-shadow: 0 2px 12px rgba(10,30,58,.25); letter-spacing: -.005em; }
     .ladnav-bar.compact { padding: 0 12px; gap: 10px; }
     body.has-ladnav { padding-top: 44px !important; }
     /* Push sticky/fixed topbars in child portals below our nav so they don't overlap */
@@ -3244,7 +3247,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .ladnav-icon-btn:hover { background: rgba(255,255,255,.15); }
     .ladnav-icon-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.7; }
     .ladnav-user { display: flex; align-items: center; gap: 8px; padding-left: 10px; border-left: 1px solid rgba(255,255,255,.18); }
-    .ladnav-avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg,#C9913A,#dba84e); color: #fff; display: grid; place-items: center; font-weight: 600; font-size: 10px; letter-spacing: .2px; font-family: 'JetBrains Mono', monospace; }
+    .ladnav-avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg,#9D7714,#B08A28); color: #fff; display: grid; place-items: center; font-weight: 600; font-size: 10px; letter-spacing: .2px; font-family: 'JetBrains Mono', monospace; }
     .ladnav-user-info { display: flex; flex-direction: column; gap: 1px; line-height: 1.1; }
     .ladnav-user-name { font-size: 11.5px; font-weight: 500; letter-spacing: -.005em; }
     .ladnav-user-role { font-size: 9px; color: rgba(255,255,255,.55); font-family: 'JetBrains Mono', monospace; letter-spacing: .3px; }
@@ -3258,14 +3261,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* ───── Lex Claude AI panel ───── */
-    .ladlex-fab { position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg,#006B3F,#008549); color: #fff; border: none; cursor: pointer; box-shadow: 0 8px 28px rgba(0,107,63,.4); display: grid; place-items: center; z-index: 9998; transition: all .25s; }
-    .ladlex-fab:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 12px 36px rgba(0,107,63,.5); }
+    .ladlex-fab { position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg,#9D7714,#9D7714); color: #fff; border: none; cursor: pointer; box-shadow: 0 8px 28px rgba(157,119,20,.4); display: grid; place-items: center; z-index: 9998; transition: all .25s; }
+    .ladlex-fab:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 12px 36px rgba(157,119,20,.5); }
     .ladlex-fab svg { width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 1.6; }
-    .ladlex-fab-dot { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; background: #C9913A; border-radius: 50%; border: 2px solid #006B3F; }
+    .ladlex-fab-dot { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; background: #9D7714; border-radius: 50%; border: 2px solid #9D7714; }
     .ladlex-panel { position: fixed; bottom: 90px; right: 24px; width: 420px; max-width: calc(100vw - 48px); height: 580px; max-height: calc(100vh - 130px); background: #fff; border-radius: 16px; box-shadow: 0 24px 80px rgba(10,30,58,.25), 0 4px 16px rgba(10,30,58,.1); display: none; flex-direction: column; overflow: hidden; z-index: 9997; font-family: 'Inter','IBM Plex Sans',system-ui,sans-serif; border: 1px solid rgba(10,30,58,.08); }
     .ladlex-panel.open { display: flex; animation: lexSlideUp .25s ease-out; }
     @keyframes lexSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .ladlex-hd { background: linear-gradient(135deg,#006B3F 0%,#008549 100%); color: #fff; padding: 16px 18px; display: flex; align-items: center; gap: 12px; }
+    .ladlex-hd { background: linear-gradient(135deg,#9D7714 0%,#9D7714 100%); color: #fff; padding: 16px 18px; display: flex; align-items: center; gap: 12px; }
     .ladlex-hd-ico { width: 32px; height: 32px; background: rgba(255,255,255,.18); border-radius: 8px; display: grid; place-items: center; flex-shrink: 0; }
     .ladlex-hd-ico svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 1.6; }
     .ladlex-hd-text { flex: 1; min-width: 0; }
@@ -3274,20 +3277,20 @@ document.addEventListener('DOMContentLoaded', () => {
     .ladlex-hd-close { background: rgba(255,255,255,.12); border: none; color: #fff; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; display: grid; place-items: center; transition: all .12s; }
     .ladlex-hd-close:hover { background: rgba(255,255,255,.22); }
     .ladlex-hd-close svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
-    .ladlex-status { padding: 8px 18px; background: #f0f9f4; border-bottom: 1px solid #b8d8c5; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #006B3F; letter-spacing: .5px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .ladlex-status { padding: 8px 18px; background: #f0f9f4; border-bottom: 1px solid #26CB84; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #9D7714; letter-spacing: .5px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
     .ladlex-status.warn { background: #fef0e0; border-color: #e8c070; color: #8a4e08; }
     .ladlex-status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; }
     .ladlex-msgs { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 14px; background: #fafbfc; }
     .ladlex-msg { display: flex; gap: 10px; max-width: 92%; }
     .ladlex-msg.user { align-self: flex-end; flex-direction: row-reverse; }
     .ladlex-msg-av { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
-    .ladlex-msg.assistant .ladlex-msg-av { background: linear-gradient(135deg,#006B3F,#008549); color: #fff; }
-    .ladlex-msg.user .ladlex-msg-av { background: linear-gradient(135deg,#C9913A,#dba84e); color: #fff; }
+    .ladlex-msg.assistant .ladlex-msg-av { background: linear-gradient(135deg,#9D7714,#9D7714); color: #fff; }
+    .ladlex-msg.user .ladlex-msg-av { background: linear-gradient(135deg,#9D7714,#B08A28); color: #fff; }
     .ladlex-msg-body { padding: 11px 14px; border-radius: 11px; font-size: 13px; line-height: 1.55; color: #1a2330; letter-spacing: -.005em; white-space: pre-wrap; word-wrap: break-word; }
     .ladlex-msg.assistant .ladlex-msg-body { background: #fff; border: 1px solid #e8ecf1; }
     .ladlex-msg.user .ladlex-msg-body { background: #1c3a5e; color: #fff; }
     .ladlex-msg-body strong { font-weight: 600; }
-    .ladlex-msg-body em { font-style: italic; color: #006B3F; }
+    .ladlex-msg-body em { font-style: italic; color: #9D7714; }
     .ladlex-msg-body code { background: #f1f4f7; padding: 1px 5px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
     .ladlex-typing { display: inline-flex; gap: 3px; align-items: center; }
     .ladlex-typing span { width: 6px; height: 6px; border-radius: 50%; background: #5a6878; animation: lexBlink 1.4s infinite; }
@@ -3296,14 +3299,14 @@ document.addEventListener('DOMContentLoaded', () => {
     @keyframes lexBlink { 0%, 60%, 100% { opacity: .3; } 30% { opacity: 1; } }
     .ladlex-input-row { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid #e8ecf1; background: #fff; align-items: flex-end; }
     .ladlex-input { flex: 1; resize: none; padding: 10px 12px; border: 1px solid #d8dfe7; border-radius: 9px; font-family: inherit; font-size: 13px; line-height: 1.5; color: #1a2330; outline: none; transition: border-color .15s; max-height: 100px; min-height: 38px; letter-spacing: -.005em; }
-    .ladlex-input:focus { border-color: #006B3F; box-shadow: 0 0 0 3px rgba(0,107,63,.1); }
-    .ladlex-send { background: #006B3F; color: #fff; border: none; width: 38px; height: 38px; border-radius: 9px; cursor: pointer; display: grid; place-items: center; transition: all .12s; flex-shrink: 0; }
-    .ladlex-send:hover:not(:disabled) { background: #004d2e; }
+    .ladlex-input:focus { border-color: #9D7714; box-shadow: 0 0 0 3px rgba(157,119,20,.1); }
+    .ladlex-send { background: #9D7714; color: #fff; border: none; width: 38px; height: 38px; border-radius: 9px; cursor: pointer; display: grid; place-items: center; transition: all .12s; flex-shrink: 0; }
+    .ladlex-send:hover:not(:disabled) { background: #70550F; }
     .ladlex-send:disabled { opacity: .4; cursor: not-allowed; }
     .ladlex-send svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
     .ladlex-suggestions { padding: 8px 14px 12px; display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid #e8ecf1; background: #fff; }
     .ladlex-suggestion { background: #f1f4f7; border: 1px solid #d8dfe7; color: #2e3f54; padding: 5px 11px; border-radius: 14px; font-size: 11.5px; cursor: pointer; transition: all .12s; font-family: inherit; letter-spacing: -.005em; }
-    .ladlex-suggestion:hover { background: #e6f4ee; border-color: #9fd4b8; color: #006B3F; }
+    .ladlex-suggestion:hover { background: #e6f4ee; border-color: #26CB84; color: #9D7714; }
 
     /* ───── API key modal ───── */
     .ladlex-modal { position: fixed; inset: 0; background: rgba(10,30,58,.6); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 20px; }
@@ -3314,15 +3317,15 @@ document.addEventListener('DOMContentLoaded', () => {
     .ladlex-modal-sub { font-size: 13px; color: #5a6878; line-height: 1.5; margin-bottom: 22px; letter-spacing: -.005em; }
     .ladlex-modal-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #5a6878; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 600; margin-bottom: 7px; }
     .ladlex-modal-input { width: 100%; padding: 11px 13px; border: 1px solid #d8dfe7; border-radius: 9px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: #1a2330; outline: none; transition: border-color .15s; margin-bottom: 14px; letter-spacing: .2px; }
-    .ladlex-modal-input:focus { border-color: #006B3F; box-shadow: 0 0 0 3px rgba(0,107,63,.1); }
+    .ladlex-modal-input:focus { border-color: #9D7714; box-shadow: 0 0 0 3px rgba(157,119,20,.1); }
     .ladlex-modal-hint { font-size: 11.5px; color: #68788a; line-height: 1.5; margin-bottom: 18px; letter-spacing: -.005em; }
-    .ladlex-modal-hint a { color: #006B3F; text-decoration: underline; }
+    .ladlex-modal-hint a { color: #9D7714; text-decoration: underline; }
     .ladlex-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
     .ladlex-modal-btn { padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all .12s; font-family: inherit; letter-spacing: -.005em; }
     .ladlex-modal-btn.ghost { background: transparent; color: #5a6878; }
     .ladlex-modal-btn.ghost:hover { background: #f1f4f7; color: #0d1b2a; }
-    .ladlex-modal-btn.primary { background: #006B3F; color: #fff; }
-    .ladlex-modal-btn.primary:hover { background: #004d2e; }
+    .ladlex-modal-btn.primary { background: #9D7714; color: #fff; }
+    .ladlex-modal-btn.primary:hover { background: #70550F; }
     .ladlex-modal-btn.danger { background: #fde6e6; color: #b81c24; }
     .ladlex-modal-btn.danger:hover { background: #f9c8c8; }
   `;
@@ -3377,7 +3380,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="ladnav-brand" onclick="location.href='/'" style="cursor:pointer" title="Home">
         <svg class="ladnav-emblem" viewBox="0 0 38 44" fill="none">
           <path d="M19 4L6 10V24C6 33 12 39 19 42C26 39 32 33 32 24V10Z" fill="rgba(255,255,255,.92)"/>
-          <path d="M19 8L10 13V24C10 30 14 35 19 38C24 35 28 30 28 24V13Z" fill="#C9913A"/>
+          <path d="M19 8L10 13V24C10 30 14 35 19 38C24 35 28 30 28 24V13Z" fill="#9D7714"/>
         </svg>
         <div class="ladnav-brand-text">
           <div class="ladnav-brand-title">Legal Affairs Department</div>
@@ -3927,7 +3930,7 @@ Click the ⚙ icon at the top right to add a key, then ask me again.`;
   // ───────── HEATMAP (skills coverage) ─────────
   function hmCell(pct){
     var v=Math.max(0,Math.min(100,Number(pct)||0));
-    var col = v>=85?'#006B3F':v>=75?'#7ab088':v>=65?'#e0c890':v>=50?'#c87838':'#8a1a1e';
+    var col = v>=85?'#9D7714':v>=75?'#C9A24A':v>=65?'#e0c890':v>=50?'#c87838':'#8a1a1e';
     var fg = v>=65 && v<85 ? '#3a3a2a' : '#fff';
     return '<div class="heatmap-cell" style="background:'+col+';color:'+fg+'">'+Math.round(v)+'%</div>';
   }
@@ -4137,7 +4140,7 @@ function _buildReportHTML(type,o,f,a,ca){
     if(rk.bottom&&rk.bottom.length) sections+='<h2>Highest-risk firms</h2>'+table(['Firm','Lawyers','Compliance','Critical'],firmRows(rk.bottom));
   }
   if(!sections) sections='<p style="color:#667;font-family:Arial">Live programme data for this report is still loading — please reopen in a moment.</p>';
-  var css='body{font-family:Georgia,serif;color:#1a2230;max-width:900px;margin:0 auto;padding:48px 40px;line-height:1.55}@media print{.noprint{display:none}body{padding:0}}.gov{font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;color:#0d7377;text-transform:uppercase;font-weight:700}h1{font-size:30px;margin:6px 0 2px}.sub{font-family:Arial;color:#667;font-size:13px;margin-bottom:22px}h2{font-size:17px;border-bottom:2px solid #0d7377;padding-bottom:5px;margin:30px 0 12px;color:#0a2540}table{width:100%;border-collapse:collapse;font-family:Arial;font-size:13px;margin:8px 0 18px}th{text-align:left;background:#0a2540;color:#fff;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.5px}td{padding:7px 10px;border-bottom:1px solid #e3e9f0}tr:nth-child(even) td{background:#f6f9fc}.foot{margin-top:36px;border-top:1px solid #ccc;padding-top:12px;font-family:Arial;font-size:10px;color:#889;letter-spacing:.5px}.btn{font-family:Arial;background:#0d7377;color:#fff;border:none;padding:10px 18px;border-radius:6px;font-size:13px;cursor:pointer}';
+  var css='body{font-family:Georgia,serif;color:#1a2230;max-width:900px;margin:0 auto;padding:48px 40px;line-height:1.55}@media print{.noprint{display:none}body{padding:0}}.gov{font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;color:#9D7714;text-transform:uppercase;font-weight:700}h1{font-size:30px;margin:6px 0 2px}.sub{font-family:Arial;color:#667;font-size:13px;margin-bottom:22px}h2{font-size:17px;border-bottom:2px solid #9D7714;padding-bottom:5px;margin:30px 0 12px;color:#0a2540}table{width:100%;border-collapse:collapse;font-family:Arial;font-size:13px;margin:8px 0 18px}th{text-align:left;background:#0a2540;color:#fff;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.5px}td{padding:7px 10px;border-bottom:1px solid #e3e9f0}tr:nth-child(even) td{background:#f6f9fc}.foot{margin-top:36px;border-top:1px solid #ccc;padding-top:12px;font-family:Arial;font-size:10px;color:#889;letter-spacing:.5px}.btn{font-family:Arial;background:#9D7714;color:#fff;border:none;padding:10px 18px;border-radius:6px;font-size:13px;cursor:pointer}';
   return '<!doctype html><html><head><meta charset="utf-8"><title>'+_rEsc(title)+' · LAD CLPD</title><style>'+css+'</style></head><body>'+
     '<div class="noprint" style="text-align:right;margin-bottom:18px"><button class="btn" onclick="window.print()">⬇ Print / Save as PDF</button></div>'+
     '<div class="gov">Government of Dubai · Legal Affairs Department</div>'+

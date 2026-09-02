@@ -8,7 +8,7 @@
   function base(){ return ((window.LAD_API_BASE)||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com').replace(/\/$/,''); }
   function tok(){ try{ return localStorage.getItem('lad_token')||''; }catch(e){ return ''; } }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);}); }
-  var LEVEL = { info:'#3b82f6', success:'#16a34a', warning:'#d97706', urgent:'#dc2626' };
+  var LEVEL = { info:'#3b82f6', success:'#B08A28', warning:'#d97706', urgent:'#dc2626' };
   var items = [];
 
   function style(){

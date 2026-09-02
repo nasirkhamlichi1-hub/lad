@@ -10,9 +10,9 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;-webkit-tap-highlight-color:transparent}
 :root{
-  --green:#006B3F;--green2:#008549;--green-d:#004d2e;--green-l:#00a85e;
-  --green-bg:#f0f9f4;--green-border:#b8d8c5;
-  --gold:#C9913A;--gold2:#dba84e;--gold-l:#f0cc88;
+  --green:#9D7714;--green2:#9D7714;--green-d:#70550F;--green-l:#B08A28;
+  --green-bg:#f0f9f4;--green-border:#26CB84;
+  --gold:#9D7714;--gold2:#B08A28;--gold-l:#DCC894;
   --gold-bg:#fdf6e8;--gold-border:#e8c878;
   --ink:#0a0e14;--ink2:#1a2330;
   --slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;--slate4:#b8c4d2;
@@ -20,9 +20,9 @@
   --paper:#f8fafb;--paper2:#f1f4f7;--white:#ffffff;
   --red:#c0392b;--red-bg:#fdeae8;--red-border:#f0aaaa;
   --amber:#92540a;--amber-bg:#fef3e2;--amber-border:#f0c878;
-  --blue:#1a4d80;--blue-l:#2563eb;--blue-bg:#eef4fb;--blue-border:#a8c4e0;
-  --purple:#5b21b6;--purple-l:#7c3aed;--purple-bg:#f3edff;--purple-border:#c4b5fd;
-  --teal:#0d7377;--teal-l:#14b8a6;--teal-bg:#e6f4f1;--teal-border:#9fd4cf;
+  --blue:#9D7714;--blue-l:#202A50;--blue-bg:#eef4fb;--blue-border:#a8c4e0;
+  --purple:#5b21b6;--purple-l:#202A50;--purple-bg:#f3edff;--purple-border:#c4b5fd;
+  --teal:#9D7714;--teal-l:#B08A28;--teal-bg:#e6f4f1;--teal-border:#26CB84;
   --serif:'Instrument Serif',Georgia,serif;
   --sans:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
   --mono:'JetBrains Mono','SF Mono',Menlo,monospace;
@@ -46,7 +46,7 @@ body{
 ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px;border:2px solid var(--paper)}
 
 /* ══ TOPBAR ══ */
-.topbar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,14,20,.97);backdrop-filter:saturate(180%) blur(32px);border-bottom:1px solid rgba(201,145,58,.12)}
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,14,20,.97);backdrop-filter:saturate(180%) blur(32px);border-bottom:1px solid rgba(157,119,20,.12)}
 .tb-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;padding:0 28px;height:64px;gap:0}
 .tb-logos{display:flex;align-items:center;gap:0;border-right:1px solid rgba(255,255,255,.15);padding-right:20px;margin-right:20px}
 .tb-logo-dubai{height:38px;display:flex;align-items:center}
@@ -72,10 +72,10 @@ body{
 .tb-lang{display:flex;align-items:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:20px;overflow:hidden}
 .tb-lang-btn{padding:4px 10px;font-size:11.5px;font-weight:600;color:rgba(255,255,255,.7);cursor:pointer;transition:all .15s;font-family:var(--mono)}
 .tb-lang-btn.on{background:rgba(255,255,255,.2);color:#fff}
-.tb-credit-badge{display:flex;align-items:center;gap:6px;background:rgba(201,145,58,.25);border:1px solid rgba(201,145,58,.4);border-radius:20px;padding:5px 12px;cursor:pointer;font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--gold-l)}
+.tb-credit-badge{display:flex;align-items:center;gap:6px;background:rgba(157,119,20,.25);border:1px solid rgba(157,119,20,.4);border-radius:20px;padding:5px 12px;cursor:pointer;font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--gold-l)}
 .btn-login{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:7px 16px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s;font-family:var(--sans)}
 .btn-login:hover{background:rgba(255,255,255,.25)}
-.btn-reg{background:var(--gold);color:#fff;padding:7px 16px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s;font-family:var(--sans);border:none;box-shadow:0 2px 8px rgba(201,145,58,.3)}
+.btn-reg{background:var(--gold);color:#fff;padding:7px 16px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s;font-family:var(--sans);border:none;box-shadow:0 2px 8px rgba(157,119,20,.3)}
 .btn-reg:hover{background:var(--gold2);transform:translateY(-1px)}
 
 /* ══ PAGE SYSTEM ══ */
@@ -87,7 +87,7 @@ body{
 .hero-bg{position:absolute;inset:0;opacity:.08}
 .hero-bg svg{width:100%;height:100%}
 .hero-inner{max-width:1400px;margin:0 auto;padding:60px 28px 80px;position:relative;z-index:1;display:grid;grid-template-columns:1.1fr 1fr;gap:40px;align-items:center}
-.hero-tag{display:inline-flex;align-items:center;gap:7px;background:rgba(201,145,58,.2);border:1px solid rgba(201,145,58,.35);border-radius:20px;padding:5px 12px;font-family:var(--mono);font-size:9.5px;color:var(--gold-l);font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:18px}
+.hero-tag{display:inline-flex;align-items:center;gap:7px;background:rgba(157,119,20,.2);border:1px solid rgba(157,119,20,.35);border-radius:20px;padding:5px 12px;font-family:var(--mono);font-size:9.5px;color:var(--gold-l);font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:18px}
 .hero-tag-dot{width:6px;height:6px;background:var(--gold-l);border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .hero-title{font-family:var(--serif);font-size:48px;color:#fff;line-height:1.08;letter-spacing:-.028em;margin-bottom:8px}
@@ -95,7 +95,7 @@ body{
 .hero-title-ar{font-family:var(--arabic);font-size:22px;color:rgba(255,255,255,.55);direction:rtl;margin-bottom:16px;line-height:1.4}
 .hero-desc{font-size:15px;color:rgba(255,255,255,.75);line-height:1.7;max-width:560px;margin-bottom:28px}
 .hero-btns{display:flex;gap:12px;flex-wrap:wrap}
-.hero-btn-p{background:var(--gold);color:#fff;padding:13px 24px;border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .2s;box-shadow:0 4px 16px rgba(201,145,58,.35)}
+.hero-btn-p{background:var(--gold);color:#fff;padding:13px 24px;border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .2s;box-shadow:0 4px 16px rgba(157,119,20,.35)}
 .hero-btn-p:hover{background:var(--gold2);transform:translateY(-2px)}
 .hero-btn-s{background:rgba(255,255,255,.12);color:#fff;padding:13px 24px;border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,.22);transition:all .2s}
 .hero-btn-s:hover{background:rgba(255,255,255,.2)}
@@ -127,8 +127,8 @@ body{
 
 /* ══ BUTTONS ══ */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:9px;font-size:12.5px;font-weight:600;font-family:var(--sans);cursor:pointer;border:none;letter-spacing:-.005em;transition:all .15s;white-space:nowrap;text-decoration:none}
-.btn-g{background:var(--gold);color:#fff;box-shadow:0 2px 8px rgba(0,107,63,.22)}.btn-g:hover{background:var(--gold2);transform:translateY(-1px)}
-.btn-gold{background:var(--gold);color:#fff;box-shadow:0 2px 8px rgba(201,145,58,.22)}.btn-gold:hover{background:var(--gold2);transform:translateY(-1px)}
+.btn-g{background:var(--gold);color:#fff;box-shadow:0 2px 8px rgba(157,119,20,.22)}.btn-g:hover{background:var(--gold2);transform:translateY(-1px)}
+.btn-gold{background:var(--gold);color:#fff;box-shadow:0 2px 8px rgba(157,119,20,.22)}.btn-gold:hover{background:var(--gold2);transform:translateY(-1px)}
 .btn-ink{background:var(--ink);color:#fff}.btn-ink:hover{background:var(--ink2)}
 .btn-gh{background:var(--white);color:var(--slate);border:1px solid var(--line)}.btn-gh:hover{background:var(--paper2);color:var(--ink);border-color:var(--line2)}
 .btn-sm{font-size:11.5px;padding:7px 12px}
@@ -144,7 +144,7 @@ body{
 .cc-art-ico{position:absolute;top:10px;right:12px;width:32px;height:32px;background:rgba(255,255,255,.18);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.25);border-radius:8px;display:grid;place-items:center;font-size:15px}
 .cc-badges{display:flex;gap:5px}
 .cc-badge{background:rgba(0,0,0,.5);backdrop-filter:blur(20px);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:5px}
-.cc-badge.gold{background:rgba(201,145,58,.8)}
+.cc-badge.gold{background:rgba(157,119,20,.8)}
 .cc-body{padding:14px;flex:1;display:flex;flex-direction:column}
 .cc-prov{font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:4px}
 .cc-title{font-family:var(--serif);font-size:15.5px;color:var(--ink);letter-spacing:-.012em;line-height:1.3;margin-bottom:7px;flex:1}
@@ -195,7 +195,7 @@ body{
 /* ══ BUY CREDITS MODAL ══ */
 #buyModal{display:none !important}#buyModal.on{display:flex !important}
 .pkg-card{border:1.5px solid var(--line2);border-radius:var(--r-lg);padding:18px;cursor:pointer;transition:all .15s;text-align:center;position:relative}
-.pkg-card:hover,.pkg-card.on{border-color:var(--gold);background:var(--gold-bg);box-shadow:0 0 0 3px rgba(201,145,58,.12)}
+.pkg-card:hover,.pkg-card.on{border-color:var(--gold);background:var(--gold-bg);box-shadow:0 0 0 3px rgba(157,119,20,.12)}
 
 /* ══ NEWS ══ */
 .news-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -483,6 +483,9 @@ function applyLADConfig() {
   })();
 </script>
 <script src="api-client.js?v=render3"></script>
+  <!-- Government of Dubai Legal Affairs Department identity -->
+  <link rel="stylesheet" href="lad-brand.css">
+  <script src="lad-brand.js" defer></script>
 </head>
 <body>
 
@@ -525,9 +528,9 @@ function applyLADConfig() {
   <div style="max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
     <div style="flex:1;min-width:260px;font-size:13px;line-height:1.55">
       The CLPD portal uses essential cookies and browser storage to keep you signed in and remember your preferences. We do not use third-party tracking. See our
-      <a href="privacy.html" style="color:#C9913A;font-weight:600;text-decoration:underline">Privacy notice</a> for details.
+      <a href="privacy.html" style="color:#9D7714;font-weight:600;text-decoration:underline">Privacy notice</a> for details.
     </div>
-    <button onclick="(function(){try{localStorage.setItem('clpd_cookie_ack','1')}catch(_){}document.getElementById('cookieBanner').style.display='none'})()" style="padding:9px 18px;background:#006B3F;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Got it</button>
+    <button onclick="(function(){try{localStorage.setItem('clpd_cookie_ack','1')}catch(_){}document.getElementById('cookieBanner').style.display='none'})()" style="padding:9px 18px;background:#9D7714;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Got it</button>
   </div>
 </div>
 <script>
@@ -620,18 +623,18 @@ function applyLADConfig() {
   <div id="drawerPanel">
     <div class="dr-head">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 48" width="28" height="30">
-        <polygon points="22,1 40,7 43,22 40,37 22,47 4,37 1,22 4,7" fill="none" stroke="#C9913A" stroke-width="1.3"/>
-        <line x1="11" y1="14" x2="11" y2="30" stroke="#C9913A" stroke-width="1.4" stroke-linecap="round"/>
-        <line x1="11" y1="30" x2="17" y2="30" stroke="#C9913A" stroke-width="1.4" stroke-linecap="round"/>
-        <polyline points="19,30 22.5,14 26,30" fill="none" stroke="#C9913A" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-        <line x1="20.5" y1="24" x2="24.5" y2="24" stroke="#C9913A" stroke-width="1.2"/>
-        <line x1="28" y1="14" x2="28" y2="30" stroke="#C9913A" stroke-width="1.4" stroke-linecap="round"/>
-        <path d="M28,14 Q38,14 38,22 Q38,30 28,30" fill="none" stroke="#C9913A" stroke-width="1.4" stroke-linecap="round"/>
-        <circle cx="22" cy="1" r="1.4" fill="#C9913A"/>
-        <circle cx="22" cy="47" r="1.4" fill="#C9913A"/>
+        <polygon points="22,1 40,7 43,22 40,37 22,47 4,37 1,22 4,7" fill="none" stroke="#9D7714" stroke-width="1.3"/>
+        <line x1="11" y1="14" x2="11" y2="30" stroke="#9D7714" stroke-width="1.4" stroke-linecap="round"/>
+        <line x1="11" y1="30" x2="17" y2="30" stroke="#9D7714" stroke-width="1.4" stroke-linecap="round"/>
+        <polyline points="19,30 22.5,14 26,30" fill="none" stroke="#9D7714" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="20.5" y1="24" x2="24.5" y2="24" stroke="#9D7714" stroke-width="1.2"/>
+        <line x1="28" y1="14" x2="28" y2="30" stroke="#9D7714" stroke-width="1.4" stroke-linecap="round"/>
+        <path d="M28,14 Q38,14 38,22 Q38,30 28,30" fill="none" stroke="#9D7714" stroke-width="1.4" stroke-linecap="round"/>
+        <circle cx="22" cy="1" r="1.4" fill="#9D7714"/>
+        <circle cx="22" cy="47" r="1.4" fill="#9D7714"/>
       </svg>
       <div style="flex:1;margin-left:10px">
-        <div style="font-family:var(--arabic);font-size:9px;color:rgba(201,145,58,.8);direction:rtl">دائرة الشؤون القانونية</div>
+        <div style="font-family:var(--arabic);font-size:9px;color:rgba(157,119,20,.8);direction:rtl">دائرة الشؤون القانونية</div>
         <div style="font-family:var(--mono);font-size:7px;color:rgba(255,255,255,.4);letter-spacing:1.2px;text-transform:uppercase;margin-top:1px">CLPD Portal</div>
       </div>
       <button class="dr-close" onclick="closeDrawer()">✕</button>
@@ -684,7 +687,7 @@ function applyLADConfig() {
 }
 
 /* ══ PUBLIC PORTAL MOBILE ══ */
-.mob-menu{display:none;position:fixed;top:64px;left:0;right:0;z-index:99;background:var(--green-d,#004d2e);border-top:1px solid rgba(255,255,255,.1);flex-direction:column;box-shadow:0 16px 40px rgba(10,14,20,.35);max-height:calc(100vh - 64px);overflow-y:auto;transition:transform .3s cubic-bezier(.4,0,.2,1);transform:translateY(-110%)}
+.mob-menu{display:none;position:fixed;top:64px;left:0;right:0;z-index:99;background:var(--green-d,#70550F);border-top:1px solid rgba(255,255,255,.1);flex-direction:column;box-shadow:0 16px 40px rgba(10,14,20,.35);max-height:calc(100vh - 64px);overflow-y:auto;transition:transform .3s cubic-bezier(.4,0,.2,1);transform:translateY(-110%)}
 .mob-menu.on{transform:translateY(0);display:flex}
 .mob-menu-link{padding:14px 22px;color:rgba(255,255,255,.85);font-size:14px;font-weight:500;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.07);transition:background .12s;font-family:var(--sans)}
 .mob-menu-link:hover,.mob-menu-link:active{background:rgba(255,255,255,.08);color:#fff}
@@ -778,7 +781,7 @@ function applyLADConfig() {
 .lad-util-left{display:flex;align-items:center;gap:14px}
 .lad-util-right{display:flex;align-items:center;gap:12px}
 .lad-util-link{font-size:12px;color:#444;text-decoration:none;display:flex;align-items:center;gap:5px;cursor:pointer;transition:color .12s;font-weight:500}
-.lad-util-link:hover{color:#006b3f}
+.lad-util-link:hover{color:#9D7714}
 .lad-util-link img{height:22px;width:auto}
 .lad-util-sep{width:1px;height:14px;background:#d0d0d0}
 .lad-util-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;color:#555;transition:background .12s}
@@ -793,14 +796,14 @@ function applyLADConfig() {
 .lad-logos-sep{width:1px;height:28px;background:rgba(255,255,255,.22)}
 .lad-menus{display:flex;align-items:stretch;height:64px;flex:1}
 .lad-mi{color:rgba(255,255,255,.85);font-size:13px;font-weight:500;padding:0 13px;height:64px;display:flex;align-items:center;cursor:pointer;position:relative;transition:background .15s;white-space:nowrap;border-bottom:3px solid transparent;text-decoration:none}
-.lad-mi:hover,.lad-mi.dd-open{background:rgba(255,255,255,.07);border-bottom-color:#c9913a;color:#fff}
+.lad-mi:hover,.lad-mi.dd-open{background:rgba(255,255,255,.07);border-bottom-color:#9D7714;color:#fff}
 .lad-mi svg{width:10px;height:10px;margin-left:4px;stroke:rgba(255,255,255,.55);fill:none;stroke-width:2.2;flex-shrink:0}
 /* Invisible hover bridge so mouse can reach dropdown */
 .lad-mi::after{content:'';position:absolute;bottom:-14px;left:0;right:0;height:14px}
-.lad-dd{position:absolute;top:calc(100% + 3px);left:0;min-width:280px;background:#1c1f2e;border:1px solid rgba(255,255,255,.1);border-top:2px solid #c9913a;box-shadow:0 8px 32px rgba(0,0,0,.42);opacity:0;pointer-events:none;transform:translateY(-6px);transition:opacity .18s,transform .18s;z-index:300}
+.lad-dd{position:absolute;top:calc(100% + 3px);left:0;min-width:280px;background:#1c1f2e;border:1px solid rgba(255,255,255,.1);border-top:2px solid #9D7714;box-shadow:0 8px 32px rgba(0,0,0,.42);opacity:0;pointer-events:none;transform:translateY(-6px);transition:opacity .18s,transform .18s;z-index:300}
 .lad-mi.dd-open .lad-dd{opacity:1;pointer-events:auto;transform:translateY(0)}
 .lad-dd a{display:block;padding:10px 18px;font-size:13px;color:rgba(255,255,255,.78);border-bottom:1px solid rgba(255,255,255,.06);text-decoration:none;transition:background .1s,color .1s;cursor:pointer}
-.lad-dd a:hover{background:rgba(255,255,255,.07);color:#c9913a;padding-left:22px}
+.lad-dd a:hover{background:rgba(255,255,255,.07);color:#9D7714;padding-left:22px}
 .lad-dd a:last-child{border-bottom:none}
 .lad-nav-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
 .lad-nav-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:5px;cursor:pointer;transition:background .15s}
@@ -810,12 +813,12 @@ function applyLADConfig() {
 .lad-nav-lang:hover{background:rgba(255,255,255,.1);color:#fff}
 .lad-btn-login{background:transparent;border:1.5px solid rgba(255,255,255,.38);color:rgba(255,255,255,.88);font-size:12.5px;padding:7px 16px;border-radius:4px;cursor:pointer;transition:all .15s;font-family:'Segoe UI',sans-serif;font-weight:500}
 .lad-btn-login:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.65)}
-.lad-btn-reg{background:#c9913a;border:1.5px solid #c9913a;color:#fff;font-size:12.5px;padding:7px 16px;border-radius:4px;cursor:pointer;transition:all .15s;font-family:'Segoe UI',sans-serif;font-weight:600}
-.lad-btn-reg:hover{background:#dba84e;border-color:#dba84e}
+.lad-btn-reg{background:#9D7714;border:1.5px solid #9D7714;color:#fff;font-size:12.5px;padding:7px 16px;border-radius:4px;cursor:pointer;transition:all .15s;font-family:'Segoe UI',sans-serif;font-weight:600}
+.lad-btn-reg:hover{background:#B08A28;border-color:#B08A28}
 .lad-profile-chip{display:none;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:5px 13px;cursor:pointer}
 .lad-profile-chip:hover{background:rgba(255,255,255,.16)}
 .lad-profile-dot{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff}
-.lad-credit-chip{display:none;align-items:center;gap:5px;background:rgba(201,145,58,.18);border:1px solid rgba(201,145,58,.38);border-radius:16px;padding:5px 11px;cursor:pointer;font-size:12px;font-weight:700;color:#f0cc88}
+.lad-credit-chip{display:none;align-items:center;gap:5px;background:rgba(157,119,20,.18);border:1px solid rgba(157,119,20,.38);border-radius:16px;padding:5px 11px;cursor:pointer;font-size:12px;font-weight:700;color:#DCC894}
 
 /* ── CAROUSEL ── */
 .lad-car{position:relative;width:100%;height:500px;overflow:hidden;background:#0d1020}
@@ -827,8 +830,8 @@ function applyLADConfig() {
 .lad-slide-body{position:absolute;bottom:0;left:0;right:0;padding:48px 64px 72px;max-width:720px}
 .lad-slide-kicker{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:600;margin-bottom:10px}
 .lad-slide-h{font-size:clamp(22px,3vw,38px);font-weight:700;color:#fff;line-height:1.22;margin-bottom:22px;font-family:'Segoe UI',sans-serif}
-.lad-slide-btn{display:inline-flex;align-items:center;gap:9px;background:#c9913a;color:#fff;font-size:13.5px;font-weight:600;padding:12px 26px;border-radius:3px;text-decoration:none;cursor:pointer;transition:background .15s;font-family:'Segoe UI',sans-serif}
-.lad-slide-btn:hover{background:#dba84e}
+.lad-slide-btn{display:inline-flex;align-items:center;gap:9px;background:#9D7714;color:#fff;font-size:13.5px;font-weight:600;padding:12px 26px;border-radius:3px;text-decoration:none;cursor:pointer;transition:background .15s;font-family:'Segoe UI',sans-serif}
+.lad-slide-btn:hover{background:#B08A28}
 .lad-slide-btn svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round}
 /* Arrows */
 .lad-arr{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.16);border-radius:50%;display:grid;place-items:center;cursor:pointer;z-index:10;transition:background .15s;backdrop-filter:blur(4px)}
@@ -839,14 +842,14 @@ function applyLADConfig() {
 /* Dots */
 .lad-dots{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:10}
 .lad-dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.38);cursor:pointer;transition:all .25s;border:none}
-.lad-dot.on{background:#c9913a;transform:scale(1.3)}
+.lad-dot.on{background:#9D7714;transform:scale(1.3)}
 
 /* ── SERVICE TABS ── */
 .lad-tabs{background:#12141e;border-top:1px solid rgba(255,255,255,.06)}
 .lad-tabs-inner{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
 .lad-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:16px 12px;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;border-bottom:3px solid transparent;border-right:1px solid rgba(255,255,255,.05);text-align:center;text-decoration:none}
 .lad-tab:last-child{border-right:none}
-.lad-tab:hover,.lad-tab.on{color:#c9913a;border-bottom-color:#c9913a;background:rgba(201,145,58,.06)}
+.lad-tab:hover,.lad-tab.on{color:#9D7714;border-bottom-color:#9D7714;background:rgba(157,119,20,.06)}
 .lad-tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5}
 
 @media(max-width:900px){
@@ -927,7 +930,7 @@ function applyLADConfig() {
       <!-- Logged-in -->
       <div class="lad-credit-chip" id="ladCreditBadge" onclick="openBuyModal()"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><span id="ladCrNum">0</span> credits</div>
       <div class="lad-profile-chip" id="ladProfileChip" onclick="window.location.href='lawyer-portal-v2.html?profile=1'" style="cursor:pointer" title="My profile · Lawyer Portal">
-        <div class="lad-profile-dot" id="ladProfileDot" style="background:#006b3f">SA</div>
+        <div class="lad-profile-dot" id="ladProfileDot" style="background:#9D7714">SA</div>
         <span style="font-size:12.5px;font-weight:600;color:#fff" id="ladProfileName">Yousef</span>
         <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
@@ -978,7 +981,7 @@ function applyLADConfig() {
     <div class="lad-overlay" style="background:linear-gradient(to top right,rgba(255,255,255,.85)0%,rgba(255,255,255,.4)35%,rgba(255,255,255,0)55%)"></div>
     <div class="lad-slide-body" style="color:#0a2240">
       <div class="lad-slide-kicker" style="color:#5b6878">Government of Dubai · Legal Heritage</div>
-      <div class="lad-slide-h" style="color:#0a2240;text-shadow:none">Proud of <em style="font-style:italic;color:#006B3F">our nation</em></div>
+      <div class="lad-slide-h" style="color:#0a2240;text-shadow:none">Proud of <em style="font-style:italic;color:#9D7714">our nation</em></div>
       <a class="lad-slide-btn" onclick="window.location.href='provider-portal.html'" style="background:#0a2240;color:#fff;border-color:#0a2240">Become a provider <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
     </div>
   </div>
@@ -1055,8 +1058,8 @@ function ladUpdateAuth() {
   if(currentUser) {
     document.getElementById('ladProfileDot').textContent = currentUser.initials||'';
     document.getElementById('ladProfileName').textContent = currentUser.name.split(' ')[0];
-    const roleCol = {lawyer:'#006b3f',firm:'#1a4d80',provider:'#c9913a'};
-    document.getElementById('ladProfileDot').style.background = roleCol[currentUser.role]||'#006b3f';
+    const roleCol = {lawyer:'#9D7714',firm:'#9D7714',provider:'#9D7714'};
+    document.getElementById('ladProfileDot').style.background = roleCol[currentUser.role]||'#9D7714';
   }
   const cr = document.getElementById('ladCreditBadge');
   cr.style.display = li && currentUser.role!=='firm'?'flex':'none';
@@ -1114,7 +1117,7 @@ ladCarInit();
             </div>
             <div style="text-align:right">
               <div style="font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.3);letter-spacing:.5px">23:59 GST</div>
-              <div style="font-family:var(--mono);font-size:8.5px;color:rgba(201,145,58,.6);font-weight:700;letter-spacing:.5px;margin-top:2px">UTC+4</div>
+              <div style="font-family:var(--mono);font-size:8.5px;color:rgba(157,119,20,.6);font-weight:700;letter-spacing:.5px;margin-top:2px">UTC+4</div>
             </div>
           </div>
 
@@ -1324,7 +1327,7 @@ ladCarInit();
           <div class="footer-brand-title">Legal Affairs Department<br>Government of Dubai</div>
           <div class="footer-brand-desc" style="margin-top:8px">The CLPD programme has been running since 2015, ensuring Dubai's legal professionals maintain the highest standards of knowledge and practice. Administered by Kwintessential.</div>
           <div style="margin-top:14px;display:flex;gap:8px">
-            <svg width="24" height="30" viewBox="0 0 38 44" fill="none"><path d="M19 2L5 9V24C5 34 11 40 19 43C27 40 33 34 33 24V9Z" fill="rgba(255,255,255,.4)"/><path d="M19 7L10 13V24C10 30 14 36 19 39C24 36 28 30 28 24V13Z" fill="#C9913A"/></svg>
+            <svg width="24" height="30" viewBox="0 0 38 44" fill="none"><path d="M19 2L5 9V24C5 34 11 40 19 43C27 40 33 34 33 24V9Z" fill="rgba(255,255,255,.4)"/><path d="M19 7L10 13V24C10 30 14 36 19 39C24 36 28 30 28 24V13Z" fill="#9D7714"/></svg>
             <div><div style="font-size:11px;color:rgba(255,255,255,.5)">Programme administered by</div><div style="font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.7);font-weight:600;letter-spacing:.5px">KWINTESSENTIAL</div></div>
           </div>
         </div>
@@ -1497,7 +1500,7 @@ ladCarInit();
      PRO BONO PAGE
 ══════════════════════════════════════════ -->
 <div class="page" id="page-probono">
-  <div style="background:linear-gradient(135deg,#0a2a1a,#006B3F);padding:48px 0">
+  <div style="background:linear-gradient(135deg,#4A380A,#9D7714);padding:48px 0">
     <div style="max-width:1100px;margin:0 auto;padding:0 28px">
       <div class="eyebrow" style="color:rgba(255,255,255,.6)">ACCREDITED CLPD ACTIVITY</div>
       <h1 style="font-family:var(--serif);font-size:36px;color:#fff;letter-spacing:-.022em;margin-bottom:10px">Voluntary Legal Services<br><em style="color:var(--gold-l)">Pro Bono</em></h1>
@@ -1743,18 +1746,18 @@ ladCarInit();
     <!-- Header -->
     <div style="background:linear-gradient(135deg,var(--green-d),var(--green));padding:20px 26px;display:flex;align-items:center;gap:14px;flex-shrink:0">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 48" width="34" height="37">
-        <polygon points="22,1 40,7 43,22 40,37 22,47 4,37 1,22 4,7" fill="none" stroke="#C9913A" stroke-width="1.3"/>
-        <polygon points="22,4 37,9.5 40,22 37,34.5 22,44 7,34.5 4,22 7,9.5" fill="rgba(201,145,58,.08)"/>
-        <line x1="11" y1="14" x2="11" y2="30" stroke="#C9913A" stroke-width="1.4" stroke-linecap="round"/>
-        <line x1="11" y1="30" x2="17" y2="30" stroke="#C9913A" stroke-width="1.4" stroke-linecap="round"/>
-        <polyline points="19,30 22.5,14 26,30" fill="none" stroke="#C9913A" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-        <line x1="20.5" y1="24" x2="24.5" y2="24" stroke="#C9913A" stroke-width="1.2"/>
-        <line x1="28" y1="14" x2="28" y2="30" stroke="#C9913A" stroke-width="1.4" stroke-linecap="round"/>
-        <path d="M28,14 Q38,14 38,22 Q38,30 28,30" fill="none" stroke="#C9913A" stroke-width="1.4" stroke-linecap="round"/>
-        <circle cx="22" cy="1" r="1.4" fill="#C9913A"/><circle cx="22" cy="47" r="1.4" fill="#C9913A"/>
+        <polygon points="22,1 40,7 43,22 40,37 22,47 4,37 1,22 4,7" fill="none" stroke="#9D7714" stroke-width="1.3"/>
+        <polygon points="22,4 37,9.5 40,22 37,34.5 22,44 7,34.5 4,22 7,9.5" fill="rgba(157,119,20,.08)"/>
+        <line x1="11" y1="14" x2="11" y2="30" stroke="#9D7714" stroke-width="1.4" stroke-linecap="round"/>
+        <line x1="11" y1="30" x2="17" y2="30" stroke="#9D7714" stroke-width="1.4" stroke-linecap="round"/>
+        <polyline points="19,30 22.5,14 26,30" fill="none" stroke="#9D7714" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="20.5" y1="24" x2="24.5" y2="24" stroke="#9D7714" stroke-width="1.2"/>
+        <line x1="28" y1="14" x2="28" y2="30" stroke="#9D7714" stroke-width="1.4" stroke-linecap="round"/>
+        <path d="M28,14 Q38,14 38,22 Q38,30 28,30" fill="none" stroke="#9D7714" stroke-width="1.4" stroke-linecap="round"/>
+        <circle cx="22" cy="1" r="1.4" fill="#9D7714"/><circle cx="22" cy="47" r="1.4" fill="#9D7714"/>
       </svg>
       <div style="flex:1">
-        <div style="font-family:var(--arabic);font-size:10.5px;color:rgba(201,145,58,.75);direction:rtl;font-weight:600;line-height:1.3;margin-bottom:2px">دائرة الشؤون القانونية · حكومة دبي</div>
+        <div style="font-family:var(--arabic);font-size:10.5px;color:rgba(157,119,20,.75);direction:rtl;font-weight:600;line-height:1.3;margin-bottom:2px">دائرة الشؤون القانونية · حكومة دبي</div>
         <div id="authTitle" style="font-family:var(--serif);font-size:18px;color:#fff;letter-spacing:-.014em">Sign in to CLPD Portal</div>
       </div>
       <button onclick="closeAuth()" style="width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);cursor:pointer;color:#fff;font-size:13px;display:grid;place-items:center;flex-shrink:0">&#x2715;</button>
@@ -1816,7 +1819,7 @@ ladCarInit();
               <div><div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.8);margin-bottom:2px">Lawyers</div><div style="font-size:11.5px;color:rgba(255,255,255,.4);line-height:1.5">Book courses, track your 16-point target, manage credits.</div></div>
             </div>
             <div style="padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;display:flex;gap:10px">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(147,197,253,.8)" stroke-width="1.7" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><rect x="2" y="7" width="20" height="14" rx="1"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(220,200,148,.8)" stroke-width="1.7" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><rect x="2" y="7" width="20" height="14" rx="1"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
               <div><div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.8);margin-bottom:2px">Firm officers</div><div style="font-size:11.5px;color:rgba(255,255,255,.4);line-height:1.5">Manage your team, bulk book, assign credits.</div></div>
             </div>
             <div style="padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;display:flex;gap:10px">
@@ -1838,18 +1841,18 @@ ladCarInit();
             <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green-l)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Credit wallet</div>
             <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green-l)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Lex AI coaching</div>
           </div>
-          <div style="padding:12px;background:rgba(0,107,63,.15);border:1px solid rgba(0,107,63,.3);border-radius:9px;font-size:11.5px;color:rgba(255,255,255,.45);line-height:1.6"><strong style="color:rgba(255,255,255,.7)">Demo:</strong> sarah@galadari.ae · any password</div>
+          <div style="padding:12px;background:rgba(157,119,20,.15);border:1px solid rgba(157,119,20,.3);border-radius:9px;font-size:11.5px;color:rgba(255,255,255,.45);line-height:1.6"><strong style="color:rgba(255,255,255,.7)">Demo:</strong> sarah@galadari.ae · any password</div>
         </div>
         <div id="ctxFirm" style="display:none">
-          <div style="font-family:var(--mono);font-size:8.5px;color:rgba(147,197,253,.8);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:rgba(147,197,253,.8);display:inline-block"></span>FIRM OFFICER</div>
-          <div style="font-family:var(--serif);font-size:19px;color:#fff;line-height:1.3;margin-bottom:14px">Your firm,<br><em style="color:rgba(147,197,253,.9)">fully managed</em></div>
+          <div style="font-family:var(--mono);font-size:8.5px;color:rgba(220,200,148,.8);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:rgba(220,200,148,.8);display:inline-block"></span>FIRM OFFICER</div>
+          <div style="font-family:var(--serif);font-size:19px;color:#fff;line-height:1.3;margin-bottom:14px">Your firm,<br><em style="color:rgba(220,200,148,.9)">fully managed</em></div>
           <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:16px">
-            <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(147,197,253,.8)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Full lawyer compliance dashboard</div>
-            <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(147,197,253,.8)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Bulk book for multiple lawyers</div>
-            <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(147,197,253,.8)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Credit wallet &amp; assignment</div>
-            <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(147,197,253,.8)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Internal session accreditation</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(220,200,148,.8)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Full lawyer compliance dashboard</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(220,200,148,.8)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Bulk book for multiple lawyers</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(220,200,148,.8)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Credit wallet &amp; assignment</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(220,200,148,.8)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Internal session accreditation</div>
           </div>
-          <div style="padding:12px;background:rgba(26,77,128,.2);border:1px solid rgba(96,165,250,.25);border-radius:9px;font-size:11.5px;color:rgba(255,255,255,.45);line-height:1.6"><strong style="color:rgba(255,255,255,.7)">Demo:</strong> compliance@galadari.ae · any password</div>
+          <div style="padding:12px;background:rgba(157,119,20,.2);border:1px solid rgba(96,165,250,.25);border-radius:9px;font-size:11.5px;color:rgba(255,255,255,.45);line-height:1.6"><strong style="color:rgba(255,255,255,.7)">Demo:</strong> compliance@galadari.ae · any password</div>
         </div>
         <div id="ctxProvider" style="display:none">
           <div style="font-family:var(--mono);font-size:8.5px;color:var(--gold-l);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:var(--gold-l);display:inline-block"></span>ACCREDITED PROVIDER</div>
@@ -1860,7 +1863,7 @@ ladCarInit();
             <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold-l)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Apply for course accreditation</div>
             <div style="font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold-l)" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>LAD review workflow tracking</div>
           </div>
-          <div style="padding:12px;background:rgba(201,145,58,.12);border:1px solid rgba(201,145,58,.25);border-radius:9px;font-size:11.5px;color:rgba(255,255,255,.45);line-height:1.6"><strong style="color:rgba(255,255,255,.7)">Demo:</strong> provider@kwintessential.ae · any password</div>
+          <div style="padding:12px;background:rgba(157,119,20,.12);border:1px solid rgba(157,119,20,.25);border-radius:9px;font-size:11.5px;color:rgba(255,255,255,.45);line-height:1.6"><strong style="color:rgba(255,255,255,.7)">Demo:</strong> provider@kwintessential.ae · any password</div>
         </div>
       </div>
     </div>
@@ -1953,13 +1956,13 @@ let ALL_COURSES = [
   {id:'ai-gov-ar',title:'AI Governance: Legal Risk & Compliance (Arabic)',icon:'',bg:'linear-gradient(135deg,#3b0764,#1e1b4b)',type:'mandatory',format:'elearning',pts:2,credits:5,provider:'LAD Academy',location:'Online · Self-paced',desc:'Comprehensive understanding of AI governance, legal risk frameworks, and compliance obligations under UAE law. Available in Arabic.',lang:'Arabic',sessions:[],seats:null},
   {id:'aml',title:'Anti Money Laundering (Update 2026)',icon:'',bg:'linear-gradient(135deg,#1a0a30,#2d1b69)',type:'mandatory',format:'face',pts:2,credits:5,provider:'Kwintessential',location:'Al Hudaiba Awards Bldg, Block C, M Floor',desc:'In-depth exploration of UAE AML architecture, Federal Decree-Law No.10 of 2025, goAML platform, and targeted financial sanctions. FATF Grey List context.',lang:'English / Arabic',sessions:[]},
   {id:'difc-arb',title:'International Arbitration & the Courts',icon:'',bg:'linear-gradient(135deg,#0a2040,#020817)',type:'mandatory',format:'face',pts:2,credits:5,provider:'DIFC Academy',location:'Gate Village Bldg 02 · DIFC',desc:'Examines how the DIFC and ADGM Courts interact with arbitration at every stage. Uses UNCITRAL Model Law as a guide.',lang:'English',sessions:[]},
-  {id:'tax',title:'Tax Law Update 2026',icon:'',bg:'linear-gradient(135deg,#1a3a1a,#0a1a08)',type:'mandatory',format:'face',pts:2,credits:5,provider:'Kwintessential',location:'Al Hudaiba Awards Bldg',desc:'Corporate tax law developments, CIT framework, transfer pricing, and economic substance requirements. Critical for all Tax practice lawyers.',lang:'English / Arabic',sessions:[]},
+  {id:'tax',title:'Tax Law Update 2026',icon:'',bg:'linear-gradient(135deg,#70550F,#0a1a08)',type:'mandatory',format:'face',pts:2,credits:5,provider:'Kwintessential',location:'Al Hudaiba Awards Bldg',desc:'Corporate tax law developments, CIT framework, transfer pricing, and economic substance requirements. Critical for all Tax practice lawyers.',lang:'English / Arabic',sessions:[]},
   {id:'construction',title:'Real Estate & Construction Laws · Case Trends',icon:'',bg:'linear-gradient(135deg,#2a3a1a,#0a1a08)',type:'mandatory',format:'face',pts:2,credits:5,provider:'Kwintessential',location:'Al Hudaiba Awards Bldg',desc:'Comprehensive analysis of UAE construction law with emphasis on recent judicial decisions and FIDIC in UAE context.',lang:'English',sessions:[]},
   {id:'ethics-ai-en',title:'Ethics — AI in the Legal Sector (English)',icon:'',bg:'linear-gradient(135deg,#2a1a3a,#1a0a2a)',type:'mandatory',format:'elearning',pts:2,credits:5,provider:'LAD Academy',location:'Online · Self-paced',desc:'International comparison on the use of AI in the legal sector. Positive impacts, risks, and ethical frameworks. Required for all practitioners.',lang:'English',sessions:[]},
   {id:'insolvency',title:'Insolvency (E-learning)',icon:'',bg:'linear-gradient(135deg,#1a2a3a,#0a1a2a)',type:'mandatory',format:'elearning',pts:2,credits:5,provider:'LAD Academy',location:'Online · Self-paced',desc:'Legislative framework for insolvency in the UAE under Federal Decree-Law No.19 of 2019. Available in English and Arabic.',lang:'English / Arabic',sessions:[]},
   {id:'copilot',title:'Generative AI for Legal Practice: Microsoft Copilot',icon:'',bg:'linear-gradient(135deg,#1a3a4a,#0a2a3a)',type:'mandatory',format:'face',pts:2,credits:5,provider:'Kwintessential',location:'Al Hudaiba Awards Bldg',desc:'Hands-on training with Microsoft Copilot. Prompt engineering, agent building, and innovative use cases for legal professionals.',lang:'English',sessions:[]},
   {id:'common-law',title:'Common Law Contract Update 2026',icon:'',bg:'linear-gradient(135deg,#3a2a1a,#1a1208)',type:'mandatory',format:'face',pts:2,credits:5,provider:'Kwintessential',location:'Al Hudaiba Awards Bldg',desc:'Advanced session building on the highly-rated 2024/2025 Common Law Contract Principles courses. Latest developments in contract law.',lang:'English',sessions:[]},
-  {id:'esg',title:'ESG & Climate Law',icon:'',bg:'linear-gradient(135deg,#0a2a1a,#042214)',type:'accredited',format:'elearning',pts:2,credits:5,provider:'Green Law Institute',location:'Online · Self-paced',desc:'Environmental, Social, and Governance principles in legal practice. UAE regulatory framework, ESG due diligence, and climate-related legal obligations.',lang:'English',sessions:[]},
+  {id:'esg',title:'ESG & Climate Law',icon:'',bg:'linear-gradient(135deg,#4A380A,#4A380A)',type:'accredited',format:'elearning',pts:2,credits:5,provider:'Green Law Institute',location:'Online · Self-paced',desc:'Environmental, Social, and Governance principles in legal practice. UAE regulatory framework, ESG due diligence, and climate-related legal obligations.',lang:'English',sessions:[]},
   {id:'exclusion',title:'Exclusion & Limitation Clauses in UAE',icon:'',bg:'linear-gradient(135deg,#2a1a0a,#1a0a04)',type:'accredited',format:'face',pts:2,credits:5,provider:'Kwintessential',location:'Online via Webex',desc:'Contractual clauses that seek to exclude or limit liability. UAE law framework and enforcement considerations.',lang:'English',sessions:[]},
   {id:'smart-contracts',title:'Smart Contracts & Blockchain for Legal',icon:'',bg:'linear-gradient(135deg,#0a1a3a,#04122a)',type:'accredited',format:'elearning',pts:2,credits:5,provider:'Online Provider',location:'Online · Self-paced',desc:'Blockchain technology and smart contracts through genuine business case studies. No technical background needed.',lang:'English',sessions:[]},
   {id:'data-protection',title:'Data Protection & Privacy — UAE',icon:'',bg:'linear-gradient(135deg,#1a2a3a,#0a1a2a)',type:'accredited',format:'face',pts:2,credits:5,provider:'Kwintessential',location:'Al Hudaiba Awards Bldg',desc:'Data Protection and Privacy compliance for businesses in the UAE. GDPR overlap, UAE regulations, and practical compliance frameworks.',lang:'English',sessions:[]},
@@ -2643,7 +2646,7 @@ function renderCourseRatings(c){
 var CC_DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], CC_MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function ccDate(iso){ var d=new Date(iso); if(isNaN(d))return ''; return CC_DAYS[d.getUTCDay()]+' '+d.getUTCDate()+' '+CC_MONS[d.getUTCMonth()]+' '+d.getUTCFullYear(); }
 function ccTime(iso){ var d=new Date(iso); if(isNaN(d))return ''; var h=d.getUTCHours(),m=d.getUTCMinutes(); return h+':'+(m<10?'0':'')+m; }
-var CC_BGS=['linear-gradient(135deg,#0a2040,#020817)','linear-gradient(135deg,#1a0a30,#2d1b69)','linear-gradient(135deg,#1a3a1a,#0a1a08)','linear-gradient(135deg,#2a1a3a,#1a0a2a)','linear-gradient(135deg,#0a2a1a,#042214)','linear-gradient(135deg,#2a1a0a,#1a0a04)','linear-gradient(135deg,#1a2a3a,#0a1a2a)'];
+var CC_BGS=['linear-gradient(135deg,#0a2040,#020817)','linear-gradient(135deg,#1a0a30,#2d1b69)','linear-gradient(135deg,#70550F,#0a1a08)','linear-gradient(135deg,#2a1a3a,#1a0a2a)','linear-gradient(135deg,#4A380A,#4A380A)','linear-gradient(135deg,#2a1a0a,#1a0a04)','linear-gradient(135deg,#1a2a3a,#0a1a2a)'];
 function ccBg(id){ var h=0; id=String(id||''); for(var i=0;i<id.length;i++)h=(h*31+id.charCodeAt(i))>>>0; return CC_BGS[h%CC_BGS.length]; }
 function mapApiCourse(c){
   var isEl = c.elearning || /e-?learning/i.test(c.format||'') || /e-?lear|elearning|e-learning/i.test(c.title||'');
@@ -3265,7 +3268,7 @@ function closeMobMenu(){
 ═══════════════════════════════════════════════ -->
 <div id="pubAttendModal" style="position:fixed;inset:0;z-index:1400;background:rgba(10,14,20,.7);backdrop-filter:blur(14px);align-items:center;justify-content:center;padding:20px;overflow-y:auto" onclick="if(event.target===this)closePubAttend()">
   <div style="background:var(--white);border-radius:32px;box-shadow:0 32px 96px rgba(10,14,20,.22);width:min(100%,680px);max-height:92vh;display:flex;flex-direction:column;overflow:hidden">
-    <div style="background:linear-gradient(135deg,var(--teal),#0d5a5e);padding:22px 26px;display:flex;align-items:center;gap:13px;flex-shrink:0">
+    <div style="background:linear-gradient(135deg,var(--teal),#9D7714);padding:22px 26px;display:flex;align-items:center;gap:13px;flex-shrink:0">
       <div style="width:42px;height:42px;border-radius:11px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;flex-shrink:0">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       </div>
@@ -3310,7 +3313,7 @@ function closeMobMenu(){
       <!-- Submission payload preview -->
       <div style="background:var(--ink);border-radius:10px;padding:14px">
         <div style="font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.4);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:8px">WORKFLOW PAYLOAD PREVIEW</div>
-        <div id="att-payload" style="font-family:var(--mono);font-size:10.5px;color:#7dd3a8;line-height:1.7;white-space:pre-wrap;max-height:100px;overflow:auto">// Upload a CSV to preview the workflow payload</div>
+        <div id="att-payload" style="font-family:var(--mono);font-size:10.5px;color:#26CB84;line-height:1.7;white-space:pre-wrap;max-height:100px;overflow:auto">// Upload a CSV to preview the workflow payload</div>
       </div>
     </div>
 
@@ -3375,10 +3378,10 @@ function openPublicAccredApp(type) {
   document.getElementById('pubAccredHdTitle').textContent = isProvider
     ? 'Apply to become an Accredited Provider'
     : 'Apply to accredit a course';
-  hd.style.background = isProvider ? 'linear-gradient(135deg,#3a2a08,#1a1208)' : 'linear-gradient(135deg,var(--teal),#0d5a5e)';
+  hd.style.background = isProvider ? 'linear-gradient(135deg,#3a2a08,#1a1208)' : 'linear-gradient(135deg,var(--teal),#9D7714)';
   document.getElementById('pubAccredHdTitle').style.color = isProvider ? '#fff' : '#fff';
-  ico.style.background = isProvider ? 'rgba(201,145,58,.25)' : 'rgba(255,255,255,.15)';
-  ico.style.border = isProvider ? '1px solid rgba(201,145,58,.4)' : '1px solid rgba(255,255,255,.22)';
+  ico.style.background = isProvider ? 'rgba(157,119,20,.25)' : 'rgba(255,255,255,.15)';
+  ico.style.border = isProvider ? '1px solid rgba(157,119,20,.4)' : '1px solid rgba(255,255,255,.22)';
   document.getElementById('pubAccredSubmitBtn').style.background = isProvider ? 'var(--gold)' : 'var(--teal)';
   document.getElementById('pa-course-section').style.display = isProvider ? 'none' : '';
   document.getElementById('pubAccredModal').classList.add('on');

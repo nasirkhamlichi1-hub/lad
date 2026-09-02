@@ -56,13 +56,13 @@
   .domain-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .domain-bar .name { width: 220px; font-size: 13px; font-weight: 500; }
   .domain-bar .track { flex: 1; height: 10px; background: #f1f5f9; border-radius: 5px; overflow: hidden; }
-  .domain-bar .fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #2563eb); border-radius: 5px; }
+  .domain-bar .fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #202A50); border-radius: 5px; }
   .domain-bar .val { width: 50px; text-align: right; font-size: 12.5px; color: #475569; font-weight: 500; }
 
   .lawyer-pill { display: inline-block; padding: 2px 8px; background: #eff6ff; color: #1d4ed8;
                  border-radius: 4px; font-size: 11px; font-weight: 500; margin: 1px 2px; }
   .freshness { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 3px; margin-left: 6px; }
-  .freshness.current { background: #d1fae5; color: #065f46; }
+  .freshness.current { background: #26CB84; color: #9D7714; }
   .freshness.stale { background: #fef3c7; color: #92400e; }
   .freshness.critically_stale { background: #fee2e2; color: #991b1b; }
   .empty { text-align: center; color: #94a3b8; padding: 40px 20px; }
@@ -73,7 +73,7 @@
 .lgn{position:sticky;top:0;z-index:600;height:54px;background:linear-gradient(90deg,#0a1e3a 0%,#1c3a5e 100%);display:flex;align-items:center;gap:6px;padding:0 18px;box-shadow:0 2px 12px rgba(0,0,0,.2);color:#fff;font-family:'Inter','IBM Plex Sans',system-ui,sans-serif;font-size:13px;letter-spacing:-.005em}
 .lgn a{text-decoration:none}
 .lgn-brand{display:flex;gap:11px;align-items:center;color:#fff;padding-right:18px;margin-right:6px;border-right:1px solid rgba(255,255,255,.15);min-width:0}
-.lgn-emblem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#C9913A,#d9a85a);color:#1c1f2e;display:grid;place-items:center;font-family:'Crimson Pro',Georgia,serif;font-size:17px;font-weight:700;flex-shrink:0}
+.lgn-emblem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#9D7714,#d9a85a);color:#1c1f2e;display:grid;place-items:center;font-family:'Crimson Pro',Georgia,serif;font-size:17px;font-weight:700;flex-shrink:0}
 .lgn-brand-text{line-height:1.15;min-width:0}
 .lgn-brand-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lgn-brand-sub{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:rgba(255,255,255,.55);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px;white-space:nowrap}
@@ -96,12 +96,15 @@
 .lgn ~ .adm-web-subtabs,.lgn ~ * .adm-web-subtabs{top:54px !important}
 @media (max-width:760px){.lgn{padding:0 10px;gap:2px}.lgn-pill{padding:6px 8px;font-size:11.5px}.lgn-emblem{width:28px;height:28px;font-size:15px}}
 </style>
+  <!-- Government of Dubai Legal Affairs Department identity -->
+  <link rel="stylesheet" href="lad-brand.css">
+  <script src="lad-brand.js" defer></script>
 </head>
 <body>
 <style>
 :root{--lad-nav-h:58px}
 .lad-shared-nav{background:#1c1f2e;height:var(--lad-nav-h);display:flex;align-items:center;padding:0 24px;gap:20px;position:sticky;top:0;z-index:500;box-shadow:0 2px 12px rgba(0,0,0,.35);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-.lad-portal-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;background:rgba(96,165,250,.15);border:1px solid rgba(96,165,250,.35);color:rgba(147,197,253,.9)}
+.lad-portal-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;background:rgba(96,165,250,.15);border:1px solid rgba(96,165,250,.35);color:rgba(220,200,148,.9)}
 .lad-snl{color:rgba(255,255,255,.75);font-size:12.5px;font-weight:500;padding:6px 12px;border-radius:6px;cursor:pointer;transition:all .15s;white-space:nowrap;text-decoration:none}
 .lad-snl:hover{background:rgba(255,255,255,.1);color:#fff}
 .lad-snl.active{background:rgba(255,255,255,.1);color:#fff}

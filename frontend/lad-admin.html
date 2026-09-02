@@ -32,12 +32,12 @@ html.lad-embed .adm-cnt-subtabs{top:0!important}
   --mono:'JetBrains Mono',monospace;
   --ink:#0a0f1a; --slate:#3a4554; --slate2:#5b6878; --slate3:#8a98aa; --slate4:#aeb9c8;
   --line:#e8ecf1; --line2:#d2dae3; --paper:#f7f9fb; --paper2:#eef2f6; --white:#fff;
-  --green:#006B3F; --green-l:#00925A; --green-bg:#e6f4ee; --green-border:#b8dccc;
-  --gold:#C9913A; --gold-l:#E5A94A; --gold-bg:#fdf6e9; --gold-border:#ead9b0;
+  --green:#9D7714; --green-l:#B08A28; --green-bg:#e6f4ee; --green-border:#26CB84;
+  --gold:#9D7714; --gold-l:#B08A28; --gold-bg:#fdf6e9; --gold-border:#ead9b0;
   --red:#dc2626; --red-l:#ef4444; --red-bg:#fef2f2; --red-border:#fecaca;
-  --blue:#2563eb; --blue-l:#3b82f6; --blue-bg:#eef4ff; --blue-border:#c5d8f7;
-  --purple:#7c3aed; --purple-l:#9333ea; --purple-bg:#f3e8ff; --purple-border:#d8b4fe;
-  --amber:#d97706; --teal:#0d9488;
+  --blue:#202A50; --blue-l:#3b82f6; --blue-bg:#eef4ff; --blue-border:#c5d8f7;
+  --purple:#202A50; --purple-l:#9333ea; --purple-bg:#f3e8ff; --purple-border:#d8b4fe;
+  --amber:#d97706; --teal:#B08A28;
   --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:18px; --r-2xl:22px;
   --sh-sm:0 1px 2px rgba(15,23,42,.04),0 2px 4px rgba(15,23,42,.04);
   --sh-md:0 4px 8px rgba(15,23,42,.06),0 8px 16px rgba(15,23,42,.06);
@@ -65,7 +65,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;padding:9px 14px;border-radius:9px;font-size:12.5px;font-weight:600;letter-spacing:.1px;display:flex;align-items:center;gap:6px;transition:all .15s}
 .adm-btn:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3)}
 .adm-btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-l));border-color:transparent;color:#0a2040;font-weight:700}
-.adm-btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(201,145,58,.4)}
+.adm-btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(157,119,20,.4)}
 .adm-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2}
 
 /* ─── FILTERS ─── */
@@ -96,7 +96,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-sch-format{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px;font-family:var(--mono);font-size:11.5px;color:var(--slate);line-height:1.7;white-space:pre;overflow-x:auto;margin-bottom:14px}
 .adm-sch-format strong{color:var(--ink);font-weight:700}
 .adm-sch-paste{width:100%;min-height:160px;padding:14px;border:1.5px solid var(--line2);border-radius:10px;background:var(--paper);font-size:12.5px;color:var(--ink);outline:none;font-family:var(--mono);line-height:1.6;resize:vertical;transition:all .15s}
-.adm-sch-paste:focus{border-color:var(--green);background:var(--white);box-shadow:0 0 0 3px rgba(0,107,63,.08)}
+.adm-sch-paste:focus{border-color:var(--green);background:var(--white);box-shadow:0 0 0 3px rgba(157,119,20,.08)}
 .adm-sch-actions{display:flex;gap:8px;margin-top:14px;align-items:center;flex-wrap:wrap}
 .adm-sch-preview{margin-top:18px;border-top:1px solid var(--line);padding-top:18px}
 .adm-sch-preview-table{width:100%;border-collapse:collapse;font-size:12.5px}
@@ -139,7 +139,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-azure-status{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.5px;padding:5px 10px;border-radius:5px;background:rgba(255,255,255,.18);text-transform:uppercase}
 .adm-search{flex:1;min-width:280px;position:relative}
 .adm-search input{width:100%;padding:9px 14px 9px 38px;border:1.5px solid var(--line2);border-radius:9px;font-size:13.5px;background:var(--paper);outline:none;transition:all .15s}
-.adm-search input:focus{border-color:var(--green);background:#fff;box-shadow:0 0 0 3px rgba(0,107,63,.08)}
+.adm-search input:focus{border-color:var(--green);background:#fff;box-shadow:0 0 0 3px rgba(157,119,20,.08)}
 .adm-search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--slate3);stroke:currentColor;fill:none;stroke-width:2}
 .adm-select{padding:9px 14px;border:1.5px solid var(--line2);border-radius:9px;background:var(--paper);font-size:13px;color:var(--ink);outline:none;cursor:pointer;font-weight:500}
 .adm-select:focus{border-color:var(--green);background:#fff}
@@ -151,9 +151,9 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-card:hover{border-color:var(--line2);box-shadow:var(--sh-md);transform:translateY(-2px)}
 .adm-card-art{height:108px;position:relative;display:flex;align-items:flex-start;padding:12px;background-size:cover;background-position:center}
 .adm-card-pill{font-family:var(--mono);font-size:8.5px;font-weight:700;color:#fff;letter-spacing:1.2px;text-transform:uppercase;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);padding:3px 8px;border-radius:5px}
-.adm-card-pts{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;background:rgba(0,107,63,.85);padding:4px 9px;border-radius:6px;letter-spacing:.3px}
+.adm-card-pts{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;background:rgba(157,119,20,.85);padding:4px 9px;border-radius:6px;letter-spacing:.3px}
 .adm-card-status{position:absolute;bottom:12px;left:12px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.5px;padding:3px 8px;border-radius:5px;display:flex;align-items:center;gap:5px;backdrop-filter:blur(8px)}
-.adm-card-status.live{background:rgba(0,107,63,.85);color:#fff;border:1px solid rgba(255,255,255,.25)}
+.adm-card-status.live{background:rgba(157,119,20,.85);color:#fff;border:1px solid rgba(255,255,255,.25)}
 .adm-card-status.draft{background:rgba(217,119,6,.85);color:#fff;border:1px solid rgba(255,255,255,.25)}
 .adm-card-status::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
 .adm-card-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:7px}
@@ -204,7 +204,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-label{display:block;font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;margin-bottom:5px}
 .adm-label-required::after{content:' *';color:var(--red)}
 .adm-input,.adm-textarea,.adm-select-full{width:100%;padding:10px 13px;border:1.5px solid var(--line2);border-radius:9px;font-size:13.5px;color:var(--ink);outline:none;background:var(--white);font-family:var(--sans);transition:all .15s}
-.adm-input:focus,.adm-textarea:focus,.adm-select-full:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,107,63,.08)}
+.adm-input:focus,.adm-textarea:focus,.adm-select-full:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(157,119,20,.08)}
 .adm-textarea{min-height:90px;resize:vertical;line-height:1.55}
 .adm-hint{font-size:11.5px;color:var(--slate3);margin-top:4px;line-height:1.4}
 
@@ -235,7 +235,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .adm-preset-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .adm-preset{height:64px;border-radius:9px;cursor:pointer;border:2px solid transparent;transition:all .15s;position:relative;background-size:cover}
 .adm-preset:hover{transform:scale(1.03)}
-.adm-preset.selected{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,107,63,.2)}
+.adm-preset.selected{border-color:var(--green);box-shadow:0 0 0 3px rgba(157,119,20,.2)}
 .adm-preset.selected::after{content:'✓';position:absolute;top:6px;right:6px;width:18px;height:18px;background:var(--green);color:#fff;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700}
 
 .adm-color-input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -487,7 +487,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 
 /* Firm/course detail table */
 .sup-firm-card { background: var(--white); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 18px 20px; margin-bottom: 12px; transition: all .15s; cursor: pointer; }
-.sup-firm-card:hover { border-color: var(--green); box-shadow: 0 2px 12px rgba(0,107,63,.08); }
+.sup-firm-card:hover { border-color: var(--green); box-shadow: 0 2px 12px rgba(157,119,20,.08); }
 .sup-firm-card.selected { border-color: var(--green); background: var(--green-bg); }
 .sup-firm-card-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .sup-firm-card-name { font-family: var(--serif); font-size: 18px; color: var(--ink); letter-spacing: -.01em; }
@@ -505,7 +505,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .sup-dist-bar { height: 100%; border-radius: 5px; transition: width .5s ease-out; display: flex; align-items: center; padding: 0 8px; color: #fff; font-family: var(--mono); font-size: 11px; font-weight: 700; }
 .sup-dist-bar.red { background: linear-gradient(90deg, var(--red), #ef4444); }
 .sup-dist-bar.amber { background: linear-gradient(90deg, var(--amber), #f59e0b); }
-.sup-dist-bar.green { background: linear-gradient(90deg, var(--green), #10b981); }
+.sup-dist-bar.green { background: linear-gradient(90deg, var(--green), #C9A24A); }
 .sup-dist-count { font-family: var(--mono); font-size: 11px; color: var(--slate2); font-weight: 600; }
 
 /* Book modal */
@@ -532,7 +532,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .lgn{position:sticky;top:0;z-index:600;height:54px;background:linear-gradient(90deg,#0a1e3a 0%,#1c3a5e 100%);display:flex;align-items:center;gap:6px;padding:0 18px;box-shadow:0 2px 12px rgba(0,0,0,.2);color:#fff;font-family:'Inter','IBM Plex Sans',system-ui,sans-serif;font-size:13px;letter-spacing:-.005em}
 .lgn a{text-decoration:none}
 .lgn-brand{display:flex;gap:11px;align-items:center;color:#fff;padding-right:18px;margin-right:6px;border-right:1px solid rgba(255,255,255,.15);min-width:0}
-.lgn-emblem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#C9913A,#d9a85a);color:#1c1f2e;display:grid;place-items:center;font-family:'Crimson Pro',Georgia,serif;font-size:17px;font-weight:700;flex-shrink:0}
+.lgn-emblem{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#9D7714,#d9a85a);color:#1c1f2e;display:grid;place-items:center;font-family:'Crimson Pro',Georgia,serif;font-size:17px;font-weight:700;flex-shrink:0}
 .lgn-brand-text{line-height:1.15;min-width:0}
 .lgn-brand-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lgn-brand-sub{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:rgba(255,255,255,.55);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px;white-space:nowrap}
@@ -555,6 +555,9 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 .lgn ~ .adm-web-subtabs,.lgn ~ * .adm-web-subtabs{top:54px !important}
 @media (max-width:760px){.lgn{padding:0 10px;gap:2px}.lgn-pill{padding:6px 8px;font-size:11.5px}.lgn-emblem{width:28px;height:28px;font-size:15px}}
 </style>
+  <!-- Government of Dubai Legal Affairs Department identity -->
+  <link rel="stylesheet" href="lad-brand.css">
+  <script src="lad-brand.js" defer></script>
 </head>
 <body>
 <!-- ═════════ Unified LAD nav ═════════ -->
@@ -568,7 +571,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
   </a>
   <span class="lgn-group-label" style="margin-left:0">LAD ADMIN</span>
   <div class="lgn-group">
-    <a class="lgn-pill" href="lad-crm.html" style="cursor:pointer;background:var(--green,#006B3F);color:#fff" title="Customer CRM · data centre">★ CRM</a>
+    <a class="lgn-pill" href="lad-crm.html" style="cursor:pointer;background:var(--green,#9D7714);color:#fff" title="Customer CRM · data centre">★ CRM</a>
     <a class="lgn-pill on" onclick="switchPage('bookings')" style="cursor:pointer">Bookings</a>
     <a class="lgn-pill" onclick="switchPage('purchases')" style="cursor:pointer">Purchases</a>
     <a class="lgn-pill" onclick="switchPage('schedules')" style="cursor:pointer">Schedules</a>
@@ -601,7 +604,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
     <div class="adm-stat"><div class="adm-stat-num" id="statSeats">0</div><div class="adm-stat-lbl">Open seats</div></div>
   </div>
   <div class="adm-actions">
-    <button class="adm-btn adm-btn-primary" onclick="admMsgOpen()" title="Message lawyers, firms or the whole profession" style="background:#0d7377;border-color:#0d7377;color:#fff">
+    <button class="adm-btn adm-btn-primary" onclick="admMsgOpen()" title="Message lawyers, firms or the whole profession" style="background:#9D7714;border-color:#9D7714;color:#fff">
       <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       Message profession
     </button>
@@ -629,7 +632,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
 </header>
 
 <!-- ═══════════════════ AZURE STATUS BANNER ═══════════════════ -->
-<div class="adm-azure-banner" id="azureBanner" style="background:linear-gradient(135deg,#0a6b46 0%,#064d31 100%)">
+<div class="adm-azure-banner" id="azureBanner" style="background:linear-gradient(135deg,#9D7714 0%,#70550F 100%)">
   <div class="adm-azure-icon">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
   </div>
@@ -646,7 +649,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
     var base=(typeof _admBase==='function'?_admBase():(window.LAD_API_BASE||'')).replace(/\/$/,'');
     if(!base){ b.style.background='linear-gradient(135deg,#b45309,#7c2d12)'; t.textContent='Backend not configured'; s.textContent='Set LAD_API_BASE in runtime-config.js.'; st.textContent='Offline'; return; }
     fetch(base+'/api/v1/health').then(function(r){return r.ok?r.json():null;}).then(function(j){
-      if(j){ b.style.background='linear-gradient(135deg,#0a6b46 0%,#064d31 100%)'; t.textContent='Backend connected · live'; s.innerHTML='Reading &amp; writing live against '+base.replace(/^https?:\/\//,'')+(j.version?(' · v'+j.version):''); st.textContent='Live'; }
+      if(j){ b.style.background='linear-gradient(135deg,#9D7714 0%,#70550F 100%)'; t.textContent='Backend connected · live'; s.innerHTML='Reading &amp; writing live against '+base.replace(/^https?:\/\//,'')+(j.version?(' · v'+j.version):''); st.textContent='Live'; }
       else throw 0;
     }).catch(function(){ b.style.background='linear-gradient(135deg,#92540a,#5b3406)'; t.textContent='Backend waking up…'; s.textContent='The server is starting (free tier sleeps). This clears in ~30–60s.'; st.textContent='Waking'; });
   }
@@ -810,7 +813,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
       <div><div style="font-size:11px;color:var(--slate3);margin-bottom:4px">Top up a lawyer by email</div>
         <input id="admTopEmail" type="email" placeholder="lawyer@firm.ae" style="padding:9px 11px;border:1.5px solid var(--line);border-radius:9px;font-size:13px;min-width:220px"/></div>
       <input id="admTopCredits" type="number" min="1" placeholder="Credits" style="padding:9px 11px;border:1.5px solid var(--line);border-radius:9px;font-size:13px;max-width:110px"/>
-      <button onclick="adminTopup()" style="background:var(--green,#006B3F);color:#fff;border:0;border-radius:9px;padding:10px 16px;cursor:pointer;font-size:13px;font-weight:600">Grant credits</button>
+      <button onclick="adminTopup()" style="background:var(--green,#9D7714);color:#fff;border:0;border-radius:9px;padding:10px 16px;cursor:pointer;font-size:13px;font-weight:600">Grant credits</button>
     </div>
   </div>
   <script>
@@ -825,7 +828,7 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
         if(!j){box.innerHTML='<div style="color:#c0392b;font-size:12.5px">Sign in as LAD Admin to view requests.</div>';return;}
         var reqs=j.requests||[]; if(cnt)cnt.textContent=reqs.length+' pending';
         box.innerHTML=reqs.length?reqs.map(function(x){
-          return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #eef1f4"><div style="flex:1"><b>'+esc(x.email)+'</b> · '+esc(x.credits)+' credits <span style="color:#8a98aa">(AED '+esc(x.aed_amount)+')</span><div style="font-size:11px;color:#8a98aa">'+esc((x.created_at||'').slice(0,16).replace('T',' '))+'</div></div><button onclick="confirmCreditRequest(\''+esc(x.id)+'\')" style="background:#006B3F;color:#fff;border:0;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12.5px;font-weight:600">Confirm</button></div>';
+          return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #eef1f4"><div style="flex:1"><b>'+esc(x.email)+'</b> · '+esc(x.credits)+' credits <span style="color:#8a98aa">(AED '+esc(x.aed_amount)+')</span><div style="font-size:11px;color:#8a98aa">'+esc((x.created_at||'').slice(0,16).replace('T',' '))+'</div></div><button onclick="confirmCreditRequest(\''+esc(x.id)+'\')" style="background:#9D7714;color:#fff;border:0;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12.5px;font-weight:600">Confirm</button></div>';
         }).join(''):'<div style="color:#8a98aa;font-size:12.5px;padding:6px 0">No pending requests.</div>';
       }).catch(function(){box.innerHTML='<div style="color:#c0392b;font-size:12.5px">Could not load requests.</div>';});
     };
@@ -1674,7 +1677,7 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
           <div><label class="adm-label" style="margin-bottom:3px">Time</label><input id="bulkTime" class="adm-input" value="14:30–16:30" style="width:140px"/></div>
           <div><label class="adm-label" style="margin-bottom:3px">Seats</label><input id="bulkSeats" class="adm-input" type="number" min="0" value="30" style="width:80px"/></div>
           <div><label class="adm-label" style="margin-bottom:3px">Lang</label><select id="bulkLang" class="adm-select-full" style="width:120px"><option>English</option><option>Arabic</option></select></div>
-          <button type="button" onclick="applyBulkDates()" style="margin-left:auto;background:var(--green,#006B3F);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer">Add dates →</button>
+          <button type="button" onclick="applyBulkDates()" style="margin-left:auto;background:var(--green,#9D7714);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer">Add dates →</button>
           <button type="button" onclick="document.getElementById('bulkDatesPanel').style.display='none'" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;color:var(--slate2)">Cancel</button>
         </div>
         <div id="bulkDatesMsg" style="font-size:12px;margin-top:9px;color:var(--slate3)"></div>
@@ -1697,7 +1700,7 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
           <div id="matFileWrap" style="display:none"><label class="adm-label" style="margin-bottom:3px">File (≤ 10 MB)</label><input id="matFile" type="file" class="adm-input" style="width:100%;padding:8px"/></div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
-          <button type="button" id="matAddBtn" onclick="addMaterial()" style="background:var(--green,#006B3F);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer">+ Add material</button>
+          <button type="button" id="matAddBtn" onclick="addMaterial()" style="background:var(--green,#9D7714);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer">+ Add material</button>
           <span id="matMsg" style="font-size:12px;color:var(--slate3)"></span>
         </div>
       </div>
@@ -1720,7 +1723,7 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
         <div class="adm-field" style="margin-top:12px"><label class="adm-label" style="margin-bottom:3px">Key elements — one per line</label>
           <textarea id="teachObj" class="adm-textarea" style="width:100%;min-height:90px" placeholder="What the lawyer must be able to do afterwards."></textarea></div>
         <div style="display:flex;align-items:center;gap:10px">
-          <button type="button" id="teachSaveBtn" onclick="teachSave()" style="background:var(--green,#006B3F);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer">Save teaching material</button>
+          <button type="button" id="teachSaveBtn" onclick="teachSave()" style="background:var(--green,#9D7714);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer">Save teaching material</button>
           <span id="teachSaveMsg" style="font-size:12px;color:var(--slate3)"></span>
         </div>
       </div>
@@ -2419,10 +2422,10 @@ const GRADIENT_PRESETS = {
     'linear-gradient(135deg,#7c2d12,#451a03)',
   ],
   accredited:[
-    'linear-gradient(135deg,#0a2a1a,#042214)',
-    'linear-gradient(135deg,#1a3a1a,#0a1a08)',
+    'linear-gradient(135deg,#4A380A,#4A380A)',
+    'linear-gradient(135deg,#70550F,#0a1a08)',
     'linear-gradient(135deg,#0c1a4a,#020817)',
-    'linear-gradient(135deg,#155e75,#082f49)',
+    'linear-gradient(135deg,#9D7714,#082f49)',
   ],
   elearning:[
     'linear-gradient(135deg,#3b0764,#1e1b4b)',
@@ -3230,7 +3233,7 @@ function applyBulkDates(){
     else bad.push(line);
   });
   const msg = document.getElementById('bulkDatesMsg');
-  if (msg) msg.innerHTML = (added ? '<span style="color:var(--green,#006B3F);font-weight:600">' + added + ' session' + (added === 1 ? '' : 's') + ' added.</span>' : 'No valid dates found.')
+  if (msg) msg.innerHTML = (added ? '<span style="color:var(--green,#9D7714);font-weight:600">' + added + ' session' + (added === 1 ? '' : 's') + ' added.</span>' : 'No valid dates found.')
     + (bad.length ? ' Couldn\'t read: ' + bad.map(b => escapeAttr(b)).join(', ') : '');
   if (added) { document.getElementById('bulkDatesText').value = ''; renderSessions(); }
 }
@@ -4101,7 +4104,7 @@ async function schCreateCoursesForUnmatched() {
 
   const gradients = {
     mandatory: ['linear-gradient(135deg,#1a0a30,#2d1b69)','linear-gradient(135deg,#3b0764,#1e1b4b)','linear-gradient(135deg,#0a2040,#020817)','linear-gradient(135deg,#7c2d12,#451a03)'],
-    accredited: ['linear-gradient(135deg,#0a2a1a,#042214)','linear-gradient(135deg,#1a3a1a,#0a1a08)','linear-gradient(135deg,#0c1a4a,#020817)','linear-gradient(135deg,#155e75,#082f49)'],
+    accredited: ['linear-gradient(135deg,#4A380A,#4A380A)','linear-gradient(135deg,#70550F,#0a1a08)','linear-gradient(135deg,#0c1a4a,#020817)','linear-gradient(135deg,#9D7714,#082f49)'],
     elearning: ['linear-gradient(135deg,#3b0764,#1e1b4b)','linear-gradient(135deg,#2a1a3a,#0a0e14)','linear-gradient(135deg,#3a1a2a,#1a0810)','linear-gradient(135deg,#3a2a08,#1a1208)'],
   };
 
@@ -4517,8 +4520,8 @@ function supBand(pts) {
 // Avatar color from firm — consistent per firm
 function supAvatarColor(firmId) {
   const palette = {
-    altamimi: '#006B3F', galadari: '#1c3a5e', hadef: '#7c2d12',
-    clyde: '#0c4a6e', mulla: '#5b21b6', dla: '#155e75',
+    altamimi: '#9D7714', galadari: '#1c3a5e', hadef: '#7c2d12',
+    clyde: '#9D7714', mulla: '#5b21b6', dla: '#9D7714',
   };
   return palette[firmId] || '#475569';
 }
@@ -4620,7 +4623,7 @@ async function admBookOpen() {
     +'<label style="'+lbl+'">Course</label><select id="admBkCourse" style="'+inp+'" onchange="admBkFillSessions()">'+courseOpts+'</select>'
     +'<label style="'+lbl+'">Session</label><select id="admBkSession" style="'+inp+'"><option value="">Select a course first…</option></select>'
     +'<div id="admBkNote" style="font-size:12px;color:#64748b"></div>',
-    'Book course', '#006B3F', async function(){
+    'Book course', '#9D7714', async function(){
       const who=(document.getElementById('admBkLawyer').value||'').trim();
       const ci=document.getElementById('admBkCourse').value; const si=document.getElementById('admBkSession').value;
       const note=document.getElementById('admBkNote');
@@ -4662,7 +4665,7 @@ function admBookEdit(id) {
     + '<div style="background:#13231b;color:#fff;padding:18px 22px"><div style="font-family:var(--serif,Georgia);font-size:21px;font-weight:600">Manage booking</div>'
     +   '<div style="font-family:var(--mono);font-size:10.5px;opacity:.72;margin-top:3px">' + _bkEsc(b.id) + (b.lawyer?(' · '+_bkEsc(b.lawyer)):'') + (b.course?(' · '+_bkEsc(b.course)):'') + '</div></div>'
     + '<div style="padding:18px 22px;display:flex;flex-direction:column;gap:9px">'
-    +   '<button style="'+aBtn+'" onmouseover="this.style.borderColor=\'#006B3F\'" onmouseout="this.style.borderColor=\'var(--line,#e3e9e4)\'" onclick="admBookAction(\''+_bkEsc(b.id)+'\',\'attended\')"><span style="color:#006B3F">✓</span> Mark attended <span style="color:var(--slate3,#aab8af);font-weight:400;font-size:12px">· awards CPD points</span></button>'
+    +   '<button style="'+aBtn+'" onmouseover="this.style.borderColor=\'#9D7714\'" onmouseout="this.style.borderColor=\'var(--line,#e3e9e4)\'" onclick="admBookAction(\''+_bkEsc(b.id)+'\',\'attended\')"><span style="color:#9D7714">✓</span> Mark attended <span style="color:var(--slate3,#aab8af);font-weight:400;font-size:12px">· awards CPD points</span></button>'
     +   '<button style="'+aBtn+'" onmouseover="this.style.borderColor=\'#c2703d\'" onmouseout="this.style.borderColor=\'var(--line,#e3e9e4)\'" onclick="admBookAction(\''+_bkEsc(b.id)+'\',\'no-show\')"><span style="color:#c2703d">⃠</span> Mark no-show</button>'
     +   '<button style="'+aBtn+';color:#c0392b" onmouseover="this.style.borderColor=\'#c0392b\'" onmouseout="this.style.borderColor=\'var(--line,#e3e9e4)\'" onclick="admBookAction(\''+_bkEsc(b.id)+'\',\'cancelled\')">✕ Cancel &amp; refund credits</button>'
     + '</div>'
@@ -4768,7 +4771,7 @@ function admPurchaseInspect(id) {
   const row = (k,v) => '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px"><span style="color:#64748b">'+k+'</span><span style="font-weight:600;color:#0f172a">'+escape(v==null||v===''?'—':String(v))+'</span></div>';
   admMiniModal('Transaction ' + escape(t.id || id),
     row('Type', t.kind) + row('Buyer', t.buyer) + row('Credits', (t.credits>0?'+':'')+(t.credits!=null?t.credits:'—')) + row('Amount', t.aed!=null?('AED '+Number(t.aed).toLocaleString()):'—') + row('Method', t.method) + row('Date', t.date) + row('Status', t.status),
-    'Close', '#006B3F', function(){ return true; });
+    'Close', '#9D7714', function(){ return true; });
 }
 function admPurchasesExport() {
   const rows = window.__admPurchases || [];
@@ -5246,7 +5249,7 @@ function supRenderDetail() {
             ? '<div style="text-align:center;padding:30px;color:var(--slate3)">No recorded activity yet.</div>'
             : '<div style="position:relative;padding-left:6px">' + l.crm.timeline.map(t => {
                 const ic = { booking: '📅', credit: '💳', cpd: '⭐', message: '✉️' }[t.kind] || '•';
-                const col = { booking: 'var(--blue)', credit: 'var(--gold)', cpd: 'var(--green)', message: 'var(--teal,#0d7377)' }[t.kind] || 'var(--slate3)';
+                const col = { booking: 'var(--blue)', credit: 'var(--gold)', cpd: 'var(--green)', message: 'var(--teal,#9D7714)' }[t.kind] || 'var(--slate3)';
                 return `<div style="display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)">
                   <div style="font-size:14px;width:22px;text-align:center">${ic}</div>
                   <div style="flex:1">
@@ -6331,7 +6334,7 @@ function admSessionsRender(){
     const fmt = _admFmtOf(s)==='online'?'Online':'Face-to-face';
     return '<div style="display:grid;grid-template-columns:34px 1.5fr 1fr 104px 78px 80px 210px;gap:0;border-bottom:1px solid var(--line);font-size:12.5px;align-items:center;'+(cancelled?'opacity:.5':'')+'">'
       +'<div style="padding:9px 0 9px 14px"><input type="checkbox" '+(ADM_SESS_SEL[s.id]?'checked':'')+' onchange="admSessSel(\''+escape(s.id)+'\',this.checked)"/></div>'
-      +'<div style="padding:9px 14px;font-weight:500"><span style="cursor:pointer;border-bottom:1px dashed var(--green,#006B3F);color:var(--ink)" title="View bookings & add lawyers" onclick="admSessionBookings(\''+escape(s.id)+'\',\''+escapeAttr(String(s.course_title||''))+'\')">'+escape(s.course_title||s.course_id||'—')+'</span>'+(s.provider_name?'<span style="color:var(--slate3);font-weight:400"> · '+escape(s.provider_name)+'</span>':'')+'</div>'
+      +'<div style="padding:9px 14px;font-weight:500"><span style="cursor:pointer;border-bottom:1px dashed var(--green,#9D7714);color:var(--ink)" title="View bookings & add lawyers" onclick="admSessionBookings(\''+escape(s.id)+'\',\''+escapeAttr(String(s.course_title||''))+'\')">'+escape(s.course_title||s.course_id||'—')+'</span>'+(s.provider_name?'<span style="color:var(--slate3);font-weight:400"> · '+escape(s.provider_name)+'</span>':'')+'</div>'
       +'<div style="padding:9px 14px;color:var(--slate2);font-family:var(--mono);font-size:11px">'+_admSdate(s.scheduled_at)+'</div>'
       +'<div style="padding:9px 14px;text-align:right;font-family:var(--mono);line-height:1.25" title="'+booked+' booked of '+cap+' · '+seats+' seats left">'+(cancelled?'—':('<span style="font-weight:600;color:var(--ink)">'+booked+' booked</span><div style="font-size:10px;color:var(--slate3)">'+seats+' of '+cap+' left</div>'))+'</div>'
       +'<div style="padding:9px 14px;font-size:11px;color:var(--slate2)">'+fmt+'</div>'
@@ -6401,7 +6404,7 @@ async function sbSearch(){
       const pts=l.points!=null?l.points:(l.lifetime_points!=null?l.lifetime_points:'');
       return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line,#eef)">'
         +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+escape(name)+'</div><div style="font-size:11px;color:var(--slate3,#9aa)">'+escape(l.email||'')+(pts!==''?(' · '+pts+'/16 pts'):'')+'</div></div>'
-        +'<button onclick="sbBook(\''+escape(l.id)+'\',this)" style="background:var(--green,#006B3F);color:#fff;border:none;border-radius:7px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer">Book</button></div>';
+        +'<button onclick="sbBook(\''+escape(l.id)+'\',this)" style="background:var(--green,#9D7714);color:#fff;border:none;border-radius:7px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer">Book</button></div>';
     }).join('');
   }catch(e){ host.innerHTML='<div style="color:#c0392b;font-size:12px">'+escape(e.message)+'</div>'; }
 }
@@ -6466,7 +6469,7 @@ function admSessionMove(id, title){
     '<div style="font-size:13px;color:#475569;margin-bottom:14px">Reschedule <strong>'+escape(title)+'</strong>. Everyone booked keeps their seat and is notified.</div>'
     +'<label style="'+lbl+'">New date &amp; time</label><input type="datetime-local" id="admMoveDt" style="'+inp+'"/>'
     +'<label style="'+lbl+'">Venue (optional)</label><input id="admMoveVenue" style="'+inp+'" placeholder="e.g. DIFC Gate Village"/>',
-    'Move & notify', '#006B3F', async function(){
+    'Move & notify', '#9D7714', async function(){
       const dt=document.getElementById('admMoveDt').value;
       const venue=document.getElementById('admMoveVenue').value;
       if(!dt){ toast('Pick a new date and time','error'); return false; }
@@ -6500,7 +6503,7 @@ document.addEventListener('DOMContentLoaded', loadAdmSessions);
 <!-- ══════ MESSAGE THE PROFESSION · dedicated composer ══════ -->
 <div id="admMsgOv" style="position:fixed;inset:0;background:rgba(8,18,12,.6);backdrop-filter:blur(8px);z-index:2300;display:none;align-items:flex-start;justify-content:center;padding:70px 20px">
   <div style="background:#fff;border-radius:18px;max-width:600px;width:100%;box-shadow:0 40px 100px rgba(0,0,0,.4);overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
-    <div style="background:linear-gradient(135deg,#0a3a28,#0d5a4a);color:#fff;padding:18px 22px;display:flex;align-items:center;justify-content:space-between">
+    <div style="background:linear-gradient(135deg,#70550F,#9D7714);color:#fff;padding:18px 22px;display:flex;align-items:center;justify-content:space-between">
       <div><div style="font-size:21px;font-weight:600">Message the profession</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;opacity:.8;margin-top:2px">In-system notification · lawyers receive it instantly</div></div>
       <button onclick="admMsgClose()" style="width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.18);border:0;color:#fff;cursor:pointer;font-size:15px">✕</button>
     </div>
@@ -6543,7 +6546,7 @@ async function admMsgSend(){
   var payload = v==='all' ? {audience:'all',title:title,body:body} : v==='noBookings' ? {audience:'segment',segment:{noBookings:true},title:title,body:body} : {audience:'segment',segment:{band:v},title:title,body:body};
   var btn=document.getElementById('admMsgSendBtn'); btn.disabled=true; btn.textContent='Sending…';
   try{ var r=await fetch(_admBase().replace(/\/$/,'')+'/api/v1/notifications/send',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+_admToken()},body:JSON.stringify(payload)});
-    var d=await r.json(); if(r.ok){ note.style.color='#16a34a'; note.textContent='✓ '+(d.message||'Sent.'); document.getElementById('admMsgTitle').value='';document.getElementById('admMsgBody').value='';document.getElementById('admMsgPrompt').value=''; setTimeout(admMsgClose,1400);} else { note.style.color='#c0392b'; note.textContent=d.error||'Could not send.'; } }
+    var d=await r.json(); if(r.ok){ note.style.color='#B08A28'; note.textContent='✓ '+(d.message||'Sent.'); document.getElementById('admMsgTitle').value='';document.getElementById('admMsgBody').value='';document.getElementById('admMsgPrompt').value=''; setTimeout(admMsgClose,1400);} else { note.style.color='#c0392b'; note.textContent=d.error||'Could not send.'; } }
   catch(e){ note.style.color='#c0392b'; note.textContent='Network error.'; }
   btn.disabled=false; btn.textContent='Send to profession →';
 }
@@ -6551,7 +6554,7 @@ async function admMsgSend(){
 
 <!-- ══════ AI ADMIN CONSOLE · ⌘K command bar + notifications composer ══════ -->
 <style>
-#aicFab{position:fixed;left:22px;bottom:22px;z-index:1400;background:linear-gradient(135deg,#0a3a28,#0d5a4a);color:#fff;border:0;border-radius:30px;padding:13px 20px;font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(10,58,40,.4);display:flex;align-items:center;gap:8px;font-family:inherit}
+#aicFab{position:fixed;left:22px;bottom:22px;z-index:1400;background:linear-gradient(135deg,#70550F,#9D7714);color:#fff;border:0;border-radius:30px;padding:13px 20px;font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(112,85,15,.4);display:flex;align-items:center;gap:8px;font-family:inherit}
 #aicFab:hover{transform:translateY(-2px)}
 #aicFab .kbd{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(255,255,255,.18);padding:2px 6px;border-radius:5px}
 #aicOverlay{position:fixed;inset:0;background:rgba(8,18,12,.55);backdrop-filter:blur(8px);z-index:1500;display:none;align-items:flex-start;justify-content:center;padding:80px 20px}
@@ -6563,19 +6566,19 @@ async function admMsgSend(){
 .aic-esc{font-family:'JetBrains Mono',monospace;font-size:10px;color:#8a9a90;background:#f1f4f1;border:1px solid #e3e9e4;border-radius:6px;padding:3px 7px;cursor:pointer}
 .aic-tabs{display:flex;gap:4px;padding:10px 16px 0}
 .aic-tab{background:none;border:0;border-bottom:2px solid transparent;padding:6px 10px;font-size:12.5px;font-weight:600;color:#8a9a90;cursor:pointer;font-family:inherit}
-.aic-tab.on{color:#006B3F;border-bottom-color:#006B3F}
+.aic-tab.on{color:#9D7714;border-bottom-color:#9D7714}
 .aic-body{padding:16px 18px;overflow-y:auto}
 .aic-chip{display:inline-block;background:#f1f4f1;border:1px solid #e3e9e4;border-radius:18px;padding:7px 13px;font-size:12.5px;color:#3a4a40;margin:0 6px 8px 0;cursor:pointer}
-.aic-chip:hover{border-color:#006B3F;color:#006B3F}
-.aic-answer{font-size:14px;line-height:1.65;color:#1a2a20;white-space:pre-wrap;background:#f6f8f6;border:1px solid #e3e9e4;border-left:3px solid #0d7377;border-radius:10px;padding:15px 17px;margin-top:6px}
+.aic-chip:hover{border-color:#9D7714;color:#9D7714}
+.aic-answer{font-size:14px;line-height:1.65;color:#1a2a20;white-space:pre-wrap;background:#f6f8f6;border:1px solid #e3e9e4;border-left:3px solid #9D7714;border-radius:10px;padding:15px 17px;margin-top:6px}
 .aic-engine{font-family:'JetBrains Mono',monospace;font-size:9px;color:#aab8af;letter-spacing:.5px;margin-top:8px;text-transform:uppercase}
 .aic-field{margin-bottom:12px}
 .aic-label{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:#8a9a90;font-weight:700;margin-bottom:6px;display:block}
 .aic-sel,.aic-inp,.aic-ta{width:100%;border:1.5px solid #d6ddd7;border-radius:9px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:#0d1b14;outline:0}
-.aic-sel:focus,.aic-inp:focus,.aic-ta:focus{border-color:#006B3F}
+.aic-sel:focus,.aic-inp:focus,.aic-ta:focus{border-color:#9D7714}
 .aic-ta{resize:vertical;min-height:84px}
-.aic-btn{background:#006B3F;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
-.aic-btn.alt{background:#fff;color:#006B3F;border:1px solid #006B3F}
+.aic-btn{background:#9D7714;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.aic-btn.alt{background:#fff;color:#9D7714;border:1px solid #9D7714}
 .aic-btn:disabled{opacity:.5;cursor:not-allowed}
 </style>
 <button id="aicFab" onclick="aicOpen()">✦ Ask AI <span class="kbd">⌘K</span></button>
@@ -6659,10 +6662,10 @@ async function admMsgSend(){
     if(!convo.length){ out.innerHTML=''; return; }
     var html='<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><span class="aic-esc" style="cursor:pointer" onclick="aicReset()">＋ New chat</span></div>';
     convo.forEach(function(m,idx){
-      if(m.role==='user'){ html+='<div style="text-align:right;margin:10px 0 4px"><span style="display:inline-block;background:#006B3F;color:#fff;border-radius:14px 14px 4px 14px;padding:9px 13px;font-size:13.5px;line-height:1.5;max-width:85%;text-align:left;white-space:pre-wrap">'+esc(m.content)+'</span></div>'; return; }
+      if(m.role==='user'){ html+='<div style="text-align:right;margin:10px 0 4px"><span style="display:inline-block;background:#9D7714;color:#fff;border-radius:14px 14px 4px 14px;padding:9px 13px;font-size:13.5px;line-height:1.5;max-width:85%;text-align:left;white-space:pre-wrap">'+esc(m.content)+'</span></div>'; return; }
       if(m.pending){ html+='<div class="aic-answer">Thinking…</div>'; return; }
       if(m.plan){
-        var d=m.plan, color=d.intent==='cancel_session'?'#c0392b':'#0d7377';
+        var d=m.plan, color=d.intent==='cancel_session'?'#c0392b':'#9D7714';
         html+='<div class="aic-answer" style="border-left-color:'+color+'">'
           +'<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:'+color+';font-weight:700;margin-bottom:6px">Proposed action · '+esc(aicPlanLabel(d.intent))+'</div>'
           +'<div style="font-size:14px;color:#0f172a">'+esc(d.summary||'')+'</div>'+aicPlanDetail(d);
@@ -6714,7 +6717,7 @@ async function admMsgSend(){
       if(r.ok){
         var msg = d.intent==='notify' ? ('✓ '+(jd.message||'Sent.'))
           : ('✓ Done'+(jd.refunded!=null?(' · '+jd.refunded+' refunded'):'')+(jd.notified!=null?(' · '+jd.notified+' notified'):''));
-        m.result='<span style="color:#16a34a;font-weight:600">'+esc(msg)+'</span>';
+        m.result='<span style="color:#B08A28;font-weight:600">'+esc(msg)+'</span>';
         try{ if(typeof loadAdmSessions==='function') loadAdmSessions(); if(typeof admBookingsRender==='function') admBookingsRender(); }catch(_){}
       } else { m.result='<span style="color:#c0392b">'+esc(jd.error||jd.message||'Action failed.')+'</span>'; }
     }catch(e){ m.result='<span style="color:#c0392b">Network error.</span>'; }

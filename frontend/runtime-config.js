@@ -57,7 +57,7 @@
   // Surface a tiny console line so testers can confirm which env they hit
   if (typeof console !== 'undefined' && console.info) {
     console.info('%cLAD CLPD %c' + window.LAD_ENV + '%c · api=' + (window.LAD_API_BASE || 'localStorage'),
-      'font-weight:600;color:#006B3F', 'background:#006B3F;color:#fff;padding:1px 6px;border-radius:3px',
+      'font-weight:600;color:#9D7714', 'background:#9D7714;color:#fff;padding:1px 6px;border-radius:3px',
       'color:#64748b;font-family:monospace;font-size:11px');
   }
 })();

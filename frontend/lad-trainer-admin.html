@@ -13,14 +13,14 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
 :root{
-  --green:#006B3F; --green2:#008549; --green-d:#004d2e; --green-l:#00a85e;
-  --green-bg:#f0f9f4; --green-border:#b8d8c5;
-  --gold:#C9913A; --gold-bg:#fdf6e8; --gold-border:#e8c878;
+  --green:#9D7714; --green2:#9D7714; --green-d:#70550F; --green-l:#B08A28;
+  --green-bg:#f0f9f4; --green-border:#26CB84;
+  --gold:#9D7714; --gold-bg:#fdf6e8; --gold-border:#e8c878;
   --ink:#0a0e14; --ink2:#1a2330; --slate:#3a4554; --slate2:#5a6878; --slate3:#8a98aa;
   --line:#e8ecf1; --line2:#d8dfe7; --paper:#f8fafb; --paper2:#f1f4f7; --white:#fff;
   --red:#c0392b; --red-bg:#fdeae8; --red-border:#f0aaaa;
   --amber:#92540a; --amber-bg:#fef3e2; --amber-border:#f0c878;
-  --blue:#1a4d80; --blue-bg:#eef4fb;
+  --blue:#9D7714; --blue-bg:#eef4fb;
   --serif:'Instrument Serif',Georgia,serif; --sans:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
   --r-sm:8px; --r:12px; --r-lg:18px;
   --sh:0 2px 4px rgba(10,14,20,.06),0 8px 24px rgba(10,14,20,.06);
@@ -32,7 +32,7 @@ a{color:var(--green2);text-decoration:none}
 
 .top{background:rgba(255,255,255,.85);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
 .top-in{display:flex;align-items:center;gap:14px;height:62px}
-.emblem{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:10px;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,107,63,.22);flex-shrink:0}
+.emblem{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:10px;display:grid;place-items:center;box-shadow:0 2px 8px rgba(157,119,20,.22);flex-shrink:0}
 .emblem svg{width:20px;height:24px}
 .brand-t{font-family:var(--serif);font-size:18px;line-height:1.05}
 .brand-s{font-family:var(--mono);font-size:8.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:2px}
@@ -62,7 +62,7 @@ h1{font-family:var(--serif);font-size:36px;font-weight:400;letter-spacing:-.02em
 .lessons{display:flex;flex-direction:column;gap:9px;max-height:64vh;overflow:auto}
 .lesson{border:1.5px solid var(--line2);border-radius:var(--r);padding:13px;cursor:pointer;transition:all .15s;background:var(--white)}
 .lesson:hover{border-color:var(--green-border);background:var(--green-bg)}
-.lesson.sel{border-color:var(--green2);background:var(--green-bg);box-shadow:0 0 0 3px rgba(0,107,63,.08)}
+.lesson.sel{border-color:var(--green2);background:var(--green-bg);box-shadow:0 0 0 3px rgba(157,119,20,.08)}
 .lesson-t{font-size:14px;font-weight:650;display:flex;align-items:center;gap:7px}
 .lesson-s{font-size:12px;color:var(--slate2);margin-top:4px;line-height:1.4}
 .lesson-m{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
@@ -74,14 +74,14 @@ label{display:block;font-size:11.5px;font-weight:650;color:var(--slate);margin:0
 .hint{font-weight:400;color:var(--slate3);font-size:11px}
 input[type=text],input[type=number],textarea,select{width:100%;font-family:var(--sans);font-size:13.5px;color:var(--ink);background:var(--white);border:1.5px solid var(--line2);border-radius:var(--r-sm);padding:10px 12px;transition:border .15s}
 textarea{resize:vertical;line-height:1.5}
-input:focus,textarea:focus,select:focus{outline:none;border-color:var(--green2);box-shadow:0 0 0 3px rgba(0,107,63,.08)}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--green2);box-shadow:0 0 0 3px rgba(157,119,20,.08)}
 .field{margin-bottom:14px}
 .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .check{display:flex;gap:9px;align-items:center;font-size:13px;color:var(--slate);font-weight:500}
 .check input{width:16px;height:16px;accent-color:var(--green2)}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:13.5px;font-weight:600;padding:11px 18px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;transition:all .15s}
-.btn-pri{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;box-shadow:0 2px 10px rgba(0,107,63,.22)}
+.btn-pri{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;box-shadow:0 2px 10px rgba(157,119,20,.22)}
 .btn-pri:hover{transform:translateY(-1px)}
 .btn-pri:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .btn-danger{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
@@ -110,6 +110,9 @@ tr:hover td{background:var(--paper)}
 .stat .n{font-family:var(--serif);font-size:30px;line-height:1;color:var(--green-d)}
 .stat .l{font-size:11px;color:var(--slate2);margin-top:6px;font-weight:500}
 </style>
+  <!-- Government of Dubai Legal Affairs Department identity -->
+  <link rel="stylesheet" href="lad-brand.css">
+  <script src="lad-brand.js" defer></script>
 </head>
 <body>
 

@@ -33,11 +33,11 @@
     --ground:#F7F6F1; --surface:#FFFFFF; --alt:#EFEDE6;
     --line:#E0DDD2; --line-soft:#EAE8DF;
     --ink:#171A17; --ink2:#484D48; --ink3:#757A73;
-    --green:#0E5C44; --green-deep:#083D2D; --green-soft:#E2EEE8; --green-line:#BCD8CB;
-    --gold:#B98A36; --gold-soft:#F6EEDD;
+    --green:#9D7714; --green-deep:#70550F; --green-soft:#E2EEE8; --green-line:#26CB84;
+    --gold:#9D7714; --gold-soft:#F6EEDD;
     --crit:#8E3F2E; --crit-soft:#F6E4DF;
     --lock:#9A9E98;
-    --hero-a:#07130E; --hero-b:#0C2A1E; --hero-c:#0E4430;
+    --hero-a:#07130E; --hero-b:#4A380A; --hero-c:#70550F;
     --ring-track:rgba(255,255,255,.14);
     --serif:'Instrument Serif',Georgia,serif;
     --sans:'Public Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -48,11 +48,11 @@
       --ground:#0F120F; --surface:#161A16; --alt:#1C211C;
       --line:#2C332C; --line-soft:#232923;
       --ink:#E8EAE6; --ink2:#B2B8B0; --ink3:#848A82;
-      --green:#7FC2A6; --green-deep:#0B241A; --green-soft:#182620; --green-line:#2B4A3C;
+      --green:#26CB84; --green-deep:#0B241A; --green-soft:#182620; --green-line:#70550F;
       --gold:#D3A65A; --gold-soft:#2A2315;
       --crit:#D98B76; --crit-soft:#2B1B16;
       --lock:#6B716A;
-      --hero-a:#05100B; --hero-b:#0A2118; --hero-c:#0C3626;
+      --hero-a:#05100B; --hero-b:#0A2118; --hero-c:#70550F;
     }
   }
   * { box-sizing:border-box; }
@@ -64,8 +64,8 @@
   /* ─── Hero: the journey's front door ─────────────────────────── */
   .hero {
     background:
-      radial-gradient(1100px 420px at 85% -60%, rgba(185,138,54,.28), transparent 60%),
-      radial-gradient(900px 500px at -10% 120%, rgba(23,94,68,.55), transparent 55%),
+      radial-gradient(1100px 420px at 85% -60%, rgba(157,119,20,.28), transparent 60%),
+      radial-gradient(900px 500px at -10% 120%, rgba(157,119,20,.55), transparent 55%),
       linear-gradient(135deg, var(--hero-a) 0%, var(--hero-b) 55%, var(--hero-c) 100%);
     color:#fff; padding:38px 0 34px; position:relative; overflow:hidden;
   }
@@ -139,7 +139,7 @@
 
   .card { background:var(--surface); border:1px solid var(--line); border-radius:12px;
     padding:16px 18px; display:flex; gap:16px; align-items:center; transition:border-color .15s, box-shadow .15s; }
-  .node.current .card { border-color:var(--green-line); box-shadow:0 10px 26px rgba(14,92,68,.10); }
+  .node.current .card { border-color:var(--green-line); box-shadow:0 10px 26px rgba(157,119,20,.10); }
   .node.locked .card { opacity:.55; }
   .kind { font:600 9.5px var(--mono); letter-spacing:.1em; text-transform:uppercase;
     padding:5px 9px; border-radius:6px; white-space:nowrap; background:var(--alt); color:var(--ink3); }
@@ -238,6 +238,9 @@
   .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:20px; }
   @media (prefers-reduced-motion:reduce){ .ring .fill{transition:none} .node.current .dot{animation:none} .path .flow{transition:none} }
 </style>
+  <!-- Government of Dubai Legal Affairs Department identity -->
+  <link rel="stylesheet" href="lad-brand.css">
+  <script src="lad-brand.js" defer></script>
 </head>
 <body>
 
@@ -262,7 +265,7 @@
         <svg class="ring" viewBox="0 0 120 120" role="img" aria-label="Progress">
           <defs>
             <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#63C39D"/><stop offset="1" stop-color="#B98A36"/>
+              <stop offset="0" stop-color="#26CB84"/><stop offset="1" stop-color="#9D7714"/>
             </linearGradient>
           </defs>
           <circle class="track" cx="60" cy="60" r="52"/>
