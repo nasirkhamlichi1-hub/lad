@@ -89,10 +89,14 @@ button{font-family:inherit;cursor:pointer}
 .adm-trow{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:var(--white);
   border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;color:inherit;font:inherit;transition:all .15s}
 .adm-trow:hover{border-color:var(--line2);box-shadow:var(--sh-sm)}
-.adm-tdel{flex-shrink:0;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;
-  font-size:15px;line-height:1;color:var(--slate3);opacity:0;transition:all .12s;cursor:pointer}
-.adm-trow:hover .adm-tdel{opacity:1}
-.adm-tdel:hover{background:var(--red-bg);color:var(--red)}
+/* The bin is ALWAYS visible — a control you cannot see is a control you
+   do not have. It only reddens on hover so it never looks armed. */
+.adm-tdel{flex-shrink:0;width:28px;height:28px;border-radius:7px;display:grid;place-items:center;
+  color:var(--slate3);background:var(--paper);border:1px solid var(--line);
+  transition:all .12s;cursor:pointer}
+.adm-tdel svg{width:14px;height:14px;display:block}
+.adm-trow:hover .adm-tdel{border-color:var(--line2)}
+.adm-tdel:hover{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
 .adm-trow[aria-current="true"]{border-color:var(--green);background:var(--green-bg)}
 .adm-trow .n{font-weight:600;font-size:13px}
 .adm-trow .c{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:.2px}
@@ -299,7 +303,10 @@ async function loadTopics(){
         '<div class="adm-grow"><div class="n">'+esc(t.title)+'</div>'+
         '<div class="c">'+t.activities+' steps · '+t.learners+' enrolled</div></div>'+
         '<span class="adm-chip'+(t.published===t.activities&&t.activities?' live':'')+'">'+t.published+'/'+t.activities+'</span>'+
-        '<span class="adm-tdel" data-tdel="'+esc(t.topic_id)+'" data-tname="'+esc(t.title)+'" data-tlearners="'+t.learners+'" title="Delete this topic">&times;</span>'+
+        '<span class="adm-tdel" data-tdel="'+esc(t.topic_id)+'" data-tname="'+esc(t.title)+'" data-tlearners="'+t.learners+'" title="Delete this topic" aria-label="Delete this topic">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+
+          '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>'+
+          '<path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></span>'+
       '</button>';
     }).join('');
     Array.prototype.forEach.call(document.querySelectorAll('[data-t]'),function(b){
