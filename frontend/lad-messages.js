@@ -42,8 +42,19 @@
     const css = `
     #ladMsgBtn{position:fixed;right:20px;bottom:20px;z-index:99998;background:#9D7714;color:#fff;border:none;border-radius:30px;padding:12px 18px;font:600 13px/1 -apple-system,Segoe UI,Roboto,sans-serif;box-shadow:0 6px 22px rgba(157,119,20,.45);cursor:pointer;display:flex;align-items:center;gap:8px}
     #ladMsgBtn:hover{background:#70550F}
-    #ladMsgBtn .ladmsg-badge{background:#ff4d6d;color:#fff;border-radius:10px;min-width:18px;height:18px;padding:0 5px;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center}
-    #ladMsgBtn .ladmsg-badge.on{display:flex}
+    /* The count sits on the corner of the launcher, the way a messaging app
+       puts it on the icon — an unanswered conversation should be visible
+       from across the room, not folded into the label. */
+    #ladMsgBtn{position:fixed}
+    #ladMsgBtn .ladmsg-badge{position:absolute;top:-7px;right:-6px;
+      background:#DC3131;color:#fff;border-radius:999px;min-width:22px;height:22px;
+      padding:0 6px;font-size:12px;font-weight:700;line-height:22px;text-align:center;
+      display:none;box-shadow:0 0 0 2.5px #fff,0 2px 6px rgba(0,0,0,.28);
+      font-variant-numeric:tabular-nums}
+    #ladMsgBtn .ladmsg-badge.on{display:block}
+    @media (prefers-color-scheme: dark){
+      #ladMsgBtn .ladmsg-badge{box-shadow:0 0 0 2.5px #0E1120,0 2px 6px rgba(0,0,0,.5)}
+    }
     @keyframes ladmsgPulse{0%,100%{box-shadow:0 6px 22px rgba(157,119,20,.45)}50%{box-shadow:0 6px 22px rgba(255,77,109,.55),0 0 0 5px rgba(255,77,109,.22)}}
     #ladMsgBtn.has-unread{animation:ladmsgPulse 1.7s ease-in-out infinite}
     #ladMsgBtn.has-unread .ladmsg-badge{animation:ladmsgPulse 1.7s ease-in-out infinite}
@@ -129,10 +140,28 @@
     try {
       const j = await api('/unread');
       ST.waiting = Number(j.waiting) || 0;
+      ST.unassigned = Number(j.unassigned) || 0;
+      // Anything the inbox is holding: unread, ownerless, or handed to a
+      // person by Maryam. The server counts each conversation once, and
+      // falls back to plain unread if it predates the attention field.
+      const n = j.attention != null ? Number(j.attention) : Number(j.unread) || 0;
+      ST.attention = n;
       const b = document.getElementById('ladMsgBadge');
-      if (b) { b.textContent = j.unread > 99 ? '99+' : j.unread; b.classList.toggle('on', j.unread > 0); }
-      var btn = document.getElementById('ladMsgBtn'); if (btn) btn.classList.toggle('has-unread', j.unread > 0);
-      try { document.title = (j.unread > 0 ? '(' + j.unread + ') ' : '') + document.title.replace(/^\(\d+\)\s*/, ''); } catch (_) {}
+      if (b) {
+        b.textContent = n > 99 ? '99+' : String(n);
+        b.classList.toggle('on', n > 0);
+        b.setAttribute('aria-label', n === 1 ? '1 conversation needs attention'
+                                             : n + ' conversations need attention');
+      }
+      var btn = document.getElementById('ladMsgBtn');
+      if (btn) {
+        btn.classList.toggle('has-unread', n > 0);
+        btn.setAttribute('aria-live', 'polite');
+        btn.title = n > 0
+          ? (n === 1 ? '1 conversation needs attention' : n + ' conversations need attention')
+          : 'Messages';
+      }
+      try { document.title = (n > 0 ? '(' + n + ') ' : '') + document.title.replace(/^\(\d+\)\s*/, ''); } catch (_) {}
     } catch (_) {}
   }
 
