@@ -528,7 +528,17 @@ async function getOutline(courseId, lawyerId = null, { includeUnpublished = fals
   // seeing them, because that is where they attach the content.
   const visible = includeUnpublished ? sections : sections.filter((s) => s.activities.length);
 
-  return { course_id: courseId, enrolment, sections: visible };
+  // The topic's own identity travels top-level, so a hub whose steps are all
+  // still drafts can still show the real title and the author's welcome
+  // instead of falling back to the raw course id.
+  return {
+    course_id: courseId,
+    enrolment,
+    title: modules.length ? modules[0].title : null,
+    summary: modules.length ? modules[0].summary : null,
+    welcome: modules.length ? (modules[0].welcome || null) : null,
+    sections: visible,
+  };
 }
 
 // ─── Reporting ───────────────────────────────────────────────────────
