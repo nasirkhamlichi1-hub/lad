@@ -18,6 +18,10 @@
 //                AI_MODEL | AI_DEPLOYMENT | AI_MODEL_NAME
 //   apiVersion : AIMODEL_API_VERSION | AZURE_OPENAI_API_VERSION
 //                (default 2024-08-01-preview)
+//
+// If no OpenAI-style endpoint is set but ANTHROPIC_API_KEY is, chat() routes
+// to Claude instead — so one Anthropic key powers every AI feature (trainer
+// brain, drafting, accreditation review) without any Azure setup.
 // ─────────────────────────────────────────────────────────────────────
 
 const axios = require('axios');
@@ -43,12 +47,16 @@ function settings() {
     'AOAI_DEPLOYMENT', 'AI_MODEL', 'AI_DEPLOYMENT', 'AI_MODEL_NAME']) || 'gpt-4o';
   const apiVersion = env(['AIMODEL_API_VERSION', 'INTERNALAI__APIVERSION', 'InternalAI__ApiVersion',
     'AZURE_OPENAI_API_VERSION']) || '2024-08-01-preview';
-  return { endpoint: endpoint.replace(/\/+$/, ''), key, deployment, apiVersion };
+  const anthropicKey = env(['ANTHROPIC_API_KEY']);
+  const anthropicModel = env(['ANTHROPIC_MODEL']) || 'claude-sonnet-4-6';
+  const anthropicBase = (env(['ANTHROPIC_BASE_URL']) || 'https://api.anthropic.com').replace(/\/+$/, '');
+  return { endpoint: endpoint.replace(/\/+$/, ''), key, deployment, apiVersion,
+    anthropicKey, anthropicModel, anthropicBase };
 }
 
 function configured() {
   const s = settings();
-  return !!(s.endpoint && s.key);
+  return !!(s.endpoint && s.key) || !!s.anthropicKey;
 }
 
 // Build the request URL tolerant of whatever was pasted into the endpoint:
@@ -84,10 +92,45 @@ function buildRequest(s) {
   return { url, headers, isAzure: false };
 }
 
+// Claude (Anthropic messages API) — used when only ANTHROPIC_API_KEY is set.
+// Anthropic wants system as a top-level field and strictly user/assistant
+// roles in messages, so anything else is folded into a user turn.
+async function anthropicChat(s, { system, messages, maxTokens, temperature }) {
+  const msgs = (messages || []).map((m) => ({
+    role: m.role === 'assistant' ? 'assistant' : 'user',
+    content: String(m.content || ''),
+  })).filter((m) => m.content);
+  if (!msgs.length) msgs.push({ role: 'user', content: 'Begin.' });
+
+  const body = { model: s.anthropicModel, max_tokens: maxTokens, temperature, messages: msgs };
+  if (system) body.system = system;
+
+  const r = await axios.post(`${s.anthropicBase}/v1/messages`, body, {
+    headers: {
+      'x-api-key': s.anthropicKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    timeout: 30000,
+    validateStatus: () => true,
+  });
+  if (r.status < 200 || r.status >= 300) {
+    const e = new Error('AiModel error ' + r.status);
+    e.code = 'AIMODEL_ERROR';
+    e.status = r.status;
+    e.detail = r.data;
+    throw e;
+  }
+  const text = r.data && Array.isArray(r.data.content) && r.data.content[0] &&
+    r.data.content[0].text;
+  return (text || '').trim();
+}
+
 // Returns the assistant's text reply, or throws.
 async function chat({ system, messages, maxTokens = 700, temperature = 0.2 }) {
   const s = settings();
   if (!s.endpoint || !s.key) {
+    if (s.anthropicKey) return anthropicChat(s, { system, messages, maxTokens, temperature });
     const e = new Error('AiModel is not configured');
     e.code = 'AIMODEL_NOT_CONFIGURED';
     throw e;
