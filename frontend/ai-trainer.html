@@ -341,7 +341,7 @@ a{color:inherit;text-decoration:none}
 
   // ─── The turn loop ───────────────────────────────────────────────────
   function nextTurn(){
-    if(S.busy||S.ended)return;S.busy=true;stopListening();
+    if(S.busy||S.ended)return;S.busy=true;stopListening();stopSpeaking();
     setState('thinking','Thinking');
     var p=DEMO?Promise.resolve(localBrain(S.selected,S.history)):api.trainerTurn(S.session.sessionId,S.history,{present:true});
     p.then(function(r){
@@ -386,8 +386,19 @@ a{color:inherit;text-decoration:none}
     }).then(function(r){ if(!r.ok) throw new Error('tts '+r.status); return r.blob(); })
       .then(function(b){ return URL.createObjectURL(b); });
   }
-  function playUrl(url){
+  // Every utterance carries the id of the turn that asked for it. Anything
+  // from an older turn is discarded rather than played — without this, tapping
+  // Speak mid-sentence left the previous audio running while the next reply
+  // started, and two trainers talked over each other.
+  function stopSpeaking(){
+    S.speechId=(S.speechId||0)+1;
+    if(S.audio){ try{S.audio.pause();}catch(e){} S.audio=null; }
+    if(window.speechSynthesis){ try{window.speechSynthesis.cancel();}catch(e){} }
+    return S.speechId;
+  }
+  function playUrl(url,id){
     return new Promise(function(resolve){
+      if(S.ended||id!==S.speechId){ URL.revokeObjectURL(url); resolve(); return; }
       var a=new Audio(url); S.audio=a;
       a.onended=function(){URL.revokeObjectURL(url);resolve();};
       a.onerror=function(){resolve();};
@@ -409,6 +420,7 @@ a{color:inherit;text-decoration:none}
     return out.filter(Boolean);
   }
   function speakEleven(text,done){
+    var id=stopSpeaking();          // silence anything still going
     setState('speaking','Speaking');
     var chunks=splitForSpeech(text);
     if(!chunks.length){ done&&done(); return; }
@@ -420,15 +432,16 @@ a{color:inherit;text-decoration:none}
     var failed=false;
     chunks.forEach(function(_,i){
       chain=chain.then(function(){
-        if(failed||S.ended) return;
-        return pending[i].then(playUrl).catch(function(){
-          if(i===0){ failed=true; speakBrowser(text,done); } // nothing spoke → browser voice
+        if(failed||S.ended||id!==S.speechId) return;
+        return pending[i].then(function(u){ return playUrl(u,id); }).catch(function(){
+          if(i===0&&id===S.speechId){ failed=true; speakBrowser(text,done); } // nothing spoke → browser voice
         });
       });
     });
-    chain.then(function(){ if(!failed) done&&done(); });
+    chain.then(function(){ if(!failed&&id===S.speechId) done&&done(); });
   }
   function speakBrowser(text,done){
+    stopSpeaking();
     if(window.speechSynthesis){
       var u=new SpeechSynthesisUtterance(text);u.rate=1;u.pitch=1;
       u.onstart=function(){setState('speaking','Speaking');};
@@ -455,12 +468,14 @@ a{color:inherit;text-decoration:none}
   }
   function stopListening(){if(S.reco){try{S.reco.stop();}catch(e){}}S.listening=false;}
 
-  el('micBtn').onclick=function(){if(S.listening){stopListening();}else{startListening();}};
+  // Tapping Speak is the lawyer interrupting — the trainer stops talking and
+  // listens, the way a person would.
+  el('micBtn').onclick=function(){if(S.listening){stopListening();}else{stopSpeaking();startListening();}};
   el('sendBtn').onclick=function(){submitReply(el('replyInput').value);};
   el('replyInput').addEventListener('keydown',function(e){if(e.key==='Enter')submitReply(el('replyInput').value);});
 
   // ─── Pause / Finish ──────────────────────────────────────────────────
-  function teardown(){S.ended=true;stopListening();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.audio){try{S.audio.pause();}catch(e){}}}
+  function teardown(){S.ended=true;stopListening();stopSpeaking();}
   function leave(){ if(RETURN_URL){location.href=RETURN_URL;} else {location.href='ai-trainer.html';} }
   el('pauseBtn').onclick=function(){teardown();var sec=Math.round((Date.now()-S.startedAt)/1000);
     if(DEMO){toast('Paused (demo).');setTimeout(leave,1000);return;}
