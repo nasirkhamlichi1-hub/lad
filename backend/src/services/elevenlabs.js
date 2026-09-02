@@ -18,36 +18,51 @@ function isConfigured() {
   return !!EL.apiKey;
 }
 
-// Returns a Buffer of MP3 audio for the given text, or throws.
-async function tts(text) {
+// Streams MP3 audio for the given text.
+//
+// SPEED IS THE FEATURE. Three things make the difference between a trainer
+// that feels present and one that feels like a bad phone line:
+//   • the /stream endpoint returns audio while it is still being generated,
+//   • optimize_streaming_latency trades a sliver of quality for first-byte time,
+//   • the flash voice model generates far faster than the multilingual one.
+// The response is piped straight through to the browser, so the lawyer hears
+// the first syllable long before the last one exists.
+async function ttsStream(text) {
   if (!isConfigured()) {
     const err = new Error('ElevenLabs is not configured');
     err.status = 501;
     throw err;
   }
+  const url = `${EL.baseUrl}/v1/text-to-speech/${encodeURIComponent(EL.voiceId)}/stream` +
+    `?output_format=${encodeURIComponent(EL.outputFormat)}` +
+    `&optimize_streaming_latency=${encodeURIComponent(EL.latency)}`;
   const r = await axios.post(
-    `${EL.baseUrl}/v1/text-to-speech/${encodeURIComponent(EL.voiceId)}?output_format=mp3_44100_128`,
+    url,
     {
       text: String(text || ''),
       model_id: EL.modelId,
-      voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+      voice_settings: { stability: 0.4, similarity_boost: 0.7, speed: EL.speed },
     },
     {
       headers: { 'xi-api-key': EL.apiKey, 'Content-Type': 'application/json', Accept: 'audio/mpeg' },
-      responseType: 'arraybuffer',
+      responseType: 'stream',
       timeout: 30000,
       validateStatus: () => true,
     }
   );
   if (r.status >= 300) {
     let detail = '';
-    try { detail = Buffer.from(r.data).toString('utf8').slice(0, 300); } catch (_) {}
+    try {
+      const chunks = [];
+      for await (const c of r.data) chunks.push(c);
+      detail = Buffer.concat(chunks).toString('utf8').slice(0, 300);
+    } catch (_) {}
     log.error('elevenlabs_tts_failed', { status: r.status, detail });
     const err = new Error('ElevenLabs TTS failed (' + r.status + ')');
     err.status = 502;
     throw err;
   }
-  return Buffer.from(r.data);
+  return r.data; // a readable stream of MP3 bytes
 }
 
-module.exports = { isConfigured, tts };
+module.exports = { isConfigured, ttsStream };
