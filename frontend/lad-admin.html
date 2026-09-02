@@ -1706,12 +1706,12 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
            key elements the server has checked against the source, review, save. -->
       <div id="teachBox" style="display:none;margin-top:18px;border-top:1px solid var(--line);padding-top:18px">
         <div style="font-family:var(--serif);font-size:16px;font-weight:500;margin-bottom:2px">Teach this with the AI trainer</div>
-        <p class="adm-hint" style="margin-bottom:12px">Pick one of the documents above — or a new one — and its text becomes the material the AI trainer teaches from for this course. PDF, Word (.docx) or plain text; a scan has no text in it and will come back empty.</p>
+        <p class="adm-hint" style="margin-bottom:12px">Pick one of the documents above — or a new one — and its text becomes the material the AI trainer teaches from for this course. PDF, Word (.docx), PowerPoint (.pptx) or plain text; a scan has no text in it and will come back empty.</p>
         <div id="teachDrop" style="border:1.5px dashed var(--line2);border-radius:11px;background:var(--paper);padding:16px;text-align:center;cursor:pointer">
           <div style="font-weight:600;font-size:13.5px;margin-bottom:2px">Drop a document here, or choose a file</div>
           <div style="font-size:11.5px;color:var(--slate3)">Read in your browser — the file is not uploaded again unless you add it above</div>
         </div>
-        <input type="file" id="teachFile" style="display:none" accept=".pdf,.docx,.txt,.md,.csv,.json,.htm,.html">
+        <input type="file" id="teachFile" style="display:none" accept=".pdf,.docx,.pptx,.txt,.md,.csv,.json,.htm,.html">
         <div id="teachMsg" style="font-family:var(--mono);font-size:11px;color:var(--slate3);margin-top:8px"></div>
         <div class="adm-field" style="margin-top:10px"><label class="adm-label" style="margin-bottom:3px">Teaching material</label>
           <textarea id="teachBody" class="adm-textarea" style="width:100%;min-height:130px" placeholder="Upload a document, or paste the material here."></textarea></div>
@@ -2978,7 +2978,8 @@ async function deleteMaterial(mid){
 var TEACH_CDN = {
   pdf:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
   pdfw:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
-  mammoth:'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js'
+  mammoth:'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
+  jszip:'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
 };
 function teachScript(src){
   return new Promise(function(ok,fail){
@@ -3007,7 +3008,44 @@ async function teachExtract(file){
     var r=await window.mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});
     return (r&&r.value)||'';
   }
-  throw new Error('That file type cannot be read. Use a PDF, a Word .docx or plain text — or paste the material in.');
+  if(/\.pptx$/.test(n)) return teachExtractPptx(file);
+  throw new Error('That file type cannot be read. Use a PDF, a Word .docx, a PowerPoint .pptx or plain text — or paste the material in.');
+}
+
+// PowerPoint decks are what most training material actually arrives as.
+// A .pptx is a zip of XML; pull every text run per slide, in slide order,
+// with the speaker notes — which often carry the real teaching narrative.
+async function teachExtractPptx(file){
+  await teachScript(TEACH_CDN.jszip);
+  var zip=await window.JSZip.loadAsync(await file.arrayBuffer());
+  function dec(s){
+    return s.replace(/&#x([0-9a-fA-F]+);/g,function(_,h){return String.fromCodePoint(parseInt(h,16));})
+            .replace(/&#(\d+);/g,function(_,d){return String.fromCodePoint(parseInt(d,10));})
+            .replace(/&quot;/g,'"').replace(/&apos;/g,"'")
+            .replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+  }
+  function textOf(xml){
+    return xml.split(/<\/a:p>/).map(function(p){
+      var runs=[], m, re=/<a:t[^>]*>([\s\S]*?)<\/a:t>/g;
+      while((m=re.exec(p))) runs.push(dec(m[1]));
+      return runs.join('').trim();
+    }).filter(Boolean).join('\n');
+  }
+  function num(p){ var m=p.match(/(\d+)\.xml$/); return m?Number(m[1]):0; }
+  var slides=Object.keys(zip.files)
+    .filter(function(p){return /^ppt\/slides\/slide\d+\.xml$/.test(p);})
+    .sort(function(a,b){return num(a)-num(b);});
+  var out=[];
+  for(var i=0;i<slides.length;i++){
+    var body=textOf(await zip.files[slides[i]].async('string'));
+    var notesPath='ppt/notesSlides/notesSlide'+num(slides[i])+'.xml';
+    var notes=zip.files[notesPath]?textOf(await zip.files[notesPath].async('string')):'';
+    notes=notes.split('\n').filter(function(l){return l.trim()&&!/^\d+$/.test(l.trim());}).join('\n');
+    var s='— Slide '+(i+1)+' —'+(body?'\n'+body:'');
+    if(notes) s+='\nSpeaker notes: '+notes;
+    if(body||notes) out.push(s);
+  }
+  return out.join('\n\n');
 }
 
 var _teachWired=false, _teachLessonId=null;

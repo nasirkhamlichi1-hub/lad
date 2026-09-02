@@ -453,7 +453,8 @@ var MAX_INLINE = 10 * 1024 * 1024;
 var CDN = {
   pdf:    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
   pdfw:   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
-  mammoth:'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js'
+  mammoth:'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
+  jszip:  'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
 };
 
 function ensureScript(src){
@@ -496,7 +497,47 @@ async function extractText(file){
     return (r&&r.value)||'';
   }
 
-  throw new Error('That file type cannot be read for teaching text. Use a PDF, a Word .docx, or a plain text file — or paste the text in yourself.');
+  if(/\.pptx$/.test(name)) return extractPptx(file);
+
+  throw new Error('That file type cannot be read for teaching text. Use a PDF, a Word .docx, a PowerPoint .pptx, or a plain text file — or paste the text in yourself.');
+}
+
+// PowerPoint decks are what most training material actually arrives as.
+// A .pptx is a zip of XML; pull every text run per slide, in slide order,
+// with the speaker notes — which often carry the real teaching narrative.
+async function extractPptx(file){
+  await ensureScript(CDN.jszip);
+  var zip=await window.JSZip.loadAsync(await file.arrayBuffer());
+  function dec(s){
+    return s.replace(/&#x([0-9a-fA-F]+);/g,function(_,h){return String.fromCodePoint(parseInt(h,16));})
+            .replace(/&#(\d+);/g,function(_,d){return String.fromCodePoint(parseInt(d,10));})
+            .replace(/&quot;/g,'"').replace(/&apos;/g,"'")
+            .replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+  }
+  function textOf(xml){
+    // paragraphs end at </a:p>; text lives in <a:t> runs
+    return xml.split(/<\/a:p>/).map(function(p){
+      var runs=[], m, re=/<a:t[^>]*>([\s\S]*?)<\/a:t>/g;
+      while((m=re.exec(p))) runs.push(dec(m[1]));
+      return runs.join('').trim();
+    }).filter(Boolean).join('\n');
+  }
+  function num(p){ var m=p.match(/(\d+)\.xml$/); return m?Number(m[1]):0; }
+  var slides=Object.keys(zip.files)
+    .filter(function(p){return /^ppt\/slides\/slide\d+\.xml$/.test(p);})
+    .sort(function(a,b){return num(a)-num(b);});
+  var out=[];
+  for(var i=0;i<slides.length;i++){
+    var body=textOf(await zip.files[slides[i]].async('string'));
+    var notesPath='ppt/notesSlides/notesSlide'+num(slides[i])+'.xml';
+    var notes=zip.files[notesPath]?textOf(await zip.files[notesPath].async('string')):'';
+    // notes pages carry a bare slide-number placeholder — drop those lines
+    notes=notes.split('\n').filter(function(l){return l.trim()&&!/^\d+$/.test(l.trim());}).join('\n');
+    var s='— Slide '+(i+1)+' —'+(body?'\n'+body:'');
+    if(notes) s+='\nSpeaker notes: '+notes;
+    if(body||notes) out.push(s);
+  }
+  return out.join('\n\n');
 }
 
 // Store the original file against the topic so learners can download it.
@@ -523,6 +564,12 @@ async function uploadMaterial(courseId, file, kind){
 }
 
 // A drop target that also works as a plain file picker.
+// A file dropped anywhere OUTSIDE a drop target must never make the browser
+// navigate away to open the document — that silently loses the whole form.
+['dragover','drop'].forEach(function(ev){
+  document.addEventListener(ev,function(e){ e.preventDefault(); });
+});
+
 function wireDrop(zoneId, inputId, onFile){
   var zone=$(zoneId), input=$(inputId);
   if(!zone||!input) return;
@@ -606,10 +653,10 @@ function paneMaterial(a){
   return '<div class="adm-field"><label class="adm-label" for="x-title">Session title</label>'+
       '<input class="adm-input" id="x-title" value="'+esc(a.title)+'"></div>'+
     '<div class="adm-sect"><h4>What the bot teaches from</h4>'+
-    '<p>Upload the source document and its text becomes the material the AI teaches from — the same text you can read and edit below. PDF, Word (.docx) or plain text. A scanned page has no text in it and will come back empty.</p>'+
+    '<p>Upload the source document and its text becomes the material the AI teaches from — the same text you can read and edit below. PDF, Word (.docx), PowerPoint (.pptx) or plain text. A scanned page has no text in it and will come back empty.</p>'+
     '<div class="adm-drop" id="x-drop"><div class="big">Drop a document here, or choose a file</div>'+
       '<div class="sm">The original is also saved for lawyers to download</div></div>'+
-    '<input type="file" id="x-file" style="display:none" accept=".pdf,.docx,.txt,.md,.csv,.json,.htm,.html">'+
+    '<input type="file" id="x-file" style="display:none" accept=".pdf,.docx,.pptx,.txt,.md,.csv,.json,.htm,.html">'+
     '<div id="x-filemeta"></div><div class="adm-busy" id="x-busy"></div>'+
     '<div class="adm-field" style="margin-top:10px">'+
       '<textarea class="adm-textarea" id="x-body" style="min-height:220px" placeholder="Upload a document, or type the material here."></textarea></div>'+
@@ -713,6 +760,17 @@ function openEdit(id){
     }).catch(function(){});
     $('x-draft').onclick=draftFromMaterial;
     wireDrop('x-drop','x-file',onTeachingFile);
+    // The material textarea is where people naturally drop the file too —
+    // accept it there instead of letting the browser open the document.
+    var body=$('x-body');
+    if(body){
+      body.addEventListener('dragover',function(e){ e.preventDefault(); });
+      body.addEventListener('drop',function(e){
+        e.preventDefault();
+        var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+        if(f) onTeachingFile(f);
+      });
+    }
   } else {
     wireDrop('x-drop','x-file',onAttachFile);
   }
@@ -732,16 +790,18 @@ async function onTeachingFile(file){
   try{
     var text=await extractText(file);
     if(!text || text.trim().length<40){
-      $('x-busy').textContent='';
-      banner('No text could be read from that file. If it is a scan or a photo of a page, the words are an image — type or paste the material in instead.','warn');
+      // The drawer covers the page banner, so say it HERE, where the author is looking.
+      $('x-busy').textContent='No text could be read from that file. If it is a scan or a photo of a page, the words are an image — type or paste the material in instead.';
+      $('x-busy').style.color='var(--amber)';
       return;
     }
     $('x-body').value=text.trim();
+    $('x-busy').style.color='';
     $('x-busy').textContent='Read '+text.trim().length.toLocaleString()+' characters. Check it below, then draft the key elements.';
     banner('');
   }catch(e){
-    $('x-busy').textContent='';
-    banner(esc(e.message),'err');
+    $('x-busy').textContent=e.message;
+    $('x-busy').style.color='var(--red)';
   }
 }
 
