@@ -279,6 +279,9 @@
     addTopicSteps:   (id, spec)    => call('POST', '/api/v1/learning/topics/' + encodeURIComponent(id) + '/steps', spec),
     moveTopicStep:   (id, act, to) => call('POST', '/api/v1/learning/topics/' + encodeURIComponent(id) + '/steps/' + encodeURIComponent(act) + '/move', { to }),
     removeTopicStep: (id, act)     => call('DELETE', '/api/v1/learning/topics/' + encodeURIComponent(id) + '/steps/' + encodeURIComponent(act)),
+    // Deletes the whole topic — steps, lessons, enrolments, progress and
+    // materials. The builder confirms with the admin before calling this.
+    deleteTopic:     (id)          => call('DELETE', '/api/v1/learning/topics/' + encodeURIComponent(id)),
     addCourseMaterial: (courseId, m) => call('POST', '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials', m),
     // The course's reference library — every law, article, link, video and
     // file loaded onto the course, for the hub to display in-page.
