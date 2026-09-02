@@ -3,465 +3,415 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AI Trainer (Scalable) · CLPD — Government of Dubai</title>
-<script type="importmap">
-{ "imports": { "buffer": "https://cdn.jsdelivr.net/npm/buffer@6.0.3/+esm" } }
-</script>
+<title>AI Trainer · CLPD — Government of Dubai</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
+/* ─────────────────────────────────────────────────────────────────────
+   The trainer is a VOICE, not a face. Same pattern as the Wonder Academy
+   build: a dark lesson hero, the objectives up front ("By the end of this
+   you can…"), and a glowing orb that shows whether the teacher is
+   listening, thinking or speaking. No camera. No avatar. No video stream.
+   ───────────────────────────────────────────────────────────────────── */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
 :root{
-  --green:#006B3F;--green2:#008549;--green-d:#004d2e;--green-l:#00a85e;--green-bg:#f0f9f4;--green-border:#b8d8c5;
-  --gold:#C9913A;--gold-bg:#fdf6e8;--gold-border:#e8c878;
-  --ink:#0a0e14;--slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;
-  --line:#e8ecf1;--line2:#d8dfe7;--paper:#f8fafb;--paper2:#f1f4f7;--white:#fff;
-  --red:#c0392b;--red-bg:#fdeae8;--red-border:#f0aaaa;--amber:#92540a;--amber-bg:#fef3e2;--amber-border:#f0c878;--blue:#1a4d80;--blue-bg:#eef4fb;
-  --serif:'Instrument Serif',Georgia,serif;--sans:'Inter',system-ui,sans-serif;
-  --r-sm:8px;--r:12px;--r-lg:18px;--sh:0 2px 4px rgba(10,14,20,.06),0 8px 24px rgba(10,14,20,.06);--sh-lg:0 8px 16px rgba(10,14,20,.1),0 32px 64px rgba(10,14,20,.1);
+  --indigo:#170f33;--indigo2:#241452;--indigo3:#2e1a66;
+  --cream:#f7f3ec;--white:#fff;
+  --ink:#171233;--slate:#4a4463;--slate2:#7a7492;
+  --purple:#5b21d6;--purple-bg:#ede7fd;
+  --orange:#ff4b2b;--orange2:#ff7a1a;
+  --green:#0c8a5f;--green2:#12b076;
+  --gold:#e8b64c;
+  --line:#e9e3d8;
+  --head:'Poppins',system-ui,sans-serif;--sans:'Inter',system-ui,sans-serif;
+  --sh:0 4px 12px rgba(23,18,51,.07),0 20px 50px rgba(23,18,51,.09);
 }
-html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
-a{color:var(--green2);text-decoration:none}
-.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
-.top{background:rgba(255,255,255,.85);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
-.top-in{display:flex;align-items:center;gap:14px;height:62px}
-.emblem{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:10px;display:grid;place-items:center;flex-shrink:0}
-.emblem svg{width:20px;height:24px}
-.brand-t{font-family:var(--serif);font-size:18px;line-height:1.05}
-.brand-s{font-family:monospace;font-size:8.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:2px}
-.top-spacer{flex:1}
-.pill{font-family:monospace;font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:5px 10px;border-radius:999px;border:1px solid}
-.pill-live{background:var(--green-bg);color:var(--green-d);border-color:var(--green-border)}
-.pill-demo{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border)}
-.ghost-link{font-size:12.5px;color:var(--slate2);font-weight:500}
-.hero{padding:34px 0 8px}
-.eyebrow{font-family:monospace;font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
-h1{font-family:var(--serif);font-size:40px;font-weight:400;letter-spacing:-.02em;line-height:1.05}
-.lede{font-size:15px;color:var(--slate);max-width:640px;margin-top:12px}
-.grid{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start;padding:24px 0 60px}
-@media(max-width:880px){.grid{grid-template-columns:1fr}}
-.card{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh);overflow:hidden}
-.card-h{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
-.card-h h3{font-size:13.5px;font-weight:650}
-.card-b{padding:18px}
-.lessons{display:flex;flex-direction:column;gap:10px}
-.lesson{border:1.5px solid var(--line2);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s}
-.lesson:hover{border-color:var(--green-border);background:var(--green-bg)}
-.lesson.sel{border-color:var(--green2);background:var(--green-bg);box-shadow:0 0 0 3px rgba(0,107,63,.08)}
-.lesson-t{font-size:14px;font-weight:650}
-.lesson-s{font-size:12.5px;color:var(--slate2);margin-top:4px}
-.lesson-m{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
-.tag{font-family:monospace;font-size:9.5px;font-weight:600;padding:3px 7px;border-radius:6px;background:var(--paper2);color:var(--slate2);border:1px solid var(--line)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600;padding:12px 20px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;transition:all .15s}
-.btn-pri{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;box-shadow:0 2px 10px rgba(0,107,63,.25)}
-.btn-pri:hover{transform:translateY(-1px)}
-.btn-pri:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.btn-danger{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
-.btn-ghost{background:var(--white);color:var(--slate);border-color:var(--line2)}
-.btn-block{width:100%}
-.note{font-size:11px;color:var(--slate3);margin-top:12px;line-height:1.5}
-.banner{display:flex;gap:10px;align-items:flex-start;background:var(--blue-bg);border:1px solid #cfe0f0;border-radius:var(--r);padding:11px 13px;margin:14px 0;font-size:12px;color:var(--slate);line-height:1.5}
-/* Stage */
-.stage-wrap{display:none}
-.stage{position:relative;background:linear-gradient(160deg,#0d1b14,#0a0e14);border-radius:var(--r-lg);overflow:hidden;aspect-ratio:16/9;box-shadow:var(--sh-lg);border:1px solid #000;display:grid;place-items:center}
-.stage video#anamVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.selfcam{position:absolute;right:12px;bottom:12px;width:132px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,.5);box-shadow:0 4px 16px rgba(0,0,0,.4);background:#000;z-index:4}
-.selfcam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
-.cap{position:absolute;left:0;right:0;bottom:0;padding:30px 18px 16px;background:linear-gradient(to top,rgba(0,0,0,.78),transparent);color:#fff;font-size:16px;line-height:1.45;z-index:3;min-height:60px}
-.cap b{color:var(--gold)}
-.stage-bar{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
-.rec{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--slate2);font-weight:500}
-.rec .dot{width:9px;height:9px;border-radius:50%;background:var(--red);animation:pulse 1.8s infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.5)}70%{box-shadow:0 0 0 8px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
-.miclbl{font-size:12px;color:var(--slate2)}
-.replybox{display:flex;gap:8px;margin-top:10px}
-.replybox input{flex:1;font-family:var(--sans);font-size:14px;border:1.5px solid var(--line2);border-radius:var(--r-sm);padding:10px 12px}
-.replybox input:focus{outline:none;border-color:var(--green2)}
-/* Stylised avatar */
-.face{width:62%;max-width:340px;filter:drop-shadow(0 12px 30px rgba(0,0,0,.4))}
-.face .mouth{transform-origin:center;transform-box:fill-box;transition:transform .08s}
-.face.speaking .mouth{animation:talk .26s infinite alternate}
-@keyframes talk{from{transform:scaleY(.35)}to{transform:scaleY(1.15)}}
-.face .lid{transform-origin:center;transform-box:fill-box;animation:blink 5s infinite}
-@keyframes blink{0%,96%,100%{transform:scaleY(0)}98%{transform:scaleY(1)}}
-/* Perception panel */
-.perc-list{display:flex;flex-direction:column;gap:9px}
-.perc{display:flex;gap:11px;align-items:flex-start;padding:11px 12px;border-radius:var(--r);border:1px solid var(--line);background:var(--paper);transition:all .25s}
-.perc.hot{background:var(--amber-bg);border-color:var(--amber-border)}
-.perc.good{background:var(--green-bg);border-color:var(--green-border)}
-.perc-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;background:var(--white);border:1px solid var(--line);font-size:15px}
-.perc-tx{font-size:12.5px;color:var(--slate)}.perc-tx b{color:var(--ink);font-weight:650}
-.prog{height:8px;background:var(--paper2);border-radius:999px;overflow:hidden;margin-top:4px}
-.prog>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green2),var(--green-l));transition:width .4s}
-.kpi{display:flex;justify-content:space-between;font-size:12px;color:var(--slate2);margin-top:14px}
+html,body{background:var(--cream);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1240px;margin:0 auto;padding:0 28px}
 .hidden{display:none!important}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh-lg);z-index:50;opacity:0;transition:opacity .2s}
+
+/* Top bar */
+.top{background:var(--indigo);color:#fff;position:sticky;top:0;z-index:30}
+.top-in{display:flex;align-items:center;gap:14px;height:72px}
+.wordmark{font-family:var(--head);font-weight:800;font-size:22px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+.wordmark .spark{color:var(--gold);font-size:18px}
+.wordmark em{font-style:normal;color:var(--orange2)}
+.wordmark small{display:block;font-family:var(--sans);font-weight:600;font-size:9px;letter-spacing:1.6px;color:rgba(255,255,255,.55);text-transform:uppercase;margin-top:1px}
+.top-spacer{flex:1}
+.pill{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:6px 12px;border-radius:999px;border:1px solid}
+.pill-live{background:rgba(18,176,118,.15);color:#7dedc2;border-color:rgba(18,176,118,.5)}
+.pill-demo{background:rgba(232,182,76,.14);color:var(--gold);border-color:rgba(232,182,76,.5)}
+.backlink{font-size:13.5px;font-weight:600;color:#fff;border:1.5px solid rgba(255,255,255,.35);border-radius:999px;padding:10px 20px;transition:all .15s}
+.backlink:hover{background:rgba(255,255,255,.12)}
+
+/* ── Chooser (no ?lesson) — the "Morning, Isaac." pattern ── */
+.choose-hero{background:linear-gradient(135deg,#ffd9c8,#ffc9d8 55%,#f3c8ff);padding:64px 0 72px}
+.choose-date{font-size:13px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#5a3f56;margin-bottom:14px}
+.choose-hero h1{font-family:var(--head);font-weight:800;font-size:clamp(40px,6vw,68px);letter-spacing:-.03em;line-height:1;color:#1d1436}
+.choose-sub{font-size:19px;color:#443a5e;margin-top:16px;max-width:640px}
+.choose-body{padding:44px 0 80px}
+.choose-body h2{font-family:var(--head);font-weight:800;font-size:clamp(26px,3.4vw,40px);letter-spacing:-.02em}
+.choose-note{font-size:13px;color:var(--slate2);margin-top:8px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px;margin-top:26px}
+.tile{border-radius:20px;padding:26px 24px 22px;color:#fff;cursor:pointer;position:relative;overflow:hidden;min-height:190px;display:flex;flex-direction:column;box-shadow:var(--sh);transition:transform .15s}
+.tile:hover{transform:translateY(-3px)}
+.tile .ic{font-size:24px;margin-bottom:auto;opacity:.95}
+.tile h3{font-family:var(--head);font-weight:800;font-size:22px;letter-spacing:-.01em;line-height:1.15;margin:18px 0 14px}
+.tile .meta{display:flex;gap:8px;flex-wrap:wrap}
+.tile .chip{font-size:11px;font-weight:700;background:rgba(0,0,0,.25);padding:4px 10px;border-radius:999px}
+.tile .bigicon{position:absolute;right:-18px;bottom:-24px;font-size:120px;opacity:.14;transform:rotate(-8deg)}
+
+/* ── Session hero ── */
+.hero{background:radial-gradient(120% 160% at 85% -20%,var(--indigo3),var(--indigo) 60%);color:#fff;padding:46px 0 34px}
+.hero h1{font-family:var(--head);font-weight:800;font-size:clamp(34px,4.6vw,58px);letter-spacing:-.03em;line-height:1.02}
+.hero-chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.hchip{font-size:13.5px;font-weight:700;padding:8px 16px;border-radius:999px}
+.hchip-purple{background:var(--purple);color:#fff}
+.hchip-ghost{background:rgba(255,255,255,.12);color:#fff}
+.segs{display:flex;gap:10px;margin-top:26px}
+.seg{height:9px;border-radius:999px;flex:1;background:rgba(255,255,255,.16);transition:background .4s}
+.seg.held{background:#fff}
+
+/* ── Session body ── */
+.session-grid{display:grid;grid-template-columns:1fr 380px;gap:26px;align-items:start;padding:34px 0 90px}
+@media(max-width:920px){.session-grid{grid-template-columns:1fr}}
+.lesson-card{background:var(--white);border-radius:22px;box-shadow:var(--sh);overflow:hidden;border-top:8px solid var(--purple)}
+.lesson-card-in{padding:34px 36px 30px}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:2.2px;text-transform:uppercase;color:var(--purple)}
+.lesson-card h2{font-family:var(--head);font-weight:800;font-size:clamp(28px,3.6vw,44px);letter-spacing:-.025em;line-height:1.05;margin-top:12px}
+.objs{margin-top:22px;display:flex;flex-direction:column;gap:13px}
+.obj{display:flex;gap:14px;align-items:flex-start;font-size:17px;color:var(--ink)}
+.obj .dash{width:22px;height:8px;border-radius:999px;background:var(--purple);flex-shrink:0;margin-top:8px;transition:background .3s}
+.obj.held{color:var(--slate2)}
+.obj.held .dash{background:var(--green2)}
+.obj .tick{display:none;color:var(--green);font-weight:800;margin-left:6px}
+.obj.held .tick{display:inline}
+
+/* transcript */
+.talk{border-top:1.5px solid var(--line);margin-top:28px;padding-top:20px}
+.talk-h{font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--slate2)}
+.lines{margin-top:14px;max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-right:6px}
+.line{font-size:15.5px;line-height:1.55}
+.line b{font-family:var(--head);font-weight:700}
+.line.trainer b{color:var(--orange)}
+.line.you b{color:var(--purple)}
+.replybox{display:flex;gap:10px;margin-top:18px}
+.replybox input{flex:1;font-family:var(--sans);font-size:15px;border:2px solid var(--line);border-radius:14px;padding:13px 16px;background:var(--cream)}
+.replybox input:focus{outline:none;border-color:var(--purple)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--head);font-size:15px;font-weight:700;padding:13px 22px;border-radius:999px;border:2px solid transparent;cursor:pointer;transition:all .15s}
+.btn-send{background:var(--ink);color:#fff}
+.btn-send:hover{transform:translateY(-1px)}
+
+/* ── Teacher card ── */
+.teacher{background:var(--indigo);border-radius:24px;box-shadow:var(--sh);color:#fff;padding:38px 30px 28px;text-align:center;position:sticky;top:96px}
+.orb-wrap{width:150px;height:150px;margin:0 auto;display:grid;place-items:center;position:relative}
+.orb{width:118px;height:118px;border-radius:50%;transition:all .4s;position:relative;z-index:2}
+.orb.listening{background:radial-gradient(circle at 32% 28%,#ffb199,#ff4b2b 55%,#c81e0a);box-shadow:0 10px 44px rgba(255,75,43,.55)}
+.orb.speaking{background:radial-gradient(circle at 32% 28%,#8ff2c8,#12b076 55%,#066a45);box-shadow:0 10px 44px rgba(18,176,118,.55)}
+.orb.thinking{background:radial-gradient(circle at 32% 28%,#c9b2ff,#7a3cf0 55%,#4316d4);box-shadow:0 10px 44px rgba(122,60,240,.55)}
+.orb.idle{background:radial-gradient(circle at 32% 28%,#d8d4e8,#8d87a8 55%,#5a5474);box-shadow:0 10px 34px rgba(0,0,0,.35)}
+.ring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,255,255,.35);opacity:0}
+.orb-wrap.live .ring{animation:ripple 1.9s infinite}
+.orb-wrap.live .ring:nth-child(2){animation-delay:.6s}
+@keyframes ripple{0%{transform:scale(.72);opacity:.75}100%{transform:scale(1.18);opacity:0}}
+.orb.speaking{animation:bob 1.1s ease-in-out infinite alternate}
+@keyframes bob{from{transform:scale(.96)}to{transform:scale(1.05)}}
+.teacher h3{font-family:var(--head);font-weight:800;font-size:24px;margin-top:22px}
+.tstate{font-size:14px;font-weight:800;letter-spacing:2.4px;text-transform:uppercase;margin-top:8px;min-height:20px}
+.tstate.listening{color:var(--orange2)}
+.tstate.speaking{color:#7dedc2}
+.tstate.thinking{color:#c9b2ff}
+.tstate.idle{color:rgba(255,255,255,.55)}
+.phase{margin-top:20px;background:rgba(255,255,255,.1);border-radius:999px;padding:13px 18px;font-family:var(--head);font-weight:700;font-size:15px}
+.thelp{font-size:14.5px;line-height:1.6;color:rgba(255,255,255,.75);margin-top:18px}
+.tctl{display:flex;gap:10px;margin-top:24px}
+.tbtn{flex:1;font-family:var(--head);font-weight:700;font-size:14px;padding:12px 8px;border-radius:999px;cursor:pointer;transition:all .15s;border:2px solid rgba(255,255,255,.4);background:transparent;color:#fff}
+.tbtn:hover{background:rgba(255,255,255,.1)}
+.tbtn-solid{background:#fff;color:var(--indigo);border-color:#fff}
+.tnote{font-size:11.5px;color:rgba(255,255,255,.5);margin-top:14px;line-height:1.5}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:14px 22px;border-radius:999px;font-family:var(--head);font-weight:600;font-size:14px;box-shadow:0 12px 40px rgba(0,0,0,.3);z-index:50;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="wrap top-in">
-    <div class="emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="#fff" opacity=".95"/></svg></div>
-    <div><div class="brand-t">CLPD AI Trainer</div><div class="brand-s">Dubai Legal Affairs Department</div></div>
+    <a class="wordmark" href="clpd-portal.html"><span class="spark">✦</span>
+      <span>CLPD <em>Trainer</em><small>Dubai Legal Affairs Department</small></span></a>
     <div class="top-spacer"></div>
     <span id="enginePill" class="pill pill-demo">Checking…</span>
-    <a class="ghost-link" href="lawyer-portal-v2.html">← My CLPD</a>
+    <a class="backlink" id="backLink" href="lawyer-portal-v2.html">← My CLPD</a>
   </div>
 </header>
 
 <main>
-  <section id="setup">
-    <div class="wrap hero">
-      <div class="eyebrow">Photoreal face · Claude brain · Your voice · Free perception</div>
-      <h1>A trainer that scales.</h1>
-      <p class="lede">Same face-to-face 1-2-1 — it speaks, listens, watches your camera and teaches every key
-        element — but the brain is Claude, the face streams from Anam, and the eyes run free in your browser.</p>
-    </div>
-    <div class="wrap grid">
-      <div class="card">
-        <div class="card-h"><h3>Choose today's lesson</h3></div>
-        <div class="card-b"><div id="lessons" class="lessons"><div class="note">Loading lessons…</div></div></div>
-      </div>
-      <div class="card">
-        <div class="card-h"><h3>Start your session</h3></div>
-        <div class="card-b">
-          <p style="font-size:13px;color:var(--slate);line-height:1.55">Your trainer uses your <b>camera and microphone</b>
-            to talk with you and read the room. Speak your answers naturally, or type them.</p>
-          <div class="banner" id="engineNote"></div>
-          <button id="startBtn" class="btn btn-pri btn-block" disabled>Begin session</button>
-          <p class="note" id="setupNote">Select a lesson to begin.</p>
-        </div>
-      </div>
+  <!-- Chooser: only when the page is opened without ?lesson= -->
+  <section id="choose" class="hidden">
+    <div class="choose-hero"><div class="wrap">
+      <div class="choose-date" id="chooseDate"></div>
+      <h1 id="chooseHi">Ready when you are.</h1>
+      <p class="choose-sub">One session, one topic. Your trainer talks — you talk back.</p>
+    </div></div>
+    <div class="wrap choose-body">
+      <h2>Your sessions</h2>
+      <p class="choose-note" id="chooseNote"></p>
+      <div id="tiles" class="tiles"></div>
     </div>
   </section>
 
-  <section id="session" class="stage-wrap">
-    <div class="wrap" style="padding:26px 0 60px"><div class="grid">
-      <div>
-        <div class="stage" id="stage">
-          <video id="anamVideo" autoplay playsinline class="hidden"></video>
-          <svg id="stylisedFace" class="face" viewBox="0 0 220 240">
-            <ellipse cx="110" cy="120" rx="86" ry="104" fill="#f1c9a5"/>
-            <path d="M24 110a86 104 0 0 1 172 0v6a86 104 0 0 1-172 0z" fill="#e9b892"/>
-            <path d="M40 70c10-34 130-34 140 0 6 20 0 30-6 26-14-44-114-44-128 0-6 4-12-6-6-26z" fill="#3a2c22"/>
-            <ellipse cx="78" cy="112" rx="12" ry="13" fill="#fff"/><ellipse cx="142" cy="112" rx="12" ry="13" fill="#fff"/>
-            <circle cx="78" cy="114" r="6" fill="#2a1c12"/><circle cx="142" cy="114" r="6" fill="#2a1c12"/>
-            <ellipse class="lid" cx="78" cy="112" rx="13" ry="13" fill="#f1c9a5"/><ellipse class="lid" cx="142" cy="112" rx="13" ry="13" fill="#f1c9a5"/>
-            <path d="M64 92c8-6 20-6 28 0M128 92c8-6 20-6 28 0" stroke="#3a2c22" stroke-width="4" fill="none" stroke-linecap="round"/>
-            <path d="M104 122l-6 26h18l-6-26z" fill="#e0a87f"/>
-            <ellipse class="mouth" cx="110" cy="170" rx="26" ry="13" fill="#7a2f2f"/>
-            <path id="mouthCalm" d="M86 170q24 16 48 0" stroke="#7a2f2f" stroke-width="5" fill="none" stroke-linecap="round" class="hidden"/>
-          </svg>
-          <div class="cap" id="caption">Connecting you to your trainer…</div>
-        </div>
-        <div class="stage-bar">
-          <span class="rec"><span class="dot"></span> <span id="recLabel">Live session</span></span>
-          <span class="miclbl" id="micLabel"></span>
-          <div style="flex:1"></div>
-          <button id="micBtn" class="btn btn-ghost">🎤 Speak</button>
-          <button id="pauseBtn" class="btn btn-ghost">Pause</button>
-          <button id="endBtn" class="btn btn-danger">Finish</button>
-        </div>
-        <div class="replybox">
-          <input id="replyInput" type="text" placeholder="…or type your answer and press Enter"/>
-          <button id="sendBtn" class="btn btn-ghost">Send</button>
-        </div>
+  <!-- The session -->
+  <section id="session" class="hidden">
+    <div class="hero"><div class="wrap">
+      <h1 id="lessonTitle">—</h1>
+      <div class="hero-chips">
+        <span class="hchip hchip-purple" id="chipTopic">CLPD taught session</span>
+        <span class="hchip hchip-ghost" id="chipMeta"></span>
       </div>
-      <div class="card">
-        <div class="card-h"><h3>What your trainer sees</h3></div>
-        <div class="card-b">
-          <div class="perc-list">
-            <div class="perc" data-k="attention"><div class="perc-ic">🎯</div><div class="perc-tx"><b>Attention</b><br><span class="v">—</span></div></div>
-            <div class="perc" data-k="mood"><div class="perc-ic">🙂</div><div class="perc-tx"><b>Mood</b><br><span class="v">—</span></div></div>
-            <div class="perc" data-k="phone"><div class="perc-ic">📵</div><div class="perc-tx"><b>Phone</b><br><span class="v">—</span></div></div>
-            <div class="perc" data-k="presence"><div class="perc-ic">👤</div><div class="perc-tx"><b>Presence</b><br><span class="v">—</span></div></div>
-          </div>
-          <div style="margin-top:16px;font-size:12px;font-weight:650;color:var(--slate)">Lesson progress</div>
-          <div class="prog"><i id="progBar"></i></div>
-          <div class="kpi"><span id="covLabel">0 of 0 key elements</span><span id="brainLabel"></span></div>
-          <p class="note" id="percNote"></p>
-        </div>
-      </div>
+      <div class="segs" id="segs"></div>
     </div></div>
+    <div class="wrap session-grid">
+      <div class="lesson-card"><div class="lesson-card-in">
+        <div class="eyebrow" id="eyebrow">CLPD · Taught session</div>
+        <h2>By the end of this you can…</h2>
+        <div class="objs" id="objs"></div>
+        <div class="talk">
+          <div class="talk-h">The conversation</div>
+          <div class="lines" id="lines"></div>
+          <div class="replybox">
+            <input id="replyInput" type="text" placeholder="Answer out loud — or type here and press Enter"/>
+            <button id="sendBtn" class="btn btn-send">Send</button>
+          </div>
+        </div>
+      </div></div>
+      <div class="teacher">
+        <div class="orb-wrap" id="orbWrap"><span class="ring"></span><span class="ring"></span><div class="orb idle" id="orb"></div></div>
+        <h3>Your trainer</h3>
+        <div class="tstate idle" id="tstate">Connecting</div>
+        <div class="phase" id="phase">Warming up</div>
+        <p class="thelp" id="thelp">Answer out loud — quick as you like. Or type below the conversation.</p>
+        <div class="tctl">
+          <button id="micBtn" class="tbtn tbtn-solid">🎤 Speak</button>
+          <button id="pauseBtn" class="tbtn">Pause</button>
+          <button id="endBtn" class="tbtn">Finish</button>
+        </div>
+        <p class="tnote">Voice runs in your browser. No camera, no video — just the conversation.</p>
+      </div>
+    </div>
   </section>
 </main>
 
 <div id="toast" class="toast"></div>
 
-<script src="runtime-config.js?v=render2"></script>
-<script src="api-client.js?v=render2"></script>
+<script src="runtime-config.js?v=voice1"></script>
+<script src="api-client.js?v=voice1"></script>
 <script>
 (function(){
   'use strict';
   var api=window.LAD;
-  var S={lessons:[],selected:null,status:null,session:null,history:[],perception:{attention:'engaged',phone:false,present:true},
-         face:'stylised',brain:'fallback',anam:null,stream:null,reco:null,listening:false,startedAt:0,busy:false,ended:false,detector:null,detLoop:null,
-         morphcastKey:'',morphcast:null,usingMorphcast:false};
-  S.perception.mood='neutral';
+  var S={lessons:[],selected:null,status:null,session:null,history:[],
+         brain:'fallback',reco:null,listening:false,startedAt:0,busy:false,ended:false,
+         coverage:{done:0,total:0}};
   var el=function(id){return document.getElementById(id);};
   function toast(m){var t=el('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2600);}
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function q(name){var m=location.search.match(new RegExp('[?&]'+name+'=([^&]*)'));return m?decodeURIComponent(m[1]):'';}
 
-  // DEMO mode = no backend configured, or ?demo=1 forced. Everything runs in the
-  // browser (scripted brain, animated avatar, browser voice, free perception),
-  // so the page is a complete working model with zero infrastructure or keys.
+  var WANT_LESSON=q('lesson');
+  var RETURN_URL=q('return');
+  if(RETURN_URL){var b=el('backLink');b.textContent='← Back to the topic';b.href=RETURN_URL;}
+  else{el('backLink').textContent='← My CLPD';}
+
+  // DEMO mode = no backend configured, or ?demo=1 forced.
   var DEMO = !api.enabled || /[?&]demo=1/.test(location.search);
   var DEMO_LESSONS=[
-    {id:'demo-goodfaith',title:'Mock Session — Good Faith in Negotiations',summary:'A short demo so you can try the trainer end-to-end.',duration_min:5,cpd_points:1,
+    {id:'demo-goodfaith',title:'Good Faith in Negotiations',summary:'A short demo so you can try the trainer end-to-end.',duration_min:5,cpd_points:1,
      objectives:['Explain what the duty to negotiate in good faith means','State what an injured party can recover (reliance loss, not lost profit)','Apply the duty to a short scenario']},
-    {id:'demo-aviation',title:'Mock Session — Air Carrier Liability',summary:'A quick taster from the aviation course.',duration_min:5,cpd_points:1,
+    {id:'demo-aviation',title:'Air Carrier Liability',summary:'A quick taster from the aviation course.',duration_min:5,cpd_points:1,
      objectives:['Explain the Montreal Convention 113,000 SDR threshold','State the UAE baggage compensation cap (150 AED/kg)','Recall the two-year limitation period']}
   ];
-
-  // Self-contained scripted brain for DEMO (mirrors the backend fallback).
-  function localBrain(lesson,history,perception){
+  function localBrain(lesson,history){
     var objs=(lesson&&lesson.objectives)||[];var total=objs.length;
     var lawyerTurns=history.filter(function(h){return h.role==='lawyer';}).length;
-    var note=perception&&(perception.phone||perception.attention==='distracted'||perception.attention==='away');
-    var nudge=note?'I want to make sure this lands — let’s keep our focus here for a moment. ':'';
     if(!total)return{say:'Tell me what you’d like to focus on today.',complete:false,coverage:{done:0,total:0}};
-    if(lawyerTurns===0)return{say:nudge+'Welcome — let’s begin. '+objs[0]+'. In your own words, what does that mean to you?',complete:false,coverage:{done:0,total:total}};
+    if(lawyerTurns===0)return{say:'Welcome — let’s begin. '+objs[0]+'. In your own words, what does that mean to you?',complete:false,coverage:{done:0,total:total}};
     var idx=lawyerTurns;var done=Math.min(idx,total);
-    if(idx>=total)return{say:nudge+'Good — that covers everything we set out to. Well done; you can apply these now.',complete:true,coverage:{done:total,total:total}};
-    return{say:nudge+'Good. Next: '+objs[idx]+'. How would you apply that with a client?',complete:false,coverage:{done:done,total:total}};
+    if(idx>=total)return{say:'Good — that covers everything we set out to. Well done; you can apply these now.',complete:true,coverage:{done:total,total:total}};
+    return{say:'Good. Next: '+objs[idx]+'. How would you apply that with a client?',complete:false,coverage:{done:done,total:total}};
   }
 
-  if(DEMO){
-    S.status={premium:false,engines:{anam:false,brain:false,morphcast:false}};
-    S.lessons=DEMO_LESSONS;renderEngine();renderLessons();
-  } else {
-    Promise.all([api.trainerStatus(),api.trainerLessons()]).then(function(r){
-      S.status=r[0];S.lessons=r[1]||[];S.morphcastKey=(r[0]&&r[0].morphcastKey)||'';renderEngine();renderLessons();
-    }).catch(function(e){toast('Could not load: '+e.message);});
+  // ─── Load lessons + engine state (called at the end, after every
+  //     constant below is assigned — var initialisers don't hoist) ──────
+  function loadAll(){
+    if(DEMO){
+      S.status={engines:{brain:false}};S.lessons=DEMO_LESSONS;boot();
+    } else {
+      Promise.all([api.trainerStatus(),api.trainerLessons()]).then(function(r){
+        S.status=r[0];S.lessons=r[1]||[];boot();
+      }).catch(function(e){toast('Could not load: '+e.message);});
+    }
   }
 
-  function renderEngine(){
-    var eng=(S.status&&S.status.engines)||{};
+  function boot(){
+    var brainOn=!!(S.status&&S.status.engines&&S.status.engines.brain);
     var p=el('enginePill');
-    var realFace=eng.anam, realBrain=eng.brain;
-    if(realFace&&realBrain){p.className='pill pill-live';p.textContent='● Photoreal · Claude';}
+    if(brainOn&&!DEMO){p.className='pill pill-live';p.textContent='● Live';}
     else{p.className='pill pill-demo';p.textContent='Preview mode';}
-    var msgs=[];
-    msgs.push(realFace?'Photoreal face + voice (Anam) is configured.':'Anam not set — using a built-in animated face and browser voice.');
-    msgs.push(realBrain?'Claude is the brain.':'No Claude key — using the built-in scripted brain.');
-    msgs.push(eng.morphcast?'MorphCast emotion AI for perception.':'Free in-browser perception.');
-    el('engineNote').innerHTML='<span>'+msgs.map(esc).join(' ')+'</span>';
+    var match=WANT_LESSON&&S.lessons.filter(function(L){return String(L.id)===WANT_LESSON;})[0];
+    if(match){S.selected=match;start();return;}
+    if(WANT_LESSON&&!match){toast('That step’s session isn’t available yet — choose one below.');}
+    renderChooser();
   }
 
-  function renderLessons(){
-    var c=el('lessons');
-    if(!S.lessons.length){c.innerHTML='<div class="note">No lessons uploaded yet. An administrator adds them in the admin page.</div>';return;}
-    c.innerHTML='';
-    S.lessons.forEach(function(L){
-      var d=document.createElement('div');d.className='lesson'+(S.selected&&S.selected.id===L.id?' sel':'');
-      var meta=[];if(L.duration_min)meta.push('<span class="tag">~'+L.duration_min+' min</span>');
-      if(L.cpd_points)meta.push('<span class="tag">'+L.cpd_points+' CPD</span>');
-      if((L.objectives||[]).length)meta.push('<span class="tag">'+L.objectives.length+' key elements</span>');
-      d.innerHTML='<div class="lesson-t">'+esc(L.title)+'</div>'+(L.summary?'<div class="lesson-s">'+esc(L.summary)+'</div>':'')+'<div class="lesson-m">'+meta.join('')+'</div>';
-      d.onclick=function(){S.selected=L;renderLessons();el('startBtn').disabled=false;el('setupNote').textContent='Ready when you are.';};
-      c.appendChild(d);
+  // ─── Chooser ─────────────────────────────────────────────────────────
+  var TILE_COLORS=['#4316d4','#cf0234','#00795c','#0f7085','#b01212','#7c1fd1'];
+  var TILE_ICONS=['⚖️','📜','🏛️','🗂️','✍️','🔍'];
+  function renderChooser(){
+    el('choose').classList.remove('hidden');
+    var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var d=new Date();
+    el('chooseDate').textContent=days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()];
+    var h=d.getHours();el('chooseHi').textContent=(h<12?'Morning.':h<17?'Afternoon.':'Evening.');
+    el('chooseNote').textContent=S.lessons.length?String(S.lessons.length)+' taught session'+(S.lessons.length===1?'':'s')+' ready for you.':'No sessions uploaded yet — an administrator adds them in the Topic Builder.';
+    var c=el('tiles');c.innerHTML='';
+    S.lessons.forEach(function(L,i){
+      var t=document.createElement('div');t.className='tile';t.style.background=TILE_COLORS[i%TILE_COLORS.length];
+      var ic=TILE_ICONS[i%TILE_ICONS.length];
+      var meta=[];if(L.duration_min)meta.push('<span class="chip">~'+L.duration_min+' min</span>');
+      if(L.cpd_points)meta.push('<span class="chip">'+L.cpd_points+' CPD</span>');
+      if((L.objectives||[]).length)meta.push('<span class="chip">'+L.objectives.length+' key elements</span>');
+      t.innerHTML='<div class="ic">'+ic+'</div><h3>'+esc(L.title)+'</h3><div class="meta">'+meta.join('')+'</div><div class="bigicon">'+ic+'</div>';
+      t.onclick=function(){S.selected=L;start();};
+      c.appendChild(t);
     });
   }
 
-  // ─── Start ───────────────────────────────────────────────────────────
-  el('startBtn').addEventListener('click', function(){
-    el('startBtn').disabled=true;el('startBtn').textContent='Connecting…';
-    if(DEMO){ proceedStart({sessionId:'demo',face:'stylised',brain:'fallback',resumed:false}); return; }
+  // ─── Start the session ───────────────────────────────────────────────
+  function start(){
+    if(DEMO){proceedStart({sessionId:'demo',brain:'fallback',resumed:false});return;}
+    setState('thinking','Connecting');
     api.trainerStartBrowserSession(S.selected.id).then(proceedStart)
-      .catch(function(e){el('startBtn').disabled=false;el('startBtn').textContent='Begin session';toast('Could not start: '+e.message);});
-  });
+      .catch(function(e){toast('Could not start: '+e.message);renderChooser();});
+  }
   function proceedStart(s){
-    S.session=s;S.face=s.face||'stylised';S.brain=s.brain||'fallback';S.startedAt=Date.now();S.history=[];
-    el('setup').classList.add('hidden');el('session').style.display='block';
-    el('recLabel').textContent=(s.resumed?'Resumed · ':'Live · ')+S.selected.title;
-    el('brainLabel').textContent=(S.brain==='claude'?'Claude':'Scripted')+' · '+(S.face==='anam'?'Anam':'Animated');
-    startCamera();
-    if(S.face==='anam'){initAnam().catch(function(){S.face='stylised';showStylised();});} else {showStylised();}
-    nextTurn(); // first turn (greeting + first element)
+    S.session=s;S.brain=s.brain||'fallback';S.startedAt=Date.now();S.history=[];
+    el('choose').classList.add('hidden');el('session').classList.remove('hidden');
+    el('lessonTitle').textContent=S.selected.title;
+    if(S.selected.summary)el('chipTopic').textContent=S.selected.summary;
+    var meta=[];if(S.selected.duration_min)meta.push('~'+S.selected.duration_min+' min');
+    if(S.selected.cpd_points)meta.push(S.selected.cpd_points+' CPD');
+    el('chipMeta').textContent=meta.join(' · ')||'Taught session';
+    if(!meta.length)el('chipMeta').style.display='none';
+    renderObjectives();
+    nextTurn();
   }
 
-  function showStylised(){el('anamVideo').classList.add('hidden');el('stylisedFace').classList.remove('hidden');}
-
-  // ─── Anam photoreal face (best-effort; isolated adapter) ──────────────
-  async function initAnam(){
-    var tok=await api.trainerAnamToken();
-    // Load the SDK from jsDelivr /+esm (self-contained — it inlines the SDK's one
-    // bare dep "buffer", which the bare unpkg ?module build fails to resolve in the
-    // browser). Fall back to the unpkg dist build (buffer via the page importmap).
-    var mod;
-    try{ mod=await import('https://cdn.jsdelivr.net/npm/@anam-ai/js-sdk@4.15.0/+esm'); }
-    catch(e){ mod=await import('https://unpkg.com/@anam-ai/js-sdk@4.15.0/dist/module/index.js'); }
-    var client=mod.createClient(tok.sessionToken);
-    await client.streamToVideoElement('anamVideo');
-    el('anamVideo').classList.remove('hidden');el('stylisedFace').classList.add('hidden');
-    // talk() makes the photoreal persona speak our Claude-authored line in its
-    // own voice (no Anam LLM — we are the brain). Returns once the command is sent.
-    S.anam={ speak:function(t){return client.talk(t);}, stop:function(){try{client.stopStreaming&&client.stopStreaming();}catch(e){}} };
+  function renderObjectives(){
+    var objs=S.selected.objectives||[];
+    var segs=el('segs');segs.innerHTML='';
+    var list=el('objs');list.innerHTML='';
+    objs.forEach(function(o){
+      var sg=document.createElement('span');sg.className='seg';segs.appendChild(sg);
+      var d=document.createElement('div');d.className='obj';
+      d.innerHTML='<span class="dash"></span><span>'+esc(o)+'<span class="tick">✓ held</span></span>';
+      list.appendChild(d);
+    });
+  }
+  function paintCoverage(cov){
+    cov=cov||{done:0,total:(S.selected.objectives||[]).length};S.coverage=cov;
+    var segs=el('segs').children,objs=el('objs').children;
+    for(var i=0;i<segs.length;i++){segs[i].classList.toggle('held',i<cov.done);}
+    for(var j=0;j<objs.length;j++){objs[j].classList.toggle('held',j<cov.done);}
+    var total=cov.total||segs.length;
+    if(cov.done>=total&&total>0){el('phase').textContent='Wrapping up';}
+    else{el('phase').textContent=total?('Key element '+Math.min(cov.done+1,total)+' of '+total):'Teaching';}
   }
 
-  // ─── Camera + in-browser perception (TensorFlow.js COCO-SSD) ─────────
-  function startCamera(){
-    navigator.mediaDevices.getUserMedia({video:true,audio:false}).then(function(stream){
-      S.stream=stream;
-      var sc=document.createElement('div');sc.className='selfcam';
-      var v=document.createElement('video');v.autoplay=true;v.muted=true;v.playsInline=true;v.srcObject=stream;
-      sc.appendChild(v);el('stage').appendChild(sc);S.selfVideo=v;
-      loadPerception(v);                       // free model: phone + presence + attention proxy
-      if(S.morphcastKey){initMorphCast(v);}    // richer attention + mood (overrides when available)
-    }).catch(function(){el('percNote').textContent='Camera not granted — perception is off, but the lesson still runs.';});
+  // ─── Orb + state ─────────────────────────────────────────────────────
+  function setState(state,label){
+    var orb=el('orb'),ts=el('tstate'),ow=el('orbWrap');
+    orb.className='orb '+state;ts.className='tstate '+state;
+    ts.textContent=label||state;
+    ow.classList.toggle('live',state==='listening'||state==='speaking');
   }
-
-  // MorphCast Emotion AI — in-browser attention + emotion. Augments the free
-  // model (which keeps phone detection). Isolated + guarded so any failure
-  // silently falls back. Frames never leave the device.
-  function initMorphCast(video){
-    var s1=document.createElement('script');s1.src='https://sdk.morphcast.com/mphtools/v1.1/mphtools.js';s1.setAttribute('data-config','compANE');
-    s1.onload=function(){
-      var s2=document.createElement('script');s2.src='https://ai-sdk.morphcast.com/v1.16/ai-sdk.js';
-      s2.onload=function(){
-        try{
-          var CY=window.CY;
-          var loader=CY.loader().licenseKey(S.morphcastKey)
-            .addModule(CY.modules().FACE_DETECTOR.name,{maxInputFrameSize:320})
-            .addModule(CY.modules().FACE_ATTENTION.name,{})
-            .addModule(CY.modules().FACE_EMOTION.name,{});
-          if(loader.source){try{loader.source(video);}catch(e){}}
-          loader.load().then(function(api){
-            S.morphcast=api; if(api&&api.start)api.start();
-            S.usingMorphcast=true; el('percNote').textContent='MorphCast emotion AI is reading attention and mood locally — nothing is uploaded.';
-          }).catch(function(){/* keep free model */});
-          window.addEventListener('CY_FACE_DETECTOR_RESULT',function(ev){ if(ev.detail) S.perception.present=(ev.detail.totalFaces||0)>0; paintPerception(); });
-          window.addEventListener('CY_FACE_ATTENTION_RESULT',function(ev){
-            var a=ev.detail&&ev.detail.attention; if(a==null)return;
-            S.perception.attention = a>0.55?'engaged': a>0.3?'distracted':'away'; paintPerception();
-          });
-          window.addEventListener('CY_FACE_EMOTION_RESULT',function(ev){
-            var out=ev.detail&&(ev.detail.output||ev.detail); var dom=out&&(out.dominantEmotion||out.dominant||(out.emotion&&Object.keys(out.emotion).sort(function(a,b){return out.emotion[b]-out.emotion[a];})[0]));
-            if(!dom)return; dom=String(dom).toLowerCase();
-            S.perception.mood = dom.indexOf('happy')>=0?'happy': (dom.indexOf('neutral')>=0?'neutral':'confused');
-            paintPerception();
-          });
-        }catch(e){/* free model remains */}
-      };s2.onerror=function(){};document.head.appendChild(s2);
-    };s1.onerror=function(){};document.head.appendChild(s1);
-  }
-
-  function loadPerception(video){
-    el('percNote').textContent='Loading the in-browser perception model…';
-    var s1=document.createElement('script');s1.src='https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js';
-    s1.onload=function(){
-      var s2=document.createElement('script');s2.src='https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js';
-      s2.onload=function(){
-        window.cocoSsd.load().then(function(model){S.detector=model;el('percNote').textContent='Perception is running locally in your browser — nothing is uploaded.';runDetect(video);})
-          .catch(function(){el('percNote').textContent='Perception model unavailable; the lesson still runs.';});
-      };s2.onerror=function(){el('percNote').textContent='Perception model unavailable; the lesson still runs.';};
-      document.head.appendChild(s2);
-    };s1.onerror=function(){el('percNote').textContent='Perception unavailable; the lesson still runs.';};
-    document.head.appendChild(s1);
-  }
-
-  function runDetect(video){
-    if(S.ended)return;
-    S.detLoop=setInterval(function(){
-      if(!S.detector||video.readyState<2)return;
-      S.detector.detect(video).then(function(preds){
-        var person=preds.find(function(p){return p.class==='person'&&p.score>0.5;});
-        var phone=preds.find(function(p){return p.class==='cell phone'&&p.score>0.45;});
-        S.perception.phone=!!phone;   // phone is always from the free model (MorphCast is face-only)
-        if(!S.usingMorphcast){        // MorphCast owns attention + presence when active
-          S.perception.present=!!person;
-          if(!person){S.perception.attention='away';}
-          else{var cx=person.bbox[0]+person.bbox[2]/2;var vw=video.videoWidth||640;var centred=cx>vw*0.25&&cx<vw*0.75;var big=person.bbox[3]>(video.videoHeight||480)*0.45;S.perception.attention=(centred&&big)?'engaged':'distracted';}
-        }
-        paintPerception();
-      }).catch(function(){});
-    },1500);
-  }
-
-  function paintPerception(){
-    setPerc('attention',S.perception.attention==='engaged'?'Engaged':S.perception.attention==='away'?'Away':'Distracted',S.perception.attention!=='engaged',S.perception.attention==='engaged');
-    var mood=S.perception.mood||'neutral';
-    setPerc('mood',mood.charAt(0).toUpperCase()+mood.slice(1),mood==='confused',mood==='happy');
-    setPerc('phone',S.perception.phone?'In hand':'Not in hand',S.perception.phone,false);
-    setPerc('presence',S.perception.present?'In frame':'Out of frame',!S.perception.present,S.perception.present);
-  }
-  function setPerc(k,v,hot,good){var n=document.querySelector('.perc[data-k="'+k+'"]');if(!n)return;n.querySelector('.v').textContent=v;n.classList.toggle('hot',!!hot);n.classList.toggle('good',!!good);}
 
   // ─── The turn loop ───────────────────────────────────────────────────
   function nextTurn(){
     if(S.busy||S.ended)return;S.busy=true;stopListening();
-    var p=DEMO?Promise.resolve(localBrain(S.selected,S.history,S.perception)):api.trainerTurn(S.session.sessionId,S.history,S.perception);
+    setState('thinking','Thinking');
+    var p=DEMO?Promise.resolve(localBrain(S.selected,S.history)):api.trainerTurn(S.session.sessionId,S.history,{present:true});
     p.then(function(r){
       S.busy=false;
       S.history.push({role:'trainer',text:r.say});
-      updateProgress(r.coverage);
-      speak(r.say, function(){
-        if(r.complete){finish(true);}
-        else{startListening();}
+      addLine('trainer','Trainer',r.say);
+      paintCoverage(r.coverage);
+      speak(r.say,function(){
+        if(r.complete){finish(true);}else{startListening();}
       });
     }).catch(function(e){S.busy=false;toast('Trainer error: '+(e.message||e));startListening();});
+  }
+
+  function addLine(cls,who,text){
+    var L=el('lines');var d=document.createElement('div');d.className='line '+cls;
+    d.innerHTML='<b>'+who+':</b> '+esc(text);L.appendChild(d);L.scrollTop=L.scrollHeight;
   }
 
   function submitReply(text){
     text=(text||'').trim();if(!text||S.busy||S.ended)return;
     el('replyInput').value='';
     S.history.push({role:'lawyer',text:text});
-    el('caption').innerHTML='<b>You:</b> '+esc(text);
+    addLine('you','You',text);
     nextTurn();
   }
 
-  // ─── Speak: Anam renders its own voice; otherwise the browser voice ───
+  // ─── Speak (browser voice) ───────────────────────────────────────────
   function speak(text,done){
-    el('caption').innerHTML='<b>Trainer:</b> '+esc(text);
-    if(S.anam&&S.face==='anam'){ try{ var p=S.anam.speak(text); setFaceSpeaking(true); if(p&&p.then){p.then(function(){setFaceSpeaking(false);done&&done();});} else {setTimeout(function(){setFaceSpeaking(false);done&&done();}, estMs(text));} return; }catch(e){} }
     if(window.speechSynthesis){
       var u=new SpeechSynthesisUtterance(text);u.rate=1;u.pitch=1;
-      u.onstart=function(){setFaceSpeaking(true);};
-      u.onend=function(){setFaceSpeaking(false);done&&done();};
+      u.onstart=function(){setState('speaking','Speaking');};
+      u.onend=function(){done&&done();};
       window.speechSynthesis.cancel();window.speechSynthesis.speak(u);
-    } else { setFaceSpeaking(true);setTimeout(function(){setFaceSpeaking(false);done&&done();},estMs(text)); }
+    } else { setState('speaking','Speaking');setTimeout(function(){done&&done();},Math.min(14000,Math.max(2200,text.length*55))); }
   }
-  function estMs(t){return Math.min(14000,Math.max(2200,t.length*55));}
-  function setFaceSpeaking(on){el('stylisedFace').classList.toggle('speaking',!!on);el('micLabel').textContent=on?'Trainer is speaking…':'';}
 
   // ─── Listen (browser speech recognition) ─────────────────────────────
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   function startListening(){
     if(S.ended)return;
-    if(!SR){el('micLabel').textContent='Type your answer below ↓';return;}
+    setState('listening','Listening');
+    el('thelp').textContent='Answer out loud — quick as you like. Or type below the conversation.';
+    if(!SR){el('thelp').textContent='This browser has no speech input — type your answer below the conversation.';setState('idle','Your turn');return;}
     try{
       S.reco=new SR();S.reco.lang='en-US';S.reco.interimResults=false;S.reco.maxAlternatives=1;
-      S.reco.onstart=function(){S.listening=true;el('micBtn').textContent='● Listening';el('micLabel').textContent='Listening — speak now';};
+      S.reco.onstart=function(){S.listening=true;el('micBtn').textContent='● Listening';};
       S.reco.onresult=function(ev){var t=ev.results[0][0].transcript;submitReply(t);};
-      S.reco.onerror=function(){el('micLabel').textContent='Didn\'t catch that — tap Speak or type below';};
-      S.reco.onend=function(){S.listening=false;el('micBtn').textContent='🎤 Speak';};
+      S.reco.onerror=function(){el('thelp').textContent='Didn’t catch that — tap Speak and try again, or type below.';};
+      S.reco.onend=function(){S.listening=false;el('micBtn').textContent='🎤 Speak';if(!S.busy&&!S.ended)setState('idle','Your turn');};
       S.reco.start();
-    }catch(e){el('micLabel').textContent='Type your answer below ↓';}
+    }catch(e){setState('idle','Your turn');}
   }
   function stopListening(){if(S.reco){try{S.reco.stop();}catch(e){}}S.listening=false;}
 
-  el('micBtn').onclick=function(){ if(S.listening){stopListening();} else {startListening();} };
+  el('micBtn').onclick=function(){if(S.listening){stopListening();}else{startListening();}};
   el('sendBtn').onclick=function(){submitReply(el('replyInput').value);};
   el('replyInput').addEventListener('keydown',function(e){if(e.key==='Enter')submitReply(el('replyInput').value);});
 
-  function updateProgress(cov){
-    cov=cov||{done:0,total:0};
-    var pct=cov.total?Math.round(cov.done/cov.total*100):0;
-    el('progBar').style.width=pct+'%';
-    el('covLabel').textContent=cov.done+' of '+cov.total+' key elements';
-  }
-
   // ─── Pause / Finish ──────────────────────────────────────────────────
-  function teardown(){S.ended=true;stopListening();if(window.speechSynthesis)window.speechSynthesis.cancel();if(S.detLoop)clearInterval(S.detLoop);try{if(S.morphcast&&S.morphcast.stop)S.morphcast.stop();}catch(e){}if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});if(S.anam)S.anam.stop();}
+  function teardown(){S.ended=true;stopListening();if(window.speechSynthesis)window.speechSynthesis.cancel();}
+  function leave(){ if(RETURN_URL){location.href=RETURN_URL;} else {location.href='ai-trainer.html';} }
   el('pauseBtn').onclick=function(){teardown();var sec=Math.round((Date.now()-S.startedAt)/1000);
-    if(DEMO){toast('Paused (demo).');setTimeout(function(){location.reload();},1000);return;}
-    api.trainerPauseSession(S.session.sessionId,{seconds:sec}).catch(function(){}).then(function(){toast('Paused — resume anytime.');setTimeout(function(){location.reload();},1200);});};
+    if(DEMO){toast('Paused (demo).');setTimeout(leave,1000);return;}
+    api.trainerPauseSession(S.session.sessionId,{seconds:sec}).catch(function(){}).then(function(){toast('Paused — resume anytime.');setTimeout(leave,1200);});};
   el('endBtn').onclick=function(){finish(false);};
   function finish(auto){ teardown(); var sec=Math.round((Date.now()-S.startedAt)/1000);
-    if(DEMO){toast('Session complete (demo). Well done.');setTimeout(function(){location.reload();},1500);return;}
-    api.trainerEndSession(S.session.sessionId,{seconds:sec}).then(function(r){var p=r&&r.cpdAwarded;toast(p?('Completed — '+p+' CPD point'+(p>1?'s':'')+'. Well done.'):'Session complete. Well done.');setTimeout(function(){location.reload();},1600);}).catch(function(){toast('Session ended.');setTimeout(function(){location.reload();},1400);}); }
+    setState('idle','Session over');el('phase').textContent='Complete';
+    if(DEMO){toast('Session complete (demo). Well done.');setTimeout(leave,1500);return;}
+    api.trainerEndSession(S.session.sessionId,{seconds:sec}).then(function(r){var p=r&&r.cpdAwarded;toast(p?('Completed — '+p+' CPD point'+(p>1?'s':'')+'. Well done.'):'Session complete. Well done.');setTimeout(leave,1600);}).catch(function(){toast('Session ended.');setTimeout(leave,1400);}); }
+
+  loadAll();
 })();
 </script>
 </body>
