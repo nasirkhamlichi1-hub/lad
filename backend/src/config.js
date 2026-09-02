@@ -95,7 +95,14 @@ module.exports = {
     // "Rachel" — a stock ElevenLabs voice — so a deploy only needs the key;
     // override ELEVENLABS_VOICE_ID to use the agent voice from Wonder Academy.
     voiceId: process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM',
-    modelId: process.env.ELEVENLABS_MODEL_ID || 'eleven_multilingual_v2',
+    // Flash is the low-latency voice model — the difference between a reply
+    // that lands in half a second and one that lands in three.
+    modelId: process.env.ELEVENLABS_MODEL_ID || 'eleven_flash_v2_5',
+    // 0–4: how much ElevenLabs may trade quality for first-byte time.
+    latency: process.env.ELEVENLABS_LATENCY || '3',
+    // A smaller MP3 starts playing sooner over a slow connection.
+    outputFormat: process.env.ELEVENLABS_OUTPUT_FORMAT || 'mp3_22050_32',
+    speed: Number(process.env.ELEVENLABS_SPEED || '1.0'),
   },
 
   // MorphCast Emotion AI — optional in-browser perception ("eyes") provider.
@@ -109,7 +116,9 @@ module.exports = {
   // Claude as the trainer brain (scalable engine). Reuses anthropic.apiKey.
   trainerBrain: {
     model:     process.env.TRAINER_BRAIN_MODEL || process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
-    maxTokens: parseInt(process.env.TRAINER_BRAIN_MAX_TOKENS || '500', 10),
+    // A spoken turn is one or two sentences. Capping the budget keeps the
+    // model from generating — and the lawyer from waiting through — a speech.
+    maxTokens: parseInt(process.env.TRAINER_BRAIN_MAX_TOKENS || '200', 10),
   },
 
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10),
