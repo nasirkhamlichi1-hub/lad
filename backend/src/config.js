@@ -64,6 +64,9 @@ module.exports = {
   anthropic: {
     apiKey: process.env.ANTHROPIC_API_KEY || '',
     model:  process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
+    // Identity-linked Anthropic keys must name the workspace they act in.
+    // Console-created workspace keys don't need this; setting it is harmless.
+    workspaceId: process.env.ANTHROPIC_WORKSPACE_ID || '',
   },
 
   // ─── Anam (photoreal avatar — face + voice) ──────────────────────────
