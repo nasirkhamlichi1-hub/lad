@@ -817,27 +817,43 @@ function onAttachFile(file){
 
 // Ask the server to propose key elements from the material. Anything it
 // cannot quote from the document is dropped before it reaches this page.
+// Everything this reports must appear IN THE DRAWER, next to the button the
+// author just pressed — the page banner is hidden behind the drawer, which
+// made every outcome here look like "nothing happened".
+function draftNote(html,color){
+  $('x-drafted').innerHTML='<div style="margin-top:10px;font-size:12.5px;line-height:1.5;color:'+
+    (color||'var(--slate2)')+'">'+html+'</div>';
+}
 async function draftFromMaterial(){
   var text=($('x-body').value||'').trim();
-  if(text.length<200){ banner('There is not enough material to draft from yet — upload a document or paste the text first.','err'); return; }
+  if(text.length<200){
+    draftNote('There is not enough material to draft from yet — go to the <b>Material</b> tab and upload a document or paste the text first.','var(--amber)');
+    return;
+  }
   var btn=$('x-draft');
   btn.disabled=true; btn.textContent='Reading the material…';
+  draftNote('Reading the material and drafting key elements…');
   try{
     var r=await api.draftLesson({title:$('x-title').value||editing.title,text:text});
     var objs=(r.objectives||[]);
     if(!objs.length){
-      banner('Nothing could be drafted that was actually quotable from this material. Write the key elements by hand.','warn');
+      draftNote('Nothing could be drafted that was actually quotable from this material. Write the key elements by hand, one per line below.','var(--amber)');
     }else{
       $('x-obj').value=objs.map(function(o){return o.text;}).join('\n');
-      $('x-drafted').innerHTML='<div style="margin-top:10px">'+objs.map(function(o){
-        return '<div class="adm-obj"><div class="adm-grow"><b>'+esc(o.text)+'</b>'+
-          '<div class="q">from the document: “'+esc(o.quote)+'”</div></div></div>';
-      }).join('')+'</div>';
-      banner('Drafted '+objs.length+' key element'+(objs.length===1?'':'s')+
-        ', each quoted from the document. '+(r.note||'')+' Edit them below — they are yours, not the model\'s.','ok');
+      $('x-drafted').innerHTML=
+        '<div style="margin-top:10px;font-size:12.5px;color:var(--green);font-weight:600">Drafted '+objs.length+
+          ' key element'+(objs.length===1?'':'s')+', each quoted from the document.'+
+          (r.note?' '+esc(r.note):'')+' Edit them below — they are yours, not the model’s.</div>'+
+        '<div style="margin-top:6px">'+objs.map(function(o){
+          return '<div class="adm-obj"><div class="adm-grow"><b>'+esc(o.text)+'</b>'+
+            '<div class="q">from the document: “'+esc(o.quote)+'”</div></div></div>';
+        }).join('')+'</div>';
     }
   }catch(e){
-    banner('Could not draft from the material: '+esc(e.message),'err');
+    draftNote('Could not draft from the material: <b>'+esc(e.message)+'</b>'+
+      (/No AI model|not configured|ai_not_configured/i.test(e.message)
+        ? '<br>The AI drafting service needs the ANTHROPIC_API_KEY set on the server. You can still write the key elements yourself, one per line below — everything else works.'
+        : ''),'var(--red)');
   }finally{
     btn.disabled=false; btn.textContent='Draft from the material';
   }

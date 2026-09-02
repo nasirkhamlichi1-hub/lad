@@ -282,11 +282,14 @@
   function renderHero(data) {
     var enr = data.enrolment;
     var first = data.sections[0] || {};
-    $('title').textContent = first.title || TOPIC;
+    // Topic identity comes top-level from the server, so it survives even
+    // when every step is still an unpublished draft (empty sections).
+    $('title').textContent = data.title || first.title || TOPIC;
 
     var w = $('welcome');
-    if (first.welcome) { w.textContent = first.welcome; w.classList.remove('quiet'); }
-    else if (first.summary) { w.textContent = first.summary; w.classList.remove('quiet'); }
+    var welcome = data.welcome || first.welcome, summary = data.summary || first.summary;
+    if (welcome) { w.textContent = welcome; w.classList.remove('quiet'); }
+    else if (summary) { w.textContent = summary; w.classList.remove('quiet'); }
     else { w.textContent = 'Work through the steps below in order — your progress is recorded as you go.'; }
 
     var pct = enr ? enr.percent : 0;
@@ -331,7 +334,8 @@
   function renderPath(data) {
     var visible = data.sections.filter(function (s) { return s.activities.length; });
     if (!visible.length) {
-      $('body').innerHTML = '<p class="skel">Nothing has been published in this topic yet — check back soon.</p>';
+      $('body').innerHTML = '<p class="skel">Nothing has been published in this topic yet — check back soon.' +
+        (data.title ? '<br>(Building this topic? Steps stay draft until each has content and you press Publish in the Topic Builder.)' : '') + '</p>';
       return;
     }
 
