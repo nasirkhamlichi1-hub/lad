@@ -5666,6 +5666,12 @@ function updateLawyerCreditUI() {
   document.getElementById('lbmBalance').textContent = lawyerCredits + ' credits';
   const bkBal = document.getElementById('bkCreditsBalance');
   if(bkBal) bkBal.textContent = lawyerCredits;
+  // The hero "Credit balance" tile must ALWAYS agree with the topbar chip —
+  // after a purchase both come from the server's returned balance.
+  const kn = document.getElementById('kpiCreditsNum');
+  if (kn) kn.textContent = lawyerCredits;
+  const ks = document.getElementById('kpiCreditsSub');
+  if (ks) ks.textContent = lawyerCredits === 1 ? 'credit available to book' : 'credits available to book';
 }
 
 function openBuyCredits(shortfall) {
