@@ -377,21 +377,56 @@ a{color:inherit;text-decoration:none}
     if(voiceOn){ speakEleven(text,done); return; }
     speakBrowser(text,done);
   }
-  function speakEleven(text,done){
-    setState('speaking','Speaking');
-    fetch((window.LAD_API_BASE||'')+'/api/v1/trainer/tts',{
+  // Fetch one chunk of speech as audio the browser can play.
+  function ttsChunk(text){
+    return fetch((window.LAD_API_BASE||'')+'/api/v1/trainer/tts',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+api.getToken()},
       body:JSON.stringify({text:text})
     }).then(function(r){ if(!r.ok) throw new Error('tts '+r.status); return r.blob(); })
-      .then(function(b){
-        var a=new Audio(URL.createObjectURL(b));
-        S.audio=a;
-        a.onended=function(){URL.revokeObjectURL(a.src);done&&done();};
-        a.onerror=function(){done&&done();};
-        return a.play();
-      })
-      .catch(function(){ speakBrowser(text,done); }); // any hiccup → browser voice
+      .then(function(b){ return URL.createObjectURL(b); });
+  }
+  function playUrl(url){
+    return new Promise(function(resolve){
+      var a=new Audio(url); S.audio=a;
+      a.onended=function(){URL.revokeObjectURL(url);resolve();};
+      a.onerror=function(){resolve();};
+      a.play().catch(function(){resolve();});
+    });
+  }
+  // Split on sentence ends so the FIRST sentence can be synthesised and played
+  // while the rest is still being generated. Waiting for a whole paragraph of
+  // audio before making a sound is what made the trainer feel dead.
+  function splitForSpeech(text){
+    var parts=String(text||'').match(/[^.!?…]+[.!?…]*\s*/g)||[text];
+    var out=[],buf='';
+    parts.forEach(function(p){
+      // Keep the opener short; group the remainder so the voice stays natural.
+      if(!out.length && buf.length+p.length>=12){ out.push((buf+p).trim()); buf=''; }
+      else { buf+=p; }
+    });
+    if(buf.trim()) out.push(buf.trim());
+    return out.filter(Boolean);
+  }
+  function speakEleven(text,done){
+    setState('speaking','Speaking');
+    var chunks=splitForSpeech(text);
+    if(!chunks.length){ done&&done(); return; }
+    // Start the first chunk immediately; fetch the rest in parallel so each is
+    // already in hand by the time the previous one finishes playing.
+    var pending=chunks.map(function(c){ return ttsChunk(c); });
+    pending[0].catch(function(){ /* handled in the chain below */ });
+    var chain=Promise.resolve();
+    var failed=false;
+    chunks.forEach(function(_,i){
+      chain=chain.then(function(){
+        if(failed||S.ended) return;
+        return pending[i].then(playUrl).catch(function(){
+          if(i===0){ failed=true; speakBrowser(text,done); } // nothing spoke → browser voice
+        });
+      });
+    });
+    chain.then(function(){ if(!failed) done&&done(); });
   }
   function speakBrowser(text,done){
     if(window.speechSynthesis){
