@@ -21,7 +21,10 @@
 //
 // If no OpenAI-style endpoint is set but ANTHROPIC_API_KEY is, chat() routes
 // to Claude instead — so one Anthropic key powers every AI feature (trainer
-// brain, drafting, accreditation review) without any Azure setup.
+// brain, drafting, accreditation review) without any Azure setup. And if an
+// endpoint IS set but the call to it fails (dead dev tunnel, wrong deployment,
+// expired key), chat() falls back to Claude rather than failing the feature —
+// stale env vars must never take the platform down.
 // ─────────────────────────────────────────────────────────────────────
 
 const axios = require('axios');
@@ -145,8 +148,21 @@ async function chat({ system, messages, maxTokens = 700, temperature = 0.2 }) {
   const body = { messages: msgs, max_tokens: maxTokens, temperature };
   if (!isAzure) body.model = s.deployment;
 
-  const r = await axios.post(url, body, { headers, timeout: 30000, validateStatus: () => true });
+  let r;
+  try {
+    r = await axios.post(url, body, { headers, timeout: 30000, validateStatus: () => true });
+  } catch (netErr) {
+    // The endpoint itself is unreachable (DNS gone, connection refused, timeout)
+    // — typical of a dev tunnel that died. Use Claude if a key is available.
+    if (s.anthropicKey) return anthropicChat(s, { system, messages, maxTokens, temperature });
+    const e = new Error('The configured AI endpoint is unreachable (' + (netErr.code || netErr.message) + ')');
+    e.code = 'AIMODEL_UNREACHABLE';
+    e.detail = { endpoint: s.endpoint };
+    throw e;
+  }
   if (r.status < 200 || r.status >= 300) {
+    // The endpoint answered but refused (bad key, wrong deployment, model gone).
+    if (s.anthropicKey) return anthropicChat(s, { system, messages, maxTokens, temperature });
     const e = new Error('AiModel error ' + r.status);
     e.code = 'AIMODEL_ERROR';
     e.status = r.status;
