@@ -174,45 +174,49 @@
   button:focus-visible { outline:2px solid var(--green); outline-offset:2px; }
 
   /* ─── The reference library ──────────────────────────────────── */
-  /* Everything loaded onto the course — laws, articles, videos, source
-     documents — presented as a reading room: files stand on the shelf as
-     book spines, videos show their still, links sit as catalogue cards.
-     Everything opens IN the hub via the reader overlay. */
-  .lib-note { font:600 10.5px var(--mono); letter-spacing:.14em; text-transform:uppercase;
-    color:var(--ink3); margin:0 0 6px; }
-  .shelf { display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap;
-    padding:18px 14px 0; border-bottom:10px solid; border-image:linear-gradient(90deg,#7a5a34,#9a7648,#7a5a34) 1;
-    margin-bottom:26px; }
-  .book { width:52px; height:178px; border-radius:5px 8px 8px 5px; cursor:pointer; position:relative;
-    display:flex; align-items:center; justify-content:center;
-    box-shadow:inset -6px 0 10px rgba(0,0,0,.28), inset 2px 0 4px rgba(255,255,255,.14), 0 4px 10px rgba(10,20,15,.25);
-    transition:transform .18s; }
-  .book:hover { transform:translateY(-8px) rotate(-1.5deg); }
-  .book .sp { writing-mode:vertical-rl; font:600 12px var(--sans); color:rgba(255,250,235,.95);
-    letter-spacing:.04em; max-height:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .book .bnd { position:absolute; left:0; right:0; height:3px; background:rgba(255,235,190,.5); }
-  .book .bnd.t { top:12px; } .book .bnd.b { bottom:12px; }
-  .vidcard { width:212px; border-radius:10px; overflow:hidden; cursor:pointer; background:#000;
-    border:1px solid var(--line); box-shadow:0 6px 16px rgba(10,20,15,.18); transition:transform .18s; margin-bottom:10px; }
-  .vidcard:hover { transform:translateY(-6px); }
-  .vidcard .thumb { position:relative; aspect-ratio:16/9; background:#111 center/cover no-repeat; }
-  .vidcard .play { position:absolute; inset:0; display:grid; place-items:center; }
-  .vidcard .play i { width:46px; height:32px; border-radius:8px; background:rgba(200,30,20,.92);
-    display:grid; place-items:center; }
-  .vidcard .play i::after { content:''; border-style:solid; border-width:8px 0 8px 14px;
-    border-color:transparent transparent transparent #fff; margin-left:3px; }
-  .vidcard .vt { font:600 12.5px var(--sans); color:var(--ink); background:var(--surface); padding:9px 11px;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .linkcard { width:212px; border-radius:10px; cursor:pointer; background:var(--surface);
-    border:1px solid var(--line); border-top:6px solid var(--gold); padding:12px 14px 14px;
-    box-shadow:0 6px 16px rgba(10,20,15,.12); transition:transform .18s; margin-bottom:10px; }
-  .linkcard:hover { transform:translateY(-6px); }
-  .linkcard .dom { font:600 9.5px var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--ink3);
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .linkcard .lt { font:600 14px var(--sans); margin-top:6px; line-height:1.35; }
-  .linkcard.scorm { border-top-color:var(--green); }
-  .linkcard.scorm .go { display:inline-block; margin-top:10px; font:700 10.5px var(--mono);
-    letter-spacing:.12em; text-transform:uppercase; color:var(--green); }
+  /* The aviation-hub pattern: a brief on each source — what it is and the
+     points that matter — then the option to open the whole thing. Reading
+     comes first; the document is one click behind it. */
+  .sec-kicker { font:700 10px var(--mono); letter-spacing:.2em; text-transform:uppercase;
+    color:var(--gold); margin-bottom:9px; }
+  .sec-lede { font-size:14.5px; color:var(--ink2); line-height:1.6; max-width:660px; margin-top:10px; }
+  .group-label { font:700 10.5px var(--mono); letter-spacing:.16em; text-transform:uppercase;
+    color:var(--ink3); margin:30px 0 14px; display:flex; align-items:center; gap:10px; }
+  .group-label:after { content:''; flex:1; height:1px; background:var(--line); }
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; }
+  .law { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px 22px 18px;
+    box-shadow:0 6px 18px rgba(10,20,15,.06); position:relative; overflow:hidden;
+    transition:transform .15s, box-shadow .15s; display:flex; flex-direction:column; }
+  .law:hover { transform:translateY(-3px); box-shadow:0 12px 28px rgba(10,20,15,.10); }
+  .law:before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--green); }
+  .law.uae:before { background:var(--gold); }
+  .law.doc:before { background:var(--ink3); }
+  .law-top { display:flex; align-items:center; gap:8px; margin-bottom:11px; flex-wrap:wrap; }
+  .tag { font:700 9.5px var(--mono); letter-spacing:.08em; text-transform:uppercase; padding:4px 9px;
+    border-radius:999px; background:var(--alt); color:var(--ink3); border:1px solid var(--line); }
+  .tag.yr { background:var(--green-soft); color:var(--green); border-color:var(--green-line); }
+  .law.uae .tag.yr { background:var(--gold-soft); color:var(--gold); border-color:var(--line); }
+  .law h3 { font-family:var(--serif); font-weight:400; font-size:21px; line-height:1.14; letter-spacing:-.01em; }
+  .law-sub { font-size:12px; color:var(--ink3); font-weight:500; margin-top:3px; }
+  .law p { font-size:13.5px; color:var(--ink2); line-height:1.62; margin-top:11px; }
+  .law ul { list-style:none; margin-top:12px; display:flex; flex-direction:column; gap:7px; }
+  .law li { font-size:12.5px; color:var(--ink2); line-height:1.5; padding-left:17px; position:relative; }
+  .law li:before { content:''; position:absolute; left:3px; top:8px; width:5px; height:5px;
+    border-radius:50%; background:var(--green); opacity:.55; }
+  .law .open { margin-top:auto; padding-top:15px; }
+  .law .open button { font:600 12.5px var(--sans); padding:9px 15px; border-radius:8px; }
+
+  /* ─── Q&A ───────────────────────────────────────────────────── */
+  .qa-wrap { display:flex; flex-direction:column; gap:10px; max-width:820px; }
+  .qa { background:var(--surface); border:1px solid var(--line); border-radius:11px; overflow:hidden; }
+  .qa summary { cursor:pointer; list-style:none; padding:15px 18px; font-weight:600; font-size:14.5px;
+    display:flex; align-items:flex-start; gap:12px; }
+  .qa summary::-webkit-details-marker { display:none; }
+  .qa-ic { flex-shrink:0; width:20px; height:20px; border-radius:6px; background:var(--green-soft);
+    color:var(--green); font:700 14px/20px var(--sans); text-align:center; transition:transform .18s; }
+  .qa[open] .qa-ic { transform:rotate(45deg); }
+  .qa-a { padding:0 18px 16px 50px; font-size:13.5px; color:var(--ink2); line-height:1.65; }
+
   #reader { max-width:1060px; width:96vw; height:92vh; padding:0; overflow:hidden; display:none;
     flex-direction:column; border-radius:14px; }
   #reader[open] { display:flex; }
@@ -480,10 +484,9 @@
   }
 
   // ─── The reference library ──────────────────────────────────────
-  // Laws, articles, videos, links and source documents loaded onto this
-  // course. Files stand on a shelf as book spines; videos show their
-  // still; links sit as catalogue cards. Everything opens in the hub.
-  var SPINES = ['#0E5C44', '#22406b', '#6e2f2a', '#5a5a2e', '#3f3a56', '#7a4a1e'];
+  // Laws, articles, videos and source documents for this topic, presented
+  // brief-first: what each source is and why it matters, with the whole
+  // document one click behind it. Everything opens inside the hub.
   function ytId(u) {
     var m = String(u || '').match(/(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);
     return m ? m[1] : null;
@@ -492,29 +495,93 @@
 
   async function loadLibrary() {
     var box = $('library');
-    var r;
-    try { r = await api.listCourseMaterials(TOPIC); }
-    catch (e) { box.style.display = 'none'; return; } // anonymous preview — the pathway still shows
-    var mats = (r && r.materials) || [];
-    if (!mats.length) { box.style.display = 'none'; return; }
-    var books = [], cards = [];
-    var bi = 0;
-    mats.forEach(function (m) {
-      var vid = m.kind === 'link' ? ytId(m.url) : null;
-      if (vid) {
-        cards.push('<div class="vidcard" data-mid="' + esc(m.id) + '"><div class="thumb" style="background-image:url(https://img.youtube.com/vi/' + esc(vid) + '/hqdefault.jpg)"><div class="play"><i></i></div></div><div class="vt">' + esc(m.title) + '</div></div>');
-      } else if (m.kind === 'scorm') {
-        cards.push('<div class="linkcard scorm" data-mid="' + esc(m.id) + '"><div class="dom">Interactive course</div><div class="lt">' + esc(m.title) + '</div><span class="go">Start ▸</span></div>');
-      } else if (m.kind === 'link') {
-        cards.push('<div class="linkcard" data-mid="' + esc(m.id) + '"><div class="dom">' + esc(domainOf(m.url)) + '</div><div class="lt">' + esc(m.title) + '</div></div>');
-      } else {
-        books.push('<div class="book" data-mid="' + esc(m.id) + '" style="background:' + SPINES[bi++ % SPINES.length] + '" title="' + esc(m.title) + '"><span class="bnd t"></span><span class="sp">' + esc(m.title) + '</span><span class="bnd b"></span></div>');
+    // Two sources, one shelf: the knowledge hub carries the BRIEFS (what each
+    // instrument is, and the points that matter) and the uploaded materials
+    // carry the DOCUMENTS. Where a brief names the same thing as a document,
+    // they become one card: read the summary, then open the whole text.
+    var mats = [], hub = null;
+    try { var r = await api.listCourseMaterials(TOPIC); mats = (r && r.materials) || []; }
+    catch (e) { /* anonymous preview, or no access yet */ }
+    try { hub = await api.hubGet(TOPIC); } catch (e) { /* no knowledge hub for this topic */ }
+
+    var laws = (hub && hub.legislation) || [];
+    var faq  = (hub && hub.faq) || [];
+    if (!laws.length && !mats.length && !faq.length) { box.style.display = 'none'; return; }
+
+    var norm = function (t) { return String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
+    var used = {};
+    // A brief can name its document, so the card gets both the summary and the file.
+    function matchDoc(d) {
+      var want = norm(d.title);
+      if (!want) return null;
+      for (var i = 0; i < mats.length; i++) {
+        var n = norm(mats[i].title);
+        if (!n || used[mats[i].id]) continue;
+        if (n === want || n.indexOf(want) === 0 || want.indexOf(n) === 0) { used[mats[i].id] = true; return mats[i]; }
       }
-    });
-    box.innerHTML =
-      '<h2 class="section-title">The reference library</h2>' +
-      '<p class="lib-note">Laws · Articles · Videos · Source documents — they open right here</p>' +
-      '<div class="shelf">' + books.join('') + cards.join('') + '</div>';
+      return null;
+    }
+
+    function openBtn(m, label) {
+      if (!m) return '';
+      return '<div class="open"><button data-mid="' + esc(m.id) + '">' + esc(label) + '</button></div>';
+    }
+    function lawCard(d) {
+      var uae = (d.group === 'uae');
+      var doc = matchDoc(d);
+      var li = (d.points || []).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
+      return '<div class="law' + (uae ? ' uae' : '') + '">' +
+        '<div class="law-top">' + (d.year ? '<span class="tag yr">' + esc(d.year) + '</span>' : '') +
+          (d.tag ? '<span class="tag">' + esc(d.tag) + '</span>' : '') + '</div>' +
+        '<h3>' + esc(d.title) + '</h3>' +
+        (d.subtitle ? '<div class="law-sub">' + esc(d.subtitle) + '</div>' : '') +
+        (d.summary ? '<p>' + esc(d.summary) + '</p>' : '') +
+        (li ? '<ul>' + li + '</ul>' : '') +
+        openBtn(doc, 'Read it in full →') + '</div>';
+    }
+    // Anything with no brief still gets a card — titled, labelled and openable.
+    function docCard(m) {
+      var vid = m.kind === 'link' ? ytId(m.url) : null;
+      var kind = vid ? 'Video' : (m.kind === 'scorm' ? 'Interactive' : (m.kind === 'link' ? domainOf(m.url) : (/pdf/i.test(m.mime || '') ? 'PDF' : 'Document')));
+      var label = vid ? 'Watch it →' : (m.kind === 'scorm' ? 'Start it →' : 'Open it →');
+      return '<div class="law doc">' +
+        '<div class="law-top"><span class="tag">' + esc(kind) + '</span></div>' +
+        '<h3>' + esc(m.title) + '</h3>' +
+        (m.file_name ? '<div class="law-sub">' + esc(m.file_name) + '</div>' : '') +
+        openBtn(m, label) + '</div>';
+    }
+
+    var intl = laws.filter(function (d) { return d.group !== 'uae'; });
+    var uaeL = laws.filter(function (d) { return d.group === 'uae'; });
+    var html = '';
+    if (laws.length) {
+      html += '<div class="sec-kicker">Primary legislation</div>' +
+        '<h2 class="section-title" style="margin-top:0">The sources behind this topic</h2>' +
+        '<p class="sec-lede">What each instrument is and the points that matter — open any of them in full when you want the whole text.</p>';
+      var cardsHtml = intl.map(lawCard).join('');
+      var uaeHtml = uaeL.map(lawCard).join('');
+      if (intl.length) html += '<div class="group-label">International conventions</div><div class="cards">' + cardsHtml + '</div>';
+      if (uaeL.length) html += '<div class="group-label">UAE legislation</div><div class="cards">' + uaeHtml + '</div>';
+    }
+    var rest = mats.filter(function (m) { return !used[m.id]; });
+    if (rest.length) {
+      html += laws.length
+        ? '<div class="group-label">Reading and reference</div>'
+        : '<div class="sec-kicker">Reference library</div>' +
+          '<h2 class="section-title" style="margin-top:0">Reading and source documents</h2>' +
+          '<p class="sec-lede">Everything loaded onto this topic — open any of it right here.</p><div style="height:6px"></div>';
+      html += '<div class="cards">' + rest.map(docCard).join('') + '</div>';
+    }
+    if (faq.length) {
+      html += '<div class="sec-kicker" style="margin-top:44px">Frequently asked</div>' +
+        '<h2 class="section-title" style="margin-top:0">Quick answers</h2>' +
+        '<div class="qa-wrap" style="margin-top:18px">' + faq.map(function (q) {
+          return '<details class="qa"><summary><span class="qa-ic">+</span><span>' + esc(q.q) + '</span></summary>' +
+            '<div class="qa-a">' + esc(q.a) + '</div></details>';
+        }).join('') + '</div>';
+    }
+
+    box.innerHTML = html;
     box.style.display = 'block';
     box.querySelectorAll('[data-mid]').forEach(function (n) {
       var m = mats.filter(function (x) { return x.id === n.getAttribute('data-mid'); })[0];
