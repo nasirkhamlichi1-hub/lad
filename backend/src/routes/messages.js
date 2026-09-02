@@ -605,10 +605,11 @@ router.get('/admins', requireAuth, (req, res) => {
 router.get('/unread', requireAuth, (req, res) => {
   const mySide = sideOf(req.user);
   const reader = req.user.sub;
-  let count = 0, mine = 0, waiting = 0;
+  let count = 0, mine = 0, waiting = 0, unassigned = 0, attention = 0;
+  const isAdminReader = isAdmin(req.user);
   try {
     let rows;
-    if (isAdmin(req.user)) {
+    if (isAdminReader) {
       rows = db.prepare(
         `SELECT c.last_sender, c.last_message_at, c.assigned_to, c.escalated, c.status, r.last_read_at
          FROM conversations c LEFT JOIN conversation_reads r ON r.conversation_id = c.id AND r.reader_id = ?
@@ -625,12 +626,20 @@ router.get('/unread', requireAuth, (req, res) => {
     for (const c of rows) {
       const unread = c.last_sender !== mySide && (!c.last_read_at || c.last_read_at < c.last_message_at);
       if (unread) { count++; if (c.assigned_to === reader) mine++; }
+      const live = c.status !== 'resolved' && c.status !== 'closed';
       // A hand-off is the team's problem until someone resolves it — counted
       // whoever it was routed to, and whether or not this reader has opened it.
-      if (c.escalated && c.status !== 'resolved' && c.status !== 'closed') waiting++;
+      if (c.escalated && live) waiting++;
+      if (isAdminReader && !c.assigned_to && live) unassigned++;
+      // What the launcher badge shows. A conversation counts once however
+      // many ways it qualifies: somebody wrote and no one has read it, or it
+      // is sitting in the queue with no owner, or Maryam handed it to a
+      // person. Counting these separately is how an unanswered message can
+      // sit in the inbox with nothing on screen to say so.
+      if (unread || (isAdminReader && live && (!c.assigned_to || c.escalated))) attention++;
     }
   } catch (e) { log.error('conv_unread_failed', { error: e.message }); }
-  res.json({ unread: count, mine, waiting });
+  res.json({ unread: count, mine, waiting, unassigned, attention });
 });
 
 // ─── CRM timeline — every recorded interaction for a firm or a lawyer ────
