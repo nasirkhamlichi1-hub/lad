@@ -12,6 +12,23 @@ function parse(value, dflt) {
   try { return value ? JSON.parse(value) : dflt; } catch (_) { return dflt; }
 }
 
+// Both of these end up inside a CSS declaration on the learner's page, so
+// neither is taken on trust. An accent has to be a plain hex colour, and a
+// hero image has to be an ordinary http(s) or same-origin URL — anything
+// else (javascript:, data:, a stray quote or bracket) is dropped, not escaped.
+function safeAccent(v) {
+  const s = String(v == null ? '' : v).trim();
+  return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : '';
+}
+function safeImage(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s || s.length > 2000) return '';
+  if (/["'()\\<>\s]/.test(s)) return '';
+  if (/^https?:\/\/[^\s]+$/i.test(s)) return s;
+  if (/^\/[^\s]*$/.test(s)) return s;          // same-origin, e.g. /api/v1/.../file
+  return '';
+}
+
 function hydrate(row) {
   if (!row) return null;
   return {
@@ -23,6 +40,12 @@ function hydrate(row) {
     faq: parse(row.faq, []),
     cta_label: row.cta_label || '',
     cta_url: row.cta_url || '',
+    hero_image: row.hero_image || '',
+    accent: row.accent || '',
+    // The bytes never travel in the hub JSON — only whether they exist, so the
+    // client knows to point the hero at the image endpoint.
+    has_hero_upload: !!row.hero_blob,
+    hero_updated_at: row.updated_at || null,
     published: !!row.published,
     updated_at: row.updated_at || null,
     updated_by: row.updated_by || null,
@@ -42,12 +65,13 @@ function upsertHub(hub, updatedById) {
   if (!courseId) throw new Error('course_id is required');
   db.prepare(`
     INSERT INTO course_hubs
-      (course_id, title, eyebrow, intro, legislation, faq, cta_label, cta_url, published, updated_at, updated_by)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
+      (course_id, title, eyebrow, intro, legislation, faq, cta_label, cta_url, hero_image, accent, published, updated_at, updated_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
     ON CONFLICT (course_id) DO UPDATE SET
       title=excluded.title, eyebrow=excluded.eyebrow, intro=excluded.intro,
       legislation=excluded.legislation, faq=excluded.faq,
       cta_label=excluded.cta_label, cta_url=excluded.cta_url,
+      hero_image=excluded.hero_image, accent=excluded.accent,
       published=excluded.published, updated_at=datetime('now'), updated_by=excluded.updated_by
   `).run(
     courseId,
@@ -58,9 +82,43 @@ function upsertHub(hub, updatedById) {
     JSON.stringify(Array.isArray(hub.faq) ? hub.faq : []),
     String(hub.cta_label || '').trim(),
     String(hub.cta_url || '').trim(),
+    safeImage(hub.hero_image),
+    safeAccent(hub.accent),
     hub.published ? 1 : 0,
     updatedById || null
   );
+  return getHub(courseId);
+}
+
+// ─── The hero photo ──────────────────────────────────────────────────
+// Held on the hub row rather than in course_materials because it is served
+// to anyone who can open the hub page, without a bearer token.
+const HERO_MAX_BYTES = 3 * 1024 * 1024;
+const HERO_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
+
+function setHero(courseId, buffer, mime) {
+  const id = String(courseId || '').trim();
+  if (!id) throw new Error('course_id is required');
+  if (!Buffer.isBuffer(buffer) || !buffer.length) throw new Error('No image received.');
+  if (buffer.length > HERO_MAX_BYTES) throw new Error('That image is over 3 MB — please use a smaller one.');
+  const m = String(mime || '').toLowerCase().split(';')[0].trim();
+  if (HERO_MIMES.indexOf(m) < 0) throw new Error('That file is not an image the browser can show (JPEG, PNG, WebP, AVIF or GIF).');
+  // The hub row may not exist yet for a course that has only lessons.
+  db.prepare(`INSERT INTO course_hubs (course_id, updated_at) VALUES (?, datetime('now'))
+              ON CONFLICT (course_id) DO NOTHING`).run(id);
+  db.prepare("UPDATE course_hubs SET hero_blob = ?, hero_mime = ?, updated_at = datetime('now') WHERE course_id = ?")
+    .run(buffer, m, id);
+  return getHub(id);
+}
+
+function getHero(courseId) {
+  const r = db.prepare('SELECT hero_blob, hero_mime, updated_at FROM course_hubs WHERE course_id = ?').get(courseId);
+  if (!r || !r.hero_blob) return null;
+  return { data: r.hero_blob, mime: r.hero_mime || 'image/jpeg', updated_at: r.updated_at };
+}
+
+function clearHero(courseId) {
+  db.prepare("UPDATE course_hubs SET hero_blob = NULL, hero_mime = NULL, updated_at = datetime('now') WHERE course_id = ?").run(courseId);
   return getHub(courseId);
 }
 
@@ -96,4 +154,4 @@ function coursesOverview() {
   return Object.values(byId).sort((a, b) => a.course_id.localeCompare(b.course_id));
 }
 
-module.exports = { getHub, listHubs, upsertHub, lessonsForCourse, coursesOverview };
+module.exports = { getHub, listHubs, upsertHub, setHero, getHero, clearHero, lessonsForCourse, coursesOverview };

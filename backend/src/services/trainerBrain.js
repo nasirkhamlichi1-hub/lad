@@ -132,7 +132,31 @@ function fallbackTurn({ lesson, history, perception }) {
 }
 
 // ─── Main entry ──────────────────────────────────────────────────────
-async function nextTurn({ lesson, history, perception, resume }) {
+// The model writes JSON, so the spoken line only becomes readable once the
+// "say" string is closed. This pulls out whatever of it exists so far, and
+// reports the first COMPLETE sentence the moment one is available.
+function firstSentenceSoFar(partial) {
+  const m = String(partial || '').match(/"say"\s*:\s*"((?:[^"\\]|\\.)*)/);
+  if (!m) return null;
+  let said;
+  try { said = JSON.parse('"' + m[1] + '"'); } catch (_) { return null; }
+  const s = String(said || '');
+  // Walk the sentence ends, gathering until there is enough to be worth
+  // speaking. A bare "Good." is too short to send on its own — it would be
+  // said, then followed by an audible seam — so it rides with the next one.
+  const MIN = 14;
+  let from = 0;
+  while (from < s.length) {
+    const rel = s.slice(from).search(/[.!?…](\s|$)/);
+    if (rel < 0) return null;                       // no complete sentence yet
+    const end = from + rel + 1;
+    if (end >= MIN) return s.slice(0, end).trim();  // enough to speak
+    from = end;                                     // too short — take the next too
+  }
+  return null;
+}
+
+async function nextTurn({ lesson, history, perception, resume, onFirstSentence }) {
   const total = (lesson && Array.isArray(lesson.objectives)) ? lesson.objectives.length : 0;
 
   if (!isConfigured()) {
@@ -145,7 +169,15 @@ async function nextTurn({ lesson, history, perception, resume }) {
   // ─── Preferred: AiModel ───────────────────────────────────────────
   if (aimodel.configured()) {
     try {
-      const text = await aimodel.chat({ system, messages, maxTokens: B.maxTokens, temperature: 0.5 });
+      let announced = false;
+      const text = await aimodel.chatStream(
+        { system, messages, maxTokens: B.maxTokens, temperature: 0.5 },
+        onFirstSentence ? (soFar) => {
+          if (announced) return;
+          const s1 = firstSentenceSoFar(soFar);
+          if (s1) { announced = true; onFirstSentence(s1); }
+        } : null
+      );
       return { ...parseReply(text, total), engine: 'aimodel' };
     } catch (e) {
       log.error('trainer_brain_aimodel_failed', { error: e.message, detail: e.detail });
@@ -182,4 +214,4 @@ async function nextTurn({ lesson, history, perception, resume }) {
   return { ...parseReply(text, total), engine: 'claude' };
 }
 
-module.exports = { isConfigured, nextTurn, perceptionNote, parseReply, systemFor };
+module.exports = { isConfigured, nextTurn, perceptionNote, parseReply, systemFor, firstSentenceSoFar };

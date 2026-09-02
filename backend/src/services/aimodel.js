@@ -131,6 +131,77 @@ async function anthropicChat(s, { system, messages, maxTokens, temperature }) {
   return (text || '').trim();
 }
 
+// Streams Claude's reply, calling onDelta(textSoFar, chunk) as it arrives.
+//
+// This is what removes the dead air. Without it the server waits for the whole
+// reply before the browser can say a word; with it the first sentence is in
+// hand — and already being turned into speech — while the model is still
+// finishing the thought.
+async function anthropicChatStream(s, { system, messages, maxTokens, temperature }, onDelta) {
+  const msgs = (messages || []).map((m) => ({
+    role: m.role === 'assistant' ? 'assistant' : 'user',
+    content: String(m.content || ''),
+  })).filter((m) => m.content);
+  if (!msgs.length) msgs.push({ role: 'user', content: 'Begin.' });
+
+  const body = { model: s.anthropicModel, max_tokens: maxTokens, temperature, messages: msgs, stream: true };
+  if (system) body.system = system;
+
+  const r = await axios.post(`${s.anthropicBase}/v1/messages`, body, {
+    headers: {
+      'x-api-key': s.anthropicKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+      ...(s.anthropicWorkspace ? { 'anthropic-workspace-id': s.anthropicWorkspace } : {}),
+    },
+    responseType: 'stream',
+    timeout: 60000,
+    validateStatus: () => true,
+  });
+  if (r.status < 200 || r.status >= 300) {
+    let detail = '';
+    try { for await (const c of r.data) detail += c.toString('utf8'); } catch (_) {}
+    const e = new Error('AiModel error ' + r.status);
+    e.code = 'AIMODEL_ERROR'; e.status = r.status; e.detail = detail.slice(0, 300);
+    throw e;
+  }
+
+  let buf = '', text = '';
+  for await (const chunk of r.data) {
+    buf += chunk.toString('utf8');
+    let nl;
+    while ((nl = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, nl).trim();
+      buf = buf.slice(nl + 1);
+      if (!line.startsWith('data:')) continue;
+      const payload = line.slice(5).trim();
+      if (!payload || payload === '[DONE]') continue;
+      let ev;
+      try { ev = JSON.parse(payload); } catch (_) { continue; }
+      if (ev.type === 'content_block_delta' && ev.delta && typeof ev.delta.text === 'string') {
+        text += ev.delta.text;
+        if (onDelta) { try { onDelta(text, ev.delta.text); } catch (_) {} }
+      }
+    }
+  }
+  return text.trim();
+}
+
+// chat(), but delivering the reply as it is written. Falls back to a single
+// call for OpenAI-style endpoints, which this deployment does not use.
+async function chatStream(opts, onDelta) {
+  const s = settings();
+  if ((!s.endpoint || !s.key) && s.anthropicKey) {
+    return anthropicChatStream(s, {
+      system: opts.system, messages: opts.messages,
+      maxTokens: opts.maxTokens || 700, temperature: opts.temperature == null ? 0.2 : opts.temperature,
+    }, onDelta);
+  }
+  const text = await chat(opts);
+  if (onDelta) { try { onDelta(text, text); } catch (_) {} }
+  return text;
+}
+
 // Returns the assistant's text reply, or throws.
 async function chat({ system, messages, maxTokens = 700, temperature = 0.2 }) {
   const s = settings();
@@ -176,4 +247,4 @@ async function chat({ system, messages, maxTokens = 700, temperature = 0.2 }) {
   return (text || '').trim();
 }
 
-module.exports = { configured, chat, settings, buildRequest };
+module.exports = { configured, chat, chatStream, settings, buildRequest };
