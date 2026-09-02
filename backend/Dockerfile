@@ -30,6 +30,10 @@ COPY --chown=app:app package*.json ./
 COPY --chown=app:app src ./src
 COPY --chown=app:app scripts ./scripts
 COPY --chown=app:app migrations ./migrations
+# Seed data read at boot by scripts/seed-{accredited,feedback,faq}.js. Only the
+# JSON is carried — the source spreadsheet in this folder is a working file and
+# has no place in a runtime image.
+COPY --chown=app:app seed-data/*.json ./seed-data/
 
 # Persistent data — mounted at runtime, never baked in
 RUN mkdir -p /app/data && chown -R app:app /app/data
