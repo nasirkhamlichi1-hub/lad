@@ -28,6 +28,7 @@ const router = express.Router();
 
 const trainerBrain = require('../services/trainerBrain');
 const anam = require('../services/anam');
+const elevenlabs = require('../services/elevenlabs');
 const trainerStore = require('../services/trainerStore');
 const store = require('../services/store');
 const config = require('../config');
@@ -51,6 +52,7 @@ router.get('/status', (_req, res) => {
     engines: {
       anam: anamOn,                         // photoreal face + voice
       brain: brainOn,                       // Claude brain (else scripted fallback)
+      voice: elevenlabs.isConfigured(),     // ElevenLabs voice (else browser voice)
       morphcast: !!config.morphcast.licenseKey, // richer in-browser perception
     },
     // Client-side MorphCast licence key (safe to expose; used by browser SDK).
@@ -310,6 +312,27 @@ router.post('/anam/session-token', requireAuth, async (req, res, next) => {
     const token = await anam.createSessionToken({ name });
     res.json(token);
   } catch (e) { next(e); }
+});
+
+// ─── The trainer's voice (ElevenLabs TTS) ────────────────────────────
+// The browser sends the line the trainer is about to say and gets back an
+// MP3 stream. The ElevenLabs key never leaves the server. 501 when the key
+// is not configured — the browser then uses its built-in voice.
+router.post('/tts', requireAuth, async (req, res, next) => {
+  try {
+    if (!elevenlabs.isConfigured()) {
+      return res.status(501).json({ error: 'voice_not_configured' });
+    }
+    const text = String((req.body && req.body.text) || '').slice(0, 900).trim();
+    if (!text) return res.status(400).json({ error: 'text is required' });
+    const audio = await elevenlabs.tts(text);
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(audio);
+  } catch (e) {
+    if (e.status === 502 || e.status === 501) return res.status(e.status).json({ error: e.message });
+    next(e);
+  }
 });
 
 // ─── Progress (learning records) ─────────────────────────────────────
