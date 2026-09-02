@@ -164,6 +164,7 @@ async function nextTurn({ lesson, history, perception, resume }) {
   const r = await axios.post(`${A.baseUrl || 'https://api.anthropic.com'}/v1/messages`, body, {
     headers: {
       'x-api-key': A.apiKey,
+      ...(A.workspaceId ? { 'anthropic-workspace-id': A.workspaceId } : {}),
       'anthropic-version': '2023-06-01',
       'content-type': 'application/json',
     },

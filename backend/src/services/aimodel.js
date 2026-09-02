@@ -51,10 +51,11 @@ function settings() {
   const apiVersion = env(['AIMODEL_API_VERSION', 'INTERNALAI__APIVERSION', 'InternalAI__ApiVersion',
     'AZURE_OPENAI_API_VERSION']) || '2024-08-01-preview';
   const anthropicKey = env(['ANTHROPIC_API_KEY']);
+  const anthropicWorkspace = env(['ANTHROPIC_WORKSPACE_ID']);
   const anthropicModel = env(['ANTHROPIC_MODEL']) || 'claude-sonnet-4-6';
   const anthropicBase = (env(['ANTHROPIC_BASE_URL']) || 'https://api.anthropic.com').replace(/\/+$/, '');
   return { endpoint: endpoint.replace(/\/+$/, ''), key, deployment, apiVersion,
-    anthropicKey, anthropicModel, anthropicBase };
+    anthropicKey, anthropicModel, anthropicBase, anthropicWorkspace };
 }
 
 function configured() {
@@ -113,6 +114,7 @@ async function anthropicChat(s, { system, messages, maxTokens, temperature }) {
       'x-api-key': s.anthropicKey,
       'anthropic-version': '2023-06-01',
       'content-type': 'application/json',
+      ...(s.anthropicWorkspace ? { 'anthropic-workspace-id': s.anthropicWorkspace } : {}),
     },
     timeout: 30000,
     validateStatus: () => true,
