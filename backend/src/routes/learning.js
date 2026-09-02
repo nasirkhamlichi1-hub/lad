@@ -86,6 +86,15 @@ router.delete('/topics/:topicId/steps/:activityId', requireRole(...ADMIN_ROLES),
   } catch (e) { next(e); }
 });
 
+// Delete a WHOLE topic — steps, AI lessons, enrolments, progress, attempts,
+// sections and reference materials. For clearing out old and test topics;
+// the builder asks for explicit confirmation before calling this.
+router.delete('/topics/:topicId', requireRole(...ADMIN_ROLES), async (req, res, next) => {
+  try {
+    res.json(await topics.deleteTopic(req.params.topicId));
+  } catch (e) { next(e); }
+});
+
 // Publishing is gated on readiness, not on the caller's say-so: an empty
 // SCORM slot or an untaught bot cannot go live by accident. `force` exists
 // for the rare deliberate override and reports what it overrode.
