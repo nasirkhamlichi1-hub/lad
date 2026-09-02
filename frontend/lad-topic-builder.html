@@ -365,6 +365,23 @@ function renderDetail(){
           steps.map(function(a,i){return '<option value="'+i+'">Before step '+(i+1)+'</option>';}).join('')+
         '</select></div>'+
       '<button class="adm-btn-green" id="a-go">Add</button>'+
+    '</div>'+
+    // ── The hub reference library ─────────────────────────────────
+    // Material that lives ON the hub, not as a graded step: relevant laws,
+    // articles, YouTube videos, primary sources. Face-to-face learners come
+    // here for their reading; AI/SCORM steps sit alongside it.
+    '<div class="adm-field" style="margin-top:26px">'+
+      '<label class="adm-label">Hub reference library — laws, articles, videos and source documents the learner opens on the hub</label>'+
+      '<div id="lib-rows" style="margin:8px 0 4px"><span class="adm-count">Loading the library…</span></div>'+
+      '<div class="adm-addbar" style="margin-top:6px">'+
+        '<div class="f"><label class="adm-label" for="lib-title">Title</label>'+
+          '<input class="adm-input" id="lib-title" placeholder="e.g. Federal Law No. 12 of 2014 — Judicial Fees"></div>'+
+        '<div class="f"><label class="adm-label" for="lib-url">Link — article, law, YouTube</label>'+
+          '<input class="adm-input" id="lib-url" placeholder="https://…"></div>'+
+        '<div class="f"><label class="adm-label" for="lib-file">…or a file (PDF, slides, document)</label>'+
+          '<input class="adm-input" id="lib-file" type="file"></div>'+
+        '<button class="adm-btn-green" id="lib-add">Add to library</button>'+
+      '</div>'+
     '</div>';
 
   $('preview').onclick=function(){ window.open('course-hub.html?topic='+encodeURIComponent(t.topic_id),'_blank','noopener'); };
@@ -387,6 +404,8 @@ function renderDetail(){
   };
   $('publish').onclick=doPublish;
   $('a-go').onclick=doAdd;
+  $('lib-add').onclick=doLibAdd;
+  loadLibAdmin();
   Array.prototype.forEach.call(document.querySelectorAll('[data-up]'),function(b){
     b.onclick=function(){ move(b.dataset.up,-1); }; });
   Array.prototype.forEach.call(document.querySelectorAll('[data-down]'),function(b){
@@ -428,6 +447,49 @@ async function remove(id){
       : '', r.mode==='retired'?'warn':'ok');
     await loadTopics(); renderDetail();
   }catch(e){ banner('Could not remove that step: '+esc(e.message),'err'); }
+}
+
+// ─── Hub reference library (admin) ───────────────────────────────
+function ytIdOf(u){var m=String(u||'').match(/(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);return m?m[1]:null;}
+async function loadLibAdmin(){
+  var box=$('lib-rows'); if(!box||!TOPIC) return;
+  try{
+    var r=await api.listCourseMaterials(TOPIC.topic_id);
+    var mats=(r&&r.materials)||[];
+    if(!mats.length){ box.innerHTML='<span class="adm-count">Nothing in the library yet — everything you add here appears on the hub for the learner.</span>'; return; }
+    box.innerHTML=mats.map(function(m){
+      var label=m.kind==='scorm'?'SCORM':(m.kind==='link'?(ytIdOf(m.url)?'VIDEO':'LINK'):'FILE');
+      return '<div class="adm-step ready" style="margin-bottom:6px">'+
+        '<span class="adm-kind k-doc">'+label+'</span>'+
+        '<div class="adm-grow"><div class="t">'+esc(m.title)+'</div>'+
+        (m.url?'<div class="s">'+esc(m.url)+'</div>':(m.file_name?'<div class="s">'+esc(m.file_name)+'</div>':''))+'</div>'+
+        '<button class="adm-btn-icon adm-btn-danger" data-libdel="'+esc(m.id)+'" title="Remove from the library">&times;</button></div>';
+    }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('[data-libdel]'),function(b){
+      b.onclick=async function(){
+        b.disabled=true;
+        try{ await api.deleteCourseMaterial(TOPIC.topic_id,b.dataset.libdel); loadLibAdmin(); }
+        catch(e){ banner('Could not remove it: '+esc(e.message),'err'); b.disabled=false; }
+      };
+    });
+  }catch(e){ box.innerHTML='<span class="adm-count">Could not load the library: '+esc(e.message)+'</span>'; }
+}
+async function doLibAdd(){
+  var btn=$('lib-add'), was=btn.textContent;
+  var title=$('lib-title').value.trim();
+  var url=$('lib-url').value.trim();
+  var file=$('lib-file').files[0]||null;
+  if(!url&&!file){ banner('Give the library item a link or a file.','err'); return; }
+  if(!title&&!file){ banner('Give it a title the learner will recognise.','err'); return; }
+  btn.disabled=true; btn.textContent='Adding…';
+  try{
+    if(file){ await uploadMaterial(TOPIC.topic_id,file,'file',title); }
+    else{ await api.addCourseMaterial(TOPIC.topic_id,{title:title,kind:'link',url:url}); }
+    $('lib-title').value='';$('lib-url').value='';$('lib-file').value='';
+    banner('Added to the hub library.','ok');
+    loadLibAdmin();
+  }catch(e){ banner('Could not add it: '+esc(e.message),'err'); }
+  finally{ btn.disabled=false; btn.textContent=was; }
 }
 
 async function doPublish(){
@@ -542,7 +604,8 @@ async function extractPptx(file){
 
 // Store the original file against the topic so learners can download it.
 // Small files go inline; anything larger needs cloud storage configured.
-async function uploadMaterial(courseId, file, kind){
+async function uploadMaterial(courseId, file, kind, title){
+  title = (title||'').trim() || file.name;
   if(file.size>MAX_INLINE){
     var sas;
     try{ sas=await api.materialUploadUrl(courseId,{file_name:file.name,mime:file.type||'application/octet-stream'}); }
@@ -550,7 +613,7 @@ async function uploadMaterial(courseId, file, kind){
     var put=await fetch(sas.upload_url,{method:'PUT',
       headers:{'x-ms-blob-type':'BlockBlob','Content-Type':file.type||'application/octet-stream'},body:file});
     if(!put.ok) throw new Error('The upload to cloud storage failed ('+put.status+').');
-    return api.addCourseMaterial(courseId,{title:file.name,kind:kind,file_name:file.name,
+    return api.addCourseMaterial(courseId,{title:title,kind:kind,file_name:file.name,
       mime:file.type||null,size:file.size,storage_key:sas.storage_key});
   }
   var b64=await new Promise(function(ok,fail){
@@ -559,7 +622,7 @@ async function uploadMaterial(courseId, file, kind){
     r.onerror=function(){fail(new Error('Could not read that file.'));};
     r.readAsDataURL(file);
   });
-  return api.addCourseMaterial(courseId,{title:file.name,kind:kind,file_name:file.name,
+  return api.addCourseMaterial(courseId,{title:title,kind:kind,file_name:file.name,
     mime:file.type||null,size:file.size,data:b64});
 }
 

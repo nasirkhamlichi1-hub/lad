@@ -280,6 +280,11 @@
     moveTopicStep:   (id, act, to) => call('POST', '/api/v1/learning/topics/' + encodeURIComponent(id) + '/steps/' + encodeURIComponent(act) + '/move', { to }),
     removeTopicStep: (id, act)     => call('DELETE', '/api/v1/learning/topics/' + encodeURIComponent(id) + '/steps/' + encodeURIComponent(act)),
     addCourseMaterial: (courseId, m) => call('POST', '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials', m),
+    // The course's reference library — every law, article, link, video and
+    // file loaded onto the course, for the hub to display in-page.
+    listCourseMaterials: (courseId) => call('GET', '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials'),
+    deleteCourseMaterial: (courseId, mid) => call('DELETE', '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials/' + encodeURIComponent(mid)),
+    materialDownloadUrl: (courseId, mid) => call('GET', '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials/' + encodeURIComponent(mid) + '/download-url'),
     // A short-lived write SAS so a large file goes straight to Azure Blob and
     // never passes through the API.
     materialUploadUrl: (courseId, spec) => call('POST', '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials/upload-url', spec),

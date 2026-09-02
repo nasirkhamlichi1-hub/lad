@@ -173,6 +173,58 @@
   button:disabled { opacity:.35; cursor:not-allowed; }
   button:focus-visible { outline:2px solid var(--green); outline-offset:2px; }
 
+  /* ─── The reference library ──────────────────────────────────── */
+  /* Everything loaded onto the course — laws, articles, videos, source
+     documents — presented as a reading room: files stand on the shelf as
+     book spines, videos show their still, links sit as catalogue cards.
+     Everything opens IN the hub via the reader overlay. */
+  .lib-note { font:600 10.5px var(--mono); letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink3); margin:0 0 6px; }
+  .shelf { display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap;
+    padding:18px 14px 0; border-bottom:10px solid; border-image:linear-gradient(90deg,#7a5a34,#9a7648,#7a5a34) 1;
+    margin-bottom:26px; }
+  .book { width:52px; height:178px; border-radius:5px 8px 8px 5px; cursor:pointer; position:relative;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:inset -6px 0 10px rgba(0,0,0,.28), inset 2px 0 4px rgba(255,255,255,.14), 0 4px 10px rgba(10,20,15,.25);
+    transition:transform .18s; }
+  .book:hover { transform:translateY(-8px) rotate(-1.5deg); }
+  .book .sp { writing-mode:vertical-rl; font:600 12px var(--sans); color:rgba(255,250,235,.95);
+    letter-spacing:.04em; max-height:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .book .bnd { position:absolute; left:0; right:0; height:3px; background:rgba(255,235,190,.5); }
+  .book .bnd.t { top:12px; } .book .bnd.b { bottom:12px; }
+  .vidcard { width:212px; border-radius:10px; overflow:hidden; cursor:pointer; background:#000;
+    border:1px solid var(--line); box-shadow:0 6px 16px rgba(10,20,15,.18); transition:transform .18s; margin-bottom:10px; }
+  .vidcard:hover { transform:translateY(-6px); }
+  .vidcard .thumb { position:relative; aspect-ratio:16/9; background:#111 center/cover no-repeat; }
+  .vidcard .play { position:absolute; inset:0; display:grid; place-items:center; }
+  .vidcard .play i { width:46px; height:32px; border-radius:8px; background:rgba(200,30,20,.92);
+    display:grid; place-items:center; }
+  .vidcard .play i::after { content:''; border-style:solid; border-width:8px 0 8px 14px;
+    border-color:transparent transparent transparent #fff; margin-left:3px; }
+  .vidcard .vt { font:600 12.5px var(--sans); color:var(--ink); background:var(--surface); padding:9px 11px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .linkcard { width:212px; border-radius:10px; cursor:pointer; background:var(--surface);
+    border:1px solid var(--line); border-top:6px solid var(--gold); padding:12px 14px 14px;
+    box-shadow:0 6px 16px rgba(10,20,15,.12); transition:transform .18s; margin-bottom:10px; }
+  .linkcard:hover { transform:translateY(-6px); }
+  .linkcard .dom { font:600 9.5px var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--ink3);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .linkcard .lt { font:600 14px var(--sans); margin-top:6px; line-height:1.35; }
+  .linkcard.scorm { border-top-color:var(--green); }
+  .linkcard.scorm .go { display:inline-block; margin-top:10px; font:700 10.5px var(--mono);
+    letter-spacing:.12em; text-transform:uppercase; color:var(--green); }
+  #reader { max-width:1060px; width:96vw; height:92vh; padding:0; overflow:hidden; display:none;
+    flex-direction:column; border-radius:14px; }
+  #reader[open] { display:flex; }
+  .rhead { display:flex; align-items:center; gap:12px; padding:13px 18px; border-bottom:1px solid var(--line); }
+  .rhead .kind { flex-shrink:0; }
+  .rhead .rt { font-weight:600; font-size:15px; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rbody { flex:1; min-height:0; background:var(--alt); }
+  .rbody iframe { width:100%; height:100%; border:0; display:block; background:#fff; }
+  .rbody .rtext { height:100%; overflow:auto; padding:34px 40px; background:var(--surface);
+    font:15px/1.7 var(--sans); white-space:pre-wrap; }
+  .rbody .rmsg { height:100%; display:grid; place-items:center; color:var(--ink3); font-size:14.5px; padding:30px; text-align:center; }
+
   .msg { background:var(--gold-soft); border:1px solid var(--line); border-radius:10px;
     padding:14px 18px; margin:20px 0; font-size:14px; color:var(--ink2); }
   .msg.err { border-color:var(--crit); color:var(--crit); background:transparent; }
@@ -229,7 +281,19 @@
   <div class="how" id="how" style="display:none"></div>
   <div id="msg"></div>
   <div id="body"><p class="skel">Loading your hub…</p></div>
+  <div id="library" style="display:none"></div>
 </div>
+
+<dialog id="reader">
+  <div class="rhead">
+    <span class="kind" id="rKind">DOC</span>
+    <span class="rt" id="rTitle"></span>
+    <button class="ghost" id="rOpen" style="display:none">Open in new tab</button>
+    <button class="ghost" id="rDown" style="display:none">Download</button>
+    <button class="ghost" id="rClose">Close</button>
+  </div>
+  <div class="rbody" id="rBody"></div>
+</dialog>
 
 <dialog id="dlg">
   <h3 id="dlgTitle"></h3>
@@ -412,6 +476,125 @@
     }
     renderHero(data);
     renderPath(data);
+    loadLibrary();
+  }
+
+  // ─── The reference library ──────────────────────────────────────
+  // Laws, articles, videos, links and source documents loaded onto this
+  // course. Files stand on a shelf as book spines; videos show their
+  // still; links sit as catalogue cards. Everything opens in the hub.
+  var SPINES = ['#0E5C44', '#22406b', '#6e2f2a', '#5a5a2e', '#3f3a56', '#7a4a1e'];
+  function ytId(u) {
+    var m = String(u || '').match(/(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);
+    return m ? m[1] : null;
+  }
+  function domainOf(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return 'link'; } }
+
+  async function loadLibrary() {
+    var box = $('library');
+    var r;
+    try { r = await api.listCourseMaterials(TOPIC); }
+    catch (e) { box.style.display = 'none'; return; } // anonymous preview — the pathway still shows
+    var mats = (r && r.materials) || [];
+    if (!mats.length) { box.style.display = 'none'; return; }
+    var books = [], cards = [];
+    var bi = 0;
+    mats.forEach(function (m) {
+      var vid = m.kind === 'link' ? ytId(m.url) : null;
+      if (vid) {
+        cards.push('<div class="vidcard" data-mid="' + esc(m.id) + '"><div class="thumb" style="background-image:url(https://img.youtube.com/vi/' + esc(vid) + '/hqdefault.jpg)"><div class="play"><i></i></div></div><div class="vt">' + esc(m.title) + '</div></div>');
+      } else if (m.kind === 'scorm') {
+        cards.push('<div class="linkcard scorm" data-mid="' + esc(m.id) + '"><div class="dom">Interactive course</div><div class="lt">' + esc(m.title) + '</div><span class="go">Start ▸</span></div>');
+      } else if (m.kind === 'link') {
+        cards.push('<div class="linkcard" data-mid="' + esc(m.id) + '"><div class="dom">' + esc(domainOf(m.url)) + '</div><div class="lt">' + esc(m.title) + '</div></div>');
+      } else {
+        books.push('<div class="book" data-mid="' + esc(m.id) + '" style="background:' + SPINES[bi++ % SPINES.length] + '" title="' + esc(m.title) + '"><span class="bnd t"></span><span class="sp">' + esc(m.title) + '</span><span class="bnd b"></span></div>');
+      }
+    });
+    box.innerHTML =
+      '<h2 class="section-title">The reference library</h2>' +
+      '<p class="lib-note">Laws · Articles · Videos · Source documents — they open right here</p>' +
+      '<div class="shelf">' + books.join('') + cards.join('') + '</div>';
+    box.style.display = 'block';
+    box.querySelectorAll('[data-mid]').forEach(function (n) {
+      var m = mats.filter(function (x) { return x.id === n.getAttribute('data-mid'); })[0];
+      n.onclick = function () { openReference(m); };
+    });
+  }
+
+  // ─── The reader ─────────────────────────────────────────────────
+  function readerShow(kindLabel, title) {
+    $('rKind').textContent = kindLabel; $('rTitle').textContent = title;
+    $('rOpen').style.display = 'none'; $('rDown').style.display = 'none';
+    $('rBody').innerHTML = '<div class="rmsg">Opening…</div>';
+    $('reader').showModal();
+  }
+  function readerFrame(url, sandboxed) {
+    var f = document.createElement('iframe');
+    if (sandboxed) f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
+    f.setAttribute('allow', 'autoplay; encrypted-media; fullscreen');
+    f.setAttribute('allowfullscreen', '');
+    f.src = url;
+    $('rBody').innerHTML = ''; $('rBody').appendChild(f);
+  }
+  function readerNewTab(url) { var b = $('rOpen'); b.style.display = ''; b.onclick = function () { window.open(url, '_blank'); }; }
+  function readerDownload(url, name) {
+    var b = $('rDown'); b.style.display = '';
+    b.onclick = function () { var a = document.createElement('a'); a.href = url; a.download = name || 'material'; document.body.appendChild(a); a.click(); a.remove(); };
+  }
+  $('rClose').onclick = function () { $('rBody').innerHTML = ''; $('reader').close(); };
+
+  // Fetch a material's bytes WITH the sign-in token (a plain browser tab has
+  // no token, which is why raw download links used to answer "no_access").
+  async function fetchMaterialBlob(courseId, mid) {
+    var resp = await fetch((window.LAD_API_BASE || '') + '/api/v1/courses/' +
+      encodeURIComponent(courseId) + '/materials/' + encodeURIComponent(mid) + '/download',
+      { headers: api.getToken() ? { 'Authorization': 'Bearer ' + api.getToken() } : {} });
+    if (!resp.ok) throw new Error('Could not open this material (' + resp.status + ')');
+    return resp.blob();
+  }
+
+  async function openReference(m, courseId) {
+    courseId = courseId || TOPIC;
+    if (!m) return;
+    var vid = m.kind === 'link' ? ytId(m.url) : null;
+    if (vid) {
+      readerShow('VIDEO', m.title);
+      readerFrame('https://www.youtube-nocookie.com/embed/' + vid + '?autoplay=1&rel=0');
+      readerNewTab(m.url);
+      return;
+    }
+    if (m.kind === 'link' || m.kind === 'scorm') {
+      // External sites usually refuse to be embedded — open them properly.
+      window.open(m.url, '_blank');
+      return;
+    }
+    // A file: inline (fetch with the token) or cloud blob (short-lived URL).
+    var isPdf = /pdf/i.test(m.mime || '') || /\.pdf$/i.test(m.file_name || '');
+    var isText = /^text\/|json|html/i.test(m.mime || '');
+    readerShow(isPdf ? 'PDF' : (isText ? 'TEXT' : 'FILE'), m.title);
+    try {
+      if (m.download_kind === 'blob') {
+        var u = await api.materialDownloadUrl(courseId, m.id);
+        if (isPdf) { readerFrame(u.url); } else { $('rBody').innerHTML = '<div class="rmsg">This file opens outside the hub.</div>'; }
+        readerNewTab(u.url); readerDownload(u.url, m.file_name || m.title);
+        return;
+      }
+      var blob = await fetchMaterialBlob(courseId, m.id);
+      var typed = new Blob([blob], { type: m.mime || 'application/octet-stream' });
+      var url = URL.createObjectURL(typed);
+      if (isPdf) { readerFrame(url); }
+      else if (isText) {
+        var txt = await typed.text();
+        var d = document.createElement('div'); d.className = 'rtext'; d.textContent = txt;
+        $('rBody').innerHTML = ''; $('rBody').appendChild(d);
+      } else {
+        $('rBody').innerHTML = '<div class="rmsg">This document type doesn’t preview in the browser — use Download and open it on your device.</div>';
+      }
+      readerNewTab(url); readerDownload(url, m.file_name || m.title);
+    } catch (e) {
+      $('rBody').innerHTML = '<div class="rmsg">' + esc(e.message || 'Could not open this material.') + '</div>';
+    }
   }
 
   // ─── Launching ──────────────────────────────────────────────────
@@ -441,11 +624,18 @@
   async function openMaterial() {
     if (!current) return;
     if (!current.material_id) { note('No file is attached to this item yet.', true); return; }
-    window.open(buildDownloadUrl(current), '_blank', 'noopener');
-  }
-  function buildDownloadUrl(a) {
-    return (window.LAD_API_BASE || '') + '/api/v1/courses/' +
-      encodeURIComponent(a.course_id) + '/materials/' + encodeURIComponent(a.material_id) + '/download';
+    // Open through the reader with the sign-in token attached — a bare tab
+    // has no token, so the old direct link answered {"error":"no_access"}.
+    try {
+      var r = await api.listCourseMaterials(current.course_id || TOPIC);
+      var m = ((r && r.materials) || []).filter(function (x) { return x.id === current.material_id; })[0];
+      if (m) { openReference(m, current.course_id || TOPIC); return; }
+    } catch (e) { /* fall through to the direct URL */ }
+    try {
+      var u = await api.materialDownloadUrl(current.course_id || TOPIC, current.material_id);
+      if (u && u.url) { window.open(u.url, '_blank'); return; }
+    } catch (e2) {}
+    note('Could not open this material.', true);
   }
 
   async function finish() {
