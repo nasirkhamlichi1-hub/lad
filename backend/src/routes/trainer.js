@@ -279,7 +279,27 @@ router.post('/turn', requireAuth, async (req, res, next) => {
       }
     }
 
-    const turn = await trainerBrain.nextTurn({ lesson, history, perception, resume });
+    // When the client asks to stream, the first complete sentence is pushed the
+    // instant the model has written it — the browser starts speaking while the
+    // rest of the reply is still being composed. One NDJSON line per event.
+    const wantsStream = !!(req.body && req.body.stream);
+    let opened = false;
+    const openStream = () => {
+      if (opened) return;
+      opened = true;
+      res.setHeader('Content-Type', 'application/x-ndjson');
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('X-Accel-Buffering', 'no');
+      res.flushHeaders && res.flushHeaders();
+    };
+
+    const turn = await trainerBrain.nextTurn({
+      lesson, history, perception, resume,
+      onFirstSentence: wantsStream ? (sentence) => {
+        openStream();
+        res.write(JSON.stringify({ phase: 'first', say: sentence }) + '\n');
+      } : null,
+    });
 
     // Persist coverage → progress (hard key-element tracking).
     const total = (lesson && Array.isArray(lesson.objectives)) ? lesson.objectives.length : 0;
@@ -291,12 +311,24 @@ router.post('/turn', requireAuth, async (req, res, next) => {
       coverage = { done: objectivesDone.length, total };
     }
 
-    res.json({
+    const payload = {
       say: turn.say,
       complete: !!turn.complete,
       coverage,
       brain: turn.engine || 'claude',
-    });
+    };
+    if (opened) {
+      res.write(JSON.stringify(Object.assign({ phase: 'done' }, payload)) + '\n');
+      return res.end();
+    }
+    if (wantsStream) {
+      // Nothing was streamed (fallback brain, or a one-sentence reply) — the
+      // client reads NDJSON either way, so answer in the same shape.
+      openStream();
+      res.write(JSON.stringify(Object.assign({ phase: 'done' }, payload)) + '\n');
+      return res.end();
+    }
+    res.json(payload);
   } catch (e) { next(e); }
 });
 

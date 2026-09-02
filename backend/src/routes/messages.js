@@ -400,7 +400,7 @@ router.get('/conversations', requireAuth, (req, res) => {
   try {
     if (admin) {
       const status = (req.query.status || '').toString();
-      const box = (req.query.box || '').toString(); // mine | unassigned | all | archived
+      const box = (req.query.box || '').toString(); // mine | unassigned | escalated | all | archived
       const where = ['1=1']; const args = [];
       // Archived threads are hidden from every working box and only surface in
       // the dedicated "archived" view, so the live inbox stays short.
@@ -409,6 +409,11 @@ router.get('/conversations', requireAuth, (req, res) => {
       if (status && status !== 'all') { where.push('c.status = ?'); args.push(status); }
       if (box === 'mine') { where.push('c.assigned_to = ?'); args.push(reader); }
       else if (box === 'unassigned') { where.push('c.assigned_to IS NULL'); }
+      // Maryam routes each hand-off to ONE owner, so an escalation that went to
+      // a colleague was invisible to everyone else — it sat in "All" looking
+      // like any other thread. This box is the team's shared "a person is
+      // waiting" queue, regardless of who it was routed to.
+      else if (box === 'escalated') { where.push("c.escalated = 1 AND c.status NOT IN ('resolved','closed')"); }
       rows = db.prepare(
         `SELECT c.*, (SELECT body FROM conversation_messages m WHERE m.conversation_id = c.id ORDER BY m.created_at DESC LIMIT 1) last_body,
                 r.last_read_at
@@ -600,12 +605,12 @@ router.get('/admins', requireAuth, (req, res) => {
 router.get('/unread', requireAuth, (req, res) => {
   const mySide = sideOf(req.user);
   const reader = req.user.sub;
-  let count = 0, mine = 0;
+  let count = 0, mine = 0, waiting = 0;
   try {
     let rows;
     if (isAdmin(req.user)) {
       rows = db.prepare(
-        `SELECT c.last_sender, c.last_message_at, c.assigned_to, r.last_read_at
+        `SELECT c.last_sender, c.last_message_at, c.assigned_to, c.escalated, c.status, r.last_read_at
          FROM conversations c LEFT JOIN conversation_reads r ON r.conversation_id = c.id AND r.reader_id = ?
          WHERE c.status != 'closed' AND COALESCE(c.archived,0) = 0`
       ).all(reader);
@@ -620,9 +625,12 @@ router.get('/unread', requireAuth, (req, res) => {
     for (const c of rows) {
       const unread = c.last_sender !== mySide && (!c.last_read_at || c.last_read_at < c.last_message_at);
       if (unread) { count++; if (c.assigned_to === reader) mine++; }
+      // A hand-off is the team's problem until someone resolves it — counted
+      // whoever it was routed to, and whether or not this reader has opened it.
+      if (c.escalated && c.status !== 'resolved' && c.status !== 'closed') waiting++;
     }
   } catch (e) { log.error('conv_unread_failed', { error: e.message }); }
-  res.json({ unread: count, mine });
+  res.json({ unread: count, mine, waiting });
 });
 
 // ─── CRM timeline — every recorded interaction for a firm or a lawyer ────

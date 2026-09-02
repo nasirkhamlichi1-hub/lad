@@ -159,4 +159,36 @@ router.get('/health', optionalAuth, async (_req, res) => {
   res.json(await aimodelDiagnostic());
 });
 
+// GET /api/v1/lex/models — which models this key may use, fastest first.
+// The trainer's speed is mostly the model's speed, and model names change;
+// rather than guessing one, read the list and set TRAINER_BRAIN_MODEL.
+router.get('/models', requireAuth, async (_req, res) => {
+  const s = aimodel.settings();
+  if (!s.anthropicKey) return res.status(501).json({ error: 'No Anthropic key configured' });
+  try {
+    const r = await axios.get(`${s.anthropicBase}/v1/models?limit=100`, {
+      headers: {
+        'x-api-key': s.anthropicKey,
+        'anthropic-version': '2023-06-01',
+        ...(s.anthropicWorkspace ? { 'anthropic-workspace-id': s.anthropicWorkspace } : {}),
+      },
+      timeout: 15000,
+      validateStatus: () => true,
+    });
+    if (r.status >= 300) return res.status(502).json({ error: 'models_failed', status: r.status });
+    const all = ((r.data && r.data.data) || []).map((m) => ({ id: m.id, name: m.display_name || m.id }));
+    // Haiku is the quick one, then Sonnet, then the rest.
+    const rank = (id) => (/haiku/i.test(id) ? 0 : /sonnet/i.test(id) ? 1 : 2);
+    all.sort((a, b) => rank(a.id) - rank(b.id) || (a.id < b.id ? 1 : -1));
+    res.json({
+      current: safeModelName(config.anthropic.model),
+      trainerModel: safeModelName(config.trainerBrain.model),
+      fastest: all.filter((m) => /haiku/i.test(m.id)).slice(0, 3).map((m) => m.id),
+      models: all,
+    });
+  } catch (e) {
+    res.status(502).json({ error: 'models_failed', message: redact(e.message) });
+  }
+});
+
 module.exports = router;
