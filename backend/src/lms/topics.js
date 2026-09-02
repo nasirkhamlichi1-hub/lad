@@ -490,8 +490,37 @@ async function removeStep(courseId, activityId) {
   return { mode, topic: await getTopic(courseId) };
 }
 
+// ─── Delete a whole topic ────────────────────────────────────────────
+// Total and deliberate: the steps, their AI lessons, every learner's
+// enrolment, progress and attempts ON THIS TOPIC, its sections and its
+// reference materials all go. Meant for clearing out old and test topics —
+// the route gates it behind admin roles and the UI asks for confirmation.
+async function deleteTopic(courseId) {
+  const acts = await store.listActivities(courseId, { includeUnpublished: true });
+  const hasModule = await db.one('SELECT id FROM course_module WHERE course_id = ? LIMIT 1', [courseId]);
+  if (!acts.length && !hasModule) {
+    const err = new Error('No such topic');
+    err.status = 404;
+    throw err;
+  }
+  for (const a of acts) {
+    if (a.kind === 'ai_lesson' && a.lesson_id) {
+      try { trainerStore.deleteLesson(a.lesson_id); } catch (_) { /* already gone */ }
+    }
+  }
+  await db.tx(async (t) => {
+    await t.run('DELETE FROM activity_attempt WHERE course_id = ?', [courseId]);
+    await t.run('DELETE FROM activity_progress WHERE course_id = ?', [courseId]);
+    await t.run('DELETE FROM enrolment WHERE course_id = ?', [courseId]);
+    await t.run('DELETE FROM activity WHERE course_id = ?', [courseId]);
+    await t.run('DELETE FROM course_module WHERE course_id = ?', [courseId]);
+    await t.run('DELETE FROM course_materials WHERE course_id = ?', [courseId]);
+  });
+  return { deleted: courseId, steps: acts.length };
+}
+
 module.exports = {
   createTopic, addToTopic, getTopic, listTopics, publishTopic,
-  insertSteps, moveStep, removeStep,
+  insertSteps, moveStep, removeStep, deleteTopic,
   readiness, slugify, normaliseSteps,
 };
