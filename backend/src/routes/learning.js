@@ -150,12 +150,24 @@ router.post('/draft-lesson', requireRole(...ADMIN_ROLES), async (req, res, next)
       '{"summary":"one or two sentences","objectives":[{"text":"...","quote":"verbatim from the document"}]}',
     ].join('\n');
 
-    const answer = await aimodel.chat({
-      system,
-      messages: [{ role: 'user', content: (title ? `Document title: ${title}\n\n` : '') + text }],
-      maxTokens: 1500,
-      temperature: 0,
-    });
+    let answer;
+    try {
+      answer = await aimodel.chat({
+        system,
+        messages: [{ role: 'user', content: (title ? `Document title: ${title}\n\n` : '') + text }],
+        maxTokens: 1500,
+        temperature: 0,
+      });
+    } catch (e) {
+      // Say WHAT failed instead of a naked 500 — the author sees this message
+      // in the drawer and can tell an unreachable endpoint from a refused key.
+      log.error('draft_lesson_ai_failed', { code: e.code, error: e.message, detail: e.detail });
+      return res.status(502).json({
+        error: 'ai_unreachable',
+        message: 'The AI service could not be reached: ' + e.message +
+          '. An administrator should check the AI settings on the server (a stale endpoint may still be configured). You can write the key elements by hand below — everything else works.',
+      });
+    }
 
     let parsed;
     try {
