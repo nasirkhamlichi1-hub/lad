@@ -69,9 +69,15 @@
       linear-gradient(135deg, var(--hero-a) 0%, var(--hero-b) 55%, var(--hero-c) 100%);
     color:#fff; padding:38px 0 34px; position:relative; overflow:hidden;
   }
-  .hero::after { /* faint rule pattern, like a ledger */
-    content:''; position:absolute; inset:0; pointer-events:none; opacity:.05;
-    background-image:repeating-linear-gradient(0deg, #fff 0 1px, transparent 1px 28px);
+  /* An uploaded photo sits behind the hero, darkened just enough that the
+     title and the ring stay legible over anything the admin chooses. */
+  .hero.has-photo::before {
+    content:''; position:absolute; inset:0; z-index:0;
+    background-image:var(--hero-photo); background-size:cover; background-position:center;
+  }
+  .hero.has-photo::after {
+    content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(180deg, rgba(6,26,19,.62) 0%, rgba(6,26,19,.78) 100%);
   }
   .hero .wrap { padding-bottom:0; position:relative; z-index:1; }
   a.back { font-size:13px; color:rgba(255,255,255,.75); text-decoration:none;
@@ -108,16 +114,6 @@
   .done-banner b { color:#fff; }
 
   @media (max-width:640px){ .hero-grid{flex-direction:column-reverse; align-items:flex-start;} .ringbox{align-self:center;} }
-
-  /* ─── How this journey works ─────────────────────────────────── */
-  .how { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px;
-    margin:-26px 0 40px; position:relative; z-index:2; }
-  .how-card { background:var(--surface); border:1px solid var(--line); border-radius:12px;
-    padding:16px 18px; box-shadow:0 8px 24px rgba(10,20,15,.07); }
-  .how-card .ic { width:34px; height:34px; border-radius:9px; display:grid; place-items:center;
-    font-size:16px; margin-bottom:10px; background:var(--green-soft); }
-  .how-card b { display:block; font-size:14px; margin-bottom:3px; }
-  .how-card span { font-size:12.5px; color:var(--ink3); line-height:1.5; display:block; }
 
   /* ─── The pathway ────────────────────────────────────────────── */
   .section-title { font-family:var(--serif); font-weight:400; font-size:24px;
@@ -282,7 +278,6 @@
 </header>
 
 <div class="wrap">
-  <div class="how" id="how" style="display:none"></div>
   <div id="msg"></div>
   <div id="body"><p class="skel">Loading your hub…</p></div>
   <div id="library" style="display:none"></div>
@@ -377,26 +372,6 @@
     }
   }
 
-  // ─── "How this journey works", from what it is made of ──────────
-  function renderHow(acts, gated) {
-    var reads = acts.filter(function (a) { return ['document','link','video'].indexOf(a.kind) >= 0; }).length;
-    var ai = acts.filter(function (a) { return a.kind === 'ai_lesson'; }).length;
-    var tests = acts.filter(function (a) { return a.kind === 'scorm' || a.kind === 'assessment'; }).length;
-    var cards = [];
-    if (reads) cards.push(['📖', reads + (reads === 1 ? ' reading' : ' readings'),
-      'The source material — open each one and mark it done when you have read it.']);
-    if (ai) cards.push(['🗣', ai + (ai === 1 ? ' AI-taught session' : ' AI-taught sessions'),
-      'A one-to-one conversation with the trainer. It teaches, asks, and will not sign a session off until you have shown you understood.']);
-    if (tests) cards.push(['✓', tests + (tests === 1 ? ' assessment' : ' assessments'),
-      'Score at or above the pass mark for it to count. Your best score stands across attempts.']);
-    cards.push(['📊', 'Progress that is earned',
-      gated ? 'Steps unlock in order, and the figure above comes from what you have actually completed — it cannot be set by anyone.'
-            : 'Take the steps in any order — the figure above comes from what you have actually completed, and cannot be set by anyone.']);
-    $('how').innerHTML = cards.map(function (c) {
-      return '<div class="how-card"><div class="ic">' + c[0] + '</div><b>' + esc(c[1]) + '</b><span>' + c[2] + '</span></div>';
-    }).join('');
-    $('how').style.display = '';
-  }
 
   // ─── The pathway ────────────────────────────────────────────────
   function renderPath(data) {
@@ -460,7 +435,6 @@
         if (a) launch(a);
       };
     });
-    renderHow(acts, visible.some(function (s) { return s.gate === 'sequential'; }));
   }
 
   async function load() {
@@ -473,6 +447,12 @@
     try { data = await api.courseOutline(TOPIC); }
     catch (e) { note('Could not load this hub: ' + esc(e.message), true); $('body').innerHTML = ''; return; }
 
+    // The hub record carries the look (photo, accent) as well as the reference
+    // library, and the look has to land before the hero paints — otherwise the
+    // page flashes the default green and then re-colours itself.
+    try { HUB = await api.hubGet(TOPIC); } catch (e) { HUB = null; }
+    applyHubLook(HUB);
+
     // Enrol on first visit so progress has somewhere to land.
     if (!data.enrolment) {
       try { await api.enrolMe(TOPIC); data = await api.courseOutline(TOPIC); }
@@ -481,6 +461,52 @@
     renderHero(data);
     renderPath(data);
     loadLibrary();
+  }
+
+  // ─── The look of this hub ───────────────────────────────────────
+  // An admin can give a course its own photo and its own colour. Everything
+  // the page tints — the ring, the step markers, the buttons, the hero
+  // gradient — is derived from that one accent, so a single choice re-skins
+  // the hub without anyone picking six shades by hand.
+  var HUB = null;
+  function toRgb(h) {
+    h = String(h || '').replace('#', '');
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  }
+  function toHex(c) {
+    return '#' + c.map(function (v) {
+      v = Math.max(0, Math.min(255, Math.round(v)));
+      return ('0' + v.toString(16)).slice(-2);
+    }).join('');
+  }
+  function mix(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+
+  function applyHubLook(hub) {
+    if (!hub) return;
+    var root = document.documentElement;
+    var hero = document.querySelector('.hero');
+
+    var accent = String(hub.accent || '').trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(accent)) {
+      var c = toRgb(accent);
+      var dark = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var paper = dark ? [22, 26, 22] : [255, 255, 255];
+      var ink = [0, 0, 0];
+      root.style.setProperty('--green', accent);
+      root.style.setProperty('--green-deep', toHex(mix(c, ink, dark ? 0.55 : 0.32)));
+      root.style.setProperty('--green-soft', toHex(mix(c, paper, dark ? 0.84 : 0.89)));
+      root.style.setProperty('--green-line', toHex(mix(c, paper, dark ? 0.55 : 0.62)));
+      root.style.setProperty('--hero-a', toHex(mix(c, ink, 0.88)));
+      root.style.setProperty('--hero-b', toHex(mix(c, ink, 0.70)));
+      root.style.setProperty('--hero-c', toHex(mix(c, ink, 0.42)));
+    }
+
+    var photo = String(hub.hero_url || hub.hero_image || '').trim();
+    // Only shapes the server already vetted — no quotes, brackets or scheme games.
+    if (hero && photo && /^(https?:\/\/|\/)/.test(photo) && !/["'()\\<>\s]/.test(photo)) {
+      hero.style.setProperty('--hero-photo', 'url(' + photo + ')');
+      hero.classList.add('has-photo');
+    }
   }
 
   // ─── The reference library ──────────────────────────────────────
@@ -502,7 +528,7 @@
     var mats = [], hub = null;
     try { var r = await api.listCourseMaterials(TOPIC); mats = (r && r.materials) || []; }
     catch (e) { /* anonymous preview, or no access yet */ }
-    try { hub = await api.hubGet(TOPIC); } catch (e) { /* no knowledge hub for this topic */ }
+    hub = HUB;  // already fetched in load(), which needed it for the hub's look
 
     var laws = (hub && hub.legislation) || [];
     var faq  = (hub && hub.faq) || [];

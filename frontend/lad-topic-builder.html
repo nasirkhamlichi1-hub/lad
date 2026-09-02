@@ -412,6 +412,22 @@ function renderDetail(){
           '<input class="adm-input" id="lib-file" type="file"></div>'+
         '<button class="adm-btn-green" id="lib-add">Add to library</button>'+
       '</div>'+
+    '</div>'+
+    // ── How the hub looks ─────────────────────────────────────────
+    // A picture behind the title band and one accent colour the whole page
+    // is built from — so a hub on aviation law does not have to look like a
+    // hub on judicial fees.
+    '<div class="adm-field" style="margin-top:26px">'+
+      '<label class="adm-label">How this hub looks — the photo behind the title and the colour the page is built around</label>'+
+      '<div class="adm-addbar" style="margin-top:6px;align-items:flex-end">'+
+        '<div class="f"><label class="adm-label" for="look-photo">Photo for the top of the hub</label>'+
+          '<input class="adm-input" id="look-photo" type="file" accept="image/*"></div>'+
+        '<div class="f" style="max-width:150px"><label class="adm-label" for="look-accent">Colour</label>'+
+          '<input class="adm-input" id="look-accent" type="color" style="height:40px;padding:3px"></div>'+
+        '<button class="adm-btn-green" id="look-save">Save look</button>'+
+        '<button class="adm-btn" id="look-clear" title="Remove the photo and go back to the default colour">Reset</button>'+
+      '</div>'+
+      '<div id="look-state" class="adm-count" style="margin-top:6px"></div>'+
     '</div>';
 
   $('preview').onclick=function(){ window.open('course-hub.html?topic='+encodeURIComponent(t.topic_id),'_blank','noopener'); };
@@ -435,7 +451,10 @@ function renderDetail(){
   $('publish').onclick=doPublish;
   $('a-go').onclick=doAdd;
   $('lib-add').onclick=doLibAdd;
+  $('look-save').onclick=doLookSave;
+  $('look-clear').onclick=doLookClear;
   loadLibAdmin();
+  loadLookAdmin();
   Array.prototype.forEach.call(document.querySelectorAll('[data-up]'),function(b){
     b.onclick=function(){ move(b.dataset.up,-1); }; });
   Array.prototype.forEach.call(document.querySelectorAll('[data-down]'),function(b){
@@ -519,6 +538,65 @@ async function doLibAdd(){
     banner('Added to the hub library.','ok');
     loadLibAdmin();
   }catch(e){ banner('Could not add it: '+esc(e.message),'err'); }
+  finally{ btn.disabled=false; btn.textContent=was; }
+}
+
+// ─── How the hub looks (admin) ───────────────────────────────────
+// The photo and the accent live on the hub record. A course may not have a
+// hub row yet — saving the look creates one, so the controls work from the
+// moment a topic exists rather than only after someone writes hub content.
+var LOOK_HUB=null;
+async function loadLookAdmin(){
+  var state=$('look-state'); if(!state||!TOPIC) return;
+  try{ LOOK_HUB=await api.hubGet(TOPIC.topic_id); }catch(e){ LOOK_HUB=null; }
+  var accent=(LOOK_HUB&&LOOK_HUB.accent)||'';
+  if(/^#[0-9a-fA-F]{6}$/.test(accent)) $('look-accent').value=accent.toLowerCase();
+  else $('look-accent').value='#0e5c44';   // the platform green, as shipped
+  var bits=[];
+  bits.push((LOOK_HUB&&LOOK_HUB.hero_url)?'A photo is set.':'No photo yet — the title band uses the plain colour.');
+  bits.push(accent?('Accent '+esc(accent)+'.'):'Using the default CLPD green.');
+  state.innerHTML=esc(bits.join(' '))+' Learners see this on the hub straight away.';
+}
+async function doLookSave(){
+  var btn=$('look-save'), was=btn.textContent;
+  btn.disabled=true; btn.textContent='Saving…';
+  try{
+    var file=$('look-photo').files[0]||null;
+    if(file){
+      if(!/^image\//.test(file.type||'')) throw new Error('choose an image file');
+      var b64=await new Promise(function(ok,fail){
+        var r=new FileReader();
+        r.onload=function(){ok(String(r.result).split('base64,').pop());};
+        r.onerror=function(){fail(new Error('could not read that image'));};
+        r.readAsDataURL(file);
+      });
+      await api.hubHeroUpload(TOPIC.topic_id,b64,file.type);
+    }
+    // upsertHub replaces every field, so send the hub back whole with only the
+    // accent changed — anything omitted would be blanked.
+    var base=LOOK_HUB||{};
+    await api.hubSave(TOPIC.topic_id,Object.assign({},base,{
+      title:(base.title||TOPIC.title||TOPIC.topic_id),
+      accent:$('look-accent').value,
+    }));
+    $('look-photo').value='';
+    banner('Saved — the hub now uses that look.','ok');
+    loadLookAdmin();
+  }catch(e){ banner('Could not save the look: '+esc(e.message),'err'); }
+  finally{ btn.disabled=false; btn.textContent=was; }
+}
+async function doLookClear(){
+  if(!confirm('Remove the photo and go back to the default colour?')) return;
+  var btn=$('look-clear'), was=btn.textContent;
+  btn.disabled=true; btn.textContent='Resetting…';
+  try{
+    try{ await api.hubHeroClear(TOPIC.topic_id); }catch(e){ /* nothing uploaded */ }
+    var base=LOOK_HUB||{};
+    if(base.course_id) await api.hubSave(TOPIC.topic_id,Object.assign({},base,{
+      title:(base.title||TOPIC.title||TOPIC.topic_id), accent:'' }));
+    banner('The hub is back to the standard look.','ok');
+    loadLookAdmin();
+  }catch(e){ banner('Could not reset it: '+esc(e.message),'err'); }
   finally{ btn.disabled=false; btn.textContent=was; }
 }
 

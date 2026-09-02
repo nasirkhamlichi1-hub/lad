@@ -49,6 +49,11 @@
     #ladMsgBtn.has-unread .ladmsg-badge{animation:ladmsgPulse 1.7s ease-in-out infinite}
     #ladMsgPanel{position:fixed;right:0;top:0;height:100vh;width:420px;max-width:100vw;background:#0f1626;color:#e7ecf5;z-index:99999;box-shadow:-8px 0 40px rgba(0,0,0,.5);transform:translateX(102%);transition:transform .26s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif}
     #ladMsgPanel.on{transform:translateX(0)}
+    /* The panel is a bounded flex column, but every row (header, thread,
+       composer) lives inside this wrapper — so it has to be the flex column
+       too. Without this it grows to its content and pushes the composer below
+       the fold, which is why the bottom of a long thread was unreachable. */
+    #ladMsgInner{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}
     .ladmsg-hd{padding:15px 18px;border-bottom:1px solid #232c40;display:flex;align-items:center;gap:10px;flex-shrink:0}
     .ladmsg-hd h3{margin:0;font-size:15px;font-weight:700;flex:1}
     .ladmsg-x{background:none;border:none;color:#9aa6bf;font-size:22px;cursor:pointer;line-height:1}
@@ -56,7 +61,9 @@
     .ladmsg-filters{display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid #232c40;flex-shrink:0}
     .ladmsg-filters button{background:#1a2336;border:1px solid #2b364f;color:#aeb9d4;border-radius:14px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:inherit}
     .ladmsg-filters button.on{background:#0d7377;border-color:#0d7377;color:#fff}
-    .ladmsg-body{flex:1;overflow-y:auto;padding:8px 0}
+    .ladmsg-filters button.needs b{background:#ff4d6d;color:#fff;border-radius:9px;padding:0 5px;margin-left:5px;font-size:11px}
+    .ladmsg-filters button.needs.on b{background:rgba(255,255,255,.25)}
+    .ladmsg-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:8px 0}
     .ladmsg-row{padding:12px 18px;border-bottom:1px solid #1b2336;cursor:pointer}
     .ladmsg-row:hover{background:#161f33}
     .ladmsg-row.unread .ladmsg-row-subj{font-weight:700}
@@ -70,7 +77,7 @@
     .ladmsg-pill.pending{background:rgba(95,208,200,.16);color:#5fd0c8}
     .ladmsg-pill.resolved,.ladmsg-pill.closed{background:rgba(61,240,160,.16);color:#3df0a0}
     .ladmsg-meta{font-size:11px;color:#6b7794}
-    .ladmsg-thread{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+    .ladmsg-thread{flex:1 1 auto;min-height:0;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
     .ladmsg-msg{max-width:82%;padding:9px 13px;border-radius:13px;font-size:13.5px;line-height:1.45}
     .ladmsg-msg.them{background:#1c2740;align-self:flex-start;border-bottom-left-radius:4px}
     .ladmsg-msg.me{background:#0d7377;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
@@ -121,6 +128,7 @@
   async function refreshBadge() {
     try {
       const j = await api('/unread');
+      ST.waiting = Number(j.waiting) || 0;
       const b = document.getElementById('ladMsgBadge');
       if (b) { b.textContent = j.unread > 99 ? '99+' : j.unread; b.classList.toggle('on', j.unread > 0); }
       var btn = document.getElementById('ladMsgBtn'); if (btn) btn.classList.toggle('has-unread', j.unread > 0);
@@ -142,6 +150,9 @@
       const q = ST.admin ? ('?box=' + ST.box) : '';
       const j = await api('/conversations' + q);
       ST.admin = !!j.admin; ST.convs = j.conversations || [];
+      // The "Needs human" count is painted into the filter row, so it has to be
+      // in hand before the row is drawn — not a moment after it.
+      if (ST.admin) { try { await refreshBadge(); } catch (_) {} }
       renderList();
     } catch (e) {
       inner.querySelector('.ladmsg-body').innerHTML = '<div class="ladmsg-empty">Couldn\'t load messages.<br>' + esc(e.message) + '</div>';
@@ -151,9 +162,11 @@
 
   function renderList() {
     const inner = document.getElementById('ladMsgInner');
+    const waiting = Number(ST.waiting) || 0;
     const filters = ST.admin
       ? `<div class="ladmsg-filters">
            <button data-box="all" class="${ST.box === 'all' ? 'on' : ''}">All</button>
+           <button data-box="escalated" class="needs ${ST.box === 'escalated' ? 'on' : ''}">Needs human${waiting ? ' <b>' + waiting + '</b>' : ''}</button>
            <button data-box="unassigned" class="${ST.box === 'unassigned' ? 'on' : ''}">Unassigned</button>
            <button data-box="mine" class="${ST.box === 'mine' ? 'on' : ''}">Mine</button>
          </div>` : '';

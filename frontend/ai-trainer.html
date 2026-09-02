@@ -340,19 +340,78 @@ a{color:inherit;text-decoration:none}
   }
 
   // ─── The turn loop ───────────────────────────────────────────────────
+  // Ask for the turn as a stream: the server pushes the first sentence the
+  // moment the model has written it, so the trainer starts speaking while the
+  // rest of its answer is still being composed. Falls back to a plain reply.
+  function streamTurn(onFirst){
+    return fetch((window.LAD_API_BASE||'')+'/api/v1/trainer/turn',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+api.getToken()},
+      body:JSON.stringify({sessionId:S.session.sessionId,history:S.history,perception:{present:true},stream:1})
+    }).then(function(resp){
+      if(!resp.ok) throw new Error('turn '+resp.status);
+      if(!resp.body||!resp.body.getReader) return resp.json();
+      var reader=resp.body.getReader(), dec=new TextDecoder(), buf='', done=null;
+      function pump(){
+        return reader.read().then(function(res){
+          if(res.value) buf+=dec.decode(res.value,{stream:true});
+          var nl;
+          while((nl=buf.indexOf('\n'))>=0){
+            var line=buf.slice(0,nl).trim(); buf=buf.slice(nl+1);
+            if(!line) continue;
+            var ev; try{ ev=JSON.parse(line); }catch(e){ continue; }
+            if(ev.phase==='first'){ onFirst&&onFirst(ev.say); }
+            else { done=ev; }
+          }
+          if(res.done) return done||{say:'',coverage:null};
+          return pump();
+        });
+      }
+      return pump();
+    });
+  }
+
   function nextTurn(){
     if(S.busy||S.ended)return;S.busy=true;stopListening();stopSpeaking();
     setState('thinking','Thinking');
-    var p=DEMO?Promise.resolve(localBrain(S.selected,S.history)):api.trainerTurn(S.session.sessionId,S.history,{present:true});
+    var spokeFirst=null, turnId=(S.turnId||0)+1; S.turnId=turnId;
+    var p=DEMO
+      ? Promise.resolve(localBrain(S.selected,S.history))
+      : streamTurn(function(first){
+          // The opener is spoken here, before the full reply exists.
+          if(S.ended||turnId!==S.turnId) return;
+          spokeFirst=first;
+          addLine('trainer','Trainer',first);
+          speak(first,null);
+        });
     p.then(function(r){
       S.busy=false;
+      if(S.ended||turnId!==S.turnId) return;
       S.history.push({role:'trainer',text:r.say});
-      addLine('trainer','Trainer',r.say);
       paintCoverage(r.coverage);
-      speak(r.say,function(){
-        if(r.complete){finish(true);}else{startListening();}
-      });
+      // Say only what has not been said yet, and keep the transcript honest.
+      var rest=r.say||'';
+      if(spokeFirst && rest.indexOf(spokeFirst)===0){
+        rest=rest.slice(spokeFirst.length).trim();
+        if(rest) addLine('trainer','Trainer',rest);
+      } else if(spokeFirst){
+        addLine('trainer','Trainer',rest);
+      } else {
+        addLine('trainer','Trainer',rest);
+      }
+      var after=function(){ if(r.complete){finish(true);}else{startListening();} };
+      if(rest){ speakQueued(rest,after); } else { whenSpeechIdle(after); }
     }).catch(function(e){S.busy=false;toast('Trainer error: '+(e.message||e));startListening();});
+  }
+
+  // Speak text WITHOUT cutting off the opener that is already playing.
+  function speakQueued(text,done){
+    var wait=S.speaking?S.speaking.catch(function(){}):Promise.resolve();
+    wait.then(function(){ if(!S.ended) speak(text,done); else done&&done(); });
+  }
+  function whenSpeechIdle(done){
+    var wait=S.speaking?S.speaking.catch(function(){}):Promise.resolve();
+    wait.then(function(){ done&&done(); });
   }
 
   function addLine(cls,who,text){
@@ -372,10 +431,16 @@ a{color:inherit;text-decoration:none}
   // The ElevenLabs voice (same stack as the Wonder Academy build) when the
   // server has the key; the browser's built-in voice otherwise. Either way
   // the orb goes green while the trainer talks.
+  // S.speaking resolves when the current utterance has finished, so a follow-on
+  // line can be queued behind it instead of cutting it off mid-word.
   function speak(text,done){
     var voiceOn=!DEMO&&S.status&&S.status.engines&&S.status.engines.voice;
-    if(voiceOn){ speakEleven(text,done); return; }
-    speakBrowser(text,done);
+    var p=new Promise(function(resolve){
+      var fin=function(){ try{ done&&done(); } finally { resolve(); } };
+      if(voiceOn){ speakEleven(text,fin); } else { speakBrowser(text,fin); }
+    });
+    S.speaking=p;
+    return p;
   }
   // Fetch one chunk of speech as audio the browser can play.
   function ttsChunk(text){

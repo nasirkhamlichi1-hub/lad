@@ -251,6 +251,12 @@
     hubGet: (courseId) => ENABLED ? call('GET', '/api/v1/hubs/' + encodeURIComponent(courseId)) : Promise.resolve(null),
     hubSave: (courseId, hub) => ENABLED ? call('PUT', '/api/v1/hubs/' + encodeURIComponent(courseId), hub)
                                         : Promise.resolve(hub),
+    hubHeroUpload: (courseId, data, mime) => ENABLED
+      ? call('POST', '/api/v1/hubs/' + encodeURIComponent(courseId) + '/hero', { data, mime })
+      : Promise.resolve({ ok: true }),
+    hubHeroClear: (courseId) => ENABLED
+      ? call('DELETE', '/api/v1/hubs/' + encodeURIComponent(courseId) + '/hero')
+      : Promise.resolve({ ok: true }),
 
     // ─── Admin: user management ──────────────────────────────────────
     listUsers: (filters) => {
