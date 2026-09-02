@@ -325,10 +325,12 @@ router.post('/tts', requireAuth, async (req, res, next) => {
     }
     const text = String((req.body && req.body.text) || '').slice(0, 900).trim();
     if (!text) return res.status(400).json({ error: 'text is required' });
-    const audio = await elevenlabs.tts(text);
+    const audio = await elevenlabs.ttsStream(text);
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Cache-Control', 'no-store');
-    res.send(audio);
+    // Pipe as it arrives — the browser starts playing mid-generation.
+    audio.on('error', () => { try { res.end(); } catch (_) {} });
+    audio.pipe(res);
   } catch (e) {
     if (e.status === 502 || e.status === 501) return res.status(e.status).json({ error: e.message });
     next(e);
