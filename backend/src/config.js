@@ -92,9 +92,10 @@ module.exports = {
   elevenlabs: {
     apiKey:  process.env.ELEVENLABS_API_KEY || '',
     baseUrl: process.env.ELEVENLABS_BASE_URL || 'https://api.elevenlabs.io',
-    // "Rachel" — a stock ElevenLabs voice — so a deploy only needs the key;
-    // override ELEVENLABS_VOICE_ID to use the agent voice from Wonder Academy.
-    voiceId: process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM',
+    // The Department's chosen trainer voice. Set ELEVENLABS_VOICE_ID to
+    // override it without a deploy; a stock voice is no longer the default,
+    // so a fresh environment speaks in the right voice from the first turn.
+    voiceId: process.env.ELEVENLABS_VOICE_ID || '8gNL8wXI7PQOc82yBLOg',
     // Flash is the low-latency voice model — the difference between a reply
     // that lands in half a second and one that lands in three.
     modelId: process.env.ELEVENLABS_MODEL_ID || 'eleven_flash_v2_5',
@@ -115,7 +116,14 @@ module.exports = {
 
   // Claude as the trainer brain (scalable engine). Reuses anthropic.apiKey.
   trainerBrain: {
-    model:     process.env.TRAINER_BRAIN_MODEL || process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
+    // Deliberately NOT inherited from ANTHROPIC_MODEL. The drafting and
+    // accreditation-review features want the strongest model available; a
+    // spoken teaching turn wants the quickest one, because the lawyer is
+    // sitting in silence until it arrives. Haiku answers a one-or-two
+    // sentence turn in a fraction of Sonnet's time, and the trainer's
+    // judgement — did they understand? — is a small, well-scoped call.
+    // Set TRAINER_BRAIN_MODEL to put it back on a larger model.
+    model:     process.env.TRAINER_BRAIN_MODEL || 'claude-haiku-4-5',
     // A spoken turn is one or two sentences. Capping the budget keeps the
     // model from generating — and the lawyer from waiting through — a speech.
     maxTokens: parseInt(process.env.TRAINER_BRAIN_MAX_TOKENS || '200', 10),
