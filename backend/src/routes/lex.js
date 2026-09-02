@@ -17,6 +17,22 @@ const maryamLocal = require('../services/maryam-local');
 const log = require('../logger');
 const { requireAuth, optionalAuth } = require('../middleware/auth');
 
+// Anything that looks like a credential is scrubbed before it can leave this
+// process. /lex/health is PUBLIC, and a provider's error text quotes back what
+// we sent it — so a key pasted into the wrong setting (e.g. the model name)
+// would otherwise be republished to the world. Redact, always, everywhere.
+const SECRET_RE = /\b(sk-[A-Za-z0-9_\-]{6,}|xi-[A-Za-z0-9_\-]{12,}|[A-Za-z0-9_\-]{40,})\b/g;
+function redact(v) {
+  return String(v == null ? '' : v).replace(SECRET_RE, '[redacted]');
+}
+// A model name is config, not a secret — but if someone pastes a key into it,
+// this keeps the value from being echoed while still naming the mistake.
+function safeModelName(v) {
+  const s = String(v || '');
+  if (/^sk-|^xi-/.test(s) || s.length > 60) return '[redacted — this looks like an API key, not a model name]';
+  return s;
+}
+
 // Shared AiModel diagnostic (no key, no secrets) — runs a live 1-token probe
 // and reports the exact failure so "Maryam isn't working" can be pinpointed.
 async function aimodelDiagnostic() {
@@ -32,7 +48,8 @@ async function aimodelDiagnostic() {
     resolvedPath,
     isTunnel: /trycloudflare\.com|ngrok|loca\.lt/i.test(host),
     isAzure,
-    deployment: s.deployment,
+    deployment: safeModelName(s.deployment),
+    anthropicModel: safeModelName(config.anthropic.model),
     apiVersion: s.apiVersion,
     hasKey: !!s.key,
     claudeFallback: !!config.anthropic.apiKey,
@@ -43,9 +60,12 @@ async function aimodelDiagnostic() {
       const text = await aimodel.chat({ messages: [{ role: 'user', content: 'Reply with the single word OK.' }], maxTokens: 5, temperature: 0 });
       out.probe = { ok: true, sample: (text || '').slice(0, 40) };
     } catch (e) {
+      const raw = typeof e.detail === 'object'
+        ? (e.detail && e.detail.error ? e.detail.error.message : JSON.stringify(e.detail))
+        : e.detail;
       out.probe = { ok: false, code: e.code || 'ERROR', httpStatus: e.status,
-        message: e.message,
-        detail: typeof e.detail === 'object' ? (e.detail.error ? e.detail.error.message : JSON.stringify(e.detail).slice(0, 300)) : String(e.detail || '').slice(0, 300) };
+        message: redact(e.message),
+        detail: redact(raw).slice(0, 300) };
     }
   }
   return out;
