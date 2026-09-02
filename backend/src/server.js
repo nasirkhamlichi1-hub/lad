@@ -112,6 +112,7 @@ app.use(compression());
 // for that endpoint only; everything else stays at the tight 2mb DoS guard.
 app.use('/api/v1/accreditations', express.json({ limit: '12mb' }));
 app.use('/api/v1/courses', express.json({ limit: '16mb' })); // inline course-material uploads
+app.use('/api/v1/hubs', express.json({ limit: '6mb' }));     // a hub's hero photo, base64
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
