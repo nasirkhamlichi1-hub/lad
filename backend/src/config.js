@@ -81,6 +81,20 @@ module.exports = {
     name:     process.env.ANAM_AVATAR_NAME || 'CLPD Trainer',
   },
 
+  // ─── ElevenLabs (the trainer's VOICE) ────────────────────────────────
+  // The same voice stack as the Wonder Academy build. When ELEVENLABS_API_KEY
+  // is set, the trainer speaks through ElevenLabs TTS (minted server-side and
+  // streamed to the browser — the key never leaves the server). If unset, the
+  // browser's built-in voice carries the lesson.
+  elevenlabs: {
+    apiKey:  process.env.ELEVENLABS_API_KEY || '',
+    baseUrl: process.env.ELEVENLABS_BASE_URL || 'https://api.elevenlabs.io',
+    // "Rachel" — a stock ElevenLabs voice — so a deploy only needs the key;
+    // override ELEVENLABS_VOICE_ID to use the agent voice from Wonder Academy.
+    voiceId: process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM',
+    modelId: process.env.ELEVENLABS_MODEL_ID || 'eleven_multilingual_v2',
+  },
+
   // MorphCast Emotion AI — optional in-browser perception ("eyes") provider.
   // The licence key is a CLIENT-side key (used by the browser SDK), so it is
   // surfaced to the frontend via /trainer/status. If unset, the browser engine
