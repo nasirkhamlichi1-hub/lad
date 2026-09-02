@@ -69,6 +69,9 @@
 
     if (res.status === 401) {
       setToken('');
+      // Tell the page the session is gone, so it can say so instead of
+      // showing a signed-in header whose every action fails.
+      try { document.dispatchEvent(new CustomEvent('lad:unauthenticated')); } catch (_) {}
       // Let the caller decide what to do on auth failure. The portal pages
       // already have a sign-in modal; bouncing to UAE Pass directly is wrong
       // when UAE Pass isn't configured or when the user came in via password.

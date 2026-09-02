@@ -18,6 +18,18 @@
 (function () {
   'use strict';
 
+  // ─── Canonical host ────────────────────────────────────────────────
+  // The apex (legalaffairstraining.com) and www are DIFFERENT origins to
+  // the browser, each with its own localStorage — so a sign-in on one
+  // does not exist on the other. Anyone landing on the apex used to see
+  // a signed-in-looking page whose every API call failed Unauthenticated.
+  // One canonical host means one session. Runs before anything else.
+  if (typeof location !== 'undefined' && location.hostname === 'legalaffairstraining.com') {
+    location.replace('https://www.legalaffairstraining.com' +
+      location.pathname + location.search + location.hash);
+    return;
+  }
+
   // ─── EDIT THIS ─────────────────────────────────────────────────────
   // Production backend (Render, Frankfurt — Docker, persistent disk):
   window.LAD_API_BASE = 'https://lad-clpd-backend.onrender.com';

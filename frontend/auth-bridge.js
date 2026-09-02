@@ -92,4 +92,48 @@
     // role portal if they're still authenticated elsewhere.
     window.location.href = '/';
   };
+
+  // ─── 4. When the API says the session is gone, SAY SO ─────────────
+  // api-client clears the stored token on any 401 and fires this event.
+  // Without it, the page keeps showing the signed-in header (name and
+  // role are cached separately) while every action fails with the bare
+  // word "Unauthenticated" — which reads as a bug, not a timeout.
+  var expiredShown = false;
+  document.addEventListener('lad:unauthenticated', function () {
+    if (expiredShown) return;
+    expiredShown = true;
+    var show = function () {
+      if (!document.body) return;
+      var bar = document.createElement('div');
+      bar.id = 'lad-session-expired';
+      bar.setAttribute('style',
+        'position:fixed;top:0;left:0;right:0;z-index:99999;' +
+        'background:#0a1f16;color:#fff;' +
+        "font:600 13.5px/1.4 Inter,system-ui,sans-serif;" +
+        'padding:12px 18px;display:flex;gap:14px;align-items:center;' +
+        'justify-content:center;flex-wrap:wrap;box-shadow:0 4px 14px rgba(0,0,0,.3)');
+      var msg = document.createElement('span');
+      msg.textContent = 'Your session has expired — sign in again to continue.';
+      var btn = document.createElement('button');
+      btn.textContent = 'Sign in';
+      btn.setAttribute('style',
+        'background:#00925A;color:#fff;border:none;border-radius:8px;' +
+        "padding:8px 18px;font:600 13px Inter,system-ui,sans-serif;cursor:pointer");
+      btn.onclick = function () {
+        try {
+          localStorage.removeItem('lad_token');
+          localStorage.removeItem('lad_role');
+        } catch (_) {}
+        // #public keeps index.html on the landing (with its sign-in)
+        // even if a stale token is still lying around. window.top so the
+        // whole CRM navigates when this fires inside an embedded pane.
+        try { window.top.location.href = 'index.html#public'; }
+        catch (_) { window.location.href = 'index.html#public'; }
+      };
+      bar.appendChild(msg); bar.appendChild(btn);
+      document.body.appendChild(bar);
+    };
+    if (document.body) show();
+    else document.addEventListener('DOMContentLoaded', show);
+  });
 })();

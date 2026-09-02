@@ -25,6 +25,13 @@
 </div>
 <script>
 (function () {
+  // Canonical host first: the apex and www are separate origins with
+  // separate sign-ins. Everything lives on www — one host, one session.
+  if (location.hostname === 'legalaffairstraining.com') {
+    location.replace('https://www.legalaffairstraining.com' +
+      location.pathname + location.search + location.hash);
+    return;
+  }
   // The single canonical entry point. Two paths:
   //  1. Signed in already → route straight to the role-appropriate portal
   //  2. Not signed in     → load the public landing where they sign in
