@@ -15,6 +15,7 @@ try {
   process.exit(1);
 }
 
+const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -158,11 +159,53 @@ const authLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req.ip || '') + '|' + String((req.body && req.body.email) || '').toLowerCase(),
+  // Keyed on IP ALONE. Including the email in the key gave a password-sprayer a
+  // fresh ten-attempt budget for every account they tried, and the login route
+  // also accepts `username`, which never appeared in the key at all.
+  keyGenerator: (req) => req.ip || 'unknown',
   message: { error: 'Too many attempts. Please wait a few minutes and try again.', code: 'RATE_LIMITED' },
 });
 for (const p of ['/api/v1/auth/login', '/api/v1/auth/staff/login', '/api/v1/auth/lawyer/login', '/api/v1/auth/change-password', '/api/v1/auth/request-reset', '/api/v1/auth/reset-password']) {
   app.use(p, authLimiter);
+}
+
+// ─── AI budget limiter ──────────────────────────────────────────────────
+// Every route below spends real money per call — a model completion, or an
+// ElevenLabs synthesis. On the general 120/minute budget one signed-in account
+// could drive ~170,000 model calls a day, so these get their own, much smaller
+// allowance, keyed on the ACCOUNT rather than the IP (an office behind one
+// address is many legitimate users; one account hammering the trainer is not).
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: Number(process.env.AI_RATE_LIMIT_MAX || 30),
+  standardHeaders: true,
+  legacyHeaders: false,
+  // These limiters run BEFORE the routers, so requireAuth has not populated
+  // req.user yet. The bearer token is the next best per-account key: it is
+  // issued per session, so one account cannot escape its budget by changing
+  // network, and two colleagues behind one office address get their own.
+  keyGenerator: (req) => {
+    const h = req.headers.authorization || '';
+    if (h.startsWith('Bearer ')) {
+      return 'tok:' + crypto.createHash('sha256').update(h.slice(7)).digest('hex').slice(0, 32);
+    }
+    return 'ip:' + (req.ip || 'unknown');
+  },
+  message: {
+    error: 'You are sending requests faster than the assistant can answer. Please wait a moment.',
+    code: 'AI_RATE_LIMITED',
+  },
+});
+for (const p of [
+  '/api/v1/lex/chat',
+  '/api/v1/assistant/command',
+  '/api/v1/trainer/turn',
+  '/api/v1/trainer/tts',
+  '/api/v1/skills/analyze',
+  '/api/v1/learning/draft-lesson',
+  '/api/v1/lawyers/copilot',
+]) {
+  app.use(p, aiLimiter);
 }
 
 // ─── Health & info ──────────────────────────────────────────────────────

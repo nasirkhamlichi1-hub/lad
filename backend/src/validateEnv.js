@@ -8,6 +8,10 @@ const REQUIRED_IN_PROD = [
   'JWT_SECRET',
   'CORS_ORIGIN',
   'DATABASE_URL',
+  // Where a successful UAE Pass sign-in lands. Unset, config.js falls back to
+  // http://localhost:8080/router.html and every production sign-in redirects
+  // the user to their own machine.
+  'FRONTEND_POST_LOGIN_URL',
 ];
 
 // Values that must NEVER appear in production. These are the dev defaults
@@ -32,8 +36,14 @@ class EnvError extends Error {
   }
 }
 
+// Anything that is not explicitly a development or test environment is treated
+// as production. The previous test — NODE_ENV === 'production' exactly — meant
+// a typo, a different orchestrator, or an unset variable silently switched off
+// every check below AND let the JWT secret fall back to a published default,
+// which would let anyone forge a super-admin token. Fail closed instead.
 function isProduction() {
-  return (process.env.NODE_ENV || 'development').toLowerCase() === 'production';
+  const env = (process.env.NODE_ENV || '').toLowerCase().trim();
+  return !(env === 'development' || env === 'dev' || env === 'test' || env === 'local');
 }
 
 function validateEnv() {
@@ -43,7 +53,10 @@ function validateEnv() {
 
   // JWT secret must be long enough to be cryptographically meaningful
   if (env.JWT_SECRET && env.JWT_SECRET.length < 32) {
-    warnings.push(`JWT_SECRET is only ${env.JWT_SECRET.length} chars — use at least 32 (48+ recommended). Generate with: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`);
+    const msg = `JWT_SECRET is only ${env.JWT_SECRET.length} chars — use at least 32 (48+ recommended). Generate with: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`;
+    // A short signing key is a warning in development and a refusal in
+    // production — it is the one secret that, if guessed, forges any role.
+    if (isProduction()) errors.push(msg); else warnings.push(msg);
   }
 
   if (isProduction()) {

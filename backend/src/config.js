@@ -36,9 +36,17 @@ if (!clientId || !clientSecret) {
   console.warn(`[config] UAE Pass credentials missing for env='${env}'. /auth/uaepass/* routes will return 503.`);
 }
 
+// Development mode has to be asked for explicitly. It relaxes real controls —
+// HSTS off, localhost CORS allowed, the playground and static frontend mounted
+// with 'unsafe-eval' — so an unset or misspelled NODE_ENV must never turn them
+// on by accident. Anything that is not a named development value is treated as
+// production. (validateEnv.js applies the same test.)
+const _env = (process.env.NODE_ENV || '').toLowerCase().trim();
+const _isDev = _env === 'development' || _env === 'dev' || _env === 'local' || _env === 'test';
+
 module.exports = {
-  nodeEnv:  process.env.NODE_ENV || 'development',
-  isDev:    (process.env.NODE_ENV || 'development') === 'development',
+  nodeEnv:  process.env.NODE_ENV || 'production',
+  isDev:    _isDev,
   port:     parseInt(process.env.PORT || '4000', 10),
   corsOrigin: process.env.CORS_ORIGIN || process.env.CORS_ORIGINS || 'http://localhost:8080',
   publicApiBase: process.env.PUBLIC_API_BASE || 'http://localhost:4000',
