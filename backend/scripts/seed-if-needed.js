@@ -30,6 +30,15 @@ function setMarker(v) {
   } catch (_) {}
 }
 
+// Is the source the seed reads actually present in this build?
+function sourcePresent() {
+  const fs = require('fs');
+  return [
+    path.join(__dirname, '..', 'seed-data', 'Blank_data_25.xlsx'),
+    path.join(__dirname, '..', 'data', 'Blank_data_25.xlsx'),
+  ].some((p) => fs.existsSync(p));
+}
+
 function lawyerCount() {
   try { return db.prepare('SELECT COUNT(*) n FROM lawyers').get().n; } catch (_) { return 0; }
 }
@@ -45,6 +54,11 @@ const res = spawnSync('node', [path.join(__dirname, 'seed.js')], { stdio: 'inher
 if (res.status === 0) {
   setMarker(SEED_VERSION);
   console.log(`[seed-if-needed] done — marker set to ${SEED_VERSION}.`);
+} else if (!sourcePresent()) {
+  // The roster spreadsheet is not in this deployment. The lawyer roll is also
+  // loaded by migration 013, so this is belt-and-braces, not the only path —
+  // say so once and move on rather than failing identically on every restart.
+  console.log('[seed-if-needed] no roster spreadsheet in this build — skipping (migration 013 carries the roll).');
 } else {
   console.error('[seed-if-needed] seed failed; leaving marker unset to retry next boot. Server will still start.');
 }
