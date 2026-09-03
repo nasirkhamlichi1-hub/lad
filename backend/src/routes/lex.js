@@ -25,6 +25,16 @@ const SECRET_RE = /\b(sk-[A-Za-z0-9_\-]{6,}|xi-[A-Za-z0-9_\-]{12,}|[A-Za-z0-9_\-
 function redact(v) {
   return String(v == null ? '' : v).replace(SECRET_RE, '[redacted]');
 }
+// Flatten a provider error into one string so it can be redacted before it is
+// logged or returned. e.detail is the raw upstream body and may be an object.
+function detailText(e) {
+  if (!e) return '';
+  const d = e.detail;
+  if (d == null) return String(e.message || '');
+  if (typeof d === 'string') return d;
+  if (d.error && d.error.message) return String(d.error.message);
+  try { return JSON.stringify(d); } catch (_) { return String(e.message || ''); }
+}
 // A model name is config, not a secret — but if someone pastes a key into it,
 // this keeps the value from being echoed while still naming the mistake.
 function safeModelName(v) {
@@ -113,9 +123,11 @@ router.post('/chat', requireAuth, async (req, res, next) => {
       });
       return res.json(asAnthropic(text, 'aimodel'));
     } catch (e) {
-      log.error('aimodel_chat', { status: e.status, detail: e.detail || e.message });
+      // Provider error bodies quote request context back at you, so they are
+      // redacted before they reach a log aggregator or a caller.
+      log.error('aimodel_chat', { status: e.status, detail: redact(detailText(e)).slice(0, 500) });
       // Fall through to Claude if available, otherwise the local assistant.
-      if (!config.anthropic.apiKey) return localAnswer() || res.status(502).json({ error: 'AiModel call failed', detail: e.detail || e.message });
+      if (!config.anthropic.apiKey) return localAnswer() || res.status(502).json({ error: 'AiModel call failed', detail: redact(detailText(e)).slice(0, 300) });
     }
   }
 
@@ -139,7 +151,9 @@ router.post('/chat', requireAuth, async (req, res, next) => {
       validateStatus: () => true,
     });
     if (r.status !== 200) {
-      return localAnswer() || res.status(r.status).json({ error: 'Anthropic API error', detail: r.data });
+      const detail = redact(typeof r.data === 'string' ? r.data : JSON.stringify(r.data || {})).slice(0, 300);
+      log.error('anthropic_chat', { status: r.status, detail });
+      return localAnswer() || res.status(r.status).json({ error: 'Anthropic API error', detail });
     }
     res.json(Object.assign({ engine: 'claude' }, r.data));
   } catch (e) { return localAnswer() || next(e); }
@@ -153,10 +167,14 @@ router.get('/status', requireAuth, async (_req, res) => {
   res.json(await aimodelDiagnostic());
 });
 
-// GET /api/v1/lex/health — same diagnostic, public, so it can be opened
-// directly in a browser tab (no auth header needed). Leaks no credentials.
-router.get('/health', optionalAuth, async (_req, res) => {
-  res.json(await aimodelDiagnostic());
+// GET /api/v1/lex/health — a liveness answer for uptime monitors and for
+// opening in a browser tab. It used to return the full diagnostic to anyone,
+// which published the internal endpoint host, the deployment name and the API
+// version, and fired a live model call on every request — an open, unmetered
+// way to spend the Department's AI budget. The detail now lives behind
+// /lex/status, which requires a signed-in caller.
+router.get('/health', (_req, res) => {
+  res.json({ service: 'lex', configured: aimodel.configured(), status: 'ok' });
 });
 
 // GET /api/v1/lex/models — which models this key may use, fastest first.

@@ -27,6 +27,30 @@ const isAdmin = (u) => !!u && ADMIN_ROLES.includes(u.role);
 const PRICE = Number(process.env.CREDIT_PRICE_AED || 210); // AED per credit
 const rid = (p) => p + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8);
 
+// ─── Instant card checkout: OFF until a real payment gateway is wired ───
+// /checkout and /firm/checkout credit a balance the moment they are called.
+// There is no payment service provider behind them — the authorisation is
+// simulated. Left enabled, any signed-in lawyer could mint credits for
+// themselves, spend them on bookings, and have the amount appear as collected
+// revenue in the VAT and credits reports.
+//
+// So they are disabled unless CREDIT_CHECKOUT_ENABLED is explicitly 'true',
+// which should only ever be set once a PSP webhook confirms settlement before
+// grant() is called. With them off, buyers use the request-and-confirm flow
+// that already exists: POST /credits/buy raises a request, and LAD Admin
+// confirms it against the money actually received.
+const CHECKOUT_ENABLED = String(process.env.CREDIT_CHECKOUT_ENABLED || '').toLowerCase() === 'true';
+const CHECKOUT_OFF = {
+  error: 'Instant card payment is not available.',
+  message: 'Card checkout is not connected to a payment gateway yet. Request your credits and LAD Admin will confirm them once payment is received.',
+  useInstead: 'POST /api/v1/credits/buy',
+};
+
+// The largest single pool-to-lawyer transfer. Well above any genuine
+// assignment; it exists so one malformed or malicious request cannot move an
+// absurd figure through the firm ledger in one go.
+const MAX_ASSIGN = 10000;
+
 function lawyerOf(req) {
   if (req.user.user_type === 'lawyer') return store.getLawyerById(req.user.sub);
   if (req.user.email) return store.getLawyerByEmail(req.user.email);
@@ -111,6 +135,7 @@ router.post('/buy', requireAuth, (req, res) => {
 // immediately (simulated PSP authorisation) so they can buy mid-booking and
 // continue. Records a completed purchase transaction for the ledger/audit.
 router.post('/checkout', requireAuth, (req, res) => {
+  if (!CHECKOUT_ENABLED) return res.status(503).json(CHECKOUT_OFF);
   const lawyer = lawyerOf(req);
   if (!lawyer) return res.status(404).json({ error: 'No lawyer account for this user.' });
   const credits = Math.round(Number((req.body && (req.body.credits || req.body.amount)) || 0));
@@ -250,6 +275,17 @@ router.post('/topup', requireAuth, (req, res) => {
   res.json({ ok: true, email: lawyer.email || email, balance, type });
 });
 
+// POST /credits/assign — move credits BETWEEN a firm's pool and one of its
+// lawyers. This is a transfer, never a grant: no credit is created here, and
+// the total held by the firm plus its lawyers does not change.
+//
+// It used to clamp the pool at zero (`MAX(0, pool - credits)`) while granting
+// the lawyer the full amount regardless — so a compliance officer with 5
+// credits in the pool could assign 100,000 to a lawyer and the difference came
+// out of nowhere. Credits are prepaid money and appear as collected revenue in
+// the VAT report, so that was a way to invent revenue. The pool movement and
+// the lawyer movement now happen in one transaction, and the transaction fails
+// if the source cannot cover it.
 router.post('/assign', requireAuth, (req, res) => {
   const u = req.user;
   if (u.role !== 'firm_compliance_officer' && !isAdmin(u)) return res.status(403).json({ error: 'Firm officers or admins only' });
@@ -257,22 +293,89 @@ router.post('/assign', requireAuth, (req, res) => {
   const lawyer = store.getLawyerById((b.lawyerId || b.id || '').toString());
   const credits = Math.round(Number(b.credits || b.amount) || 0);
   if (!lawyer || !credits) return res.status(400).json({ error: 'lawyerId and credits are required' });
-  if (u.role === 'firm_compliance_officer' && lawyer.firm_id !== u.firm_id) return res.status(403).json({ error: 'That lawyer is not in your firm' });
-  const balance = grant(lawyer, credits, { type: 'transfer', description: credits >= 0 ? 'Assigned from firm pool' : 'Returned to firm pool', method: 'firm', actor: u });
-  // Move the credits between the firm pool and the lawyer, and record it on
-  // the firm ledger. Positive = assign out of pool; negative = return to pool.
-  // Non-blocking: clamp at 0 so legacy firms with no pool aren't stuck.
-  if (lawyer.firm_id && credits !== 0) {
-    try {
-      const name = `${(lawyer.first_name || '')} ${(lawyer.last_name || '')}`.trim();
-      db.prepare('UPDATE firms SET credit_pool = MAX(0, COALESCE(credit_pool,0) - ?) WHERE id = ?').run(credits, lawyer.firm_id);
+  if (!Number.isFinite(credits) || Math.abs(credits) > MAX_ASSIGN) {
+    return res.status(400).json({ error: `A single assignment may move at most ${MAX_ASSIGN} credits.` });
+  }
+  // A compliance officer only ever touches their own firm's lawyers. An admin
+  // acting on a firm still moves that firm's pool, not some other firm's.
+  if (u.role === 'firm_compliance_officer' && lawyer.firm_id !== u.firm_id) {
+    return res.status(403).json({ error: 'That lawyer is not in your firm' });
+  }
+  if (!lawyer.firm_id) {
+    return res.status(400).json({ error: 'This lawyer is not attached to a firm, so there is no pool to assign from.' });
+  }
+
+  const name = `${(lawyer.first_name || '')} ${(lawyer.last_name || '')}`.trim();
+  let balance;
+  try {
+    balance = db.transaction(() => {
+      if (credits > 0) {
+        // Pool → lawyer. Conditional: the pool must actually hold the credits.
+        const moved = db.prepare(
+          'UPDATE firms SET credit_pool = credit_pool - ? WHERE id = ? AND COALESCE(credit_pool,0) >= ?'
+        ).run(credits, lawyer.firm_id, credits);
+        if (moved.changes !== 1) {
+          const pool = db.prepare('SELECT COALESCE(credit_pool,0) p FROM firms WHERE id = ?').get(lawyer.firm_id);
+          const e = new Error('insufficient_pool');
+          e.code = 'insufficient_pool';
+          e.pool = pool ? pool.p : 0;
+          throw e;
+        }
+      } else {
+        // Lawyer → pool. The lawyer must actually hold what is being taken back.
+        const taken = db.prepare(
+          'UPDATE lawyers SET credit_balance = credit_balance - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND COALESCE(credit_balance,0) >= ?'
+        ).run(-credits, lawyer.id, -credits);
+        if (taken.changes !== 1) {
+          const e = new Error('insufficient_balance');
+          e.code = 'insufficient_balance';
+          e.balance = Number(lawyer.credit_balance) || 0;
+          throw e;
+        }
+        db.prepare('UPDATE firms SET credit_pool = COALESCE(credit_pool,0) + ? WHERE id = ?').run(-credits, lawyer.firm_id);
+      }
+
+      // Only now, with the source debited, is the other side credited. For a
+      // return the lawyer was already debited above, so grant() is called for
+      // the assign direction only; both directions write their own ledger row.
+      const out = credits > 0
+        ? grant(lawyer, credits, { type: 'transfer', description: 'Assigned from firm pool', method: 'firm', actor: u })
+        : (function () {
+            const txId = rid('TX-');
+            try {
+              db.prepare(
+                `INSERT INTO credit_transactions (id, lawyer_id, type, amount, aed_amount, description, payment_method, status)
+                 VALUES (?,?,?,?,?,?,?, 'completed')`
+              ).run(txId, lawyer.id, 'transfer', credits, 0, 'Returned to firm pool', 'firm');
+            } catch (_) {}
+            const row = db.prepare('SELECT credit_balance FROM lawyers WHERE id = ?').get(lawyer.id);
+            return row ? Number(row.credit_balance) || 0 : 0;
+          })();
+
       db.prepare(
         `INSERT INTO firm_credit_transactions (id, firm_id, type, amount, description, lawyer_id)
          VALUES (?,?,?,?,?,?)`
       ).run(rid('FTX-'), lawyer.firm_id, credits > 0 ? 'assign' : 'refund', -credits,
         credits > 0 ? `Assigned ${credits} credits to ${name}` : `Returned ${-credits} credits from ${name}`, lawyer.id);
-    } catch (_) {}
+
+      return out;
+    })();
+  } catch (e) {
+    if (e.code === 'insufficient_pool') {
+      return res.status(402).json({
+        error: 'insufficient_pool', pool: e.pool, requested: credits,
+        message: `Your firm's pool holds ${e.pool} credit${e.pool === 1 ? '' : 's'} — not enough to assign ${credits}. Purchase more credits first.`,
+      });
+    }
+    if (e.code === 'insufficient_balance') {
+      return res.status(402).json({
+        error: 'insufficient_balance', balance: e.balance, requested: -credits,
+        message: `${name || 'That lawyer'} holds ${e.balance} credit${e.balance === 1 ? '' : 's'} — you cannot take back ${-credits}.`,
+      });
+    }
+    throw e;
   }
+
   res.json({ ok: true, lawyerId: lawyer.id, balance });
 });
 
@@ -322,6 +425,7 @@ router.get('/firm', requireAuth, (req, res) => {
 // POST /credits/firm/checkout — instant card purchase into the firm pool
 // (simulated PSP authorisation), mirroring the lawyer /checkout flow.
 router.post('/firm/checkout', requireAuth, (req, res) => {
+  if (!CHECKOUT_ENABLED) return res.status(503).json(CHECKOUT_OFF);
   if (!canFirm(req.user)) return res.status(403).json({ error: 'Firm officers or admins only' });
   const firmId = firmIdOf(req, (req.body && req.body.firmId || '').toString());
   if (!firmId) return res.status(400).json({ error: 'No firm context for this user.' });

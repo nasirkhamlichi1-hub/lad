@@ -234,7 +234,14 @@ router.post('/', requireAuth, (req, res) => {
             ).run('FTX-' + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8), lawyer.firm_id, 'use', -cost, 0, desc, lawyer_id);
           } catch (_) {}
         } else {
-          db.prepare('UPDATE lawyers SET credit_balance = credit_balance - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(cost, lawyer_id);
+          // Conditional, exactly like the firm-pool branch above. The credit
+          // gate that ran before this transaction is a check-then-act: two
+          // bookings submitted at once could both pass it and drive the balance
+          // negative. The WHERE clause is what actually prevents that.
+          const upd = db.prepare(
+            'UPDATE lawyers SET credit_balance = credit_balance - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND COALESCE(credit_balance,0) >= ?'
+          ).run(cost, lawyer_id, cost);
+          if (upd.changes !== 1) { const e = new Error('insufficient_credits'); e.code = 'insufficient_credits'; throw e; }
           try {
             db.prepare(
               `INSERT INTO credit_transactions (id, lawyer_id, type, amount, aed_amount, description, payment_method, status)
@@ -307,9 +314,10 @@ router.post('/', requireAuth, (req, res) => {
 // the rest still go through. Returns a per-lawyer result summary.
 router.post('/bulk', requireAuth, (req, res) => {
   const u = req.user;
-  const isLADBulk = isSuper(u.role) || u.role === 'lad_admin' || u.role === 'provider_admin';
+  const isLADBulk = isSuper(u.role) || u.role === 'lad_admin';
+  const isProviderBulk = u.role === 'provider_admin';
   const isCO = u.role === 'firm_compliance_officer';
-  if (!isLADBulk && !isCO) return res.status(403).json({ error: 'Admins or firm officers only' });
+  if (!isLADBulk && !isProviderBulk && !isCO) return res.status(403).json({ error: 'Admins, providers or firm officers only' });
 
   const ids = Array.isArray(req.body.lawyer_ids) ? req.body.lawyer_ids.map(String).filter(Boolean) : [];
   if (!ids.length) return res.status(400).json({ error: 'lawyer_ids is required' });
@@ -320,6 +328,13 @@ router.post('/bulk', requireAuth, (req, res) => {
   if (course && Number(course.private) && isCO) {
     // A firm CO may only bulk-book their own firm's private course.
     if (!store.canAccessCourse(course, u)) return res.status(403).json({ error: 'course_private' });
+  }
+  // A provider bulk-books onto its OWN courses only — not another provider's.
+  if (isProviderBulk) {
+    if (!course) return res.status(400).json({ error: 'course_id is required' });
+    if (!u.provider_id || course.provider_id !== u.provider_id) {
+      return res.status(403).json({ error: 'not_your_course', message: 'You may only book lawyers onto courses your organisation runs.' });
+    }
   }
   const baseCost = Math.max(0, Math.round(Number(
     req.body.credits_used != null ? req.body.credits_used
@@ -390,20 +405,49 @@ router.patch('/:id', requireAuth, (req, res) => {
   if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
   const isOwner = u.user_type === 'lawyer' && u.sub === booking.lawyer_id;
-  const isLAD = isSuper(u.role) || u.role === 'lad_admin' || u.role === 'provider_admin';
+  const isLAD = isSuper(u.role) || u.role === 'lad_admin';
   const lawyer = store.getLawyerById(booking.lawyer_id);
   const isFirmCO = u.role === 'firm_compliance_officer' && lawyer && lawyer.firm_id === u.firm_id;
-  if (!isOwner && !isLAD && !isFirmCO) return res.status(403).json({ error: 'Forbidden' });
+
+  // The course this booking is for, and who runs it. provider_admin used to be
+  // folded into isLAD, which let ANY training provider edit ANY booking on any
+  // other provider's course. A provider is confined to their own courses.
+  const bkCourse = db.prepare('SELECT id, provider_id, private, owner_firm_id FROM courses WHERE id = ?').get(booking.course_id) || {};
+  const isCourseProvider = u.role === 'provider_admin' && !!u.provider_id && bkCourse.provider_id === u.provider_id;
+
+  if (!isOwner && !isLAD && !isFirmCO && !isCourseProvider) return res.status(403).json({ error: 'Forbidden' });
 
   const allowed = ['booked','attended','cancelled','no-show','refunded'];
   if (req.body.status && !allowed.includes(req.body.status)) {
     return res.status(400).json({ error: `status must be one of ${allowed.join(', ')}` });
   }
 
-  // Only LAD / firm officers may award CPD points or edit notes. A booking's
-  // owner (the lawyer) can change status (e.g. cancel) but must NOT be able to
-  // self-award compliance points. points_earned is validated and bounded.
-  const canAwardPoints = isLAD || isFirmCO;
+  // ─── Who may attest that a lawyer attended, and award the CPD points ───
+  // CPD points are the statutory record of a lawyer's compliance, so the
+  // attestation has to come from whoever actually ran the room:
+  //
+  //   • the Department          — always, it regulates the whole scheme;
+  //   • the course's provider   — for its own courses, which it delivered;
+  //   • the lawyer's own firm   — ONLY for the firm's own internal courses.
+  //
+  // A firm used to be able to award up to 50 points on any course in the
+  // system, including an external provider's, which meant the organisation
+  // that benefits from a lawyer being compliant was also the one certifying
+  // it. A firm marking its own internal session is different — it ran that
+  // session — and that path is unchanged.
+  //
+  // The booking's owner can still change status (cancel, for instance) but has
+  // never been able to award themselves points.
+  const isOwnFirmCourse = !!(bkCourse.owner_firm_id && lawyer && bkCourse.owner_firm_id === lawyer.firm_id);
+  const canAwardPoints = isLAD || isCourseProvider || (isFirmCO && isOwnFirmCourse);
+  if (req.body.points_earned !== undefined && !canAwardPoints) {
+    return res.status(403).json({
+      error: 'cannot_attest_attendance',
+      message: isFirmCO
+        ? 'Attendance on a provider’s course is confirmed by the provider or by the Department, not by the firm. Ask the provider to mark this booking attended.'
+        : 'You may not award CPD points on this booking.',
+    });
+  }
   const fields = [];
   const values = [];
   if (req.body.status !== undefined) { fields.push('status = ?'); values.push(req.body.status); }
@@ -542,15 +586,28 @@ router.post('/:id/complete', requireAuth, (req, res) => {
   const booking = db.prepare('SELECT * FROM bookings WHERE id = ?').get(req.params.id);
   if (!booking) return res.status(404).json({ error: 'Booking not found' });
   const isOwner = u.user_type === 'lawyer' && u.sub === booking.lawyer_id;
-  const isLAD = isSuper(u.role) || u.role === 'lad_admin' || u.role === 'provider_admin';
+  const isLAD = isSuper(u.role) || u.role === 'lad_admin';
   const lawyer = store.getLawyerById(booking.lawyer_id);
   const isFirmCO = u.role === 'firm_compliance_officer' && lawyer && lawyer.firm_id === u.firm_id;
-  if (!isOwner && !isLAD && !isFirmCO) return res.status(403).json({ error: 'Forbidden' });
 
   const course = booking.course_id ? store.getCourseById(booking.course_id) : null;
+  // Same rule as PATCH: a provider completes its own courses, a firm completes
+  // its own internal ones, the Department completes anything.
+  const isCourseProvider = u.role === 'provider_admin' && !!u.provider_id && course && course.provider_id === u.provider_id;
+  const isOwnFirmCourse = !!(course && course.owner_firm_id && lawyer && course.owner_firm_id === lawyer.firm_id);
+
+  if (!isOwner && !isLAD && !isCourseProvider && !(isFirmCO && isOwnFirmCourse)) {
+    return res.status(403).json({
+      error: 'cannot_attest_attendance',
+      message: isFirmCO
+        ? 'Completion of a provider’s course is confirmed by the provider or by the Department, not by the firm.'
+        : 'Forbidden',
+    });
+  }
+
   const isElearn = !!course && /e-?learn/i.test(String(course.format || course.type || ''));
   if (isOwner && !isElearn) {
-    return res.status(400).json({ error: 'not_elearning', message: 'Only e-learning courses can be self-completed — your firm files attendance for in-person sessions.' });
+    return res.status(400).json({ error: 'not_elearning', message: 'Only e-learning courses can be self-completed — the provider files attendance for in-person sessions.' });
   }
   if ((booking.status || '').toLowerCase() === 'attended') {
     return res.json({ ...booking, points_awarded: 0, already: true });

@@ -34,6 +34,10 @@ const { requireAuth, optionalAuth } = require('../middleware/auth');
 // users). Everyday LAD Admins, providers, firms and lawyers cannot review.
 const REVIEWER_ROLES = ['lad_intelligence', 'lad_super_admin', 'super_admin', 'dg'];
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+// A single internal session filing writes one CPD record per attendee. The
+// largest genuine cohort the Department has seen is well under this; the cap
+// exists so one request cannot write thousands of rows.
+const MAX_SESSION_ATTENDEES = 500;
 
 const isReviewer = (u) => !!u && REVIEWER_ROLES.includes(u.role);
 
@@ -352,6 +356,22 @@ router.get('/alerts', requireAuth, (req, res) => {
 });
 
 // ─── Submit ──────────────────────────────────────────────────────────
+// Two very different things arrive on this route.
+//
+//   1. A PUBLIC APPLICATION for accreditation, from the CLPD portal or the
+//      provider portal. A prospective provider has no account yet, so this
+//      stays open — but it only ever creates a PENDING row for a human to
+//      review. It grants nothing.
+//
+//   2. A FIRM SESSION SUBMISSION against an already-accredited course, which
+//      auto-approves and writes CPD points onto named lawyers' statutory
+//      records. That is a privileged act and it is authenticated: the caller
+//      must be signed in, and the linked accreditation must belong to them.
+//
+// Before this split, anyone on the internet could read an accreditation_code
+// out of the public catalogue and POST a session submission naming any
+// lawyer, permanently inflating that lawyer's CPD balance. The award branch
+// now refuses an unauthenticated or unrelated caller outright.
 router.post('/', optionalAuth, (req, res) => {
   const p = req.body || {};
   if (!p || typeof p !== 'object' || (!p.providerName && !p.courseTitle && !p.course && !p.title && p.type !== 'session_submission')) {
@@ -365,10 +385,30 @@ router.post('/', optionalAuth, (req, res) => {
   // and award immediately. Everything else enters the review queue.
   const linkedCode = (p.accreditationCode || '').toString().trim() || null;
   const linked = linkedCode ? db.prepare("SELECT * FROM accreditations WHERE accreditation_code = ? AND status = 'approved'").get(linkedCode) : null;
+
+  if (type === 'session_submission') {
+    if (!u) {
+      return res.status(401).json({ error: 'Sign in to file an internal session. Attendance filing writes to lawyers’ CPD records, so it cannot be submitted anonymously.' });
+    }
+    // The submitter must have standing on the accredited course they are
+    // filing against — the reviewer roles, the provider or firm that owns it,
+    // or a compliance officer of that firm. ownsRow() already encodes that.
+    if (linked && !ownsRow(u, linked)) {
+      return res.status(403).json({ error: 'This accreditation code does not belong to your organisation.' });
+    }
+    // Named attendees are the whole point of the award, so they must be real
+    // and they must be bounded — an unbounded list is a write amplifier.
+    const attendees = Array.isArray(p.lawyers) ? p.lawyers : (Array.isArray(p.attendees) ? p.attendees : []);
+    if (attendees.length > MAX_SESSION_ATTENDEES) {
+      return res.status(413).json({ error: `A single session may file at most ${MAX_SESSION_ATTENDEES} attendees.` });
+    }
+  }
+
   // Auto-approve a firm session only when its code resolves to an approved
-  // course; otherwise it enters the review queue. Points come from the
-  // approved course (authoritative) so submissions can't inflate them.
-  const autoApprove = type === 'session_submission' && !!linked;
+  // course AND the authenticated submitter has standing on it (checked above);
+  // otherwise it enters the review queue. Points come from the approved course
+  // (authoritative) so submissions can't inflate them.
+  const autoApprove = type === 'session_submission' && !!linked && !!u;
   const status = autoApprove ? 'approved' : 'pending';
   // Structured reference (e.g. GAL2601). Pending applications carry a trailing
   // 'P' (GAL2601P); the 'P' is dropped to the clean code on approval.

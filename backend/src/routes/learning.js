@@ -15,6 +15,9 @@
 const express = require('express');
 const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth');
 const store = require('../lms/store');
+// The lawyer directory, kept separate from the LMS store above. Needed to
+// resolve a learner's firm when scoping a report to a compliance officer.
+const lawyers = require('../services/store');
 const topics = require('../lms/topics');
 const aimodel = require('../services/aimodel');
 const log = require('../logger');
@@ -23,6 +26,10 @@ const router = express.Router();
 
 const ADMIN_ROLES = ['lad_admin', 'lad_super_admin', 'super_admin', 'dg', 'provider_admin'];
 const REPORT_ROLES = [...ADMIN_ROLES, 'firm_compliance_officer'];
+// Who may read a NAMED lawyer's full learning record across firms. Deliberately
+// excludes provider_admin: a training provider sees its own cohorts, never an
+// individual lawyer's history at another organisation.
+const LAD_REPORT_ROLES = ['lad_admin', 'lad_super_admin', 'super_admin', 'dg'];
 
 const userId = (req) => (req.user && (req.user.sub || req.user.id)) || null;
 const isAdmin = (req) => !!req.user && ADMIN_ROLES.includes(req.user.role);
@@ -342,12 +349,32 @@ router.get('/courses/:courseId/cohort', requireRole(...REPORT_ROLES), async (req
   } catch (e) { next(e); }
 });
 
+// A learner report is the whole record of one named lawyer — every enrolment,
+// every attempt, every score. Role membership alone is not enough to read it:
+// a firm compliance officer is confined to their own firm, and a training
+// provider has no business reading a lawyer's record at all. Without the firm
+// check, an officer at one firm could enumerate lawyer ids and pull the full
+// learning history of a competitor's lawyers.
 router.get('/learners/:lawyerId/report', requireAuth, async (req, res, next) => {
   try {
     const target = targetLawyerId(req);
     if (!target) return res.status(400).json({ error: 'No learner specified' });
-    if (target !== userId(req) && !REPORT_ROLES.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Forbidden — you may only read your own record' });
+
+    if (target !== userId(req)) {
+      const role = req.user.role;
+      if (LAD_REPORT_ROLES.includes(role)) {
+        // LAD reads the whole profession — that is the Department's remit.
+      } else if (role === 'firm_compliance_officer') {
+        if (!req.user.firm_id) {
+          return res.status(403).json({ error: 'Forbidden — no firm context for this account' });
+        }
+        const learner = lawyers.getLawyerById(target);
+        if (!learner || learner.firm_id !== req.user.firm_id) {
+          return res.status(403).json({ error: 'Forbidden — you may only read learners at your own firm' });
+        }
+      } else {
+        return res.status(403).json({ error: 'Forbidden — you may only read your own record' });
+      }
     }
     res.json(await store.learnerReport(target));
   } catch (e) { next(e); }

@@ -393,11 +393,20 @@ router.post('/change-password', requireAuth, async (req, res) => {
                                   password_changed_at = CURRENT_TIMESTAMP
                             WHERE id = ?`).run(newHash, req.user.sub);
 
+  // Changing a password signs out every OTHER device — this one keeps working,
+  // so the user is not thrown out of the session they are sitting in.
+  let endedElsewhere = 0;
+  try {
+    endedElsewhere = jwtService.revokeAllForUser(req.user.sub, userType);
+    db.prepare('UPDATE auth_sessions SET revoked = 0 WHERE id = ?').run(req.user.jti);
+    if (endedElsewhere > 0) endedElsewhere -= 1;   // this session was counted then restored
+  } catch (_) {}
+
   db.prepare(`INSERT INTO audit_log (actor_id, actor_type, action, details, ip)
               VALUES (?, ?, 'user.self_password_change', ?, ?)`)
-    .run(req.user.sub, userType, JSON.stringify({}), req.ip || null);
+    .run(req.user.sub, userType, JSON.stringify({ sessions_ended: endedElsewhere }), req.ip || null);
 
-  res.json({ ok: true });
+  res.json({ ok: true, otherSessionsEnded: endedElsewhere });
 });
 
 // ─── Self-service password reset ─────────────────────────────────────
@@ -462,6 +471,10 @@ router.post('/reset-password', (req, res) => {
     db.prepare(`UPDATE ${table} SET password_hash = ?, must_change_password = 0, password_changed_at = CURRENT_TIMESTAMP WHERE id = ?`).run(hash, row.user_id);
     // single-use + invalidate any other outstanding tokens for this user
     db.prepare('UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE user_type=? AND user_id=? AND used_at IS NULL').run(row.user_type, row.user_id);
+    // Someone resets a password because they think the account is compromised.
+    // Kill every session that was issued under the old one, or a stolen token
+    // keeps working for the rest of its life.
+    jwtService.revokeAllForUser(row.user_id, row.user_type);
   });
   tx();
   try { db.prepare("INSERT INTO audit_log (actor_id, actor_type, action, details, ip) VALUES (?,?, 'user.password_reset', ?, ?)").run(row.user_id, row.user_type, JSON.stringify({ via: 'reset_token' }), req.ip || null); } catch (_) {}

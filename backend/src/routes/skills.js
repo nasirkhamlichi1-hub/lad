@@ -136,9 +136,25 @@ router.get('/heatmap', requireRole('lad_admin', 'lad_intelligence'), (_req, res)
 });
 
 // POST /api/v1/skills/rebuild — force a rebuild of all skill_events
-// (LAD admin; called after a bulk attendance import or schema change)
-router.post('/rebuild', requireRole('lad_admin'), (_req, res) => {
-  res.json(skills.rebuildAllSkillEvents());
+// (LAD admin; run after a bulk attendance import or a schema change).
+//
+// This DELETEs every row in skill_events and replays the whole booking history
+// synchronously, blocking the event loop for the duration. There is no UI for
+// it and no undo, so it will not fire on a stray POST: the caller has to say
+// what they are about to do. Nothing in the platform calls it — it is an
+// operator tool, run deliberately from a terminal.
+router.post('/rebuild', requireRole('lad_admin'), (req, res) => {
+  const confirm = (req.body && req.body.confirm) || req.query.confirm;
+  if (confirm !== 'rebuild-all-skill-events') {
+    return res.status(400).json({
+      error: 'confirmation_required',
+      message: 'This deletes and rebuilds the entire capability graph. Repeat the request with {"confirm":"rebuild-all-skill-events"} if that is what you intend.',
+    });
+  }
+  log.warn('skills_rebuild_started', { actor: req.user && req.user.sub });
+  const out = skills.rebuildAllSkillEvents();
+  log.warn('skills_rebuild_finished', Object.assign({ actor: req.user && req.user.sub }, out || {}));
+  res.json(out);
 });
 
 module.exports = router;

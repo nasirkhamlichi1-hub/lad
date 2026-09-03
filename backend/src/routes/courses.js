@@ -13,6 +13,9 @@ const activity = require('../services/activity');
 const blob = require('../services/blobStorage');
 const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth');
 
+// Longest free-text comment accepted on the anonymous course-rating form.
+const MAX_COMMENT_CHARS = 2000;
+
 const _nid = () => 'NT-' + crypto.randomBytes(6).toString('hex').toUpperCase().slice(0, 10);
 const _tid = () => 'TX-' + crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8);
 // Notify every lawyer with an active booking on a session.
@@ -229,10 +232,18 @@ router.post('/:id/feedback', optionalAuth, (req, res) => {
   if (!has) return res.status(400).json({ error: 'no_ratings', message: 'Provide at least one rating (1–5).' });
   const course = db.prepare('SELECT id FROM courses WHERE id = ?').get(req.params.id);
   if (!course) return res.status(404).json({ error: 'Course not found' });
+  // The rating is anonymous by design (an in-room QR code), so the comment is
+  // untrusted free text that will be read in an admin console. Bound it — an
+  // unbounded field on an unauthenticated route is a storage amplifier — and
+  // strip control characters so it cannot smuggle markup structure.
+  let comment = b.comment == null ? null : String(b.comment);
+  if (comment !== null) {
+    comment = comment.replace(/[\u0000-\u001F\u007F]/g, ' ').slice(0, MAX_COMMENT_CHARS).trim() || null;
+  }
   try {
     const store = require('../../scripts/seed-feedback');
     const result = store.submitResponse(db, {
-      courseId: req.params.id, ratings: r, comment: b.comment,
+      courseId: req.params.id, ratings: r, comment,
       sessionId: b.session_id || b.sessionId || null,
       lawyerId: (req.user && (req.user.lawyer_id || req.user.id)) || null,
     });
@@ -271,6 +282,16 @@ function courseOrTopicExists(id) {
 // they have a (non-cancelled) booking for the course.
 function canAccessMaterials(courseId, user) {
   if (isMaterialAdmin(user)) return true;
+
+  // Course materials are the CONTENT of a course — the slides and notes from a
+  // firm's internal session, not just its title. A compliance officer used to
+  // be waved through for every course in the system, which handed any firm the
+  // teaching material of every other firm's private internal courses. An
+  // officer now gets materials only for courses their firm may actually see:
+  // anything public, plus their own firm's private ones.
+  const course = db.prepare('SELECT id, private, owner_firm_id FROM courses WHERE id = ?').get(courseId);
+  if (!store.canAccessCourse(course, user)) return false;
+
   if (user && user.role === 'firm_compliance_officer') return true;
   if (user && user.user_type === 'lawyer') {
     try {

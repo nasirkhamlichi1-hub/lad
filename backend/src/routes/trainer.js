@@ -42,7 +42,10 @@ const ADMIN_ROLES = ['lad_admin', 'lad_super_admin'];
 // MorphCast/in-browser perception. Each piece activates when its key is set;
 // otherwise it degrades (animated face / scripted brain / browser voice / free
 // perception) so the trainer always runs.
-router.get('/status', (_req, res) => {
+// Signed-in callers only. The trainer is a members' feature, and this response
+// carries the MorphCast licence key plus an inventory of which paid engines the
+// Department has provisioned — neither belongs on an open endpoint.
+router.get('/status', requireAuth, (_req, res) => {
   const anamOn = anam.isConfigured();
   const brainOn = trainerBrain.isConfigured();
   res.json({
@@ -139,15 +142,38 @@ router.post('/bundled-courses/:file/import', requireRole(...ADMIN_ROLES), (req, 
 const userId = (req) => req.user.sub || req.user.id || null;
 const isAdmin = (req) => req.user && ADMIN_ROLES.includes(req.user.role);
 
-// Elapsed seconds for a session, trusting a client-reported value when given,
-// else derived from started_at (SQLite UTC) to now.
-function sessionSeconds(session, bodySeconds) {
-  if (Number.isFinite(bodySeconds) && bodySeconds >= 0) return bodySeconds | 0;
+// Wall-clock seconds since the session row was created, from the server's own
+// clock. This is the number that decides whether CPD points are earned, so it
+// is never taken from the request.
+function serverSeconds(session) {
   if (!session || !session.started_at) return 0;
   const started = Date.parse(session.started_at.replace(' ', 'T') + 'Z');
   if (Number.isNaN(started)) return 0;
   return Math.max(0, Math.floor((Date.now() - started) / 1000));
 }
+
+// Elapsed seconds recorded against the session. A client-reported value is
+// accepted for the LEARNING LOG (the browser knows about tab switches and idle
+// time the server cannot see) but it is capped at the server's own elapsed
+// time, so it can only ever be honest or lower — never inflated.
+function sessionSeconds(session, bodySeconds) {
+  const real = serverSeconds(session);
+  if (Number.isFinite(bodySeconds) && bodySeconds >= 0) return Math.min(bodySeconds | 0, real);
+  return real;
+}
+
+// ─── What earns CPD points on the AI trainer ─────────────────────────
+// A lawyer used to be able to open a lesson and immediately close it to bank
+// its points: `percent` was hard-set to 100 on 'ended' and the elapsed time
+// came from the request body. CPD points are a statutory record, so an award
+// now requires evidence the server itself observed:
+//   • real time on the lesson, measured server-side, and
+//   • coverage of the lesson's key elements, accumulated by /turn.
+// A lawyer who genuinely worked through the material passes both without
+// noticing they exist; a lawyer who opened and closed the page earns nothing
+// and is told why.
+const MIN_CPD_SECONDS = Number(process.env.TRAINER_MIN_CPD_SECONDS || 300);   // 5 minutes
+const MIN_CPD_PERCENT = Number(process.env.TRAINER_MIN_CPD_PERCENT || 70);    // % of key elements covered
 
 // Start a NEW session for a lesson, or RESUME an in-progress one. Either way a
 // single trainer_progress row per (lawyer, lesson) tracks the cumulative
@@ -200,7 +226,11 @@ async function closeSession(req, res, next, mode) {
   try {
     const session = trainerStore.getSession(req.params.id);
     if (!session) return res.status(404).json({ error: 'Session not found' });
-    if (session.lawyer_id && session.lawyer_id !== userId(req) && !isAdmin(req)) {
+    // A session with no lawyer_id used to skip this check entirely, so any
+    // signed-in user could drive someone else's ad-hoc session. An unowned
+    // session is now claimable only by nobody — it belongs to whoever started
+    // it, and an admin.
+    if (session.lawyer_id !== userId(req) && !isAdmin(req)) {
       return res.status(403).json({ error: 'Not your session' });
     }
 
@@ -214,6 +244,8 @@ async function closeSession(req, res, next, mode) {
 
     let progress = session.progress_id ? trainerStore.getProgressById(session.progress_id) : null;
     let cpdAwarded = 0;
+    let earned = false;
+    let shortfall = null;
 
     if (progress) {
       if (mode === 'paused') {
@@ -228,22 +260,45 @@ async function closeSession(req, res, next, mode) {
           percent: body.percent,
           resumeContext,
         });
-      } else { // ended → mark complete and award CPD once
+      } else { // ended → mark complete, and award CPD once IF it was earned
         const lesson = trainerStore.getLesson(session.lesson_id);
-        progress = trainerStore.updateProgressLearning(progress.id, { addSeconds: seconds, percent: 100 });
-        if (lesson && lesson.cpd_points > 0 && progress.cpd_points_awarded === 0) {
+        // Coverage comes from /turn, which the server writes as the lesson's
+        // key elements are actually discussed. It is not taken from the body.
+        const covered = Number(progress.percent_complete) || 0;
+        const totalSeconds = (progress.total_seconds || 0) + seconds;
+        earned = totalSeconds >= MIN_CPD_SECONDS && covered >= MIN_CPD_PERCENT;
+
+        progress = trainerStore.updateProgressLearning(progress.id, {
+          addSeconds: seconds,
+          // Only a genuinely completed lesson reads 100%. A lesson closed early
+          // keeps its real coverage so the lawyer can resume and finish it.
+          percent: earned ? 100 : covered,
+        });
+
+        if (earned && lesson && lesson.cpd_points > 0 && progress.cpd_points_awarded === 0) {
           store.awardCpdPoints({
             lawyerId: session.lawyer_id, points: lesson.cpd_points,
             source: 'ai_trainer', refId: session.id, ip: req.ip,
           });
           cpdAwarded = lesson.cpd_points;
         }
-        progress = trainerStore.completeProgress(progress.id, { cpdPoints: cpdAwarded });
+        if (earned) {
+          progress = trainerStore.completeProgress(progress.id, { cpdPoints: cpdAwarded });
+        } else {
+          shortfall = {
+            reason: 'incomplete',
+            message: 'This lesson is not complete yet, so no CPD points have been recorded. Resume it to finish the remaining material.',
+            minutesRequired: Math.ceil(MIN_CPD_SECONDS / 60),
+            minutesRecorded: Math.floor(totalSeconds / 60),
+            percentRequired: MIN_CPD_PERCENT,
+            percentCovered: Math.round(covered),
+          };
+        }
       }
     }
 
-    log.info('trainer_session_closed', { sessionId: session.id, mode, seconds, cpdAwarded });
-    res.json({ session: trainerStore.getSession(session.id), progress, cpdAwarded, status: mode });
+    log.info('trainer_session_closed', { sessionId: session.id, mode, seconds, cpdAwarded, earned });
+    res.json({ session: trainerStore.getSession(session.id), progress, cpdAwarded, status: mode, ...(shortfall ? { cpd: shortfall } : {}) });
   } catch (e) { next(e); }
 }
 
@@ -266,7 +321,11 @@ router.post('/turn', requireAuth, async (req, res, next) => {
     const { sessionId, history, perception } = req.body || {};
     const session = sessionId ? trainerStore.getSession(sessionId) : null;
     if (!session) return res.status(404).json({ error: 'Session not found' });
-    if (session.lawyer_id && session.lawyer_id !== userId(req) && !isAdmin(req)) {
+    // A session with no lawyer_id used to skip this check entirely, so any
+    // signed-in user could drive someone else's ad-hoc session. An unowned
+    // session is now claimable only by nobody — it belongs to whoever started
+    // it, and an admin.
+    if (session.lawyer_id !== userId(req) && !isAdmin(req)) {
       return res.status(403).json({ error: 'Not your session' });
     }
 
