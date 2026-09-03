@@ -1,0 +1,10 @@
+# Local SQLite working databases — never committed. The schema lives in
+# backend/migrations/, which is the only source of truth for the database.
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+node_modules/
+.env
+.DS_Store
