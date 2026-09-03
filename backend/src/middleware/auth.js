@@ -8,14 +8,22 @@ const db = require('../db');
 // record. One place, so lawyers/credits/bookings/messaging all resolve the firm
 // consistently instead of falling back to a placeholder id.
 function backfillFirmId(user) {
-  if (!user || user.firm_id) return user;
+  if (!user) return user;
   try {
     if (user.role === 'firm_compliance_officer' || user.user_type === 'staff') {
-      const s = db.prepare('SELECT firm_id FROM staff WHERE id = ?').get(user.sub);
-      if (s && s.firm_id) user.firm_id = s.firm_id;
+      // provider_id is read from the database on every request and never from
+      // the token, so a provider cannot claim to run someone else's courses by
+      // editing a claim. It decides who may attest attendance on a course.
+      const s = db.prepare('SELECT firm_id, provider_id FROM staff WHERE id = ?').get(user.sub);
+      if (s) {
+        if (!user.firm_id && s.firm_id) user.firm_id = s.firm_id;
+        user.provider_id = s.provider_id || null;
+      }
     } else if (user.user_type === 'lawyer' || user.role === 'lawyer') {
-      const l = db.prepare('SELECT firm_id FROM lawyers WHERE id = ?').get(user.sub);
-      if (l && l.firm_id) user.firm_id = l.firm_id;
+      if (!user.firm_id) {
+        const l = db.prepare('SELECT firm_id FROM lawyers WHERE id = ?').get(user.sub);
+        if (l && l.firm_id) user.firm_id = l.firm_id;
+      }
     }
   } catch (_) { /* never block a request on this */ }
   return user;
