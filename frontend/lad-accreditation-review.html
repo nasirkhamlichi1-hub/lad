@@ -1,7 +1,8 @@
 <!doctype html>
 <html lang="en">
 <head>
-<script src="lad-admin-guard.js" data-roles="lad_intelligence,lad_super_admin,super_admin,dg"></script>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script src="lad-admin-guard.js" data-roles="lad_admin,lad_intelligence,lad_super_admin,super_admin,dg"></script>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Accreditation Review Workspace · LAD</title>
@@ -563,7 +564,14 @@ function renderDetail(){
   updateDecisionFooter(a);
 }
 
-function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(ch){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]);}); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(ch){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]);}); }
+// An attachment URL arrives inside an application submitted by an outside
+// party. Allow only the schemes a real attachment uses; anything else (above
+// all javascript:) becomes an inert link rather than executable markup.
+function safeHref(u){
+  var v = String(u == null ? '' : u).trim();
+  return /^(data:(image|application|text)\/[a-z0-9.+-]+;|https?:|blob:)/i.test(v) ? esc(v) : 'about:blank';
+}
 
 // Render every detail the applicant actually submitted, so nothing is hidden —
 // institution details for a provider registration, course details otherwise.
@@ -646,7 +654,7 @@ function renderCenter(a){
           const label = f.label ? `<div class="c-file-label">${esc(f.label)}</div>` : '';
           const inner = `<div class="c-file-ico ${ext}">${ext.toUpperCase()}</div><div class="c-file-main">${label}<div class="c-file-name" title="${esc(name)}">${esc(name)}</div></div><div class="c-file-size">${esc(size)}</div>`;
           return f.dataUrl
-            ? `<a class="c-file" href="${f.dataUrl}" download="${esc(name)}" target="_blank" style="text-decoration:none;color:inherit">${inner}</a>`
+            ? `<a class="c-file" href="${safeHref(f.dataUrl)}" download="${esc(name)}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">${inner}</a>`
             : `<div class="c-file" title="File content not available">${inner}</div>`;
         }).join('')}
       </div>` : `<div style="font-size:13px;color:var(--slate2);padding:10px 0">No files were attached to this application.</div>`}
@@ -960,26 +968,66 @@ function _mapRow(row){
   };
 }
 
+// ── Save banner ──────────────────────────────────────────────────────
+// A reviewer's score is a regulatory decision. These writes used to swallow
+// every failure — no base URL, a 401, a 500 — while the typed number stayed on
+// screen, so a reviewer could score an application, see it "stick", and have
+// saved nothing. Every failure is now visible and named.
+function saveBanner(msg, kind) {
+  var el = document.getElementById('saveBanner');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'saveBanner';
+    el.setAttribute('role', 'status');
+    el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:99999;'
+      + 'max-width:640px;padding:12px 18px;border-radius:8px;font:500 14px/1.45 var(--lad-font,system-ui);'
+      + 'box-shadow:0 2px 12px rgba(0,0,0,.18);display:none';
+    document.body.appendChild(el);
+  }
+  if (!msg) { el.style.display = 'none'; return; }
+  var err = kind === 'error';
+  el.style.background = err ? '#DC3131' : '#202A50';
+  el.style.color = '#fff';
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  if (!err) el._t = setTimeout(function () { el.style.display = 'none'; }, 2200);
+}
+
+// One PATCH, with the failure surfaced rather than logged.
+async function patchAccreditation(ref, body, what) {
+  const base = _apiBase();
+  if (!base) { saveBanner('NOT SAVED — the review workspace cannot reach the API. Refresh and sign in again.', 'error'); return false; }
+  let res;
+  try {
+    res = await fetch(base + '/api/v1/accreditations/' + encodeURIComponent(ref), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    saveBanner('NOT SAVED — ' + what + ' for ' + ref + ' could not reach the server. Check your connection; your entry is still on screen.', 'error');
+    return false;
+  }
+  if (!res.ok) {
+    let detail = 'HTTP ' + res.status;
+    try { const j = await res.json(); detail = (j && (j.message || j.error)) || detail; } catch (_) {}
+    if (res.status === 401 || res.status === 403) {
+      detail = 'your session has expired — sign in again before continuing';
+    }
+    saveBanner('NOT SAVED — ' + what + ' for ' + ref + ': ' + detail, 'error');
+    return false;
+  }
+  saveBanner('Saved · ' + ref, 'ok');
+  return true;
+}
+
 // ── PATCH a score field for a real entry (debounced via blur) ──
 async function persistScores(ref, scores) {
-  const base = _apiBase(); if (!base) return;
-  try {
-    await fetch(base + '/api/v1/accreditations/' + encodeURIComponent(ref), {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ..._authHeaders() },
-      body: JSON.stringify({ scores }),
-    });
-  } catch (e) { console.warn('[scoring] persist failed', e); }
+  return patchAccreditation(ref, { scores }, 'the scores');
 }
 async function persistPoints(ref, final_points, final_credits) {
-  const base = _apiBase(); if (!base) return;
-  try {
-    await fetch(base + '/api/v1/accreditations/' + encodeURIComponent(ref), {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ..._authHeaders() },
-      body: JSON.stringify({ final_points, final_credits }),
-    });
-  } catch (e) { console.warn('[points] persist failed', e); }
+  return patchAccreditation(ref, { final_points, final_credits }, 'the points award');
 }
 
 // Live update — called from <input oninput=...>
@@ -1090,9 +1138,14 @@ function updateDecisionFooter(a){
     if (a.decision || (a._real && a.status && a.status !== 'pending')) {
       const s = a.decision || a.status;
       const color = s === 'approved' ? 'var(--green)' : s === 'rejected' ? 'var(--red)' : s === 'returned' ? 'var(--amber)' : 'var(--slate3)';
-      status.innerHTML = `<span style="color:${color}">Decision · ${s}</span> · ${a.ref}`;
+      // a.ref and a.title come from an accreditation APPLICATION, i.e. text an
+      // external training provider typed. Never interpolate it unescaped — an
+      // unescaped title here executes in a reviewer's session, and reviewers
+      // hold the Department's highest-privileged roles.
+      status.innerHTML = `<span style="color:${color}">Decision · ${esc(s)}</span> · ${esc(a.ref)}`;
     } else {
-      status.innerHTML = `Decision · <span style="color:var(--ink)">${a.ref}</span> · ${a.title.slice(0, 50)}${a.title.length > 50 ? '…' : ''}`;
+      const _t = String(a.title == null ? '' : a.title);
+      status.innerHTML = `Decision · <span style="color:var(--ink)">${esc(a.ref)}</span> · ${esc(_t.slice(0, 50))}${_t.length > 50 ? '…' : ''}`;
     }
   }
 }

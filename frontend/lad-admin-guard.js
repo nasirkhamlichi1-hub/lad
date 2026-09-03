@@ -13,6 +13,7 @@
  *   2. firm_compliance_officer → firm-compliance-portal          (own firm's lawyers)
  *   3. provider_admin          → provider-portal                 (accreditation + own-course attendance; NO profession data)
  *   4. lad_staff               → lad-staff-training              (internal training)
+ *      (aliases: lad_staff_training, staff_training, trainee)
  *   5. lad_admin               → CRM + accreditation, intelligence and the command centre (with super)
  *   6. lad_super_admin         → everything, incl. command-centre, lad-intelligence and accreditation
  *
@@ -49,7 +50,14 @@
   switch (role) {
     case 'firm_compliance_officer': dest = 'firm-compliance-portal.html'; break;
     case 'provider_admin': case 'provider': dest = 'provider-portal.html'; break;
-    case 'lad_staff': dest = 'lad-staff-training.html'; break;
+    // clpd-portal.html's router treats all four of these as LAD internal
+    // training staff and sends them to /staff-training. The guard has to
+    // agree, or an account whose role is one of the aliases (S-LADSTAFF is
+    // 'lad_staff_training' in migration 009) is routed to the page by the
+    // portal and bounced straight back off it by this file — a sign-in that
+    // lands the user on the public landing, every time.
+    case 'lad_staff': case 'lad_staff_training': case 'staff_training': case 'trainee':
+      dest = 'lad-staff-training.html'; break;
     case 'lad_admin': case 'lad_intelligence': dest = 'lad-crm.html'; break;
     case 'lad_super_admin': case 'super_admin': case 'dg': dest = 'lad-crm.html'; break;
     case 'lawyer': dest = 'lawyer-portal-v2.html'; break;

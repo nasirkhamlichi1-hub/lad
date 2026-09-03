@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <script src="lad-admin-guard.js" data-roles="lad_admin,lad_intelligence,lad_super_admin,super_admin,dg"></script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -575,7 +576,6 @@ input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--ink)}
     <a class="lgn-pill on" onclick="switchPage('bookings')" style="cursor:pointer">Bookings</a>
     <a class="lgn-pill" onclick="switchPage('purchases')" style="cursor:pointer">Purchases</a>
     <a class="lgn-pill" onclick="switchPage('schedules')" style="cursor:pointer">Schedules</a>
-    <a class="lgn-pill" onclick="switchPage('migrate')" style="cursor:pointer;display:none">Migrate</a>
     <a class="lgn-pill" onclick="switchPage('website')" style="cursor:pointer">Website</a>
     <a class="lgn-pill" onclick="switchPage('support')" style="cursor:pointer">Support</a>
   </div>
@@ -1464,26 +1464,12 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
 
   </div>
 
-  <div style="padding:0 28px 28px">
-    <div style="background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px">
-      <div class="adm-cnt-card-eyebrow" style="margin-bottom:8px">AZURE MIGRATION · ENDPOINT MAP</div>
-      <h3 style="font-family:var(--serif);font-size:18px;color:var(--ink);margin:0 0 14px">When you wire up Azure Functions, these are the endpoints to implement:</h3>
-      <table class="adm-sch-preview-table">
-        <thead><tr><th style="width:34%">Operation</th><th style="width:42%">Azure endpoint</th><th>Schema</th></tr></thead>
-        <tbody>
-          <tr><td><code>api.getCourses()</code></td><td><code>GET /api/v1/courses</code></td><td>→ Course[]</td></tr>
-          <tr><td><code>api.saveCourse(c)</code></td><td><code>PUT /api/v1/courses/{id}</code></td><td>← Course</td></tr>
-          <tr><td><code>api.deleteCourse(id)</code></td><td><code>DELETE /api/v1/courses/{id}</code></td><td>—</td></tr>
-          <tr><td><code>api.getSchedules()</code></td><td><code>GET /api/v1/schedules</code></td><td>→ Session[]</td></tr>
-          <tr><td><code>api.bulkUpsertSchedule(rows)</code></td><td><code>POST /api/v1/schedules/bulk</code></td><td>← Session[]</td></tr>
-          <tr><td><code>api.getContent()</code></td><td><code>GET /api/v1/content</code></td><td>→ Content</td></tr>
-          <tr><td><code>api.saveContent(c)</code></td><td><code>PUT /api/v1/content</code></td><td>← Content</td></tr>
-          <tr><td><code>api.getFAQ()</code></td><td><code>GET /api/v1/faq</code></td><td>→ FAQ[]</td></tr>
-          <tr><td><code>api.saveFAQ(items)</code></td><td><code>PUT /api/v1/faq</code></td><td>← FAQ[]</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <!-- A developer note table listing 'the endpoints to implement when you
+       wire up Azure Functions' was rendered here, in a live admin console.
+       Two of the endpoints it named (/api/v1/schedules, /schedules/bulk)
+       were never built — the real ones are /courses/sessions/all and
+       /courses/sessions/bulk — so it documented the system incorrectly to
+       whoever read it. Planning notes belong in the repo, not on screen. -->
 </section>
 
 <!-- ═══════════════════ EDITOR SLIDE-OVER ═══════════════════ -->
@@ -1768,64 +1754,13 @@ ai-gov,Mon 9 Jun 2026,9:00–11:00,30,Arabic
 </aside>
 
 
-<!-- ═══════════════════ PAGE: MIGRATE (legacy data import) ═══════════════════ -->
-<section class="adm-page" data-page="migrate">
-  <div class="adm-page-head">
-    <div class="adm-page-eyebrow">DATA MIGRATION &middot; LEGACY UPLOAD</div>
-    <h2 class="adm-page-title">Import legacy data</h2>
-    <p class="adm-page-desc">Upload Excel or CSV exports of lawyers, firms, providers, courses, or historical accreditations. The system maps common column names automatically, runs a dry-run preview first, then commits on your approval. Existing records are updated by id; missing ids are inserted.</p>
-  </div>
-
-  <div style="padding:0 28px 28px;max-width:1100px">
-    <!-- Step 1: pick entity -->
-    <div style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;margin-bottom:18px">
-      <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;margin-bottom:14px">1. CHOOSE ENTITY TYPE</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="adm-btn adm-btn-primary migrate-entity-btn" data-entity="legacy"         onclick="setMigrateEntity('legacy')" style="background:var(--green);color:#fff">★ Legacy bundle (combined export)</button>
-        <button class="adm-btn migrate-entity-btn" data-entity="lawyers"        onclick="setMigrateEntity('lawyers')">Lawyers only</button>
-        <button class="adm-btn migrate-entity-btn" data-entity="firms"          onclick="setMigrateEntity('firms')">Firms only</button>
-        <button class="adm-btn migrate-entity-btn" data-entity="providers"      onclick="setMigrateEntity('providers')">Providers only</button>
-        <button class="adm-btn migrate-entity-btn" data-entity="courses"        onclick="setMigrateEntity('courses')">Courses only</button>
-        <button class="adm-btn migrate-entity-btn" data-entity="accreditations" onclick="setMigrateEntity('accreditations')">Accreditations (historical)</button>
-      </div>
-      <div id="migrateExpected" style="margin-top:14px;font-size:12.5px;color:var(--slate2);line-height:1.6;display:none">
-        <span style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase">Expected columns (accepted aliases):</span>
-        <div id="migrateExpectedList" style="margin-top:6px;font-family:var(--mono);font-size:11.5px;color:var(--slate)"></div>
-      </div>
-    </div>
-
-    <!-- Step 2: upload file -->
-    <div style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;margin-bottom:18px">
-      <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;margin-bottom:14px">2. UPLOAD FILE (CSV or .xlsx)</div>
-      <div id="migrateDropzone" onclick="document.getElementById('migrateFile').click()"
-           ondragover="event.preventDefault();this.style.borderColor='var(--gold)';this.style.background='var(--gold-bg)'"
-           ondragleave="this.style.borderColor='var(--line2)';this.style.background='var(--white)'"
-           ondrop="event.preventDefault();this.style.borderColor='var(--line2)';this.style.background='var(--white)';handleMigrateFile(event.dataTransfer.files[0])"
-           style="border:2px dashed var(--line2);border-radius:12px;padding:42px;text-align:center;cursor:pointer;transition:all .15s">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--slate3)" stroke-width="1.5" stroke-linecap="round" style="margin:0 auto 10px;display:block"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px">Drag and drop, or click to browse</div>
-        <div style="font-size:12px;color:var(--slate3)">.csv, .xlsx, .xls · up to ~50,000 rows</div>
-        <input id="migrateFile" type="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleMigrateFile(this.files[0])"/>
-      </div>
-      <div id="migrateFileSummary" style="margin-top:14px;font-size:12.5px;color:var(--slate);display:none"></div>
-    </div>
-
-    <!-- Step 3: preview -->
-    <div id="migratePreviewBlock" style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;margin-bottom:18px;display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:700">3. PREVIEW (first 10 rows)</div>
-        <div style="display:flex;gap:8px">
-          <button class="adm-btn" onclick="runMigrateDryRun()" id="migrateDryRunBtn">▶ Dry-run</button>
-          <button class="adm-btn adm-btn-primary" onclick="commitMigrate()" id="migrateCommitBtn" disabled style="opacity:.4">✓ Commit import</button>
-        </div>
-      </div>
-      <div id="migratePreviewTable" style="overflow-x:auto;border:1px solid var(--line);border-radius:8px"></div>
-    </div>
-
-    <!-- Step 4: results -->
-    <div id="migrateResultBlock" style="display:none"></div>
-  </div>
-</section>
+<!-- The legacy data-migration console lived here. It posted to
+     /api/v1/import/<entity>, an endpoint that does not exist in the
+     backend, so every request 404'd — while the screen offered a
+     "Commit N rows to the live database?" button. A dead promise of a
+     destructive action on a government admin console is worse than no
+     screen at all, so it is gone. If a bulk import is needed, build the
+     endpoint first. -->
 
 <!-- ═══════════════════ PAGE: AUDIT LOG ═══════════════════ -->
 <section class="adm-page" data-page="audit">
@@ -3495,7 +3430,7 @@ function downloadExport(){
 // ────────── UTIL ──────────
 function escape(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function escapeAttr(s){ return String(s||'').replace(/"/g,'&quot;').replace(/&/g,'&amp;'); }
-function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);}); }
 function toast(msg, kind){
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -6063,209 +5998,6 @@ function supExportCSV() {
   toast(`✓ Exported ${rows.length-1} rows`, 'success');
 }
 
-// ═════════ Legacy data migration ═════════
-let _migrateEntity = null;
-let _migrateRows = [];
-let _migrateFilename = '';
-
-const MIGRATE_FIELD_HINTS = {
-  legacy:         ['Type', 'Firm/Lawyer ID', 'Name', 'Email', 'Gender', 'Phone', 'Address', 'City', 'Country', 'Jobtitle', 'Firm', 'Qualification Country', 'Specialisms', 'Prefer Language', 'Department', 'Joining Date', 'Current Credits', 'Total Purchased Credits', 'Total Refunded Credits', 'Course Name', 'Course Provider', 'Course Schedule', 'Course Status', 'Course bookedby', 'Course booked date', 'Course Admin Notes', 'Points Received', 'Total Points'],
-  lawyers:        ['id', 'firm_id', 'firm_name', 'first_name', 'last_name', 'emirates_id', 'email', 'phone', 'bar_no', 'practicing', 'status', 'points', 'credits', 'compliance_year'],
-  firms:          ['id', 'name', 'trn', 'email', 'phone', 'address', 'credit_pool', 'status'],
-  providers:      ['id', 'name', 'contact_email', 'contact_phone', 'status'],
-  courses:        ['id', 'provider_id', 'title', 'category', 'points', 'credits_required', 'description', 'status'],
-  accreditations: ['ref', 'accreditation_code', 'type', 'status', 'submitted_by', 'submitted_at', 'final_points', 'final_credits', 'reviewer1', 'reviewer2', 'courseTitle', 'providerName', 'applicantEmail', 'trainer', 'learningObjectives', 'duration', 'format', 'audience'],
-};
-
-function setMigrateEntity(entity) {
-  _migrateEntity = entity;
-  document.querySelectorAll('.migrate-entity-btn').forEach(b => {
-    if (b.dataset.entity === entity) { b.style.background = 'var(--gold)'; b.style.color = '#fff'; b.style.borderColor = 'var(--gold)'; }
-    else { b.style.background = ''; b.style.color = ''; b.style.borderColor = ''; }
-  });
-  const list = document.getElementById('migrateExpectedList');
-  list.textContent = (MIGRATE_FIELD_HINTS[entity] || []).join(' · ');
-  document.getElementById('migrateExpected').style.display = 'block';
-  // Reset previous file/preview/result
-  _migrateRows = [];
-  document.getElementById('migrateFileSummary').style.display = 'none';
-  document.getElementById('migratePreviewBlock').style.display = 'none';
-  document.getElementById('migrateResultBlock').style.display = 'none';
-  document.getElementById('migrateFile').value = '';
-}
-
-function handleMigrateFile(file) {
-  if (!file) return;
-  if (!_migrateEntity) { alert('Pick an entity type first.'); return; }
-  _migrateFilename = file.name;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const wb = XLSX.read(data, { type: 'array' });
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      _migrateRows = XLSX.utils.sheet_to_json(sheet, { defval: null, raw: false });
-      const summary = document.getElementById('migrateFileSummary');
-      summary.style.display = 'block';
-      summary.innerHTML = '<strong>' + file.name + '</strong> · sheet "' + wb.SheetNames[0] + '" · ' + _migrateRows.length + ' rows · ' + Object.keys(_migrateRows[0] || {}).length + ' columns';
-      renderMigratePreview();
-      document.getElementById('migrateCommitBtn').disabled = true;
-      document.getElementById('migrateCommitBtn').style.opacity = '.4';
-    } catch (err) {
-      alert('Could not parse the file: ' + err.message);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function renderMigratePreview() {
-  if (!_migrateRows.length) return;
-  const block = document.getElementById('migratePreviewBlock');
-  block.style.display = 'block';
-  const cols = Object.keys(_migrateRows[0]);
-  const head = '<tr>' + cols.map(c => '<th style="font-family:var(--mono);font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;padding:8px 10px;background:var(--paper);border-bottom:1px solid var(--line);text-align:left;color:var(--slate2)">' + c + '</th>').join('') + '</tr>';
-  const body = _migrateRows.slice(0, 10).map(r =>
-    '<tr>' + cols.map(c => '<td style="padding:7px 10px;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink)">' + (r[c] == null ? '<span style="color:var(--slate3)">—</span>' : String(r[c]).slice(0, 80)) + '</td>').join('') + '</tr>'
-  ).join('');
-  document.getElementById('migratePreviewTable').innerHTML = '<table style="width:100%;border-collapse:collapse;background:#fff">' + head + body + '</table>' + (_migrateRows.length > 10 ? '<div style="padding:10px;background:var(--paper);text-align:center;font-size:11.5px;color:var(--slate3)">... and ' + (_migrateRows.length - 10) + ' more rows</div>' : '');
-}
-
-// Chunks legacy-bundle uploads so we don't blow the 50MB body limit and so
-// each transaction completes within the rate-limited request window.
-async function callMigrate(dryRun) {
-  if (!_migrateRows.length || !_migrateEntity) return null;
-  const base = (window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com';
-  if (!base) { alert('Backend not configured'); return null; }
-  const token = localStorage.getItem('lad_token') || '';
-  if (!token) { alert('Sign in as LAD admin first'); return null; }
-
-  const isLegacy = (_migrateEntity === 'legacy' || _migrateEntity === 'legacy_bundle');
-  const CHUNK = isLegacy ? 5000 : _migrateRows.length;
-  const total = _migrateRows.length;
-  const url = base + '/api/v1/import/' + _migrateEntity + (dryRun ? '?dry_run=1' : '');
-
-  // Aggregate result tracker
-  const agg = isLegacy
-    ? { entity: _migrateEntity, errors: [], firms_inserted:0, firms_skipped:0, providers_inserted:0, providers_skipped:0, lawyers_inserted:0, lawyers_updated:0, lawyers_skipped:0, bookings_inserted:0, bookings_skipped:0, unique_lawyers:0, unique_firms:0, unique_providers:0, total_course_rows:0, skipped_rows:0 }
-    : { entity: _migrateEntity, errors: [], inserted:0, updated:0, skipped:0 };
-
-  const dropzoneSummary = document.getElementById('migrateFileSummary');
-  for (let start = 0; start < total; start += CHUNK) {
-    const chunk = _migrateRows.slice(start, Math.min(total, start + CHUNK));
-    if (dropzoneSummary) {
-      dropzoneSummary.style.display = 'block';
-      dropzoneSummary.innerHTML = `<strong>${_migrateFilename}</strong> · ${dryRun ? 'dry-run' : 'committing'} rows ${start + 1}–${start + chunk.length} of ${total.toLocaleString()}…`;
-    }
-    let r, body;
-    try {
-      r = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ rows: chunk }),
-      });
-      body = await r.json();
-    } catch (e) {
-      alert('Network error mid-import at row ' + start + ': ' + e.message);
-      return null;
-    }
-    if (!r.ok) { alert('Import failed at row ' + start + ': ' + (body?.error?.message || r.status)); return null; }
-    // Merge counters
-    for (const k of Object.keys(agg)) {
-      if (k === 'entity') continue;
-      if (k === 'errors') { agg.errors.push(...(body.errors || [])); continue; }
-      if (typeof body[k] === 'number') agg[k] += body[k];
-    }
-  }
-  if (dropzoneSummary) {
-    dropzoneSummary.innerHTML = `<strong>${_migrateFilename}</strong> · ${dryRun ? 'dry-run' : 'commit'} complete · ${total.toLocaleString()} rows processed`;
-  }
-  return agg;
-}
-
-async function runMigrateDryRun() {
-  const btn = document.getElementById('migrateDryRunBtn');
-  btn.disabled = true; btn.textContent = 'Running…';
-  const res = await callMigrate(true);
-  btn.disabled = false; btn.textContent = '▶ Dry-run';
-  if (!res) return;
-  renderMigrateResult(res, true);
-  if ((res.errors || []).length === 0) {
-    document.getElementById('migrateCommitBtn').disabled = false;
-    document.getElementById('migrateCommitBtn').style.opacity = '1';
-  }
-}
-
-async function commitMigrate() {
-  if (!confirm('Commit ' + _migrateRows.length + ' ' + _migrateEntity + ' rows to the live database?')) return;
-  const btn = document.getElementById('migrateCommitBtn');
-  btn.disabled = true; btn.textContent = 'Importing…'; btn.style.opacity = '.6';
-  const res = await callMigrate(false);
-  btn.textContent = '✓ Commit import';
-  if (!res) { btn.disabled = false; btn.style.opacity = '1'; return; }
-  renderMigrateResult(res, false);
-  // Lock further commits — start fresh by reuploading
-  btn.style.opacity = '.4';
-}
-
-function renderMigrateResult(res, isDryRun) {
-  const block = document.getElementById('migrateResultBlock');
-  block.style.display = 'block';
-  const errs = res.errors || [];
-  const ok = errs.length === 0;
-  const headerColor = isDryRun ? 'var(--blue)' : ok ? 'var(--green)' : 'var(--amber)';
-  const headerLabel = isDryRun ? 'DRY RUN' : ok ? 'IMPORTED' : 'IMPORTED WITH WARNINGS';
-
-  // Legacy-bundle responses have multi-entity counters. Render them differently.
-  const isLegacy = (res.entity === 'legacy' || res.entity === 'legacy_bundle');
-  const tile = (label, num, color) => `
-    <div style="background:var(--paper);padding:16px 18px;border-radius:10px">
-      <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:6px">${label}</div>
-      <div style="font-family:var(--serif);font-size:28px;font-weight:500;color:${color};line-height:1">${(num || 0).toLocaleString()}</div>
-    </div>`;
-
-  let tiles;
-  if (isLegacy) {
-    tiles = `
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px">
-        ${tile('Lawyers inserted', res.lawyers_inserted, 'var(--green)')}
-        ${tile('Lawyers updated',  res.lawyers_updated,  'var(--blue)')}
-        ${tile('Firms created',    res.firms_inserted,   'var(--green)')}
-        ${tile('Providers created',res.providers_inserted,'var(--green)')}
-        ${tile('Bookings imported',res.bookings_inserted,'var(--blue)')}
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
-        ${tile('Unique lawyers',   res.unique_lawyers,   'var(--ink)')}
-        ${tile('Unique firms',     res.unique_firms,     'var(--ink)')}
-        ${tile('Unique providers', res.unique_providers, 'var(--ink)')}
-        ${tile('Course rows',      res.total_course_rows,'var(--ink)')}
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
-        ${tile('Non-lawyer rows skipped', res.skipped_rows, 'var(--slate3)')}
-        ${tile('Lawyer rows with errors', res.lawyers_skipped, 'var(--amber)')}
-        ${tile('Errors', errs.length, errs.length ? 'var(--red)' : 'var(--slate3)')}
-      </div>`;
-  } else {
-    tiles = `
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px">
-        ${tile('Inserted', res.inserted, 'var(--green)')}
-        ${tile('Updated',  res.updated,  'var(--blue)')}
-        ${tile('Skipped',  res.skipped,  'var(--slate3)')}
-        ${tile('Errors',   errs.length,  errs.length ? 'var(--red)' : 'var(--slate3)')}
-      </div>`;
-  }
-
-  block.innerHTML = `
-    <div style="background:var(--white);border:1px solid var(--line);border-left:4px solid ${headerColor};border-radius:14px;padding:24px 26px">
-      <div style="font-family:var(--mono);font-size:10px;color:${headerColor};letter-spacing:1.3px;text-transform:uppercase;font-weight:700;margin-bottom:16px">4. ${headerLabel} · ${res.entity}</div>
-      ${tiles}
-      ${errs.length ? `
-        <div style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin:10px 0 8px">First ${Math.min(20, errs.length)} errors:</div>
-        <div style="background:var(--paper);border-radius:8px;padding:12px;max-height:240px;overflow-y:auto;font-family:var(--mono);font-size:11.5px;color:var(--slate2)">
-          ${errs.slice(0, 20).map(e => `<div style="padding:4px 0;border-bottom:1px dotted var(--line)"><strong style="color:var(--red)">${e.row != null ? 'Row ' + e.row : (e.id || '')}:</strong> ${e.message}</div>`).join('')}
-        </div>
-      ` : `<div style="color:var(--green);font-size:13.5px;margin-top:8px">${isDryRun ? '✓ No errors — safe to commit.' : '✓ Import completed cleanly.'}</div>`}
-    </div>`;
-}
 
 </script>
 <script>

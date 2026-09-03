@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <script src="lad-admin-guard.js" data-roles="lad_admin,lad_intelligence,lad_super_admin,super_admin,dg"></script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -835,7 +836,7 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
           function tok(){ try{ return localStorage.getItem('lad_token')||''; }catch(e){ return ''; } }
           function set(id,v){ var el=document.getElementById(id); if(el) el.textContent=v; }
           function n(x){ var v=Number(x); return Number.isFinite(v)?v.toLocaleString():'—'; }
-          function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]);}); }
+          function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);}); }
 
           // Real identity for the LAD super user (Nasir / Duncan) — never hardcoded.
           (function(){
@@ -3797,7 +3798,7 @@ Click the ⚙ icon at the top right to add a key, then ask me again.`;
   function getPub(p){ return fetch(base+p).then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; }); }
   function $(id){ return document.getElementById(id); }
   function set(id,v){ var e=$(id); if(e) e.textContent=v; }
-  function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]);}); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);}); }
   function num(x){ var v=Number(x); return Number.isFinite(v)?Math.round(v).toLocaleString():'—'; }
   window.LAD_LIVE = window.LAD_LIVE || {};
 

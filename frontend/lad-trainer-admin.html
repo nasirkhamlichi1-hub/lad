@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <script src="lad-admin-guard.js" data-roles="lad_admin,lad_intelligence,lad_super_admin,super_admin,dg"></script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -264,7 +265,7 @@ tr:hover td{background:var(--paper)}
         </div>
         <div class="field"><label for="hub-title">Title</label><input type="text" id="hub-title" placeholder="Litigation &amp; Arbitration in Aviation Law"/></div>
         <div class="field"><label for="hub-intro">Intro <span class="hint">— the lede paragraph</span></label><textarea id="hub-intro" rows="3"></textarea></div>
-        <div class="field"><label for="hub-cta-url">Training link <span class="hint">— where the button goes (the live AI trainer)</span></label><input type="text" id="hub-cta-url" placeholder="https://…/ai-trainer-live.html"/></div>
+        <div class="field"><label for="hub-cta-url">Training link <span class="hint">— where the button goes (the live AI trainer)</span></label><input type="text" id="hub-cta-url" placeholder="/ai-trainer.html?lesson=…"/></div>
 
         <div class="field">
           <label style="display:flex;align-items:center">Primary legislation
@@ -512,7 +513,13 @@ tr:hover td{background:var(--paper)}
   // ─── Knowledge hub editor ──────────────────────────────────────────
   // One course = one upload. The trainer runs on the lessons; the hub adds the
   // reference layer (legislation + FAQ) on top of the SAME course content.
-  var DEFAULT_TRAINER_URL = 'https://nice-ocean-0a45eff10.7.azurestaticapps.net/ai-trainer-live.html';
+  // Relative, so a hub CTA follows whichever host the platform is served
+  // from. The absolute default used to point at the retired
+  // nice-ocean-….azurestaticapps.net hostname, which is a different origin
+  // to www.legalaffairstraining.com — a lawyer sent there arrived signed
+  // out, on a page that no longer exists, and that URL was then saved into
+  // every hub a trainer admin created.
+  var DEFAULT_TRAINER_URL = '/ai-trainer.html';
   var hubState = { courses:[], course:null, loaded:false };
 
   function hubOptions(){

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta charset="UTF-8"/>
 <script src="lad-admin-guard.js" data-roles="lawyer"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -468,6 +469,14 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
   <!-- Government of Dubai Legal Affairs Department identity -->
   <link rel="stylesheet" href="lad-brand.css">
   <script src="lad-brand.js" defer></script>
+<script>
+/* One-time cleanup: earlier builds asked users to paste personal API keys and
+   kept them in this browser. Nothing reads them any more — Maryam's key lives
+   on the server — so remove them rather than leaving credentials sitting in
+   localStorage where any script on the page could read them. */
+(function(){try{['lad_claude_api_key','claude_key','anam_key','anam_persona']
+  .forEach(function(k){localStorage.removeItem(k);});}catch(e){}})();
+</script>
 </head>
 <body>
 
@@ -3270,7 +3279,10 @@ function paintMyRecord(me) {
     const role = (me.role || me.job_title || '').toString();
     const firm = (me.firmName || me.firm_name || '').toString();
     const practice = (me.specialisms || '').toString();
-    roleLine.innerHTML = `${role ? role + (firm ? ' · ' + firm : '') : (firm || '')}${practice ? '<br><span style="color:var(--slate2)">' + practice.split(',').slice(0,4).join(' · ') + '</span>' : ''}`;
+    // role, firm and specialisms are stored values that an administrator or
+    // an import can set, so they are escaped before becoming markup.
+    const _e = (x) => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    roleLine.innerHTML = `${role ? _e(role) + (firm ? ' · ' + _e(firm) : '') : _e(firm || '')}${practice ? '<br><span style="color:var(--slate2)">' + _e(practice.split(',').slice(0,4).join(' · ')) + '</span>' : ''}`;
   }
   // Big numbers + progress bar
   set('ovPtsEarned', pts);
@@ -5948,9 +5960,12 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
 
   // ─── Storage helpers ─────────────────────────────────────────
   const STORAGE = {
-    getApiKey:  () => localStorage.getItem('lad_claude_api_key') || '',
-    setApiKey:  (k) => localStorage.setItem('lad_claude_api_key', k),
-    clearApiKey:() => localStorage.removeItem('lad_claude_api_key'),
+    // Maryam's key lives on the server. These remain only to clear anything a
+    // previous build of this page persuaded the user to store, and are called
+    // on load by the purge below.
+    getApiKey:  () => '',
+    setApiKey:  () => {},
+    clearApiKey:() => { try { localStorage.removeItem('lad_claude_api_key'); } catch (_) {} },
   };
 
   // ─── Inject CSS once (used by both nav bar and Lex chat) ─────
@@ -6227,75 +6242,14 @@ Be concise, practical and warm. Use markdown sparingly (bold for key terms, ital
     const msgs = document.getElementById('ladlex-msgs'); if (msgs) msgs.scrollTop = msgs.scrollHeight;
   }
 
-  async function streamFromClaude(prompt, targetEl) {
-    const apiKey = STORAGE.getApiKey();
-    const systemPrompt = `You are Maryam, an AI assistant inside the Dubai Legal Affairs Department's CLPD (Continuing Legal Professional Development) compliance platform.
-
-You are speaking to ${_lex.portalContext}.
-
-Key context:
-- The 2026 CLPD compliance year requires 16 points total: 8 mandatory + 8 accredited
-- The deadline is <span data-cfg-date="deadline">31 December 2026</span>
-- Mandatory courses are LAD-run (free or near-free)
-- Accredited courses are provided by external providers (priced in credits)
-- 1 credit = AED 120; a standard course costs 5 credits
-- Failure to comply by deadline can suspend a lawyer's practising certificate
-- Common course providers: Kwintessential, Hadef & Partners, DIFC Academy
-
-Be concise, practical, and warm. Use markdown sparingly (bold for key terms, italic for emphasis). Don't repeat what the user said. Give specific course names and point values when possible. If the user asks something outside your scope, say so briefly.`;
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-5',
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: _lex.history.map(m => ({ role: m.role, content: m.content })),
-        stream: true,
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`API ${response.status}: ${errText.slice(0, 200)}`);
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let fullText = '';
-    targetEl.innerHTML = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const data = line.slice(6).trim();
-        if (!data || data === '[DONE]') continue;
-        try {
-          const event = JSON.parse(data);
-          if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
-            fullText += event.delta.text;
-            targetEl.innerHTML = formatLexMarkdown(fullText);
-            document.getElementById('ladlex-msgs').scrollTop = document.getElementById('ladlex-msgs').scrollHeight;
-          }
-        } catch {}
-      }
-    }
-
-    _lex.history.push({ role: 'assistant', content: fullText });
-  }
+  // ─── REMOVED: direct browser → api.anthropic.com ────────────────────
+  // This used to send a lawyer's own pasted Anthropic key from their browser
+  // straight to Anthropic, with anthropic-dangerous-direct-browser-access set.
+  // A Government of Dubai portal should never ask a user for a personal
+  // billing credential, and a key sitting in localStorage is readable by any
+  // XSS on the page. Maryam runs entirely through respondViaAiModel() above,
+  // where the key stays on the server. The function is gone rather than
+  // disabled so it cannot be called back into service by accident.
 
   async function respondInDemoMode(prompt, targetEl) {
     // Lightweight demo responses keyed off keywords. The real value is the Claude integration.

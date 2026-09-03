@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <script src="lad-admin-guard.js" data-roles="firm_compliance_officer"></script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -255,6 +256,14 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-
   <!-- Government of Dubai Legal Affairs Department identity -->
   <link rel="stylesheet" href="lad-brand.css">
   <script src="lad-brand.js" defer></script>
+<script>
+/* One-time cleanup: earlier builds asked users to paste personal API keys and
+   kept them in this browser. Nothing reads them any more — Maryam's key lives
+   on the server — so remove them rather than leaving credentials sitting in
+   localStorage where any script on the page could read them. */
+(function(){try{['lad_claude_api_key','claude_key','anam_key','anam_persona']
+  .forEach(function(k){localStorage.removeItem(k);});}catch(e){}})();
+</script>
 </head>
 <body>
 
@@ -3313,7 +3322,7 @@ async function loadLawyerCompleted(l) {
     // then leave only completed/attended courses for the history list below.
     if (schedWrap) {
       const sm = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const escS = (x) => String(x == null ? '' : x).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+      const escS = (x) => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
       const fullDate = (iso) => { if (!iso) return 'Date TBC'; const d = new Date(iso); return isNaN(d) ? 'Date TBC' : d.getUTCDate() + ' ' + sm[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
       const cal = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#202A50" stroke-width="2" style="flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>';
       const scheduled = att.filter(a => (a.status || '').toLowerCase() === 'booked');
@@ -3333,7 +3342,7 @@ async function loadLawyerCompleted(l) {
     }
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const fmt = (iso) => { if (!iso) return ''; const d = new Date(iso); return isNaN(d) ? '' : months[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
-    const esc = (x) => String(x == null ? '' : x).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+    const esc = (x) => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     wrap.innerHTML = att.map(a => {
       const st = (a.status || '').toLowerCase();
       const done = st === 'attended' || st === 'completed';
@@ -3631,11 +3640,16 @@ async function callClaude(messages, systemPrompt) {
 }
 
 function lexMsg(role, text) {
+  // The assistant's reply is model output built from firm and lawyer data,
+  // so it is untrusted markup: a prompt injection reaching the model would
+  // otherwise execute in the compliance officer's session. Only the line
+  // breaks are turned into markup; everything else is escaped first.
+  const lexEsc=(x)=>String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const msgs=document.getElementById('lexMsgs');
   const isU=role==='user';
   const d=document.createElement('div');
   d.style.cssText=`display:flex;gap:9px;align-items:flex-start;${isU?'flex-direction:row-reverse':''}`;
-  d.innerHTML=`<div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:11px;${isU?'background:linear-gradient(135deg,#9D7714,#202A50);color:#fff;font-weight:700;font-family:var(--mono)':'background:linear-gradient(135deg,#202A50,#B08A28);color:#fff;font-size:13px'}">${isU?'SA':'✦'}</div><div style="max-width:84%;background:${isU?'var(--ink)':'rgba(255,255,255,.08)'};color:${isU?'#fff':'rgba(255,255,255,.85)'};border:1px solid ${isU?'var(--ink)':'rgba(255,255,255,.12)'};border-radius:${isU?'11px 3px 11px 11px':'3px 11px 11px 11px'};padding:9px 12px;font-size:12.5px;line-height:1.65">${text.replace(/\n/g,'<br>')}</div>`;
+  d.innerHTML=`<div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:11px;${isU?'background:linear-gradient(135deg,#9D7714,#202A50);color:#fff;font-weight:700;font-family:var(--mono)':'background:linear-gradient(135deg,#202A50,#B08A28);color:#fff;font-size:13px'}">${isU?'SA':'✦'}</div><div style="max-width:84%;background:${isU?'var(--ink)':'rgba(255,255,255,.08)'};color:${isU?'#fff':'rgba(255,255,255,.85)'};border:1px solid ${isU?'var(--ink)':'rgba(255,255,255,.12)'};border-radius:${isU?'11px 3px 11px 11px':'3px 11px 11px 11px'};padding:9px 12px;font-size:12.5px;line-height:1.65">${lexEsc(text).replace(/\n/g,'<br>')}</div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
   lexHistory.push({role,content:text});
 }
@@ -3966,9 +3980,21 @@ async function triggerWorkflow(payload) {
     return null;
   }
   try {
+    // Filing an internal session writes CPD points onto named lawyers, so the
+    // API requires the compliance officer's own token — it will not accept an
+    // anonymous filing.
+    const _tok = (function () { try { return localStorage.getItem('lad_token') || ''; } catch (_) { return ''; } })();
+    if (!_tok) {
+      alert('Your session has expired. Please sign in again before filing this session.');
+      return null;
+    }
     const r = await fetch(base + '/api/v1/accreditations', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-actor': payload.submittedBy || 'anonymous' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + _tok,
+        'x-actor': payload.submittedBy || 'anonymous',
+      },
       body: JSON.stringify(payload),
       keepalive: true,
     });
@@ -4325,7 +4351,7 @@ async function loadFirmIdentity() {
     const firm = await r.json();
     const name = (firm && (firm.name || firm.full_name) || '').toString().trim();
     if (!name) return;
-    const esc = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     try { document.title = name + ' — CLPD Compliance Portal'; } catch (_) {}
     const sb = document.getElementById('firmNameSidebar'); if (sb) sb.textContent = name;
     const t = document.getElementById('firmNameTitle');
@@ -4953,7 +4979,7 @@ window.addEventListener('resize',()=>{ if(window.innerWidth>768)closeSidebar(); 
 
   // ─── Storage helpers ─────────────────────────────────────────
   const STORAGE = {
-    getApiKey:  () => localStorage.getItem('lad_claude_api_key') || '',
+    getApiKey:  () => '',   // the key lives on the server; nothing is stored here
     setApiKey:  (k) => localStorage.setItem('lad_claude_api_key', k),
     clearApiKey:() => localStorage.removeItem('lad_claude_api_key'),
   };
@@ -5225,74 +5251,11 @@ Please try again in a moment.`;
     const msgs = document.getElementById('ladlex-msgs'); if (msgs) msgs.scrollTop = msgs.scrollHeight;
   }
 
-  async function streamFromClaude(prompt, targetEl) {
-    const apiKey = STORAGE.getApiKey();
-    const systemPrompt = `You are Maryam, an AI assistant inside the Dubai Legal Affairs Department's CLPD (Continuing Legal Professional Development) compliance platform.
-
-You are speaking to ${_lex.portalContext}.
-
-Key context:
-- CLPD is one 12-month cycle: 16 points total (8 mandatory + 8 accredited), due 31 December 2026
-- ${clpdPace()}
-- Mandatory courses are LAD-run (free or near-free)
-- Accredited courses are provided by external providers (priced in credits)
-- 1 credit = AED 120; a standard course costs 5 credits
-- Common course providers: Kwintessential, Hadef & Partners, DIFC Academy
-
-Be concise, practical, and warm. Judge lawyers on PACE against the cycle, not raw points — mid-cycle progress is normal and someone tracking the expected pace is doing fine, so don't call people "critical" unless they're clearly behind with little time left. Use markdown sparingly (bold for key terms, italic for emphasis). Don't repeat what the user said. Give specific course names and point values when possible. If the user asks something outside your scope, say so briefly.`;
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-5',
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: _lex.history.map(m => ({ role: m.role, content: m.content })),
-        stream: true,
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`API ${response.status}: ${errText.slice(0, 200)}`);
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let fullText = '';
-    targetEl.innerHTML = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const data = line.slice(6).trim();
-        if (!data || data === '[DONE]') continue;
-        try {
-          const event = JSON.parse(data);
-          if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
-            fullText += event.delta.text;
-            targetEl.innerHTML = formatLexMarkdown(fullText);
-            document.getElementById('ladlex-msgs').scrollTop = document.getElementById('ladlex-msgs').scrollHeight;
-          }
-        } catch {}
-      }
-    }
-
-    _lex.history.push({ role: 'assistant', content: fullText });
-  }
+  // ─── REMOVED: direct browser → api.anthropic.com ────────────────────
+  // Dead since Maryam moved to the server-side proxy, but it still read a
+  // personal Anthropic key out of localStorage. A government portal does not
+  // ask a compliance officer for their own billing credential, and a key in
+  // localStorage is readable by any XSS on the page. Deleted outright.
 
   async function respondInDemoMode(prompt, targetEl) {
     // Lightweight demo responses keyed off keywords. The real value is the Claude integration.

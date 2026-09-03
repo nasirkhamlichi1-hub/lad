@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <script src="lad-admin-guard.js" data-roles="lad_super_admin,super_admin,dg"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -424,7 +425,7 @@
   var base=((window.LAD_API_BASE)||(window.LAD_SYNC&&window.LAD_SYNC.base)||'https://lad-clpd-backend.onrender.com').replace(/\/$/,'');
   function tok(){ try{return localStorage.getItem('lad_token')||'';}catch(e){return '';} }
   function $(id){ return document.getElementById(id); }
-  function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]);}); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);}); }
   function nf(x){ var v=Number(x); return Number.isFinite(v)?v.toLocaleString():'—'; }
   function getJSON(path){ return fetch(base+path,{headers:{Authorization:'Bearer '+tok()}}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}); }
   function countUp(el,to,suffix,dur){ if(!el)return; to=Number(to)||0; suffix=suffix||''; dur=dur||1100; var t0=null;
