@@ -8,6 +8,12 @@
  * the footer at runtime and moves anything already anchored at the top
  * down to make room for it.
  *
+ * A page that already prints the marks in its own chrome gets NO bar: on
+ * those pages the injected one is a second (on clpd-portal, a third) copy
+ * of the same crest stacked above the page's own masthead, and the offset
+ * makeRoom() applies to clear it pushes the page's fixed furniture into
+ * whatever else is pinned to the top. See alreadyBranded() below.
+ *
  * Safe to include twice. Safe on pages that render their own chrome.
  * ═══════════════════════════════════════════════════════════════════════ */
 (function () {
@@ -83,6 +89,105 @@
     return f;
   }
 
+  /* ─── Is the page already carrying the marks? ────────────────────────
+   * Half the pages in this system print the crest and the wordmark in
+   * their own masthead (clpd-portal prints the crest twice on its own —
+   * once in the utility strip, once in the dark nav). Adding the bar
+   * there stacks the same artwork two or three deep. The rule below is
+   * deliberately biased towards SKIPPING: a page that keeps its own marks
+   * and loses the bar still shows the identity, whereas a page that gets
+   * both shows it wrong. Only the bar is affected — the footer is decided
+   * separately and still goes on every scrolling page.                  */
+
+  // The artwork the Department serves. Any reference to it, anywhere in
+  // the document, means the page is already showing an official mark.
+  var ART_RE = /(gov_new\.svg|DG_white\.svg|ladlogo\.svg|lad_logo_white\.svg|legal\.dubai\.gov\.ae\/assets\/govlogo)/i;
+
+  // Names that only ever describe the crest/wordmark lockup itself, so an
+  // image of any kind inside one is taken to be the mark. Deliberately NOT
+  // bare "logo"/"logos": the application shells use those for their own
+  // initial tile (lad-crm's "LAD" square, hub's generic shield), which is
+  // not a Government mark — reading those as one would strip the identity
+  // from the very pages that have none of their own.
+  var NAME_RE = /(^|[^a-z])(crest|wordmark|lockup|govlogo|gov-logo|gov-crest)([^a-z]|$)/i;
+
+  // Weaker names: "brand-mark" is used here for a coloured gradient tile
+  // with initials in it, so only a real image asset counts, never an
+  // inline <svg> and never a gradient.
+  var WEAK_NAME_RE = /(^|[^a-z])(brandmark|brand-mark|brand-logo)([^a-z]|$)/i;
+
+  // What the marks are called in alt text, in both languages.
+  var ALT_RE = /(government of dubai|legal affairs department|حكومة دبي|دائرة الشؤون القانونية)/i;
+
+  // Chrome the page draws for itself, however it is labelled.
+  var CHROME_SEL = 'header,nav,[class*="nav"],[class*="header"],[class*="topbar"],' +
+                   '[class*="masthead"],[class*="util"],[class*="brand"]';
+
+  function ours(el) {
+    return !!(el.closest && (el.closest('#ladBrandBar') || el.closest('#ladFooter')));
+  }
+
+  function attrs(el, names) {
+    var out = '';
+    for (var i = 0; i < names.length; i++) out += ' ' + (el.getAttribute(names[i]) || '');
+    return out;
+  }
+
+  // Returns a short reason string when the page already shows a mark,
+  // or null when it does not. Any non-null answer suppresses the bar.
+  function alreadyBranded() {
+    var i, el, imgs = document.getElementsByTagName('img');
+
+    // 1. The artwork itself, however it is referenced.
+    var refs = document.querySelectorAll('img,source,image,use,object,embed');
+    for (i = 0; i < refs.length; i++) {
+      el = refs[i]; if (ours(el)) continue;
+      if (ART_RE.test(attrs(el, ['src', 'srcset', 'data-src', 'href', 'xlink:href', 'data'])))
+        return 'official artwork referenced on the page';
+    }
+
+    // 2. An element named for the lockup that actually carries artwork.
+    //    The name alone proves nothing — the image has to be there, and a
+    //    gradient is not an image, which is why only url() backgrounds
+    //    count.
+    var named = document.querySelectorAll('[class],[id]');
+    for (i = 0; i < named.length; i++) {
+      el = named[i]; if (ours(el)) continue;
+      var nm = (typeof el.className === 'string' ? el.className : '') + ' ' + (el.id || '');
+      var strong = NAME_RE.test(nm);
+      if (!strong && !WEAK_NAME_RE.test(nm)) continue;
+      if (el.querySelector(strong ? 'img,svg,picture,image' : 'img,picture'))
+        return 'lockup element carrying artwork';
+      var bg; try { bg = getComputedStyle(el).backgroundImage; } catch (e) { bg = ''; }
+      if (bg && /url\(/i.test(bg)) return 'lockup element with a background image';
+    }
+
+    // 3. An image labelled as one of the two marks, wherever it is served
+    //    from — covers local copies of the artwork under any filename.
+    for (i = 0; i < imgs.length; i++) {
+      el = imgs[i]; if (ours(el)) continue;
+      if (ALT_RE.test(attrs(el, ['alt', 'aria-label', 'title'])))
+        return 'image labelled as an official mark';
+    }
+
+    // 4. Structural backstop: the page's own header/nav across the top of
+    //    the document carrying a real image asset of logo size. Only
+    //    <img> counts. Inline <svg> is how every page here draws its
+    //    icons — search glasses, chevrons, a generic shield — and reading
+    //    those as a mark would take the bar off pages that carry no
+    //    Government artwork at all.
+    for (i = 0; i < imgs.length; i++) {
+      el = imgs[i]; if (ours(el)) continue;
+      if (!el.closest(CHROME_SEL)) continue;
+      var r = el.getBoundingClientRect();
+      if (r.top > 200) continue;                        // not part of the masthead
+      var h = r.height || parseFloat(el.getAttribute('height')) || 0;
+      if (h > 24) return 'own masthead image';          // taller than an icon
+    }
+
+    return null;
+  }
+
   // Anything pinned across the top of the viewport has to come down by the
   // height of the bar. Deliberately narrow: a top navigation spans most of
   // the width and is short. A full-height side drawer (the messages panel)
@@ -114,22 +219,31 @@
     var html = document.documentElement;
     if (!html.getAttribute('lang')) html.setAttribute('lang', 'en');
 
-    var bar = brandBar();
-    document.body.insertBefore(bar, document.body.firstChild);
+    // Pages that print the marks themselves get nothing added, so nothing
+    // is shifted either: makeRoom() is reachable only from inside this
+    // branch, and scrollPaddingTop is only set when a bar exists to clear.
+    var branded = alreadyBranded();
+    if (branded) {
+      window.__ladBrandBarSkipped = branded;
+    } else {
+      var bar = brandBar();
+      document.body.insertBefore(bar, document.body.firstChild);
 
-    // Measure after insertion — the bar's height comes from the stylesheet,
-    // and if the stylesheet failed to load there is nothing to make room for.
-    var barH = bar.getBoundingClientRect().height;
-    if (barH > 0) {
-      makeRoom(barH);
-      // Some pages clear their own fixed nav with a scroll-margin; keep
-      // in-page anchors landing below both bars.
-      html.style.scrollPaddingTop = barH + 'px';
+      // Measure after insertion — the bar's height comes from the stylesheet,
+      // and if the stylesheet failed to load there is nothing to make room for.
+      var barH = bar.getBoundingClientRect().height;
+      if (barH > 0) {
+        makeRoom(barH);
+        // Some pages clear their own fixed nav with a scroll-margin; keep
+        // in-page anchors landing below both bars.
+        html.style.scrollPaddingTop = barH + 'px';
+      }
     }
 
     // A page that manages its own scrolling (a full-viewport application
     // shell) would hide a footer or break its layout. Those pages still
-    // carry both marks in the bar, which is what the identity requires.
+    // carry both marks — in the bar, or in their own masthead — which is
+    // what the identity requires. Unchanged by the check above.
     var bodyCs = getComputedStyle(document.body);
     var locked = bodyCs.overflow === 'hidden' || bodyCs.overflowY === 'hidden' ||
                  getComputedStyle(html).overflow === 'hidden';

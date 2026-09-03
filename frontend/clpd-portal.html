@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>CLPD Training Portal — Legal Affairs Department, Government of Dubai</title>
@@ -486,6 +487,14 @@ function applyLADConfig() {
   <!-- Government of Dubai Legal Affairs Department identity -->
   <link rel="stylesheet" href="lad-brand.css">
   <script src="lad-brand.js" defer></script>
+<script>
+/* One-time cleanup: earlier builds asked users to paste personal API keys and
+   kept them in this browser. Nothing reads them any more — Maryam's key lives
+   on the server — so remove them rather than leaving credentials sitting in
+   localStorage where any script on the page could read them. */
+(function(){try{['lad_claude_api_key','claude_key','anam_key','anam_persona']
+  .forEach(function(k){localStorage.removeItem(k);});}catch(e){}})();
+</script>
 </head>
 <body>
 
@@ -650,7 +659,7 @@ function applyLADConfig() {
       <a class="dr-link" onclick="showPage('courses');setCalView('cal');closeDrawer()"> Training Calendar</a>
       <div class="dr-sec">Resources</div>
       <a class="dr-link" onclick="showPage('faq');closeDrawer()"> FAQs</a>
-      <a class="dr-link" onclick="window.location.href='provider-portal.html';closeDrawer()"> Accreditation</a>
+      <a class="dr-link" onclick="showPage('accreditation');closeDrawer()"> Accreditation</a>
       <a class="dr-link" href="/ladstaff" target="_blank" rel="noopener" onclick="closeDrawer()"> LAD Staff Training ↗</a>
       <a class="dr-link" onclick="showPage('advocates');closeDrawer()">🇦🇪 Advocates Courses</a>
       <a class="dr-link" onclick="showPage('probono');closeDrawer()"> Pro Bono</a>
@@ -911,7 +920,7 @@ function applyLADConfig() {
       <div class="lad-mi" onmouseenter="ladOpen(this)" onmouseleave="ladClose(this)">
         Services <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         <div class="lad-dd" onmouseenter="ladKeep(this.parentElement)" onmouseleave="ladClose(this.parentElement)">
-          <a onclick="window.location.href='provider-portal.html';ddForceClose()">Accreditation</a>
+          <a onclick="showPage('accreditation');ddForceClose()">Accreditation</a>
           <a onclick="showPage('probono');ddForceClose()">Pro Bono</a>
           <a onclick="showPage('exemption');ddForceClose()">Exemption / Extension</a>
         </div>
@@ -1008,7 +1017,7 @@ function applyLADConfig() {
       <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
       E-learning
     </div>
-    <div class="lad-tab on" onclick="window.location.href='provider-portal.html'">
+    <div class="lad-tab" onclick="showPage('accreditation')">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
       Accreditation
     </div>
