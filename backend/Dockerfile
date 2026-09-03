@@ -30,10 +30,15 @@ COPY --chown=app:app package*.json ./
 COPY --chown=app:app src ./src
 COPY --chown=app:app scripts ./scripts
 COPY --chown=app:app migrations ./migrations
-# Seed data read at boot by scripts/seed-{accredited,feedback,faq}.js. Only the
-# JSON is carried — the source spreadsheet in this folder is a working file and
-# has no place in a runtime image.
-COPY --chown=app:app seed-data/*.json ./seed-data/
+# Seed data read at boot by scripts/seed-{accredited,feedback,faq}.js and by
+# seed.js, which needs the anonymised roster spreadsheet. The whole folder is
+# carried: without the .xlsx, seed-if-needed.js fails on every single boot,
+# never sets its version marker, and retries for ever — a failure line in the
+# logs of every restart, which teaches operators to ignore boot errors.
+COPY --chown=app:app seed-data ./seed-data
+# Bundled courses, read by /api/v1/trainer/bundled-courses. Without these the
+# admin's one-click "import a ready-made course" list is always empty.
+COPY --chown=app:app courses ./courses
 
 # Persistent data — mounted at runtime, never baked in
 RUN mkdir -p /app/data && chown -R app:app /app/data
