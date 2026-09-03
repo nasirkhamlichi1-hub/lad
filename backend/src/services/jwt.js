@@ -43,4 +43,29 @@ function revoke(jti) {
   db.prepare('UPDATE auth_sessions SET revoked = 1 WHERE id = ?').run(jti);
 }
 
-module.exports = { sign, verify, revoke };
+// Revoke every live session for one account. Called when a password is reset:
+// resetting a password is what someone does when they think their account is
+// compromised, so any token an attacker already holds has to die with it —
+// otherwise it stays valid for the rest of its eight hours.
+function revokeAllForUser(userId, userType) {
+  if (!userId) return 0;
+  try {
+    const info = db.prepare(
+      'UPDATE auth_sessions SET revoked = 1 WHERE user_id = ? AND user_type = ? AND revoked = 0'
+    ).run(userId, userType);
+    return info.changes || 0;
+  } catch (_) { return 0; }
+}
+
+// Housekeeping: auth_sessions grows by one row per sign-in for ever, and every
+// authenticated request reads this table. Drop rows whose tokens expired more
+// than a week ago — they can never authenticate anything again.
+function pruneExpired() {
+  try {
+    const cutoff = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+    const info = db.prepare('DELETE FROM auth_sessions WHERE expires_at < ?').run(cutoff);
+    return info.changes || 0;
+  } catch (_) { return 0; }
+}
+
+module.exports = { sign, verify, revoke, revokeAllForUser, pruneExpired };
