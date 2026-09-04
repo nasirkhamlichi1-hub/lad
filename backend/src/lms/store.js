@@ -335,7 +335,13 @@ async function closeAttempt(attemptId, lawyerId, {
       `UPDATE activity_attempt
        SET status = ?, score = ?, seconds = ?, detail = ?, ended_at = ?
        WHERE id = ?`,
-      [abandoned ? 'abandoned' : 'completed', cleanScore, cleanSeconds, db.toJson(detail), ts, attemptId]
+      // The attempt keeps its own verdict — completed, passed, failed, or
+      // in_progress when it ended without completing — not a flat
+      // 'completed' for anything that was not abandoned. The roll-up below
+      // reads that verdict; before this, closing with completed:false still
+      // counted as a completion, and the only way to not complete was to
+      // abandon.
+      [abandoned ? 'abandoned' : status, cleanScore, cleanSeconds, db.toJson(detail), ts, attemptId]
     );
 
     // Rebuild the aggregate from the attempt log rather than adding to it.
@@ -347,7 +353,7 @@ async function closeAttempt(attemptId, lawyerId, {
               COALESCE(SUM(seconds), 0) AS seconds,
               MAX(score) AS best_score,
               MIN(started_at) AS first_at,
-              MAX(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS ever_completed
+              MAX(CASE WHEN status IN ('completed','passed','failed') THEN 1 ELSE 0 END) AS ever_completed
        FROM activity_attempt
        WHERE activity_id = ? AND lawyer_id = ?`,
       [attempt.activity_id, lawyerId]
