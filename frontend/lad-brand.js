@@ -219,6 +219,16 @@
     var html = document.documentElement;
     if (!html.getAttribute('lang')) html.setAttribute('lang', 'en');
 
+    // A page shown inside another LAD page (the CRM embeds the admin,
+    // trainer and topic-builder screens in iframes, flagged ?embed=1 /
+    // html.lad-embed) must not repeat the marks the host page already
+    // carries — one identity per viewport. Bar and footer both stay off.
+    if (window.self !== window.top ||
+        document.documentElement.classList.contains('lad-embed')) {
+      window.__ladBrandBarSkipped = 'embedded in another LAD page';
+      return;
+    }
+
     // Pages that print the marks themselves get nothing added, so nothing
     // is shifted either: makeRoom() is reachable only from inside this
     // branch, and scrollPaddingTop is only set when a bar exists to clear.
