@@ -141,6 +141,12 @@ if (config.isDev) {
   ));
 }
 
+// ─── SCORM player ───
+// Mounted BEFORE the general rate limiter: a SCORM package is hundreds of
+// small asset requests on the first screen alone, and every one of them is
+// already authorised by the signed token in its path.
+app.use('/api/v1/scorm', require('./routes/scorm'));
+
 // ─── Rate limit ─────────────────────────────────────────────────────────
 // Skip the UAE Pass callback (we don't want to drop legitimate redirects).
 const limiter = rateLimit({
