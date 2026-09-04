@@ -867,7 +867,7 @@ function paneFile(a){
   return '<div class="adm-field"><label class="adm-label" for="x-title">Title</label>'+
       '<input class="adm-input" id="x-title" value="'+esc(a.title)+'"></div>'+
     '<div class="adm-drop" id="x-drop"><div class="big">Drop the '+(isScorm?'SCORM package':'file')+' here, or choose one</div>'+
-      '<div class="sm">Up to 10 MB here; larger files need cloud storage, or add a link below</div></div>'+
+      '<div class="sm">'+(isScorm?'Upload the .zip exactly as your authoring tool exported it — no need to unzip it. Up to 10 MB here; larger packages need cloud storage.':'Up to 10 MB here; larger files need cloud storage, or add a link below')+'</div></div>'+
     '<input type="file" id="x-file" style="display:none"'+(isScorm?' accept=".zip"':'')+'>'+
     '<div id="x-filemeta"></div><div class="adm-busy" id="x-busy"></div>'+
     '<div class="adm-field" style="margin-top:14px"><label class="adm-label" for="x-url">'+
