@@ -645,7 +645,15 @@
     var b = $('rDown'); b.style.display = '';
     b.onclick = function () { var a = document.createElement('a'); a.href = url; a.download = name || 'material'; document.body.appendChild(a); a.click(); a.remove(); };
   }
-  $('rClose').onclick = function () { $('rBody').innerHTML = ''; $('reader').close(); };
+  $('rClose').onclick = function () {
+    $('rBody').innerHTML = ''; $('reader').close();
+    if (scormSession && !scormSession.done) {
+      var sess = scormSession; scormSession = null;
+      var seconds = Math.max(5, Math.round((Date.now() - openedAt) / 1000));
+      api.closeAttempt(sess.attempt.id, { completed: false, abandoned: true, seconds: seconds })
+        .catch(function () { }).then(function () { return load(); });
+    }
+  };
 
   // Fetch a material's bytes WITH the sign-in token (a plain browser tab has
   // no token, which is why raw download links used to answer "no_access").
@@ -665,6 +673,13 @@
       readerShow('VIDEO', m.title);
       readerFrame('https://www.youtube-nocookie.com/embed/' + vid + '?autoplay=1&rel=0');
       readerNewTab(m.url);
+      return;
+    }
+    if (m.kind === 'scorm' && m.has_file) {
+      // An uploaded package plays inside the hub, against our own runtime.
+      readerShow('INTERACTIVE', m.title);
+      try { readerFrame(await scormPlayerUrl(courseId, m.id)); }
+      catch (e) { $('rBody').innerHTML = '<div class="rmsg">' + esc(e.message || 'Could not open the package.') + '</div>'; }
       return;
     }
     if (m.kind === 'link' || m.kind === 'scorm') {
@@ -700,6 +715,46 @@
     }
   }
 
+  // ─── SCORM, played in the hub ───────────────────────────────────
+  // The backend unzips the uploaded package and serves it with a SCORM
+  // runtime of its own; this page just frames the player and listens for
+  // what the package reports. The attempt opened here is settled from the
+  // package's own status and score — no more "tell the hub when you have
+  // finished it".
+  async function scormPlayerUrl(courseId, mid) {
+    var resp = await fetch((window.LAD_API_BASE || '') + '/api/v1/scorm/' +
+      encodeURIComponent(courseId) + '/' + encodeURIComponent(mid) + '/launch',
+      { method: 'POST', headers: api.getToken() ? { 'Authorization': 'Bearer ' + api.getToken() } : {} });
+    var j = null; try { j = await resp.json(); } catch (e) { }
+    if (!resp.ok) {
+      var err = new Error((j && j.message) || 'Could not open the package (' + resp.status + ')');
+      err.link = j && j.url; throw err;
+    }
+    return (window.LAD_API_BASE || '') + j.player_url;
+  }
+
+  var scormSession = null;
+  window.addEventListener('message', async function (ev) {
+    var d = ev.data && ev.data.ladScorm;
+    if (!d || !scormSession) return;
+    var apiOrigin; try { apiOrigin = new URL(window.LAD_API_BASE || location.href).origin; } catch (e) { apiOrigin = location.origin; }
+    if (ev.origin !== apiOrigin) return;
+    if (d.event === 'finish' && !scormSession.done) {
+      scormSession.done = true;
+      var sess = scormSession; scormSession = null;
+      try {
+        await api.closeAttempt(sess.attempt.id, {
+          completed: !!d.completed,
+          score: d.score == null ? undefined : d.score,
+          percent: d.percent == null ? null : d.percent,
+          seconds: d.seconds || Math.max(5, Math.round((Date.now() - openedAt) / 1000)),
+        });
+      } catch (e) { /* the state is saved server-side either way */ }
+      $('rBody').innerHTML = ''; try { $('reader').close(); } catch (e) { }
+      note(''); await load();
+    }
+  });
+
   // ─── Launching ──────────────────────────────────────────────────
   // The AI trainer runs its own session and the server mirrors it onto the
   // spine, so this page must NOT also open an attempt for it — that would
@@ -717,9 +772,19 @@
       openAttempt = started.attempt;
     } catch (e) { note('Could not start this activity: ' + esc(e.message), true); return; }
 
+    if (a.kind === 'scorm' && a.material_id) {
+      try {
+        var pUrl = await scormPlayerUrl(a.course_id || TOPIC, a.material_id);
+        scormSession = { attempt: openAttempt, activity: a, done: false };
+        readerShow('ASSESSMENT', a.title);
+        readerFrame(pUrl);
+        return;
+      } catch (e) { /* a link-only package falls through to the old flow */ }
+    }
+
     $('dlgTitle').textContent = a.title;
     $('dlgBody').innerHTML = a.kind === 'scorm'
-      ? 'Opens the package in a new tab. Until the SCORM runtime is connected, tell the hub when you have finished it — after that the package will report its own score.'
+      ? 'Opens the package in a new tab — tell the hub when you have finished it.'
       : 'Opens in a new tab. Mark it done when you have read it and the hub will record the time you spent.';
     $('dlg').showModal();
   }
