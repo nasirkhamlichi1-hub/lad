@@ -97,15 +97,23 @@ const ALWAYS_ALLOW = [
 // Never true in production: config.isDev is false there.
 const isLocalOrigin = (o) => config.isDev && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o);
 
-app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin) return cb(null, true); // mobile apps, server-to-server, curl
-    if (isLocalOrigin(origin)) return cb(null, true);
-    if (ALWAYS_ALLOW.includes(origin) || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) return cb(null, true);
-    log.warn('cors_rejected', { origin });
-    cb(new Error('CORS: origin ' + origin + ' not allowed'));
-  },
-  credentials: true,
+// The API serves one set of pages of its own: the SCORM player and the
+// package inside it. A POST from that page carries Origin = this host, and
+// a page's own host is never a cross-origin caller — so it is allowed first,
+// before the allow-list, otherwise the player's commits are refused and a
+// learner's package state is never saved.
+const isOwnOrigin = (origin, req) => {
+  try { return new URL(origin).host === String(req.headers.host || '').toLowerCase(); } catch (_) { return false; }
+};
+app.use(cors((req, cb) => {
+  const origin = req.headers.origin;
+  const ok = !origin // mobile apps, server-to-server, curl
+    || isOwnOrigin(origin, req)
+    || isLocalOrigin(origin)
+    || ALWAYS_ALLOW.includes(origin) || allowedOrigins.includes(origin) || allowedOrigins.includes('*');
+  if (ok) return cb(null, { origin: true, credentials: true });
+  log.warn('cors_rejected', { origin });
+  cb(new Error('CORS: origin ' + origin + ' not allowed'));
 }));
 
 app.use(compression());
