@@ -247,6 +247,11 @@
 
     <!-- CUSTOMERS -->
     <div class="view" id="v-cust"><div class="scroll" style="width:100%;padding:22px">
+      <!-- Roster transfers: a firm has asked to take a lawyer from another firm.
+           The roll is the Department's register, so the Department decides. -->
+      <div class="panel" id="rosterReqPanel" style="max-width:900px;margin:0 auto 14px;display:none"><div class="panel-hd"><h2>Roster transfers awaiting a decision</h2><span class="sub" id="rosterReqCount" style="margin-left:auto"></span></div>
+        <div class="panel-bd" id="rosterReqList" style="max-height:none"></div>
+      </div>
       <div class="panel" style="max-width:900px;margin:0 auto"><div class="panel-hd"><h2>Customers</h2>
         <input class="inp" id="custSearch" placeholder="Search a lawyer or firm…" style="max-width:340px;margin-left:auto" oninput="custSearch()"/></div>
         <div class="panel-bd" id="custList" style="max-height:none"><div class="empty">Search above, or browse firms below.</div></div>
@@ -688,7 +693,30 @@
   window.sxBook=function(lid,btn){btn.disabled=true;btn.textContent='…';api('/api/v1/bookings',{method:'POST',body:JSON.stringify({lawyer_id:lid,session_id:window.__SX.id,course_id:window.__SX.course})}).then(function(){toast('✓ Booked');openSession(window.__SX.id)}).catch(function(e){toast(e.message);btn.disabled=false;btn.textContent='Book'})};
 
   // ── customers ──
-  function browseFirms(){document.getElementById('custList').innerHTML=FIRMS.slice(0,40).map(function(f){return '<div class="row" onclick="openFirm(\''+q1(f.id)+'\')"><div class="av" style="width:36px;height:36px;font-size:12px;background:'+avColor(f.name)+'">'+initials(f.name)+'</div><div style="flex:1"><div class="ttl">'+esc(f.name||f.id)+'</div><div class="sub">'+esc(f.id)+'</div></div></div>'}).join('')||'<div class="empty">No firms.</div>'}
+  // ── Roster transfer requests (firm → firm moves need the Department's say) ──
+  async function loadRosterRequests(){
+    var panel=document.getElementById('rosterReqPanel'), list=document.getElementById('rosterReqList'), cnt=document.getElementById('rosterReqCount'); if(!panel) return;
+    var j; try { j = await api('/api/v1/firms/roster-requests?status=pending'); } catch(e){ panel.style.display='none'; return; }
+    var rows=(j&&j.requests)||[];
+    if(!rows.length){ panel.style.display='none'; return; }
+    panel.style.display=''; cnt.textContent=rows.length+' pending';
+    list.innerHTML = rows.map(function(r){
+      return '<div class="row" style="align-items:flex-start;gap:12px">'
+        +'<div class="av" style="width:36px;height:36px;font-size:12px;background:'+avColor(r.lawyer.name)+'">'+initials(r.lawyer.name)+'</div>'
+        +'<div style="flex:1;min-width:0"><div class="ttl">'+esc(r.lawyer.name)+(r.lawyer.roll_number?' <span class="sub">· '+esc(r.lawyer.roll_number)+'</span>':'')+'</div>'
+        +'<div class="sub">From <b>'+esc(r.from_firm?r.from_firm.name:'no firm')+'</b> to <b>'+esc(r.to_firm.name)+'</b> · asked by '+esc(r.requested_by_name||'the firm')+' · '+fdate(r.created_at)+(r.note?'<br><i>“'+esc(r.note)+'”</i>':'')+'</div>'
+        +'<input class="inp" id="rrNote_'+q1(r.id)+'" placeholder="Note for the record (optional)" style="margin-top:8px;max-width:420px"/></div>'
+        +'<div style="display:flex;flex-direction:column;gap:6px"><button class="btn btn-xs btn-l" onclick="decideRoster(\''+q1(r.id)+'\',true)">Approve</button><button class="btn btn-xs" onclick="decideRoster(\''+q1(r.id)+'\',false)">Decline</button></div>'
+        +'</div>';
+    }).join('');
+  }
+  window.decideRoster=async function(id, approve){
+    var note=(document.getElementById('rrNote_'+id)||{}).value||'';
+    try { var j = await api('/api/v1/firms/roster-requests/'+encodeURIComponent(id)+'/decide',{method:'POST',body:JSON.stringify({approve:approve,note:note})}); toast(approve?'✓ Transfer approved — the lawyer has moved':'Transfer declined'); }
+    catch(e){ toast(e.message); }
+    loadRosterRequests();
+  };
+  function browseFirms(){ loadRosterRequests();document.getElementById('custList').innerHTML=FIRMS.slice(0,40).map(function(f){return '<div class="row" onclick="openFirm(\''+q1(f.id)+'\')"><div class="av" style="width:36px;height:36px;font-size:12px;background:'+avColor(f.name)+'">'+initials(f.name)+'</div><div style="flex:1"><div class="ttl">'+esc(f.name||f.id)+'</div><div class="sub">'+esc(f.id)+'</div></div></div>'}).join('')||'<div class="empty">No firms.</div>'}
   var csT;window.custSearch=function(){clearTimeout(csT);csT=setTimeout(function(){
     var qv=(document.getElementById('custSearch').value||'').trim();var host=document.getElementById('custList');
     if(qv.length<2){browseFirms();return}var ql=qv.toLowerCase();host.innerHTML='<div class="empty">Searching…</div>';

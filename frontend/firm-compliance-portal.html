@@ -828,10 +828,13 @@ body{padding-top:var(--lad-nav-h)}
             <h2 class="sec-title" data-cfg-html="firm_sec_lawyers_title">Your <em>lawyers</em></h2>
             <div class="sec-desc">Click any row to open their profile, see course recommendations, and book individually.</div>
           </div>
-          <div class="sec-acts">
+          <div class="sec-acts" style="display:flex;align-items:center;gap:10px">
             <span id="filtCount" style="font-family:var(--mono);font-size:10.5px;color:var(--slate3)">—</span>
+            <button class="btn btn-g btn-sm" onclick="openRosterAdd()" id="rosterAddBtn">+ Add lawyer</button>
           </div>
         </div>
+        <!-- Transfer requests this firm has with the Department. Hidden until there are any. -->
+        <div id="rosterPending" style="display:none;margin:-4px 0 12px;padding:10px 14px;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:8px;background:var(--paper);font-size:12.5px;color:var(--slate)"></div>
         <div class="search-wrap">
           <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input id="lawSearch" type="text" placeholder="Search by name, practice area, seniority, points…" oninput="filterLawyers()"/>
@@ -2449,10 +2452,130 @@ function renderLawyerRow(l,i) {
     <div style="text-align:center"><span class="pill ${pillClass(l.pts)}" style="font-size:9px">${pillLabel(l.pts)}</span></div>
     <div onclick="event.stopPropagation()" style="display:flex;gap:5px;justify-content:flex-end;align-items:center">
       <button class="btn btn-xs btn-gh" onclick="openOR(${l.id})">✉</button>
+      <button class="btn btn-xs btn-gh" onclick="openRosterRemove(${l.id})" title="Remove from your roster" aria-label="Remove ${l.name} from your roster" style="color:var(--red)">✕</button>
       <button class="btn btn-xs btn-b" onclick="openLawyer(${l.id})">→</button>
     </div>
   </div>`;
 }
+
+// ════════════════════════════════════════════
+// ROSTER — add a lawyer from the roll, remove one from the firm
+// ════════════════════════════════════════════
+// The roll is the Department's register. A firm can attach a lawyer who is on
+// it and with no firm, and detach one of its own. Taking a lawyer from another
+// firm is a request the Department decides — the server enforces all of it;
+// this is just the front of it.
+function _rosterBase(){ return ((window.LAD_SYNC && window.LAD_SYNC.base) || window.LAD_API_BASE || 'https://lad-clpd-backend.onrender.com').replace(/\/$/,''); }
+async function _rosterApi(path, opts){
+  const r = await fetch(_rosterBase() + '/api/v1/firms/me' + path, Object.assign({ headers: { 'Content-Type':'application/json', Authorization: 'Bearer ' + (localStorage.getItem('lad_token')||'') }, cache:'no-store' }, opts||{}));
+  let j = {}; try { j = await r.json(); } catch(_){}
+  if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+  return j;
+}
+function _escR(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function _rosterModal(html){
+  let m = document.getElementById('rosterModal');
+  if (!m) { m = document.createElement('div'); m.id='rosterModal'; m.setAttribute('style','position:fixed;inset:0;z-index:1200;background:rgba(10,14,20,.6);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:20px'); m.onclick = e => { if (e.target===m) closeRosterModal(); }; document.body.appendChild(m); }
+  m.innerHTML = `<div style="background:var(--white);border-radius:var(--r-2xl);box-shadow:var(--sh-xl);width:min(100%,560px);max-height:88vh;display:flex;flex-direction:column;overflow:hidden">${html}</div>`;
+  m.style.display = 'flex';
+  return m;
+}
+function closeRosterModal(){ const m=document.getElementById('rosterModal'); if (m) m.style.display='none'; }
+function _rosterHead(icon, title, sub){
+  return `<div style="padding:17px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:11px;flex-shrink:0">
+    <div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--green),var(--green-l));display:grid;place-items:center;font-size:15px;color:#fff">${icon}</div>
+    <div style="flex:1"><div style="font-family:var(--serif);font-size:17px;color:var(--ink)">${title}</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;margin-top:2px">${sub}</div></div>
+    <button onclick="closeRosterModal()" style="width:28px;height:28px;border-radius:7px;background:var(--paper2);border:1px solid var(--line);cursor:pointer;color:var(--slate);font-size:14px;display:grid;place-items:center">✕</button>
+  </div>`;
+}
+
+// ── Add ──
+function openRosterAdd(){
+  _rosterModal(_rosterHead('+', 'Add a lawyer to your roster', 'SEARCH THE DEPARTMENT\'S ROLL') + `
+    <div style="padding:17px 22px;display:flex;flex-direction:column;gap:10px;flex:1;overflow:hidden">
+      <input id="rosterQ" type="text" placeholder="Name, email or roll number — at least three characters" autocomplete="off"
+        style="width:100%;padding:10px 12px;border:1.5px solid var(--line2);border-radius:9px;font-size:13.5px;font-family:var(--sans);color:var(--ink);outline:none"
+        onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--line2)'" oninput="rosterSearchDebounced()"/>
+      <div id="rosterRes" style="flex:1;overflow-y:auto;min-height:120px;display:flex;flex-direction:column;gap:6px">
+        <div style="color:var(--slate3);font-size:12.5px;padding:18px 4px;line-height:1.6">A lawyer who is on the roll and with no firm joins your roster immediately. A lawyer who is with another firm becomes a transfer request that the Department decides — you will see it above your lawyer list until it is answered.</div>
+      </div>
+    </div>`);
+  setTimeout(()=>{ const q=document.getElementById('rosterQ'); if(q) q.focus(); }, 30);
+}
+let _rosterT=null;
+function rosterSearchDebounced(){ clearTimeout(_rosterT); _rosterT=setTimeout(rosterSearch, 260); }
+async function rosterSearch(){
+  const q=(document.getElementById('rosterQ')||{}).value||''; const box=document.getElementById('rosterRes'); if(!box) return;
+  if (q.trim().length<3){ box.innerHTML='<div style="color:var(--slate3);font-size:12.5px;padding:14px 4px">Type at least three characters.</div>'; return; }
+  box.innerHTML='<div style="color:var(--slate3);font-size:12.5px;padding:14px 4px">Searching the roll…</div>';
+  let j; try { j = await _rosterApi('/lawyers/search?q='+encodeURIComponent(q.trim())); } catch(e){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;padding:14px 4px">'+_escR(e.message)+'</div>'; return; }
+  const rows=j.results||[];
+  if(!rows.length){ box.innerHTML='<div style="color:var(--slate3);font-size:12.5px;padding:14px 4px">No practising lawyer on the roll matches that. Check the spelling, or ask the Department on 800 523 if they should be on the roll and are not.</div>'; return; }
+  box.innerHTML = rows.map(r=>{
+    const act = r.action==='add' ? `<button class="btn btn-g btn-xs" onclick="rosterAdd('${_escR(r.id)}','${_escR(r.name)}',false)">Add to roster</button>`
+      : r.action==='request_transfer' ? `<button class="btn btn-gh btn-xs" onclick="rosterAdd('${_escR(r.id)}','${_escR(r.name)}',true)" title="With another firm — the Department decides">Request transfer</button>`
+      : r.action==='requested' ? `<span style="font-family:var(--mono);font-size:10px;color:var(--gold)">REQUESTED</span>`
+      : `<span style="font-family:var(--mono);font-size:10px;color:var(--slate3)">ON YOUR ROSTER</span>`;
+    const where = r.affiliation==='none' ? 'No firm' : r.affiliation==='own' ? 'Your firm' : 'With another firm';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--paper)">
+      <div style="flex:1;min-width:0"><div style="font-size:13.5px;color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_escR(r.name)}</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--slate3)">${r.roll_number?_escR(r.roll_number)+' · ':''}${_escR(r.email_masked||'')}${r.email_masked?' · ':''}${where}</div></div>
+      ${act}</div>`;
+  }).join('');
+}
+async function rosterAdd(id, name, isTransfer, note){
+  // A transfer goes to the Department, so give the officer one line to say why
+  // — inline, in the result row, rather than a browser prompt.
+  if (isTransfer && note === undefined) {
+    const btn = event && event.target; const row = btn && btn.closest('div[style*="border-radius:9px"]'); if (!row) return;
+    row.innerHTML = `<div style="flex:1;min-width:0"><div style="font-size:13px;color:var(--ink);font-weight:600;margin-bottom:6px">Ask the Department to move ${_escR(name)} to your firm</div>
+      <input id="rosterNote_${_escR(id)}" type="text" placeholder="Optional note — e.g. joined us on 1 September" style="width:100%;padding:8px 10px;border:1.5px solid var(--line2);border-radius:8px;font-size:12.5px;font-family:var(--sans);color:var(--ink);outline:none"/></div>
+      <button class="btn btn-g btn-xs" onclick="rosterAdd('${_escR(id)}','${_escR(name)}',true,(document.getElementById('rosterNote_${_escR(id)}')||{}).value||'')">Send request</button>`;
+    const inp = document.getElementById('rosterNote_'+id); if (inp) { inp.focus(); inp.onkeydown = e => { if (e.key==='Enter') rosterAdd(id, name, true, inp.value||''); }; }
+    return;
+  }
+  note = note || '';
+  try {
+    const j = await _rosterApi('/lawyers', { method:'POST', body: JSON.stringify({ lawyer_id:id, note }) });
+    if (j.outcome==='added'){ showToast('✓ '+name+' added to your roster'); closeRosterModal(); await loadFirmLawyersFromBackend(); }
+    else { showToast('Request sent to the Department'); closeRosterModal(); }
+    loadRosterPending();
+  } catch(e){ showToast(e.message); }
+}
+
+// ── Remove ──
+function openRosterRemove(localId){
+  const l = LAWYERS.find(x=>x.id===localId); if(!l) return;
+  _rosterModal(_rosterHead('✕', 'Remove '+_escR(l.name)+' from your roster?', 'THE ROLL ENTRY IS NOT AFFECTED') + `
+    <div style="padding:17px 22px;display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:13px;color:var(--slate);line-height:1.6">This records that ${_escR(l.name)} is no longer with your firm. Their roll entry, CPD points, credits and history are unchanged — only the affiliation is removed, and the change is logged with the Department. They will be notified.</div>
+      <div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:5px">REASON (OPTIONAL)</div>
+        <input id="rosterReason" type="text" placeholder="e.g. Left the firm on 31 August" style="width:100%;padding:9px 11px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--line2)'"/></div>
+    </div>
+    <div style="padding:13px 22px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-gh btn-sm" onclick="closeRosterModal()">Keep</button>
+      <button class="btn btn-sm" id="rosterRemoveBtn" style="background:var(--red);color:#fff" onclick="rosterRemove('${_escR(l.laId)}','${_escR(l.name)}')">Remove from roster</button>
+    </div>`);
+}
+async function rosterRemove(laId, name){
+  const btn=document.getElementById('rosterRemoveBtn'); if(btn){ btn.disabled=true; btn.textContent='Removing…'; }
+  const reason=(document.getElementById('rosterReason')||{}).value||'';
+  try { await _rosterApi('/lawyers/'+encodeURIComponent(laId), { method:'DELETE', body: JSON.stringify({ reason }) }); showToast('✓ '+name+' removed from your roster'); closeRosterModal(); selected.clear(); await loadFirmLawyersFromBackend(); }
+  catch(e){ showToast(e.message); if(btn){ btn.disabled=false; btn.textContent='Remove from roster'; } }
+}
+
+// ── Pending transfer requests strip ──
+async function loadRosterPending(){
+  const el=document.getElementById('rosterPending'); if(!el) return;
+  let j; try { j = await _rosterApi('/lawyers/requests'); } catch(_){ return; }
+  const pend=(j.requests||[]).filter(r=>r.status==='pending');
+  const recent=(j.requests||[]).filter(r=>r.status!=='pending').slice(0,2);
+  if(!pend.length && !recent.length){ el.style.display='none'; return; }
+  el.style.display='block';
+  el.innerHTML = (pend.length ? `<strong style="color:var(--ink)">With the Department:</strong> ` + pend.map(r=>_escR(r.lawyer.name)+' (transfer from '+_escR(r.from_firm?r.from_firm.name:'no firm')+')').join(', ') + ' — awaiting a decision.' : '')
+    + (recent.length ? (pend.length?'<br>':'') + recent.map(r=>`<span style="color:var(--slate3)">${_escR(r.lawyer.name)} — ${r.status}${r.decision_note?': '+_escR(r.decision_note):''}</span>`).join('<br>') : '');
+}
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(loadRosterPending, 1200); });
 
 // ════════════════════════════════════════════
 // MASS BOOKING
