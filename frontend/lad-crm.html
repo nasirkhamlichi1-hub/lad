@@ -560,12 +560,13 @@
     ]).then(function(r){
       CONV=r[0].conversations||[];var o=r[1]||{};TASKS_DUE=(r[2].tasks||[]);
       var open=CONV.filter(function(c){return c.status!=='closed'&&c.status!=='resolved'}).length;
-      var un=CONV.filter(function(c){return !c.assigned_to&&c.status!=='closed'}).length;
+      // Same rule as box=attention: unassigned OR escalated, still live.
+      var un=CONV.filter(function(c){return (!c.assigned_to||c.escalated)&&c.status!=='closed'&&c.status!=='resolved'}).length;
       var ib=document.getElementById('inboxBadge');ib.textContent=un;document.getElementById('railInbox').classList.toggle('has',un>0);
       var L=o.lawyers||{},F=o.firms||{};
       var dash=document.getElementById('dashGrid');
       dash.innerHTML=
-        kpi('Open conversations',open,un+' unassigned')
+        kpi('Open conversations',open,un+' need attention')
         +kpi('Assigned to me',CONV.filter(function(c){return c.assigned_to===ME.sub&&c.status!=='closed'}).length,'your queue')
         +kpi('Upcoming sessions',SESS.length,(SESS.reduce(function(s,x){return s+(Number(x.seats_remaining)||0)},0))+' seats open')
         +kpi('Tasks due',TASKS_DUE.length,'follow-ups')
@@ -923,7 +924,11 @@
   loadSessions().then(loadDash);
   // The Inbox badge (new-message indicator) updates everywhere in the shell —
   // not just on Home — so it's live while you're deep in Courses, Users, etc.
-  function refreshInboxBadge(){api('/api/v1/messages/conversations?box=unassigned').then(function(j){var un=(j.conversations||[]).filter(function(c){return c.status!=='closed'}).length;var ib=document.getElementById('inboxBadge');if(ib)ib.textContent=un;var ri=document.getElementById('railInbox');if(ri)ri.classList.toggle('has',un>0)}).catch(function(){})}
+  // box=attention, not box=unassigned. Maryam routes every hand-off to a named
+  // owner, so an escalated thread is assigned — and the unassigned count could
+  // never see the threads that most needed a person. Nothing in the shell said
+  // anything was outstanding.
+  function refreshInboxBadge(){api('/api/v1/messages/conversations?box=attention').then(function(j){var un=(j.conversations||[]).length;var ib=document.getElementById('inboxBadge');if(ib)ib.textContent=un;var ri=document.getElementById('railInbox');if(ri)ri.classList.toggle('has',un>0)}).catch(function(){})}
   setInterval(function(){if(document.getElementById('v-dash').classList.contains('on'))loadDash();else refreshInboxBadge()},45000);
   // Deep-link / refresh-safe navigation — the URL hash tracks the open module.
   function fromHash(){var h=(location.hash||'').replace(/^#/,'');if(h&&document.getElementById('v-'+h))go(h)}
