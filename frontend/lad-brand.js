@@ -229,6 +229,24 @@
       var bar = brandBar();
       document.body.insertBefore(bar, document.body.firstChild);
 
+      // A body laid out as a horizontal flex row (the application shells:
+      // rail + main) takes the bar as one more COLUMN, and the content
+      // pane — flex:1 with min-width:0 — is starved to zero width: header,
+      // rail, and a blank page. Wrap the row and give the bar a full line
+      // of its own. A grid body (lawyer-portal-v2) has the same failure
+      // mode and gets the grid version of the same cure.
+      var pre = getComputedStyle(document.body);
+      if (pre.display.indexOf('flex') !== -1 &&
+          pre.flexDirection.indexOf('row') === 0) {
+        document.body.style.flexWrap = 'wrap';
+        bar.style.flex = '0 0 100%';
+      } else if (pre.display.indexOf('grid') !== -1) {
+        bar.style.gridColumn = '1 / -1';
+      }
+      // Pages that size their panes against the viewport can subtract
+      // var(--lad-bar-h) behind this class — set only when a bar exists.
+      document.body.classList.add('lad-has-brandbar');
+
       // Measure after insertion — the bar's height comes from the stylesheet,
       // and if the stylesheet failed to load there is nothing to make room for.
       var barH = bar.getBoundingClientRect().height;
