@@ -47,6 +47,13 @@
   .subbody{flex:1;min-height:0;display:flex}
   /* ── main ── */
   .main{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh}
+  /* The injected Government brand bar (lad-brand.js) wraps onto a full
+     first row of the flex body; keep the rail and the pane inside what is
+     left of the viewport. :where() keeps specificity flat so the mobile
+     rules below still win. */
+  :where(body.lad-has-brandbar){align-content:flex-start}
+  :where(body.lad-has-brandbar) .rail,
+  :where(body.lad-has-brandbar) .main{height:calc(100vh - var(--lad-bar-h,46px))}
   .topbar{height:60px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 22px;flex-shrink:0}
   .topbar h1{font-size:17px;margin:0;font-weight:700;letter-spacing:-.01em}
   .topbar .sub{font-size:11px;color:var(--slate3);margin-top:1px}
@@ -159,6 +166,7 @@
     .rl span{font-size:8px}
     .rl .badge{top:6px;right:14px}
     .main{height:100vh;padding-bottom:58px}
+    :where(body.lad-has-brandbar) .main{height:calc(100vh - var(--lad-bar-h,46px));padding-bottom:58px;min-width:100%}
     .topbar{height:54px;gap:10px;padding:0 12px}
     .topbar h1{font-size:15px}.topbar .sub{display:none}
     .cmd{max-width:none}
