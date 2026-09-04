@@ -94,6 +94,19 @@ html.lad-embed body{background:transparent}
 .btn:hover{background:var(--green-l)}
 .btn-light{background:var(--white);border:1.5px solid var(--line2);color:var(--ink)}
 .btn-light:hover{background:var(--paper)}
+
+/* Resume. Deliberately louder than the status pill beside it: a lawyer
+   scanning this page is looking for the one thing they can carry straight on
+   with, and that should be findable without reading every row. */
+.p-resume{background:var(--gold);color:#fff;border-color:var(--gold)}
+.rbtn{background:transparent;color:var(--gold);border:1px solid var(--gold-border);
+  padding:4px 10px;border-radius:99px;font-family:var(--mono);font-size:9px;font-weight:600;
+  letter-spacing:.6px;text-transform:uppercase;white-space:nowrap}
+.rbtn:hover{background:var(--gold-bg)}
+.rnote{font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.2px;
+  margin:-4px 0 12px;display:flex;align-items:baseline;gap:6px}
+.rnote b{font-weight:600}
+.rnote i{font-style:normal;color:var(--slate3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .empty{color:var(--slate3);font-size:13px;font-style:italic;padding:20px 0;text-align:center}
 .err{background:var(--red-bg);border:1px solid var(--red-border);color:#9b1c1c;
   border-radius:10px;padding:11px 15px;font-size:12.5px;margin-bottom:14px}
@@ -162,12 +175,21 @@ async function load(){
     (outline.sections||[]).forEach(function(s){ steps=steps.concat(s.activities); });
     steps.sort(function(a,b){return a.position-b.position;});
 
+    // The step the lawyer walked away from. The server decides what counts as
+    // resumable (it has the resume_state and knows the activity is unfinished);
+    // this only picks the first one so the card can point straight at it.
+    var resumeStep=null;
+    for(var s=0;s<steps.length;s++){
+      if(steps[s].progress&&steps[s].progress.resumable){ resumeStep=steps[s]; break; }
+    }
+
     html+='<div class="card">'+
       '<div class="chead">'+
         '<div class="cname">'+esc((outline.sections[0]&&outline.sections[0].title)||e.course_id)+'</div>'+
         '<div class="pct">'+e.percent+'%</div>'+
-        '<button class="btn" data-go="'+esc(e.course_id)+'">'+
-          (e.status==='completed'?'Revisit':'Continue')+'</button>'+
+        '<button class="btn" data-go="'+esc(e.course_id)+'"'+
+          (resumeStep?(' data-step="'+esc(resumeStep.id)+'"'):'')+'>'+
+          (e.status==='completed'?'Revisit':(resumeStep?'Resume':'Continue'))+'</button>'+
       '</div>'+
       '<div class="track"><div class="fill" style="width:'+e.percent+'%"></div></div>'+
       '<div class="cmeta">'+e.required_done+' of '+e.required_total+' required steps · '+
@@ -177,6 +199,10 @@ async function load(){
         ?'<div class="cmeta" style="color:var(--gold)">Assigned'+(e.assigned_by_name?' by '+esc(e.assigned_by_name):'')+
           (e.due_at?' · complete by '+esc(String(e.due_at).slice(0,10)):'')+(e.note?' · '+esc(e.note):'')+'</div>'
         :'')+
+      // Name the step by title rather than showing resume_state itself — that
+      // payload belongs to the launching engine and is not written for a reader.
+      (resumeStep?('<div class="rnote"><b>Pick up where you left off</b>'+
+        '<i>'+esc(resumeStep.title)+'</i></div>'):'')+
       steps.map(function(a,n){
         var k=KIND[a.kind]||KIND.document, p=a.progress||{status:'not_started'};
         var bits=[];
@@ -184,18 +210,34 @@ async function load(){
         if(a.pass_score) bits.push('pass '+a.pass_score);
         if(p.total_seconds) bits.push(mins(p.total_seconds));
         if(p.attempt_count) bits.push(p.attempt_count+'x');
+        if(p.resumable&&p.percent) bits.push(p.percent+'% in');
         return '<div class="step"><span class="idx">'+(n+1)+'</span>'+
           '<span class="kind '+k.c+'">'+k.l+'</span>'+
           '<div class="grow"><div class="st" translate="no">'+esc(a.title)+'</div>'+
           '<div class="ss">'+esc(bits.join(' · '))+'</div></div>'+
-          '<span class="pill p-'+p.status+'">'+LABEL[p.status]+'</span></div>';
+          (p.resumable
+            ? '<button class="rbtn" data-resume="'+esc(a.id)+'" data-course="'+esc(a.course_id||'')+'">Resume</button>'
+            : '<span class="pill p-'+p.status+'">'+LABEL[p.status]+'</span>')+
+          '</div>';
       }).join('')+
     '</div>';
   }
 
   $('body').innerHTML=html;
   Array.prototype.forEach.call(document.querySelectorAll('[data-go]'),function(b){
-    b.onclick=function(){ location.href='course-hub.html?topic='+encodeURIComponent(b.dataset.go); };
+    b.onclick=function(){
+      // Carry the step through so the hub opens on it rather than at the top
+      // of a topic the lawyer is already halfway down.
+      var url='course-hub.html?topic='+encodeURIComponent(b.dataset.go);
+      if(b.dataset.step) url+='&resume='+encodeURIComponent(b.dataset.step);
+      location.href=url;
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-resume]'),function(b){
+    b.onclick=function(){
+      location.href='course-hub.html?topic='+encodeURIComponent(b.dataset.course)+
+        '&resume='+encodeURIComponent(b.dataset.resume);
+    };
   });
 }
 load();

@@ -326,13 +326,32 @@ async function boot(){
 
   if(!TOPICS.length){ $('tlist').innerHTML='<div class="empty">No topics yet.</div>'; return; }
   renderList();
-  // Deep link from the Topic Builder: ?topic=ID opens that topic, and
-  // &assign=1 opens the assign dialog straight away.
+  // Deep links, from two places. The Topic Builder sends ?topic=ID, with
+  // &assign=1 to open the assign dialog straight away. The estate-wide view
+  // (lad-lms-overview.html) sends ?topic=ID for a course, or ?lawyer=ID for a
+  // learner — and a learner means first finding a topic they appear on,
+  // because cohorts are per-topic and there is nothing to select them from
+  // otherwise.
   var qs=new URLSearchParams(location.search);
-  var want=qs.get('topic');
+  var want=qs.get('topic'), wantLawyer=qs.get('lawyer');
+
+  // Learner with no topic named: walk the topics until their row turns up.
+  if(wantLawyer&&!want){
+    for(var i=0;i<TOPICS.length;i++){
+      await open(TOPICS[i].topic_id);
+      var hit=((CURRENT&&CURRENT.rows)||[]).filter(function(e){return e.lawyer_id===wantLawyer;})[0];
+      if(hit){ openLearner(hit.lawyer_id,nameOf(hit)); return; }
+    }
+    return; // on no cohort — leave the last topic open rather than a blank pane
+  }
+
   var first=TOPICS.filter(function(t){return t.topic_id===want;})[0]||TOPICS[0];
   await open(first.topic_id);
   if(want&&qs.get('assign')==='1'&&first.topic_id===want&&first.published>0) openAssign(first);
+  if(wantLawyer){
+    var row=((CURRENT&&CURRENT.rows)||[]).filter(function(e){return e.lawyer_id===wantLawyer;})[0];
+    if(row) openLearner(row.lawyer_id,nameOf(row));
+  }
 }
 
 function renderList(){

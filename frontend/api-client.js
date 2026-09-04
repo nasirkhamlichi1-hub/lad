@@ -317,6 +317,10 @@
 
     startActivity:   (id, info)    => call('POST', '/api/v1/learning/activities/' + encodeURIComponent(id) + '/attempts', info || {}),
     closeAttempt:    (id, info)    => call('POST', '/api/v1/learning/attempts/' + encodeURIComponent(id) + '/close', info || {}),
+    // Heartbeat for an attempt still running. Banks the resume point and the
+    // time so far; it cannot complete anything — only closeAttempt can.
+    checkpoint:      (id, info)    => call('POST', '/api/v1/learning/attempts/' + encodeURIComponent(id) + '/checkpoint', info || {}),
+    activityResume:  (id)          => call('GET',  '/api/v1/learning/activities/' + encodeURIComponent(id) + '/resume'),
 
     courseCohort:    (courseId)    => call('GET',  '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/cohort'),
     // Assignment — put a published topic on named lawyers' lists. LAD may
@@ -327,6 +331,13 @@
     searchLawyers:   (q, extra)    => call('GET',  '/api/v1/lawyers?search=' + encodeURIComponent(q || '') + '&limit=25' + (extra || '')),
     learnerReport:   (lawyerId)    => call('GET',  '/api/v1/learning/learners/' + encodeURIComponent(lawyerId) + '/report'),
     myLearningReport: ()           => call('GET',  '/api/v1/learning/report/mine'),
+    // LAD-wide view across every course and learner. LAD roles only — a
+    // provider admin is refused by the server, so callers should treat a 403
+    // as "not for you" rather than an error worth showing.
+    learningOverview: (q)          => call('GET',  '/api/v1/learning/overview' +
+                                        (q ? ('?' + new URLSearchParams(q).toString()) : '')),
+    reapAttempts:    (minutes)     => call('POST', '/api/v1/learning/maintenance/reap-attempts',
+                                        minutes ? { minutes } : {}),
 
     // Self-service password change (used by the first-login flow)
     changeMyPassword: (oldPassword, newPassword) =>
