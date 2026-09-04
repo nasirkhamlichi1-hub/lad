@@ -21,6 +21,8 @@ const lawyers = require('../services/store');
 const topics = require('../lms/topics');
 const aimodel = require('../services/aimodel');
 const log = require('../logger');
+// Direct read of the SCORM player's saved state when settling a SCORM attempt.
+const db = require('../db');
 
 const router = express.Router();
 
@@ -317,14 +319,60 @@ router.post('/activities/:id/attempts', requireAuth, async (req, res, next) => {
 router.post('/attempts/:id/close', requireAuth, async (req, res, next) => {
   try {
     const b = req.body || {};
+    let completed = b.completed !== false;
+    let score = b.score;
+    let abandoned = b.abandoned === true;
+    let percent = b.percent === undefined ? null : b.percent;
+    let detail = b.detail || null;
+
+    // For a SCORM step the server already holds the truth: the player commits
+    // the learner's cmi to scorm_state on every LMSCommit. So a close that
+    // arrives as "abandoned" — the reader's Close button, a tab shut before
+    // the package called Terminate, a finish message that never reached the
+    // page — is settled from that state, not from what the client managed to
+    // relay. Without this a learner could reach the last screen, close the
+    // overlay, and be told they were still in progress.
+    try {
+      const open = await store.getAttempt(req.params.id);
+      if (open && open.lawyer_id === userId(req) && open.status === 'open' && open.kind === 'scorm') {
+        const act = await store.getActivity(open.activity_id);
+        const st = act && act.material_id
+          ? db.prepare('SELECT cmi FROM scorm_state WHERE material_id = ? AND lawyer_id = ?').get(act.material_id, userId(req))
+          : null;
+        if (st && st.cmi) {
+          const cmi = JSON.parse(st.cmi) || {};
+          const g = (k) => (cmi[k] == null ? '' : String(cmi[k]));
+          const ls = g('cmi.core.lesson_status'), cs = g('cmi.completion_status'), ss = g('cmi.success_status');
+          const done = ls === 'completed' || ls === 'passed' || ls === 'failed' || cs === 'completed' || ss === 'passed' || ss === 'failed';
+          const rawS = g('cmi.core.score.raw') || g('cmi.score.raw');
+          const scaled = g('cmi.score.scaled');
+          // The package's own verdict is the verdict. A close that claims
+          // completion the package has not recorded is not completion.
+          completed = done; if (done) abandoned = false;
+          if (done) {
+            if ((score === null || score === undefined) && rawS !== '' && Number.isFinite(Number(rawS))) score = Number(rawS);
+            if ((score === null || score === undefined) && scaled !== '' && Number.isFinite(Number(scaled))) score = Math.round(Number(scaled) * 100);
+            if (percent == null && score != null) percent = score;
+            detail = Object.assign({}, detail || {}, { settled_from: 'scorm_state' });
+          } else if (!completed) {
+            // Not done by the package's own rules: pass on what it knows so the
+            // hub can say how far along the learner is rather than nothing.
+            const pm = g('cmi.progress_measure');
+            if (percent == null && pm !== '' && Number.isFinite(Number(pm))) percent = Math.round(Number(pm) * 100);
+            detail = Object.assign({}, detail || {}, { package_status: cs || ls || 'unknown' });
+          }
+        }
+      }
+    } catch (e) { log.warn('scorm_state_settle_failed', { attempt: req.params.id, error: e.message }); }
+
     const attempt = await store.closeAttempt(req.params.id, userId(req), {
-      completed: b.completed !== false,
-      score: b.score,
+      completed,
+      score,
       seconds: b.seconds,
-      percent: b.percent === undefined ? null : b.percent,
-      detail: b.detail || null,
+      percent,
+      detail,
       resumeState: b.resume_state || null,
-      abandoned: b.abandoned === true,
+      abandoned,
     });
     if (!attempt) return res.status(404).json({ error: 'Attempt not found' });
 
