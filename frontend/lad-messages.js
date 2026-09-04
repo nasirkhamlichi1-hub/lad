@@ -34,7 +34,8 @@
     return r.json();
   }
 
-  const ST = { open: false, admin: false, box: 'all', convs: [], active: null, admins: [], poll: null, composing: false };
+  // `view` is the requester's own Inbox / Archived switch; `box` is the admin's.
+  const ST = { open: false, admin: false, box: 'all', view: 'inbox', convs: [], active: null, admins: [], poll: null, composing: false };
 
   // ─── Styles ─────────────────────────────────────────────────────────
   function injectCSS() {
@@ -116,6 +117,26 @@
     .ladmsg-assign{display:flex;gap:6px;align-items:center;padding:9px 16px;border-bottom:1px solid #232c40;background:#131c2e;flex-wrap:wrap}
     .ladmsg-assign select{background:#1a2336;border:1px solid #2b364f;color:#eef2fa;border-radius:7px;padding:5px 8px;font-size:12px;font-family:inherit}
     .ladmsg-newbtn{background:#9D7714;border:none;color:#fff;border-radius:8px;padding:7px 13px;font-weight:600;cursor:pointer;font-size:12.5px;font-family:inherit}
+    /* Per-thread actions. Kept small and quiet on the row, revealed on hover
+       or focus so the list still reads as a list; always visible on touch,
+       where there is no hover. */
+    .ladmsg-row{position:relative}
+    .ladmsg-acts{position:absolute;right:14px;top:10px;display:flex;gap:4px;opacity:0;transition:opacity .12s}
+    .ladmsg-row:hover .ladmsg-acts,.ladmsg-row:focus-within .ladmsg-acts{opacity:1}
+    @media (hover:none){.ladmsg-acts{opacity:1}}
+    .ladmsg-act{background:#1a2336;border:1px solid #2b364f;color:#aeb9d4;border-radius:7px;width:28px;height:26px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+    .ladmsg-act:hover{color:#fff;border-color:#9D7714}
+    .ladmsg-act.del:hover{border-color:#DC3131;color:#ff8a9e}
+    .ladmsg-act svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .ladmsg-row:hover .ladmsg-time{visibility:hidden}
+    .ladmsg-hd .ladmsg-act{margin-left:2px}
+    /* Delete confirmation, inline in the panel rather than a browser alert. */
+    .ladmsg-confirm{margin:12px 16px;padding:14px;border:1px solid #3a2a2e;background:#1d1519;border-radius:10px;font-size:13px;color:#e7ecf5}
+    .ladmsg-confirm p{margin:0 0 10px;line-height:1.5}
+    .ladmsg-confirm .row{display:flex;gap:8px;justify-content:flex-end}
+    .ladmsg-confirm .ladmsg-send{background:#DC3131}
+    .ladmsg-confirm .ladmsg-send:hover{background:#b02525}
+    .ladmsg-ghost{background:transparent;border:1px solid #2b364f;color:#aeb9d4;border-radius:9px;padding:9px 14px;cursor:pointer;font-family:inherit;font-weight:600}
     `;
     const s = document.createElement('style'); s.id = 'ladMsgCSS'; s.textContent = css; document.head.appendChild(s);
   }
@@ -176,7 +197,7 @@
     inner.innerHTML = '<div class="ladmsg-hd"><h3>Messages</h3><button class="ladmsg-x" id="ladMsgClose">×</button></div><div class="ladmsg-body"><div class="ladmsg-empty">Loading…</div></div>';
     document.getElementById('ladMsgClose').onclick = closePanel;
     try {
-      const q = ST.admin ? ('?box=' + ST.box) : '';
+      const q = ST.admin ? ('?box=' + ST.box) : (ST.view === 'archived' ? '?view=archived' : '');
       const j = await api('/conversations' + q);
       ST.admin = !!j.admin; ST.convs = j.conversations || [];
       // The "Needs human" count is painted into the filter row, so it has to be
@@ -198,14 +219,25 @@
            <button data-box="escalated" class="needs ${ST.box === 'escalated' ? 'on' : ''}">Needs human${waiting ? ' <b>' + waiting + '</b>' : ''}</button>
            <button data-box="unassigned" class="${ST.box === 'unassigned' ? 'on' : ''}">Unassigned</button>
            <button data-box="mine" class="${ST.box === 'mine' ? 'on' : ''}">Mine</button>
-         </div>` : '';
+         </div>`
+      : `<div class="ladmsg-filters">
+           <button data-view="inbox" class="${ST.view === 'inbox' ? 'on' : ''}">Inbox</button>
+           <button data-view="archived" class="${ST.view === 'archived' ? 'on' : ''}">Archived</button>
+         </div>`;
     const newBtn = ST.admin ? '' : '<button class="ladmsg-newbtn" id="ladMsgNew">+ New message</button>';
+    const inArchive = !ST.admin && ST.view === 'archived';
+    const acts = c => ST.admin ? '' : `
+          <span class="ladmsg-acts">
+            <button class="ladmsg-act" data-act="${inArchive ? 'restore' : 'archive'}" title="${inArchive ? 'Move back to inbox' : 'Archive'}" aria-label="${inArchive ? 'Move back to inbox' : 'Archive'}">${inArchive ? ICO.restore : ICO.archive}</button>
+            <button class="ladmsg-act del" data-act="delete" title="Delete" aria-label="Delete">${ICO.trash}</button>
+          </span>`;
     const rows = ST.convs.length ? ST.convs.map(c => `
-      <div class="ladmsg-row ${c.unread ? 'unread' : ''}" data-id="${c.id}">
+      <div class="ladmsg-row ${c.unread ? 'unread' : ''}" data-id="${c.id}" tabindex="0">
         <div class="ladmsg-row-top">
           ${c.unread ? '<span class="ladmsg-dot"></span>' : ''}
           <span class="ladmsg-row-subj">${esc(c.subject || '(no subject)')}</span>
           <span class="ladmsg-time">${ago(c.last_message_at)}</span>
+          ${acts(c)}
         </div>
         <div class="ladmsg-prev">${esc(c.preview || '')}</div>
         <div class="ladmsg-row-top" style="margin-top:5px">
@@ -215,12 +247,54 @@
           ${ST.admin && c.escalated ? '<span class="ladmsg-pill" style="background:rgba(255,77,109,.18);color:#ff7a93">needs human</span>' : (ST.admin && c.ai_handled ? '<span class="ladmsg-pill" style="background:rgba(220,200,148,.16);color:#26CB84">Maryam</span>' : '')}
           ${ST.admin ? `<span class="ladmsg-meta">${esc(c.requester_name || '')}${c.assigned_name ? ' · → ' + esc(c.assigned_name) : ''}</span>` : (c.assigned_name ? `<span class="ladmsg-meta">CLPD · ${esc(c.assigned_name)}</span>` : '<span class="ladmsg-meta">CLPD Admin</span>')}
         </div>
-      </div>`).join('') : `<div class="ladmsg-empty">${ST.admin ? 'No conversations in this view.' : 'No messages yet.<br>Start a conversation with CLPD Admin.'}</div>`;
+      </div>`).join('') : `<div class="ladmsg-empty">${ST.admin ? 'No conversations in this view.' : (inArchive ? 'Nothing archived.' : 'No messages yet.<br>Start a conversation with CLPD Admin.')}</div>`;
     inner.innerHTML = `<div class="ladmsg-hd"><h3>Messages</h3>${newBtn}<button class="ladmsg-x" id="ladMsgClose">×</button></div>${filters}<div class="ladmsg-body">${rows}</div>`;
     document.getElementById('ladMsgClose').onclick = closePanel;
     const nb = document.getElementById('ladMsgNew'); if (nb) nb.onclick = startCompose;
-    inner.querySelectorAll('.ladmsg-filters button').forEach(b => b.onclick = () => { ST.box = b.getAttribute('data-box'); loadList(); });
-    inner.querySelectorAll('.ladmsg-row').forEach(r => r.onclick = () => openThread(r.getAttribute('data-id')));
+    inner.querySelectorAll('.ladmsg-filters button[data-box]').forEach(b => b.onclick = () => { ST.box = b.getAttribute('data-box'); loadList(); });
+    inner.querySelectorAll('.ladmsg-filters button[data-view]').forEach(b => b.onclick = () => { ST.view = b.getAttribute('data-view'); loadList(); });
+    inner.querySelectorAll('.ladmsg-row').forEach(r => {
+      r.onclick = () => openThread(r.getAttribute('data-id'));
+      r.onkeydown = e => { if (e.key === 'Enter') openThread(r.getAttribute('data-id')); };
+      r.querySelectorAll('.ladmsg-act').forEach(b => b.onclick = e => { e.stopPropagation(); rowAction(r.getAttribute('data-id'), b.getAttribute('data-act')); });
+    });
+  }
+
+  const ICO = {
+    archive: '<svg viewBox="0 0 24 24"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>',
+    restore: '<svg viewBox="0 0 24 24"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M12 17v-5"/><path d="m9 15 3-3 3 3"/></svg>',
+    trash:   '<svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>',
+  };
+
+  // Archive and restore act at once. Delete asks first, in the panel, and says
+  // plainly what happens: the thread leaves this account, and the Department
+  // keeps its record — a lawyer should not be surprised by either half.
+  async function rowAction(id, act) {
+    if (act === 'archive' || act === 'restore') {
+      try { await api('/conversations/' + id + '/archive', { method: 'POST', body: JSON.stringify({ archived: act === 'archive' }) }); } catch (e) { alert(e.message); }
+      if (ST.active === id) return loadList();
+      return loadList();
+    }
+    if (act === 'delete') return confirmDelete(id);
+  }
+
+  function confirmDelete(id, subject) {
+    const c = { subject: subject != null ? subject : ((ST.convs.find(x => x.id === id) || {}).subject) };
+    const host = document.querySelector('#ladMsgInner .ladmsg-body') || document.querySelector('#ladMsgInner .ladmsg-thread');
+    if (!host) return;
+    const old = document.getElementById('ladMsgConfirm'); if (old) old.remove();
+    const box = document.createElement('div');
+    box.className = 'ladmsg-confirm'; box.id = 'ladMsgConfirm';
+    box.innerHTML = `<p><strong>Delete “${esc(c.subject || 'this conversation')}”?</strong></p>
+      <p>It will be removed from your messages and cannot be restored. The Department retains its copy of correspondence as a record.</p>
+      <div class="row"><button class="ladmsg-ghost" id="ladMsgDelNo">Keep</button><button class="ladmsg-send" id="ladMsgDelYes">Delete</button></div>`;
+    host.prepend(box); box.scrollIntoView({ block: 'nearest' });
+    document.getElementById('ladMsgDelNo').onclick = () => box.remove();
+    document.getElementById('ladMsgDelYes').onclick = async () => {
+      const b = document.getElementById('ladMsgDelYes'); b.disabled = true; b.textContent = 'Deleting…';
+      try { await api('/conversations/' + id, { method: 'DELETE' }); } catch (e) { alert(e.message); }
+      loadList();
+    };
   }
 
   // ─── Compose a new conversation (requester only) ────────────────────
@@ -263,6 +337,7 @@
 
   async function renderThread(silent) {
     const id = ST.active; if (!id) return;
+    if (silent && document.getElementById('ladMsgConfirm')) return; // a decision is pending; don't repaint under it
     let c; try { c = (await api('/conversations/' + id)).conversation; } catch (e) { if (!silent) { const t = document.querySelector('#ladMsgInner .ladmsg-thread'); if (t) t.innerHTML = '<div class="ladmsg-empty">' + esc(e.message) + '</div>'; } return; }
     if (ST.active !== id) return;
     const inner = document.getElementById('ladMsgInner');
@@ -305,14 +380,25 @@
     const typingHtml = expectMaryam ? '<div class="ladmsg-msg them ladmsg-typing"><div class="ladmsg-who">Maryam · CLPD Assistant</div><span class="ladmsg-dots"><i></i><i></i><i></i></span></div>' : '';
     if (expectMaryam) { if (!ST.typingPoll) { ST.typingStart = Date.now(); ST.typingPoll = setInterval(() => { if (ST.active === id && ST.open && (Date.now() - ST.typingStart) < 45000) renderThread(true); else { clearInterval(ST.typingPoll); ST.typingPoll = null; } }, 2500); } }
     else if (ST.typingPoll) { clearInterval(ST.typingPoll); ST.typingPoll = null; }
+    const threadActs = ST.admin ? '' : `
+        <button class="ladmsg-act" id="ladMsgThArch" title="${c.archived ? 'Move back to inbox' : 'Archive'}" aria-label="${c.archived ? 'Move back to inbox' : 'Archive'}">${c.archived ? ICO.restore : ICO.archive}</button>
+        <button class="ladmsg-act del" id="ladMsgThDel" title="Delete" aria-label="Delete">${ICO.trash}</button>`;
     inner.innerHTML = `
-      <div class="ladmsg-hd"><button class="ladmsg-back" id="ladMsgBack">‹ Back</button><h3 style="flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.subject || 'Conversation')}</h3><button class="ladmsg-x" id="ladMsgClose">×</button></div>
+      <div class="ladmsg-hd"><button class="ladmsg-back" id="ladMsgBack">‹ Back</button><h3 style="flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.subject || 'Conversation')}</h3>${threadActs}<button class="ladmsg-x" id="ladMsgClose">×</button></div>
       ${assignBar}
       <div class="ladmsg-thread" id="ladMsgThread">${msgs || '<div class="ladmsg-empty">No messages.</div>'}${typingHtml}</div>
       ${typingHtml ? '' : satHtml}
       <div class="ladmsg-compose"><textarea id="ladMsgReply" rows="2" placeholder="Write a reply…"></textarea><div class="row"><span style="flex:1"></span><button class="ladmsg-send" id="ladMsgSendBtn">Send</button></div></div>`;
     document.getElementById('ladMsgClose').onclick = closePanel;
     document.getElementById('ladMsgBack').onclick = loadList;
+    const thArch = document.getElementById('ladMsgThArch');
+    if (thArch) thArch.onclick = async () => {
+      try { await api('/conversations/' + id + '/archive', { method: 'POST', body: JSON.stringify({ archived: !c.archived }) }); } catch (e) { alert(e.message); }
+      ST.view = c.archived ? 'inbox' : 'archived'; // follow the thread to where it went
+      loadList();
+    };
+    const thDel = document.getElementById('ladMsgThDel');
+    if (thDel) thDel.onclick = () => confirmDelete(id, c.subject);
     const thread = document.getElementById('ladMsgThread'); thread.scrollTop = thread.scrollHeight;
     document.getElementById('ladMsgSendBtn').onclick = sendReply;
     document.getElementById('ladMsgReply').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendReply(); });
