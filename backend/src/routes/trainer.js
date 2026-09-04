@@ -297,10 +297,65 @@ async function closeSession(req, res, next, mode) {
       }
     }
 
-    log.info('trainer_session_closed', { sessionId: session.id, mode, seconds, cpdAwarded, earned });
-    res.json({ session: trainerStore.getSession(session.id), progress, cpdAwarded, status: mode, ...(shortfall ? { cpd: shortfall } : {}) });
+    // Mirror the result onto the learning journey. The hub deliberately does
+    // not open a spine attempt for an AI session — it would double-count —
+    // and trusts the server to do it here. Until now nothing did, so a lesson
+    // could be fully taught and its CPD awarded while the journey step still
+    // read "not started". Every step that teaches from this lesson gets one
+    // attempt: completed when the lesson was earned, in progress (with the
+    // minutes) when it was paused or closed short.
+    let mirrored = 0;
+    try {
+      const spine = require('../lms/store');
+      const steps = require('../db').prepare(
+        "SELECT id FROM activity WHERE kind = 'ai_lesson' AND lesson_id = ? AND published = 1"
+      ).all(session.lesson_id);
+      const totalSeconds = progress ? (Number(progress.total_seconds) || seconds) : seconds;
+      for (const a of steps) {
+        const att = await spine.startAttempt({ activityId: a.id, lawyerId: session.lawyer_id, externalId: session.id, detail: { source: 'ai_trainer' } });
+        if (!att) continue;
+        await spine.closeAttempt(att.id, session.lawyer_id, {
+          completed: mode === 'ended' && earned,
+          abandoned: !(mode === 'ended' && earned),
+          seconds: totalSeconds,
+          percent: progress ? (Number(progress.percent_complete) || 0) : null,
+          detail: { source: 'ai_trainer', session_id: session.id, cpd_awarded: cpdAwarded },
+        });
+        mirrored++;
+      }
+    } catch (e) { log.warn('trainer_spine_mirror_failed', { sessionId: session.id, error: e.message }); }
+
+    log.info('trainer_session_closed', { sessionId: session.id, mode, seconds, cpdAwarded, earned, mirrored });
+    res.json({ session: trainerStore.getSession(session.id), progress, cpdAwarded, status: mode, mirrored, ...(shortfall ? { cpd: shortfall } : {}) });
   } catch (e) { next(e); }
 }
+
+// Lessons completed in the trainer before the journey mirror existed still
+// read "not started" on their steps. Once, at boot, settle those: every
+// completed trainer_progress whose published step has no completed progress
+// for that lawyer gets one completed attempt. Idempotent, and cheap — both
+// tables are small — so it is safe to leave in.
+(async function backfillTrainerSpine() {
+  try {
+    const spine = require('../lms/store');
+    const dbx = require('../db');
+    const rows = dbx.prepare(`
+      SELECT p.lawyer_id, p.lesson_id, p.total_seconds, p.cpd_points_awarded, a.id AS activity_id
+      FROM trainer_progress p
+      JOIN activity a ON a.kind = 'ai_lesson' AND a.lesson_id = p.lesson_id AND a.published = 1
+      LEFT JOIN activity_progress ap ON ap.activity_id = a.id AND ap.lawyer_id = p.lawyer_id
+      WHERE p.status = 'completed' AND (ap.id IS NULL OR ap.status NOT IN ('completed','passed'))
+    `).all();
+    let n = 0;
+    for (const r of rows) {
+      const att = await spine.startAttempt({ activityId: r.activity_id, lawyerId: r.lawyer_id, externalId: 'backfill:' + r.lesson_id, detail: { source: 'ai_trainer_backfill' } });
+      if (!att) continue;
+      await spine.closeAttempt(att.id, r.lawyer_id, { completed: true, seconds: Number(r.total_seconds) || 0, percent: 100, detail: { source: 'ai_trainer_backfill', cpd_awarded: r.cpd_points_awarded } });
+      n++;
+    }
+    if (n) log.info('trainer_spine_backfill', { mirrored: n });
+  } catch (e) { log.warn('trainer_spine_backfill_failed', { error: e.message }); }
+})();
 
 // Stop midway — the lawyer can come back later and resume this lesson.
 router.post('/sessions/:id/pause', requireAuth, (req, res, next) => closeSession(req, res, next, 'paused'));
