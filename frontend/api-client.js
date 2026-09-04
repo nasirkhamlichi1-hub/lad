@@ -315,6 +315,12 @@
     closeAttempt:    (id, info)    => call('POST', '/api/v1/learning/attempts/' + encodeURIComponent(id) + '/close', info || {}),
 
     courseCohort:    (courseId)    => call('GET',  '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/cohort'),
+    // Assignment — put a published topic on named lawyers' lists. LAD may
+    // name any lawyer or a whole firm; a firm officer only their own firm.
+    assignableTopics: ()           => call('GET',  '/api/v1/learning/assignable'),
+    assignTopic:     (courseId, spec) => call('POST', '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/assign', spec || {}),
+    unassignTopic:   (courseId, lawyerId) => call('DELETE', '/api/v1/learning/courses/' + encodeURIComponent(courseId) + '/assign/' + encodeURIComponent(lawyerId)),
+    searchLawyers:   (q, extra)    => call('GET',  '/api/v1/lawyers?search=' + encodeURIComponent(q || '') + '&limit=25' + (extra || '')),
     learnerReport:   (lawyerId)    => call('GET',  '/api/v1/learning/learners/' + encodeURIComponent(lawyerId) + '/report'),
     myLearningReport: ()           => call('GET',  '/api/v1/learning/report/mine'),
 

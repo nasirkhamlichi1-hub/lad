@@ -132,7 +132,7 @@ async function load(){
   try{ report=await api.myLearningReport(); }
   catch(e){ $('body').innerHTML='<div class="err">Could not load your progress: '+esc(e.message)+'</div>'; return; }
 
-  var enrolments=report.enrolments||[];
+  var enrolments=(report.enrolments||[]).filter(function(e){return e.status!=='withdrawn';});
   if(!enrolments.length){
     $('body').innerHTML='<div class="empty">You are not enrolled on any topics yet.</div>';
     return;
@@ -170,6 +170,10 @@ async function load(){
       '<div class="cmeta">'+e.required_done+' of '+e.required_total+' required steps · '+
         mins(e.total_seconds)+' recorded'+
         (e.completed_at?(' · finished '+esc(String(e.completed_at).slice(0,10))):'')+'</div>'+
+      (e.source==='assigned'
+        ?'<div class="cmeta" style="color:var(--gold)">Assigned'+(e.assigned_by_name?' by '+esc(e.assigned_by_name):'')+
+          (e.due_at?' · complete by '+esc(String(e.due_at).slice(0,10)):'')+(e.note?' · '+esc(e.note):'')+'</div>'
+        :'')+
       steps.map(function(a,n){
         var k=KIND[a.kind]||KIND.document, p=a.progress||{status:'not_started'};
         var bits=[];

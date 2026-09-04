@@ -146,6 +146,42 @@ dialog .k{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spac
   </div>
 </div>
 
+<!-- Assign a published topic to lawyers. The Department names lawyers one by
+     one, a whole firm, or both; each becomes an enrolment that starts at 0%
+     and appears on the lawyer's dashboard at once. -->
+<dialog id="adlg" style="width:min(640px,94vw)">
+  <h3>Assign to lawyers</h3>
+  <p class="k" id="aSub"></p>
+  <div style="display:grid;gap:12px;margin-top:10px">
+    <div>
+      <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Lawyers</label>
+      <input id="aSearch" type="search" placeholder="Search by name, email, roll number or firm…" autocomplete="off"
+        style="width:100%;padding:9px 11px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px">
+      <div id="aResults" style="max-height:180px;overflow:auto;border:1px solid var(--line);border-radius:9px;margin-top:6px;display:none"></div>
+      <div id="aChosen" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+    </div>
+    <div>
+      <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Or a whole firm</label>
+      <select id="aFirm" style="width:100%;padding:9px 11px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;background:#fff">
+        <option value="">— none —</option>
+      </select>
+      <div class="hint" style="margin-top:4px">Every practising lawyer at the firm is assigned. Anyone already on the topic is left as they are.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:10px">
+      <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Complete by <span style="font-weight:400;color:var(--slate3)">(optional)</span></label>
+        <input id="aDue" type="date" style="width:100%;padding:8px 10px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px"></div>
+      <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Note to the lawyer <span style="font-weight:400;color:var(--slate3)">(optional)</span></label>
+        <input id="aNote" type="text" maxlength="500" placeholder="e.g. Mandatory for Year 11 — ethics requirement" style="width:100%;padding:8px 10px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px"></div>
+    </div>
+    <div id="aOut"></div>
+  </div>
+  <div class="row">
+    <button class="btn" id="aGo">Assign</button>
+    <span style="flex:1"></span>
+    <button class="btn-light" id="aClose">Close</button>
+  </div>
+</dialog>
+
 <dialog id="dlg">
   <h3 id="dName"></h3>
   <p class="k" id="dSub"></p>
@@ -287,7 +323,13 @@ async function boot(){
 
   if(!TOPICS.length){ $('tlist').innerHTML='<div class="empty">No topics yet.</div>'; return; }
   renderList();
-  open(TOPICS[0].topic_id);
+  // Deep link from the Topic Builder: ?topic=ID opens that topic, and
+  // &assign=1 opens the assign dialog straight away.
+  var qs=new URLSearchParams(location.search);
+  var want=qs.get('topic');
+  var first=TOPICS.filter(function(t){return t.topic_id===want;})[0]||TOPICS[0];
+  await open(first.topic_id);
+  if(want&&qs.get('assign')==='1'&&first.topic_id===want&&first.published>0) openAssign(first);
 }
 
 function renderList(){
@@ -317,6 +359,9 @@ async function open(id){
     '<div class="panel">'+
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
         '<h2 class="ptitle" style="flex:1;margin:0">'+esc(t.title)+'</h2>'+
+        (t.published>0
+          ?'<button class="btn" id="cohortAssign" style="padding:6px 12px;font-size:12px">+ Assign to lawyers</button>'
+          :'<span class="pill p-not_started" title="Publish the topic in the Topic Builder first">draft — publish before assigning</span>')+
         (rows.length?'<button class="btn-light" id="cohortCsv" style="padding:6px 12px;font-size:12px">Export CSV</button>':'')+
       '</div>'+
       '<p class="hint">'+rows.length+' enrolled · '+done+' finished · '+avg+'% average progress</p>'+
@@ -325,16 +370,20 @@ async function open(id){
           '<th>Lawyer</th><th>Progress</th><th>Steps</th><th>Time</th><th>Status</th><th></th>'+
         '</tr></thead><tbody>'+
         rows.map(function(e){
+          var how=e.source==='assigned'
+            ?'<br><span class="num" style="color:var(--slate3)">assigned'+(e.assigned_by_name?' by '+esc(e.assigned_by_name):'')+(e.due_at?' · due '+esc(String(e.due_at).slice(0,10)):'')+'</span>'
+            :'';
           return '<tr>'+
-            '<td><b>'+esc(nameOf(e))+'</b>'+(e.lawyer_email?'<br><span class="num" style="color:var(--slate3)">'+esc(e.lawyer_email)+'</span>':'')+'</td>'+
+            '<td><b>'+esc(nameOf(e))+'</b>'+(e.lawyer_email?'<br><span class="num" style="color:var(--slate3)">'+esc(e.lawyer_email)+'</span>':'')+how+'</td>'+
             '<td><span class="mini"><i style="width:'+e.percent+'%"></i></span><span class="num">'+e.percent+'%</span></td>'+
             '<td class="num">'+e.required_done+'/'+e.required_total+'</td>'+
             '<td class="num">'+mins(e.total_seconds)+'</td>'+
             '<td><span class="pill p-'+e.status+'">'+(LABEL[e.status]||e.status)+'</span></td>'+
-            '<td><button class="link" data-l="'+esc(e.lawyer_id)+'" data-n="'+esc(nameOf(e))+'">Record</button></td>'+
+            '<td style="white-space:nowrap"><button class="link" data-l="'+esc(e.lawyer_id)+'" data-n="'+esc(nameOf(e))+'">Record</button>'+
+              (e.status!=='completed'&&e.status!=='withdrawn'?' · <button class="link" style="color:var(--slate3)" data-x="'+esc(e.lawyer_id)+'" data-n="'+esc(nameOf(e))+'">Remove</button>':'')+'</td>'+
           '</tr>';
         }).join('')+'</tbody></table></div>'
-        :'<div class="empty">Nobody is enrolled on this topic yet.</div>')+
+        :'<div class="empty">Nobody is enrolled on this topic yet.'+(t.published>0?' Use <b>Assign to lawyers</b> to put it on their lists.':'')+'</div>')+
     '</div>'+
     (data.stalls&&data.stalls.length?
       '<div class="panel" style="margin-top:14px">'+
@@ -350,7 +399,92 @@ async function open(id){
   Array.prototype.forEach.call(document.querySelectorAll('[data-l]'),function(b){
     b.onclick=function(){ openLearner(b.dataset.l,b.dataset.n); };
   });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-x]'),function(b){
+    b.onclick=async function(){
+      if(!confirm('Remove "'+t.title+'" from '+b.dataset.n+'?\n\nIf they have not started, the topic simply leaves their list. If they have, their record is kept and marked withdrawn.')) return;
+      b.disabled=true;
+      try{ await api.unassignTopic(id,b.dataset.x); await refreshTopics(); open(id); }
+      catch(e){ alert('Could not remove: '+e.message); b.disabled=false; }
+    };
+  });
   if($('cohortCsv')) $('cohortCsv').onclick=exportCohortCSV;
+  if($('cohortAssign')) $('cohortAssign').onclick=function(){ openAssign(t); };
+}
+
+// ─── Assign dialog ─────────────────────────────────────────────
+var ASSIGN={topic:null,chosen:{}};
+var FIRMS=null;
+async function openAssign(t){
+  ASSIGN={topic:t,chosen:{}};
+  $('aSub').textContent=t.title+' · every lawyer named here is enrolled from today and sees it on their dashboard';
+  $('aSearch').value=''; $('aResults').style.display='none'; $('aResults').innerHTML='';
+  $('aDue').value=''; $('aNote').value=''; $('aOut').innerHTML=''; $('aGo').disabled=false; $('aGo').textContent='Assign';
+  renderChosen();
+  if(!FIRMS){
+    try{ FIRMS=await api.getFirms(); }catch(e){ FIRMS=[]; }
+    if(!Array.isArray(FIRMS)) FIRMS=FIRMS.firms||[];
+    $('aFirm').innerHTML='<option value="">— none —</option>'+FIRMS.map(function(f){
+      return '<option value="'+esc(f.id)+'">'+esc(f.name||f.id)+'</option>';}).join('');
+  }
+  $('aFirm').value='';
+  $('adlg').showModal();
+  $('aSearch').focus();
+}
+function renderChosen(){
+  var ids=Object.keys(ASSIGN.chosen);
+  $('aChosen').innerHTML=ids.length?ids.map(function(id){
+    return '<span class="pill p-active" style="display:inline-flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-family:inherit;font-size:12px;padding:4px 8px">'+
+      esc(ASSIGN.chosen[id])+' <button class="link" data-un="'+esc(id)+'" style="color:inherit;font-size:12px" aria-label="remove">✕</button></span>';
+  }).join(''):'<span class="hint">Nobody chosen yet.</span>';
+  Array.prototype.forEach.call($('aChosen').querySelectorAll('[data-un]'),function(b){
+    b.onclick=function(){ delete ASSIGN.chosen[b.dataset.un]; renderChosen(); };
+  });
+}
+var searchTimer=null;
+$('aSearch').oninput=function(){
+  clearTimeout(searchTimer);
+  var q=$('aSearch').value.trim();
+  if(q.length<2){ $('aResults').style.display='none'; return; }
+  searchTimer=setTimeout(async function(){
+    var r; try{ r=await api.searchLawyers(q); }catch(e){ $('aResults').innerHTML='<div class="empty">'+esc(e.message)+'</div>'; $('aResults').style.display='block'; return; }
+    var rows=(r&&(r.data||r.lawyers||r.rows||r.items))||(Array.isArray(r)?r:[]);
+    $('aResults').style.display='block';
+    if(!rows.length){ $('aResults').innerHTML='<div class="empty">No lawyer matches “'+esc(q)+'”.</div>'; return; }
+    $('aResults').innerHTML=rows.map(function(l){
+      var name=((l.first_name||'')+' '+(l.last_name||'')).trim()||l.id;
+      return '<button class="trow" data-pick="'+esc(l.id)+'" data-name="'+esc(name)+'" style="width:100%;text-align:left">'+
+        '<div class="grow"><div class="n">'+esc(name)+(ASSIGN.chosen[l.id]?' <span class="pill p-active">chosen</span>':'')+'</div>'+
+        '<div class="c">'+esc(l.firm_name||'No firm')+(l.email?' · '+esc(l.email):'')+'</div></div></button>';
+    }).join('');
+    Array.prototype.forEach.call($('aResults').querySelectorAll('[data-pick]'),function(b){
+      b.onclick=function(){ ASSIGN.chosen[b.dataset.pick]=b.dataset.name; renderChosen(); $('aSearch').value=''; $('aResults').style.display='none'; $('aSearch').focus(); };
+    });
+  },250);
+};
+$('aGo').onclick=async function(){
+  var ids=Object.keys(ASSIGN.chosen), firm=$('aFirm').value;
+  if(!ids.length&&!firm){ $('aOut').innerHTML='<div class="err">Choose at least one lawyer, or a firm.</div>'; return; }
+  $('aGo').disabled=true; $('aGo').textContent='Assigning…';
+  var spec={lawyer_ids:ids};
+  if(firm) spec.firm_id=firm;
+  if($('aDue').value) spec.due_at=$('aDue').value;
+  if($('aNote').value.trim()) spec.note=$('aNote').value.trim();
+  try{
+    var r=await api.assignTopic(ASSIGN.topic.topic_id,spec);
+    var bits=[];
+    bits.push('<b>'+r.assigned.length+'</b> assigned');
+    if(r.already.length) bits.push(r.already.length+' already on the topic (left as they were)');
+    if(r.skipped.length) bits.push(r.skipped.length+' skipped: '+r.skipped.map(function(s){return esc(s.id)+' ('+esc(s.reason.replace(/_/g,' '))+')';}).join(', '));
+    $('aOut').innerHTML='<div class="'+(r.assigned.length?'ok':'hint')+'" style="padding:10px 12px;border-radius:9px;background:var(--gold-bg)">'+bits.join(' · ')+'.'+(r.assigned.length?' Each lawyer has been notified.':'')+'</div>';
+    ASSIGN.chosen={}; renderChosen(); $('aFirm').value='';
+    await refreshTopics(); open(ASSIGN.topic.topic_id);
+  }catch(e){ $('aOut').innerHTML='<div class="err">'+esc(e.message)+'</div>'; }
+  finally{ $('aGo').disabled=false; $('aGo').textContent='Assign'; }
+};
+$('aClose').onclick=function(){ $('adlg').close(); };
+
+async function refreshTopics(){
+  try{ TOPICS=(await api.listTopics()).topics||[]; renderList(); }catch(e){}
 }
 
 async function openLearner(lawyerId,name){

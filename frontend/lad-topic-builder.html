@@ -83,6 +83,7 @@ button{font-family:inherit;cursor:pointer}
 .adm-btn-light{background:var(--white);border:1.5px solid var(--line2);color:var(--ink);padding:9px 16px;
   border-radius:9px;font-size:13px;font-weight:600}
 .adm-btn-light:hover{background:var(--paper)}
+a.adm-btn-light{text-decoration:none;display:inline-flex;align-items:center}
 .adm-btn-light:disabled{opacity:.4;cursor:not-allowed}
 .adm-btn-sm{padding:6px 11px;font-size:12px;border-radius:7px}
 .adm-btn-icon{width:28px;height:28px;padding:0;display:inline-grid;place-items:center;
@@ -363,12 +364,13 @@ function renderDetail(){
       '<h2 class="adm-panel-title">'+esc(t.title)+'</h2>'+
       '<span class="adm-count">'+steps.length+' steps · '+ready+' ready · '+t.published+' live</span>'+
       '<button class="adm-btn-light adm-btn-sm" id="preview">Preview hub</button>'+
+      (t.published>0?'<a class="adm-btn-light adm-btn-sm" id="assignNow" href="lad-learning-admin.html?topic='+encodeURIComponent(t.topic_id)+'&assign=1" title="Put the published steps on named lawyers\' learning lists">Assign to lawyers</a>':'')+
       '<button class="adm-btn-green adm-btn-sm" id="publish"'+(t.outstanding?' disabled':'')+'>Publish</button>'+
     '</div>'+
     (t.outstanding
       ? '<div class="adm-banner warn"><b>'+t.outstanding+' of '+steps.length+'</b> steps still need content. Publishing stays locked until they have some — a lawyer should never open an empty step.</div>'
       : (t.published===steps.length && steps.length
-          ? '<div class="adm-banner ok">Every step is published and live in the hub.</div>'
+          ? '<div class="adm-banner ok">Every step is published and live in the hub. Use <b>Assign to lawyers</b> to put it on their lists.</div>'
           : '<div class="adm-banner ok">All steps are ready. Publish when you want lawyers to see them.</div>'))+
     '<div class="adm-field" style="margin:12px 0 16px">'+
       '<label class="adm-label" for="hub-wel">Hub message — your words to the learner, shown at the top of their journey</label>'+
@@ -460,6 +462,7 @@ function renderDetail(){
     }
   };
   $('publish').onclick=doPublish;
+  wireAssignLink(t.topic_id);
   $('a-go').onclick=doAdd;
   $('lib-add').onclick=doLibAdd;
   $('look-save').onclick=doLookSave;
@@ -611,10 +614,22 @@ async function doLookClear(){
   finally{ btn.disabled=false; btn.textContent=was; }
 }
 
+// Published means reachable. It reaches nobody until it is assigned (or a
+// lawyer opens the hub link themselves), so the banner offers the next step.
+function wireAssignLink(id){
+  var a=$('assignNow'); if(!a) return;
+  a.onclick=function(ev){
+    // Inside the CRM, hand over to its Learners tab rather than leaving the shell.
+    if(window.parent&&window.parent!==window){
+      ev.preventDefault();
+      try{ window.parent.postMessage({type:'ladAssignTopic',topic:id},'*'); }catch(e){ location.href=a.href; }
+    }
+  };
+}
 async function doPublish(){
   try{
     var r=await api.publishTopic(TOPIC.topic_id,false);
-    banner('Published '+r.published+' step'+(r.published===1?'':'s')+'. Lawyers can see them in the hub now.','ok');
+    banner('Published '+r.published+' step'+(r.published===1?'':'s')+'. Lawyers can see them in the hub now — use <b>Assign to lawyers</b> to put it on their lists.','ok');
     TOPIC=await api.getTopic(TOPIC.topic_id);
     await loadTopics(); renderDetail();
   }catch(e){ banner('Could not publish: '+esc(e.message),'err'); }

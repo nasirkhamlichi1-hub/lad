@@ -3567,7 +3567,9 @@ async function loadMyLearning() {
     return;
   }
 
-  var enrolments = (report && report.enrolments) || [];
+  // A withdrawn enrolment was taken off this lawyer's list by the Department
+  // or their firm; the record is kept for audit but it is not theirs to do.
+  var enrolments = ((report && report.enrolments) || []).filter(function (e) { return e.status !== 'withdrawn'; });
   if (!enrolments.length) { section.style.display = 'none'; return; }
 
   section.style.display = '';
@@ -3617,6 +3619,12 @@ async function loadMyLearning() {
         '<div class="activity-meta" style="margin-top:6px">' + e.required_done + ' of ' + e.required_total +
           ' required steps · ' + mins(e.total_seconds) + ' recorded' +
           (e.status === 'completed' ? ' · finished' : '') + '</div>' +
+        (e.source === 'assigned'
+          ? '<div class="activity-meta" style="margin-top:4px;color:var(--gold)">Assigned' +
+              (e.assigned_by_name ? ' by ' + esc(e.assigned_by_name) : '') +
+              (e.due_at ? ' · complete by ' + esc(String(e.due_at).slice(0, 10)) : '') +
+              (e.note ? ' · ' + esc(e.note) : '') + '</div>'
+          : '') +
       '</div>' +
       '<div class="activity-list">' +
       steps.map(function (a, n) {

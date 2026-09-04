@@ -830,6 +830,7 @@ body{padding-top:var(--lad-nav-h)}
           </div>
           <div class="sec-acts" style="display:flex;align-items:center;gap:10px">
             <span id="filtCount" style="font-family:var(--mono);font-size:10.5px;color:var(--slate3)">—</span>
+            <button class="btn btn-gh btn-sm" onclick="openAssignTraining()" id="assignTrainingBtn" title="Put a published topic on your lawyers' learning lists">▸ Assign training</button>
             <button class="btn btn-g btn-sm" onclick="openRosterAdd()" id="rosterAddBtn">+ Add lawyer</button>
           </div>
         </div>
@@ -2487,6 +2488,70 @@ function _rosterHead(icon, title, sub){
     <div style="flex:1"><div style="font-family:var(--serif);font-size:17px;color:var(--ink)">${title}</div><div style="font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:1px;text-transform:uppercase;margin-top:2px">${sub}</div></div>
     <button onclick="closeRosterModal()" style="width:28px;height:28px;border-radius:7px;background:var(--paper2);border:1px solid var(--line);cursor:pointer;color:var(--slate);font-size:14px;display:grid;place-items:center">✕</button>
   </div>`;
+}
+
+// ── Assign training ──
+// A published topic goes on named lawyers' learning lists. The server confines
+// an officer to their own firm whatever ids are sent; this just chooses them.
+async function _learnApi(path, opts){
+  const r = await fetch(_rosterBase() + '/api/v1/learning' + path, Object.assign({ headers: { 'Content-Type':'application/json', Authorization: 'Bearer ' + (localStorage.getItem('lad_token')||'') }, cache:'no-store' }, opts||{}));
+  let j = {}; try { j = await r.json(); } catch(_){}
+  if (!r.ok) throw new Error(j.message || j.error || ('HTTP ' + r.status));
+  return j;
+}
+async function openAssignTraining(){
+  _rosterModal(_rosterHead('▸', 'Assign training', 'PUBLISHED TOPICS FROM THE DEPARTMENT') + `
+    <div style="padding:17px 22px;display:flex;flex-direction:column;gap:12px;flex:1;overflow:hidden">
+      <div id="atTopics" style="color:var(--slate3);font-size:12.5px">Loading topics…</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <label style="font-family:var(--mono);font-size:9.5px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600">Lawyers</label>
+        <label style="font-size:12px;color:var(--slate);display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="atAll" onchange="atToggleAll(this.checked)"/> Everyone on the roster</label>
+        <span id="atCount" style="font-family:var(--mono);font-size:10.5px;color:var(--slate3);margin-left:auto">0 chosen</span>
+      </div>
+      <div id="atRows" style="flex:1;overflow-y:auto;min-height:120px;max-height:36vh;border:1px solid var(--line);border-radius:9px;padding:4px 8px">
+        ${LAWYERS.length ? LAWYERS.map(l => `<label style="display:flex;align-items:center;gap:9px;padding:7px 4px;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer"><input type="checkbox" class="atPick" value="${_escR(l.laId)}" onchange="atCount()"/><span style="flex:1">${_escR(l.name)}</span><span style="font-family:var(--mono);font-size:10.5px;color:var(--slate3)">${_escR(l.practice)}</span></label>`).join('') : '<div style="color:var(--slate3);font-size:12.5px;padding:14px 4px">No lawyers on your roster yet.</div>'}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:10px">
+        <div><label style="display:block;font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;margin-bottom:5px">Complete by (optional)</label>
+          <input id="atDue" type="date" style="width:100%;padding:8px 10px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans)"/></div>
+        <div><label style="display:block;font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;margin-bottom:5px">Note to the lawyer (optional)</label>
+          <input id="atNote" type="text" maxlength="500" placeholder="e.g. Required before the Q4 compliance review" style="width:100%;padding:8px 10px;border:1.5px solid var(--line2);border-radius:9px;font-size:13px;font-family:var(--sans)"/></div>
+      </div>
+      <div id="atOut" style="font-size:12.5px"></div>
+    </div>
+    <div style="padding:12px 22px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0">
+      <button class="btn btn-gh btn-sm" onclick="closeRosterModal()">Cancel</button>
+      <button class="btn btn-sm" id="atGo" style="background:var(--green);color:#fff" onclick="atSubmit()">Assign</button>
+    </div>`);
+  try {
+    const j = await _learnApi('/assignable');
+    const ts = j.topics || [];
+    document.getElementById('atTopics').innerHTML = ts.length
+      ? `<label style="display:block;font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;text-transform:uppercase;font-weight:600;margin-bottom:5px">Topic</label>
+         <select id="atTopic" style="width:100%;padding:9px 11px;border:1.5px solid var(--line2);border-radius:9px;font-size:13.5px;font-family:var(--sans);background:#fff">${ts.map(t=>`<option value="${_escR(t.topic_id)}">${_escR(t.title)} · ${t.published} step${t.published===1?'':'s'}</option>`).join('')}</select>`
+      : '<div style="color:var(--slate3)">The Department has not published any topics yet.</div>';
+  } catch(e) { document.getElementById('atTopics').innerHTML = '<div style="color:var(--red)">'+_escR(e.message)+'</div>'; }
+}
+function atToggleAll(on){ document.querySelectorAll('.atPick').forEach(c => { c.checked = on; }); atCount(); }
+function atCount(){ const n = document.querySelectorAll('.atPick:checked').length; const el = document.getElementById('atCount'); if (el) el.textContent = n + ' chosen'; }
+async function atSubmit(){
+  const sel = document.getElementById('atTopic'); const out = document.getElementById('atOut'); const go = document.getElementById('atGo');
+  if (!sel) { out.innerHTML = '<span style="color:var(--red)">There is no topic to assign.</span>'; return; }
+  const ids = Array.from(document.querySelectorAll('.atPick:checked')).map(c => c.value);
+  if (!ids.length) { out.innerHTML = '<span style="color:var(--red)">Choose at least one lawyer.</span>'; return; }
+  go.disabled = true; go.textContent = 'Assigning…';
+  const spec = { lawyer_ids: ids };
+  const due = document.getElementById('atDue').value; if (due) spec.due_at = due;
+  const note = document.getElementById('atNote').value.trim(); if (note) spec.note = note;
+  try {
+    const r = await _learnApi('/courses/' + encodeURIComponent(sel.value) + '/assign', { method:'POST', body: JSON.stringify(spec) });
+    const bits = [`<b>${r.assigned.length}</b> assigned`];
+    if (r.already.length) bits.push(`${r.already.length} already on it`);
+    if (r.skipped.length) bits.push(`${r.skipped.length} skipped`);
+    out.innerHTML = `<span style="color:var(--green)">${bits.join(' · ')}.${r.assigned.length ? ' Each lawyer has been notified and will see it on their dashboard.' : ''}</span>`;
+    showToast('✓ ' + r.assigned.length + ' lawyer' + (r.assigned.length===1?'':'s') + ' assigned "' + r.title + '"');
+  } catch(e) { out.innerHTML = '<span style="color:var(--red)">'+_escR(e.message)+'</span>'; }
+  finally { go.disabled = false; go.textContent = 'Assign'; }
 }
 
 // ── Add ──
