@@ -296,6 +296,143 @@ router.get('/enrolments/mine', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ─── Assignment ──────────────────────────────────────────────────────
+// Publishing makes a topic reachable; it puts it in front of nobody. An
+// assignment is the Department (or a firm's compliance officer, for their
+// own lawyers) putting a published topic on named lawyers' learning lists.
+// It is an enrolment with source 'assigned' and a record of who did it, so
+// the learner sees it on their dashboard at once, the cohort view counts
+// them from that moment, and nothing about progress is invented — the
+// enrolment starts at 0% like any other.
+
+const ASSIGN_ROLES = ['lad_admin', 'lad_super_admin', 'super_admin', 'dg', 'firm_compliance_officer'];
+const isLAD = (req) => !!req.user && LAD_REPORT_ROLES.includes(req.user.role);
+
+function rid(prefix) { return prefix + '-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 7).toUpperCase(); }
+function assignmentLog(a) {
+  try {
+    db.prepare(
+      `INSERT INTO activity_log (id, firm_id, lawyer_id, kind, actor_type, actor_id, actor_name, summary, ref_type, ref_id, meta, created_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`
+    ).run(rid('AC'), a.firm_id || null, a.lawyer_id || null, a.kind, a.actor_type || null, a.actor_id || null,
+      a.actor_name || null, a.summary || null, 'learning', a.ref_id || null,
+      a.meta ? JSON.stringify(a.meta) : null, new Date().toISOString());
+  } catch (e) { log.error('activity_log_failed', { error: e.message }); }
+}
+function notifyLawyer(lawyerId, title, body, by) {
+  try {
+    db.prepare('INSERT INTO notifications (id, recipient_type, recipient_id, title, body, level, created_by) VALUES (?,?,?,?,?,?,?)')
+      .run(rid('NT'), 'lawyer', lawyerId, title, body, 'info', by || 'LAD');
+  } catch (e) { log.error('notify_failed', { error: e.message }); }
+}
+
+// Topics that can be assigned right now: those with at least one published
+// step. A draft topic is not offered — assigning it would put an empty hub
+// in front of a lawyer.
+router.get('/assignable', requireRole(...ASSIGN_ROLES), async (_req, res, next) => {
+  try {
+    const all = await topics.listTopics();
+    res.json({ topics: all.filter((t) => t.published > 0) });
+  } catch (e) { next(e); }
+});
+
+router.post('/courses/:courseId/assign', requireRole(...ASSIGN_ROLES), async (req, res, next) => {
+  try {
+    const courseId = req.params.courseId;
+    const b = req.body || {};
+    const note = String(b.note || '').trim().slice(0, 500) || null;
+    const dueAt = b.due_at && /^\d{4}-\d{2}-\d{2}/.test(String(b.due_at)) ? String(b.due_at).slice(0, 10) : null;
+
+    // The topic must exist and be published — at least one step a learner can open.
+    const published = await store.listActivities(courseId);
+    if (!published.length) {
+      const any = await store.listActivities(courseId, { includeUnpublished: true });
+      return res.status(any.length ? 409 : 404).json(any.length
+        ? { error: 'not_published', message: 'This topic has no published steps yet. Publish it in the Topic Builder, then assign it.' }
+        : { error: 'not_found', message: 'No such topic.' });
+    }
+    const mods = await store.listModules(courseId);
+    const topicTitle = mods.length ? mods[0].title : courseId;
+
+    // Who: explicit lawyer ids, a whole firm, or both. A firm officer is
+    // confined to their own firm whatever the request says.
+    const officerFirm = isLAD(req) ? null : (req.user.firm_id || null);
+    if (!isLAD(req) && !officerFirm) return res.status(403).json({ error: 'Forbidden — no firm context for this account' });
+
+    const wanted = new Map();
+    const ids = Array.isArray(b.lawyer_ids) ? b.lawyer_ids.map(String) : [];
+    for (const id of ids) wanted.set(id, null);
+    const firmId = officerFirm || (b.firm_id ? String(b.firm_id) : null);
+    if (b.firm_id || (officerFirm && b.whole_firm)) {
+      for (const l of lawyers.getLawyersByFirm(firmId)) {
+        const st = String(l.status || 'active').toLowerCase();
+        if (['inactive', 'resigned', 'non-practising'].includes(st)) continue;
+        wanted.set(l.id, l);
+      }
+    }
+    if (!wanted.size) return res.status(400).json({ error: 'nobody', message: 'Choose at least one lawyer, or a firm.' });
+
+    const actor = { id: userId(req), name: req.user.name || (isLAD(req) ? 'The Department' : 'Your firm') };
+    const out = { topic_id: courseId, title: topicTitle, assigned: [], already: [], skipped: [] };
+
+    for (const [id, pre] of wanted) {
+      // getLawyersByFirm does not return firm_id; those rows came from the firm, so say so.
+      const l = pre ? Object.assign({ firm_id: firmId }, pre) : lawyers.getLawyerById(id);
+      if (!l) { out.skipped.push({ id, reason: 'not_found' }); continue; }
+      if (officerFirm && l.firm_id !== officerFirm) { out.skipped.push({ id, reason: 'not_your_firm' }); continue; }
+
+      const existing = await store.getEnrolment(courseId, id);
+      if (existing) { out.already.push({ id, name: `${l.first_name || ''} ${l.last_name || ''}`.trim(), percent: existing.percent, status: existing.status }); continue; }
+
+      await store.ensureEnrolment(courseId, id, 'assigned');
+      const ts = new Date().toISOString();
+      try {
+        await require('../lms/engine').run(
+          'UPDATE enrolment SET assigned_by = ?, assigned_by_name = ?, assigned_at = ?, due_at = ?, note = ? WHERE course_id = ? AND lawyer_id = ?',
+          [actor.id, actor.name, ts, dueAt, note, courseId, id]
+        );
+      } catch (e) { log.warn('assignment_detail_failed', { error: e.message }); }
+
+      const name = `${l.first_name || ''} ${l.last_name || ''}`.trim() || id;
+      notifyLawyer(id,
+        `New training assigned: ${topicTitle}`,
+        `${actor.name} has assigned you the topic "${topicTitle}".` + (dueAt ? ` Please complete it by ${dueAt}.` : '') + (note ? ` Note: ${note}` : '') + ' Open it from My Learning on your dashboard.',
+        actor.name);
+      assignmentLog({
+        firm_id: l.firm_id || null, lawyer_id: id, kind: 'course_assigned',
+        actor_type: isLAD(req) ? 'admin' : 'firm', actor_id: actor.id, actor_name: actor.name,
+        summary: `${actor.name} assigned "${topicTitle}" to ${name}` + (dueAt ? ` (due ${dueAt})` : ''),
+        ref_id: courseId, meta: { topic_id: courseId, due_at: dueAt, note },
+      });
+      out.assigned.push({ id, name });
+    }
+    res.status(out.assigned.length ? 201 : 200).json(out);
+  } catch (e) { next(e); }
+});
+
+// Take a topic off a lawyer's list. Only an enrolment that has not been
+// started is withdrawn outright; one with attempts is evidence and is
+// marked withdrawn instead, so the record of what they did survives.
+router.delete('/courses/:courseId/assign/:lawyerId', requireRole(...ASSIGN_ROLES), async (req, res, next) => {
+  try {
+    const { courseId, lawyerId } = req.params;
+    const l = lawyers.getLawyerById(lawyerId);
+    if (!l) return res.status(404).json({ error: 'No such lawyer' });
+    if (!isLAD(req) && l.firm_id !== req.user.firm_id) return res.status(403).json({ error: 'Forbidden — not a lawyer at your firm' });
+    const e = await store.getEnrolment(courseId, lawyerId);
+    if (!e) return res.status(404).json({ error: 'Not enrolled' });
+    const engine = require('../lms/engine');
+    const started = await engine.one('SELECT 1 AS x FROM activity_attempt at JOIN activity a ON a.id = at.activity_id WHERE a.course_id = ? AND at.lawyer_id = ? LIMIT 1', [courseId, lawyerId]);
+    if (started) await engine.run("UPDATE enrolment SET status = 'withdrawn' WHERE course_id = ? AND lawyer_id = ?", [courseId, lawyerId]);
+    else await engine.run('DELETE FROM enrolment WHERE course_id = ? AND lawyer_id = ?', [courseId, lawyerId]);
+    const mods = await store.listModules(courseId);
+    const title = mods.length ? mods[0].title : courseId;
+    const actorName = req.user.name || (isLAD(req) ? 'The Department' : 'Your firm');
+    assignmentLog({ firm_id: l.firm_id || null, lawyer_id: lawyerId, kind: 'course_unassigned', actor_type: isLAD(req) ? 'admin' : 'firm', actor_id: userId(req), actor_name: actorName, summary: `${actorName} removed "${title}" from ${`${l.first_name || ''} ${l.last_name || ''}`.trim() || lawyerId}`, ref_id: courseId });
+    res.json({ ok: true, outcome: started ? 'withdrawn' : 'removed' });
+  } catch (e) { next(e); }
+});
+
 // ─── Attempts ────────────────────────────────────────────────────────
 
 // Launching an activity. The response carries the attempt id every engine
