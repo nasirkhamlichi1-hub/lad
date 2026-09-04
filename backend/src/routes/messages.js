@@ -454,11 +454,18 @@ router.get('/conversations', requireAuth, (req, res) => {
     } else {
       const ctx = requesterCtx(req.user);
       if (!ctx) return res.json({ conversations: [], unread: 0 });
+      // A requester never sees a thread they deleted. Their archive is a
+      // separate view of their own — ?view=archived — and has nothing to do
+      // with the admin team's archive flag on the same row.
+      const view = (req.query.view || '').toString();
+      const archClause = view === 'archived' ? 'c.requester_archived = 1' : 'COALESCE(c.requester_archived,0) = 0';
       rows = db.prepare(
         `SELECT c.*, (SELECT body FROM conversation_messages m WHERE m.conversation_id = c.id ORDER BY m.created_at DESC LIMIT 1) last_body,
                 r.last_read_at
          FROM conversations c LEFT JOIN conversation_reads r ON r.conversation_id = c.id AND r.reader_id = ?
-         WHERE c.requester_type = ? AND c.requester_id = ? ORDER BY c.last_message_at DESC LIMIT 200`
+         WHERE c.requester_type = ? AND c.requester_id = ?
+           AND c.requester_deleted_at IS NULL AND ${archClause}
+         ORDER BY c.last_message_at DESC LIMIT 200`
       ).all(reader, ctx.type, ctx.id);
     }
   } catch (e) { log.error('conv_list_failed', { error: e.message }); }
@@ -474,7 +481,10 @@ router.get('/conversations', requireAuth, (req, res) => {
       last_message_at: c.last_message_at, last_sender: c.last_sender,
       preview: clip(c.last_body, 140), unread: isUnread,
       ai_handled: !!c.ai_handled, escalated: !!c.escalated, category: c.category || null, priority: c.priority || 'normal',
-      archived: !!c.archived,
+      // Each side sees its own archive flag. Showing a lawyer the admin
+      // team's flag would leak internal triage and mean nothing to them.
+      archived: admin ? !!c.archived : !!c.requester_archived,
+      requester_deleted: admin ? !!c.requester_deleted_at : undefined,
     };
   });
   res.json({ conversations, unread, admin });
@@ -493,7 +503,8 @@ function getConversation(id, u) {
     firm_id: c.firm_id, assigned_to: c.assigned_to, assigned_name: c.assigned_name,
     ai_handled: !!c.ai_handled, escalated: !!c.escalated, category: c.category || null, priority: c.priority || 'normal',
     rating: c.rating != null ? Number(c.rating) : null,
-    archived: !!c.archived,
+    archived: isAdmin(u) ? !!c.archived : !!c.requester_archived,
+    requester_deleted: isAdmin(u) ? !!c.requester_deleted_at : undefined,
     created_at: c.created_at, last_message_at: c.last_message_at, last_sender: c.last_sender,
     messages,
   };
@@ -503,6 +514,9 @@ router.get('/conversations/:id', requireAuth, (req, res) => {
   const c = db.prepare('SELECT * FROM conversations WHERE id = ?').get(req.params.id);
   if (!c) return res.status(404).json({ error: 'Conversation not found' });
   if (!canSee(req.user, c)) return res.status(403).json({ error: 'Forbidden' });
+  // Deleted by the requester: gone from their account, so a stale link or
+  // an old tab gets the same answer as a thread that never existed.
+  if (!isAdmin(req.user) && c.requester_deleted_at) return res.status(404).json({ error: 'Conversation not found' });
   markRead(c.id, req.user.sub);
   res.json({ conversation: getConversation(c.id, req.user) });
 });
@@ -527,6 +541,10 @@ router.post('/conversations/:id/messages', requireAuth, (req, res) => {
     const reopen = (c.status === 'resolved' || c.status === 'closed');
     db.prepare('UPDATE conversations SET last_message_at = ?, updated_at = ?, last_sender = ?, status = CASE WHEN ? THEN ? ELSE status END WHERE id = ?')
       .run(ts, ts, side, reopen ? 1 : 0, side === 'admin' ? 'pending' : 'open', c.id);
+    // A reply from CLPD brings an archived thread back into the requester's
+    // inbox, the way a mail client surfaces a new message on an archived
+    // conversation. Otherwise an answer could land in a view nobody checks.
+    if (side === 'admin') db.prepare('UPDATE conversations SET requester_archived = 0, requester_archived_at = NULL WHERE id = ?').run(c.id);
   });
   tx();
   if (side === 'admin') markFirstResponse(c.id, ts);
@@ -595,18 +613,46 @@ router.post('/conversations/:id/status', requireAuth, (req, res) => {
 // ─── Archive / restore (admin only) ──────────────────────────────────
 // Archiving lifts a thread out of the working inbox without deleting it — it
 // stays fully readable in the "Archived" view and can be restored any time.
+// Each side archives for itself. An admin's archive flag and a requester's
+// are different columns on the same row, so neither can hide a thread from
+// the other: the Department's queue and the lawyer's inbox stay independent.
 router.post('/conversations/:id/archive', requireAuth, (req, res) => {
-  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admins only' });
   const c = db.prepare('SELECT * FROM conversations WHERE id = ?').get(req.params.id);
   if (!c) return res.status(404).json({ error: 'Conversation not found' });
+  if (!canSee(req.user, c)) return res.status(403).json({ error: 'Forbidden' });
   // Default action is to archive; pass { archived:false } to restore.
   const archive = !(req.body && req.body.archived === false);
   const ts = now();
-  db.prepare('UPDATE conversations SET archived = ?, archived_at = ?, updated_at = ? WHERE id = ?')
-    .run(archive ? 1 : 0, archive ? ts : null, ts, c.id);
-  logActivity({ ...convScope(c), kind: archive ? 'archived' : 'unarchived', actor_type: 'admin', actor_id: req.user.sub, actor_name: req.user.name, ref_id: c.id,
-    summary: `${req.user.name || 'An admin'} ${archive ? 'archived' : 'restored'} "${c.subject || ''}"` });
+  if (isAdmin(req.user)) {
+    db.prepare('UPDATE conversations SET archived = ?, archived_at = ?, updated_at = ? WHERE id = ?')
+      .run(archive ? 1 : 0, archive ? ts : null, ts, c.id);
+    logActivity({ ...convScope(c), kind: archive ? 'archived' : 'unarchived', actor_type: 'admin', actor_id: req.user.sub, actor_name: req.user.name, ref_id: c.id,
+      summary: `${req.user.name || 'An admin'} ${archive ? 'archived' : 'restored'} "${c.subject || ''}"` });
+    return res.json({ ok: true, archived: archive });
+  }
+  if (c.requester_deleted_at) return res.status(404).json({ error: 'Conversation not found' });
+  db.prepare('UPDATE conversations SET requester_archived = ?, requester_archived_at = ? WHERE id = ?')
+    .run(archive ? 1 : 0, archive ? ts : null, c.id);
+  logActivity({ ...convScope(c), kind: archive ? 'requester_archived' : 'requester_unarchived', actor_type: 'requester', actor_id: req.user.sub, actor_name: req.user.name || c.requester_name, ref_id: c.id,
+    summary: `${req.user.name || c.requester_name || 'The requester'} ${archive ? 'archived' : 'restored'} "${c.subject || ''}" in their own messages` });
   res.json({ ok: true, archived: archive });
+});
+
+// A requester deletes a thread from their own account. It leaves their list,
+// their thread view and their badge for good, and cannot be restored by them.
+// The row is kept: correspondence with a regulator is a record, so the
+// Department's copy — and the CRM timeline entry — survive. Admins have no
+// delete; their tool for a settled thread is the archive above.
+router.delete('/conversations/:id', requireAuth, (req, res) => {
+  if (isAdmin(req.user)) return res.status(403).json({ error: 'Conversations are records and cannot be deleted by the Department. Archive it instead.' });
+  const c = db.prepare('SELECT * FROM conversations WHERE id = ?').get(req.params.id);
+  if (!c || c.requester_deleted_at) return res.status(404).json({ error: 'Conversation not found' });
+  if (!canSee(req.user, c)) return res.status(403).json({ error: 'Forbidden' });
+  const ts = now();
+  db.prepare('UPDATE conversations SET requester_deleted_at = ?, requester_archived = 0 WHERE id = ?').run(ts, c.id);
+  logActivity({ ...convScope(c), kind: 'requester_deleted', actor_type: 'requester', actor_id: req.user.sub, actor_name: req.user.name || c.requester_name, ref_id: c.id,
+    summary: `${req.user.name || c.requester_name || 'The requester'} deleted "${c.subject || ''}" from their messages — the Department's copy is retained` });
+  res.json({ ok: true, deleted: true });
 });
 
 // ─── Mark read ───────────────────────────────────────────────────────
@@ -651,7 +697,7 @@ router.get('/unread', requireAuth, (req, res) => {
       rows = ctx ? db.prepare(
         `SELECT c.last_sender, c.last_message_at, c.assigned_to, r.last_read_at
          FROM conversations c LEFT JOIN conversation_reads r ON r.conversation_id = c.id AND r.reader_id = ?
-         WHERE c.requester_type = ? AND c.requester_id = ?`
+         WHERE c.requester_type = ? AND c.requester_id = ? AND c.requester_deleted_at IS NULL`
       ).all(reader, ctx.type, ctx.id) : [];
     }
     for (const c of rows) {
