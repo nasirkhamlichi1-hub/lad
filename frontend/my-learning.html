@@ -101,6 +101,9 @@ html.lad-embed body{background:transparent}
 </style>
   <!-- Government of Dubai Legal Affairs Department identity -->
   <link rel="stylesheet" href="lad-brand.css">
+  <link rel="stylesheet" href="lad-rtl.css">
+  <!-- Arabic interface: direction before first paint, dictionary-driven translation, language switch -->
+  <script src="lad-i18n.js"></script>
   <script src="lad-brand.js" defer></script>
 </head>
 <body>
@@ -183,7 +186,7 @@ async function load(){
         if(p.attempt_count) bits.push(p.attempt_count+'x');
         return '<div class="step"><span class="idx">'+(n+1)+'</span>'+
           '<span class="kind '+k.c+'">'+k.l+'</span>'+
-          '<div class="grow"><div class="st">'+esc(a.title)+'</div>'+
+          '<div class="grow"><div class="st" translate="no">'+esc(a.title)+'</div>'+
           '<div class="ss">'+esc(bits.join(' · '))+'</div></div>'+
           '<span class="pill p-'+p.status+'">'+LABEL[p.status]+'</span></div>';
       }).join('')+

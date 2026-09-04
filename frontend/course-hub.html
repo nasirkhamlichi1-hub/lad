@@ -247,6 +247,9 @@
 </style>
   <!-- Government of Dubai Legal Affairs Department identity -->
   <link rel="stylesheet" href="lad-brand.css">
+  <link rel="stylesheet" href="lad-rtl.css">
+  <!-- Arabic interface: direction before first paint, dictionary-driven translation, language switch -->
+  <script src="lad-i18n.js"></script>
   <script src="lad-brand.js" defer></script>
 </head>
 <body>
@@ -396,7 +399,7 @@
     var n = 0;
     $('body').innerHTML = visible.map(function (s, si) {
       var head = (visible.length > 1 || si > 0)
-        ? '<h2 class="section-title">' + esc(s.title) + '</h2>' +
+        ? '<h2 class="section-title" translate="no">' + esc(s.title) + '</h2>' +
           '<p class="gate-note">' + (s.gate === 'sequential' ? 'In order — each step unlocks the next' : 'Any order') + '</p>' +
           (s.welcome && si > 0 ? '' : '')
         : '<h2 class="section-title">The pathway</h2>' +
@@ -416,7 +419,7 @@
           '<div class="card">' +
             '<span class="kind ' + (KINDCLS[a.kind] || '') + '">' + (KINDTXT[a.kind] || a.kind) + '</span>' +
             '<div class="grow"><div class="continue-tag">Continue here</div>' +
-              '<div class="t">' + esc(a.title) + '</div>' +
+              '<div class="t" translate="no">' + esc(a.title) + '</div>' +
               '<div class="m">' + esc(metaLine(a)) + '</div></div>' +
             pill +
             '<button data-id="' + a.id + '"' + (a.locked ? ' disabled' : '') + '>' + btn + '</button>' +
@@ -587,7 +590,7 @@
         (m.learner.started ? '<span class="tag" style="background:#F58C1F;color:#fff">In progress</span>' : '');
       return '<div class="law doc">' +
         '<div class="law-top"><span class="tag">' + esc(kind) + '</span>' + status + '</div>' +
-        '<h3>' + esc(m.title) + '</h3>' +
+        '<h3 translate="no">' + esc(m.title) + '</h3>' +
         // The author's description of what this is; the file name only when
         // there is no description AND the title is not already the file name.
         (m.description ? '<div class="law-sub" style="font-weight:400;font-family:inherit;text-transform:none;letter-spacing:0;font-size:14px;line-height:1.55;color:#575757">' + esc(m.description) + '</div>'

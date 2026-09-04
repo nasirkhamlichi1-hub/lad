@@ -207,6 +207,9 @@ html.lad-embed .adm-wrap{padding-top:14px;max-width:none}
 </style>
   <!-- Government of Dubai Legal Affairs Department identity -->
   <link rel="stylesheet" href="lad-brand.css">
+  <link rel="stylesheet" href="lad-rtl.css">
+  <!-- Arabic interface: direction before first paint, dictionary-driven translation, language switch -->
+  <script src="lad-i18n.js"></script>
   <script src="lad-brand.js" defer></script>
 </head>
 <body>
@@ -312,7 +315,7 @@ async function loadTopics(){
     if(!r.topics.length){ $('tlist').innerHTML='<div class="adm-empty">No topics yet.</div>'; return; }
     $('tlist').innerHTML=r.topics.map(function(t){
       return '<button class="adm-trow" data-t="'+esc(t.topic_id)+'"'+(selected===t.topic_id?' aria-current="true"':'')+'>'+
-        '<div class="adm-grow"><div class="n">'+esc(t.title)+'</div>'+
+        '<div class="adm-grow"><div class="n" translate="no">'+esc(t.title)+'</div>'+
         '<div class="c">'+t.activities+' steps · '+t.learners+' enrolled</div></div>'+
         '<span class="adm-chip'+(t.published===t.activities&&t.activities?' live':'')+'">'+t.published+'/'+t.activities+'</span>'+
         '<span class="adm-tdel" data-tdel="'+esc(t.topic_id)+'" data-tname="'+esc(t.title)+'" data-tlearners="'+t.learners+'" title="Delete this topic" aria-label="Delete this topic">'+
@@ -361,7 +364,7 @@ function renderDetail(){
 
   $('detail').innerHTML=
     '<div class="adm-toolbar">'+
-      '<h2 class="adm-panel-title">'+esc(t.title)+'</h2>'+
+      '<h2 class="adm-panel-title" translate="no">'+esc(t.title)+'</h2>'+
       '<span class="adm-count">'+steps.length+' steps · '+ready+' ready · '+t.published+' live</span>'+
       '<button class="adm-btn-light adm-btn-sm" id="preview">Preview hub</button>'+
       (t.published>0?'<a class="adm-btn-light adm-btn-sm" id="assignNow" href="lad-learning-admin.html?topic='+encodeURIComponent(t.topic_id)+'&assign=1" title="Put the published steps on named lawyers\' learning lists">Assign to lawyers</a>':'')+
@@ -383,7 +386,7 @@ function renderDetail(){
       return '<div class="adm-step '+(a.ready?'ready':'blocked')+'">'+
         '<span class="adm-idx">'+(i+1)+'</span>'+
         '<span class="adm-kind '+k.cls+'">'+k.label+'</span>'+
-        '<div class="adm-grow"><div class="t">'+esc(a.title)+'</div>'+
+        '<div class="adm-grow"><div class="t" translate="no">'+esc(a.title)+'</div>'+
         (a.ready?'<div class="s">Ready'+(a.pass_score?' · pass mark '+a.pass_score:'')+'</div>'
                 :'<div class="s needs">'+esc(a.needs)+'</div>')+'</div>'+
         '<span class="adm-chip'+(a.published?' live':'')+'">'+(a.published?'live':'draft')+'</span>'+
@@ -524,7 +527,7 @@ async function loadLibAdmin(){
       var label=m.kind==='scorm'?'SCORM':(m.kind==='link'?(ytIdOf(m.url)?'VIDEO':'LINK'):'FILE');
       return '<div class="adm-step ready" style="margin-bottom:6px">'+
         '<span class="adm-kind k-doc">'+label+'</span>'+
-        '<div class="adm-grow"><div class="t">'+esc(m.title)+'</div>'+
+        '<div class="adm-grow"><div class="t" translate="no">'+esc(m.title)+'</div>'+
         (m.url?'<div class="s">'+esc(m.url)+'</div>':(m.file_name?'<div class="s">'+esc(m.file_name)+'</div>':''))+'</div>'+
         '<button class="adm-btn-icon adm-btn-danger" data-libdel="'+esc(m.id)+'" title="Remove from the library">&times;</button></div>';
     }).join('');

@@ -1,0 +1,103 @@
+/* ═══════════════════════════════════════════════════════════════════════
+ * lad-rtl.css — the Arabic reading direction, on every page
+ * ═══════════════════════════════════════════════════════════════════════
+ * Applied when <html dir="rtl"> (set by lad-i18n.js before first paint).
+ * The pages were written left-to-right with physical properties; flexbox
+ * and grid mirror themselves under dir="rtl", and lad-i18n.js flips inline
+ * styles once. What is left is typography — Arabic must not be tracked or
+ * set in a Latin display face — and the handful of layouts that pin
+ * things to a physical side.
+ *
+ * Dubai Font is the Government of Dubai typeface for both scripts; it is
+ * declared in lad-brand.css and the four files ship with the site.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Typography ───────────────────────────────────────────────────── */
+:root[dir="rtl"]{
+  --sans:'Dubai','Dubai W23','Segoe UI',Tahoma,Arial,sans-serif;
+  --serif:'Dubai','Dubai W23','Segoe UI',Tahoma,Arial,sans-serif;
+  --mono:'Dubai','Dubai W23','Segoe UI',Tahoma,Arial,sans-serif;
+  --lad-font:'Dubai','Dubai W23','Segoe UI',Tahoma,Arial,sans-serif;
+}
+[dir="rtl"] body, [dir="rtl"] button, [dir="rtl"] input, [dir="rtl"] select, [dir="rtl"] textarea,
+[dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3, [dir="rtl"] h4, [dir="rtl"] h5, [dir="rtl"] h6,
+[dir="rtl"] [style*="font-family"], [dir="rtl"] [class*="serif"], [dir="rtl"] [class*="mono"],
+[dir="rtl"] .eyebrow, [dir="rtl"] .k, [dir="rtl"] .pill, [dir="rtl"] .num, [dir="rtl"] .badge, [dir="rtl"] .tag{
+  font-family:'Dubai','Dubai W23','Segoe UI',Tahoma,Arial,sans-serif !important;
+}
+/* Tracking breaks the joined script. Every eyebrow and mono label in the
+   system sets letter-spacing; none of it survives here. */
+[dir="rtl"] *{ letter-spacing:0 !important; }
+/* Arabic reads smaller at the same size: one step up for small type. */
+[dir="rtl"] [style*="font-size:9"], [dir="rtl"] [style*="font-size:10"], [dir="rtl"] [style*="font-size: 9"], [dir="rtl"] [style*="font-size: 10"],
+[dir="rtl"] .eyebrow, [dir="rtl"] .k, [dir="rtl"] .pill, [dir="rtl"] .badge, [dir="rtl"] .tag, [dir="rtl"] .hint, [dir="rtl"] .cmeta, [dir="rtl"] .ss{
+  font-size:max(1em, 12px);
+}
+[dir="rtl"] body{ line-height:1.7; }
+/* Uppercase is a Latin device; leave the case alone so mixed labels keep
+   their Latin acronyms readable (UAE PASS, SCORM, CSV). */
+[dir="rtl"] [style*="text-transform"], [dir="rtl"] .eyebrow, [dir="rtl"] .k, [dir="rtl"] th, [dir="rtl"] .pill{ text-transform:none !important; }
+/* Italic Arabic is not a thing. */
+[dir="rtl"] em, [dir="rtl"] i:not([class]), [dir="rtl"] .italic{ font-style:normal; }
+
+/* ── Direction of text, numbers and mixed content ─────────────────── */
+[dir="rtl"] body{ direction:rtl; text-align:start; }
+/* Latin fragments inside Arabic — emails, ids, URLs, codes — keep their own
+   direction and do not drag punctuation across. */
+[dir="rtl"] code, [dir="rtl"] pre, [dir="rtl"] kbd, [dir="rtl"] .num, [dir="rtl"] .mono,
+[dir="rtl"] input[type="email"], [dir="rtl"] input[type="url"], [dir="rtl"] input[type="tel"], [dir="rtl"] input[type="number"],
+[dir="rtl"] input[type="date"], [dir="rtl"] input[type="time"], [dir="rtl"] input[type="month"], [dir="rtl"] input[type="password"],
+[dir="rtl"] a[href^="mailto:"], [dir="rtl"] a[href^="tel:"], [dir="rtl"] a[href^="http"]:not([class]){
+  direction:ltr; unicode-bidi:isolate; display:inline-block; text-align:start;
+}
+[dir="rtl"] input[type="email"], [dir="rtl"] input[type="url"], [dir="rtl"] input[type="password"],
+[dir="rtl"] input[type="number"], [dir="rtl"] input[type="date"], [dir="rtl"] input[type="time"], [dir="rtl"] input[type="month"]{ display:block; width:100%; text-align:right; }
+
+/* ── Layout fixes the browser does not do for us ──────────────────── */
+/* Tables: header cells and body cells written text-align:left. */
+[dir="rtl"] th, [dir="rtl"] td{ text-align:start; }
+[dir="rtl"] th[style*="text-align:right"], [dir="rtl"] td[style*="text-align:right"]{ text-align:left; }
+/* Physical margins used to push a control to the row end. */
+[dir="rtl"] [class*="ml-auto"]{ margin-left:0 !important; margin-right:auto !important; }
+[dir="rtl"] [class*="mr-auto"]{ margin-right:0 !important; margin-left:auto !important; }
+/* Left-border accents on callouts and quotes become right-border accents. */
+[dir="rtl"] [style*="border-left:3px"], [dir="rtl"] [style*="border-left: 3px"], [dir="rtl"] [style*="border-left:4px"], [dir="rtl"] [style*="border-left: 4px"]{
+  border-left:0 !important;
+}
+/* Search boxes with an absolutely positioned icon on the left. */
+[dir="rtl"] .search-wrap svg, [dir="rtl"] .search svg, [dir="rtl"] .searchbox svg{ left:auto; right:12px; }
+[dir="rtl"] .search-wrap input, [dir="rtl"] .search input, [dir="rtl"] .searchbox input{ padding-left:12px; padding-right:38px; }
+/* Fixed side panels (messages, notifications, the CRM drawer) stay on the
+   edge they were written for: they hide themselves with translateX() off
+   that edge, so moving them to the other side would leave them stranded
+   mid-screen. Fixed furniture keeps its physical corner in both directions. */
+/* Progress bars fill from the right. */
+[dir="rtl"] .bar-fill, [dir="rtl"] .fill, [dir="rtl"] .mini i, [dir="rtl"] .progress > *{ margin-left:auto; }
+/* Icons that point the way. */
+[dir="rtl"] .chev, [dir="rtl"] .chevron, [dir="rtl"] .arrow, [dir="rtl"] [class*="caret"]{ transform:scaleX(-1); }
+/* The Department's marks are never mirrored. */
+[dir="rtl"] .lad-brandbar img, [dir="rtl"] .lad-footer img, [dir="rtl"] img[alt*="Dubai"], [dir="rtl"] img[src*="govlogo"]{ transform:none !important; }
+
+/* ── The language switch ──────────────────────────────────────────── */
+.lad-langswitch{
+  position:fixed; bottom:14px; left:50%; transform:translateX(-50%); z-index:2147483000;
+  display:inline-flex; gap:2px; padding:3px; border-radius:999px;
+  background:#FFFFFF; border:1px solid #CCCCCC; box-shadow:0 2px 12px rgba(0,0,0,.08);
+  font-family:'Dubai','Dubai W23','Segoe UI',Tahoma,Arial,sans-serif; font-size:13px; line-height:1;
+}
+.lad-langswitch button{
+  appearance:none; border:0; background:transparent; color:#575757; cursor:pointer;
+  padding:7px 12px; border-radius:999px; font:inherit; letter-spacing:0 !important;
+}
+.lad-langswitch button:hover{ color:#70550F; }
+.lad-langswitch button[aria-current="true"]{ background:#9D7714; color:#FFFFFF; cursor:default; }
+.lad-langswitch button[lang="ar"]{ direction:rtl; }
+@media print{ .lad-langswitch{ display:none; } }
+
+/* ── Page-specific ────────────────────────────────────────────────── */
+/* clpd-portal hero: the English title is set in two lines with an <em>;
+   the page already carries the Department's own Arabic line beneath it,
+   so in Arabic that line IS the title. */
+[dir="rtl"] .hero-title{ display:none; }
+[dir="rtl"] .hero-title-ar{ font-size:44px; color:#fff; line-height:1.25; margin-bottom:16px; }
+@media (max-width:760px){ [dir="rtl"] .hero-title-ar{ font-size:30px; } }

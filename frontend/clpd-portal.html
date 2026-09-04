@@ -492,6 +492,9 @@ function applyLADConfig() {
 <script src="api-client.js?v=render3"></script>
   <!-- Government of Dubai Legal Affairs Department identity -->
   <link rel="stylesheet" href="lad-brand.css">
+  <link rel="stylesheet" href="lad-rtl.css">
+  <!-- Arabic interface: direction before first paint, dictionary-driven translation, language switch -->
+  <script src="lad-i18n.js"></script>
   <script src="lad-brand.js" defer></script>
 <script>
 /* One-time cleanup: earlier builds asked users to paste personal API keys and
@@ -679,8 +682,9 @@ function applyLADConfig() {
     </nav>
     <div class="dr-foot">
       <div class="dr-lang" id="drLang">
-        <div class="dr-lang-btn on" onclick="setLang('en')">EN</div>
-        <div class="dr-lang-btn" onclick="setLang('ar')">عر</div>
+        <div class="dr-lang-btn" id="langEN" translate="no" onclick="setLang('en')">EN</div>
+        <div class="dr-lang-btn" id="langAR" translate="no" onclick="setLang('ar')">عر</div>
+        <script>(function(){var ar=window.LAD_LANG==='ar';document.getElementById(ar?'langAR':'langEN').classList.add('on');})();</script>
       </div>
       <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.25);letter-spacing:.5px">© 2026 Kwintessential · LAD Dubai</div>
     </div>
@@ -938,7 +942,7 @@ function applyLADConfig() {
 
     <div class="lad-nav-right">
       <div class="lad-nav-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-      <div class="lad-nav-lang" onclick="setLang('ar')">العربية</div>
+      <div class="lad-nav-lang" translate="no" onclick="setLang(window.LAD_LANG==='ar'?'en':'ar')"><script>document.write(window.LAD_LANG==='ar'?'English':'العربية')</script></div>
       <!-- Logged-out -->
       <button class="lad-btn-login" id="ladBtnLogin" onclick="openAuth('login')">Login</button>
       <button class="lad-btn-reg" id="ladBtnReg" onclick="openAuth('register')">Register</button>
@@ -3029,6 +3033,9 @@ handleResize();
 // LANGUAGE
 // ════════════════════════════════════════════
 function setLang(l) {
+  // The whole site switches language through lad-i18n.js (persisted, every
+  // page); this page's old cosmetic flip only remains as a fallback.
+  if (window.ladSetLang) { window.ladSetLang(l); return; }
   document.getElementById('langEN').classList.toggle('on',l==='en');
   document.getElementById('langAR').classList.toggle('on',l==='ar');
   document.documentElement.dir = l==='ar'?'rtl':'ltr';

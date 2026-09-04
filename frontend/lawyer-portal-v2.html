@@ -474,6 +474,9 @@ body{font-feature-settings:"ss01","cv01","cv11";min-height:100vh;overflow-x:hidd
 </style>
   <!-- Government of Dubai Legal Affairs Department identity -->
   <link rel="stylesheet" href="lad-brand.css">
+  <link rel="stylesheet" href="lad-rtl.css">
+  <!-- Arabic interface: direction before first paint, dictionary-driven translation, language switch -->
+  <script src="lad-i18n.js"></script>
   <script src="lad-brand.js" defer></script>
 <script>
 /* One-time cleanup: earlier builds asked users to paste personal API keys and
@@ -3640,7 +3643,7 @@ async function loadMyLearning() {
             (n + 1) + '</span>' +
           '<span class="pill" style="background:var(--paper2);color:var(--slate2);min-width:78px;justify-content:center">' +
             (KIND[a.kind] || 'STEP') + '</span>' +
-          '<div class="activity-info"><div class="activity-title" style="font-size:14px">' + esc(a.title) + '</div>' +
+          '<div class="activity-info"><div class="activity-title" translate="no" style="font-size:14px">' + esc(a.title) + '</div>' +
           '<div class="activity-meta">' + esc(bits.join(' · ')) + '</div></div>' +
           '<span class="pill" style="' + (TONE[p.status] || TONE.not_started) + '">' +
             (LABEL[p.status] || p.status) + '</span></div>';
