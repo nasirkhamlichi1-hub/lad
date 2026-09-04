@@ -231,8 +231,60 @@ router.post('/play/:token/__state', (req, res) => {
               VALUES (?,?,?,datetime('now'))
               ON CONFLICT(material_id, lawyer_id) DO UPDATE SET cmi = excluded.cmi, updated_at = excluded.updated_at`)
     .run(t.mid, t.sub, JSON.stringify(cmi));
-  res.json({ ok: true });
+  // The package's own verdict settles the learner's step the moment it is
+  // saved — not when (or whether) the page around it gets round to closing.
+  settleFromState(t.mid, t.sub, cmi).then((n) => res.json({ ok: true, settled: n })).catch(() => res.json({ ok: true }));
 });
+
+// ─── Settlement ───────────────────────────────────────────────────────
+// A SCORM step counts as done when the package says so: lesson_status
+// completed/passed/failed (1.2) or completion_status completed /
+// success_status passed|failed (2004). When that arrives, every open
+// attempt this learner has on a step that plays this package is closed
+// with the package's score; if there is no open attempt at all — the
+// learner opened it from the reference library, or a tab died before the
+// hub could open one — one is written and closed, so progress is never
+// lost to the page around the player.
+function verdictOf(cmi) {
+  const g = (k) => (cmi[k] == null ? '' : String(cmi[k]));
+  const ls = g('cmi.core.lesson_status'), cs = g('cmi.completion_status'), ss = g('cmi.success_status');
+  const done = ls === 'completed' || ls === 'passed' || ls === 'failed' || cs === 'completed' || ss === 'passed' || ss === 'failed';
+  let score = null;
+  const raw = g('cmi.core.score.raw') || g('cmi.score.raw');
+  if (raw !== '' && Number.isFinite(Number(raw))) score = Number(raw);
+  else { const sc = g('cmi.score.scaled'); if (sc !== '' && Number.isFinite(Number(sc))) score = Math.round(Number(sc) * 100); }
+  return { done, score, status: cs || ls || 'unknown' };
+}
+async function settleFromState(materialId, lawyerId, cmi) {
+  const v = verdictOf(cmi || {});
+  if (!v.done) return 0;
+  const spine = require('../lms/store');
+  const steps = db.prepare("SELECT id FROM activity WHERE kind = 'scorm' AND material_id = ? AND published = 1").all(materialId);
+  let n = 0;
+  for (const a of steps) {
+    const open = db.prepare("SELECT id, started_at FROM activity_attempt WHERE activity_id = ? AND lawyer_id = ? AND status = 'open' ORDER BY started_at DESC").all(a.id, lawyerId);
+    let ids = open.map((r) => r.id);
+    if (!ids.length) {
+      const prog = db.prepare('SELECT status FROM activity_progress WHERE activity_id = ? AND lawyer_id = ?').get(a.id, lawyerId);
+      if (prog && ['completed', 'passed', 'failed'].includes(prog.status)) continue; // already settled
+      const att = await spine.startAttempt({ activityId: a.id, lawyerId, detail: { source: 'scorm_state' } });
+      if (!att) continue;
+      ids = [att.id];
+    }
+    for (const id of ids) {
+      const row = db.prepare('SELECT started_at FROM activity_attempt WHERE id = ?').get(id);
+      const seconds = row && row.started_at ? Math.max(1, Math.round((Date.now() - new Date(row.started_at.replace(' ', 'T') + (row.started_at.endsWith('Z') ? '' : 'Z')).getTime()) / 1000)) : 0;
+      await spine.closeAttempt(id, lawyerId, {
+        completed: true, abandoned: false, score: v.score, seconds: Number.isFinite(seconds) ? seconds : 0,
+        percent: v.score != null ? v.score : 100, detail: { source: 'scorm_state', settled_at: 'commit', package_status: v.status },
+      });
+      n++;
+    }
+  }
+  return n;
+}
+router.settleFromState = settleFromState;
+router.verdictOf = verdictOf;
 
 // ─── The player ──────────────────────────────────────────────────────
 function playHeaders(res, contentType) {

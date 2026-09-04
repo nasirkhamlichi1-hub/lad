@@ -290,8 +290,10 @@ function canAccessMaterials(courseId, user) {
   // teaching material of every other firm's private internal courses. An
   // officer now gets materials only for courses their firm may actually see:
   // anything public, plus their own firm's private ones.
+  // A topic built in the Topic Builder has no catalogue row; it is not a
+  // firm's private course, so the enrolment / booking check below decides.
   const course = db.prepare('SELECT id, private, owner_firm_id FROM courses WHERE id = ?').get(courseId);
-  if (!store.canAccessCourse(course, user)) return false;
+  if (course && !store.canAccessCourse(course, user)) return false;
 
   if (user && user.role === 'firm_compliance_officer') return true;
   if (user && user.user_type === 'lawyer') {

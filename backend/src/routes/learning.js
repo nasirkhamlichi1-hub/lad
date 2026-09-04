@@ -565,6 +565,25 @@ router.get('/learners/:lawyerId/report', requireAuth, async (req, res, next) => 
   } catch (e) { next(e); }
 });
 
+// What a SCORM package has recorded for one learner — the package's own
+// status and score — so support can answer "I finished it but it says in
+// progress" from the evidence rather than from the learner's memory.
+router.get('/learners/:lawyerId/scorm/:materialId', requireRole(...LAD_REPORT_ROLES), async (req, res, next) => {
+  try {
+    const st = db.prepare('SELECT cmi, updated_at FROM scorm_state WHERE material_id = ? AND lawyer_id = ?').get(req.params.materialId, req.params.lawyerId);
+    if (!st) return res.json({ saved: false, message: 'The package has not saved any state for this learner — it was never opened, or it never called Commit/Finish.' });
+    let cmi = {}; try { cmi = JSON.parse(st.cmi) || {}; } catch (_) {}
+    const g = (k) => (cmi[k] == null ? null : String(cmi[k]));
+    res.json({
+      saved: true, updated_at: st.updated_at,
+      lesson_status: g('cmi.core.lesson_status'), completion_status: g('cmi.completion_status'), success_status: g('cmi.success_status'),
+      score_raw: g('cmi.core.score.raw') || g('cmi.score.raw'), score_scaled: g('cmi.score.scaled'),
+      lesson_location: g('cmi.core.lesson_location') || g('cmi.location'), progress_measure: g('cmi.progress_measure'),
+      keys: Object.keys(cmi).length,
+    });
+  } catch (e) { next(e); }
+});
+
 router.get('/report/mine', requireAuth, async (req, res, next) => {
   try {
     res.json(await store.learnerReport(userId(req)));
