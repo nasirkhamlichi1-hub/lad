@@ -439,6 +439,7 @@
 
     var acts = [];
     visible.forEach(function (s) { acts = acts.concat(s.activities); });
+    spineActs = acts; // the library needs these to route a package through the tracked path
     Array.prototype.forEach.call(document.querySelectorAll('[data-id]'), function (b) {
       b.onclick = function () {
         var a = acts.filter(function (x) { return x.id === b.dataset.id; })[0];
@@ -579,9 +580,13 @@
     function docCard(m) {
       var vid = m.kind === 'link' ? ytId(m.url) : null;
       var kind = vid ? 'Video' : (m.kind === 'scorm' ? 'Interactive' : (m.kind === 'link' ? domainOf(m.url) : (/pdf/i.test(m.mime || '') ? 'PDF' : 'Document')));
-      var label = vid ? 'Watch it →' : (m.kind === 'scorm' ? 'Start it →' : 'Open it →');
+      var done = m.learner && m.learner.completed;
+      var label = vid ? 'Watch it →' : (m.kind === 'scorm' ? (done ? 'Review it →' : (m.learner && m.learner.started ? 'Continue →' : 'Start it →')) : 'Open it →');
+      var status = !m.learner ? '' :
+        done ? '<span class="tag" style="background:#26CB84;color:#fff">Completed ✓' + (m.learner.score != null ? ' · ' + esc(String(m.learner.score)) + '%' : '') + '</span>' :
+        (m.learner.started ? '<span class="tag" style="background:#F58C1F;color:#fff">In progress</span>' : '');
       return '<div class="law doc">' +
-        '<div class="law-top"><span class="tag">' + esc(kind) + '</span></div>' +
+        '<div class="law-top"><span class="tag">' + esc(kind) + '</span>' + status + '</div>' +
         '<h3>' + esc(m.title) + '</h3>' +
         (m.file_name ? '<div class="law-sub">' + esc(m.file_name) + '</div>' : '') +
         openBtn(m, label) + '</div>';
@@ -676,6 +681,11 @@
       return;
     }
     if (m.kind === 'scorm' && m.has_file) {
+      // If this package is also a step on the journey, play it through the
+      // tracked path so finishing it counts — otherwise a learner who does
+      // the whole thing from the library earns nothing on the ring.
+      var step = spineActs.filter(function (a) { return a.kind === 'scorm' && a.material_id === m.id; })[0];
+      if (step) { launch(step); return; }
       // An uploaded package plays inside the hub, against our own runtime.
       readerShow('INTERACTIVE', m.title);
       try { readerFrame(await scormPlayerUrl(courseId, m.id)); }
@@ -734,9 +744,17 @@
   }
 
   var scormSession = null;
+  var spineActs = [];
   window.addEventListener('message', async function (ev) {
     var d = ev.data && ev.data.ladScorm;
-    if (!d || !scormSession) return;
+    if (!d) return;
+    // A package played from the reference library has no attempt to close,
+    // but the player has already saved the learner's result server-side —
+    // so on finish, close the reader and redraw the library so the tick shows.
+    if (!scormSession) {
+      if (d.event === 'finish') { $('rBody').innerHTML = ''; try { $('reader').close(); } catch (e) { } try { await loadLibrary(); } catch (e) { } }
+      return;
+    }
     var apiOrigin; try { apiOrigin = new URL(window.LAD_API_BASE || location.href).origin; } catch (e) { apiOrigin = location.origin; }
     if (ev.origin !== apiOrigin) return;
     if (d.event === 'finish' && !scormSession.done) {
