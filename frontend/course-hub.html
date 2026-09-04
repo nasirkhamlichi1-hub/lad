@@ -672,8 +672,13 @@
     var b = $('rDown'); b.style.display = '';
     b.onclick = function () { var a = document.createElement('a'); a.href = url; a.download = name || 'material'; document.body.appendChild(a); a.click(); a.remove(); };
   }
-  $('rClose').onclick = function () {
-    $('rBody').innerHTML = ''; $('reader').close();
+  // Tearing the reader down. Split out from the button because Escape closes a
+  // modal <dialog> natively without firing any click handler — and leaving this
+  // undone meant the heartbeat kept running against a sitting nobody was in,
+  // booking hours that never happened onto the estate dashboard, and leaving a
+  // SCORM iframe alive inside a closed dialog to report a stale finish later.
+  function teardownReader() {
+    $('rBody').innerHTML = '';
     if (scormSession && !scormSession.done) {
       stopHeartbeat();
       var sess = scormSession; scormSession = null;
@@ -681,7 +686,10 @@
       api.closeAttempt(sess.attempt.id, { completed: false, abandoned: true, seconds: seconds })
         .catch(function () { }).then(function () { return load(); });
     }
-  };
+  }
+  $('rClose').onclick = function () { $('reader').close(); };
+  // 'close' fires however the dialog went away — button, Escape, or .close().
+  $('reader').addEventListener('close', teardownReader);
 
   // Fetch a material's bytes WITH the sign-in token (a plain browser tab has
   // no token, which is why raw download links used to answer "no_access").
@@ -839,7 +847,7 @@
                       '&return=' + encodeURIComponent(location.pathname + location.search);
       return;
     }
-    current = a; openedAt = Date.now(); openAttempt = null;
+    current = a; openedAt = Date.now(); openAttempt = null; dlgHandled = false;
     try {
       var started = await api.startActivity(a.id, {});
       openAttempt = started.attempt;
@@ -880,18 +888,30 @@
     note('Could not open this material.', true);
   }
 
+  // Whether this sitting has already been settled, so the dialog's own 'close'
+  // event does not settle it a second time. finish() closes the dialog, which
+  // fires 'close', which would otherwise abandon the attempt it just completed.
+  var dlgHandled = false;
+
   async function finish() {
     stopHeartbeat();
+    dlgHandled = true;
     if (!openAttempt) { $('dlg').close(); return; }
     var seconds = Math.max(30, elapsed());
     try {
       await api.closeAttempt(openAttempt.id, { completed: true, seconds: seconds });
       $('dlg').close(); note('');
       await load();
-    } catch (e) { note('Could not record that: ' + esc(e.message), true); }
+    } catch (e) {
+      // The close failed, so nothing was settled — let the dialog's own close
+      // path settle it rather than silently dropping the sitting.
+      dlgHandled = false;
+      note('Could not record that: ' + esc(e.message), true);
+    }
   }
   async function abandon() {
     stopHeartbeat();
+    dlgHandled = true;
     if (openAttempt) {
       var seconds = Math.max(5, elapsed());
       try { await api.closeAttempt(openAttempt.id, { completed: false, abandoned: true, seconds: seconds }); }
@@ -904,6 +924,14 @@
   $('dlgGo').onclick = openMaterial;
   $('dlgDone').onclick = finish;
   $('dlgClose').onclick = abandon;
+  // Escape closes a modal <dialog> natively, firing no click handler. Without
+  // this the heartbeat would keep running against a sitting nobody is in,
+  // booking hours that never happened onto the estate dashboard — and the
+  // fresh heartbeat would keep the reaper from ever settling it.
+  $('dlg').addEventListener('close', function () {
+    if (dlgHandled) { dlgHandled = false; return; }
+    abandon().catch(function () {});
+  });
 
   load();
 })();

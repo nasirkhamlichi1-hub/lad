@@ -8,7 +8,11 @@
 (function(){if(location.hostname==='legalaffairstraining.com'){location.replace('https://www.legalaffairstraining.com'+location.pathname+location.search+location.hash);}})();</script>
 
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<script src="lad-admin-guard.js" data-roles="lad_admin,lad_intelligence,lad_super_admin,super_admin,dg"></script>
+<!-- Must match LAD_REPORT_ROLES in backend/src/routes/learning.js exactly.
+     lad_intelligence is deliberately absent: the server refuses it, so listing
+     it here would only let an intelligence officer load a page that then shows
+     nothing but a permission error. -->
+<script src="lad-admin-guard.js" data-roles="lad_admin,lad_super_admin,super_admin,dg"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Learning Overview — LAD CLPD</title>
