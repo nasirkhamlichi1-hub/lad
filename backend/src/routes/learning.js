@@ -519,6 +519,41 @@ router.post('/attempts/:id/close', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Heartbeat for an attempt still in flight. The launching engine calls this
+// every so often while the learner works; it banks the resume point and the
+// time so far without settling anything.
+//
+// This is what makes "pick a course up whenever you want" true rather than
+// aspirational: without it, everything between opening an activity and
+// closing it cleanly is lost the moment a tab closes.
+//
+// Note what it deliberately cannot do. There is no `completed` and no
+// `score` — a client may report where a learner has got to, never that they
+// finished. Completion stays derived from a settled attempt, which is the
+// rule that keeps every percentage in the system falsifiable.
+router.post('/attempts/:id/checkpoint', requireAuth, async (req, res, next) => {
+  try {
+    const b = req.body || {};
+    const result = await store.checkpoint(req.params.id, userId(req), {
+      resumeState: b.resume_state || null,
+      seconds: b.seconds === undefined ? null : b.seconds,
+      percent: b.percent === undefined ? null : b.percent,
+      detail: b.detail || null,
+    });
+    if (!result) return res.status(404).json({ error: 'Attempt not found' });
+    res.json(result);
+  } catch (e) { next(e); }
+});
+
+// Where this learner resumes an activity, if anywhere. The UI reads
+// `resumable` to decide between "Start" and "Resume"; the launching engine
+// reads `resume_state`, whose shape only it understands.
+router.get('/activities/:id/resume', requireAuth, async (req, res, next) => {
+  try {
+    res.json(await store.resumeFor(req.params.id, userId(req)));
+  } catch (e) { next(e); }
+});
+
 // ─── Reporting ───────────────────────────────────────────────────────
 
 router.get('/courses/:courseId/cohort', requireRole(...REPORT_ROLES), async (req, res, next) => {
@@ -581,6 +616,42 @@ router.get('/learners/:lawyerId/scorm/:materialId', requireRole(...LAD_REPORT_RO
       lesson_location: g('cmi.core.lesson_location') || g('cmi.location'), progress_measure: g('cmi.progress_measure'),
       keys: Object.keys(cmi).length,
     });
+  } catch (e) { next(e); }
+});
+
+// The whole estate, from above — every course, every learner, one payload.
+//
+// Restricted to LAD's own roles rather than ADMIN_ROLES, which is wider than
+// it looks: a provider_admin is an admin of *their* content and has no
+// business reading completion rates across every other provider's courses,
+// or a firm-by-firm breakdown of the profession. Per-course and per-learner
+// reporting stays available to them through /cohort and /learners/:id/report,
+// both of which are already scoped.
+router.get('/overview', requireRole(...LAD_REPORT_ROLES), async (req, res, next) => {
+  try {
+    const num = (v, dflt) => {
+      const n = Number(v);
+      return Number.isFinite(n) && n > 0 ? n : dflt;
+    };
+    res.json(await store.overview({
+      days: Math.min(365, num(req.query.days, 30)),
+      staleDays: Math.min(365, num(req.query.stale_days, 14)),
+      coldHours: Math.min(168, num(req.query.cold_hours, 2)),
+    }));
+  } catch (e) { next(e); }
+});
+
+// Settle abandoned attempts on demand. The reaper already sweeps on a timer
+// (src/lms/reaper.js); this is the manual pull for when an admin is looking
+// at a cold-attempt count and wants it cleared now rather than at the next
+// sweep. Safe to call repeatedly — it settles only what has actually gone
+// silent, and settling is idempotent.
+router.post('/maintenance/reap-attempts', requireRole(...LAD_REPORT_ROLES), async (req, res, next) => {
+  try {
+    const minutes = Number((req.body || {}).minutes);
+    res.json(await require('../lms/reaper').sweep({
+      minutes: Number.isFinite(minutes) && minutes > 0 ? Math.min(10080, minutes) : undefined,
+    }));
   } catch (e) { next(e); }
 });
 

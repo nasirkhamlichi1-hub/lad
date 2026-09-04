@@ -323,6 +323,8 @@
 
   var api = window.LAD;
   var TOPIC = new URLSearchParams(location.search).get('topic') || '';
+  // Set by a Resume link from My Learning: the step to open on arrival.
+  var RESUME = new URLSearchParams(location.search).get('resume') || '';
   var current = null, openedAt = 0, openAttempt = null;
   var $ = function (id) { return document.getElementById(id); };
 
@@ -449,6 +451,20 @@
         if (a) launch(a);
       };
     });
+
+    // Arrived from a Resume link. Scroll the step into view and open it, so
+    // "pick up where you left off" lands on the actual step rather than at
+    // the top of a topic the lawyer is already halfway through. Consumed
+    // once — a reload should not keep reopening the dialog.
+    if (RESUME) {
+      var want = acts.filter(function (x) { return x.id === RESUME; })[0];
+      RESUME = '';
+      if (want) {
+        var el = document.querySelector('[data-id="' + (window.CSS && CSS.escape ? CSS.escape(want.id) : want.id) + '"]');
+        if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        launch(want);
+      }
+    }
   }
 
   async function load() {
@@ -656,15 +672,24 @@
     var b = $('rDown'); b.style.display = '';
     b.onclick = function () { var a = document.createElement('a'); a.href = url; a.download = name || 'material'; document.body.appendChild(a); a.click(); a.remove(); };
   }
-  $('rClose').onclick = function () {
-    $('rBody').innerHTML = ''; $('reader').close();
+  // Tearing the reader down. Split out from the button because Escape closes a
+  // modal <dialog> natively without firing any click handler — and leaving this
+  // undone meant the heartbeat kept running against a sitting nobody was in,
+  // booking hours that never happened onto the estate dashboard, and leaving a
+  // SCORM iframe alive inside a closed dialog to report a stale finish later.
+  function teardownReader() {
+    $('rBody').innerHTML = '';
     if (scormSession && !scormSession.done) {
+      stopHeartbeat();
       var sess = scormSession; scormSession = null;
       var seconds = Math.max(5, Math.round((Date.now() - openedAt) / 1000));
       api.closeAttempt(sess.attempt.id, { completed: false, abandoned: true, seconds: seconds })
         .catch(function () { }).then(function () { return load(); });
     }
-  };
+  }
+  $('rClose').onclick = function () { $('reader').close(); };
+  // 'close' fires however the dialog went away — button, Escape, or .close().
+  $('reader').addEventListener('close', teardownReader);
 
   // Fetch a material's bytes WITH the sign-in token (a plain browser tab has
   // no token, which is why raw download links used to answer "no_access").
@@ -765,6 +790,7 @@
     if (ev.origin !== apiOrigin) return;
     if (d.event === 'finish' && !scormSession.done) {
       scormSession.done = true;
+      stopHeartbeat();
       var sess = scormSession; scormSession = null;
       try {
         await api.closeAttempt(sess.attempt.id, {
@@ -779,6 +805,37 @@
     }
   });
 
+  // ─── Keeping the record while the learner works ─────────────────
+  // A lawyer who opens a reading and then closes the laptop used to leave an
+  // attempt open forever and lose every second of it. The heartbeat banks the
+  // time as it accrues, so whatever happens to the tab, the record already
+  // reflects the work. It reports time only — a client is never trusted to
+  // say an activity was completed.
+  var beat = null;
+  function elapsed() { return Math.max(0, Math.round((Date.now() - openedAt) / 1000)); }
+
+  function sendBeat() {
+    if (!openAttempt) return;
+    // Fire and forget. A dropped heartbeat costs at most one interval of
+    // recorded time and must never surface an error over the learner's work.
+    try { api.checkpoint(openAttempt.id, { seconds: elapsed() }).catch(function () {}); }
+    catch (e) { /* offline, sleeping, navigating away */ }
+  }
+
+  function startHeartbeat() {
+    stopHeartbeat();
+    beat = setInterval(sendBeat, 30000);
+  }
+  function stopHeartbeat() { if (beat) { clearInterval(beat); beat = null; } }
+
+  // The tab going away is the case this exists for, and it is the one moment
+  // no interval will fire. visibilitychange is the event that actually
+  // survives a phone locking or a tab closing; pagehide covers the rest.
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') sendBeat();
+  });
+  window.addEventListener('pagehide', sendBeat);
+
   // ─── Launching ──────────────────────────────────────────────────
   // The AI trainer runs its own session and the server mirrors it onto the
   // spine, so this page must NOT also open an attempt for it — that would
@@ -790,10 +847,11 @@
                       '&return=' + encodeURIComponent(location.pathname + location.search);
       return;
     }
-    current = a; openedAt = Date.now(); openAttempt = null;
+    current = a; openedAt = Date.now(); openAttempt = null; dlgHandled = false;
     try {
       var started = await api.startActivity(a.id, {});
       openAttempt = started.attempt;
+      startHeartbeat();
     } catch (e) { note('Could not start this activity: ' + esc(e.message), true); return; }
 
     if (a.kind === 'scorm' && a.material_id) {
@@ -830,20 +888,34 @@
     note('Could not open this material.', true);
   }
 
+  // Whether this sitting has already been settled, so the dialog's own 'close'
+  // event does not settle it a second time. finish() closes the dialog, which
+  // fires 'close', which would otherwise abandon the attempt it just completed.
+  var dlgHandled = false;
+
   async function finish() {
+    stopHeartbeat();
+    dlgHandled = true;
     if (!openAttempt) { $('dlg').close(); return; }
-    var seconds = Math.max(30, Math.round((Date.now() - openedAt) / 1000));
+    var seconds = Math.max(30, elapsed());
     try {
       await api.closeAttempt(openAttempt.id, { completed: true, seconds: seconds });
       $('dlg').close(); note('');
       await load();
-    } catch (e) { note('Could not record that: ' + esc(e.message), true); }
+    } catch (e) {
+      // The close failed, so nothing was settled — let the dialog's own close
+      // path settle it rather than silently dropping the sitting.
+      dlgHandled = false;
+      note('Could not record that: ' + esc(e.message), true);
+    }
   }
   async function abandon() {
+    stopHeartbeat();
+    dlgHandled = true;
     if (openAttempt) {
-      var seconds = Math.max(5, Math.round((Date.now() - openedAt) / 1000));
+      var seconds = Math.max(5, elapsed());
       try { await api.closeAttempt(openAttempt.id, { completed: false, abandoned: true, seconds: seconds }); }
-      catch (e) { /* leaving it open is acceptable — it reads as in progress */ }
+      catch (e) { /* the reaper settles it later; the heartbeat kept the time */ }
     }
     $('dlg').close();
     await load();
@@ -852,6 +924,14 @@
   $('dlgGo').onclick = openMaterial;
   $('dlgDone').onclick = finish;
   $('dlgClose').onclick = abandon;
+  // Escape closes a modal <dialog> natively, firing no click handler. Without
+  // this the heartbeat would keep running against a sitting nobody is in,
+  // booking hours that never happened onto the estate dashboard — and the
+  // fresh heartbeat would keep the reaper from ever settling it.
+  $('dlg').addEventListener('close', function () {
+    if (dlgHandled) { dlgHandled = false; return; }
+    abandon().catch(function () {});
+  });
 
   load();
 })();

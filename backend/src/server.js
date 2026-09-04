@@ -373,6 +373,12 @@ server.headersTimeout = 66000;
 // SMTP config — when unconfigured it simply logs and leaves mail queued.
 try { require('./services/email').startWorker(); } catch (e) { log.error('email_worker_start_failed', { error: e.message }); }
 
+// ─── Abandoned-attempt reaper ───────────────────────────────────────────
+// Settles learning attempts whose engine stopped checking in, so the open
+// count means "live right now" rather than "ever started". Keeps the
+// learner's seconds and resume point — see src/lms/reaper.js.
+try { require('./lms/reaper').startWorker(); } catch (e) { log.error('lms_reaper_start_failed', { error: e.message }); }
+
 let shuttingDown = false;
 function shutdown(signal) {
   if (shuttingDown) return;

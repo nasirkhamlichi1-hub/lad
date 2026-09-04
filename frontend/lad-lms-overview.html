@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>/* Canonical host. The apex and www are separate origins with separate
+   sign-ins and separate caches; only www serves the application. Runs first,
+   inline, before any external script, so a deep link on the bare domain is
+   corrected instead of booting a page whose scripts cannot load. */
+(function(){if(location.hostname==='legalaffairstraining.com'){location.replace('https://www.legalaffairstraining.com'+location.pathname+location.search+location.hash);}})();</script>
+
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<!-- Must match LAD_REPORT_ROLES in backend/src/routes/learning.js exactly.
+     lad_intelligence is deliberately absent: the server refuses it, so listing
+     it here would only let an intelligence officer load a page that then shows
+     nothing but a permission error. -->
+<script src="lad-admin-guard.js" data-roles="lad_admin,lad_super_admin,super_admin,dg"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learning Overview — LAD CLPD</title>
+<!--
+  The whole learning estate on one page, for LAD's own people.
+
+  lad-learning-admin.html answers "how is this topic going" and a learner
+  report answers "how is this lawyer doing". Neither answers "how is the
+  programme doing", which is what a regulator opens a dashboard to ask.
+
+  Two registers, deliberately in this order:
+    · the band across the top is the board-pack number — scale, reach,
+      completion, CPD delivered;
+    · everything below it is operational — who has gone quiet, where people
+      get stuck, which topics are dragging.
+
+  Every figure is read from the derived tables the attempt log maintains.
+  Nothing here is stored for the dashboard's benefit, so the view cannot
+  drift from the evidence underneath it.
+
+  Provider admins are excluded at the server, not just here: the estate-wide
+  numbers and the firm breakdown are not theirs to read.
+
+  ?embed=1 drops the page header so this can sit inside the admin portal.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="runtime-config.js"></script>
+<script src="api-client.js"></script>
+<script src="auth-bridge.js"></script>
+<style>
+:root{
+  --serif:'Instrument Serif',serif; --sans:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
+  --ink:#0a0f1a; --slate:#3a4554; --slate2:#5b6878; --slate3:#8a98aa; --slate4:#aeb9c8;
+  --line:#e8ecf1; --line2:#d2dae3; --paper:#f7f9fb; --paper2:#eef2f6; --white:#fff;
+  --gold:#9D7714; --gold-d:#70550F; --gold-bg:#fdf6e9; --gold-border:#ead9b0;
+  --navy:#202A50; --navy-bg:#eef4ff; --navy-border:#c5d8f7;
+  --green:#26CB84; --green-bg:#e6f4ee;
+  --amber:#F58C1F; --amber-bg:#fff6ec; --amber-border:#f7d9b4;
+  --red:#DC3131; --red-bg:#fef2f2; --red-border:#fecaca;
+  --r-lg:14px; --sh-sm:0 1px 2px rgba(15,23,42,.04),0 2px 4px rgba(15,23,42,.04);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--paper);font-size:14px;
+  line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+.wrap{max-width:1200px;margin:0 auto;padding:22px 24px 60px}
+html.lad-embed .page-head{display:none}
+html.lad-embed body{background:transparent}
+
+.page-head{padding:14px 0 12px;margin-bottom:16px;border-bottom:1px solid var(--line);
+  display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap}
+.hgrow{flex:1;min-width:240px}
+.eyebrow{font-family:var(--mono);font-size:9.5px;color:var(--gold);letter-spacing:1.4px;
+  text-transform:uppercase;font-weight:600;margin-bottom:3px}
+.title{font-family:var(--serif);font-size:26px;letter-spacing:-.02em;margin:0 0 4px;font-weight:500;line-height:1.1}
+.desc{font-size:12.5px;color:var(--slate);max-width:820px}
+
+.ctrl{display:flex;gap:6px;align-items:center}
+.ctrl label{font-family:var(--mono);font-size:9px;letter-spacing:.7px;text-transform:uppercase;
+  color:var(--slate3);font-weight:600}
+select{font-family:var(--sans);font-size:12.5px;padding:6px 9px;border:1px solid var(--line2);
+  border-radius:8px;background:var(--white);color:var(--ink)}
+
+/* ── the band ── */
+.band{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);
+  box-shadow:var(--sh-sm);padding:15px 17px}
+.stat .v{font-family:var(--serif);font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.stat .v.gold{color:var(--gold-d)}
+.stat .v.navy{color:var(--navy)}
+.stat .l{font-family:var(--mono);font-size:9px;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--slate3);font-weight:600;margin-top:7px}
+.stat .s{font-size:11px;color:var(--slate3);margin-top:3px}
+
+h2{font-family:var(--serif);font-size:19px;font-weight:500;letter-spacing:-.01em;margin:26px 0 10px}
+h2 .n{font-family:var(--mono);font-size:11px;color:var(--slate3);font-weight:600;margin-left:7px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);
+  box-shadow:var(--sh-sm);padding:0;overflow:hidden;margin-bottom:14px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:940px){.cols{grid-template-columns:1fr}}
+
+/* ── activity sparkline ── */
+.spark{display:flex;align-items:flex-end;gap:2px;height:56px;padding:14px 16px 0}
+.spark i{flex:1;background:var(--gold-border);border-radius:2px 2px 0 0;min-height:2px;display:block}
+.spark i.on{background:var(--gold)}
+.sparkx{display:flex;justify-content:space-between;padding:6px 16px 14px;
+  font-family:var(--mono);font-size:9px;color:var(--slate3)}
+
+/* ── tables ── */
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{background:var(--navy);color:#fff;font-weight:500;text-align:left;padding:9px 14px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.7px;text-transform:uppercase;white-space:nowrap}
+th.r,td.r{text-align:right}
+td{padding:9px 14px;border-top:1px solid var(--line);vertical-align:middle}
+tbody tr:nth-child(even){background:var(--paper)}
+tbody tr.click{cursor:pointer}
+tbody tr.click:hover{background:var(--gold-bg)}
+.nm{font-weight:500}
+.sub{font-family:var(--mono);font-size:10px;color:var(--slate3);font-variant-numeric:tabular-nums}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600}
+
+.mini{height:5px;background:var(--paper2);border-radius:99px;overflow:hidden;width:74px;display:inline-block;
+  vertical-align:middle;margin-right:7px}
+.mini i{display:block;height:100%;background:var(--gold);border-radius:99px}
+
+.tag{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;
+  padding:3px 8px;border-radius:99px;white-space:nowrap;border:1px solid transparent}
+.t-warn{background:var(--amber-bg);color:#a35b06;border-color:var(--amber-border)}
+.t-bad{background:var(--red-bg);color:#9b1c1c;border-color:var(--red-border)}
+.t-ok{background:var(--green-bg);color:#0f7a4d}
+
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:10px;
+  padding:10px 14px;font-size:12.5px;color:#7a4405;margin-bottom:14px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.note b{font-weight:600}
+.note .grow{flex:1;min-width:180px}
+.btn-s{background:var(--white);border:1px solid var(--amber-border);color:#a35b06;
+  padding:5px 12px;border-radius:8px;font-size:11.5px;font-weight:600}
+.btn-s:hover{background:#fff}
+
+.empty{color:var(--slate3);font-size:12.5px;font-style:italic;padding:18px 16px;text-align:center}
+.err{background:var(--red-bg);border:1px solid var(--red-border);color:#9b1c1c;
+  border-radius:10px;padding:11px 15px;font-size:12.5px;margin-bottom:14px}
+.foot{font-family:var(--mono);font-size:9.5px;color:var(--slate4);letter-spacing:.3px;
+  margin-top:22px;text-align:right}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="page-head">
+    <div class="hgrow">
+      <div class="eyebrow">Legal Affairs Department · CLPD</div>
+      <h1 class="title">Learning overview</h1>
+      <div class="desc">Every topic and every learner on the training platform, drawn from the
+        attempt record rather than from anything reported by hand.</div>
+    </div>
+    <div class="ctrl">
+      <label for="win">Window</label>
+      <select id="win">
+        <option value="7">7 days</option>
+        <option value="30" selected>30 days</option>
+        <option value="90">90 days</option>
+        <option value="365">12 months</option>
+      </select>
+    </div>
+  </div>
+  <div id="out"><div class="empty">Loading…</div></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var api = window.LAD;
+  var $ = function (id) { return document.getElementById(id); };
+  if (/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('lad-embed');
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+  function hrs(sec) {
+    var h = (sec || 0) / 3600;
+    return h >= 10 ? Math.round(h) : (h >= 1 ? h.toFixed(1) : Math.round((sec || 0) / 60) + 'm');
+  }
+  function days(ts) {
+    if (!ts) return '—';
+    var d = Math.floor((Date.now() - new Date(String(ts).replace(' ', 'T') + 'Z').getTime()) / 86400000);
+    return isFinite(d) ? (d <= 0 ? 'today' : d + 'd ago') : '—';
+  }
+  function bar(pct) {
+    return '<span class="mini"><i style="width:' + Math.max(0, Math.min(100, pct || 0)) + '%"></i></span>';
+  }
+
+  // ─── The band ───────────────────────────────────────────────────
+  // Six figures, chosen so the row answers "how big, how engaged, how much
+  // finished" without anyone having to interpret it. Reach before rate:
+  // a completion percentage means nothing until you know over how many.
+  function band(h, w) {
+    function stat(v, l, s, cls) {
+      return '<div class="stat"><div class="v' + (cls ? ' ' + cls : '') + '">' + v + '</div>' +
+        '<div class="l">' + l + '</div>' + (s ? '<div class="s">' + s + '</div>' : '') + '</div>';
+    }
+    return '<div class="band">' +
+      stat(h.learners, 'Learners', h.learners_active + ' active in ' + w + 'd') +
+      stat(h.courses, 'Topics live', h.enrolments + ' enrolments') +
+      stat(h.completion_rate + '%', 'Completed', h.completed + ' of ' + h.enrolments, 'gold') +
+      stat(h.in_flight, 'In progress', h.not_started + ' not started', 'navy') +
+      stat(hrs(h.total_seconds), 'Hours recorded', h.attempts + ' sittings in ' + w + 'd') +
+      stat(Math.round(h.cpd_minutes / 60), 'CPD hours earned', 'across all topics', 'gold') +
+    '</div>';
+  }
+
+  // ─── Activity over the window ───────────────────────────────────
+  function spark(rows, w) {
+    if (!rows.length) return '';
+    var max = rows.reduce(function (m, r) { return Math.max(m, r.attempts); }, 1);
+    var bars = rows.map(function (r) {
+      return '<i class="' + (r.attempts ? 'on' : '') + '" style="height:' +
+        Math.max(2, Math.round((r.attempts / max) * 100)) + '%" title="' +
+        esc(r.day) + ': ' + r.attempts + ' sittings, ' + r.learners + ' learners"></i>';
+    }).join('');
+    return '<h2>Activity<span class="n">' + w + ' days · peak ' + max + ' sittings</span></h2>' +
+      '<div class="card"><div class="spark">' + bars + '</div>' +
+      '<div class="sparkx"><span>' + esc(rows[0].day) + '</span>' +
+      '<span>' + esc(rows[rows.length - 1].day) + '</span></div></div>';
+  }
+
+  // ─── Who needs chasing ──────────────────────────────────────────
+  // Started, not finished, gone quiet. Sorted oldest-silence first, because
+  // that is the order someone working through the list would want.
+  function stalled(rows, staleDays) {
+    if (!rows.length) {
+      return '<h2>Gone quiet</h2><div class="card"><div class="empty">' +
+        'No learner has been inactive for more than ' + staleDays + ' days.</div></div>';
+    }
+    return '<h2>Gone quiet<span class="n">' + rows.length + ' started, stalled ' + staleDays + 'd+</span></h2>' +
+      '<div class="card"><table><thead><tr>' +
+      '<th>Learner</th><th>Topic</th><th class="r">Progress</th><th class="r">Last seen</th>' +
+      '</tr></thead><tbody>' +
+      rows.map(function (r) {
+        return '<tr class="click" data-lawyer="' + esc(r.lawyer_id) + '">' +
+          '<td><div class="nm">' + esc(r.lawyer_name || r.lawyer_id) + '</div>' +
+            '<div class="sub">' + esc(r.firm_name || r.firm_id || '—') + '</div></td>' +
+          '<td>' + esc(r.course_title || r.course_id) + '</td>' +
+          '<td class="r">' + bar(r.percent) + '<span class="num">' + r.percent + '%</span></td>' +
+          '<td class="r"><span class="tag ' + (r.percent >= 50 ? 't-warn' : 't-bad') + '">' +
+            days(r.last_active_at) + '</span></td></tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  }
+
+  // ─── Where people get stuck ─────────────────────────────────────
+  // Many started and few finished on one required step is usually the step's
+  // fault, not the cohort's. That reading is the point of the column.
+  function stalls(rows) {
+    if (!rows.length) return '';
+    return '<h2>Sticking points<span class="n">required steps, most stalled first</span></h2>' +
+      '<div class="card"><table><thead><tr>' +
+      '<th>Step</th><th class="r">Stalled</th><th class="r">Finished</th>' +
+      '</tr></thead><tbody>' +
+      rows.map(function (r) {
+        var total = r.stalled + r.finished;
+        var through = total ? Math.round((r.finished / total) * 100) : 0;
+        return '<tr><td><div class="nm">' + esc(r.title) + '</div>' +
+          '<div class="sub">' + esc(r.course_title || r.course_id) + ' · ' + esc(r.kind) + '</div></td>' +
+          '<td class="r"><span class="tag ' + (through < 50 ? 't-bad' : 't-warn') + '">' + r.stalled + '</span></td>' +
+          '<td class="r"><span class="num">' + r.finished + '</span> ' +
+            '<span class="sub">' + through + '% through</span></td></tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  }
+
+  function byCourse(rows, staleDays) {
+    if (!rows.length) return '';
+    return '<h2>By topic<span class="n">' + rows.length + '</span></h2>' +
+      '<div class="card"><table><thead><tr>' +
+      '<th>Topic</th><th class="r">Enrolled</th><th class="r">Average</th>' +
+      '<th class="r">Done</th><th class="r">Stalled</th><th class="r">Hours</th>' +
+      '</tr></thead><tbody>' +
+      rows.map(function (r) {
+        return '<tr class="click" data-course="' + esc(r.course_id) + '">' +
+          '<td><div class="nm">' + esc(r.course_title || r.course_id) + '</div>' +
+            '<div class="sub">last activity ' + days(r.last_active_at) + '</div></td>' +
+          '<td class="r num">' + r.enrolled + '</td>' +
+          '<td class="r">' + bar(r.avg_percent) + '<span class="num">' + r.avg_percent + '%</span></td>' +
+          '<td class="r num">' + r.completed + '</td>' +
+          '<td class="r">' + (r.stalled
+            ? '<span class="tag t-warn">' + r.stalled + '</span>'
+            : '<span class="sub">—</span>') + '</td>' +
+          '<td class="r num">' + hrs(r.seconds) + '</td></tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  }
+
+  function byFirm(rows) {
+    if (!rows.length) return '';
+    return '<h2>By firm<span class="n">' + rows.length + '</span></h2>' +
+      '<div class="card"><table><thead><tr>' +
+      '<th>Firm</th><th class="r">Learners</th><th class="r">Average</th><th class="r">Completed</th>' +
+      '</tr></thead><tbody>' +
+      rows.slice(0, 40).map(function (r) {
+        return '<tr><td class="nm">' + esc(r.firm_name || r.firm_id) + '</td>' +
+          '<td class="r num">' + r.learners + '</td>' +
+          '<td class="r">' + bar(r.avg_percent) + '<span class="num">' + r.avg_percent + '%</span></td>' +
+          '<td class="r num">' + r.completed + '</td></tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  }
+
+  // A cold-attempt count that never falls means the reaper is not running.
+  // Worth surfacing here rather than leaving it in a log nobody reads.
+  function cold(a) {
+    if (!a.cold_attempts) return '';
+    return '<div class="note"><div class="grow"><b>' + a.cold_attempts + ' sitting' +
+      (a.cold_attempts === 1 ? '' : 's') + ' left open.</b> ' +
+      'A learner closed the tab and the engine stopped reporting. Their time and place are safe; ' +
+      'the sittings simply have not been settled yet' +
+      (a.cold_oldest ? ' — oldest opened ' + days(a.cold_oldest) : '') + '.</div>' +
+      '<button class="btn-s" id="reap">Settle now</button></div>';
+  }
+
+  async function load() {
+    var w = Number($('win').value) || 30;
+    $('out').innerHTML = '<div class="empty">Loading…</div>';
+
+    var d;
+    try { d = await api.learningOverview({ days: w }); }
+    catch (e) {
+      $('out').innerHTML = '<div class="err">' +
+        (/403|forbidden/i.test(e.message)
+          ? 'This view is for the Legal Affairs Department’s own administrators.'
+          : 'Could not load the overview: ' + esc(e.message)) + '</div>';
+      return;
+    }
+
+    $('out').innerHTML =
+      cold(d.attention) +
+      band(d.headline, d.window.days) +
+      spark(d.by_day || [], d.window.days) +
+      '<div class="cols"><div>' + stalled(d.attention.stalled_learners || [], d.window.stale_days) + '</div>' +
+      '<div>' + stalls(d.attention.stall_points || []) + '</div></div>' +
+      byCourse(d.by_course || [], d.window.stale_days) +
+      byFirm(d.by_firm || []) +
+      '<div class="foot">Generated ' + esc(d.generated_at) + ' · every figure derived from the attempt record</div>';
+
+    // Drill-down. Both destinations already exist and already enforce their
+    // own access, so these are links rather than a second reporting surface.
+    Array.prototype.forEach.call(document.querySelectorAll('[data-course]'), function (tr) {
+      tr.onclick = function () {
+        location.href = 'lad-learning-admin.html?topic=' + encodeURIComponent(tr.dataset.course);
+      };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-lawyer]'), function (tr) {
+      tr.onclick = function () {
+        location.href = 'lad-learning-admin.html?lawyer=' + encodeURIComponent(tr.dataset.lawyer);
+      };
+    });
+    var reap = $('reap');
+    if (reap) reap.onclick = async function () {
+      reap.disabled = true; reap.textContent = 'Settling…';
+      try { await api.reapAttempts(); } catch (e) { /* the sweep is best-effort */ }
+      load();
+    };
+  }
+
+  $('win').onchange = load;
+  load();
+})();
+</script>
+</body>
+</html>
