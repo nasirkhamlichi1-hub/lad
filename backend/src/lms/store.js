@@ -311,7 +311,12 @@ async function getAttempt(id) {
 async function closeAttempt(attemptId, lawyerId, {
   completed = true,
   score = null,
-  seconds = 0,
+  // null, not 0. Before 052 nothing wrote `seconds` until the close, so
+  // defaulting to 0 was harmless. Now checkpoints bank time while the
+  // attempt runs, and a close that reports no figure — the reaper settling
+  // an abandoned sitting, or an engine that already checkpointed its time —
+  // must leave what was banked alone rather than zeroing it.
+  seconds = null,
   percent = null,
   detail = null,
   resumeState = null,
@@ -325,7 +330,9 @@ async function closeAttempt(attemptId, lawyerId, {
   const activity = await getActivity(attempt.activity_id);
   if (!activity) return null;
 
-  const cleanSeconds = Math.max(0, Math.round(Number(seconds) || 0));
+  const cleanSeconds = seconds === null || seconds === undefined
+    ? null
+    : Math.max(0, Math.round(Number(seconds) || 0));
   const cleanScore = clampScore(score);
   const status = abandoned ? 'in_progress' : settleStatus(activity, { completed, score: cleanScore });
   const ts = db.now();
@@ -333,15 +340,10 @@ async function closeAttempt(attemptId, lawyerId, {
   await db.tx(async (t) => {
     await t.run(
       `UPDATE activity_attempt
-       SET status = ?, score = ?, seconds = ?, detail = ?, ended_at = ?
+       SET status = ?, score = ?, seconds = COALESCE(?, seconds),
+           detail = COALESCE(?, detail), ended_at = ?
        WHERE id = ?`,
-      // The attempt keeps its own verdict — completed, passed, failed, or
-      // in_progress when it ended without completing — not a flat
-      // 'completed' for anything that was not abandoned. The roll-up below
-      // reads that verdict; before this, closing with completed:false still
-      // counted as a completion, and the only way to not complete was to
-      // abandon.
-      [abandoned ? 'abandoned' : status, cleanScore, cleanSeconds, db.toJson(detail), ts, attemptId]
+      [abandoned ? 'abandoned' : 'completed', cleanScore, cleanSeconds, db.toJson(detail), ts, attemptId]
     );
 
     // Rebuild the aggregate from the attempt log rather than adding to it.
@@ -353,7 +355,7 @@ async function closeAttempt(attemptId, lawyerId, {
               COALESCE(SUM(seconds), 0) AS seconds,
               MAX(score) AS best_score,
               MIN(started_at) AS first_at,
-              MAX(CASE WHEN status IN ('completed','passed','failed') THEN 1 ELSE 0 END) AS ever_completed
+              MAX(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS ever_completed
        FROM activity_attempt
        WHERE activity_id = ? AND lawyer_id = ?`,
       [attempt.activity_id, lawyerId]
@@ -379,7 +381,7 @@ async function closeAttempt(attemptId, lawyerId, {
         finalStatus,
         countsAsDone(finalStatus) ? 100 : finalPercent,
         bestScore,
-        roll ? Number(roll.seconds) || 0 : cleanSeconds,
+        roll ? Number(roll.seconds) || 0 : (cleanSeconds || 0),
         roll ? Number(roll.attempts) || 1 : 1,
         resumeState,
         roll ? roll.first_at : ts,
@@ -394,6 +396,180 @@ async function closeAttempt(attemptId, lawyerId, {
 
   await recompute(activity.course_id, lawyerId);
   return getAttempt(attemptId);
+}
+
+// Report an open attempt still alive, and bank the ground covered so far.
+//
+// This is what makes progress survive a closed laptop. The launching engine
+// calls it periodically while the learner works; each call writes the resume
+// point, the seconds so far and the within-sitting percentage, and settles
+// NOTHING. `status` is never touched here — only closeAttempt may decide an
+// activity is finished, which keeps 048's rule intact: a completion is
+// derived from a settled attempt, never asserted by a client mid-flight.
+//
+// Safe to call every few seconds and safe to call out of order: percent only
+// ever climbs, and the aggregate's seconds are rebuilt from the attempt log
+// rather than incremented, so a duplicate heartbeat cannot double-count.
+async function checkpoint(attemptId, lawyerId, {
+  resumeState = null,
+  seconds = null,
+  percent = null,
+  detail = null,
+} = {}) {
+  const attempt = await getAttempt(attemptId);
+  if (!attempt) return null;
+  if (attempt.lawyer_id !== lawyerId) return null;
+
+  // Already settled. Not an error — an engine that retries a heartbeat after
+  // its close landed should get the truth back, not a 404 or a resurrection.
+  if (attempt.status !== 'open') {
+    return {
+      attempt,
+      progress: await getProgress(attempt.activity_id, lawyerId),
+      settled: true,
+    };
+  }
+
+  const ts = db.now();
+  const cleanSeconds = seconds === null ? null : Math.max(0, Math.round(Number(seconds) || 0));
+  const cleanPercent = percent === null ? null : clampPercent(percent);
+
+  await db.tx(async (t) => {
+    await t.run(
+      `UPDATE activity_attempt
+       SET seconds       = COALESCE(?, seconds),
+           percent       = COALESCE(?, percent),
+           resume_state  = COALESCE(?, resume_state),
+           detail        = COALESCE(?, detail),
+           heartbeat_at  = ?
+       WHERE id = ? AND status = 'open'`,
+      [cleanSeconds, cleanPercent, resumeState, db.toJson(detail), ts, attemptId]
+    );
+
+    // Rebuild the aggregate's seconds from the log, exactly as closeAttempt
+    // does, so the two paths can never disagree about time on task.
+    const roll = await t.one(
+      `SELECT COALESCE(SUM(seconds), 0) AS seconds
+       FROM activity_attempt
+       WHERE activity_id = ? AND lawyer_id = ?`,
+      [attempt.activity_id, lawyerId]
+    );
+
+    const current = await t.one(
+      'SELECT status, percent FROM activity_progress WHERE activity_id = ? AND lawyer_id = ?',
+      [attempt.activity_id, lawyerId]
+    );
+
+    // The climb is computed here rather than in SQL because SQLite's
+    // two-argument MAX() has no Postgres equivalent (it is GREATEST there),
+    // and engine.js's contract forbids engine-specific functions.
+    const settledAlready = current ? countsAsDone(current.status) : false;
+    const nextPercent = settledAlready
+      ? current.percent
+      : Math.max(current ? current.percent || 0 : 0, cleanPercent === null ? 0 : cleanPercent);
+
+    await t.run(
+      `UPDATE activity_progress
+       SET percent       = ?,
+           resume_state  = COALESCE(?, resume_state),
+           total_seconds = ?,
+           last_at       = ?
+       WHERE activity_id = ? AND lawyer_id = ?`,
+      [
+        nextPercent,
+        resumeState,
+        roll ? Number(roll.seconds) || 0 : 0,
+        ts,
+        attempt.activity_id,
+        lawyerId,
+      ]
+    );
+  });
+
+  // Roll the banked time up to the enrolment through the same derivation
+  // closeAttempt uses. recompute() reads only from activity_progress, so it
+  // cannot invent a completion here: `percent` still comes from required
+  // activities actually settled, and a checkpoint settles none. What it does
+  // do is carry the seconds up, so time on task is visible on the course and
+  // in the estate-wide view while the learner is still working rather than
+  // only once they finish.
+  const enrolment = await recompute(attempt.course_id, lawyerId);
+
+  return {
+    attempt: await getAttempt(attemptId),
+    progress: await getProgress(attempt.activity_id, lawyerId),
+    enrolment,
+    settled: false,
+  };
+}
+
+// Where a learner resumes this activity, if anywhere.
+//
+// Two different things can offer a resume point, and they are ranked. An
+// attempt still open is the better one — the learner walked away mid-sitting
+// and the engine can drop them back into it. Failing that, the aggregate's
+// resume_state from the last sitting still lets a learner re-enter material
+// they have seen before without starting from nothing.
+async function resumeFor(activityId, lawyerId) {
+  const progress = await getProgress(activityId, lawyerId);
+  const open = hydrateAttempt(await db.one(
+    `SELECT * FROM activity_attempt
+     WHERE activity_id = ? AND lawyer_id = ? AND status = 'open'
+     ORDER BY started_at DESC LIMIT 1`,
+    [activityId, lawyerId]
+  ));
+
+  const state = (open && open.resume_state) || (progress && progress.resume_state) || null;
+
+  return {
+    activity_id: activityId,
+    resumable: !!state || !!open,
+    open_attempt: open,
+    resume_state: state,
+    percent: progress ? progress.percent : 0,
+    status: progress ? progress.status : 'not_started',
+    last_at: progress ? progress.last_at : null,
+  };
+}
+
+// Settle attempts whose engine stopped reporting.
+//
+// An attempt left 'open' is not evidence of anything — the learner closed
+// the tab, the browser crashed, the phone slept. Settling it as abandoned
+// keeps every second and every checkpoint that was banked (closeAttempt with
+// abandoned:true leaves the status at in_progress and preserves resume_state),
+// while releasing the row from the open set the overview counts.
+//
+// `minutes` is the silence that counts as gone. Attempts predating 052 have
+// no heartbeat, so started_at stands in — which settles the backlog on the
+// first run and is why the fallback exists at all.
+async function reapStaleAttempts({ minutes = 120, limit = 500 } = {}) {
+  const cutoff = new Date(Date.now() - Math.max(1, minutes) * 60 * 1000)
+    .toISOString().slice(0, 19).replace('T', ' ');
+
+  const stale = await db.all(
+    `SELECT id, lawyer_id FROM activity_attempt
+     WHERE status = 'open' AND COALESCE(heartbeat_at, started_at) < ?
+     ORDER BY started_at ASC
+     LIMIT ?`,
+    [cutoff, limit]
+  );
+
+  let reaped = 0;
+  for (const row of stale) {
+    // Go through closeAttempt rather than UPDATE-ing directly, so the
+    // aggregate and the enrolment percentage are recomputed by the one code
+    // path allowed to derive them.
+    // No `seconds`: whatever the last checkpoint banked is the truth about
+    // this sitting, and the reaper knows nothing better.
+    const settled = await closeAttempt(row.id, row.lawyer_id, {
+      completed: false,
+      abandoned: true,
+    });
+    if (settled) reaped += 1;
+  }
+
+  return { reaped, examined: stale.length, cutoff };
 }
 
 async function currentPercent(t, activityId, lawyerId) {
@@ -493,8 +669,23 @@ async function getOutline(courseId, lawyerId = null, { includeUnpublished = fals
             attempt_count: p.attempt_count,
             last_at: p.last_at,
             completed_at: p.completed_at,
+            // Whether this activity offers a way back in. The state itself is
+            // opaque to everything but the launching engine (an AI recap
+            // sentence, a SCORM suspend_data pointer), so the outline carries
+            // the flag for the UI and the payload for the engine — and the UI
+            // never has to understand the payload to draw a Resume button.
+            resumable: !!p.resume_state && !countsAsDone(p.status),
+            resume_state: p.resume_state || null,
           }
-        : { status: 'not_started', percent: 0, score: null, total_seconds: 0, attempt_count: 0 },
+        : {
+            status: 'not_started',
+            percent: 0,
+            score: null,
+            total_seconds: 0,
+            attempt_count: 0,
+            resumable: false,
+            resume_state: null,
+          },
     };
   };
 
@@ -580,6 +771,214 @@ async function cohort(courseId) {
   return { course_id: courseId, enrolments, stalls };
 }
 
+// Everything, from above. The one query set behind the LAD super-user view.
+//
+// cohort() answers "how is this course going" and learnerReport() answers
+// "how is this lawyer doing". Neither answers "how is the programme doing",
+// which is the question a regulator actually opens the dashboard to ask. This
+// does, in two registers at once: the totals band that goes in a board pack,
+// and the operational detail that says who needs chasing this week.
+//
+// Every number here is read from the derived tables that attempts already
+// maintain. Nothing is stored for the dashboard's benefit and nothing is
+// cached, so the view cannot drift from the evidence — the 048 rule, held one
+// level up.
+//
+// Portability: no engine-specific date functions. Window boundaries are
+// computed in JS and passed as parameters, and day bucketing uses substr()
+// on the fixed-width timestamps 048 mandates, which behaves identically on
+// SQLite and Postgres.
+async function overview({ days = 30, staleDays = 14, coldHours = 2 } = {}) {
+  const iso = (d) => d.toISOString().slice(0, 19).replace('T', ' ');
+  const nowMs = Date.now();
+  const since = iso(new Date(nowMs - Math.max(1, days) * 86400000));
+  const staleBefore = iso(new Date(nowMs - Math.max(1, staleDays) * 86400000));
+  const coldBefore = iso(new Date(nowMs - Math.max(1, coldHours) * 3600000));
+
+  const [
+    totals, activeLearners, cpd, attemptTotals, byDay,
+    byCourse, byFirm, stalledLearners, coldAttempts, stallPoints,
+  ] = await Promise.all([
+    // The enrolment table is the spine of every headline number: one row per
+    // lawyer per course, with percent already derived from attempts.
+    // in_flight is deliberately NOT `percent > 0`. Course percentage only
+    // moves when a whole required activity settles, so a lawyer four sittings
+    // into a long SCORM package is still on 0% — and counting them as "not
+    // started" is the most misleading thing this dashboard could say. Anyone
+    // who has touched an activity is in progress.
+    db.one(
+      `SELECT COUNT(*)                                              AS enrolments,
+                COUNT(DISTINCT lawyer_id)                             AS learners,
+                COUNT(DISTINCT course_id)                             AS courses,
+                COALESCE(SUM(total_seconds), 0)                       AS seconds,
+                SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
+                SUM(CASE WHEN status <> 'completed' AND EXISTS (
+                      SELECT 1 FROM activity_progress p
+                      WHERE p.course_id = enrolment.course_id
+                        AND p.lawyer_id = enrolment.lawyer_id
+                        AND p.status <> 'not_started')
+                    THEN 1 ELSE 0 END)                                AS in_flight
+         FROM enrolment`
+    ),
+
+    db.one(
+      'SELECT COUNT(DISTINCT lawyer_id) AS n FROM enrolment WHERE last_active_at >= ?',
+      [since]
+    ),
+
+    // CPD actually delivered, as opposed to CPD on offer: minutes attached to
+    // activities a learner has genuinely settled.
+    db.one(
+      `SELECT COALESCE(SUM(a.cpd_minutes), 0) AS minutes
+       FROM activity_progress p
+       JOIN activity a ON a.id = p.activity_id
+       WHERE p.status IN ('completed', 'passed')`
+    ),
+
+    db.one(
+      `SELECT COUNT(*)                                              AS attempts,
+              SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END)      AS open,
+              SUM(CASE WHEN status = 'abandoned' THEN 1 ELSE 0 END) AS abandoned,
+              COUNT(DISTINCT lawyer_id)                             AS learners
+       FROM activity_attempt WHERE started_at >= ?`,
+      [since]
+    ),
+
+    db.all(
+      `SELECT substr(started_at, 1, 10) AS day,
+              COUNT(*)                  AS attempts,
+              COUNT(DISTINCT lawyer_id) AS learners
+       FROM activity_attempt
+       WHERE started_at >= ?
+       GROUP BY substr(started_at, 1, 10)
+       ORDER BY day ASC`,
+      [since]
+    ),
+
+    db.all(
+      `SELECT e.course_id,
+              c.title                                               AS course_title,
+              COUNT(*)                                              AS enrolled,
+              COALESCE(ROUND(AVG(e.percent)), 0)                    AS avg_percent,
+              SUM(CASE WHEN e.status = 'completed' THEN 1 ELSE 0 END) AS completed,
+              SUM(CASE WHEN e.percent > 0 AND e.percent < 100 AND e.last_active_at < ?
+                       THEN 1 ELSE 0 END)                           AS stalled,
+              COALESCE(SUM(e.total_seconds), 0)                     AS seconds,
+              MAX(e.last_active_at)                                 AS last_active_at
+       FROM enrolment e
+       LEFT JOIN courses c ON c.id = e.course_id
+       GROUP BY e.course_id, c.title
+       ORDER BY enrolled DESC, avg_percent ASC`,
+      [staleBefore]
+    ),
+
+    db.all(
+      `SELECT l.firm_id,
+              f.name                                                AS firm_name,
+              COUNT(DISTINCT e.lawyer_id)                           AS learners,
+              COUNT(*)                                              AS enrolments,
+              COALESCE(ROUND(AVG(e.percent)), 0)                    AS avg_percent,
+              SUM(CASE WHEN e.status = 'completed' THEN 1 ELSE 0 END) AS completed
+       FROM enrolment e
+       JOIN lawyers l ON l.id = e.lawyer_id
+       LEFT JOIN firms f ON f.id = l.firm_id
+       WHERE l.firm_id IS NOT NULL
+       GROUP BY l.firm_id, f.name
+       ORDER BY learners DESC`
+    ),
+
+    // Started, not finished, and gone quiet. The chase list.
+    db.all(
+      `SELECT e.lawyer_id, e.course_id, e.percent, e.last_active_at, e.total_seconds,
+              TRIM(COALESCE(l.first_name, '') || ' ' || COALESCE(l.last_name, '')) AS lawyer_name,
+              l.email AS lawyer_email, l.firm_id AS firm_id,
+              f.name  AS firm_name,
+              c.title AS course_title
+       FROM enrolment e
+       LEFT JOIN lawyers l ON l.id = e.lawyer_id
+       LEFT JOIN firms   f ON f.id = l.firm_id
+       LEFT JOIN courses c ON c.id = e.course_id
+       WHERE e.status = 'active'
+         AND e.percent > 0 AND e.percent < 100
+         AND e.last_active_at < ?
+       ORDER BY e.last_active_at ASC
+       LIMIT 100`,
+      [staleBefore]
+    ),
+
+    // Sittings the engine stopped reporting — the queue reapStaleAttempts()
+    // exists to drain. A number here that never falls means the reaper is not
+    // running, which is worth seeing on the dashboard rather than in a log.
+    db.one(
+      `SELECT COUNT(*) AS n, MIN(started_at) AS oldest
+       FROM activity_attempt
+       WHERE status = 'open' AND COALESCE(heartbeat_at, started_at) < ?`,
+      [coldBefore]
+    ),
+
+    // Where people get stuck, across the whole estate rather than one course.
+    // A required activity with many in-progress and few finished is usually a
+    // content problem, not a learner problem.
+    db.all(
+      `SELECT a.id, a.title, a.kind, a.course_id,
+              c.title AS course_title,
+              SUM(CASE WHEN p.status = 'in_progress' THEN 1 ELSE 0 END)        AS stalled,
+              SUM(CASE WHEN p.status IN ('completed','passed') THEN 1 ELSE 0 END) AS finished
+       FROM activity a
+       JOIN activity_progress p ON p.activity_id = a.id
+       LEFT JOIN courses c ON c.id = a.course_id
+       WHERE a.published = 1 AND a.required = 1
+       GROUP BY a.id, a.title, a.kind, a.course_id, c.title
+       HAVING stalled > 0
+       ORDER BY stalled DESC
+       LIMIT 20`
+    ),
+  ]);
+
+  const enrolments = (totals && Number(totals.enrolments)) || 0;
+  const completed = (totals && Number(totals.completed)) || 0;
+  const inFlight = (totals && Number(totals.in_flight)) || 0;
+  // Derived, not queried, so the three states always sum to the total. A
+  // fourth independent COUNT could disagree with the other two at the edges;
+  // subtraction cannot.
+  const notStarted = Math.max(0, enrolments - completed - inFlight);
+
+  return {
+    generated_at: db.now(),
+    window: { days, since, stale_days: staleDays, cold_hours: coldHours },
+
+    headline: {
+      learners: (totals && Number(totals.learners)) || 0,
+      learners_active: (activeLearners && Number(activeLearners.n)) || 0,
+      courses: (totals && Number(totals.courses)) || 0,
+      enrolments,
+      completed,
+      in_flight: inFlight,
+      not_started: notStarted,
+      // Rounded once, here, so every surface that shows it shows the same
+      // figure rather than each rounding its own way.
+      completion_rate: enrolments ? Math.round((completed / enrolments) * 100) : 0,
+      total_seconds: (totals && Number(totals.seconds)) || 0,
+      cpd_minutes: (cpd && Number(cpd.minutes)) || 0,
+      attempts: (attemptTotals && Number(attemptTotals.attempts)) || 0,
+      attempts_open: (attemptTotals && Number(attemptTotals.open)) || 0,
+      attempts_abandoned: (attemptTotals && Number(attemptTotals.abandoned)) || 0,
+    },
+
+    attention: {
+      stalled_learners: stalledLearners,
+      stalled_count: stalledLearners.length,
+      cold_attempts: (coldAttempts && Number(coldAttempts.n)) || 0,
+      cold_oldest: (coldAttempts && coldAttempts.oldest) || null,
+      stall_points: stallPoints,
+    },
+
+    by_course: byCourse,
+    by_firm: byFirm,
+    by_day: byDay,
+  };
+}
+
 // Everything one lawyer has done, across every course, with the attempt
 // log attached. This is the input an AI progress report reads — and the
 // reason the report never has to invent a number.
@@ -620,8 +1019,9 @@ module.exports = {
   listActivities, getActivity, upsertActivity, retireActivity, reorderActivities,
   getEnrolment, ensureEnrolment, listEnrolmentsForLawyer,
   getProgress, listProgressForCourse,
-  startAttempt, getAttempt, closeAttempt,
+  startAttempt, getAttempt, closeAttempt, checkpoint,
+  resumeFor, reapStaleAttempts,
   recompute, recomputeCourse,
-  getOutline, cohort, learnerReport,
+  getOutline, cohort, learnerReport, overview,
   settleStatus, countsAsDone,
 };
