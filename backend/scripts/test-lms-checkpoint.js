@@ -133,6 +133,64 @@ async function main() {
   check('checkpoint on a settled attempt is a no-op', r.settled, true);
   check('completed status unmoved', r.progress.status, 'completed');
 
+  // ─── a completion arriving after the reaper settled the sitting ─
+  // The case that loses a lawyer's work if closeAttempt treats 'abandoned'
+  // as final: laptop sleeps, reaper settles, learner returns and marks it
+  // done. That close must still count.
+  console.log('\nfinishing after a reap');
+  const late = await store.upsertActivity(COURSE, {
+    module_id: mod.id, kind: 'document', title: 'Practice note', position: 2, required: true,
+  });
+  const lateAtt = await store.startAttempt({ activityId: late.id, lawyerId: ALICE });
+  await store.checkpoint(lateAtt.id, ALICE, { seconds: 300, percent: 40 });
+  await db.run("UPDATE activity_attempt SET heartbeat_at = '2020-01-01 00:00:00' WHERE id = ?", [lateAtt.id]);
+  await reaper.sweep({ minutes: 60 });
+  check('reaper settled it', (await store.getAttempt(lateAtt.id)).status, 'abandoned');
+
+  const revived = await store.closeAttempt(lateAtt.id, ALICE, { completed: true, seconds: 400 });
+  check('a genuine completion still lands', revived.status, 'completed');
+  const lateProgress = await store.getProgress(late.id, ALICE);
+  check('and the activity completes', lateProgress.status, 'completed');
+  check('time is not lost', lateProgress.total_seconds, 400);
+  check('re-abandoning stays a no-op',
+    (await store.closeAttempt(lateAtt.id, ALICE, { completed: false, abandoned: true })).status, 'completed');
+
+  // ─── malformed figures must not erase banked time ──────────────
+  console.log('\nbad input cannot erase time');
+  const junk = await store.startAttempt({ activityId: scorm.id, lawyerId: ALICE });
+  await store.checkpoint(junk.id, ALICE, { seconds: 250 });
+  check('time banked', (await store.getProgress(scorm.id, ALICE)).total_seconds, 250);
+  await store.checkpoint(junk.id, ALICE, { seconds: 'oops' });
+  check('a non-numeric heartbeat is ignored', (await store.getProgress(scorm.id, ALICE)).total_seconds, 250);
+  await store.checkpoint(junk.id, ALICE, { seconds: -5 });
+  check('a negative heartbeat is ignored', (await store.getProgress(scorm.id, ALICE)).total_seconds, 250);
+  await store.closeAttempt(junk.id, ALICE, { completed: false, abandoned: true });
+
+  // ─── an unfinished sitting is resumable even with no saved state ─
+  // A document or a video has no position worth storing, so requiring
+  // resume_state would mean those steps always read "Start".
+  console.log('\nstarted-but-unfinished is resumable');
+  const plain = await store.upsertActivity(COURSE, {
+    module_id: mod.id, kind: 'video', title: 'Briefing recording', position: 3, required: false,
+  });
+  const plainAtt = await store.startAttempt({ activityId: plain.id, lawyerId: ALICE });
+  await store.closeAttempt(plainAtt.id, ALICE, { completed: false, abandoned: true, seconds: 60 });
+  const ol2 = await store.getOutline(COURSE, ALICE);
+  const plainRow = ol2.sections[0].activities.find((a) => a.id === plain.id);
+  check('no state, but still resumable', plainRow.progress.resumable, true);
+  check('and carries no state to misread', plainRow.progress.resume_state, null);
+  const doneRow = ol2.sections[0].activities.find((a) => a.id === late.id);
+  check('a completed step is never resumable', doneRow.progress.resumable, false);
+
+  // ─── the reaper's floor ────────────────────────────────────────
+  console.log('\nreaper window floor');
+  const live = await store.startAttempt({ activityId: plain.id, lawyerId: BOB });
+  await store.checkpoint(live.id, BOB, { seconds: 10 });
+  await reaper.sweep({ minutes: 1 });
+  check('a 1-minute window cannot settle a live sitting',
+    (await store.getAttempt(live.id)).status, 'open');
+  await store.closeAttempt(live.id, BOB, { completed: false, abandoned: true });
+
   // ─── ownership ─────────────────────────────────────────────────
   console.log('\nownership');
   const att3 = await store.startAttempt({ activityId: scorm.id, lawyerId: ALICE });
