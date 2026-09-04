@@ -431,7 +431,7 @@ router.get('/conversations', requireAuth, (req, res) => {
   try {
     if (admin) {
       const status = (req.query.status || '').toString();
-      const box = (req.query.box || '').toString(); // mine | unassigned | escalated | all | archived
+      const box = (req.query.box || '').toString(); // mine | unassigned | escalated | attention | all | archived
       const where = ['1=1']; const args = [];
       // Archived threads are hidden from every working box and only surface in
       // the dedicated "archived" view, so the live inbox stays short.
@@ -445,6 +445,13 @@ router.get('/conversations', requireAuth, (req, res) => {
       // like any other thread. This box is the team's shared "a person is
       // waiting" queue, regardless of who it was routed to.
       else if (box === 'escalated') { where.push("c.escalated = 1 AND c.status NOT IN ('resolved','closed')"); }
+      // Everything a person still has to act on, whoever it belongs to. The
+      // rail badge counts THIS, not 'unassigned' — because escalate() routes
+      // each hand-off to an owner, so the threads that most need a human were
+      // precisely the ones the unassigned count could never see.
+      else if (box === 'attention') {
+        where.push("(c.assigned_to IS NULL OR c.escalated = 1) AND c.status NOT IN ('resolved','closed')");
+      }
       rows = db.prepare(
         `SELECT c.*, (SELECT body FROM conversation_messages m WHERE m.conversation_id = c.id ORDER BY m.created_at DESC LIMIT 1) last_body,
                 r.last_read_at
@@ -810,7 +817,18 @@ router.post('/conversations/:id/rate', requireAuth, (req, res) => {
   const rating = Math.round(Number(req.body && req.body.rating));
   if (!(rating >= 1 && rating <= 5)) return res.status(400).json({ error: 'Rating must be 1–5.' });
   const ts = now();
-  db.prepare("UPDATE conversations SET rating = ?, rating_at = ?, status = CASE WHEN status IN ('open','pending') THEN 'resolved' ELSE status END, updated_at = ? WHERE id = ?")
+  // Rating Maryam is not the same as the matter being closed. An escalated
+  // thread has a named human who has not answered yet, so a rating records
+  // satisfaction and leaves the status alone — otherwise asking for a person
+  // and then rating the service marked the thread resolved while it was still
+  // flagged "needs human", and it read as handled in the inbox.
+  db.prepare(`UPDATE conversations
+              SET rating = ?, rating_at = ?,
+                  status = CASE WHEN escalated = 1 THEN status
+                                WHEN status IN ('open','pending') THEN 'resolved'
+                                ELSE status END,
+                  updated_at = ?
+              WHERE id = ?`)
     .run(rating, ts, ts, c.id);
   logActivity({ ...convScope(c), kind: 'rating', actor_type: 'requester', actor_id: req.user.sub, actor_name: req.user.name || c.requester_name, ref_id: c.id,
     summary: `${c.requester_name || 'Client'} rated the service ${rating}/5 on "${c.subject || ''}"`, meta: { rating, ai_handled: !!c.ai_handled, escalated: !!c.escalated } });
