@@ -36,6 +36,11 @@ const STALE_MINUTES = Number(process.env.LMS_REAP_STALE_MINUTES || 120);
 // without adding meaningful load.
 const SWEEP_MS = Number(process.env.LMS_REAP_INTERVAL_MS || 10 * 60 * 1000);
 
+// How many attempts one sweep will settle. Each is its own transaction plus a
+// recompute, so this bounds the work a single pass does; a backlog larger than
+// this drains across successive sweeps.
+const REAP_LIMIT = Number(process.env.LMS_REAP_LIMIT || 500);
+
 let _timer = null;
 let _running = false;
 
@@ -46,7 +51,7 @@ async function sweep({ minutes = STALE_MINUTES } = {}) {
   if (_running) return { skipped: true };
   _running = true;
   try {
-    const result = await store.reapStaleAttempts({ minutes });
+    const result = await store.reapStaleAttempts({ minutes, limit: REAP_LIMIT });
     if (result.reaped) {
       log.info('lms_attempts_reaped', {
         reaped: result.reaped,
@@ -67,9 +72,11 @@ function startWorker() {
   if (_timer) return;
   _timer = setInterval(() => { sweep().catch(() => {}); }, SWEEP_MS);
   _timer.unref && _timer.unref();
-  // A sweep shortly after boot clears whatever a restart orphaned — and,
-  // on the first deploy of 056, the backlog of attempts opened before
-  // heartbeats existed at all.
+  // A sweep shortly after boot clears whatever a restart orphaned. On the
+  // first deploy of 056 it also starts on the backlog of attempts opened
+  // before heartbeats existed — starts, not finishes: each sweep settles at
+  // most REAP_LIMIT, so a large backlog drains over several sweeps rather
+  // than locking the database for one long pass.
   setTimeout(() => { sweep().catch(() => {}); }, 20 * 1000).unref();
   log.info('lms_reaper_started', { staleMinutes: STALE_MINUTES, sweepMs: SWEEP_MS });
 }

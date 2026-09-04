@@ -325,14 +325,40 @@ async function closeAttempt(attemptId, lawyerId, {
   const attempt = await getAttempt(attemptId);
   if (!attempt) return null;
   if (attempt.lawyer_id !== lawyerId) return null;
-  if (attempt.status !== 'open') return attempt; // already settled — idempotent
+
+  // Which re-closes are no-ops, and which are not.
+  //
+  // Every settled verdict — completed, passed, failed, and the in_progress
+  // an attempt gets when it ended without completing — is final. An engine
+  // retrying a close on a flaky connection must not double-count, and
+  // nothing may revise a sitting that already reported its result.
+  //
+  // 'abandoned' is the one exception, and it exists because the reaper
+  // creates it. A
+  // learner whose laptop slept through the stale window comes back to an
+  // attempt the reaper has already settled; if this returned early, their
+  // "Mark it done" would answer 200, the hub would close the dialog and
+  // reload, and the completion — with its CPD minutes and its contribution
+  // to the course — would vanish with nothing shown to anyone. So a genuine
+  // completion arriving after a reap is allowed to settle the sitting it
+  // belongs to. Re-abandoning an abandoned attempt stays a no-op.
+  if (attempt.status !== 'open' && attempt.status !== 'abandoned') return attempt;
+  if (attempt.status === 'abandoned' && abandoned) return attempt;
 
   const activity = await getActivity(attempt.activity_id);
   if (!activity) return null;
 
+  // Only null/undefined means "no figure reported". A string, a NaN or a
+  // negative used to coerce to 0 and then overwrite whatever checkpoints had
+  // banked, so a malformed report from an engine erased real time on task.
+  // A negative is treated as no figure rather than clamped to 0: time on task
+  // only ever grows, so a negative is nonsense, and clamping it would let one
+  // bad report erase everything the checkpoints banked.
+  const rawSeconds = Number(seconds);
   const cleanSeconds = seconds === null || seconds === undefined
+    || !Number.isFinite(rawSeconds) || rawSeconds < 0
     ? null
-    : Math.max(0, Math.round(Number(seconds) || 0));
+    : Math.round(rawSeconds);
   const cleanScore = clampScore(score);
   const status = abandoned ? 'in_progress' : settleStatus(activity, { completed, score: cleanScore });
   const ts = db.now();
@@ -437,8 +463,18 @@ async function checkpoint(attemptId, lawyerId, {
   }
 
   const ts = db.now();
-  const cleanSeconds = seconds === null ? null : Math.max(0, Math.round(Number(seconds) || 0));
-  const cleanPercent = percent === null ? null : clampPercent(percent);
+  // As in closeAttempt: only null/undefined is "no figure". Anything
+  // unparseable is ignored rather than coerced to 0, which would overwrite
+  // banked time with nothing.
+  const rawSeconds = Number(seconds);
+  const cleanSeconds = seconds === null || seconds === undefined
+    || !Number.isFinite(rawSeconds) || rawSeconds < 0
+    ? null
+    : Math.round(rawSeconds);
+  const rawPercent = Number(percent);
+  const cleanPercent = percent === null || percent === undefined || !Number.isFinite(rawPercent)
+    ? null
+    : clampPercent(rawPercent);
 
   await db.tx(async (t) => {
     await t.run(
@@ -549,8 +585,12 @@ async function resumeFor(activityId, lawyerId) {
 // `minutes` is the silence that counts as gone. Attempts predating 056 have
 // no heartbeat, so started_at stands in — which settles the backlog on the
 // first run and is why the fallback exists at all.
+// `minutes` has a floor of 30 rather than 1. A one-minute window would settle
+// every sitting currently in progress as abandoned, and the endpoint that
+// exposes this is a reporting one — a mistyped parameter should not be able to
+// reach across every learner on the platform.
 async function reapStaleAttempts({ minutes = 120, limit = 500 } = {}) {
-  const cutoff = new Date(Date.now() - Math.max(1, minutes) * 60 * 1000)
+  const cutoff = new Date(Date.now() - Math.max(30, minutes) * 60 * 1000)
     .toISOString().slice(0, 19).replace('T', ' ');
 
   const stale = await db.all(
@@ -675,12 +715,20 @@ async function getOutline(courseId, lawyerId = null, { includeUnpublished = fals
             attempt_count: p.attempt_count,
             last_at: p.last_at,
             completed_at: p.completed_at,
-            // Whether this activity offers a way back in. The state itself is
-            // opaque to everything but the launching engine (an AI recap
-            // sentence, a SCORM suspend_data pointer), so the outline carries
-            // the flag for the UI and the payload for the engine — and the UI
-            // never has to understand the payload to draw a Resume button.
-            resumable: !!p.resume_state && !countsAsDone(p.status),
+            // Whether this activity offers a way back in.
+            //
+            // Two things qualify, and requiring only the first was too strict:
+            // a saved resume point (an AI recap sentence, a SCORM suspend_data
+            // pointer) OR simply an unfinished sitting. A document or a video
+            // has no position worth storing, so it would never carry state —
+            // yet a lawyer who opened it and stopped should still see "Resume"
+            // rather than "Start", because that is what actually happened.
+            //
+            // The state itself stays opaque to everything but the launching
+            // engine: the outline carries the flag for the UI and the payload
+            // for the engine, and the UI never has to understand the payload.
+            resumable: !countsAsDone(p.status)
+              && (!!p.resume_state || p.status === 'in_progress'),
             resume_state: p.resume_state || null,
           }
         : {
@@ -935,7 +983,11 @@ async function overview({ days = 30, staleDays = 14, coldHours = 2 } = {}) {
        LEFT JOIN courses c ON c.id = a.course_id
        WHERE a.published = 1 AND a.required = 1
        GROUP BY a.id, a.title, a.kind, a.course_id, c.title
-       HAVING stalled > 0
+       -- The aggregate is repeated rather than referenced by its alias:
+       -- SQLite accepts an output alias in HAVING, Postgres does not, and
+       -- engine.js's contract is that this subsystem ports unchanged.
+       -- (ORDER BY may use the alias in both.)
+       HAVING SUM(CASE WHEN p.status = 'in_progress' THEN 1 ELSE 0 END) > 0
        ORDER BY stalled DESC
        LIMIT 20`
     ),
