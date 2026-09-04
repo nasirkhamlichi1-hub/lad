@@ -11,6 +11,7 @@ const email = require('../services/email');
 const tpl = require('../services/email-templates');
 const activity = require('../services/activity');
 const blob = require('../services/blobStorage');
+const aimodel = require('../services/aimodel');
 const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth');
 
 // Longest free-text comment accepted on the anonymous course-rating form.
@@ -309,6 +310,7 @@ function canAccessMaterials(courseId, user) {
 }
 const materialMeta = (m) => ({
   id: m.id, course_id: m.course_id, title: m.title, kind: m.kind,
+  description: m.description || null,
   url: m.kind === 'link' || m.kind === 'scorm' ? (m.url || null) : null,
   file_name: m.file_name || null, mime: m.mime || null, size: Number(m.size) || 0,
   has_file: !!m.data || !!m.storage_key,
@@ -387,14 +389,83 @@ router.post('/:id/materials', requireRole(...MATERIAL_ROLES), (req, res) => {
     }
   }
   const id = _mid();
+  const description = cleanDescription(req.body.description);
   try {
-    db.prepare(`INSERT INTO course_materials (id, course_id, title, kind, url, file_name, mime, size, data, storage_key, created_by)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?)`)
-      .run(id, req.params.id, title, kind, url, (req.body.file_name || null), (req.body.mime || null), size, data, storageKey, (req.user && req.user.sub) || null);
+    db.prepare(`INSERT INTO course_materials (id, course_id, title, kind, url, file_name, mime, size, data, storage_key, created_by, description)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(id, req.params.id, title, kind, url, (req.body.file_name || null), (req.body.mime || null), size, data, storageKey, (req.user && req.user.sub) || null, description);
   } catch (e) { return res.status(500).json({ error: 'save_failed', message: e.message }); }
   const row = db.prepare('SELECT * FROM course_materials WHERE id = ?').get(id);
   res.status(201).json(materialMeta(row));
 });
+
+function cleanDescription(v) {
+  const d = String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, 600);
+  return d || null;
+}
+
+// PATCH title / description of a material (admin). The file itself is not
+// touched — a rename is a rename, never a re-upload.
+router.patch('/:id/materials/:mid', requireRole(...MATERIAL_ROLES), (req, res) => {
+  const row = db.prepare('SELECT * FROM course_materials WHERE id = ? AND course_id = ?').get(req.params.mid, req.params.id);
+  if (!row) return res.status(404).json({ error: 'Material not found' });
+  const b = req.body || {};
+  const title = b.title === undefined ? row.title : String(b.title || '').trim();
+  if (!title) return res.status(400).json({ error: 'title is required' });
+  const description = b.description === undefined ? row.description : cleanDescription(b.description);
+  db.prepare('UPDATE course_materials SET title = ?, description = ? WHERE id = ?').run(title, description, row.id);
+  res.json(materialMeta(db.prepare('SELECT * FROM course_materials WHERE id = ?').get(row.id)));
+});
+
+// POST draft a title and a one-or-two-sentence description for a material
+// from its text (extracted in the browser) and its file name. Nothing is
+// saved — the author reads it, edits it, and saves the material as usual.
+// Without an AI model configured the fallback is honest and small: a clean
+// title from the file name, and the document's first sentence.
+router.post('/:id/materials/summarise', requireRole(...MATERIAL_ROLES), async (req, res) => {
+  const b = req.body || {};
+  const fileName = String(b.file_name || '').trim();
+  const givenTitle = String(b.title || '').trim();
+  const text = String(b.text || '').replace(/\s+/g, ' ').trim().slice(0, 40000);
+  // A placeholder title ("SCORM package", "Material", a bare file name) is not a title.
+  const placeholder = !givenTitle || /^(scorm package|material|document|reading|file)( \d+)?$/i.test(givenTitle) || /\.(zip|pdf|docx?|pptx?)$/i.test(givenTitle);
+  const fallbackTitle = (placeholder ? titleFromFileName(fileName) : givenTitle) || titleFromFileName(fileName) || givenTitle;
+  const firstSentence = (text.match(/^.{20,240}?[.!?](\s|$)/) || [text.slice(0, 200)])[0].trim();
+  if (!aimodel.configured()) {
+    return res.json({ title: fallbackTitle, description: firstSentence || '', source: 'heuristic',
+      note: 'No AI model is configured on this server, so this is the file name tidied up and the document\'s first sentence.' });
+  }
+  try {
+    const system = 'You write catalogue entries for training materials at the Government of Dubai Legal Affairs Department. Reply with JSON only: {"title": string, "description": string}. The title is the material\'s real title as a reader would know it (Title Case, no file extensions, no random codes, at most 12 words). The description is one or two plain sentences, at most 240 characters, saying what the material is and what a lawyer will get from it. Formal, precise, no marketing, no exclamation marks. If the text is empty, work from the file name and the given title alone and keep the description to what can honestly be said.';
+    const user = 'File name: ' + (fileName || '(none)') + '\nGiven title: ' + (givenTitle || '(none)') + '\nText:\n' + (text || '(no text available — a packaged interactive module)');
+    const out = await aimodel.chat({ system, messages: [{ role: 'user', content: user }], maxTokens: 300, temperature: 0.2 });
+    const raw = String(out && (out.text || out.content || out) || '');
+    const m = raw.match(/\{[\s\S]*\}/);
+    const j = m ? JSON.parse(m[0]) : {};
+    const title = String(j.title || '').trim().slice(0, 140) || fallbackTitle;
+    const description = String(j.description || '').replace(/\s+/g, ' ').trim().slice(0, 300) || firstSentence;
+    res.json({ title, description, source: 'ai' });
+  } catch (e) {
+    res.json({ title: fallbackTitle, description: firstSentence || '', source: 'heuristic', note: 'The AI draft failed (' + e.message + '); this is the fallback.' });
+  }
+});
+
+// "a-quick-guide-to-talking-about-disabilities-scorm12-X5jGH11z.zip"
+//   → "A Quick Guide to Talking About Disabilities"
+function titleFromFileName(name) {
+  let s = String(name || '').replace(/\.[A-Za-z0-9]{1,5}$/, '');
+  s = s.replace(/[-_]+(scorm(12|2004)?|v?\d+(\.\d+)*|final|copy|draft)$/i, '');
+  s = s.replace(/[-_][A-Za-z0-9]{6,12}$/, (m) => (/\d/.test(m) && /[a-z]/.test(m) && /[A-Z]/.test(m) ? '' : m)); // X5jGH11z, not 'Course'
+  s = s.replace(/[-_]+(scorm(12|2004)?|sample)$/i, '');
+  s = s.replace(/[-_.]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!s) return '';
+  const small = new Set(['a', 'an', 'the', 'and', 'or', 'of', 'to', 'in', 'on', 'for', 'with', 'at', 'by', 'about', 'under']);
+  return s.split(' ').map((w, i) => {
+    if (/^[A-Z0-9]{2,}$/.test(w)) return w;                       // AU, UAE, DIFC
+    const lw = w.toLowerCase();
+    return (i > 0 && small.has(lw)) ? lw : lw.charAt(0).toUpperCase() + lw.slice(1);
+  }).join(' ');
+}
 
 // GET download a single material (inline file streamed, or redirect to the URL)
 router.get('/:id/materials/:mid/download', optionalAuth, (req, res) => {
