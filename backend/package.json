@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@azure/storage-blob": "^12.32.0",
+    "adm-zip": "^0.5.16",
     "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.3.0",
