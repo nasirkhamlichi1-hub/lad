@@ -236,9 +236,9 @@
     <div class="view" id="v-inbox"><div class="inbox">
       <div class="inbox-list">
         <div class="panel-hd"><h2>Inbox</h2><div class="seg" id="ibSeg">
-          <button class="on" onclick="ibBox('unassigned',this)">Unassigned</button>
+          <button onclick="ibBox('unassigned',this)">Unassigned</button>
           <button onclick="ibBox('mine',this)">Mine</button>
-          <button onclick="ibBox('all',this)">All</button>
+          <button class="on" onclick="ibBox('all',this)">All</button>
           <button onclick="ibBox('archived',this)">Archived</button></div></div>
         <div class="panel-bd" id="ibList" style="flex:1"></div>
       </div>
@@ -562,7 +562,7 @@
 
   // ── conversations ──
   function convRow(c){return '<div class="row conv" onclick="openConv(\''+c.id+'\')"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px"><span class="ttl" style="flex:1">'+esc(c.subject||'(no subject)')+'</span><span class="sub" style="font-family:monospace">'+ago(c.last_message_at)+'</span></div><div class="sub">'+esc(c.preview||'')+'</div><div style="margin-top:6px;display:flex;gap:5px;align-items:center;flex-wrap:wrap"><span class="pill '+esc(c.status)+'">'+esc(c.status)+'</span>'+(c.priority==='high'?'<span class="pill high">high</span>':'')+(c.category?'<span class="pill cat">'+esc(c.category)+'</span>':'')+(c.escalated?'<span class="pill esc">needs human</span>':(c.ai_handled?'<span class="pill ai">Maryam</span>':''))+'<span class="sub" style="flex:1">'+esc(c.requester_name||'')+(c.assigned_name?' · → '+esc(c.assigned_name):'')+'</span>'+(c.assigned_to===ME.sub?'':'<button class="btn btn-l btn-xs" onclick="event.stopPropagation();takeConv(\''+c.id+'\')">Take it</button>')+'</div></div></div>'}
-  var IBBOX='unassigned';
+  var IBBOX='all';
   window.ibBox=function(b,el){IBBOX=b;document.querySelectorAll('#ibSeg button').forEach(function(x){x.classList.remove('on')});el.classList.add('on');renderInbox()};
   function renderInbox(){
     var host=document.getElementById('ibList');host.innerHTML='<div class="empty">Loading…</div>';
