@@ -362,7 +362,37 @@
     let satHtml = '';
     const last = (c.messages || []).slice(-1)[0];
     const lastIsReply = last && last.sender_side === 'admin';
-    if (!ST.admin && lastIsReply && !c.rating) {
+
+    // Is that reply a question waiting on the lawyer?
+    //
+    // Maryam often answers and then asks something back — "can you confirm
+    // whether you attended sessions that haven't come through?". Treating that
+    // as the end of the conversation put "Did this resolve your question?"
+    // underneath it, with only "Yes, thanks" and "I need more help" to choose
+    // from. Neither answers her, so the lawyer clicks for a human, which takes
+    // Maryam out of the loop for good: she asked something and then refused to
+    // hear the answer. While she is waiting, there is no prompt — just the
+    // reply box, and her next turn continues normally.
+    //
+    // Both question marks: the portal runs in Arabic as well as English.
+    //
+    // A closing courtesy — "anything else I can help with?" — ends in a question
+    // mark but is not waiting on anything, and treating it as open would quietly
+    // suppress the rating on threads Maryam genuinely resolved. Those are
+    // excluded so the prompt still appears where it belongs.
+    const lastBody = String((last && last.body) || '').trim();
+    const isClosingCourtesy = /(anything\s+else|help\s+with\s+anything|else\s+I\s+can\s+(do|help)|هل\s+هناك\s+شيء\s+آخر)[^.?!؟]*[?؟]\s*$/i.test(lastBody);
+    const awaitingAnswer = lastIsReply && /[?؟]\s*$/.test(lastBody) && !isClosingCourtesy;
+
+    // A thread with a human on it has someone who still owes an answer, so
+    // there is nothing to rate yet — asking anyway is what let a lawyer request
+    // a person and then mark the thread resolved by rating it. Once that human
+    // resolves or closes it, the stars come back, so human-handled work is
+    // still rated; it just is not rated in advance.
+    const awaitingHuman = !!(c.escalated || c.assigned_to)
+      && c.status !== 'resolved' && c.status !== 'closed';
+
+    if (!ST.admin && lastIsReply && !c.rating && !awaitingAnswer && !awaitingHuman) {
       const stars = '<div class="ladmsg-stars" id="ladMsgStars">' + [1,2,3,4,5].map(n => `<button class="ladmsg-star" data-n="${n}" title="${n} star${n>1?'s':''}">★</button>`).join('') + '</div>';
       if (c.ai_handled && !c.escalated && !c.assigned_to) {
         satHtml = `<div class="ladmsg-sat" id="ladMsgSat">
