@@ -138,7 +138,7 @@
 
   // ── Matching ──────────────────────────────────────────────────────
   var D = null, LOWER = null, PREFIX = null, TOKENS = null;
-  var NUM = /(^|[^A-Za-z؀-ۿ])([+\-]?\d[\d,.:]*)(?![A-Za-z])/g;
+  var NUM = /(^|[^A-Za-z؀-ۿ])([+\-]?\d[\d,.:]*)(?![A-Za-z]{2})/g; // a one-letter unit (30d, 10m, 14d+) is not part of the number
   var LATIN = /[A-Za-z]/;
   var ARABIC = /[؀-ۿ]/;
   var SEPS = [' · ', ' — ', ' | ', ' • ', ' – '];
