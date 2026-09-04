@@ -9,7 +9,7 @@
 // right now, they hold time-on-task that never lands on the aggregate,
 // and they make "is anyone actually studying at 2am" unanswerable.
 //
-// 052's checkpoint gives every live attempt a heartbeat. This worker is
+// 056's checkpoint gives every live attempt a heartbeat. This worker is
 // the other half: anything that has stopped beating for longer than the
 // window is settled as abandoned. Abandoned is not failed — closeAttempt
 // with abandoned:true keeps the seconds, keeps the resume point and
@@ -68,7 +68,7 @@ function startWorker() {
   _timer = setInterval(() => { sweep().catch(() => {}); }, SWEEP_MS);
   _timer.unref && _timer.unref();
   // A sweep shortly after boot clears whatever a restart orphaned — and,
-  // on the first deploy of 052, the backlog of attempts opened before
+  // on the first deploy of 056, the backlog of attempts opened before
   // heartbeats existed at all.
   setTimeout(() => { sweep().catch(() => {}); }, 20 * 1000).unref();
   log.info('lms_reaper_started', { staleMinutes: STALE_MINUTES, sweepMs: SWEEP_MS });
