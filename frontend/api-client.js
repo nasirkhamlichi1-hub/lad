@@ -293,6 +293,10 @@
     // file loaded onto the course, for the hub to display in-page.
     listCourseMaterials: (courseId) => call('GET', '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials'),
     deleteCourseMaterial: (courseId, mid) => call('DELETE', '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials/' + encodeURIComponent(mid)),
+    // Rename / describe a material without touching the file; and have the
+    // server draft a title and a one-line description from the document's text.
+    updateCourseMaterial: (courseId, mid, patch) => call('PATCH', '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials/' + encodeURIComponent(mid), patch || {}),
+    summariseMaterial: (courseId, spec) => call('POST', '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials/summarise', spec || {}),
     materialDownloadUrl: (courseId, mid) => call('GET', '/api/v1/courses/' + encodeURIComponent(courseId) + '/materials/' + encodeURIComponent(mid) + '/download-url'),
     // A short-lived write SAS so a large file goes straight to Azure Blob and
     // never passes through the API.

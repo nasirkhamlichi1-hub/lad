@@ -588,7 +588,10 @@
       return '<div class="law doc">' +
         '<div class="law-top"><span class="tag">' + esc(kind) + '</span>' + status + '</div>' +
         '<h3>' + esc(m.title) + '</h3>' +
-        (m.file_name ? '<div class="law-sub">' + esc(m.file_name) + '</div>' : '') +
+        // The author's description of what this is; the file name only when
+        // there is no description AND the title is not already the file name.
+        (m.description ? '<div class="law-sub" style="font-weight:400;font-family:inherit;text-transform:none;letter-spacing:0;font-size:14px;line-height:1.55;color:#575757">' + esc(m.description) + '</div>'
+          : (m.file_name && m.file_name !== m.title ? '<div class="law-sub">' + esc(m.file_name) + '</div>' : '')) +
         openBtn(m, label) + '</div>';
     }
 

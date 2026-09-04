@@ -738,8 +738,9 @@ async function extractPptx(file){
 
 // Store the original file against the topic so learners can download it.
 // Small files go inline; anything larger needs cloud storage configured.
-async function uploadMaterial(courseId, file, kind, title){
-  title = (title||'').trim() || file.name;
+async function uploadMaterial(courseId, file, kind, title, description){
+  title = (title||'').trim() || titleFromFileName(file.name) || file.name;
+  description = (description||'').trim() || null;
   if(file.size>MAX_INLINE){
     var sas;
     try{ sas=await api.materialUploadUrl(courseId,{file_name:file.name,mime:file.type||'application/octet-stream'}); }
@@ -747,7 +748,7 @@ async function uploadMaterial(courseId, file, kind, title){
     var put=await fetch(sas.upload_url,{method:'PUT',
       headers:{'x-ms-blob-type':'BlockBlob','Content-Type':file.type||'application/octet-stream'},body:file});
     if(!put.ok) throw new Error('The upload to cloud storage failed ('+put.status+').');
-    return api.addCourseMaterial(courseId,{title:title,kind:kind,file_name:file.name,
+    return api.addCourseMaterial(courseId,{title:title,description:description,kind:kind,file_name:file.name,
       mime:file.type||null,size:file.size,storage_key:sas.storage_key});
   }
   var b64=await new Promise(function(ok,fail){
@@ -756,7 +757,7 @@ async function uploadMaterial(courseId, file, kind, title){
     r.onerror=function(){fail(new Error('Could not read that file.'));};
     r.readAsDataURL(file);
   });
-  return api.addCourseMaterial(courseId,{title:title,kind:kind,file_name:file.name,
+  return api.addCourseMaterial(courseId,{title:title,description:description,kind:kind,file_name:file.name,
     mime:file.type||null,size:file.size,data:b64});
 }
 
@@ -879,8 +880,13 @@ function paneTeaching(a){
 
 function paneFile(a){
   var isScorm=a.kind==='scorm';
-  return '<div class="adm-field"><label class="adm-label" for="x-title">Title</label>'+
-      '<input class="adm-input" id="x-title" value="'+esc(a.title)+'"></div>'+
+  return '<div class="adm-field"><label class="adm-label" for="x-title">Title <span style="font-weight:400;color:var(--slate3)">— what the lawyer sees on the card</span></label>'+
+      '<input class="adm-input" id="x-title" value="'+esc(a.title)+'" placeholder="e.g. A Quick Guide to Talking About Disabilities"></div>'+
+    '<div class="adm-field"><label class="adm-label" for="x-desc">Description <span style="font-weight:400;color:var(--slate3)">— one or two sentences on what it is</span></label>'+
+      '<textarea class="adm-textarea" id="x-desc" style="min-height:64px" maxlength="600" placeholder="Write it yourself, or press Draft with AI once the file is in."></textarea>'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap">'+
+        '<button class="adm-btn-light adm-btn-sm" id="x-summarise" type="button">✦ Draft title &amp; description with AI</button>'+
+        '<span id="x-sumnote" style="font-size:12px;color:var(--slate3)"></span></div></div>'+
     '<div class="adm-drop" id="x-drop"><div class="big">Drop the '+(isScorm?'SCORM package':'file')+' here, or choose one</div>'+
       '<div class="sm">'+(isScorm?'Upload the .zip exactly as your authoring tool exported it — no need to unzip it. Up to 10 MB here; larger packages need cloud storage.':'Up to 10 MB here; larger files need cloud storage, or add a link below')+'</div></div>'+
     '<input type="file" id="x-file" style="display:none"'+(isScorm?' accept=".zip"':'')+'>'+
@@ -889,6 +895,45 @@ function paneFile(a){
       (isScorm?'…or a SCORM package URL':'…or a link')+'</label>'+
       '<input class="adm-input" id="x-url" placeholder="https://…"></div>';
 }
+
+// "a-quick-guide-to-talking-about-disabilities-scorm12-X5jGH11z.zip"
+//   → "A Quick Guide to Talking About Disabilities"
+function titleFromFileName(name){
+  var s=String(name||'').replace(/\.[A-Za-z0-9]{1,5}$/,'');
+  s=s.replace(/[-_]+(scorm(12|2004)?|v?\d+(\.\d+)*|final|copy|draft)$/i,'');
+  s=s.replace(/[-_][A-Za-z0-9]{6,12}$/,function(m){ return (/\d/.test(m)&&/[a-z]/.test(m)&&/[A-Z]/.test(m))?'':m; }); // X5jGH11z, not 'Course'
+  s=s.replace(/[-_]+(scorm(12|2004)?|sample)$/i,'');
+  s=s.replace(/[-_.]+/g,' ').replace(/\s+/g,' ').trim();
+  if(!s) return '';
+  var small={a:1,an:1,the:1,and:1,or:1,of:1,to:1,'in':1,on:1,'for':1,'with':1,at:1,by:1,about:1,under:1};
+  return s.split(' ').map(function(w,i){
+    if(/^[A-Z0-9]{2,}$/.test(w)) return w;
+    var lw=w.toLowerCase();
+    return (i>0&&small[lw])?lw:lw.charAt(0).toUpperCase()+lw.slice(1);
+  }).join(' ');
+}
+// The title is the author's unless it is still the placeholder the step was
+// created with ("SCORM package", "Material", a bare file name).
+function titleIsDefault(v,a){
+  v=String(v||'').trim();
+  return !v || v===a.title && /^(scorm package|material|document|reading|file)( \d+)?$/i.test(v) || /\.(zip|pdf|docx?|pptx?)$/i.test(v);
+}
+async function summariseMaterial(a){
+  var btn=$('x-summarise'), note=$('x-sumnote');
+  btn.disabled=true; btn.textContent='Drafting…'; note.textContent='';
+  try{
+    var text='';
+    if(pending && a.kind!=='scorm'){ try{ text=await extractText(pending); }catch(e){ text=''; } }
+    var fileName=pending?pending.name:((EXISTING_MAT&&EXISTING_MAT.file_name)||'');
+    var r=await api.summariseMaterial(TOPIC.topic_id,{title:$('x-title').value.trim(),file_name:fileName,text:(text||'').slice(0,40000)});
+    if(r.title && titleIsDefault($('x-title').value,a)) $('x-title').value=r.title;
+    else if(r.title && !$('x-title').value.trim()) $('x-title').value=r.title;
+    if(r.description) $('x-desc').value=r.description;
+    note.textContent=r.source==='ai'?'Drafted from the document — edit anything before you save.':(r.note||'Drafted without AI — edit before you save.');
+  }catch(e){ note.textContent='Could not draft: '+e.message; note.style.color='var(--red)'; }
+  finally{ btn.disabled=false; btn.textContent='✦ Draft title & description with AI'; }
+}
+var EXISTING_MAT=null;
 
 function paneMarking(a){
   return '<div class="adm-sect"><h4>Marking</h4>'+
@@ -970,6 +1015,19 @@ function openEdit(id){
     }
   } else {
     wireDrop('x-drop','x-file',onAttachFile);
+    EXISTING_MAT=null;
+    if($('x-summarise')) $('x-summarise').onclick=function(){ summariseMaterial(a); };
+    // A step that already carries a material: show its saved description so
+    // a rename or a rewrite does not start from a blank box.
+    if(a.material_id){
+      api.listCourseMaterials(TOPIC.topic_id).then(function(r){
+        var m=((r&&r.materials)||[]).filter(function(x){return x.id===a.material_id;})[0];
+        if(!m) return;
+        EXISTING_MAT=m;
+        if($('x-desc') && !$('x-desc').value) $('x-desc').value=m.description||'';
+        if($('x-title') && titleIsDefault($('x-title').value,a) && m.title && !/\.(zip|pdf|docx?|pptx?)$/i.test(m.title)) $('x-title').value=m.title;
+      }).catch(function(){});
+    }
   }
 
   $('dlgBackdrop').classList.add('on');
@@ -1007,6 +1065,9 @@ function onAttachFile(file){
   pending=file;
   $('x-filemeta').innerHTML='<div class="adm-file"><span class="nm">'+esc(file.name)+
     '</span><span class="sz">'+fmtSize(file.size)+'</span></div>';
+  // A file name is not a title. Offer a readable one; the author can change it.
+  var t=$('x-title');
+  if(t && editing && titleIsDefault(t.value,editing)){ var guess=titleFromFileName(file.name); if(guess) t.value=guess; }
   $('x-busy').textContent=file.size>MAX_INLINE
     ? 'Over 10 MB — this will go to cloud storage if it is configured.'
     : 'Ready to save.';
@@ -1088,15 +1149,21 @@ $('dSave').onclick=async function(){
 
     }else{
       var url=($('x-url')&&$('x-url').value.trim())||'';
-      if(!pending && !url){ $('dStatus').textContent='No file or link yet.'; banner('Upload a file or give it a URL.','err'); return; }
+      if(!pending && !url && !a.material_id){ $('dStatus').textContent='No file or link yet.'; banner('Upload a file or give it a URL.','err'); return; }
 
       var m;
+      var mTitle=$('x-title').value.trim()||a.title;
+      var mDesc=($('x-desc')&&$('x-desc').value.trim())||'';
       if(pending){
         $('x-busy').textContent='Uploading…';
-        m=await uploadMaterial(TOPIC.topic_id,pending,a.kind==='scorm'?'scorm':'file');
+        m=await uploadMaterial(TOPIC.topic_id,pending,a.kind==='scorm'?'scorm':'file',mTitle,mDesc);
+      }else if(a.material_id && !url){
+        // Nothing new attached: this is a rename / description edit of the material already on the step.
+        m=await api.updateCourseMaterial(TOPIC.topic_id,a.material_id,{title:mTitle,description:mDesc});
       }else{
         m=await api.addCourseMaterial(TOPIC.topic_id,{
-          title:$('x-title').value.trim()||a.title,
+          title:mTitle,
+          description:mDesc,
           kind:a.kind==='scorm'?'scorm':'link',
           url:url
         });
