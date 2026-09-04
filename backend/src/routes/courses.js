@@ -343,7 +343,28 @@ router.get('/:id/materials', optionalAuth, (req, res) => {
   }
   let rows = [];
   try { rows = db.prepare('SELECT * FROM course_materials WHERE course_id = ? ORDER BY created_at').all(req.params.id); } catch (_) {}
-  res.json({ materials: rows.map(materialMeta), blob_enabled: blob.isConfigured() });
+  const out = rows.map(materialMeta);
+  // The signed-in learner's own result on each SCORM package, read from the
+  // player's saved state. A package finished from the reference library is
+  // not a journey step, so nothing else records it — without this the hub
+  // had no way to show "you completed this", although the server knew.
+  if (req.user && req.user.sub) {
+    for (const m of out) {
+      if (m.kind !== 'scorm') continue;
+      try {
+        const st = db.prepare('SELECT cmi, updated_at FROM scorm_state WHERE material_id = ? AND lawyer_id = ?').get(m.id, req.user.sub);
+        if (!st || !st.cmi) continue;
+        const cmi = JSON.parse(st.cmi) || {};
+        const g = (k) => (cmi[k] == null ? '' : String(cmi[k]));
+        const ls = g('cmi.core.lesson_status'), cs = g('cmi.completion_status'), ss = g('cmi.success_status');
+        const completed = ls === 'completed' || ls === 'passed' || ls === 'failed' || cs === 'completed' || ss === 'passed' || ss === 'failed';
+        const passed = ls === 'passed' || ss === 'passed';
+        const raw = Number(g('cmi.core.score.raw') || g('cmi.score.raw'));
+        m.learner = { completed, passed, started: !!(ls || cs) && !completed, score: Number.isFinite(raw) && (g('cmi.core.score.raw') || g('cmi.score.raw')) !== '' ? raw : null, updated_at: st.updated_at };
+      } catch (_) {}
+    }
+  }
+  res.json({ materials: out, blob_enabled: blob.isConfigured() });
 });
 
 // POST add a material (admin) — a link/SCORM URL, or a small inline file
