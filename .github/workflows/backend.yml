@@ -37,6 +37,15 @@ jobs:
 
       - name: Validate env (dev mode — should only warn)
         working-directory: backend
+        # NODE_ENV must be set explicitly. validateEnv now fails closed —
+        # anything that is not development/dev/test/local counts as production,
+        # so an unset NODE_ENV makes this step demand JWT_SECRET, CORS_ORIGIN
+        # and the rest, and the job dies before the smoke test. That check is
+        # right (an unset NODE_ENV in a real deploy must not silently disable
+        # the secret checks); it just means this step has to say which mode it
+        # is exercising, which is what its own name promises.
+        env:
+          NODE_ENV: development
         run: node -e "require('./src/validateEnv').validateEnv()"
 
       - name: Boot smoke-test
