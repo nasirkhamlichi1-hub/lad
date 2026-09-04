@@ -44,9 +44,11 @@ ALTER TABLE activity_attempt ADD COLUMN resume_state TEXT;
 -- activity_progress.percent, which is the best across every sitting.
 ALTER TABLE activity_attempt ADD COLUMN percent INTEGER;
 
--- Finding stale open attempts is the reaper's only query, and it runs on a
--- timer against a table that grows forever. Index the two columns it filters
--- on so it stays a range scan rather than a full table scan.
+-- The reaper filters `status = 'open'` and then compares
+-- COALESCE(heartbeat_at, started_at) against a cutoff. The COALESCE defeats a
+-- range scan on the second column, so only the status equality is served here
+-- — which is the half that matters: open attempts are a small, bounded subset
+-- of a table that grows forever, and this keeps the sweep off the full log.
 CREATE INDEX IF NOT EXISTS idx_attempt_open_heartbeat
   ON activity_attempt (status, heartbeat_at);
 
