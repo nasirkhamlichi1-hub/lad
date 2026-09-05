@@ -95,6 +95,7 @@
       window.ladSetLang(b.getAttribute('data-lang'));
     });
     document.body.appendChild(d);
+    syncSwitch();
     place(d);
 
     // Placement depends on the width of a bar that is still settling when the
@@ -323,8 +324,36 @@
     if (fellBack) return; fellBack = true;
     html.setAttribute('lang', 'en'); html.setAttribute('dir', 'ltr');
     html.classList.remove('lad-lang-ar'); html.classList.add('lad-lang-en');
+    syncSwitch();
     release();
     try { console.warn('[lad-i18n] Arabic dictionary unavailable — showing English for this load.'); } catch (e) {}
+  }
+
+  // Keep the switch honest about what is on the screen. Without this the
+  // fallback leaves العربية marked as the current language over a page that is
+  // entirely in English: a visitor who picks Arabic sees the control light up
+  // and nothing else change, which reads as a broken site rather than as a
+  // language that is not ready. Mark the language actually being shown, and
+  // say on the Arabic control why it is not the one in use.
+  //
+  // Called at mount as well, because the fallback can happen before the switch
+  // exists — the dictionary is written into the page while it is still
+  // parsing, so its onerror can fire first.
+  function syncSwitch() {
+    var d = document.getElementById('ladLangSwitch');
+    if (!d) return;
+    var shown = html.getAttribute('lang') === 'ar' ? 'ar' : 'en';
+    var bs = d.querySelectorAll('button[data-lang]');
+    for (var i = 0; i < bs.length; i++) {
+      var b = bs[i], mine = b.getAttribute('data-lang');
+      if (mine === shown) b.setAttribute('aria-current', 'true');
+      else b.removeAttribute('aria-current');
+      if (mine === 'ar' && fellBack) {
+        b.setAttribute('aria-disabled', 'true');
+        b.setAttribute('title', 'Arabic is not available yet · العربية غير متاحة حالياً');
+        b.classList.add('lad-langswitch-unavailable');
+      }
+    }
   }
 
   // ── Matching ──────────────────────────────────────────────────────
