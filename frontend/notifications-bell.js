@@ -15,11 +15,16 @@
     if (document.getElementById('nb-style')) return;
     var s=document.createElement('style'); s.id='nb-style';
     s.textContent =
-      '#nb-btn{position:fixed;top:70px;right:20px;z-index:9998;width:42px;height:42px;border-radius:50%;background:#fff;border:1px solid rgba(15,23,42,.12);box-shadow:0 6px 20px rgba(15,23,42,.12);cursor:pointer;display:grid;place-items:center;transition:transform .15s}'
+      /* The bell floats at the top, inline end. Two things it has to respect:
+       * --lad-langrow-h, set by lad-i18n.js on the narrow screens where the
+       * language switch takes a row of its own under the nav — without it the
+       * bell lands on that row; and inset-inline-end rather than right, so the
+       * bell crosses to the other side in Arabic like everything else. */
+      '#nb-btn{position:fixed;top:calc(70px + var(--lad-langrow-h, 0px));inset-inline-end:20px;z-index:9998;width:42px;height:42px;border-radius:50%;background:#fff;border:1px solid rgba(15,23,42,.12);box-shadow:0 6px 20px rgba(15,23,42,.12);cursor:pointer;display:grid;place-items:center;transition:transform .15s}'
       +'#nb-btn:hover{transform:translateY(-1px)}'
       +'#nb-btn svg{width:19px;height:19px;stroke:#334155;fill:none;stroke-width:1.8}'
-      +'#nb-badge{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;border-radius:9px;background:#dc2626;color:#fff;font:700 10px/18px -apple-system,sans-serif;text-align:center;padding:0 4px;display:none}'
-      +'#nb-panel{position:fixed;top:118px;right:20px;z-index:9999;width:360px;max-width:calc(100vw - 40px);max-height:60vh;overflow-y:auto;background:#fff;border:1px solid rgba(15,23,42,.1);border-radius:14px;box-shadow:0 24px 60px rgba(15,23,42,.22);display:none;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}'
+      +'#nb-badge{position:absolute;top:-3px;inset-inline-end:-3px;min-width:18px;height:18px;border-radius:9px;background:#dc2626;color:#fff;font:700 10px/18px -apple-system,sans-serif;text-align:center;padding:0 4px;display:none}'
+      +'#nb-panel{position:fixed;top:calc(118px + var(--lad-langrow-h, 0px));inset-inline-end:20px;z-index:9999;width:360px;max-width:calc(100vw - 40px);max-height:60vh;overflow-y:auto;background:#fff;border:1px solid rgba(15,23,42,.1);border-radius:14px;box-shadow:0 24px 60px rgba(15,23,42,.22);display:none;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}'
       +'#nb-panel.on{display:block}'
       +'.nb-hd{padding:13px 16px;border-bottom:1px solid #eef2f6;display:flex;align-items:center;justify-content:space-between}'
       +'.nb-hd b{font-size:14px;color:#0f172a}'

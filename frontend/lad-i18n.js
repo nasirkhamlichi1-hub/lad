@@ -62,12 +62,23 @@
   html.classList.add('lad-lang-' + LANG);
 
   // ── The switch ────────────────────────────────────────────────────
-  // A small fixed pill, bottom start corner, on top-level pages only. An
-  // embedded page follows the page that embeds it.
+  // Top of the page, where a language switch belongs — not floating over the
+  // content. Each portal draws a horizontal bar of some kind across the top,
+  // so the switch joins that bar and sits at its end (its inline-end, so it
+  // mirrors in Arabic without a second rule). Where no bar has room for it —
+  // a phone, mostly — it takes a row of its own directly beneath the chrome
+  // rather than floating over the navigation.
+  //
+  // Top-level pages only. An embedded page follows the page that embeds it.
   function mountSwitch() {
     if (window.self !== window.top) return;
     if (/[?&]embed=1/.test(location.search)) return;
     if (document.getElementById('ladLangSwitch')) return;
+    // A page that already prints its own language control keeps it. The public
+    // portal puts العربية in its dark nav and routes it through ladSetLang, so
+    // injecting a second control there gives a visitor two switches side by
+    // side and no way to tell which one is authoritative.
+    if (document.querySelector('.lad-nav-lang, [data-lad-lang-switch]')) return;
     var d = document.createElement('div');
     d.id = 'ladLangSwitch';
     d.className = 'lad-langswitch';
@@ -84,6 +95,186 @@
       window.ladSetLang(b.getAttribute('data-lang'));
     });
     document.body.appendChild(d);
+    place(d);
+
+    // Placement depends on the width of a bar that is still settling when the
+    // document is first ready: the Department's artwork loads late, and if it
+    // cannot be reached the wider typographic lockup replaces it, which can
+    // take away the room the switch was measured into. So place again once
+    // everything has loaded, and again whenever the window is resized.
+    //
+    // Several of these pages also re-render their shell after they have their
+    // data, which throws away anything inside it. Re-placing puts the switch
+    // back, so a re-render cannot leave a page with no way to change language.
+    function again() {
+      if (!d.isConnected) document.body.appendChild(d);
+      place(d);
+    }
+    window.addEventListener('load', again);
+    var t = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(t);
+      t = setTimeout(again, 150);
+    });
+    if (window.MutationObserver) {
+      var pending = false;
+      new MutationObserver(function () {
+        if (pending || d.isConnected) return;
+        pending = true;
+        setTimeout(function () { pending = false; again(); }, 60);
+      }).observe(document.body, { childList: true, subtree: true });
+    }
+  }
+
+  // Put the switch in the page's own top bar if one has room for it; failing
+  // that, in a row of its own under the chrome; failing that — a body whose
+  // own layout an extra child would disturb — in a fixed pill. Re-runnable: it
+  // re-derives the answer from the page as it stands now and moves the node.
+  //
+  // Candidates are listed in one selector and taken in document order, which
+  // is also the order we want: the Government utility strip sits above the
+  // dark portal nav, which sits above the page's own .topbar, and the highest
+  // bar on the page is the one a visitor reads as "the top".
+  //
+  // Matching the selector is not enough: lawyer-portal-v2 carries a .topbar
+  // that is display:none at desktop widths, and appending to it hid the switch
+  // completely. So a candidate has to actually be laid out — on screen, wide
+  // enough to be a bar, and near the top — before it is adopted.
+  //
+  // Bare `nav` is deliberately NOT a candidate. It is tempting — on some pages
+  // the top bar is a plain <nav> — but on these portals <nav> is just as often
+  // the side rail (.sb-nav, .rail) or a secondary bar, and admitting it moved
+  // the switch somewhere worse on clpd-portal while fixing nothing. A page
+  // with no bar we recognise gets the fixed pill, which is predictable
+  // everywhere.
+  function place(d) {
+    var bars = [];
+    var cands = document.querySelectorAll(
+      '.lad-util-inner, .lad-shared-nav, .topbar, .lad-brandbar, header.topbar');
+    for (var i = 0; i < cands.length; i++) {
+      var el = cands[i];
+      if (el.contains(d)) continue;
+      if (!el.offsetParent && getComputedStyle(el).position !== 'fixed') continue; // display:none
+      var r = el.getBoundingClientRect();
+      // A horizontal bar across the top: it spans the screen, it is short, and
+      // it is near the top. "Spans the screen" is measured against the
+      // viewport, not a fixed 400px — on a phone every bar is under 400px wide
+      // and an absolute floor left the switch floating over the masthead.
+      if (r.width < Math.min(400, window.innerWidth * 0.8)) continue;
+      if (r.height < 24 || r.height > 120 || r.top > 160) continue;
+      bars.push(el);
+    }
+    // The bar the switch is already in still counts, and keeps its place ahead
+    // of the rest so a re-run does not shuffle it between equally good bars.
+    // Its own row is not a bar: counting it would make every re-run conclude
+    // the switch already fits where it is and never move it back up.
+    var current = d.parentElement;
+    if (current && current !== document.body && current.id !== 'ladLangRow') bars.unshift(current);
+
+    for (var k = 0; k < bars.length; k++) {
+      var host = bars[k];
+      d.style.removeProperty('--lad-sw-top');
+      d.className = 'lad-langswitch lad-langswitch--inline'
+        // The dark portal nav needs the light treatment; a white pill on navy
+        // reads as a hole punched in the bar. Decide from the bar's own colour
+        // rather than its class, so a page that restyles its bar still gets a
+        // switch that matches it.
+        + (isDark(host) ? ' lad-langswitch--ondark' : '');
+      if (d.parentElement !== host) host.appendChild(d);
+      // Does it actually fit? These bars are fixed-height flex rows carrying
+      // the Department's marks, and on a narrow screen — or when the artwork
+      // fails and the wider typographic lockup stands in — a third child
+      // pushes past the edge and the switch ends up half off-screen. Measure
+      // rather than guess. Nothing here may shrink the marks to make room.
+      //
+      // Compare the boxes rather than reading scrollWidth: a flex child that
+      // overflows a bar with visible overflow does not always widen it.
+      var hb = host.getBoundingClientRect(), sb = d.getBoundingClientRect();
+      if (sb.width >= 1 && sb.right <= hb.right + 1 && sb.left >= hb.left - 1) {
+        dropRow();
+        return;
+      }
+    }
+
+    // No bar has room — a phone, typically, where the masthead already fills
+    // the width. Give the switch a row of its own directly under the chrome
+    // instead of floating it: in normal flow it pushes the page down by 40px
+    // and covers nothing, where a floating pill on a 390px screen lands on
+    // the navigation every time.
+    //
+    // The row goes at body level, after the last bar that is itself a child of
+    // body. Anchoring it inside a content area instead would work until the
+    // page re-rendered that area, which several of these do once their data
+    // arrives — and the switch would vanish with it.
+    var anchor = null;
+    for (var a = bars.length - 1; a >= 0; a--) {
+      if (bars[a].parentElement === document.body) { anchor = bars[a]; break; }
+    }
+    var row = document.getElementById('ladLangRow');
+    var bodyFlows = /^(block|flow-root)$/.test(getComputedStyle(document.body).display);
+    if (bodyFlows) {
+      if (!row) {
+        row = document.createElement('div');
+        row.id = 'ladLangRow';
+        row.className = 'lad-langswitch-row';
+      }
+      d.className = 'lad-langswitch lad-langswitch--inline';
+      d.style.removeProperty('--lad-sw-top');
+      row.appendChild(d);
+      // After the lowest bar, so the marks still lead the page. A bar that is
+      // fixed or sticky is not in flow where it appears, but its DOM position
+      // is still the right seam to insert at.
+      if (anchor) {
+        if (row.previousElementSibling !== anchor) document.body.insertBefore(row, anchor.nextSibling);
+      } else if (row !== document.body.firstElementChild) {
+        document.body.insertBefore(row, document.body.firstChild);
+      }
+      // The row keeps the white pill whatever is behind it. The dark treatment
+      // is for a switch sitting *inside* a dark bar, where a white pill reads
+      // as a hole; a white pill on open dark page background is just a
+      // control, and reads the same way the floating pill always did.
+      //
+      // Anything else pinned to the top inline end — the notifications bell —
+      // reads this so it can sit below the row instead of on top of it.
+      document.documentElement.style.setProperty(
+        '--lad-langrow-h', Math.round(row.getBoundingClientRect().height) + 'px');
+      return;
+    }
+
+    // Body is a flex or grid container, where an extra child would join the
+    // page's own layout and disturb it. Float instead, below the lowest bar.
+    dropRow();
+    d.className = 'lad-langswitch';
+    if (d.parentElement !== document.body) document.body.appendChild(d);
+    var floor = 0;
+    for (var j = 0; j < bars.length; j++) {
+      var br = bars[j].getBoundingClientRect();
+      if (br.bottom > floor) floor = br.bottom;
+    }
+    if (floor > 0) d.style.setProperty('--lad-sw-top', Math.round(floor + 10) + 'px');
+    else d.style.removeProperty('--lad-sw-top');
+  }
+
+  // The switch has gone back into a bar, so its own row is now an empty gap.
+  function dropRow() {
+    var row = document.getElementById('ladLangRow');
+    if (row && row.parentElement) row.parentElement.removeChild(row);
+    document.documentElement.style.setProperty('--lad-langrow-h', '0px');
+  }
+
+  // Is this element painted on a dark ground? Walks up until it finds an
+  // ancestor that actually paints one, because a flex row inside a dark nav
+  // is itself transparent.
+  function isDark(el) {
+    for (var n = el; n && n.nodeType === 1; n = n.parentElement) {
+      var m = getComputedStyle(n).backgroundColor
+        .match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)(?:[,\s/]+([\d.]+))?/);
+      if (!m) continue;
+      if (m[4] !== undefined && parseFloat(m[4]) < 0.5) continue; // see-through
+      // Rec. 601 luma is good enough to tell navy from white.
+      return (0.299 * +m[1] + 0.587 * +m[2] + 0.114 * +m[3]) < 128;
+    }
+    return false;
   }
 
   function onReady(fn) {
