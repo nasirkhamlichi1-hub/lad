@@ -79,18 +79,49 @@
 [dir="rtl"] .lad-brandbar img, [dir="rtl"] .lad-footer img, [dir="rtl"] img[alt*="Dubai"], [dir="rtl"] img[src*="govlogo"]{ transform:none !important; }
 
 /* ── The language switch ──────────────────────────────────────────── */
+/* Fallback placement, for a page with no top bar of its own — or one with no
+   room left in it: fixed at the top, at the inline end — right in English,
+   left in Arabic, with no second rule, because inset-inline-end follows dir.
+   --lad-sw-top is set by lad-i18n.js to sit below whatever bar the page does
+   draw; the nav-height fallback covers a page that draws none. */
 .lad-langswitch{
-  position:fixed; bottom:14px; left:50%; transform:translateX(-50%); z-index:2147483000;
+  position:fixed; inset-inline-end:16px; z-index:2147483000;
+  top:var(--lad-sw-top, calc(var(--lad-nav-h, 0px) + 12px));
   display:inline-flex; gap:2px; padding:3px; border-radius:999px;
   background:#FFFFFF; border:1px solid #CCCCCC; box-shadow:0 2px 12px rgba(0,0,0,.08);
   font-family:'Dubai','Dubai W23','Segoe UI',Tahoma,Arial,sans-serif; font-size:13px; line-height:1;
+}
+/* In the page's own top bar: no longer floating, so it takes no shadow and
+   pushes itself to the end of the bar. margin-inline-start:auto does that in a
+   flex bar (every portal's is) and is harmless in one that is not. */
+.lad-langswitch--inline{
+  position:static; transform:none; margin-inline-start:auto; box-shadow:none;
+  flex:0 0 auto; align-self:center;
+}
+/* A row of its own, under the page's chrome, for a screen too narrow to fit
+   the switch into the bar. In normal flow, so it pushes the page down instead
+   of covering the navigation. */
+.lad-langswitch-row{
+  display:flex; justify-content:flex-end; align-items:center;
+  padding:6px 16px; width:100%; box-sizing:border-box;
+}
+.lad-langswitch-row .lad-langswitch{ margin-inline-start:0; }
+@media print{ .lad-langswitch-row{ display:none; } }
+/* Sitting in the dark portal nav. A white pill there reads as a hole punched
+   in the bar, so the switch goes see-through and lets the bar show through;
+   the selected side keeps the Department's gold, which carries on navy. */
+.lad-langswitch--ondark{
+  background:rgba(255,255,255,.10); border-color:rgba(255,255,255,.22);
 }
 .lad-langswitch button{
   appearance:none; border:0; background:transparent; color:#575757; cursor:pointer;
   padding:7px 12px; border-radius:999px; font:inherit; letter-spacing:0 !important;
 }
+.lad-langswitch--ondark button{ color:rgba(255,255,255,.78); }
 .lad-langswitch button:hover{ color:#70550F; }
+.lad-langswitch--ondark button:hover{ color:#FFFFFF; }
 .lad-langswitch button[aria-current="true"]{ background:#9D7714; color:#FFFFFF; cursor:default; }
+.lad-langswitch--ondark button[aria-current="true"]{ color:#FFFFFF; }
 .lad-langswitch button[lang="ar"]{ direction:rtl; }
 @media print{ .lad-langswitch{ display:none; } }
 
