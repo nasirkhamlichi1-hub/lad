@@ -123,6 +123,11 @@
 .lad-langswitch button[aria-current="true"]{ background:#9D7714; color:#FFFFFF; cursor:default; }
 .lad-langswitch--ondark button[aria-current="true"]{ color:#FFFFFF; }
 .lad-langswitch button[lang="ar"]{ direction:rtl; }
+/* Marked when the Arabic dictionary could not be loaded, so the control shows
+   that the language is not on offer rather than silently doing nothing. Still
+   clickable: the choice is stored and the next load tries the dictionary
+   again, so a visitor is never locked out of Arabic once it ships. */
+.lad-langswitch-unavailable{ opacity:.45; }
 @media print{ .lad-langswitch{ display:none; } }
 
 /* ── Page-specific ────────────────────────────────────────────────── */
