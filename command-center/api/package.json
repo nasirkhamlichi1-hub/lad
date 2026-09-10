@@ -1,0 +1,7 @@
+{
+  "name": "orbit-command-center-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Azure Functions API for Orbit Mission Control — the portfolio analyst (proxies to the Claude API).",
+  "engines": { "node": ">=18" }
+}

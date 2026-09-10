@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Course Accreditation — Legal Affairs Department · CLPD</title>
+<meta name="description" content="Apply for CLPD course accreditation, track your application, and browse accredited courses — Dubai Legal Affairs Department."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{
+  --green:#006B3F;--green2:#008549;--green-d:#004d2e;--green-bg:#eaf6ef;--green-border:#bfe0cd;
+  --gold:#C9913A;--gold2:#dba84e;--gold-l:#f0cc88;--gold-bg:#fdf6e8;
+  --sky:#0e6ba8;--sky-bg:#eaf4fb;--amber:#92540a;--amber-bg:#fef3e2;--amber-border:#f0d9b0;
+  --ink:#0a0e14;--navy:#1c1f2e;--slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;--line:#e8ecf1;--line2:#d8dfe7;
+  --paper:#f8fafb;--paper2:#f1f4f7;--white:#fff;--red:#c0392b;--red-bg:#fdeae8;--red-border:#f3c9c2;
+  --serif:'Instrument Serif',Georgia,serif;--sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:12px;--r-lg:18px;--sh:0 2px 4px rgba(10,14,20,.06),0 8px 24px rgba(10,14,20,.06);--sh-md:0 6px 14px rgba(10,14,20,.1),0 24px 48px rgba(10,14,20,.12);
+}
+html,body{color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;background:var(--paper);min-height:100vh}
+a{color:var(--green2);text-decoration:none}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+.muted{color:var(--slate3)}
+.top{background:var(--navy);position:sticky;top:0;z-index:20}
+.top-in{display:flex;align-items:center;gap:13px;height:62px;max-width:1080px;margin:0 auto;padding:0 24px;color:#fff}
+.emblem{width:36px;height:36px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:9px;display:grid;place-items:center}
+.emblem svg{width:18px;height:22px}
+.brand-t{font-family:var(--serif);font-size:17px}.brand-s{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.5);letter-spacing:1.2px;text-transform:uppercase;font-weight:600}
+.spacer{flex:1}.top a{color:rgba(255,255,255,.8);font-size:12.5px;font-weight:500}
+.hero{background:linear-gradient(160deg,#1c1407,#0a0e14 64%);color:#fff;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(800px 320px at 82% -10%,rgba(201,145,58,.22),transparent 70%)}
+.hero-in{position:relative;max-width:1080px;margin:0 auto;padding:40px 24px 30px}
+.eyebrow{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold-l);margin-bottom:12px}
+.hero h1{font-family:var(--serif);font-size:clamp(28px,4.6vw,42px);font-weight:400;line-height:1.05}
+.hero p{color:rgba(255,255,255,.76);margin-top:10px;font-size:15px;max-width:64ch}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:26px 0 24px;flex-wrap:wrap}
+.tab{padding:11px 16px;font-size:13.5px;font-weight:650;color:var(--slate2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab:hover{color:var(--ink)}.tab.on{color:var(--green-d);border-bottom-color:var(--green2)}
+.tab .badge{font-family:var(--mono);font-size:9px;font-weight:700;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);border-radius:999px;padding:1px 6px;margin-left:6px}
+.panel{display:none}.panel.on{display:block}
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh)}
+.card-b{padding:24px}
+.sec-t{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--slate3);margin:22px 0 12px;display:flex;align-items:center;gap:10px}
+.sec-t:first-child{margin-top:0}.sec-t:after{content:"";flex:1;height:1px;background:var(--line)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.fgrid{grid-template-columns:1fr}}
+.fld{display:flex;flex-direction:column}
+label{font-size:12px;font-weight:650;color:var(--slate);margin-bottom:5px}
+input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line2);border-radius:10px;font-size:14px;font-family:var(--sans)}
+textarea{resize:vertical;min-height:78px;line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green2)}
+.col2{grid-column:1/-1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600;padding:13px 22px;border-radius:12px;border:1px solid transparent;cursor:pointer;transition:transform .12s,background .15s}
+.btn-pri{background:linear-gradient(135deg,var(--green2),var(--green));color:#fff;box-shadow:0 6px 18px rgba(0,107,63,.25)}
+.btn-pri:hover{transform:translateY(-1px);color:#fff}.btn-pri:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-soft{background:#f3f5f7;color:var(--slate);border:1px solid var(--line2);font-weight:600;padding:9px 14px;font-size:13px}
+.btn-ok{background:var(--green2);color:#fff}.btn-no{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.err{color:var(--red);font-size:13px;margin-top:10px;display:none}
+.ok{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green-d);padding:14px 16px;border-radius:12px;font-size:14px;display:none;margin-bottom:16px}
+.empty{color:var(--slate3);text-align:center;padding:40px 18px;font-size:14px}
+.item{border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px;background:#fff;box-shadow:var(--sh)}
+.item-h{display:flex;align-items:flex-start;gap:12px}
+.item-t{font-size:16px;font-weight:700}.item-s{font-size:12.5px;color:var(--slate2);margin-top:2px}
+.pill{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:4px 9px;border-radius:999px;white-space:nowrap}
+.pill.pending{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.pill.approved{background:var(--green-bg);color:var(--green-d);border:1px solid var(--green-border)}
+.pill.rejected{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.tag{font-size:11.5px;font-weight:600;color:var(--slate2);background:var(--paper2);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.det{font-size:13px;color:var(--slate);line-height:1.6;margin-top:12px;display:none}
+.det.on{display:block}.det b{color:var(--ink)}
+.det-row{margin-top:8px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.reason{flex:1;min-width:200px;padding:9px 11px;font-size:13px;border:1.5px solid var(--line2);border-radius:9px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:11px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:100}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.signin-note{font-size:12.5px;color:var(--slate2);margin-top:10px}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <div class="emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="#fff"/></svg></div>
+  <div><div class="brand-t">Course Accreditation</div><div class="brand-s">Dubai Legal Affairs · CLPD</div></div>
+  <div class="spacer"></div>
+  <span id="who" class="muted" style="color:rgba(255,255,255,.75);font-size:12.5px"></span>
+  <a href="/portal" style="margin-left:14px">← Platform</a>
+</div></header>
+
+<header class="hero"><div class="hero-in">
+  <div class="eyebrow">Continuing Legal Professional Development</div>
+  <h1>Course accreditation</h1>
+  <p>Training providers and law firms apply to have a course recognised as CLPD-eligible. The Legal Affairs Department reviews each application and, once approved, the course is published to the accredited catalogue.</p>
+</div></header>
+
+<main class="wrap" style="padding-bottom:70px">
+  <div class="tabs" id="tabs">
+    <div class="tab on" data-tab="apply">Apply</div>
+    <div class="tab" data-tab="mine" id="tabMine" style="display:none">My applications</div>
+    <div class="tab" data-tab="catalogue">Accredited catalogue</div>
+    <div class="tab" data-tab="review" id="tabReview" style="display:none">Review queue<span class="badge" id="revBadge" style="display:none"></span></div>
+  </div>
+
+  <!-- Apply -->
+  <section class="panel on" data-panel="apply">
+    <div class="card"><div class="card-b">
+      <div id="applyOk" class="ok"></div>
+      <div class="sec-t">A1 · Applicant / provider</div>
+      <div class="fgrid">
+        <div class="fld"><label>Organisation name *</label><input id="orgName" placeholder="e.g. Emirates Centre for Legal Training"/></div>
+        <div class="fld"><label>Applicant type</label><select id="orgType"><option value="provider">External training provider</option><option value="firm">Dubai law firm</option></select></div>
+        <div class="fld"><label>Contact name</label><input id="contactName" placeholder="Full name"/></div>
+        <div class="fld"><label>Contact email *</label><input id="contactEmail" type="email" placeholder="you@org.ae"/></div>
+        <div class="fld"><label>Phone</label><input id="phone" placeholder="+971 …"/></div>
+        <div class="fld"><label>Website</label><input id="website" placeholder="https://"/></div>
+        <div class="fld col2"><label>About the organisation</label><textarea id="about" placeholder="Brief description of the provider and relevant experience."></textarea></div>
+      </div>
+      <div class="sec-t">A2 · Course to accredit</div>
+      <div class="fgrid">
+        <div class="fld col2"><label>Course title *</label><input id="title" placeholder="e.g. Arbitration in International Aviation Disputes"/></div>
+        <div class="fld"><label>Delivery format</label><select id="format"><option>In-person</option><option>Online (live)</option><option>Online (self-paced)</option><option>Hybrid</option></select></div>
+        <div class="fld"><label>Duration (hours)</label><input id="durationHours" placeholder="e.g. 4"/></div>
+        <div class="fld"><label>CPD points requested</label><input id="cpdPoints" placeholder="e.g. 4"/></div>
+        <div class="fld"><label>Area(s) of law</label><input id="areas" placeholder="e.g. Aviation, Arbitration"/></div>
+        <div class="fld col2"><label>Course summary</label><textarea id="summary" placeholder="What the course covers."></textarea></div>
+        <div class="fld col2"><label>Learning outcomes</label><textarea id="outcomes" placeholder="What a participant will be able to do afterwards."></textarea></div>
+      </div>
+      <div id="applyErr" class="err"></div>
+      <button class="btn btn-pri" id="submitBtn" style="margin-top:18px">Submit application</button>
+      <div class="signin-note" id="applySign"></div>
+    </div></div>
+  </section>
+
+  <!-- My applications -->
+  <section class="panel" data-panel="mine"><div id="mineList"></div></section>
+
+  <!-- Catalogue -->
+  <section class="panel" data-panel="catalogue"><div id="catList"></div></section>
+
+  <!-- Review queue -->
+  <section class="panel" data-panel="review"><div id="revList"></div></section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var el=function(i){return document.getElementById(i);};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function toast(m){var t=el('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},2600);}
+  function token(){try{return localStorage.getItem('tr_token')||'';}catch(e){return '';}}
+  var ME={email:'',name:'',role:'',reviewer:false};
+
+  // Tabs
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(t){
+    t.onclick=function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){x.classList.remove('on');});
+      Array.prototype.forEach.call(document.querySelectorAll('.panel'),function(x){x.classList.remove('on');});
+      t.classList.add('on');
+      var name=t.getAttribute('data-tab');
+      document.querySelector('.panel[data-panel="'+name+'"]').classList.add('on');
+      if(name==='catalogue')loadCatalogue();
+      if(name==='mine')loadMine();
+      if(name==='review')loadReview();
+    };
+  });
+
+  // Identity (optional sign-in via shared token)
+  (function boot(){
+    var t=token();
+    if(!t){ el('applySign').innerHTML='Tip: <a href="/portal">sign in</a> to track your applications.'; loadCatalogue(); return; }
+    fetch('/api/me?token='+encodeURIComponent(t)).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      if(j&&j.email){ ME.email=j.email;ME.name=j.name||j.email;ME.role=j.role||'lawyer';ME.reviewer=(ME.role==='admin'||ME.role==='oversight');
+        el('who').textContent='👤 '+ME.name; el('tabMine').style.display='';
+        if(ME.email)el('contactEmail').value=ME.email;
+        if(ME.reviewer){ el('tabReview').style.display=''; loadReviewBadge(); }
+        el('applySign').innerHTML='Signed in as '+esc(ME.email)+' — your applications are saved to your account.';
+      }
+      loadCatalogue();
+    }).catch(function(){loadCatalogue();});
+  })();
+
+  // ── Apply ──
+  el('submitBtn').onclick=function(){
+    el('applyErr').style.display='none';el('applyOk').style.display='none';
+    var applicant={orgName:el('orgName').value.trim(),orgType:el('orgType').value,contactName:el('contactName').value.trim(),contactEmail:el('contactEmail').value.trim(),phone:el('phone').value.trim(),website:el('website').value.trim(),about:el('about').value.trim()};
+    var course={title:el('title').value.trim(),format:el('format').value,durationHours:el('durationHours').value.trim(),cpdPoints:el('cpdPoints').value.trim(),areas:el('areas').value.trim(),summary:el('summary').value.trim(),outcomes:el('outcomes').value.trim()};
+    if(!applicant.orgName||!applicant.contactEmail||!course.title){el('applyErr').textContent='Organisation, contact email and course title are required.';el('applyErr').style.display='block';return;}
+    var btn=el('submitBtn');btn.disabled=true;btn.textContent='Submitting…';
+    fetch('/api/accreditation',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({applicant:applicant,course:course,token:token()})})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+      .then(function(o){ btn.disabled=false;btn.textContent='Submit application';
+        if(!o.ok){el('applyErr').textContent=(o.j&&o.j.error)||'Could not submit.';el('applyErr').style.display='block';return;}
+        el('applyOk').textContent='Application submitted. The Legal Affairs Department will review it and notify you of the decision.';el('applyOk').style.display='block';
+        ['title','durationHours','cpdPoints','areas','summary','outcomes'].forEach(function(id){el(id).value='';});
+        window.scrollTo({top:0,behavior:'smooth'});
+      }).catch(function(){btn.disabled=false;btn.textContent='Submit application';el('applyErr').textContent='Network error.';el('applyErr').style.display='block';});
+  };
+
+  // ── Catalogue ──
+  function loadCatalogue(){
+    var box=el('catList');box.innerHTML='<div class="empty">Loading…</div>';
+    fetch('/api/accreditation?scope=catalogue').then(function(r){return r.ok?r.json():null;}).then(function(j){
+      var cs=(j&&j.courses)||[];
+      if(!cs.length){box.innerHTML='<div class="empty">No accredited courses yet.</div>';return;}
+      box.innerHTML=cs.map(function(c){
+        return '<div class="item"><div class="item-h"><div><div class="item-t">'+esc(c.title)+'</div><div class="item-s">'+esc(c.provider||'')+'</div></div><span class="pill approved" style="margin-left:auto">Accredited</span></div>'+
+          '<div class="meta">'+tag(c.cpdPoints?c.cpdPoints+' CPD pts':'')+tag(c.durationHours?c.durationHours+' hrs':'')+tag(c.format)+tag(c.areas)+'</div>'+
+          (c.summary?'<div class="item-s" style="margin-top:10px">'+esc(c.summary)+'</div>':'')+'</div>';
+      }).join('');
+    }).catch(function(){box.innerHTML='<div class="empty">Could not load the catalogue.</div>';});
+  }
+  function tag(v){return v?'<span class="tag">'+esc(v)+'</span>':'';}
+
+  // ── My applications ──
+  function loadMine(){
+    var box=el('mineList');if(!token()){box.innerHTML='<div class="empty"><a href="/portal">Sign in</a> to see your applications.</div>';return;}
+    box.innerHTML='<div class="empty">Loading…</div>';
+    fetch('/api/accreditation?scope=mine&token='+encodeURIComponent(token())).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      var as=(j&&j.applications)||[];
+      if(!as.length){box.innerHTML='<div class="empty">You haven’t submitted any applications yet.</div>';return;}
+      box.innerHTML=as.map(function(a){return appCard(a,false);}).join('');
+      bindDetails();bindUploads();
+    }).catch(function(){box.innerHTML='<div class="empty">Could not load your applications.</div>';});
+  }
+
+  // ── Review queue ──
+  function loadReviewBadge(){
+    fetch('/api/accreditation?status=pending&token='+encodeURIComponent(token())).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      var n=((j&&j.applications)||[]).length; var b=el('revBadge'); if(n){b.textContent=n;b.style.display='';}else b.style.display='none';
+    }).catch(function(){});
+  }
+  function loadReview(){
+    var box=el('revList');box.innerHTML='<div class="empty">Loading…</div>';
+    fetch('/api/accreditation?token='+encodeURIComponent(token())).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      if(!j){box.innerHTML='<div class="empty">Reviewer access required.</div>';return;}
+      var as=(j.applications)||[];
+      if(!as.length){box.innerHTML='<div class="empty">No applications to review.</div>';return;}
+      box.innerHTML=as.map(function(a){return appCard(a,true);}).join('');
+      bindDetails();bindDecisions();bindAi();
+    }).catch(function(){box.innerHTML='<div class="empty">Could not load the queue.</div>';});
+  }
+
+  function appCard(a,review){
+    var pill='<span class="pill '+esc(a.status)+'" style="margin-left:auto">'+esc(a.status)+'</span>';
+    var det='<div class="det" id="det_'+esc(a.id)+'">'+
+      detRow('Provider',esc(a.orgName)+(a.orgType?' · '+esc(a.orgType):''))+
+      detRow('Contact',esc(a.contactName||'')+' · '+esc(a.contactEmail||'')+(a.phone?' · '+esc(a.phone):''))+
+      (a.website?detRow('Website',esc(a.website)):'')+
+      (a.about?detRow('About',esc(a.about)):'')+
+      detRow('Format',esc(a.format||'—'))+detRow('Duration',esc(a.durationHours||'—')+' hrs')+detRow('CPD points',esc(a.cpdPoints||'—'))+detRow('Areas',esc(a.areas||'—'))+
+      (a.summary?detRow('Summary',esc(a.summary)):'')+(a.outcomes?detRow('Outcomes',esc(a.outcomes)):'')+
+      (a.reviewReason?detRow('Decision note',esc(a.reviewReason)+(a.reviewedBy?' — '+esc(a.reviewedBy):'')):'')+
+      '</div>';
+    var code=a.courseCode?'<span class="tag" style="background:var(--sky-bg);border-color:#bcdcf0;color:var(--sky);font-family:var(--mono);font-weight:700">Code: '+esc(a.courseCode)+'</span>':'';
+    var actions='';
+    if(review&&a.status==='pending'){
+      actions='<div id="ai_'+esc(a.id)+'"></div>'+
+        '<div class="actions"><button class="btn btn-soft ai" data-id="'+esc(a.id)+'">🤖 AI assessment</button>'+
+        '<input class="reason" id="rsn_'+esc(a.id)+'" placeholder="Decision note (required to reject)"/>'+
+        '<button class="btn btn-soft btn-ok dec" data-id="'+esc(a.id)+'" data-dec="approved">Approve</button>'+
+        '<button class="btn btn-soft btn-no dec" data-id="'+esc(a.id)+'" data-dec="rejected">Reject</button></div>';
+    }
+    if(!review&&a.status==='approved'&&a.courseCode){
+      actions='<div class="actions" style="display:block"><div class="sec-t" style="margin:6px 0 8px">Upload attendees — points go to each lawyer’s CPD</div>'+
+        '<textarea id="att_'+esc(a.id)+'" placeholder="One per line: email or email, Full name&#10;e.g. nasir@firm.ae, Nasir Khamlichi"></textarea>'+
+        '<button class="btn btn-pri up" data-code="'+esc(a.courseCode)+'" data-id="'+esc(a.id)+'" style="margin-top:10px">Add attendees ('+esc(a.cpdPoints||'0')+' pts each)</button></div>';
+    }
+    return '<div class="item"><div class="item-h"><div><div class="item-t">'+esc(a.courseTitle||a.orgName)+'</div><div class="item-s">'+esc(a.orgName)+' · submitted '+esc((a.createdAt||'').slice(0,10))+'</div></div>'+pill+'</div>'+
+      '<div class="meta">'+code+tag(a.cpdPoints?a.cpdPoints+' CPD pts':'')+tag(a.durationHours?a.durationHours+' hrs':'')+tag(a.format)+tag(a.areas)+(a.aiScore?'<span class="tag" style="color:var(--sky)">AI: '+esc(a.aiScore)+'</span>':'')+'<span class="tag" style="cursor:pointer;color:var(--green2)" data-toggle="'+esc(a.id)+'">Details ▾</span></div>'+
+      det+actions+'</div>';
+  }
+  function detRow(k,v){return '<div class="det-row"><b>'+k+':</b> '+v+'</div>';}
+  function bindDetails(){ Array.prototype.forEach.call(document.querySelectorAll('[data-toggle]'),function(t){ t.onclick=function(){ var d=el('det_'+t.getAttribute('data-toggle')); if(d)d.classList.toggle('on'); }; }); }
+  function bindAi(){
+    Array.prototype.forEach.call(document.querySelectorAll('.ai'),function(btn){
+      btn.onclick=function(){
+        var id=btn.getAttribute('data-id'),box=el('ai_'+id);
+        btn.disabled=true;btn.textContent='Assessing…';box.innerHTML='';
+        fetch('/api/accreditation',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'ai-review',id:id,token:token()})})
+          .then(function(r){return r.json();}).then(function(j){
+            btn.disabled=false;btn.textContent='🤖 AI assessment';
+            if(!j||!j.available){box.innerHTML='<div class="item-s" style="color:var(--amber)">AI model not configured — set the AiModel keys to enable suggestions.</div>';return;}
+            var s=j.suggestion||{};
+            var flags=(s.flags&&s.flags.length)?'<div class="det-row"><b>Flags:</b> '+s.flags.map(esc).join('; ')+'</div>':'';
+            box.innerHTML='<div class="card" style="background:var(--sky-bg);border-color:#bcdcf0;margin:6px 0 4px"><div class="card-b" style="padding:14px 16px">'+
+              '<div style="font-weight:700;color:var(--sky);font-size:13px;margin-bottom:6px">AI assessment'+(s.verdict?' — suggests to '+esc(s.verdict):'')+'</div>'+
+              (s.score!=null?'<div class="det-row"><b>Quality score:</b> '+esc(s.score)+'/100</div>':'')+
+              (s.recommendedPoints!=null?'<div class="det-row"><b>Recommended CPD points:</b> '+esc(s.recommendedPoints)+'</div>':'')+
+              (s.rationale?'<div class="det-row">'+esc(s.rationale)+'</div>':'')+flags+
+              '<div class="item-s" style="margin-top:8px;color:var(--slate3)">A suggestion only — your decision stands.</div></div></div>';
+          }).catch(function(){btn.disabled=false;btn.textContent='🤖 AI assessment';toast('Could not run the assessment.');});
+      };
+    });
+  }
+  function bindUploads(){
+    Array.prototype.forEach.call(document.querySelectorAll('.up'),function(btn){
+      btn.onclick=function(){
+        var id=btn.getAttribute('data-id'),code=btn.getAttribute('data-code');
+        var raw=(el('att_'+id)&&el('att_'+id).value||'').trim();
+        if(!raw){toast('Add at least one attendee email.');return;}
+        var attendees=raw.split(/\n+/).map(function(line){var p=line.split(',');return {email:(p[0]||'').trim(),name:(p[1]||'').trim()};}).filter(function(a){return a.email;});
+        if(!attendees.length){toast('No valid emails found.');return;}
+        btn.disabled=true;btn.textContent='Uploading…';
+        fetch('/api/cpd',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'attend',courseCode:code,attendees:attendees,token:token()})})
+          .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+          .then(function(o){ btn.disabled=false;btn.textContent='Add attendees';
+            if(!o.ok){toast((o.j&&o.j.error)||'Could not upload.');return;}
+            el('att_'+id).value='';toast(o.j.added+' attendee'+(o.j.added===1?'':'s')+' added · '+o.j.points+' pts each');
+          }).catch(function(){btn.disabled=false;btn.textContent='Add attendees';toast('Network error.');});
+      };
+    });
+  }
+  function bindDecisions(){
+    Array.prototype.forEach.call(document.querySelectorAll('.dec'),function(btn){
+      btn.onclick=function(){
+        var id=btn.getAttribute('data-id'),dec=btn.getAttribute('data-dec');
+        var reason=(el('rsn_'+id)&&el('rsn_'+id).value||'').trim();
+        if(dec==='rejected'&&!reason){toast('Add a note explaining the rejection.');return;}
+        btn.disabled=true;
+        fetch('/api/accreditation',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'decide',id:id,decision:dec,reason:reason,token:token()})})
+          .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+          .then(function(o){ if(o.ok){toast(dec==='approved'?'Approved & published to the catalogue':'Application rejected');loadReview();loadReviewBadge();}else{btn.disabled=false;toast((o.j&&o.j.error)||'Could not save.');} })
+          .catch(function(){btn.disabled=false;toast('Network error.');});
+      };
+    });
+  }
+})();
+</script>
+</body>
+</html>

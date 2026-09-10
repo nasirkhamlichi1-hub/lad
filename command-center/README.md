@@ -1,0 +1,103 @@
+# Orbit — Mission Control
+
+A 3D portfolio "mission control" for the Government of Dubai Legal Affairs
+Department. Each **division is a planet**; each **project is a moon** orbiting it.
+Colour encodes health (green on‑track · amber at‑risk · red failing), the central
+**sun is overall portfolio health**, and an AI analyst answers spoken questions
+like *"which project is failing?"* or *"what should I be concerned about?"*.
+
+Single self‑contained file (`index.html`). three.js loads from a CDN. All data
+lives in the browser (`localStorage`) — each division edits its own KPIs and
+project progress/status/concerns in the inspector panel.
+
+## What it actually analyses (not a gimmick)
+Orbit runs a real portfolio‑analytics engine over the live data, so it helps you
+oversee many projects at a glance and on demand:
+
+- **Schedule variance** — actual progress vs where the plan says it should be
+  (from start/due dates); flags what's *materially behind*.
+- **Budget burn & variance** — spend vs budget, and whether spend is *outpacing
+  delivery* (the early sign of an overrun).
+- **Dependencies** — each project's blockers; surfaces work *blocked by an
+  unhealthy dependency* and what it blocks downstream.
+- **Milestones** — done / total, overdue, and the next gate.
+- **Momentum** — improving / steady / declining trend.
+- **Reported‑vs‑analytical divergence** — catches "watermelon" projects reported
+  greener than the metrics justify.
+- **Explainable risk score + recommended next step** per project.
+
+How to use it:
+- **Click a moon** → a per‑project deep dive (progress‑vs‑plan, budget burn,
+  momentum, milestones, dependency chain, why it needs attention, what to do).
+- **Click a planet** → edit that division's KPIs and projects.
+- **Filters** (top) and **✦ Executive briefing** highlight risk across the whole
+  system.
+- **Ask the analyst** anything in natural language — offline it answers budget /
+  schedule / dependency / momentum / milestone / optimism / priority questions
+  with reasons; with a Claude key it reasons over the full analytics snapshot.
+
+## The AI analyst
+The voice console calls **`/api/analyst`** — an Azure Static Web Apps managed
+function (`command-center/api/analyst`) that proxies to the Claude API
+(`claude-opus-4-8`). It receives `{ question, context }` (a live JSON snapshot of
+divisions/projects/KPIs) and returns `{ answer }`. The API key lives in Azure,
+never in the browser.
+
+- **Until `ANTHROPIC_API_KEY` is set**, the function returns 503 and the
+  frontend automatically falls back to the **built‑in offline analyst** — so the
+  app is fully usable without it (great for the local/CDN-only demo).
+- With the key set, answers come from Claude with full reasoning, and the
+  dashboard still highlights any projects the answer names.
+
+**Bring your own key (no backend needed).** Click the ⚙ button in the analyst
+panel and paste an **Anthropic API key** — the app then calls Claude directly
+from your browser for full, real‑time analysis of any question. The key is kept
+in your browser's `localStorage` only (never uploaded or committed). This is ideal
+for a private review; for a shared/public deployment use the server `/api/analyst`
+route instead so the key stays server‑side. (A Claude key powers the *analyst*; it
+cannot produce *voice* — see below.)
+
+## Natural voice (text‑to‑speech)
+For a fully conversational, human voice (instead of the robotic browser voice),
+the app calls **`/api/tts`** — a function that proxies to **Azure AI Speech**
+(neural voices, e.g. `en-US-AvaMultilingualNeural`) and returns MP3 audio.
+
+- Create a **Speech** resource in Azure and add two environment variables to the
+  Static Web App: **`SPEECH_KEY`** and **`SPEECH_REGION`** (e.g. `uaenorth`).
+- Until those are set, the function returns 503 and the app **falls back to the
+  best available browser voice** (so it still talks, just not neural‑quality).
+- Change the `VOICE` constant in `command-center/api/tts/index.js` to pick a
+  different neural voice.
+
+> On the GitHub Pages preview there's no backend, so you'll hear the improved
+> browser voice. The neural voice activates on the Azure deployment.
+
+## Deploy to Azure Static Web Apps
+A workflow is included: `.github/workflows/azure-static-web-apps-command-center.yml`
+(app `command-center`, api `command-center/api`, no build step).
+
+**Go‑live checklist**
+1. In the Azure Portal, **create a Static Web App** and connect this repo +
+   branch (or reuse the included workflow). Set **App location** `command-center`,
+   **Api location** `command-center/api`, **Output location** empty.
+2. Add the repo secret **`AZURE_STATIC_WEB_APPS_API_TOKEN_COMMAND_CENTER`**
+   (the deployment token from the new Static Web App). Azure adds this
+   automatically if you let it generate the workflow.
+3. In the Static Web App → **Settings → Environment variables**, add
+   **`ANTHROPIC_API_KEY`** = your `sk-ant-…` key (from console.anthropic.com).
+4. Push to the branch — the app deploys and the analyst goes live.
+
+three.js is fetched from `cdn.jsdelivr.net` at runtime (standard on Azure). To run
+fully offline later, vendor three.js into the folder and point the import map at
+local paths.
+
+## Run locally
+Because the page uses ES‑module imports, serve it (don't open via `file://`):
+
+```bash
+cd command-center
+npx serve .          # or: python3 -m http.server 8080
+```
+
+There's no API locally, so the voice console uses the offline analyst — which is
+the intended fallback.

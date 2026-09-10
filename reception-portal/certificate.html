@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Service Ambassador Certificate</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<style>
+:root{--gold:#ffd479;--mut:#8a93b0;--line:rgba(255,255,255,.12)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:radial-gradient(120% 90% at 50% 0,#0c1430,#05060f 60%);color:#e8ecf6;font-family:'Inter',sans-serif}
+.cert{width:min(720px,96vw);background:linear-gradient(160deg,#0e1226,#0a0d1f);border:1px solid rgba(255,212,121,.4);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.cert-in{padding:46px 46px 30px;text-align:center;border:2px solid rgba(255,212,121,.25);margin:14px;border-radius:12px}
+.ck{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold)}
+.ch{font-family:'Instrument Serif',serif;font-size:40px;margin:14px 0 4px}
+.csub{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--mut)}
+.cname{font-family:'Instrument Serif',serif;font-size:34px;color:var(--gold);margin:26px 0 8px;border-bottom:1px solid rgba(255,212,121,.3);display:inline-block;padding:0 26px 8px}
+.cbody{max-width:520px;margin:14px auto 0;font-size:14.5px;line-height:1.7;color:#cdd6ea}
+.cfoot{display:flex;justify-content:space-between;margin:30px 14px 0;font-size:12px;color:var(--mut);font-family:'JetBrains Mono',monospace;letter-spacing:1px}
+.actions{display:flex;gap:10px;justify-content:center;padding:0 0 22px}
+.btn{background:var(--gold);border:none;color:#1a1407;border-radius:10px;padding:11px 20px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn.ghost{background:rgba(255,255,255,.08);color:#e8ecf6;border:1px solid var(--line)}
+.msg{text-align:center;padding:60px 24px;color:var(--mut);font-size:15px}
+.seal{width:64px;height:64px;border-radius:50%;margin:0 auto 6px;background:radial-gradient(circle at 34% 30%,var(--gold),#b5781b 70%);box-shadow:0 0 30px rgba(255,196,90,.5)}
+@media print{body{background:#fff}.actions{display:none}.cert{box-shadow:none;border-color:#caa44a}}
+</style>
+</head>
+<body>
+<div id="root"><div class="msg">Loading certificate…</div></div>
+<script>
+const $=s=>document.querySelector(s);
+function qp(k){return new URLSearchParams(location.search).get(k)||'';}
+function fmt(iso){const d=new Date(iso);return isNaN(d)?'':d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});}
+async function go(){
+  const t=qp('t');
+  if(!t){$('#root').innerHTML='<div class="msg">No certificate token provided.</div>';return;}
+  let j;
+  try{const r=await fetch('/api/cert?t='+encodeURIComponent(t),{cache:'no-store'});j=await r.json();if(!r.ok)throw new Error(j.error||'error');}
+  catch(e){$('#root').innerHTML='<div class="msg">'+(e.message||'This certificate link is not valid.')+'</div>';return;}
+  if(!j.completed){
+    $('#root').innerHTML='<div class="msg"><div class="seal"></div><b>'+(j.name||j.email)+'</b> has certified <b>'+j.certified+' of 11</b> services.<br>The certificate unlocks once all 11 are complete.</div>';
+    return;
+  }
+  $('#root').innerHTML=
+  '<div class="cert"><div class="cert-in">'+
+    '<div class="seal"></div>'+
+    '<div class="ck">Government of Dubai · Legal Affairs Department</div>'+
+    '<div class="ch">Certificate of Completion</div>'+
+    '<div class="csub">Service Ambassador Academy</div>'+
+    '<div class="cname">'+esc(j.name||j.email)+'</div>'+
+    '<div class="cbody">has completed voice-led training across all <b>eleven</b> Legal Affairs Department services — learning each service, passing every knowledge check and handling live customer simulations — and is hereby certified a <b>Service Ambassador</b>.</div>'+
+    '<div class="cfoot"><span>Dubai · '+fmt(j.date)+'</span><span>Know our services. Serve with happiness.</span></div>'+
+  '</div><div class="actions"><button class="btn" onclick="window.print()">Print / Save PDF</button></div></div>';
+}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+go();
+</script>
+</body>
+</html>
