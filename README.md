@@ -23,6 +23,13 @@ This bundle contains everything needed to deploy the platform to production:
 └── README.md                 This file
 ```
 
+## Living Horizon staff-training portal
+
+The same engine also runs an internal staff-training portal for Living Horizon:
+the `living-horizon/` front end plus the backend with `APP_BRAND=living-horizon`.
+See **`docs/LIVING-HORIZON.md`** for the runbook (Azure Static Web App + App
+Service, settings, first sign-in, building a course).
+
 ## First-time setup
 
 1. **Read `PRODUCTION.md`.** It lists every step, what's automated, and what requires a human.

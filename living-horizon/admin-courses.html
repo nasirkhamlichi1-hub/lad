@@ -1,0 +1,1207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Courses · Living Horizon Training</title>
+<!--
+  Build a learning journey as an ordered sequence.
+
+  A topic is a list of steps in whatever order the author wants — AI,
+  SCORM, AI, AI, material, SCORM is as ordinary as three of each. Steps
+  are added one at a time or in bulk, inserted anywhere, moved, and
+  removed. Nothing reaches a learner until every step has content.
+
+  A course = a topic on the learning spine: e-learning modules (SCORM),
+  policy documents and AI trainer sessions, in the order the author wants.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lh.css">
+<script src="runtime-config.js"></script>
+<script src="lh-api.js"></script>
+<script src="lh-shell.js" data-roles="admin"></script>
+<style>
+:root{
+  --serif:'Fraunces',serif;
+  --sans:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --ink:#132A3A; --slate:#3A4B58; --slate2:#66737C; --slate3:#8A979E; --slate4:#AEB9C0;
+  --line:#E4E6E3; --line2:#D3D7D4; --paper:#F7F6F2; --paper2:#EFEDE7; --white:#fff;
+  --green:#0F6E77; --green-l:#0B5057; --green-bg:#E2F0F1; --green-border:#B5D8DB;
+  --gold:#C7861F; --gold-l:#E8A33D; --gold-bg:#FBF0DC; --gold-border:#F1D9AE;
+  --red:#dc2626; --red-bg:#fef2f2; --red-border:#fecaca;
+  --blue:#2B5566; --blue-bg:#E8F1F5; --blue-border:#BFD3DB;
+  --purple:#0F6E77; --purple-bg:#E2F0F1; --purple-border:#B5D8DB;
+  --amber:#C7861F; --teal:#0F6E77;
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:18px;
+  --sh-sm:0 1px 2px rgba(15,23,42,.04),0 2px 4px rgba(15,23,42,.04);
+  --sh-md:0 4px 8px rgba(15,23,42,.06),0 8px 16px rgba(15,23,42,.06);
+  --sh-lg:0 10px 20px rgba(15,23,42,.08),0 20px 40px rgba(15,23,42,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--paper);
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+
+.adm-wrap{max-width:1240px;margin:0 auto;padding:22px 24px 60px}
+.adm-page-head{padding:14px 0 12px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.adm-page-eyebrow{font-family:var(--mono);font-size:9.5px;color:var(--gold);letter-spacing:1.4px;
+  text-transform:uppercase;font-weight:600;margin-bottom:3px}
+.adm-page-title{font-family:var(--serif);font-size:26px;color:var(--ink);letter-spacing:-.02em;
+  margin:0 0 4px;font-weight:500;line-height:1.1}
+.adm-page-desc{font-size:12.5px;color:var(--slate);line-height:1.5;max-width:780px}
+
+.adm-panel{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);
+  box-shadow:var(--sh-sm);padding:20px}
+.adm-panel+.adm-panel{margin-top:14px}
+.adm-panel-title{font-family:var(--serif);font-size:17px;font-weight:500;margin:0 0 3px;letter-spacing:-.01em}
+.adm-hint{font-size:11.5px;color:var(--slate3);margin:0 0 14px;line-height:1.45}
+
+.adm-cols{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
+@media (max-width:960px){.adm-cols{grid-template-columns:1fr}}
+
+.adm-label{display:block;font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;
+  text-transform:uppercase;font-weight:600;margin-bottom:5px}
+.adm-field{margin-bottom:14px}
+.adm-input,.adm-select,.adm-textarea{width:100%;font-family:var(--sans);font-size:13px;color:var(--ink);
+  background:var(--white);border:1.5px solid var(--line2);border-radius:9px;padding:9px 11px;transition:border-color .15s}
+.adm-input:focus,.adm-select:focus,.adm-textarea:focus{outline:none;border-color:var(--green)}
+.adm-textarea{min-height:96px;resize:vertical;line-height:1.55}
+
+.adm-btn-green{background:var(--green);color:#fff;border:none;padding:9px 18px;border-radius:9px;
+  font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.adm-btn-green:hover{background:var(--green-l)}
+.adm-btn-green:disabled{background:var(--slate4);cursor:not-allowed}
+.adm-btn-light{background:var(--white);border:1.5px solid var(--line2);color:var(--ink);padding:9px 16px;
+  border-radius:9px;font-size:13px;font-weight:600}
+.adm-btn-light:hover{background:var(--paper)}
+a.adm-btn-light{text-decoration:none;display:inline-flex;align-items:center}
+.adm-btn-light:disabled{opacity:.4;cursor:not-allowed}
+.adm-btn-sm{padding:6px 11px;font-size:12px;border-radius:7px}
+.adm-btn-icon{width:28px;height:28px;padding:0;display:inline-grid;place-items:center;
+  background:var(--white);border:1.5px solid var(--line2);border-radius:7px;color:var(--slate2);font-size:13px}
+.adm-btn-icon:hover:not(:disabled){background:var(--paper);border-color:var(--slate4);color:var(--ink)}
+.adm-btn-icon:disabled{opacity:.3;cursor:not-allowed}
+.adm-btn-danger{color:var(--red);border-color:var(--red-border)}
+.adm-btn-danger:hover:not(:disabled){background:var(--red-bg)}
+
+/* topic list */
+.adm-tlist{display:flex;flex-direction:column;gap:6px}
+.adm-trow{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:var(--white);
+  border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;color:inherit;font:inherit;transition:all .15s}
+.adm-trow:hover{border-color:var(--line2);box-shadow:var(--sh-sm)}
+/* The bin is ALWAYS visible — a control you cannot see is a control you
+   do not have. It only reddens on hover so it never looks armed. */
+.adm-tdel{flex-shrink:0;width:28px;height:28px;border-radius:7px;display:grid;place-items:center;
+  color:var(--slate3);background:var(--paper);border:1px solid var(--line);
+  transition:all .12s;cursor:pointer}
+.adm-tdel svg{width:14px;height:14px;display:block}
+.adm-trow:hover .adm-tdel{border-color:var(--line2)}
+.adm-tdel:hover{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+.adm-trow[aria-current="true"]{border-color:var(--green);background:var(--green-bg)}
+.adm-trow .n{font-weight:600;font-size:13px}
+.adm-trow .c{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:.2px}
+.adm-grow{flex:1;min-width:0}
+
+/* sequence */
+.adm-step{display:flex;align-items:center;gap:11px;background:var(--white);border:1px solid var(--line);
+  border-left:3px solid var(--line2);border-radius:11px;padding:10px 12px;margin-bottom:6px;transition:all .15s}
+.adm-step.ready{border-left-color:var(--green)}
+.adm-step.blocked{border-left-color:var(--gold)}
+.adm-step:hover{box-shadow:var(--sh-sm)}
+.adm-idx{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--slate4);
+  min-width:22px;text-align:right;font-variant-numeric:tabular-nums}
+.adm-kind{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;
+  padding:5px 8px;border-radius:6px;white-space:nowrap;min-width:74px;text-align:center}
+.k-ai{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
+.k-scorm{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.k-doc{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border)}
+.adm-step .t{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-step .s{font-size:11.5px;color:var(--slate3);margin-top:1px}
+.adm-step .s.needs{color:var(--amber)}
+.adm-chip{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;
+  padding:4px 8px;border-radius:5px;background:var(--paper2);color:var(--slate2);white-space:nowrap}
+.adm-chip.live{background:var(--green);color:#fff}
+.adm-tools{display:flex;gap:4px}
+
+/* add-step bar */
+.adm-addbar{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;background:var(--paper);
+  border:1px dashed var(--line2);border-radius:11px;padding:12px 14px;margin-top:10px}
+.adm-addbar .f{min-width:120px}
+.adm-addbar .f.narrow{min-width:76px;max-width:88px}
+
+.adm-banner{border-radius:10px;padding:11px 15px;margin-bottom:14px;font-size:12.5px;line-height:1.5;
+  border:1px solid}
+.adm-banner.warn{background:var(--gold-bg);border-color:var(--gold-border);color:#7a5a20}
+.adm-banner.ok{background:var(--green-bg);border-color:var(--green-border);color:#9D7714}
+.adm-banner.err{background:var(--red-bg);border-color:var(--red-border);color:#9b1c1c}
+
+.adm-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.adm-toolbar .adm-panel-title{flex:1;margin:0}
+.adm-empty{color:var(--slate3);font-size:12.5px;font-style:italic;padding:6px 0}
+.adm-count{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:.3px}
+
+/* ─── Step editor: the same right-hand sheet the course editor uses ─── */
+.adm-editor-backdrop{position:fixed;inset:0;background:rgba(10,15,26,.5);backdrop-filter:blur(4px);
+  z-index:200;opacity:0;visibility:hidden;transition:all .25s}
+.adm-editor-backdrop.on{opacity:1;visibility:visible}
+.adm-editor{position:fixed;top:0;right:0;bottom:0;width:min(720px,100%);background:var(--white);
+  box-shadow:var(--sh-lg);z-index:201;transform:translateX(100%);
+  transition:transform .3s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column}
+.adm-editor.on{transform:translateX(0)}
+.adm-editor-head{padding:20px 26px;border-bottom:1px solid var(--line);display:flex;align-items:center;
+  gap:14px;background:linear-gradient(135deg,#0B3C46,#0F6E77);color:#fff}
+.adm-editor-head-eyebrow{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.55);
+  letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:3px}
+.adm-editor-head-title{font-family:var(--serif);font-size:22px;letter-spacing:-.014em;line-height:1.1;flex:1}
+.adm-editor-close{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.18);color:#fff;display:grid;place-items:center;font-size:15px;cursor:pointer}
+.adm-editor-close:hover{background:rgba(255,255,255,.2)}
+.adm-tabs{display:flex;gap:0;border-bottom:1px solid var(--line);background:var(--paper);padding:0 26px;overflow-x:auto}
+.adm-tab{padding:11px 16px;background:transparent;border:none;border-bottom:2px solid transparent;
+  font-size:12.5px;font-weight:600;color:var(--slate2);letter-spacing:.2px;transition:all .15s;white-space:nowrap}
+.adm-tab:hover{color:var(--ink)}
+.adm-tab.active{color:var(--green);border-bottom-color:var(--green)}
+.adm-editor-body{flex:1;overflow-y:auto;padding:24px 26px}
+.adm-pane{display:none}
+.adm-pane.active{display:block}
+.adm-editor-foot{padding:14px 26px;border-top:1px solid var(--line);background:var(--paper);
+  display:flex;gap:8px;align-items:center}
+.adm-editor-foot .spacer{flex:1}
+.adm-editor-foot .st{font-family:var(--mono);font-size:11px;color:var(--slate3)}
+.adm-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+html.lad-embed .adm-page-head{display:none}
+html.lad-embed .adm-wrap{padding-top:14px;max-width:none}
+
+/* upload well */
+.adm-drop{border:1.5px dashed var(--line2);border-radius:11px;background:var(--paper);
+  padding:16px;text-align:center;transition:all .15s;cursor:pointer}
+.adm-drop:hover,.adm-drop.over{border-color:var(--green);background:var(--green-bg)}
+.adm-drop .big{font-weight:600;font-size:13.5px;margin-bottom:2px}
+.adm-drop .sm{font-size:11.5px;color:var(--slate3)}
+.adm-file{display:flex;align-items:center;gap:9px;background:var(--white);border:1px solid var(--line);
+  border-radius:9px;padding:9px 11px;margin-top:8px;font-size:12.5px}
+.adm-file .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.adm-file .sz{font-family:var(--mono);font-size:10.5px;color:var(--slate3)}
+.adm-busy{font-family:var(--mono);font-size:11px;color:var(--slate3);margin-top:8px}
+
+/* teaching brief */
+.adm-brief{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+@media (max-width:560px){.adm-brief{grid-template-columns:1fr}}
+.adm-brief .adm-field{margin-bottom:0}
+.adm-sect{border-top:1px solid var(--line);margin:18px 0 14px;padding-top:16px}
+.adm-pane > .adm-sect:first-child{border-top:none;margin-top:0;padding-top:0}
+.adm-sect h4{font-family:var(--serif);font-size:15px;font-weight:500;margin:0 0 2px}
+.adm-sect p{font-size:11.5px;color:var(--slate3);margin:0 0 12px;line-height:1.45}
+.adm-obj{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
+.adm-obj:first-of-type{border-top:none}
+.adm-obj .q{font-size:11px;color:var(--slate3);font-style:italic;margin-top:3px;line-height:1.4}
+</style>
+</head>
+<body>
+<div class="adm-wrap">
+  <div class="adm-page-head">
+    <div class="adm-page-eyebrow">Admin console</div>
+    <h1 class="adm-page-title">Courses</h1>
+    <p class="adm-page-desc">A course is an ordered journey. Add steps in whatever order you want — e-learning modules, policy documents, AI trainer sessions — insert or move them at any point, and attach the content. Nothing reaches a staff member until every step has something behind it and you publish.</p>
+  </div>
+
+  <div class="adm-cols">
+    <div>
+      <div class="adm-panel">
+        <h2 class="adm-panel-title">New course</h2>
+        <p class="adm-hint">Create it with a title, then build the sequence step by step.</p>
+        <div class="adm-field">
+          <label class="adm-label" for="f-title">Title</label>
+          <input class="adm-input" id="f-title" placeholder="e.g. Welcoming visitors to reception">
+        </div>
+        <div class="adm-field">
+          <label class="adm-label" for="f-sum">What it covers</label>
+          <textarea class="adm-textarea" id="f-sum" style="min-height:60px" placeholder="One or two lines the staff member sees on the course card."></textarea>
+        </div>
+        <div class="adm-field">
+          <label class="adm-label" for="f-wel">Welcome message <span style="font-weight:400;color:var(--adm-muted,#8a8f98)">(shown at the top of the course page)</span></label>
+          <textarea class="adm-textarea" id="f-wel" style="min-height:60px" placeholder="Your words to the learner — why this course matters and what it gives them."></textarea>
+        </div>
+        <div class="adm-field">
+          <label class="adm-label" for="f-gate">Order</label>
+          <select class="adm-select" id="f-gate">
+            <option value="sequential">In sequence — each unlocks the next</option>
+            <option value="none">Any order</option>
+          </select>
+        </div>
+        <div class="adm-field">
+          <label class="adm-label" for="f-first">Start with</label>
+          <select class="adm-select" id="f-first">
+            <option value="scorm">An e-learning module (SCORM)</option>
+            <option value="document">A policy document</option>
+            <option value="ai_lesson">An AI trainer session</option>
+          </select>
+        </div>
+        <button class="adm-btn-green" id="create" style="width:100%;justify-content:center">Create course</button>
+      </div>
+
+      <div class="adm-panel">
+        <h2 class="adm-panel-title">Courses</h2>
+        <p class="adm-hint">Select one to edit its sequence.</p>
+        <div class="adm-tlist" id="tlist"><div class="adm-empty">Loading…</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div id="banner"></div>
+      <div class="adm-panel" id="detail"><div class="adm-empty">Create a course, or choose one from the list.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="adm-editor-backdrop" id="dlgBackdrop"></div>
+<aside class="adm-editor" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+  <div class="adm-editor-head">
+    <div style="flex:1;min-width:0">
+      <div class="adm-editor-head-eyebrow" id="dKind"></div>
+      <div class="adm-editor-head-title" id="dTitle"></div>
+    </div>
+    <button class="adm-editor-close" id="dClose" aria-label="Close">&times;</button>
+  </div>
+  <div class="adm-tabs" id="dTabs"></div>
+  <div class="adm-editor-body" id="dFields"></div>
+  <div class="adm-editor-foot">
+    <button class="adm-btn-green" id="dSave">Save</button>
+    <button class="adm-btn-light" id="dCancel">Cancel</button>
+    <span class="spacer"></span>
+    <span class="st" id="dStatus"></span>
+  </div>
+</aside>
+
+<script>
+(function(){
+'use strict';
+var api=window.LAD, selected=null, TOPIC=null, editing=null, pending=null;
+// Inside the CRM this page is an iframe under Courses, which already draws
+// the heading — so drop ours rather than showing two.
+if(/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('lad-embed');
+var $=function(id){return document.getElementById(id);};
+
+var KIND={
+  ai_lesson:{label:'AI trainer',cls:'k-ai'},
+  scorm:{label:'Module',cls:'k-scorm'},
+  document:{label:'Document',cls:'k-doc'},
+  link:{label:'Document',cls:'k-doc'},
+  video:{label:'Video',cls:'k-doc'}
+};
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function banner(t,k){ $('banner').innerHTML=t?'<div class="adm-banner '+(k||'warn')+'">'+t+'</div>':''; }
+
+// ─── topic list ────────────────────────────────────────────────
+async function loadTopics(){
+  try{
+    var r=await api.listTopics();
+    if(!r.topics.length){ $('tlist').innerHTML='<div class="adm-empty">No courses yet.</div>'; return; }
+    $('tlist').innerHTML=r.topics.map(function(t){
+      return '<button class="adm-trow" data-t="'+esc(t.topic_id)+'"'+(selected===t.topic_id?' aria-current="true"':'')+'>'+
+        '<div class="adm-grow"><div class="n" translate="no">'+esc(t.title)+'</div>'+
+        '<div class="c">'+t.activities+' steps · '+t.learners+' on it</div></div>'+
+        '<span class="adm-chip'+(t.published===t.activities&&t.activities?' live':'')+'">'+t.published+'/'+t.activities+'</span>'+
+        '<span class="adm-tdel" data-tdel="'+esc(t.topic_id)+'" data-tname="'+esc(t.title)+'" data-tlearners="'+t.learners+'" title="Delete this course" aria-label="Delete this course">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+
+          '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>'+
+          '<path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></span>'+
+      '</button>';
+    }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-t]'),function(b){
+      b.onclick=function(){ open(b.dataset.t); };
+    });
+    // Deleting is deliberate: it names the topic, warns when learners are
+    // enrolled, and takes the whole thing — steps, lessons, progress, library.
+    Array.prototype.forEach.call(document.querySelectorAll('[data-tdel]'),function(x){
+      x.onclick=async function(ev){
+        ev.stopPropagation();
+        var name=x.dataset.tname, learners=Number(x.dataset.tlearners)||0;
+        var warn='Delete the course “'+name+'”?'+
+          (learners?'\n\n'+learners+' staff member'+(learners===1?' is':'s are')+' on it — their progress on THIS course will be removed.':'')+
+          '\n\nThis also deletes its steps, AI sessions and document library. It cannot be undone.';
+        if(!window.confirm(warn)) return;
+        try{
+          await api.deleteTopic(x.dataset.tdel);
+          if(selected===x.dataset.tdel){ selected=null; TOPIC=null; $('detail').innerHTML='<div class="adm-empty">Create a course, or choose one from the list.</div>'; }
+          banner('Deleted “'+esc(name)+'”.','ok');
+          await loadTopics();
+        }catch(e){ banner('Could not delete it: '+esc(e.message),'err'); }
+      };
+    });
+  }catch(e){ $('tlist').innerHTML='<div class="adm-empty">'+esc(e.message)+'</div>'; }
+}
+
+async function open(id){
+  selected=id;
+  try{ TOPIC=await api.getTopic(id); }
+  catch(e){ banner('Could not open that course: '+esc(e.message),'err'); return; }
+  await loadTopics();
+  renderDetail();
+}
+
+// ─── the sequence ──────────────────────────────────────────────
+function renderDetail(){
+  var t=TOPIC;
+  var steps=t.activities.slice().sort(function(a,b){return a.position-b.position;});
+  var ready=steps.filter(function(a){return a.ready;}).length;
+
+  $('detail').innerHTML=
+    '<div class="adm-toolbar">'+
+      '<h2 class="adm-panel-title" translate="no">'+esc(t.title)+'</h2>'+
+      '<span class="adm-count">'+steps.length+' steps · '+ready+' ready · '+t.published+' live</span>'+
+      '<button class="adm-btn-light adm-btn-sm" id="preview">Preview course page</button>'+
+      (t.published>0?'<a class="adm-btn-light adm-btn-sm" id="assignNow" href="admin.html#progress?topic='+encodeURIComponent(t.topic_id)+'&assign=1" title="Put this course on named staff members\' lists">Assign to staff</a>':'')+
+      '<button class="adm-btn-green adm-btn-sm" id="publish"'+(t.outstanding?' disabled':'')+'>Publish</button>'+
+    '</div>'+
+    (t.outstanding
+      ? '<div class="adm-banner warn"><b>'+t.outstanding+' of '+steps.length+'</b> steps still need content. Publishing stays locked until they have some — a staff member should never open an empty step.</div>'
+      : (t.published===steps.length && steps.length
+          ? '<div class="adm-banner ok">Every step is published and live. Staff can open it from My training; use <b>Assign to staff</b> to put it on named people\'s lists.</div>'
+          : '<div class="adm-banner ok">All steps are ready. Publish when you want staff to see them.</div>'))+
+    '<div class="adm-field" style="margin:12px 0 16px">'+
+      '<label class="adm-label" for="hub-wel">Welcome message — your words to the learner, shown at the top of the course page</label>'+
+      '<textarea class="adm-textarea" id="hub-wel" style="min-height:64px" placeholder="Welcome the learner. Say why this course matters and what it will give them.">'+esc(t.welcome||'')+'</textarea>'+
+      '<div style="display:flex;justify-content:flex-end;margin-top:6px">'+
+        '<button class="adm-btn-light adm-btn-sm" id="hub-wel-save">Save message</button></div>'+
+    '</div>'+
+    '<div id="steps">'+steps.map(function(a,i){
+      var k=KIND[a.kind]||KIND.document;
+      return '<div class="adm-step '+(a.ready?'ready':'blocked')+'">'+
+        '<span class="adm-idx">'+(i+1)+'</span>'+
+        '<span class="adm-kind '+k.cls+'">'+k.label+'</span>'+
+        '<div class="adm-grow"><div class="t" translate="no">'+esc(a.title)+'</div>'+
+        (a.ready?'<div class="s">Ready'+(a.pass_score?' · pass mark '+a.pass_score:'')+'</div>'
+                :'<div class="s needs">'+esc(a.needs)+'</div>')+'</div>'+
+        '<span class="adm-chip'+(a.published?' live':'')+'">'+(a.published?'live':'draft')+'</span>'+
+        '<div class="adm-tools">'+
+          '<button class="adm-btn-icon" data-up="'+a.id+'"'+(i===0?' disabled':'')+' title="Move up">&#9650;</button>'+
+          '<button class="adm-btn-icon" data-down="'+a.id+'"'+(i===steps.length-1?' disabled':'')+' title="Move down">&#9660;</button>'+
+          '<button class="adm-btn-light adm-btn-sm" data-edit="'+a.id+'">'+(a.kind==='ai_lesson'?'Teach':(a.kind==='scorm'?'Upload module':'Attach document'))+'</button>'+
+          '<button class="adm-btn-icon adm-btn-danger" data-del="'+a.id+'" title="Remove">&times;</button>'+
+        '</div></div>';
+    }).join('')+'</div>'+
+    '<div class="adm-addbar">'+
+      '<div class="f"><label class="adm-label" for="a-kind">Add step</label>'+
+        '<select class="adm-select" id="a-kind">'+
+          '<option value="scorm">E-learning module (SCORM)</option>'+
+          '<option value="document">Policy document</option>'+
+          '<option value="ai_lesson">AI trainer session</option></select></div>'+
+      '<div class="f narrow"><label class="adm-label" for="a-count">How many</label>'+
+        '<input class="adm-input" id="a-count" type="number" min="1" max="40" value="1"></div>'+
+      '<div class="f"><label class="adm-label" for="a-at">Insert</label>'+
+        '<select class="adm-select" id="a-at">'+
+          '<option value="">At the end</option>'+
+          steps.map(function(a,i){return '<option value="'+i+'">Before step '+(i+1)+'</option>';}).join('')+
+        '</select></div>'+
+      '<button class="adm-btn-green" id="a-go">Add</button>'+
+    '</div>'+
+    // ── The hub reference library ─────────────────────────────────
+    // Material that lives ON the hub, not as a graded step: relevant laws,
+    // articles, YouTube videos, primary sources. Face-to-face learners come
+    // here for their reading; AI/SCORM steps sit alongside it.
+    '<div class="adm-field" style="margin-top:26px">'+
+      '<label class="adm-label">Policy documents &amp; reference library — policies, procedures, links and videos the learner opens on the course page (not graded steps)</label>'+
+      '<div id="lib-rows" style="margin:8px 0 4px"><span class="adm-count">Loading the library…</span></div>'+
+      '<div class="adm-addbar" style="margin-top:6px">'+
+        '<div class="f"><label class="adm-label" for="lib-title">Title</label>'+
+          '<input class="adm-input" id="lib-title" placeholder="e.g. Visitor policy 2026"></div>'+
+        '<div class="f"><label class="adm-label" for="lib-url">Link — intranet page, article, YouTube</label>'+
+          '<input class="adm-input" id="lib-url" placeholder="https://…"></div>'+
+        '<div class="f"><label class="adm-label" for="lib-file">…or a file (PDF, Word, slides)</label>'+
+          '<input class="adm-input" id="lib-file" type="file"></div>'+
+        '<button class="adm-btn-green" id="lib-add">Add to library</button>'+
+      '</div>'+
+    '</div>'+
+    // ── How the hub looks ─────────────────────────────────────────
+    // A picture behind the title band and one accent colour the whole page
+    // is built from — so a hub on aviation law does not have to look like a
+    // hub on judicial fees.
+    '<div class="adm-field" style="margin-top:26px">'+
+      '<label class="adm-label">How the course page looks — the photo behind the title and the colour the page is built around</label>'+
+      '<div class="adm-addbar" style="margin-top:6px;align-items:flex-end">'+
+        '<div class="f"><label class="adm-label" for="look-photo">Photo for the top of the course page</label>'+
+          '<input class="adm-input" id="look-photo" type="file" accept="image/*"></div>'+
+        '<div class="f" style="max-width:150px"><label class="adm-label" for="look-accent">Colour</label>'+
+          '<input class="adm-input" id="look-accent" type="color" style="height:40px;padding:3px"></div>'+
+        '<button class="adm-btn-green" id="look-save">Save look</button>'+
+        '<button class="adm-btn" id="look-clear" title="Remove the photo and go back to the default colour">Reset</button>'+
+      '</div>'+
+      '<div id="look-state" class="adm-count" style="margin-top:6px"></div>'+
+    '</div>';
+
+  $('preview').onclick=function(){ window.open('course.html?topic='+encodeURIComponent(t.topic_id),'_blank','noopener'); };
+  $('hub-wel-save').onclick=async function(){
+    var btn=$('hub-wel-save'), was=btn.textContent;
+    btn.disabled=true; btn.textContent='Saving…';
+    try{
+      var m=(t.modules&&t.modules[0])||null;
+      if(!m) throw new Error('this course has no section to hold the message yet');
+      // upsertModule replaces every field, so send the whole existing row
+      // with only the welcome changed — anything omitted would be wiped.
+      await api.saveTopicModules(t.topic_id,[Object.assign({},m,{welcome:$('hub-wel').value.trim()||null})]);
+      TOPIC=await api.getTopic(t.topic_id);
+      banner('Welcome message saved — staff see it at the top of the course page.','ok');
+      renderDetail();
+    }catch(e){
+      banner('Could not save the message: '+esc(e.message),'err');
+      btn.disabled=false; btn.textContent=was;
+    }
+  };
+  $('publish').onclick=doPublish;
+  wireAssignLink(t.topic_id);
+  $('a-go').onclick=doAdd;
+  $('lib-add').onclick=doLibAdd;
+  $('look-save').onclick=doLookSave;
+  $('look-clear').onclick=doLookClear;
+  loadLibAdmin();
+  loadLookAdmin();
+  Array.prototype.forEach.call(document.querySelectorAll('[data-up]'),function(b){
+    b.onclick=function(){ move(b.dataset.up,-1); }; });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-down]'),function(b){
+    b.onclick=function(){ move(b.dataset.down,1); }; });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-edit]'),function(b){
+    b.onclick=function(){ openEdit(b.dataset.edit); }; });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-del]'),function(b){
+    b.onclick=function(){ remove(b.dataset.del); }; });
+}
+
+async function doAdd(){
+  var at=$('a-at').value;
+  try{
+    TOPIC=await api.addTopicSteps(TOPIC.topic_id,{
+      kind:$('a-kind').value,
+      count:Number($('a-count').value)||1,
+      at:at===''?null:Number(at)
+    });
+    banner('');
+    await loadTopics(); renderDetail();
+  }catch(e){ banner('Could not add that: '+esc(e.message),'err'); }
+}
+
+async function move(id,delta){
+  var steps=TOPIC.activities.slice().sort(function(a,b){return a.position-b.position;});
+  var i=steps.findIndex(function(a){return a.id===id;});
+  var to=i+delta;
+  if(to<0||to>=steps.length) return;
+  try{ TOPIC=await api.moveTopicStep(TOPIC.topic_id,id,to); renderDetail(); }
+  catch(e){ banner('Could not move that step: '+esc(e.message),'err'); }
+}
+
+async function remove(id){
+  try{
+    var r=await api.removeTopicStep(TOPIC.topic_id,id);
+    TOPIC=r.topic;
+    banner(r.mode==='retired'
+      ? 'Staff had already started that step, so it was retired rather than deleted — the record of what they did is kept.'
+      : '', r.mode==='retired'?'warn':'ok');
+    await loadTopics(); renderDetail();
+  }catch(e){ banner('Could not remove that step: '+esc(e.message),'err'); }
+}
+
+// ─── Hub reference library (admin) ───────────────────────────────
+function ytIdOf(u){var m=String(u||'').match(/(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);return m?m[1]:null;}
+async function loadLibAdmin(){
+  var box=$('lib-rows'); if(!box||!TOPIC) return;
+  try{
+    var r=await api.listCourseMaterials(TOPIC.topic_id);
+    var mats=(r&&r.materials)||[];
+    if(!mats.length){ box.innerHTML='<span class="adm-count">Nothing in the library yet — everything you add here appears on the course page for the learner.</span>'; return; }
+    box.innerHTML=mats.map(function(m){
+      var label=m.kind==='scorm'?'MODULE':(m.kind==='link'?(ytIdOf(m.url)?'VIDEO':'LINK'):'DOCUMENT');
+      return '<div class="adm-step ready" style="margin-bottom:6px">'+
+        '<span class="adm-kind k-doc">'+label+'</span>'+
+        '<div class="adm-grow"><div class="t" translate="no">'+esc(m.title)+'</div>'+
+        (m.url?'<div class="s">'+esc(m.url)+'</div>':(m.file_name?'<div class="s">'+esc(m.file_name)+'</div>':''))+'</div>'+
+        '<button class="adm-btn-icon adm-btn-danger" data-libdel="'+esc(m.id)+'" title="Remove from the library">&times;</button></div>';
+    }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('[data-libdel]'),function(b){
+      b.onclick=async function(){
+        b.disabled=true;
+        try{ await api.deleteCourseMaterial(TOPIC.topic_id,b.dataset.libdel); loadLibAdmin(); }
+        catch(e){ banner('Could not remove it: '+esc(e.message),'err'); b.disabled=false; }
+      };
+    });
+  }catch(e){ box.innerHTML='<span class="adm-count">Could not load the library: '+esc(e.message)+'</span>'; }
+}
+async function doLibAdd(){
+  var btn=$('lib-add'), was=btn.textContent;
+  var title=$('lib-title').value.trim();
+  var url=$('lib-url').value.trim();
+  var file=$('lib-file').files[0]||null;
+  if(!url&&!file){ banner('Give the library item a link or a file.','err'); return; }
+  if(!title&&!file){ banner('Give it a title the learner will recognise.','err'); return; }
+  btn.disabled=true; btn.textContent='Adding…';
+  try{
+    if(file){ await uploadMaterial(TOPIC.topic_id,file,'file',title); }
+    else{ await api.addCourseMaterial(TOPIC.topic_id,{title:title,kind:'link',url:url}); }
+    $('lib-title').value='';$('lib-url').value='';$('lib-file').value='';
+    banner('Added to the course library.','ok');
+    loadLibAdmin();
+  }catch(e){ banner('Could not add it: '+esc(e.message),'err'); }
+  finally{ btn.disabled=false; btn.textContent=was; }
+}
+
+// ─── How the hub looks (admin) ───────────────────────────────────
+// The photo and the accent live on the hub record. A course may not have a
+// hub row yet — saving the look creates one, so the controls work from the
+// moment a topic exists rather than only after someone writes hub content.
+var LOOK_HUB=null;
+async function loadLookAdmin(){
+  var state=$('look-state'); if(!state||!TOPIC) return;
+  try{ LOOK_HUB=await api.hubGet(TOPIC.topic_id); }catch(e){ LOOK_HUB=null; }
+  var accent=(LOOK_HUB&&LOOK_HUB.accent)||'';
+  if(/^#[0-9a-fA-F]{6}$/.test(accent)) $('look-accent').value=accent.toLowerCase();
+  else $('look-accent').value='#0F6E77';   // the portal teal, as shipped
+  var bits=[];
+  bits.push((LOOK_HUB&&LOOK_HUB.hero_url)?'A photo is set.':'No photo yet — the title band uses the plain colour.');
+  bits.push(accent?('Accent '+esc(accent)+'.'):'Using the default teal.');
+  state.innerHTML=esc(bits.join(' '))+' Learners see this on the course page straight away.';
+}
+async function doLookSave(){
+  var btn=$('look-save'), was=btn.textContent;
+  btn.disabled=true; btn.textContent='Saving…';
+  try{
+    var file=$('look-photo').files[0]||null;
+    if(file){
+      if(!/^image\//.test(file.type||'')) throw new Error('choose an image file');
+      var b64=await new Promise(function(ok,fail){
+        var r=new FileReader();
+        r.onload=function(){ok(String(r.result).split('base64,').pop());};
+        r.onerror=function(){fail(new Error('could not read that image'));};
+        r.readAsDataURL(file);
+      });
+      await api.hubHeroUpload(TOPIC.topic_id,b64,file.type);
+    }
+    // upsertHub replaces every field, so send the hub back whole with only the
+    // accent changed — anything omitted would be blanked.
+    var base=LOOK_HUB||{};
+    await api.hubSave(TOPIC.topic_id,Object.assign({},base,{
+      title:(base.title||TOPIC.title||TOPIC.topic_id),
+      accent:$('look-accent').value,
+    }));
+    $('look-photo').value='';
+    banner('Saved — the course page now uses that look.','ok');
+    loadLookAdmin();
+  }catch(e){ banner('Could not save the look: '+esc(e.message),'err'); }
+  finally{ btn.disabled=false; btn.textContent=was; }
+}
+async function doLookClear(){
+  if(!confirm('Remove the photo and go back to the default colour?')) return;
+  var btn=$('look-clear'), was=btn.textContent;
+  btn.disabled=true; btn.textContent='Resetting…';
+  try{
+    try{ await api.hubHeroClear(TOPIC.topic_id); }catch(e){ /* nothing uploaded */ }
+    var base=LOOK_HUB||{};
+    if(base.course_id) await api.hubSave(TOPIC.topic_id,Object.assign({},base,{
+      title:(base.title||TOPIC.title||TOPIC.topic_id), accent:'' }));
+    banner('The course page is back to the standard look.','ok');
+    loadLookAdmin();
+  }catch(e){ banner('Could not reset it: '+esc(e.message),'err'); }
+  finally{ btn.disabled=false; btn.textContent=was; }
+}
+
+// Published means reachable. It reaches nobody until it is assigned (or a
+// staff member opens it themselves), so the banner offers the next step.
+function wireAssignLink(id){
+  var a=$('assignNow'); if(!a) return;
+  a.onclick=function(ev){
+    // Inside the admin console, hand over to its progress workspace rather than leaving the shell.
+    if(window.parent&&window.parent!==window){
+      ev.preventDefault();
+      try{ window.parent.postMessage({type:'ladAssignTopic',topic:id},'*'); }catch(e){ location.href=a.href; }
+    }
+  };
+}
+async function doPublish(){
+  try{
+    var r=await api.publishTopic(TOPIC.topic_id,false);
+    banner('Published '+r.published+' step'+(r.published===1?'':'s')+'. Staff can open the course from My training now — use <b>Assign to staff</b> to put it on named people\'s lists.','ok');
+    TOPIC=await api.getTopic(TOPIC.topic_id);
+    await loadTopics(); renderDetail();
+  }catch(e){ banner('Could not publish: '+esc(e.message),'err'); }
+}
+
+// ─── Material → teaching source ────────────────────────────────────
+// The document the author uploads has two jobs: the learner downloads it, and
+// the AI teaches from it. So we do both — store the original as a course
+// material, and extract its text into the lesson body.
+//
+// Extraction runs in the browser. That keeps large files off the API, needs
+// no server-side parser, and means the author sees exactly what the bot will
+// read before anything is saved. Scanned pages have no text layer and will
+// come back empty — the UI says so rather than saving a blank lesson.
+
+var MAX_INLINE = 10 * 1024 * 1024;
+var CDN = {
+  pdf:    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+  pdfw:   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+  mammoth:'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
+  jszip:  'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
+};
+
+function ensureScript(src){
+  return new Promise(function(ok,fail){
+    if(document.querySelector('script[data-src="'+src+'"]')) return ok();
+    var el=document.createElement('script');
+    el.src=src; el.setAttribute('data-src',src);
+    el.onload=function(){ok();};
+    el.onerror=function(){fail(new Error('Could not load the reader for this file type.'));};
+    document.head.appendChild(el);
+  });
+}
+
+function fmtSize(n){
+  if(n<1024) return n+' B';
+  if(n<1024*1024) return Math.round(n/1024)+' KB';
+  return (n/1024/1024).toFixed(1)+' MB';
+}
+
+async function extractText(file){
+  var name=(file.name||'').toLowerCase();
+  if(/\.(txt|md|markdown|csv|json|html?|xml)$/.test(name)) return await file.text();
+
+  if(/\.pdf$/.test(name)){
+    await ensureScript(CDN.pdf);
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc=CDN.pdfw;
+    var doc=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+    var pages=[];
+    for(var i=1;i<=doc.numPages;i++){
+      var page=await doc.getPage(i);
+      var tc=await page.getTextContent();
+      pages.push(tc.items.map(function(it){return it.str;}).join(' ').replace(/\s+/g,' ').trim());
+    }
+    return pages.filter(Boolean).join('\n\n');
+  }
+
+  if(/\.docx$/.test(name)){
+    await ensureScript(CDN.mammoth);
+    var r=await window.mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});
+    return (r&&r.value)||'';
+  }
+
+  if(/\.pptx$/.test(name)) return extractPptx(file);
+
+  throw new Error('That file type cannot be read for teaching text. Use a PDF, a Word .docx, a PowerPoint .pptx, or a plain text file — or paste the text in yourself.');
+}
+
+// PowerPoint decks are what most training material actually arrives as.
+// A .pptx is a zip of XML; pull every text run per slide, in slide order,
+// with the speaker notes — which often carry the real teaching narrative.
+async function extractPptx(file){
+  await ensureScript(CDN.jszip);
+  var zip=await window.JSZip.loadAsync(await file.arrayBuffer());
+  function dec(s){
+    return s.replace(/&#x([0-9a-fA-F]+);/g,function(_,h){return String.fromCodePoint(parseInt(h,16));})
+            .replace(/&#(\d+);/g,function(_,d){return String.fromCodePoint(parseInt(d,10));})
+            .replace(/&quot;/g,'"').replace(/&apos;/g,"'")
+            .replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+  }
+  function textOf(xml){
+    // paragraphs end at </a:p>; text lives in <a:t> runs
+    return xml.split(/<\/a:p>/).map(function(p){
+      var runs=[], m, re=/<a:t[^>]*>([\s\S]*?)<\/a:t>/g;
+      while((m=re.exec(p))) runs.push(dec(m[1]));
+      return runs.join('').trim();
+    }).filter(Boolean).join('\n');
+  }
+  function num(p){ var m=p.match(/(\d+)\.xml$/); return m?Number(m[1]):0; }
+  var slides=Object.keys(zip.files)
+    .filter(function(p){return /^ppt\/slides\/slide\d+\.xml$/.test(p);})
+    .sort(function(a,b){return num(a)-num(b);});
+  var out=[];
+  for(var i=0;i<slides.length;i++){
+    var body=textOf(await zip.files[slides[i]].async('string'));
+    var notesPath='ppt/notesSlides/notesSlide'+num(slides[i])+'.xml';
+    var notes=zip.files[notesPath]?textOf(await zip.files[notesPath].async('string')):'';
+    // notes pages carry a bare slide-number placeholder — drop those lines
+    notes=notes.split('\n').filter(function(l){return l.trim()&&!/^\d+$/.test(l.trim());}).join('\n');
+    var s='— Slide '+(i+1)+' —'+(body?'\n'+body:'');
+    if(notes) s+='\nSpeaker notes: '+notes;
+    if(body||notes) out.push(s);
+  }
+  return out.join('\n\n');
+}
+
+// Store the original file against the topic so learners can download it.
+// Small files go inline; anything larger needs cloud storage configured.
+async function uploadMaterial(courseId, file, kind, title, description){
+  title = (title||'').trim() || titleFromFileName(file.name) || file.name;
+  description = (description||'').trim() || null;
+  if(file.size>MAX_INLINE){
+    var sas;
+    try{ sas=await api.materialUploadUrl(courseId,{file_name:file.name,mime:file.type||'application/octet-stream'}); }
+    catch(e){ throw new Error('That file is over 10 MB and cloud storage is not set up on this server, so it cannot be stored here. Host it and add it as a link instead.'); }
+    var put=await fetch(sas.upload_url,{method:'PUT',
+      headers:{'x-ms-blob-type':'BlockBlob','Content-Type':file.type||'application/octet-stream'},body:file});
+    if(!put.ok) throw new Error('The upload to cloud storage failed ('+put.status+').');
+    return api.addCourseMaterial(courseId,{title:title,description:description,kind:kind,file_name:file.name,
+      mime:file.type||null,size:file.size,storage_key:sas.storage_key});
+  }
+  var b64=await new Promise(function(ok,fail){
+    var r=new FileReader();
+    r.onload=function(){ok(String(r.result).split('base64,').pop());};
+    r.onerror=function(){fail(new Error('Could not read that file.'));};
+    r.readAsDataURL(file);
+  });
+  return api.addCourseMaterial(courseId,{title:title,description:description,kind:kind,file_name:file.name,
+    mime:file.type||null,size:file.size,data:b64});
+}
+
+// A drop target that also works as a plain file picker.
+// A file dropped anywhere OUTSIDE a drop target must never make the browser
+// navigate away to open the document — that silently loses the whole form.
+['dragover','drop'].forEach(function(ev){
+  document.addEventListener(ev,function(e){ e.preventDefault(); });
+});
+
+function wireDrop(zoneId, inputId, onFile){
+  var zone=$(zoneId), input=$(inputId);
+  if(!zone||!input) return;
+  zone.onclick=function(){ input.click(); };
+  input.onchange=function(){ if(input.files&&input.files[0]) onFile(input.files[0]); };
+  ['dragenter','dragover'].forEach(function(ev){
+    zone.addEventListener(ev,function(e){ e.preventDefault(); zone.classList.add('over'); });
+  });
+  ['dragleave','drop'].forEach(function(ev){
+    zone.addEventListener(ev,function(e){ e.preventDefault(); zone.classList.remove('over'); });
+  });
+  zone.addEventListener('drop',function(e){
+    var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+    if(f) onFile(f);
+  });
+}
+
+// ─── The teaching brief ────────────────────────────────────────────
+// How this session is taught, as opposed to what it teaches. Kept in the
+// same order the server renders them so the form reads like the prompt.
+// Every field is optional: an empty brief leaves the trainer's standard
+// charter exactly as it is.
+
+var BRIEF = [
+  ['persona','You are',[['','Standard trainer'],['practitioner','A senior colleague — teaches from experience'],
+    ['regulator','A compliance lead — precise about obligations'],['examiner','An examiner — probing, exact'],
+    ['mentor','A mentor — patient, alongside a colleague']]],
+  ['expertise_level','They are',[['','Unspecified'],['new','New to the role'],['practising','Experienced in the role'],['senior','Senior']]],
+  ['depth','Depth',[['','Unspecified'],['orientation','Orientation'],['working','Working knowledge'],['deep','Deep treatment']]],
+  ['turn_length','Turn length',[['','Standard'],['very_short','Very short — a sentence or two'],
+    ['short','Short — two or three'],['moderate','Moderate — up to five']]],
+  ['check_frequency','Check understanding',[['','Standard'],['every_point','After every idea'],
+    ['few_points','Every two or three ideas'],['section_ends','At the end of each element']]],
+  ['question_style','Ask',[['','Standard'],['recall','Recall — state the rule'],['applied','Applied — use the rule'],
+    ['scenario','Scenario — decide on real facts'],['mixed','Mixed — recall then scenario']]],
+  ['on_wrong_answer','Wrong answers',[['','Standard'],['reteach','Correct and re-teach'],
+    ['hint','One hint, let them retry'],['socratic','Narrow the question until they see it']]],
+  ['strictness','Before it counts',[['','Standard'],['coaching','Broadly right is enough'],
+    ['standard','Correct and unprompted'],['exacting','Correct AND applied to fresh facts']]],
+  ['pass_criteria','To close',[['','Standard'],['explain_back','Summarise it back'],
+    ['apply','Talk through applying it'],['cite','Say which policy each obligation comes from']]],
+  ['language','Language',[['','English'],['english','English'],['arabic','Arabic'],
+    ['english_ar','English with Arabic terms']]]
+];
+
+function briefControls(current){
+  var b=current||{};
+  return '<div class="adm-brief">'+BRIEF.map(function(f){
+    return '<div class="adm-field"><label class="adm-label" for="b-'+f[0]+'">'+esc(f[1])+'</label>'+
+      '<select class="adm-select" id="b-'+f[0]+'">'+f[2].map(function(o){
+        return '<option value="'+o[0]+'"'+(String(b[f[0]]||'')===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';
+      }).join('')+'</select></div>';
+  }).join('')+'</div>'+
+  '<div class="adm-field" style="margin-top:12px"><label class="adm-label" for="b-house">House rules — your own words</label>'+
+  '<textarea class="adm-textarea" id="b-house" style="min-height:70px" placeholder="e.g. Use examples from our own reception desk. Always name the policy a rule comes from. Never speculate about individual colleagues.">'+esc(b.house_rules||'')+'</textarea>'+
+  '<p class="adm-hint">These tune how the session is taught. They cannot switch off coverage or the check that the learner actually understood each element — a completion nobody verified would not be worth recording.</p></div>';
+}
+
+function readBrief(){
+  var out={};
+  BRIEF.forEach(function(f){ var el=$('b-'+f[0]); if(el&&el.value) out[f[0]]=el.value; });
+  var h=$('b-house'); if(h&&h.value.trim()) out.house_rules=h.value.trim();
+  return Object.keys(out).length?out:null;
+}
+
+// ─── attaching content ─────────────────────────────────────────
+// ─── The step editor ───────────────────────────────────────────────
+// The same right-hand sheet the course editor uses: a hero head, a tab
+// strip, one pane per tab, and a sticky footer. Splitting the work across
+// tabs matters more here than it looks — material, key elements and
+// teaching style are three different jobs, often done at different times,
+// and stacking them in one scrolling dialog made the last two easy to miss.
+
+var TABS = {
+  ai_lesson: [['material','Material'],['elements','Key elements'],['teaching','Teaching']],
+  scorm:     [['file','Package'],['marking','Marking']],
+  other:     [['file','File']]
+};
+
+function paneMaterial(a){
+  return '<div class="adm-field"><label class="adm-label" for="x-title">Session title</label>'+
+      '<input class="adm-input" id="x-title" value="'+esc(a.title)+'"></div>'+
+    '<div class="adm-sect"><h4>What the bot teaches from</h4>'+
+    '<p>Upload the policy or training document and its text becomes the material the AI teaches from — the same text you can read and edit below. PDF, Word (.docx), PowerPoint (.pptx) or plain text. A scanned page has no text in it and will come back empty.</p>'+
+    '<div class="adm-drop" id="x-drop"><div class="big">Drop a document here, or choose a file</div>'+
+      '<div class="sm">The original is also saved for staff to download</div></div>'+
+    '<input type="file" id="x-file" style="display:none" accept=".pdf,.docx,.pptx,.txt,.md,.csv,.json,.htm,.html">'+
+    '<div id="x-filemeta"></div><div class="adm-busy" id="x-busy"></div>'+
+    '<div class="adm-field" style="margin-top:10px">'+
+      '<textarea class="adm-textarea" id="x-body" style="min-height:220px" placeholder="Upload a document, or type the material here."></textarea></div>'+
+    '</div>';
+}
+
+function paneElements(){
+  return '<div class="adm-sect"><h4>Key elements</h4>'+
+    '<p>What the staff member must be able to do afterwards. The trainer teaches these one at a time and will not close the session until each is understood. Draft them from the material and edit whatever you disagree with.</p>'+
+    '<button class="adm-btn-light adm-btn-sm" id="x-draft" type="button">Draft from the material</button>'+
+    '<div id="x-drafted"></div>'+
+    '<div class="adm-field" style="margin-top:12px">'+
+      '<label class="adm-label" for="x-obj">One per line</label>'+
+      '<textarea class="adm-textarea" id="x-obj" style="min-height:150px"></textarea></div>'+
+    '</div>';
+}
+
+function paneTeaching(a){
+  return '<div class="adm-sect"><h4>How it is taught</h4>'+
+    '<p>The trainer already keeps every session conversational and covers each element. This is where you shape the rest of it for this course.</p>'+
+    briefControls(a.lesson && a.lesson.teaching_brief)+'</div>';
+}
+
+function paneFile(a){
+  var isScorm=a.kind==='scorm';
+  return '<div class="adm-field"><label class="adm-label" for="x-title">Title <span style="font-weight:400;color:var(--slate3)">— what the staff member sees on the card</span></label>'+
+      '<input class="adm-input" id="x-title" value="'+esc(a.title)+'" placeholder="e.g. Fire safety and evacuation"></div>'+
+    '<div class="adm-field"><label class="adm-label" for="x-desc">Description <span style="font-weight:400;color:var(--slate3)">— one or two sentences on what it is</span></label>'+
+      '<textarea class="adm-textarea" id="x-desc" style="min-height:64px" maxlength="600" placeholder="Write it yourself, or press Draft with AI once the file is in."></textarea>'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap">'+
+        '<button class="adm-btn-light adm-btn-sm" id="x-summarise" type="button">✦ Draft title &amp; description with AI</button>'+
+        '<span id="x-sumnote" style="font-size:12px;color:var(--slate3)"></span></div></div>'+
+    '<div class="adm-drop" id="x-drop"><div class="big">Drop the '+(isScorm?'SCORM package (.zip)':'policy document')+' here, or choose one</div>'+
+      '<div class="sm">'+(isScorm?'Upload the .zip exactly as Articulate, Rise, Storyline or iSpring exported it — no need to unzip it. Up to 10 MB here; larger packages need cloud storage.':'PDF, Word or slides. Up to 10 MB here; larger files need cloud storage, or add a link below')+'</div></div>'+
+    '<input type="file" id="x-file" style="display:none"'+(isScorm?' accept=".zip"':'')+'>'+
+    '<div id="x-filemeta"></div><div class="adm-busy" id="x-busy"></div>'+
+    '<div class="adm-field" style="margin-top:14px"><label class="adm-label" for="x-url">'+
+      (isScorm?'…or a SCORM package URL':'…or a link')+'</label>'+
+      '<input class="adm-input" id="x-url" placeholder="https://…"></div>';
+}
+
+// "a-quick-guide-to-talking-about-disabilities-scorm12-X5jGH11z.zip"
+//   → "A Quick Guide to Talking About Disabilities"
+function titleFromFileName(name){
+  var s=String(name||'').replace(/\.[A-Za-z0-9]{1,5}$/,'');
+  s=s.replace(/[-_]+(scorm(12|2004)?|v?\d+(\.\d+)*|final|copy|draft)$/i,'');
+  s=s.replace(/[-_][A-Za-z0-9]{6,12}$/,function(m){ return (/\d/.test(m)&&/[a-z]/.test(m)&&/[A-Z]/.test(m))?'':m; }); // X5jGH11z, not 'Course'
+  s=s.replace(/[-_]+(scorm(12|2004)?|sample)$/i,'');
+  s=s.replace(/[-_.]+/g,' ').replace(/\s+/g,' ').trim();
+  if(!s) return '';
+  var small={a:1,an:1,the:1,and:1,or:1,of:1,to:1,'in':1,on:1,'for':1,'with':1,at:1,by:1,about:1,under:1};
+  return s.split(' ').map(function(w,i){
+    if(/^[A-Z0-9]{2,}$/.test(w)) return w;
+    var lw=w.toLowerCase();
+    return (i>0&&small[lw])?lw:lw.charAt(0).toUpperCase()+lw.slice(1);
+  }).join(' ');
+}
+// The title is the author's unless it is still the placeholder the step was
+// created with ("SCORM package", "Material", a bare file name).
+function titleIsDefault(v,a){
+  v=String(v||'').trim();
+  return !v || v===a.title && /^(scorm package|material|document|reading|file)( \d+)?$/i.test(v) || /\.(zip|pdf|docx?|pptx?)$/i.test(v);
+}
+async function summariseMaterial(a){
+  var btn=$('x-summarise'), note=$('x-sumnote');
+  btn.disabled=true; btn.textContent='Drafting…'; note.textContent='';
+  try{
+    var text='';
+    if(pending && a.kind!=='scorm'){ try{ text=await extractText(pending); }catch(e){ text=''; } }
+    var fileName=pending?pending.name:((EXISTING_MAT&&EXISTING_MAT.file_name)||'');
+    var r=await api.summariseMaterial(TOPIC.topic_id,{title:$('x-title').value.trim(),file_name:fileName,text:(text||'').slice(0,40000)});
+    if(r.title && titleIsDefault($('x-title').value,a)) $('x-title').value=r.title;
+    else if(r.title && !$('x-title').value.trim()) $('x-title').value=r.title;
+    if(r.description) $('x-desc').value=r.description;
+    note.textContent=r.source==='ai'?'Drafted from the document — edit anything before you save.':(r.note||'Drafted without AI — edit before you save.');
+  }catch(e){ note.textContent='Could not draft: '+e.message; note.style.color='var(--red)'; }
+  finally{ btn.disabled=false; btn.textContent='✦ Draft title & description with AI'; }
+}
+var EXISTING_MAT=null;
+
+function paneMarking(a){
+  return '<div class="adm-sect"><h4>Marking</h4>'+
+    '<p>The score the staff member has to reach for this module to count as passed. Below it the step reads as failed and the course stays open.</p>'+
+    '<div class="adm-field" style="max-width:200px"><label class="adm-label" for="x-pass">Pass mark</label>'+
+    '<input class="adm-input" id="x-pass" type="number" min="0" max="100" value="'+(a.pass_score===null?80:a.pass_score)+'"></div></div>';
+}
+
+function stepTab(which){
+  Array.prototype.forEach.call(document.querySelectorAll('#dTabs .adm-tab'),function(t){
+    t.classList.toggle('active', t.dataset.tab===which);
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#dFields .adm-pane'),function(p){
+    p.classList.toggle('active', p.dataset.pane===which);
+  });
+}
+
+function closeEditor(){
+  $('dlg').classList.remove('on');
+  $('dlgBackdrop').classList.remove('on');
+  editing=null; pending=null;
+  $('dStatus').textContent='';
+}
+
+function openEdit(id){
+  var a=TOPIC.activities.filter(function(x){return x.id===id;})[0];
+  editing=a; pending=null;
+  var kind=(KIND[a.kind]||KIND.document);
+  $('dKind').textContent=kind.label+' · step '+(a.position+1);
+  $('dTitle').textContent=a.title;
+  $('dStatus').textContent='';
+
+  var tabs = TABS[a.kind] || (a.kind==='scorm' ? TABS.scorm : TABS.other);
+  $('dTabs').innerHTML = tabs.length>1
+    ? tabs.map(function(t,i){ return '<button class="adm-tab'+(i===0?' active':'')+'" type="button" data-tab="'+t[0]+'">'+esc(t[1])+'</button>'; }).join('')
+    : '';
+  $('dTabs').style.display = tabs.length>1 ? '' : 'none';
+
+  var panes = {};
+  if(a.kind==='ai_lesson'){
+    panes.material=paneMaterial(a); panes.elements=paneElements(); panes.teaching=paneTeaching(a);
+  } else {
+    panes.file=paneFile(a);
+    if(a.kind==='scorm') panes.marking=paneMarking(a);
+  }
+  $('dFields').innerHTML = tabs.map(function(t,i){
+    return '<div class="adm-pane'+(i===0?' active':'')+'" data-pane="'+t[0]+'">'+panes[t[0]]+'</div>';
+  }).join('');
+
+  Array.prototype.forEach.call(document.querySelectorAll('#dTabs .adm-tab'),function(t){
+    t.onclick=function(){ stepTab(t.dataset.tab); };
+  });
+
+  if(a.kind==='ai_lesson'){
+    // The body and objectives live on the trainer lesson, so read them rather
+    // than guessing from the activity.
+    api.trainerAllLessons().then(function(all){
+      var l=(all||[]).filter(function(x){return x.id===a.lesson_id;})[0];
+      if(!l) return;
+      $('x-body').value=l.body||'';
+      $('x-obj').value=(l.objectives||[]).join('\n');
+      if(l.teaching_brief){
+        BRIEF.forEach(function(f){ var el=$('b-'+f[0]); if(el&&l.teaching_brief[f[0]]) el.value=l.teaching_brief[f[0]]; });
+        if(l.teaching_brief.house_rules && $('b-house')) $('b-house').value=l.teaching_brief.house_rules;
+      }
+    }).catch(function(){});
+    $('x-draft').onclick=draftFromMaterial;
+    wireDrop('x-drop','x-file',onTeachingFile);
+    // The material textarea is where people naturally drop the file too —
+    // accept it there instead of letting the browser open the document.
+    var body=$('x-body');
+    if(body){
+      body.addEventListener('dragover',function(e){ e.preventDefault(); });
+      body.addEventListener('drop',function(e){
+        e.preventDefault();
+        var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+        if(f) onTeachingFile(f);
+      });
+    }
+  } else {
+    wireDrop('x-drop','x-file',onAttachFile);
+    EXISTING_MAT=null;
+    if($('x-summarise')) $('x-summarise').onclick=function(){ summariseMaterial(a); };
+    // A step that already carries a material: show its saved description so
+    // a rename or a rewrite does not start from a blank box.
+    if(a.material_id){
+      api.listCourseMaterials(TOPIC.topic_id).then(function(r){
+        var m=((r&&r.materials)||[]).filter(function(x){return x.id===a.material_id;})[0];
+        if(!m) return;
+        EXISTING_MAT=m;
+        if($('x-desc') && !$('x-desc').value) $('x-desc').value=m.description||'';
+        if($('x-title') && titleIsDefault($('x-title').value,a) && m.title && !/\.(zip|pdf|docx?|pptx?)$/i.test(m.title)) $('x-title').value=m.title;
+      }).catch(function(){});
+    }
+  }
+
+  $('dlgBackdrop').classList.add('on');
+  $('dlg').classList.add('on');
+}
+
+// A file chosen for an AI session: read its text for the bot, and keep the
+// original for the learner. The upload happens on Save, not now, so cancelling
+// leaves nothing behind.
+async function onTeachingFile(file){
+  pending=file;
+  $('x-filemeta').innerHTML='<div class="adm-file"><span class="nm">'+esc(file.name)+
+    '</span><span class="sz">'+fmtSize(file.size)+'</span></div>';
+  $('x-busy').textContent='Reading the document…';
+  try{
+    var text=await extractText(file);
+    if(!text || text.trim().length<40){
+      // The drawer covers the page banner, so say it HERE, where the author is looking.
+      $('x-busy').textContent='No text could be read from that file. If it is a scan or a photo of a page, the words are an image — type or paste the material in instead.';
+      $('x-busy').style.color='var(--amber)';
+      return;
+    }
+    $('x-body').value=text.trim();
+    $('x-busy').style.color='';
+    $('x-busy').textContent='Read '+text.trim().length.toLocaleString()+' characters. Check it below, then draft the key elements.';
+    banner('');
+  }catch(e){
+    $('x-busy').textContent=e.message;
+    $('x-busy').style.color='var(--red)';
+  }
+}
+
+// A file chosen for a material or SCORM step — nothing to extract.
+function onAttachFile(file){
+  pending=file;
+  $('x-filemeta').innerHTML='<div class="adm-file"><span class="nm">'+esc(file.name)+
+    '</span><span class="sz">'+fmtSize(file.size)+'</span></div>';
+  // A file name is not a title. Offer a readable one; the author can change it.
+  var t=$('x-title');
+  if(t && editing && titleIsDefault(t.value,editing)){ var guess=titleFromFileName(file.name); if(guess) t.value=guess; }
+  $('x-busy').textContent=file.size>MAX_INLINE
+    ? 'Over 10 MB — this will go to cloud storage if it is configured.'
+    : 'Ready to save.';
+}
+
+// Ask the server to propose key elements from the material. Anything it
+// cannot quote from the document is dropped before it reaches this page.
+// Everything this reports must appear IN THE DRAWER, next to the button the
+// author just pressed — the page banner is hidden behind the drawer, which
+// made every outcome here look like "nothing happened".
+function draftNote(html,color){
+  $('x-drafted').innerHTML='<div style="margin-top:10px;font-size:12.5px;line-height:1.5;color:'+
+    (color||'var(--slate2)')+'">'+html+'</div>';
+}
+async function draftFromMaterial(){
+  var text=($('x-body').value||'').trim();
+  if(text.length<200){
+    draftNote('There is not enough material to draft from yet — go to the <b>Material</b> tab and upload a document or paste the text first.','var(--amber)');
+    return;
+  }
+  var btn=$('x-draft');
+  btn.disabled=true; btn.textContent='Reading the material…';
+  draftNote('Reading the material and drafting key elements…');
+  try{
+    var r=await api.draftLesson({title:$('x-title').value||editing.title,text:text});
+    var objs=(r.objectives||[]);
+    if(!objs.length){
+      draftNote('Nothing could be drafted that was actually quotable from this material. Write the key elements by hand, one per line below.','var(--amber)');
+    }else{
+      $('x-obj').value=objs.map(function(o){return o.text;}).join('\n');
+      $('x-drafted').innerHTML=
+        '<div style="margin-top:10px;font-size:12.5px;color:var(--green);font-weight:600">Drafted '+objs.length+
+          ' key element'+(objs.length===1?'':'s')+', each quoted from the document.'+
+          (r.note?' '+esc(r.note):'')+' Edit them below — they are yours, not the model’s.</div>'+
+        '<div style="margin-top:6px">'+objs.map(function(o){
+          return '<div class="adm-obj"><div class="adm-grow"><b>'+esc(o.text)+'</b>'+
+            '<div class="q">from the document: “'+esc(o.quote)+'”</div></div></div>';
+        }).join('')+'</div>';
+    }
+  }catch(e){
+    draftNote('Could not draft from the material: <b>'+esc(e.message)+'</b>'+
+      (/No AI model|not configured|ai_not_configured/i.test(e.message)
+        ? '<br>AI drafting needs the AI key set on the server (see the runbook). You can still write the key elements yourself, one per line below — everything else works.'
+        : ''),'var(--red)');
+  }finally{
+    btn.disabled=false; btn.textContent='Draft from the material';
+  }
+}
+
+$('dSave').onclick=async function(){
+  var a=editing; if(!a) return;
+  var btn=$('dSave'); btn.disabled=true; var was=btn.textContent; btn.textContent='Saving…';
+  try{
+    if(a.kind==='ai_lesson'){
+      var body=($('x-body').value||'').trim();
+      if(body.length<40){ $('dStatus').textContent='Nothing to teach from yet.'; stepTab('material'); banner('Give the trainer something to teach from — upload a document or paste the material.','err'); return; }
+
+      // Keep the source document alongside the lesson, so a staff member can read
+      // what they were taught from and an admin can see where it came from.
+      var materialId=null;
+      if(pending){
+        $('x-busy').textContent='Storing the document…';
+        var mat=await uploadMaterial(TOPIC.topic_id,pending,'file');
+        materialId=(mat&&(mat.id||(mat.material&&mat.material.id)))||null;
+      }
+
+      await api.trainerSaveLessons([{
+        id:a.lesson_id,
+        title:$('x-title').value.trim()||a.title,
+        body:body,
+        objectives:$('x-obj').value.split('\n').map(function(s){return s.trim();}).filter(Boolean),
+        course_id:TOPIC.topic_id,
+        duration_min:30,
+        active:false,
+        teaching_brief:readBrief(),
+        source_material_id:materialId
+      }]);
+      await api.saveActivities(TOPIC.topic_id,[Object.assign({},a,{title:$('x-title').value.trim()||a.title})]);
+
+    }else{
+      var url=($('x-url')&&$('x-url').value.trim())||'';
+      if(!pending && !url && !a.material_id){ $('dStatus').textContent='No file or link yet.'; banner('Upload a file or give it a URL.','err'); return; }
+
+      var m;
+      var mTitle=$('x-title').value.trim()||a.title;
+      var mDesc=($('x-desc')&&$('x-desc').value.trim())||'';
+      if(pending){
+        $('x-busy').textContent='Uploading…';
+        m=await uploadMaterial(TOPIC.topic_id,pending,a.kind==='scorm'?'scorm':'file',mTitle,mDesc);
+      }else if(a.material_id && !url){
+        // Nothing new attached: this is a rename / description edit of the material already on the step.
+        m=await api.updateCourseMaterial(TOPIC.topic_id,a.material_id,{title:mTitle,description:mDesc});
+      }else{
+        m=await api.addCourseMaterial(TOPIC.topic_id,{
+          title:mTitle,
+          description:mDesc,
+          kind:a.kind==='scorm'?'scorm':'link',
+          url:url
+        });
+      }
+      var patch=Object.assign({},a,{
+        title:$('x-title').value.trim()||a.title,
+        material_id:(m&&(m.id||(m.material&&m.material.id)))||a.material_id
+      });
+      if($('x-pass')) patch.pass_score=Number($('x-pass').value);
+      await api.saveActivities(TOPIC.topic_id,[patch]);
+    }
+
+    closeEditor();
+    TOPIC=await api.getTopic(TOPIC.topic_id);
+    banner(''); await loadTopics(); renderDetail();
+  }catch(e){ banner('Could not save: '+esc(e.message),'err'); }
+  finally{ btn.disabled=false; btn.textContent=was; }
+};
+$('dCancel').onclick=closeEditor;
+$('dClose').onclick=closeEditor;
+$('dlgBackdrop').onclick=closeEditor;
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape' && $('dlg').classList.contains('on')) closeEditor();
+});
+
+// ─── create ────────────────────────────────────────────────────
+$('create').onclick=async function(){
+  var title=$('f-title').value.trim();
+  if(!title){ banner('Give the course a title first.','err'); $('f-title').focus(); return; }
+  try{
+    var t=await api.createTopic({
+      title:title,
+      summary:$('f-sum').value.trim()||null,
+      welcome:$('f-wel').value.trim()||null,
+      gate:$('f-gate').value,
+      steps:[{kind:$('f-first').value}]
+    });
+    $('f-title').value=''; $('f-sum').value=''; $('f-wel').value='';
+    TOPIC=t; selected=t.topic_id;
+    banner('Created <b>'+esc(t.title)+'</b>. Add the rest of the sequence below, attach the content, then publish.','ok');
+    await loadTopics(); renderDetail();
+  }catch(e){ banner('Could not create the course: '+esc(e.message),'err'); }
+};
+
+loadTopics();
+})();
+</script>
+</body>
+</html>

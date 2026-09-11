@@ -296,6 +296,54 @@ router.get('/enrolments/mine', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ─── The catalogue ───────────────────────────────────────────────────
+// Every topic a learner may open — those with at least one published step —
+// with the learner's own enrolment beside each, so a home page can show
+// "continue", "assigned to you" and "available" from one call. The hub's
+// look (accent, photo) travels with it so cards can be drawn in the topic's
+// own colour. Draft topics are not here: nothing reaches a learner until
+// the author publishes it.
+router.get('/catalogue', requireAuth, async (req, res, next) => {
+  try {
+    const me = userId(req);
+    const all = await topics.listTopics();
+    const live = all.filter((t) => t.published > 0);
+    const hubs = require('../services/hubStore');
+    const mine = new Map((await store.listEnrolmentsForLawyer(me)).map((e) => [e.course_id, e]));
+    const out = [];
+    for (const t of live) {
+      const mods = await store.listModules(t.topic_id);
+      const m = mods[0] || {};
+      let hub = null;
+      try { hub = hubs.getHub(t.topic_id); } catch (_) { hub = null; }
+      const e = mine.get(t.topic_id) || null;
+      out.push({
+        topic_id: t.topic_id,
+        title: t.title,
+        summary: m.summary || null,
+        welcome: m.welcome || null,
+        gate: m.gate || 'none',
+        steps: t.published,
+        counts: t.counts,
+        learners: t.learners,
+        updated_at: t.updated_at,
+        accent: hub && hub.accent ? hub.accent : null,
+        hero_url: hub && hub.has_hero_upload
+          ? `${req.protocol}://${req.get('host')}/api/v1/hubs/${encodeURIComponent(t.topic_id)}/hero?v=${encodeURIComponent(String(hub.hero_updated_at || '').replace(/\D/g, '') || '1')}`
+          : (hub && hub.hero_image ? hub.hero_image : null),
+        enrolment: e ? {
+          status: e.status, percent: e.percent, source: e.source,
+          required_done: e.required_done, required_total: e.required_total,
+          total_seconds: e.total_seconds, started_at: e.started_at,
+          last_active_at: e.last_active_at, completed_at: e.completed_at,
+          assigned_by_name: e.assigned_by_name || null, due_at: e.due_at || null, note: e.note || null,
+        } : null,
+      });
+    }
+    res.json({ topics: out });
+  } catch (e) { next(e); }
+});
+
 // ─── Assignment ──────────────────────────────────────────────────────
 // Publishing makes a topic reachable; it puts it in front of nobody. An
 // assignment is the Department (or a firm's compliance officer, for their
@@ -319,12 +367,15 @@ function assignmentLog(a) {
       a.meta ? JSON.stringify(a.meta) : null, new Date().toISOString());
   } catch (e) { log.error('activity_log_failed', { error: e.message }); }
 }
-function notifyLawyer(lawyerId, title, body, by) {
+// The notifications table addresses lawyers and firms; a staff learner is
+// addressed by the same id under recipient_type 'staff', which /mine reads.
+function notifyLearner(learner, title, body, by) {
   try {
     db.prepare('INSERT INTO notifications (id, recipient_type, recipient_id, title, body, level, created_by) VALUES (?,?,?,?,?,?,?)')
-      .run(rid('NT'), 'lawyer', lawyerId, title, body, 'info', by || 'LAD');
+      .run(rid('NT'), learner.kind === 'staff' ? 'staff' : 'lawyer', learner.id, title, body, 'info', by || require('../brand').name);
   } catch (e) { log.error('notify_failed', { error: e.message }); }
 }
+const learners = require('../services/learners');
 
 // Topics that can be assigned right now: those with at least one published
 // step. A draft topic is not offered — assigning it would put an empty hub
@@ -334,6 +385,14 @@ router.get('/assignable', requireRole(...ASSIGN_ROLES), async (_req, res, next) 
     const all = await topics.listTopics();
     res.json({ topics: all.filter((t) => t.published > 0) });
   } catch (e) { next(e); }
+});
+
+// Staff learners who can be assigned a course — the assign dialog's search
+// on a staff-training instance. LAD roles only; a firm officer assigns
+// within their own firm through the lawyer search instead.
+router.get('/learners/search', requireRole(...LAD_REPORT_ROLES), (req, res) => {
+  const q = String(req.query.q || '').trim();
+  res.json({ learners: q ? learners.searchStaffLearners(q) : learners.listStaffLearners().slice(0, 50) });
 });
 
 router.post('/courses/:courseId/assign', requireRole(...ASSIGN_ROLES), async (req, res, next) => {
@@ -354,8 +413,9 @@ router.post('/courses/:courseId/assign', requireRole(...ASSIGN_ROLES), async (re
     const mods = await store.listModules(courseId);
     const topicTitle = mods.length ? mods[0].title : courseId;
 
-    // Who: explicit lawyer ids, a whole firm, or both. A firm officer is
-    // confined to their own firm whatever the request says.
+    // Who: explicit learner ids (lawyers or staff), a whole firm, every staff
+    // learner on the instance, or any mix. A firm officer is confined to
+    // their own firm whatever the request says.
     const officerFirm = isLAD(req) ? null : (req.user.firm_id || null);
     if (!isLAD(req) && !officerFirm) return res.status(403).json({ error: 'Forbidden — no firm context for this account' });
 
@@ -367,22 +427,29 @@ router.post('/courses/:courseId/assign', requireRole(...ASSIGN_ROLES), async (re
       for (const l of lawyers.getLawyersByFirm(firmId)) {
         const st = String(l.status || 'active').toLowerCase();
         if (['inactive', 'resigned', 'non-practising'].includes(st)) continue;
-        wanted.set(l.id, l);
+        wanted.set(l.id, Object.assign({ firm_id: firmId, kind: 'lawyer' }, l));
       }
     }
-    if (!wanted.size) return res.status(400).json({ error: 'nobody', message: 'Choose at least one lawyer, or a firm.' });
+    // "Everyone": every active staff learner. LAD roles only — a firm officer
+    // has no business enrolling the Department's own people.
+    if (b.everyone === true && isLAD(req)) {
+      for (const s of learners.listStaffLearners()) wanted.set(s.id, s);
+    }
+    if (!wanted.size) return res.status(400).json({ error: 'nobody', message: 'Choose at least one person, a firm, or everyone.' });
 
-    const actor = { id: userId(req), name: req.user.name || (isLAD(req) ? 'The Department' : 'Your firm') };
+    const brandName = require('../brand').name;
+    const actor = { id: userId(req), name: req.user.name || (isLAD(req) ? brandName : 'Your firm') };
     const out = { topic_id: courseId, title: topicTitle, assigned: [], already: [], skipped: [] };
 
     for (const [id, pre] of wanted) {
-      // getLawyersByFirm does not return firm_id; those rows came from the firm, so say so.
-      const l = pre ? Object.assign({ firm_id: firmId }, pre) : lawyers.getLawyerById(id);
+      const l = pre || learners.findLearner(id);
       if (!l) { out.skipped.push({ id, reason: 'not_found' }); continue; }
-      if (officerFirm && l.firm_id !== officerFirm) { out.skipped.push({ id, reason: 'not_your_firm' }); continue; }
+      if (officerFirm && (l.kind === 'staff' || l.firm_id !== officerFirm)) { out.skipped.push({ id, reason: 'not_your_firm' }); continue; }
+      if (String(l.status || 'active').toLowerCase() === 'suspended') { out.skipped.push({ id, reason: 'suspended' }); continue; }
 
+      const name = `${l.first_name || ''} ${l.last_name || ''}`.trim() || l.email || id;
       const existing = await store.getEnrolment(courseId, id);
-      if (existing) { out.already.push({ id, name: `${l.first_name || ''} ${l.last_name || ''}`.trim(), percent: existing.percent, status: existing.status }); continue; }
+      if (existing) { out.already.push({ id, name, percent: existing.percent, status: existing.status }); continue; }
 
       await store.ensureEnrolment(courseId, id, 'assigned');
       const ts = new Date().toISOString();
@@ -393,10 +460,9 @@ router.post('/courses/:courseId/assign', requireRole(...ASSIGN_ROLES), async (re
         );
       } catch (e) { log.warn('assignment_detail_failed', { error: e.message }); }
 
-      const name = `${l.first_name || ''} ${l.last_name || ''}`.trim() || id;
-      notifyLawyer(id,
+      notifyLearner({ id, kind: l.kind || 'lawyer' },
         `New training assigned: ${topicTitle}`,
-        `${actor.name} has assigned you the topic "${topicTitle}".` + (dueAt ? ` Please complete it by ${dueAt}.` : '') + (note ? ` Note: ${note}` : '') + ' Open it from My Learning on your dashboard.',
+        `${actor.name} has assigned you the course "${topicTitle}".` + (dueAt ? ` Please complete it by ${dueAt}.` : '') + (note ? ` Note: ${note}` : '') + ' Open it from My Learning on your dashboard.',
         actor.name);
       assignmentLog({
         firm_id: l.firm_id || null, lawyer_id: id, kind: 'course_assigned',
@@ -416,9 +482,9 @@ router.post('/courses/:courseId/assign', requireRole(...ASSIGN_ROLES), async (re
 router.delete('/courses/:courseId/assign/:lawyerId', requireRole(...ASSIGN_ROLES), async (req, res, next) => {
   try {
     const { courseId, lawyerId } = req.params;
-    const l = lawyers.getLawyerById(lawyerId);
-    if (!l) return res.status(404).json({ error: 'No such lawyer' });
-    if (!isLAD(req) && l.firm_id !== req.user.firm_id) return res.status(403).json({ error: 'Forbidden — not a lawyer at your firm' });
+    const l = learners.findLearner(lawyerId);
+    if (!l) return res.status(404).json({ error: 'No such learner' });
+    if (!isLAD(req) && (l.kind === 'staff' || l.firm_id !== req.user.firm_id)) return res.status(403).json({ error: 'Forbidden — not a lawyer at your firm' });
     const e = await store.getEnrolment(courseId, lawyerId);
     if (!e) return res.status(404).json({ error: 'Not enrolled' });
     const engine = require('../lms/engine');
@@ -427,7 +493,7 @@ router.delete('/courses/:courseId/assign/:lawyerId', requireRole(...ASSIGN_ROLES
     else await engine.run('DELETE FROM enrolment WHERE course_id = ? AND lawyer_id = ?', [courseId, lawyerId]);
     const mods = await store.listModules(courseId);
     const title = mods.length ? mods[0].title : courseId;
-    const actorName = req.user.name || (isLAD(req) ? 'The Department' : 'Your firm');
+    const actorName = req.user.name || (isLAD(req) ? require('../brand').name : 'Your firm');
     assignmentLog({ firm_id: l.firm_id || null, lawyer_id: lawyerId, kind: 'course_unassigned', actor_type: isLAD(req) ? 'admin' : 'firm', actor_id: userId(req), actor_name: actorName, summary: `${actorName} removed "${title}" from ${`${l.first_name || ''} ${l.last_name || ''}`.trim() || lawyerId}`, ref_id: courseId });
     res.json({ ok: true, outcome: started ? 'withdrawn' : 'removed' });
   } catch (e) { next(e); }

@@ -1,0 +1,135 @@
+/* ─────────────────────────────────────────────────────────────────────
+ * Living Horizon Training — the portal's one stylesheet
+ * ─────────────────────────────────────────────────────────────────────
+ * Tokens, the shell (top bar, footer), and the handful of components every
+ * page shares: buttons, cards, pills, forms, tables. Page-specific layout
+ * stays in the page. Change the palette here and the whole portal follows.
+ * ───────────────────────────────────────────────────────────────────── */
+:root {
+  --lh-ink:#132A3A;        /* text */
+  --lh-ink2:#3A4B58;
+  --lh-muted:#66737C;
+  --lh-faint:#9AA5AC;
+  --lh-teal:#0F6E77;       /* primary — the horizon line */
+  --lh-teal-d:#0B5057;
+  --lh-teal-soft:#E2F0F1;
+  --lh-teal-line:#B5D8DB;
+  --lh-sun:#E8A33D;        /* accent — the sun on it */
+  --lh-sun-d:#C7861F;
+  --lh-sun-soft:#FBF0DC;
+  --lh-paper:#F7F6F2;      /* page */
+  --lh-paper2:#EFEDE7;
+  --lh-white:#FFFFFF;
+  --lh-line:#E4E6E3;
+  --lh-line2:#D3D7D4;
+  --lh-green:#2E8B57;
+  --lh-green-soft:#E3F2E9;
+  --lh-red:#B23A3A;
+  --lh-red-soft:#F8E6E6;
+  --lh-display:'Fraunces',Georgia,'Times New Roman',serif;
+  --lh-sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --lh-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --lh-r:12px;
+  --lh-sh:0 1px 2px rgba(19,42,58,.04),0 4px 14px rgba(19,42,58,.06);
+  --lh-sh-lg:0 12px 40px rgba(19,42,58,.14);
+  --lh-nav-h:60px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--lh-paper);color:var(--lh-ink);font:15px/1.55 var(--lh-sans);-webkit-font-smoothing:antialiased}
+a{color:var(--lh-teal)}
+button,input,select,textarea{font-family:inherit}
+img{max-width:100%}
+
+/* ─── Shell: top bar ───────────────────────────────────────────── */
+.lh-nav{position:sticky;top:0;z-index:600;height:var(--lh-nav-h);background:var(--lh-ink);color:#fff;display:flex;align-items:center;gap:18px;padding:0 22px;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.lh-brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;flex-shrink:0}
+.lh-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(160deg,var(--lh-teal) 0%,var(--lh-teal) 55%,var(--lh-sun) 56%);position:relative;flex-shrink:0}
+.lh-mark::after{content:'';position:absolute;left:7px;right:7px;top:15px;height:2px;background:#fff;border-radius:2px;opacity:.9}
+.lh-brand b{font-family:var(--lh-display);font-weight:600;font-size:18px;letter-spacing:-.01em;line-height:1}
+.lh-brand small{display:block;font:600 9.5px/1 var(--lh-mono);letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:4px}
+.lh-links{display:flex;align-items:center;gap:2px;flex:1;min-width:0}
+.lh-links a{color:rgba(255,255,255,.78);text-decoration:none;font-size:13.5px;font-weight:500;padding:7px 12px;border-radius:8px;white-space:nowrap}
+.lh-links a:hover{background:rgba(255,255,255,.1);color:#fff}
+.lh-links a.active{background:rgba(255,255,255,.14);color:#fff}
+.lh-right{display:flex;align-items:center;gap:10px;margin-left:auto;flex-shrink:0}
+.lh-user{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:4px 12px 4px 5px;font-size:12.5px;font-weight:600;color:#fff;max-width:240px}
+.lh-user .dot{width:24px;height:24px;border-radius:50%;background:var(--lh-sun);color:var(--lh-ink);display:grid;place-items:center;font:700 10px var(--lh-sans);flex-shrink:0}
+.lh-user span.n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lh-user .r{font:600 9px var(--lh-mono);letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55);white-space:nowrap}
+.lh-signout{background:transparent;border:0;color:rgba(255,255,255,.65);font-size:12.5px;cursor:pointer;padding:6px 8px;border-radius:8px}
+.lh-signout:hover{color:#fff;background:rgba(255,255,255,.1)}
+@media (max-width:720px){.lh-nav{padding:0 14px;gap:10px}.lh-links{display:none}.lh-user{padding:4px 6px 4px 5px;gap:0}.lh-user .r,.lh-user span.n{display:none}.lh-brand b{font-size:16px}}
+html.lh-embed .lh-nav{display:none}
+
+/* ─── Shell: footer ────────────────────────────────────────────── */
+.lh-foot{max-width:1180px;margin:40px auto 0;padding:18px 22px 34px;border-top:1px solid var(--lh-line);color:var(--lh-faint);font:500 11.5px var(--lh-mono);letter-spacing:.04em;display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between}
+html.lh-embed .lh-foot{display:none}
+
+/* ─── Layout helpers ───────────────────────────────────────────── */
+.lh-wrap{max-width:1180px;margin:0 auto;padding:26px 22px 40px}
+.lh-eyebrow{font:600 10.5px var(--lh-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--lh-sun-d);margin-bottom:6px}
+.lh-h1{font-family:var(--lh-display);font-weight:500;font-size:clamp(28px,4vw,40px);line-height:1.08;letter-spacing:-.015em;margin:0 0 8px}
+.lh-h2{font-family:var(--lh-display);font-weight:500;font-size:22px;line-height:1.15;letter-spacing:-.01em;margin:26px 0 10px}
+.lh-lede{color:var(--lh-ink2);max-width:66ch;margin:0 0 18px;font-size:15px}
+.lh-muted{color:var(--lh-muted)}
+.lh-mono{font-family:var(--lh-mono)}
+
+/* ─── Buttons ──────────────────────────────────────────────────── */
+.lh-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1.5px solid var(--lh-teal);background:var(--lh-teal);color:#fff;font:600 13.5px var(--lh-sans);padding:10px 18px;border-radius:10px;cursor:pointer;text-decoration:none;transition:background .15s,border-color .15s,transform .1s;white-space:nowrap}
+.lh-btn:hover{background:var(--lh-teal-d);border-color:var(--lh-teal-d)}
+.lh-btn:active{transform:translateY(1px)}
+.lh-btn:disabled{opacity:.45;cursor:not-allowed}
+.lh-btn.sun{background:var(--lh-sun);border-color:var(--lh-sun);color:var(--lh-ink)}
+.lh-btn.sun:hover{background:var(--lh-sun-d);border-color:var(--lh-sun-d)}
+.lh-btn.ghost{background:transparent;color:var(--lh-teal)}
+.lh-btn.ghost:hover{background:var(--lh-teal-soft)}
+.lh-btn.light{background:var(--lh-white);border-color:var(--lh-line2);color:var(--lh-ink)}
+.lh-btn.light:hover{background:var(--lh-paper)}
+.lh-btn.danger{background:transparent;border-color:var(--lh-red);color:var(--lh-red)}
+.lh-btn.danger:hover{background:var(--lh-red-soft)}
+.lh-btn.sm{padding:7px 12px;font-size:12.5px;border-radius:8px}
+.lh-btn.xs{padding:5px 10px;font-size:11.5px;border-radius:7px}
+.lh-btn.block{width:100%}
+
+/* ─── Cards, pills, notes ──────────────────────────────────────── */
+.lh-card{background:var(--lh-white);border:1px solid var(--lh-line);border-radius:var(--lh-r);box-shadow:var(--lh-sh);padding:20px 22px}
+.lh-pill{display:inline-block;font:600 10px var(--lh-mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:999px;white-space:nowrap;background:var(--lh-paper2);color:var(--lh-muted);border:1px solid transparent}
+.lh-pill.teal{background:var(--lh-teal-soft);color:var(--lh-teal-d);border-color:var(--lh-teal-line)}
+.lh-pill.sun{background:var(--lh-sun-soft);color:var(--lh-sun-d)}
+.lh-pill.green{background:var(--lh-green);color:#fff}
+.lh-pill.red{background:var(--lh-red-soft);color:var(--lh-red)}
+.lh-note{border-radius:10px;padding:11px 15px;font-size:13px;line-height:1.5;border:1px solid var(--lh-line);background:var(--lh-white)}
+.lh-note.ok{background:var(--lh-green-soft);border-color:#BFE3CD;color:#1F5E3B}
+.lh-note.warn{background:var(--lh-sun-soft);border-color:#F1D9AE;color:#7A5312}
+.lh-note.err{background:var(--lh-red-soft);border-color:#EFC1C1;color:#8A2626}
+.lh-empty{color:var(--lh-muted);font-style:italic;padding:22px 0;text-align:center;font-size:13.5px}
+
+/* ─── Forms ────────────────────────────────────────────────────── */
+.lh-label{display:block;font:600 10px var(--lh-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--lh-muted);margin-bottom:6px}
+.lh-input,.lh-select,.lh-textarea{width:100%;font:14px var(--lh-sans);color:var(--lh-ink);background:var(--lh-white);border:1.5px solid var(--lh-line2);border-radius:9px;padding:10px 12px;transition:border-color .15s}
+.lh-input:focus,.lh-select:focus,.lh-textarea:focus{outline:none;border-color:var(--lh-teal);box-shadow:0 0 0 3px var(--lh-teal-soft)}
+.lh-textarea{min-height:96px;resize:vertical;line-height:1.55}
+.lh-field{margin-bottom:14px}
+.lh-help{font-size:11.5px;color:var(--lh-muted);margin-top:5px;line-height:1.45}
+
+/* ─── Progress ─────────────────────────────────────────────────── */
+.lh-track{height:8px;background:var(--lh-paper2);border-radius:99px;overflow:hidden}
+.lh-track i{display:block;height:100%;background:linear-gradient(90deg,var(--lh-teal),var(--lh-sun));border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* ─── Tables ───────────────────────────────────────────────────── */
+.lh-table{width:100%;border-collapse:collapse;font-size:13px}
+.lh-table th{font:600 10px var(--lh-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--lh-muted);text-align:left;padding:9px 12px;background:var(--lh-paper);border-bottom:1px solid var(--lh-line)}
+.lh-table td{padding:10px 12px;border-bottom:1px solid var(--lh-line);vertical-align:middle}
+.lh-table tbody tr:hover{background:var(--lh-paper)}
+.lh-scroll{overflow-x:auto}
+
+/* ─── Session expired bar ──────────────────────────────────────── */
+#lh-expired{position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--lh-ink);color:#fff;padding:12px 18px;display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;font:600 13.5px var(--lh-sans);box-shadow:0 4px 14px rgba(0,0,0,.3)}
+#lh-expired button{background:var(--lh-sun);color:var(--lh-ink);border:0;border-radius:8px;padding:8px 16px;font:600 13px var(--lh-sans);cursor:pointer}
+
+/* ─── Toast ────────────────────────────────────────────────────── */
+.lh-toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--lh-ink);color:#fff;padding:12px 20px;border-radius:10px;font:500 13.5px var(--lh-sans);box-shadow:var(--lh-sh-lg);opacity:0;transition:all .22s;z-index:1200;pointer-events:none;max-width:92vw}
+.lh-toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.lh-toast.err{background:var(--lh-red)}
+@media (prefers-reduced-motion:reduce){.lh-track i{transition:none}.lh-toast{transition:none}}

@@ -794,14 +794,23 @@ async function getOutline(courseId, lawyerId = null, { includeUnpublished = fals
 
 // ─── Reporting ───────────────────────────────────────────────────────
 
+// A learner is a row in `lawyers` on the CLPD platform and a row in `staff`
+// on a staff-training instance; the spine only knows their id. Both are
+// joined and the first name that exists wins, so a staff learner is not an
+// anonymous id on the cohort page.
+const LEARNER_NAME = `COALESCE(NULLIF(TRIM(COALESCE(l.first_name, '') || ' ' || COALESCE(l.last_name, '')), ''),
+                               NULLIF(TRIM(COALESCE(s.first_name, '') || ' ' || COALESCE(s.last_name, '')), ''))`;
+
 async function cohort(courseId) {
   const enrolments = await db.all(
     `SELECT e.*,
-            TRIM(COALESCE(l.first_name, '') || ' ' || COALESCE(l.last_name, '')) AS lawyer_name,
-            l.email AS lawyer_email,
-            l.firm_id AS firm_id
+            ${LEARNER_NAME} AS lawyer_name,
+            COALESCE(l.email, s.email) AS lawyer_email,
+            COALESCE(l.firm_id, s.firm_id) AS firm_id,
+            CASE WHEN l.id IS NOT NULL THEN 'lawyer' WHEN s.id IS NOT NULL THEN 'staff' ELSE NULL END AS learner_kind
      FROM enrolment e
      LEFT JOIN lawyers l ON l.id = e.lawyer_id
+     LEFT JOIN staff   s ON s.id = e.lawyer_id
      WHERE e.course_id = ?
      ORDER BY e.percent DESC, e.last_active_at DESC`,
     [courseId]
@@ -911,7 +920,7 @@ async function overview({ days = 30, staleDays = 14, coldHours = 2 } = {}) {
 
     db.all(
       `SELECT e.course_id,
-              c.title                                               AS course_title,
+              COALESCE(c.title, m.title)                            AS course_title,
               COUNT(*)                                              AS enrolled,
               COALESCE(ROUND(AVG(e.percent)), 0)                    AS avg_percent,
               SUM(CASE WHEN e.status = 'completed' THEN 1 ELSE 0 END) AS completed,
@@ -921,7 +930,8 @@ async function overview({ days = 30, staleDays = 14, coldHours = 2 } = {}) {
               MAX(e.last_active_at)                                 AS last_active_at
        FROM enrolment e
        LEFT JOIN courses c ON c.id = e.course_id
-       GROUP BY e.course_id, c.title
+       LEFT JOIN course_module m ON m.course_id = e.course_id AND m.position = 0
+       GROUP BY e.course_id, c.title, m.title
        ORDER BY enrolled DESC, avg_percent ASC`,
       [staleBefore]
     ),
@@ -944,14 +954,16 @@ async function overview({ days = 30, staleDays = 14, coldHours = 2 } = {}) {
     // Started, not finished, and gone quiet. The chase list.
     db.all(
       `SELECT e.lawyer_id, e.course_id, e.percent, e.last_active_at, e.total_seconds,
-              TRIM(COALESCE(l.first_name, '') || ' ' || COALESCE(l.last_name, '')) AS lawyer_name,
-              l.email AS lawyer_email, l.firm_id AS firm_id,
+              ${LEARNER_NAME} AS lawyer_name,
+              COALESCE(l.email, s.email) AS lawyer_email, l.firm_id AS firm_id,
               f.name  AS firm_name,
-              c.title AS course_title
+              COALESCE(c.title, m.title) AS course_title
        FROM enrolment e
        LEFT JOIN lawyers l ON l.id = e.lawyer_id
+       LEFT JOIN staff   s ON s.id = e.lawyer_id
        LEFT JOIN firms   f ON f.id = l.firm_id
        LEFT JOIN courses c ON c.id = e.course_id
+       LEFT JOIN course_module m ON m.course_id = e.course_id AND m.position = 0
        WHERE e.status = 'active'
          AND e.percent > 0 AND e.percent < 100
          AND e.last_active_at < ?
@@ -975,14 +987,15 @@ async function overview({ days = 30, staleDays = 14, coldHours = 2 } = {}) {
     // content problem, not a learner problem.
     db.all(
       `SELECT a.id, a.title, a.kind, a.course_id,
-              c.title AS course_title,
+              COALESCE(c.title, m.title) AS course_title,
               SUM(CASE WHEN p.status = 'in_progress' THEN 1 ELSE 0 END)        AS stalled,
               SUM(CASE WHEN p.status IN ('completed','passed') THEN 1 ELSE 0 END) AS finished
        FROM activity a
        JOIN activity_progress p ON p.activity_id = a.id
        LEFT JOIN courses c ON c.id = a.course_id
+       LEFT JOIN course_module m ON m.course_id = a.course_id AND m.position = 0
        WHERE a.published = 1 AND a.required = 1
-       GROUP BY a.id, a.title, a.kind, a.course_id, c.title
+       GROUP BY a.id, a.title, a.kind, a.course_id, c.title, m.title
        -- The aggregate is repeated rather than referenced by its alias:
        -- SQLite accepts an output alias in HAVING, Postgres does not, and
        -- engine.js's contract is that this subsystem ports unchanged.

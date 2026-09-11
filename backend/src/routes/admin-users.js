@@ -29,7 +29,9 @@ const { requireRole } = require('../middleware/requireRole');
 const passwords = require('../services/passwords');
 
 // ─── Role rules ─────────────────────────────────────────────────────────
-const ALL_ROLES = ['lawyer', 'firm_compliance_officer', 'lad_intelligence', 'lad_admin', 'lad_super_admin', 'provider_admin'];
+// lad_staff is the internal staff LEARNER: no oversight, no CLPD machinery —
+// the account that takes courses on the staff-training portal.
+const ALL_ROLES = ['lawyer', 'firm_compliance_officer', 'lad_intelligence', 'lad_staff', 'lad_admin', 'lad_super_admin', 'provider_admin'];
 const ADMIN_ROLES = ['lad_admin', 'lad_super_admin'];
 
 // What roles can the actor create?

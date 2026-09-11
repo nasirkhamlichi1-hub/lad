@@ -44,9 +44,13 @@ if (!clientId || !clientSecret) {
 const _env = (process.env.NODE_ENV || '').toLowerCase().trim();
 const _isDev = _env === 'development' || _env === 'dev' || _env === 'local' || _env === 'test';
 
+// Which organisation this instance serves (APP_BRAND) — see src/brand.js.
+const brand = require('./brand');
+
 module.exports = {
   nodeEnv:  process.env.NODE_ENV || 'production',
   isDev:    _isDev,
+  brand,
   port:     parseInt(process.env.PORT || '4000', 10),
   corsOrigin: process.env.CORS_ORIGIN || process.env.CORS_ORIGINS || 'http://localhost:8080',
   publicApiBase: process.env.PUBLIC_API_BASE || 'http://localhost:4000',
@@ -89,7 +93,7 @@ module.exports = {
     // only needs ANAM_API_KEY set; override ANAM_AVATAR_ID to pick another.
     avatarId: process.env.ANAM_AVATAR_ID || '6cc28442-cccd-42a8-b6e4-24b7210a09c5',
     voiceId:  process.env.ANAM_VOICE_ID || '',            // optional specific Anam voice
-    name:     process.env.ANAM_AVATAR_NAME || 'CLPD Trainer',
+    name:     process.env.ANAM_AVATAR_NAME || `${brand.name} Trainer`,
   },
 
   // ─── ElevenLabs (the trainer's VOICE) ────────────────────────────────
@@ -148,7 +152,7 @@ module.exports = {
     secure:   String(process.env.SMTP_SECURE || '').toLowerCase() === 'true',
     user:     process.env.SMTP_USER || '',
     from:     process.env.MAIL_FROM || '',
-    fromName: process.env.MAIL_FROM_NAME || 'LAD CLPD',
+    fromName: process.env.MAIL_FROM_NAME || brand.mailFromName,
     configured: !!(process.env.SMTP_HOST || '').trim(),
   },
 };

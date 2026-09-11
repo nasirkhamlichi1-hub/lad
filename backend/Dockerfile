@@ -46,7 +46,8 @@ VOLUME ["/app/data"]
 
 ENV NODE_ENV=production \
     PORT=4000 \
-    LOG_LEVEL=info
+    LOG_LEVEL=info \
+    APP_BRAND=lad
 
 USER app
 EXPOSE 4000
@@ -57,10 +58,8 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
 
 # tini reaps zombies and forwards SIGTERM cleanly — required for graceful shutdown
 ENTRYPOINT ["/sbin/tini", "--"]
-# Zero-downtime boot: apply schema migrations (fast), then START THE SERVER
-# IMMEDIATELY so the health check passes within ~2s and Render's rolling deploy
-# never drops traffic. All data seeding runs in the BACKGROUND (own process, so
-# it can't block the event loop); the app also self-heals feedback/accredited
-# data lazily. SQLite WAL + busy_timeout lets the seed and the live server share
-# the file safely.
-CMD ["sh", "-c", "node scripts/migrate.js || true; { node scripts/seed-if-needed.js; node scripts/seed-feedback.js; node scripts/seed-accredited.js; node scripts/seed-hubs.js; node scripts/seed-faq.js; node scripts/dedupe-firms.js; } & exec node src/server.js"]
+# Boot sequence lives in scripts/boot.sh: migrate, start the server at once,
+# seed in the background. What is seeded depends on APP_BRAND — the CLPD
+# dataset for the Legal Affairs Department, nothing but the bootstrap admin
+# for Living Horizon.
+CMD ["sh", "scripts/boot.sh"]

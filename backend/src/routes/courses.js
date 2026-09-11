@@ -296,19 +296,21 @@ function canAccessMaterials(courseId, user) {
   if (course && !store.canAccessCourse(course, user)) return false;
 
   if (user && user.role === 'firm_compliance_officer') return true;
-  if (user && user.user_type === 'lawyer') {
+  if (!user || !user.sub) return false;
+  if (user.user_type === 'lawyer') {
     try {
       const b = db.prepare("SELECT 1 FROM bookings WHERE lawyer_id = ? AND course_id = ? AND status NOT IN ('cancelled','refunded') LIMIT 1").get(user.sub, courseId);
       if (b) return true;
     } catch (_) { /* fall through to the enrolment check */ }
-    // Enrolled on the topic through the learning spine — the same claim on the
-    // material as a booking gives on a scheduled course.
-    try {
-      const e = db.prepare("SELECT 1 FROM enrolment WHERE lawyer_id = ? AND course_id = ? LIMIT 1").get(user.sub, courseId);
-      return !!e;
-    } catch (_) { return false; }
   }
-  return false;
+  // Enrolled on the topic through the learning spine — the same claim on the
+  // material as a booking gives on a scheduled course. Any signed-in learner,
+  // not only a lawyer: on a staff-training instance the learners are staff
+  // accounts, and this used to answer them 403 on every policy document.
+  try {
+    const e = db.prepare("SELECT 1 FROM enrolment WHERE lawyer_id = ? AND course_id = ? LIMIT 1").get(user.sub, courseId);
+    return !!e;
+  } catch (_) { return false; }
 }
 const materialMeta = (m) => ({
   id: m.id, course_id: m.course_id, title: m.title, kind: m.kind,
