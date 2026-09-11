@@ -1,0 +1,47 @@
+name: living-horizon-swa
+
+# Deploys ./living-horizon (the Living Horizon staff-training portal) to its
+# own Azure Static Web App on every push to main that touches it. A separate
+# app from the CLPD front end: separate URL, separate deploy token, separate
+# backend (APP_BRAND=living-horizon).
+#
+# Secret to add in GitHub → Settings → Secrets and variables → Actions:
+#   AZURE_SWA_API_TOKEN_LIVING_HORIZON   the Static Web App's deployment token
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'living-horizon/**'
+      - '.github/workflows/living-horizon-swa.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: deploy Living Horizon portal to Azure SWA
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check deploy token
+        id: cfg
+        env:
+          TOKEN: ${{ secrets.AZURE_SWA_API_TOKEN_LIVING_HORIZON }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Deploy skipped — add the AZURE_SWA_API_TOKEN_LIVING_HORIZON secret (Static Web App → Manage deployment token)."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy to Azure Static Web Apps
+        if: steps.cfg.outputs.ready == 'true'
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_SWA_API_TOKEN_LIVING_HORIZON }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: living-horizon
+          # No api_location — the Express backend runs on App Service.
+          output_location: ''
+          skip_app_build: true

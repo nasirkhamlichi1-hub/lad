@@ -230,7 +230,8 @@ app.get('/api/v1/health', (_req, res) => {
   const dbOk = db.ping();
   res.status(dbOk ? 200 : 503).json({
     status: dbOk ? 'ok' : 'degraded',
-    service: 'lad-clpd-backend',
+    service: config.brand.service,
+    brand: config.brand.id,
     version: pkg.version,
     env: config.nodeEnv,
     timestamp: new Date().toISOString(),
@@ -240,7 +241,14 @@ app.get('/api/v1/health', (_req, res) => {
 });
 
 app.get('/api/v1/version', (_req, res) => {
-  res.json({ name: pkg.name, version: pkg.version, env: config.nodeEnv });
+  res.json({ name: pkg.name, version: pkg.version, env: config.nodeEnv, brand: config.brand.id });
+});
+
+// Which organisation this instance serves — the portal reads it on boot to
+// put the right name on the page. Public: it is the name on the door.
+app.get('/api/v1/brand', (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=300');
+  res.json(config.brand.public());
 });
 
 // API routes (all under /api/v1)
@@ -297,24 +305,31 @@ if (config.isDev) {
   // second server, and no CORS in the way. In production the frontend is
   // a separate Azure Static Web App and this never runs.
   const fs = require('fs');
+  // The portals are ordinary pages with inline script and styles; the API's
+  // default-src 'none' policy would break them. They load Google Fonts, and
+  // runtime-config points the API at an absolute localhost origin in
+  // development — which is not 'self' when the page is opened on 127.0.0.1,
+  // and is http rather than https. Both have to be allowed or every portal
+  // loads unstyled and blank.
+  const portalHeaders = (res) => {
+    res.setHeader('Content-Security-Policy',
+      "default-src 'self'; img-src 'self' data: https:; " +
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+      "connect-src 'self' http://localhost:* http://127.0.0.1:* https:; " +
+      "font-src 'self' data: https://fonts.gstatic.com https:; media-src 'self' blob: https:; " +
+      "frame-src 'self' http://localhost:* http://127.0.0.1:* https:");
+  };
   if (fs.existsSync(FRONTEND)) {
-    app.use('/app', express.static(FRONTEND, {
-      setHeaders: (res) => {
-        // The portals are ordinary pages with inline script and styles;
-        // the API's default-src 'none' policy would break them.
-        // The portals load Google Fonts, and runtime-config points the API at
-        // an absolute localhost origin in development — which is not 'self'
-        // when the page is opened on 127.0.0.1, and is http rather than https.
-        // Both have to be allowed or every portal loads unstyled and blank.
-        res.setHeader('Content-Security-Policy',
-          "default-src 'self'; img-src 'self' data: https:; " +
-          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
-          "connect-src 'self' http://localhost:* http://127.0.0.1:* https:; " +
-          "font-src 'self' data: https://fonts.gstatic.com https:; media-src 'self' blob: https:");
-      },
-    }));
+    app.use('/app', express.static(FRONTEND, { setHeaders: portalHeaders }));
     log.info('frontend_mounted', { url: `http://localhost:${config.port}/app/` });
+  }
+  // The Living Horizon staff-training portal — a separate front end on the
+  // same API, served here in development so one `npm start` runs it all.
+  const LIVING_HORIZON = path.join(__dirname, '..', '..', 'living-horizon');
+  if (fs.existsSync(LIVING_HORIZON)) {
+    app.use('/lh', express.static(LIVING_HORIZON, { setHeaders: portalHeaders }));
+    log.info('living_horizon_mounted', { url: `http://localhost:${config.port}/lh/` });
   }
   app.get('/playground', (_req, res) => {
     res.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'");

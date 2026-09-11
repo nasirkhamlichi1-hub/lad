@@ -1,5 +1,7 @@
 'use strict';
 
+const L = require('../brand').learnerNoun;
+
 // The trainer's BRAIN for the scalable engine — Claude (Anthropic).
 // ---------------------------------------------------------------------
 // Given the lesson, the conversation so far, and what the camera currently
@@ -32,7 +34,7 @@ function isConfigured() {
 function perceptionNote(p) {
   if (!p) return '';
   const bits = [];
-  if (p.present === false) bits.push('the lawyer has stepped out of the camera frame');
+  if (p.present === false) bits.push(`the ${L} has stepped out of the camera frame`);
   if (p.phone) bits.push('a phone is visible in their hand');
   if (p.attention === 'distracted') bits.push('they look distracted / are looking away');
   if (p.attention === 'away') bits.push('they are not looking at the screen');
@@ -55,7 +57,7 @@ function systemFor(lesson, resume) {
     parts.push(
       '',
       '--- RESUMING A PREVIOUS SESSION ---',
-      `The lawyer has already covered about ${Math.round(resume.percent || 0)}% of this lesson. Here is the recap so you can continue without repeating:`,
+      `The ${L} has already covered about ${Math.round(resume.percent || 0)}% of this lesson. Here is the recap so you can continue without repeating:`,
       resume.context,
       'Greet them back briefly, then continue from where they left off.'
     );
@@ -83,7 +85,7 @@ function toMessages(history, perception) {
   // last user message (or add one if the last turn was the assistant's).
   const note = perceptionNote(perception);
   if (!msgs.length) {
-    msgs.push({ role: 'user', content: ['[The session is starting. Greet the lawyer briefly and begin teaching the first key element.]', note].filter(Boolean).join(' ') });
+    msgs.push({ role: 'user', content: [`[The session is starting. Greet the ${L} briefly and begin teaching the first key element.]`, note].filter(Boolean).join(' ') });
     return msgs;
   }
   if (msgs[msgs.length - 1].role === 'assistant') {

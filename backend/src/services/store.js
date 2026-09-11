@@ -16,6 +16,9 @@ let _accEnsured = false;
 function ensureAccredited() {
   if (_accEnsured) return;
   _accEnsured = true;
+  // The accredited catalogue is Legal Affairs Department data; another brand's
+  // instance never loads it (the columns it adds are created by 024 anyway).
+  if (!require('../brand').ladData) return;
   try {
     const acc = require('../../scripts/seed-accredited');
     acc.ensureColumns(db);

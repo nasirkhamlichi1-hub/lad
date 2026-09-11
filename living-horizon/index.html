@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · Living Horizon Training</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lh.css">
+<script src="runtime-config.js"></script>
+<script src="lh-api.js"></script>
+<script src="lh-shell.js" data-roles="public" data-nav="none" data-foot="none"></script>
+<style>
+  body{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
+  .side{background:linear-gradient(160deg,#0B3C46 0%,#0F6E77 60%,#E8A33D 140%);color:#fff;padding:48px 52px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+  .side::after{content:'';position:absolute;left:-10%;right:-10%;bottom:-28%;height:58%;background:radial-gradient(ellipse at center,rgba(232,163,61,.55),transparent 62%);pointer-events:none}
+  .side .lh-brand b{font-size:22px}
+  .side h1{font-family:var(--lh-display);font-weight:500;font-size:clamp(34px,4.4vw,52px);line-height:1.04;letter-spacing:-.02em;margin:0 0 16px;max-width:14ch;position:relative}
+  .side p{font-size:16px;color:rgba(255,255,255,.82);max-width:46ch;margin:0;position:relative;line-height:1.6}
+  .side ul{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:10px;position:relative}
+  .side li{display:flex;gap:12px;align-items:flex-start;font-size:14px;color:rgba(255,255,255,.88)}
+  .side li b{flex-shrink:0;width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-size:13px}
+  .side .foot{font:500 11.5px var(--lh-mono);letter-spacing:.06em;color:rgba(255,255,255,.55);position:relative}
+  .main{display:grid;place-items:center;padding:40px 24px}
+  .card{width:100%;max-width:400px}
+  .card h2{font-family:var(--lh-display);font-weight:500;font-size:28px;margin:0 0 4px;letter-spacing:-.01em}
+  .card .sub{color:var(--lh-muted);font-size:13.5px;margin:0 0 24px}
+  .pw{position:relative}
+  .pw button{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--lh-muted);font:600 11px var(--lh-mono);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;padding:6px}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:-4px 0 18px;font-size:12.5px}
+  .row a{color:var(--lh-teal);text-decoration:none;font-weight:600}
+  .row a:hover{text-decoration:underline}
+  #msg{margin-bottom:14px;display:none}
+  .reset{display:none;margin-top:18px}
+  @media (max-width:860px){body{grid-template-columns:1fr}.side{padding:34px 28px;min-height:0}.side ul{display:none}}
+</style>
+</head>
+<body>
+<aside class="side">
+  <a class="lh-brand" href="index.html"><span class="lh-mark"></span><span><b data-lh-brand>Living Horizon</b><small>Staff training</small></span></a>
+  <div>
+    <h1>Your training, in one place.</h1>
+    <p>Every course you have been given, your policy documents, and a trainer you can talk to — with your progress saved so you can pick up exactly where you left off.</p>
+    <ul>
+      <li><b>▶</b><span>Interactive e-learning modules that remember where you stopped</span></li>
+      <li><b>▤</b><span>The policies and documents that go with each course, in one library</span></li>
+      <li><b>✦</b><span>A one-to-one AI trainer that teaches from your own material and checks you have understood</span></li>
+    </ul>
+  </div>
+  <div class="foot">All training is free for staff · progress is recorded automatically</div>
+</aside>
+
+<main class="main">
+  <div class="card">
+    <h2>Sign in</h2>
+    <p class="sub">Use the email and password your training administrator gave you.</p>
+    <div id="msg" class="lh-note err"></div>
+    <form id="form" autocomplete="on">
+      <div class="lh-field">
+        <label class="lh-label" for="email">Work email</label>
+        <input class="lh-input" id="email" type="email" autocomplete="username" required placeholder="you@livinghorizon.com">
+      </div>
+      <div class="lh-field">
+        <label class="lh-label" for="pw">Password</label>
+        <div class="pw">
+          <input class="lh-input" id="pw" type="password" autocomplete="current-password" required placeholder="••••••••••">
+          <button type="button" id="showPw">show</button>
+        </div>
+      </div>
+      <div class="row"><span></span><a href="#" id="forgot">Forgotten your password?</a></div>
+      <button class="lh-btn block" type="submit" id="go">Sign in</button>
+    </form>
+    <div class="reset lh-card" id="reset">
+      <b>Reset your password</b>
+      <p class="lh-muted" style="font-size:13px;margin:6px 0 12px">Enter your work email. If an account exists, a reset link is sent to it and is valid for 60 minutes.</p>
+      <div class="lh-field"><input class="lh-input" id="resetEmail" type="email" placeholder="you@livinghorizon.com"></div>
+      <div style="display:flex;gap:8px"><button class="lh-btn sm" id="resetGo" type="button">Send reset link</button><button class="lh-btn sm light" id="resetCancel" type="button">Cancel</button></div>
+      <div id="resetMsg" class="lh-note ok" style="display:none;margin-top:10px"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+(function(){
+  'use strict';
+  var api=window.LH, $=function(id){return document.getElementById(id);};
+  var qs=new URLSearchParams(location.search);
+  var ADMIN=['lad_admin','lad_super_admin','super_admin','dg'];
+  var LEARNER=['lad_staff','lad_staff_training','staff_training','trainee'];
+  function dest(role){ return ADMIN.indexOf(role)>=0?'admin.html':(LEARNER.indexOf(role)>=0?'home.html':null); }
+  function say(t,ok){ var m=$('msg'); m.textContent=t; m.className='lh-note '+(ok?'ok':'err'); m.style.display=t?'block':'none'; }
+
+  if(qs.get('why')==='norole') say('That account is not set up for this portal. Ask your training administrator to add you as a staff member.');
+
+  // Already signed in — straight through, unless the address says #public.
+  var me=window.LHShell&&window.LHShell.me;
+  if(me && !/public/.test(location.hash)){
+    var d=dest(me.role);
+    if(d){ location.replace(qs.get('next')||d); }
+  }
+
+  $('showPw').onclick=function(){ var p=$('pw'); var t=p.type==='password'; p.type=t?'text':'password'; this.textContent=t?'hide':'show'; };
+  $('form').onsubmit=async function(ev){
+    ev.preventDefault(); say('');
+    var b=$('go'); b.disabled=true; b.textContent='Signing in…';
+    try{
+      var r=await api.login($('email').value.trim(),$('pw').value);
+      var d=dest(r.role);
+      if(!d){ api.logout(); say('That account is not set up for this portal. Ask your training administrator to add you as a staff member.'); return; }
+      if(r.must_change_password){ location.href='change-password.html'+(qs.get('next')?'?next='+encodeURIComponent(qs.get('next')):''); return; }
+      location.href=qs.get('next')||d;
+    }catch(e){
+      say(e.status===401?'That email or password is not right. Check both and try again.':(e.status===429?'Too many attempts — wait a few minutes and try again.':('Could not sign in: '+(e.message||e))));
+    }finally{ b.disabled=false; b.textContent='Sign in'; }
+  };
+  $('forgot').onclick=function(e){ e.preventDefault(); $('reset').style.display='block'; $('resetEmail').value=$('email').value; $('resetEmail').focus(); };
+  $('resetCancel').onclick=function(){ $('reset').style.display='none'; };
+  $('resetGo').onclick=async function(){
+    var b=$('resetGo'); b.disabled=true;
+    try{ await api.requestPasswordReset($('resetEmail').value.trim()); var m=$('resetMsg'); m.textContent='If that account exists, a reset link is on its way.'; m.style.display='block'; }
+    catch(e){ var m2=$('resetMsg'); m2.className='lh-note err'; m2.textContent='Could not send that: '+(e.message||e); m2.style.display='block'; }
+    finally{ b.disabled=false; }
+  };
+})();
+</script>
+</body>
+</html>

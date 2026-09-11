@@ -19,7 +19,8 @@
     "check-env": "NODE_ENV=production node -e \"require('./src/validateEnv').validateEnv()\"",
     "seed:demo-spine": "node scripts/seed-spine-demo.js",
     "test:topics": "node scripts/test-topics.js",
-    "test:learning": "node scripts/test-learning-spine.js && node scripts/test-topics.js"
+    "test:learning": "node scripts/test-learning-spine.js && node scripts/test-topics.js",
+    "test:living-horizon": "APP_BRAND=living-horizon node scripts/test-living-horizon.js"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.32.0",

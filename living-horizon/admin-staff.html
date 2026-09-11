@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Staff accounts · Living Horizon Training</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lh.css">
+<script src="runtime-config.js"></script>
+<script src="lh-api.js"></script>
+<script src="lh-shell.js" data-roles="admin"></script>
+<!--
+  Accounts on the portal. Three kinds:
+    Staff member   (lad_staff)        takes courses; sees My training only
+    Training admin (lad_admin)        builds courses, tracks progress, manages staff members
+    Super admin    (lad_super_admin)  everything, including other admins
+  Passwords are shown ONCE when an account is created or reset and are never
+  stored readably — copy and pass them on by a safe route. Every new account
+  must change its password on first sign-in.
+-->
+<style>
+  .head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+  .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .filters .lh-input,.filters .lh-select{width:auto;min-width:160px}
+  .filters .lh-input[type=search]{flex:1;min-width:220px}
+  .count{margin-left:auto;font:500 11.5px var(--lh-mono);color:var(--lh-muted)}
+  td.name{font-weight:600}
+  .actions{display:flex;gap:4px;justify-content:flex-end;flex-wrap:wrap}
+  .modal{position:fixed;inset:0;background:rgba(19,42,58,.55);display:none;align-items:flex-start;justify-content:center;padding:50px 18px;z-index:800;overflow-y:auto}
+  .modal.on{display:flex}
+  .modal .lh-card{width:520px;max-width:100%;padding:0;overflow:hidden}
+  .mh{padding:18px 22px;border-bottom:1px solid var(--lh-line);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .mh h3{font-family:var(--lh-display);font-weight:500;font-size:22px;margin:0}
+  .mh .x{border:0;background:transparent;font-size:22px;color:var(--lh-muted);cursor:pointer;line-height:1}
+  .mb{padding:18px 22px}
+  .mf{padding:12px 22px;border-top:1px solid var(--lh-line);background:var(--lh-paper);display:flex;justify-content:flex-end;gap:8px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .pwbox{background:var(--lh-white);border:1.5px dashed var(--lh-teal-line);border-radius:9px;padding:10px 12px;font:600 15px var(--lh-mono);display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+  .pwbox button{border:0;background:transparent;color:var(--lh-teal);font:600 11px var(--lh-mono);letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+  @media (max-width:720px){.lh-table thead{display:none}.lh-table,.lh-table tbody,.lh-table tr,.lh-table td{display:block;width:100%}.lh-table tr{padding:10px 0;border-bottom:1px solid var(--lh-line)}.lh-table td{padding:3px 0;border:0}.actions{justify-content:flex-start;margin-top:6px}}
+</style>
+</head>
+<body>
+<div class="lh-wrap">
+  <div class="head">
+    <div><div class="lh-eyebrow">Admin console</div><h1 class="lh-h1" style="font-size:30px">Staff accounts</h1>
+      <p class="lh-lede" id="desc" style="margin:0">Add the people who will train here, reset a password, or suspend an account that should no longer sign in.</p></div>
+    <button class="lh-btn" id="addBtn">+ Add account</button>
+  </div>
+  <div class="filters">
+    <input class="lh-input" type="search" id="q" placeholder="Search by name or email…">
+    <select class="lh-select" id="role"><option value="">Every kind of account</option></select>
+    <select class="lh-select" id="status"><option value="">Any status</option><option value="active">Active</option><option value="suspended">Suspended</option></select>
+    <span class="count" id="count"></span>
+  </div>
+  <div id="err"></div>
+  <div class="lh-card lh-scroll" style="padding:0">
+    <table class="lh-table"><thead><tr><th>Name</th><th>Email</th><th>Kind</th><th>Status</th><th>Last sign-in</th><th></th></tr></thead>
+    <tbody id="rows"><tr><td colspan="6" class="lh-empty">Loading…</td></tr></tbody></table>
+  </div>
+</div>
+
+<div class="modal" id="addM"><div class="lh-card">
+  <div class="mh"><div><h3>Add an account</h3><div class="lh-muted" style="font-size:12.5px">They sign in with the email and the password shown after you save, then set their own.</div></div><button class="x" data-close="addM">×</button></div>
+  <div class="mb">
+    <div id="addErr" class="lh-note err" style="display:none;margin-bottom:12px"></div>
+    <div class="lh-field"><label class="lh-label">Kind of account</label><select class="lh-select" id="aRole"></select>
+      <div class="lh-help"><b>Staff member</b> takes courses. <b>Training admin</b> builds courses, tracks progress and manages staff members. <b>Super admin</b> can also manage other admins.</div></div>
+    <div class="two"><div class="lh-field"><label class="lh-label">First name</label><input class="lh-input" id="aFirst"></div><div class="lh-field"><label class="lh-label">Last name</label><input class="lh-input" id="aLast"></div></div>
+    <div class="lh-field"><label class="lh-label">Work email</label><input class="lh-input" id="aEmail" type="email" placeholder="name@livinghorizon.com"></div>
+    <div class="lh-field"><label class="lh-label">Temporary password</label><div style="display:flex;gap:8px"><input class="lh-input" id="aPw" placeholder="Leave blank to generate one"><button class="lh-btn sm light" type="button" id="aGen">Generate</button></div>
+      <div class="lh-help">Shown once after you save. The person must change it the first time they sign in.</div></div>
+  </div>
+  <div class="mf"><button class="lh-btn light" data-close="addM">Cancel</button><button class="lh-btn" id="aGo">Create account</button></div>
+</div></div>
+
+<div class="modal" id="editM"><div class="lh-card">
+  <div class="mh"><div><h3>Edit account</h3><div class="lh-muted" id="eSub" style="font-size:12.5px"></div></div><button class="x" data-close="editM">×</button></div>
+  <div class="mb">
+    <div id="editErr" class="lh-note err" style="display:none;margin-bottom:12px"></div>
+    <input type="hidden" id="eId">
+    <div class="two"><div class="lh-field"><label class="lh-label">First name</label><input class="lh-input" id="eFirst"></div><div class="lh-field"><label class="lh-label">Last name</label><input class="lh-input" id="eLast"></div></div>
+    <div class="lh-field"><label class="lh-label">Work email</label><input class="lh-input" id="eEmail" type="email"></div>
+    <div class="lh-field" id="eRoleF"><label class="lh-label">Kind of account</label><select class="lh-select" id="eRole"></select><div class="lh-help">Only a super admin can change this.</div></div>
+  </div>
+  <div class="mf"><button class="lh-btn light" data-close="editM">Cancel</button><button class="lh-btn" id="eGo">Save</button></div>
+</div></div>
+
+<div class="modal" id="pwM"><div class="lh-card">
+  <div class="mh"><div><h3 id="pwTitle">Account created</h3><div class="lh-muted" id="pwSub" style="font-size:12.5px"></div></div><button class="x" data-close="pwM">×</button></div>
+  <div class="mb"><div class="lh-note ok"><b>Temporary password</b> — copy it now. It is not shown again and is not stored anywhere readable.
+    <div class="pwbox"><span id="pwVal"></span><button type="button" id="pwCopy">Copy</button></div></div></div>
+  <div class="mf"><button class="lh-btn" data-close="pwM">Done</button></div>
+</div></div>
+
+<script>
+(function(){
+  'use strict';
+  var api=window.LH, $=function(id){return document.getElementById(id);}, toast=window.LHShell.toast;
+  var ME=window.LHShell.role||'';
+  var LABEL={lad_staff:'Staff member',lad_admin:'Training admin',lad_super_admin:'Super admin',lad_staff_training:'Staff member',staff_training:'Staff member',trainee:'Staff member',
+    lad_intelligence:'Analyst (LAD)',lawyer:'Lawyer (LAD)',firm_compliance_officer:'Firm officer (LAD)',provider_admin:'Provider (LAD)',super_admin:'Super admin',dg:'Super admin'};
+  var CREATABLE=ME==='lad_super_admin'||ME==='super_admin'||ME==='dg'?['lad_staff','lad_admin','lad_super_admin']:['lad_staff'];
+  var VISIBLE=['lad_staff','lad_admin','lad_super_admin'];
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function canTouch(u){ if(ME==='lad_super_admin'||ME==='super_admin'||ME==='dg') return true; return ['lad_admin','lad_super_admin','super_admin','dg'].indexOf(u.role)<0; }
+  function open(id){ $(id).classList.add('on'); } function close(id){ $(id).classList.remove('on'); }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-close]'),function(b){ b.onclick=function(){ close(b.dataset.close); }; });
+
+  $('role').innerHTML='<option value="">Every kind of account</option>'+VISIBLE.map(function(r){return '<option value="'+r+'">'+LABEL[r]+'</option>';}).join('');
+  if(ME==='lad_admin') $('desc').textContent='Add staff members, reset their passwords, or suspend an account. Ask a super admin to manage other administrators.';
+
+  async function load(){
+    try{
+      var r=await api.listUsers({search:$('q').value.trim(),role:$('role').value,status:$('status').value});
+      // Only the portal's own kinds of account: a LAD-era row would only confuse.
+      var users=(r.users||[]).filter(function(u){return u.user_type!=='lawyer'&&VISIBLE.indexOf(u.role)>=0||($('role').value&&u.role===$('role').value);});
+      $('count').textContent=users.length+' account'+(users.length===1?'':'s');
+      if(!users.length){ $('rows').innerHTML='<tr><td colspan="6" class="lh-empty">No accounts match.</td></tr>'; return; }
+      $('rows').innerHTML=users.map(function(u){
+        var t=canTouch(u);
+        return '<tr><td class="name">'+esc(u.name||(u.first_name+' '+u.last_name))+(u.must_change_password?' <span class="lh-pill sun">first sign-in pending</span>':'')+'</td>'+
+          '<td class="lh-muted">'+esc(u.email)+'</td><td>'+esc(LABEL[u.role]||u.role)+'</td>'+
+          '<td><span class="lh-pill '+(u.status==='active'?'teal':'red')+'">'+esc(u.status)+'</span></td>'+
+          '<td class="lh-mono lh-muted" style="font-size:11.5px">'+(u.last_login_at?esc(String(u.last_login_at).replace('T',' ').slice(0,16)):'never')+'</td>'+
+          '<td><div class="actions">'+(t?
+            '<button class="lh-btn xs light" data-edit="'+esc(u.id)+'">Edit</button>'+
+            '<button class="lh-btn xs light" data-reset="'+esc(u.id)+'" data-n="'+esc(u.name||u.email)+'">Reset password</button>'+
+            (u.status==='active'?'<button class="lh-btn xs danger" data-susp="'+esc(u.id)+'" data-n="'+esc(u.name||u.email)+'">Suspend</button>':'<button class="lh-btn xs" data-react="'+esc(u.id)+'">Reactivate</button>')+
+            (['lad_staff','lad_staff_training','staff_training','trainee'].indexOf(u.role)>=0?'<button class="lh-btn xs ghost" data-prog="'+esc(u.id)+'">Progress</button>':'')
+            :'<span class="lh-muted" style="font-size:11px">no permission</span>')+'</div></td></tr>';
+      }).join('');
+      wire();
+    }catch(e){ $('err').innerHTML='<div class="lh-note err">'+esc(e.message)+'</div>'; }
+  }
+  function wire(){
+    var q=function(sel,fn){ Array.prototype.forEach.call(document.querySelectorAll(sel),fn); };
+    q('[data-edit]',function(b){ b.onclick=function(){ openEdit(b.dataset.edit); }; });
+    q('[data-reset]',function(b){ b.onclick=async function(){
+      if(!confirm('Reset the password for '+b.dataset.n+'? Their current password stops working at once.')) return;
+      try{ var r=await api.resetUserPassword(b.dataset.reset); showPw('Password reset',b.dataset.n,r.new_password); load(); }catch(e){ toast(e.message,true); }
+    }; });
+    q('[data-susp]',function(b){ b.onclick=async function(){
+      if(!confirm('Suspend '+b.dataset.n+'? They will not be able to sign in until reactivated. Their progress is kept.')) return;
+      try{ await api.suspendUser(b.dataset.susp); toast('Suspended'); load(); }catch(e){ toast(e.message,true); }
+    }; });
+    q('[data-react]',function(b){ b.onclick=async function(){ try{ await api.reactivateUser(b.dataset.react); toast('Reactivated'); load(); }catch(e){ toast(e.message,true); } }; });
+    q('[data-prog]',function(b){ b.onclick=function(){
+      var qs='lawyer='+encodeURIComponent(b.dataset.prog);
+      if(window.parent&&window.parent!==window){ try{ window.parent.postMessage({type:'lhOpen',tab:'progress',qs:qs},'*'); return; }catch(e){} }
+      location.href='admin.html#progress?'+qs;
+    }; });
+  }
+  var t=null; $('q').oninput=function(){ clearTimeout(t); t=setTimeout(load,250); };
+  $('role').onchange=load; $('status').onchange=load;
+
+  // ─── Add ─────────────────────────────────────────────────────
+  $('addBtn').onclick=function(){
+    $('addErr').style.display='none'; ['aFirst','aLast','aEmail','aPw'].forEach(function(id){ $(id).value=''; });
+    $('aRole').innerHTML=CREATABLE.map(function(r){return '<option value="'+r+'">'+LABEL[r]+'</option>';}).join('');
+    open('addM'); setTimeout(function(){ $('aFirst').focus(); },80);
+  };
+  $('aGen').onclick=function(){
+    var W=['Harbour','Horizon','Summit','Meadow','Lantern','Compass','Beacon','Cedar','Willow','Coral','Amber','Pebble','Marina','Garden','Bridge','Orchard'];
+    var a=W[Math.floor(Math.random()*W.length)],b; do{ b=W[Math.floor(Math.random()*W.length)]; }while(b===a);
+    $('aPw').value=a+'-'+b+'-'+(10+Math.floor(Math.random()*90))+'-'+'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random()*24)]+'abcdefghjkmnpqrstuvwxyz'[Math.floor(Math.random()*23)];
+  };
+  $('aGo').onclick=async function(){
+    var b=$('aGo'); b.disabled=true; b.textContent='Creating…'; $('addErr').style.display='none';
+    try{
+      var data={role:$('aRole').value,first_name:$('aFirst').value.trim(),last_name:$('aLast').value.trim(),email:$('aEmail').value.trim(),password:$('aPw').value,must_change_password:true};
+      if(!data.first_name||!data.last_name||!data.email) throw new Error('Name and email are needed.');
+      var r=await api.createUser(data);
+      close('addM'); showPw('Account created',data.first_name+' '+data.last_name,r.initial_password); load();
+    }catch(e){ $('addErr').textContent=e.message||'Could not create the account.'; $('addErr').style.display='block'; }
+    finally{ b.disabled=false; b.textContent='Create account'; }
+  };
+
+  // ─── Edit ────────────────────────────────────────────────────
+  async function openEdit(id){
+    $('editErr').style.display='none';
+    try{
+      var u=(await api.getUser(id)).user||{};
+      $('eId').value=u.id; $('eFirst').value=u.first_name||''; $('eLast').value=u.last_name||''; $('eEmail').value=u.email||'';
+      $('eSub').textContent=(u.email||'')+' · '+(u.id||'');
+      var canRole=ME==='lad_super_admin'||ME==='super_admin'||ME==='dg';
+      $('eRoleF').style.display=canRole?'':'none';
+      $('eRole').innerHTML=['lad_staff','lad_admin','lad_super_admin'].map(function(r){return '<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+LABEL[r]+'</option>';}).join('');
+      open('editM');
+    }catch(e){ toast(e.message||'Could not load that account',true); }
+  }
+  $('eGo').onclick=async function(){
+    var b=$('eGo'); b.disabled=true; $('editErr').style.display='none';
+    try{
+      var patch={first_name:$('eFirst').value.trim(),last_name:$('eLast').value.trim(),email:$('eEmail').value.trim()};
+      if($('eRoleF').style.display!=='none') patch.role=$('eRole').value;
+      if(!patch.first_name||!patch.last_name||!patch.email) throw new Error('Name and email are needed.');
+      await api.updateUser($('eId').value,patch); close('editM'); toast('Saved'); load();
+    }catch(e){ $('editErr').textContent=e.message||'Could not save.'; $('editErr').style.display='block'; }
+    finally{ b.disabled=false; }
+  };
+
+  // ─── The one-time password ───────────────────────────────────
+  function showPw(title,who,pw){ $('pwTitle').textContent=title; $('pwSub').textContent='For '+who; $('pwVal').textContent=pw; $('pwCopy').textContent='Copy'; open('pwM'); }
+  $('pwCopy').onclick=function(){ navigator.clipboard.writeText($('pwVal').textContent).then(function(){ $('pwCopy').textContent='Copied ✓'; }).catch(function(){ toast('Select the password and copy it by hand',true); }); };
+
+  load();
+})();
+</script>
+</body>
+</html>

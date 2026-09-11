@@ -56,14 +56,21 @@ const TOKEN_TTL = '6h';
 const MAX_ZIP_BYTES = 600 * 1024 * 1024;
 
 // The origins allowed to EMBED the player. Mirrors the CORS allow-list —
-// the hub pages live there.
+// the hub pages live there. CORS_ORIGIN is included too, so a portal on
+// another host (the Living Horizon Static Web App) can frame the player
+// without a code change: the same setting that lets it call the API lets
+// it play a package.
 const FRAME_ANCESTORS = [
   "'self'",
   'https://legalaffairstraining.com',
   'https://www.legalaffairstraining.com',
   'https://icy-mud-07d00dc03.7.azurestaticapps.net',
   'https://nice-ocean-0a45eff10.7.azurestaticapps.net',
-].concat(config.isDev ? ['http://localhost:*', 'http://127.0.0.1:*'] : []).join(' ');
+]
+  .concat(String(config.corsOrigin || '').split(',').map((s) => s.trim()).filter((s) => /^https?:\/\//.test(s)))
+  .concat(config.isDev ? ['http://localhost:*', 'http://127.0.0.1:*'] : [])
+  .filter((v, i, a) => a.indexOf(v) === i)
+  .join(' ');
 
 // ─── Access: same rule as course materials ──────────────────────────
 const MATERIAL_ROLES = ['lad_admin', 'provider_admin', 'lad_super_admin', 'super_admin', 'dg'];

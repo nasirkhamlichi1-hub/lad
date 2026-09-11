@@ -275,10 +275,12 @@ function listProgressForLawyer(lawyerId) {
 function listProgressForLesson(lessonId) {
   return db.prepare(`
     SELECT p.*,
-           TRIM(COALESCE(law.first_name, '') || ' ' || COALESCE(law.last_name, '')) AS lawyer_name,
-           law.email AS lawyer_email
+           COALESCE(NULLIF(TRIM(COALESCE(law.first_name, '') || ' ' || COALESCE(law.last_name, '')), ''),
+                    NULLIF(TRIM(COALESCE(st.first_name, '') || ' ' || COALESCE(st.last_name, '')), '')) AS lawyer_name,
+           COALESCE(law.email, st.email) AS lawyer_email
     FROM trainer_progress p
     LEFT JOIN lawyers law ON law.id = p.lawyer_id
+    LEFT JOIN staff   st  ON st.id  = p.lawyer_id
     WHERE p.lesson_id = ?
     ORDER BY p.last_active_at DESC
   `).all(lessonId).map(hydrateProgress);

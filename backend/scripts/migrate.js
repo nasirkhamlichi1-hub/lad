@@ -18,6 +18,28 @@ const db = require('../src/db');
 
 const MIGRATIONS_DIR = path.join(__dirname, '..', 'migrations');
 
+// Migrations that carry the Legal Affairs Department's DATA rather than the
+// schema: the anonymised lawyer roll, the 2025 course schedule, and the demo
+// and test sign-ins (password "test"). Every one of them is INSERT/UPDATE/
+// DELETE only — no CREATE, no ALTER — so another brand's database can skip
+// them without a later migration finding a column missing. They are still
+// recorded as applied, so the runner stays linear and idempotent.
+//
+// Living Horizon's database must never contain Dubai lawyer records or a
+// super-admin whose password is "test".
+const LAD_DATA_MIGRATIONS = new Set([
+  '009-access-users.sql',
+  '013-points-data-2025.sql',
+  '014-test-logins.sql',
+  '015-schedule-2025.sql',
+  '016-reset-test-passwords.sql',
+  '018-staff-admin-logins.sql',
+  '019-lad-staff-training.sql',
+  '039-create-duncan-super-admin.sql',
+  '040-create-yusuf-super-admin.sql',
+]);
+const brand = require('../src/brand');
+
 function ensureMigrationsTable() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS _migrations (
@@ -87,6 +109,11 @@ function main() {
   for (const m of migrations) {
     if (alreadyApplied(m.id)) {
       console.log(`[migrate] skip ${m.id} (already applied)`);
+      continue;
+    }
+    if (!brand.ladData && LAD_DATA_MIGRATIONS.has(m.id)) {
+      console.log(`[migrate] skip ${m.id} (LAD data only — brand is ${brand.id})`);
+      db.prepare('INSERT INTO _migrations (id, checksum) VALUES (?, ?)').run(m.id, 'skipped:' + m.checksum);
       continue;
     }
     console.log(`[migrate] applying ${m.id} …`);
