@@ -41,6 +41,23 @@ What a training administrator gets (`admin.html`):
 
 ---
 
+## 2a. The short way: one script in Azure Cloud Shell
+
+`docs/azure-living-horizon.sh` does §2, §3 and the GitHub wiring in one go.
+Open Cloud Shell (the `>_` icon at the top of portal.azure.com, Bash) and run:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/nasirkhamlichi1-hub/lad/main/docs/azure-living-horizon.sh -o lh.sh
+ADMIN_EMAIL=you@livinghorizon.com ADMIN_PASSWORD='Choose-A-Temp-Pass-1' bash lh.sh
+# optional: ANTHROPIC_API_KEY=sk-ant-… for the AI trainer's brain
+```
+
+It creates the resource group, App Service (container), Static Web App and all
+settings, stores the deploy token and publish profile as GitHub secrets, points
+`runtime-config.js` at the new API, runs both workflows, and prints the URLs and
+your first sign-in. Safe to re-run. The manual steps below are the same thing
+by hand.
+
 ## 2. Stand up the backend (Azure App Service)
 
 1. **Create the Web App** — Linux, *Web App for Containers*, one instance (SQLite is
