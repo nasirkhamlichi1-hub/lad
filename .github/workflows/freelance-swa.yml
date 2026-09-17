@@ -45,6 +45,9 @@ jobs:
           cp frontend/lad-brand.css frontend/lad-brand.js frontend/lad-rtl.css \
              frontend/lad-i18n.js frontend/lad-ar.js frontend/favicon.svg freelance/
           mkdir -p freelance/fonts && cp frontend/fonts/*.woff2 freelance/fonts/
+          # The Department's photography, which the landing page and the sign-in
+          # page open with. Without it the hero falls back to a flat colour.
+          mkdir -p freelance/img && cp frontend/img/*.jpg freelance/img/
           ls freelance
 
       - name: Deploy to Azure Static Web Apps
