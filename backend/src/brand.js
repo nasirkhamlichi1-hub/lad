@@ -28,6 +28,11 @@ const BRANDS = {
     // The LAD-specific data migrations (lawyer roll, 2025 schedule, demo and
     // test sign-ins) apply on this brand only.
     ladData: true,
+    // Which table a learner lives in: 'lawyer' (the `lawyers` table, signed
+    // in as role lawyer) or 'staff' (a `staff` row with a learner role).
+    learnerKind: 'lawyer',
+    // Lawyers on the public platform belong to a licensed firm.
+    firms: true,
   },
   'living-horizon': {
     id: 'living-horizon',
@@ -39,6 +44,27 @@ const BRANDS = {
     mailFromName: 'Living Horizon Training',
     service: 'living-horizon-training-backend',
     ladData: false,
+    learnerKind: 'staff',
+    firms: false,
+  },
+  // The Department's training portal for freelance lawyers: the same engine
+  // and admin console, a small cohort of individually licensed lawyers who
+  // sign in on their own (no firm, no compliance officer), every course free
+  // (no credits), no accredited-provider catalogue. Learners are `lawyers`
+  // rows created by an administrator, so their progress reads like a
+  // lawyer's anywhere else in the system.
+  freelance: {
+    id: 'freelance',
+    name: 'Legal Affairs Department',
+    org: 'the Dubai Legal Affairs Department',
+    programme: 'Freelance Lawyers Training',
+    learnerNoun: 'freelance lawyer',
+    trainerRole: 'professional one-to-one legal trainer for freelance lawyers licensed by the Dubai Legal Affairs Department',
+    mailFromName: 'LAD Freelance Lawyers Training',
+    service: 'lad-freelance-backend',
+    ladData: false,
+    learnerKind: 'lawyer',
+    firms: false,
   },
 };
 
@@ -55,6 +81,7 @@ brand.isLad = brand.id === 'lad';
 // What the frontend is allowed to know. No secrets, no infrastructure.
 brand.public = () => ({
   id: brand.id, name: brand.name, programme: brand.programme, learner_noun: brand.learnerNoun,
+  learner_kind: brand.learnerKind, firms: brand.firms,
 });
 
 module.exports = brand;

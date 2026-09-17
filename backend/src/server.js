@@ -331,6 +331,15 @@ if (config.isDev) {
     app.use('/lh', express.static(LIVING_HORIZON, { setHeaders: portalHeaders }));
     log.info('living_horizon_mounted', { url: `http://localhost:${config.port}/lh/` });
   }
+  // The freelance-lawyers portal — the Department's lite instance, likewise.
+  const FREELANCE = path.join(__dirname, '..', '..', 'freelance');
+  if (fs.existsSync(FREELANCE)) {
+    app.use('/freelance', express.static(FREELANCE, { setHeaders: portalHeaders }));
+    // The identity files (lad-*.css/js, lad-ar.js, fonts/) live once in frontend/;
+    // the deploy workflow copies them in, and here they fall through to it.
+    app.use('/freelance', express.static(FRONTEND, { setHeaders: portalHeaders, index: false }));
+    log.info('freelance_mounted', { url: `http://localhost:${config.port}/freelance/` });
+  }
   app.get('/playground', (_req, res) => {
     res.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'");
     res.sendFile(path.join(PLAYGROUND, 'spine.html'));
