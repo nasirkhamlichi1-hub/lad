@@ -1,0 +1,60 @@
+name: freelance-swa
+
+# Deploys ./freelance (the Department's freelance lawyers training portal,
+# freelance.legalaffairstraining.com) to its own Azure Static Web App on every
+# push to main that touches it. A separate app from the CLPD front end:
+# separate URL, separate deploy token, separate backend (APP_BRAND=freelance).
+#
+# Secret to add in GitHub → Settings → Secrets and variables → Actions:
+#   AZURE_SWA_API_TOKEN_FREELANCE   the Static Web App's deployment token
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'freelance/**'
+      - 'frontend/lad-*.js'
+      - 'frontend/lad-*.css'
+      - 'frontend/fonts/**'
+      - '.github/workflows/freelance-swa.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: deploy freelance lawyers portal to Azure SWA
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check deploy token
+        id: cfg
+        env:
+          TOKEN: ${{ secrets.AZURE_SWA_API_TOKEN_FREELANCE }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Deploy skipped — add the AZURE_SWA_API_TOKEN_FREELANCE secret (Static Web App → Manage deployment token)."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bring in the Department's identity files from frontend/
+        # The portal shares the CLPD platform's brand, fonts, RTL layout and
+        # Arabic dictionary. They live once, in frontend/, and are copied in
+        # at deploy time so the Static Web App is self-contained.
+        run: |
+          cp frontend/lad-brand.css frontend/lad-brand.js frontend/lad-rtl.css \
+             frontend/lad-i18n.js frontend/lad-ar.js frontend/favicon.svg freelance/
+          mkdir -p freelance/fonts && cp frontend/fonts/*.woff2 freelance/fonts/
+          ls freelance
+
+      - name: Deploy to Azure Static Web Apps
+        if: steps.cfg.outputs.ready == 'true'
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_SWA_API_TOKEN_FREELANCE }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: freelance
+          # No api_location — the Express backend runs on App Service.
+          output_location: ''
+          skip_app_build: true
