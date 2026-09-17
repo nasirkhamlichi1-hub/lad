@@ -20,7 +20,8 @@
     "seed:demo-spine": "node scripts/seed-spine-demo.js",
     "test:topics": "node scripts/test-topics.js",
     "test:learning": "node scripts/test-learning-spine.js && node scripts/test-topics.js",
-    "test:living-horizon": "APP_BRAND=living-horizon node scripts/test-living-horizon.js"
+    "test:living-horizon": "APP_BRAND=living-horizon node scripts/test-living-horizon.js",
+    "test:freelance": "APP_BRAND=freelance DATABASE_URL=./data/freelance-test.sqlite node scripts/migrate.js && APP_BRAND=freelance DATABASE_URL=./data/freelance-test.sqlite node scripts/test-freelance.js"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.32.0",
