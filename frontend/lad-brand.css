@@ -107,6 +107,7 @@
   --blue:var(--lad-navy);   --blue-l:#2C3765; --blue-bg:var(--lad-navy-soft); --blue-border:#BFC5D8;
   --purple:var(--lad-navy); --purple-l:#2C3765; --purple-bg:var(--lad-navy-soft); --purple-border:#BFC5D8;
   --teal:var(--lad-gold);   --teal-l:var(--lad-gold-dark); --teal-bg:var(--lad-gold-soft); --teal-border:var(--lad-gold-line);
+  --navy:var(--lad-navy);   --navy-bg:var(--lad-navy-soft); --navy-border:#BFC5D8;
 
   /* one family for headings, body and labels */
   --sans:var(--lad-font); --serif:var(--lad-font); --mono:var(--lad-font);

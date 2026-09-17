@@ -432,7 +432,7 @@
         var after = lk.charAt(c.length);
         if (/[A-Za-z0-9]/.test(after)) continue;
         var head = fill(LOWER[c], t.nums);
-        var rest = n.slice(c.length);
+        var rest = n.slice(fill(c, t.nums).length);   // c is templated; measure it against the string with its numbers back
         var rr = tx(rest, depth + 1);
         return head + (rr !== null ? rr : rest);
       }
@@ -444,7 +444,7 @@
       if (tail.length < 3) break;
       var tv = LOWER[tail];
       if (tv !== undefined) {
-        var headStr = n.slice(0, n.length - tail.length);
+        var headStr = n.slice(0, n.length - fill(tail, t.nums).length);
         var hr = tx(headStr, depth + 1);
         return (hr !== null ? hr : headStr) + fill(tv, t.nums);
       }
@@ -587,6 +587,7 @@
     var tw = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
       acceptNode: function (n) {
         if (n.nodeType === 1) {
+          if (n.nodeName === 'TEXTAREA') { doAttrs(n); return NodeFilter.FILTER_REJECT; }   // its placeholder is interface; its content is the user's
           if (SKIP[n.nodeName] || n.getAttribute('translate') === 'no' || n.id === 'ladLangSwitch' ||
               (n.classList && (n.classList.contains('notranslate') || n.classList.contains('lad-content'))) || n.isContentEditable) {
             return NodeFilter.FILTER_REJECT;
