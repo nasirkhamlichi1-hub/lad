@@ -65,6 +65,10 @@ img{max-width:100%}
 .fl-signout:hover{color:#fff;background:rgba(255,255,255,.1)}
 @media (max-width:720px){.fl-nav{padding:0 14px;gap:10px}.fl-links{display:none}.fl-user{padding:4px 6px 4px 5px;gap:0}.fl-user .r,.fl-user span.n{display:none}.fl-brand b{font-size:16px}}
 html.fl-embed .fl-nav{display:none}
+/* An admin workspace opened in the console's frame is already inside the
+   site's chrome — drawing it again stacks two Government bars inside one
+   page. The frame carries ?embed=1, which sets .fl-embed. */
+html.fl-embed .lad-util,html.fl-embed .lad-nav,html.fl-embed .lad-footer{display:none}
 
 /* ─── Shell: footer ────────────────────────────────────────────── */
 .fl-foot{max-width:1180px;margin:40px auto 0;padding:18px 22px 10px;border-top:1px solid var(--fl-line);color:var(--fl-muted);font:400 12.5px var(--fl-mono);display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between}
@@ -138,3 +142,128 @@ html.fl-embed .fl-foot{display:none}
 .fl-toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .fl-toast.err{background:var(--fl-red)}
 @media (prefers-reduced-motion:reduce){.fl-track i{transition:none}.fl-toast{transition:none}}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * The Department's site chrome
+ * ═══════════════════════════════════════════════════════════════════════
+ * The public CLPD portal (clpd-portal.html) opens with a Government utility
+ * strip above a dark navigation bar, and this portal is meant to read as the
+ * same site. The rules below are that chrome, lifted from it so the two match
+ * rather than resemble each other — same heights, same gold, same hover.
+ *
+ * Two deliberate differences, both because this portal is not a catalogue:
+ *   · no Register button — freelance lawyers are issued accounts, they do not
+ *     sign themselves up;
+ *   · no Courses/Services dropdowns — there is nothing to browse before
+ *     signing in, so the menu is the landing page's own sections.
+ *
+ * Physical left/right from the original is written as inline-start/end here,
+ * so the whole bar mirrors in Arabic without a second set of rules.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Government utility strip ─────────────────────────────────── */
+.lad-util{background:#f7f7f7;border-bottom:1px solid #e2e2e2;padding:0}
+.lad-util-inner{max-width:1400px;margin:0 auto;padding:0 24px;height:36px;display:flex;align-items:center;justify-content:space-between}
+.lad-util-left,.lad-util-right{display:flex;align-items:center;gap:12px}
+.lad-util-left{gap:14px}
+.lad-util-link{font-size:12px;color:#444;text-decoration:none;display:flex;align-items:center;gap:5px;cursor:pointer;transition:color .12s;font-weight:500}
+.lad-util-link:hover{color:#9D7714}
+.lad-util-link img{height:20px;width:auto}
+.lad-util-sep{width:1px;height:14px;background:#d0d0d0}
+.lad-util-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;color:#555;transition:background .12s}
+.lad-util-icon:hover{background:#e8e8e8}
+.lad-util-icon svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7}
+
+/* ─── The dark navigation bar ──────────────────────────────────── */
+.lad-nav{background:#1c1f2e;position:sticky;top:0;z-index:600;box-shadow:0 3px 14px rgba(0,0,0,.38)}
+.lad-nav-inner{max-width:1400px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:0}
+.lad-logos{display:flex;align-items:center;padding-inline-end:22px;border-inline-end:1px solid rgba(255,255,255,.13);margin-inline-end:20px;gap:14px;flex-shrink:0;text-decoration:none}
+.lad-logos img{height:38px;width:auto}
+.lad-logos-sep{width:1px;height:28px;background:rgba(255,255,255,.22)}
+/* If the Department's artwork cannot be reached, the programme name stands in
+   rather than leaving an empty bar. */
+.lad-logos-text{color:#fff;font-family:var(--fl-display);font-weight:700;font-size:15px;line-height:1.15;white-space:nowrap}
+.lad-logos-text small{display:block;font-weight:500;font-size:10.5px;color:rgba(255,255,255,.6);margin-top:3px}
+.lad-menus{display:flex;align-items:stretch;height:64px;flex:1}
+.lad-mi{color:rgba(255,255,255,.85);font-size:13px;font-weight:500;padding:0 13px;height:64px;display:flex;align-items:center;cursor:pointer;position:relative;transition:background .15s;white-space:nowrap;border-bottom:3px solid transparent;text-decoration:none}
+.lad-mi:hover,.lad-mi.on{background:rgba(255,255,255,.07);border-bottom-color:#9D7714;color:#fff}
+.lad-nav-right{display:flex;align-items:center;gap:8px;margin-inline-start:auto;flex-shrink:0}
+.lad-nav-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:5px;cursor:pointer;transition:background .15s}
+.lad-nav-icon:hover{background:rgba(255,255,255,.1)}
+.lad-nav-icon svg{width:16px;height:16px;stroke:rgba(255,255,255,.65);fill:none;stroke-width:1.7}
+/* The language control lives in the bar, as it does on the CLPD portal.
+   lad-i18n.js sees .lad-nav-lang and stands its own switch down, so a visitor
+   is never offered two. */
+.lad-nav-lang{font-size:13px;color:rgba(255,255,255,.7);cursor:pointer;padding:5px 9px;border-radius:4px;transition:background .15s;border:1px solid rgba(255,255,255,.18);background:transparent;font-family:inherit}
+.lad-nav-lang:hover{background:rgba(255,255,255,.1);color:#fff}
+.lad-btn-login{background:transparent;border:1.5px solid rgba(255,255,255,.38);color:rgba(255,255,255,.88);font-size:12.5px;padding:7px 16px;border-radius:4px;cursor:pointer;transition:all .15s;font-family:inherit;font-weight:500;text-decoration:none;display:inline-block}
+.lad-btn-login:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.65)}
+.lad-btn-reg{background:#9D7714;border:1.5px solid #9D7714;color:#fff;font-size:12.5px;padding:7px 16px;border-radius:4px;cursor:pointer;transition:all .15s;font-family:inherit;font-weight:600;text-decoration:none;display:inline-block}
+.lad-btn-reg:hover{background:#B08A28;border-color:#B08A28}
+.lad-profile-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:5px 13px;text-decoration:none}
+.lad-profile-chip .dot{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;background:#9D7714;flex-shrink:0}
+.lad-profile-chip .nm{font-size:12.5px;font-weight:600;color:#fff;white-space:nowrap}
+.lad-profile-chip .rl{font-size:11px;color:rgba(255,255,255,.55)}
+
+/* ─── Hero ─────────────────────────────────────────────────────── */
+.lad-car{position:relative;width:100%;height:500px;overflow:hidden;background:#0d1020}
+.lad-slide{position:absolute;inset:0;opacity:0;transition:opacity 1s ease}
+.lad-slide.on{opacity:1}
+.lad-slide-bg{position:absolute;inset:0;background-size:cover;background-position:center 65%}
+.lad-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,10,20,.78) 0%,rgba(5,10,20,.55) 55%,rgba(5,10,20,.2) 100%)}
+[dir="rtl"] .lad-overlay{background:linear-gradient(270deg,rgba(5,10,20,.78) 0%,rgba(5,10,20,.55) 55%,rgba(5,10,20,.2) 100%)}
+.lad-slide-body{position:absolute;bottom:0;inset-inline-start:0;inset-inline-end:0;padding:48px 64px 72px;max-width:720px}
+.lad-slide-kicker{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:600;margin-bottom:10px}
+[dir="rtl"] .lad-slide-kicker{letter-spacing:0}
+.lad-slide-h{font-size:clamp(22px,3vw,38px);font-weight:700;color:#fff;line-height:1.22;margin-bottom:22px;font-family:var(--fl-display)}
+.lad-slide-p{font-size:15px;color:rgba(255,255,255,.8);line-height:1.6;margin:-12px 0 22px;max-width:52ch}
+.lad-slide-btn{display:inline-flex;align-items:center;gap:9px;background:#9D7714;color:#fff;font-size:13.5px;font-weight:600;padding:12px 26px;border-radius:3px;text-decoration:none;cursor:pointer;transition:background .15s}
+.lad-slide-btn:hover{background:#B08A28}
+.lad-slide-btn svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round}
+[dir="rtl"] .lad-slide-btn svg{transform:scaleX(-1)}
+.lad-arr{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.16);border-radius:50%;display:grid;place-items:center;cursor:pointer;z-index:10;transition:background .15s}
+.lad-arr:hover{background:rgba(0,0,0,.72)}
+.lad-arr svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round}
+.lad-arr-l{inset-inline-start:20px}
+.lad-arr-r{inset-inline-end:20px}
+.lad-dots{position:absolute;bottom:22px;inset-inline-start:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:10}
+[dir="rtl"] .lad-dots{transform:translateX(50%)}
+.lad-dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.38);cursor:pointer;transition:all .25s;border:none;padding:0}
+.lad-dot.on{background:#9D7714;transform:scale(1.3)}
+
+/* ─── The band of four, under the hero ─────────────────────────── */
+.lad-tabs{background:#12141e;border-top:1px solid rgba(255,255,255,.06)}
+.lad-tabs-inner{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.lad-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:16px 12px;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;border-bottom:3px solid transparent;border-inline-end:1px solid rgba(255,255,255,.05);text-align:center;text-decoration:none}
+.lad-tab:last-child{border-inline-end:none}
+.lad-tab:hover,.lad-tab.on{color:#9D7714;border-bottom-color:#9D7714;background:rgba(157,119,20,.06)}
+.lad-tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5}
+
+/* ─── Landing sections ─────────────────────────────────────────── */
+.fl-band{padding:72px 24px}
+.fl-band-in{max-width:1100px;margin:0 auto}
+.fl-band.dark{background:var(--fl-navy);color:#fff}
+.fl-band.dark .fl-band-h{color:#fff}
+.fl-kicker{font:600 11px/1 var(--fl-mono);letter-spacing:2.5px;text-transform:uppercase;color:var(--fl-teal);margin:0 0 12px}
+[dir="rtl"] .fl-kicker{letter-spacing:0}
+.fl-band.dark .fl-kicker{color:var(--fl-teal-line)}
+.fl-band-h{font-family:var(--fl-display);font-weight:700;font-size:clamp(24px,3vw,34px);line-height:1.2;margin:0 0 14px;color:var(--fl-navy);text-wrap:balance}
+.fl-band-p{font-size:16px;line-height:1.65;color:var(--fl-ink2);max-width:66ch;margin:0}
+.fl-band.dark .fl-band-p{color:rgba(255,255,255,.82)}
+.fl-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:36px}
+.fl-step{background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);padding:26px 24px}
+.fl-band.dark .fl-step{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)}
+.fl-step-n{width:34px;height:34px;border-radius:9px;background:var(--fl-teal);color:#fff;display:grid;place-items:center;font-size:15px;margin-bottom:14px}
+.fl-step h3{font-family:var(--fl-display);font-size:17px;font-weight:700;margin:0 0 8px;color:var(--fl-navy)}
+.fl-band.dark .fl-step h3{color:#fff}
+.fl-step p{margin:0;font-size:14px;line-height:1.6;color:var(--fl-ink2)}
+.fl-band.dark .fl-step p{color:rgba(255,255,255,.75)}
+
+@media(max-width:900px){
+  .lad-menus,.lad-util,.lad-tabs{display:none}
+  .lad-slide-body{padding:28px 24px 60px}
+  .lad-car{height:380px}
+  .lad-logos img:first-child{display:none}
+  .lad-logos-sep{display:none}
+  .fl-band{padding:48px 20px}
+}
