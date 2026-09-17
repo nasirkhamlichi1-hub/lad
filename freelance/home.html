@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My training · Legal Affairs Department</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<!-- Government of Dubai Legal Affairs Department identity, then the portal's own stylesheet -->
+<link rel="stylesheet" href="lad-brand.css">
+<link rel="stylesheet" href="fl.css">
+<link rel="stylesheet" href="lad-rtl.css">
+<!-- Arabic interface: direction before first paint, dictionary-driven translation, language switch -->
+<script src="lad-i18n.js"></script>
+<script src="lad-brand.js" defer></script>
+<script src="runtime-config.js"></script>
+<script src="fl-api.js"></script>
+<script src="fl-shell.js" data-roles="learner"></script>
+<!--
+  The lawyer's home: where they are on every course they have, what has
+  been assigned to them, and everything else they can start. Every number
+  comes from the server's own record of attempts — nothing here is guessed.
+-->
+<style>
+  .hero{background:linear-gradient(160deg,var(--fl-sun-d),var(--fl-navy) 70%,#2C3765);color:#fff;padding:38px 0 30px}
+  .hero .fl-eyebrow{color:rgba(255,255,255,.6)}
+  .hero h1{font-family:var(--fl-display);font-weight:700;font-size:clamp(28px,4vw,38px);margin:0 0 6px;text-wrap:balance}
+  .hero p{margin:0;color:rgba(255,255,255,.8);max-width:60ch}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:-22px;position:relative;z-index:2}
+  .stat{background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);box-shadow:var(--fl-sh);padding:14px 16px}
+  .stat .v{font-family:var(--fl-display);font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+  .stat .v.teal{color:var(--fl-teal)}
+  .stat .l{font:500 11px var(--fl-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--fl-muted);margin-top:7px}
+
+  .continue{display:grid;grid-template-columns:1.4fr 1fr;gap:0;overflow:hidden;padding:0;border-color:var(--fl-teal-line)}
+  .continue .l{padding:22px 24px}
+  .continue .r{background:var(--fl-teal-soft);padding:22px 24px;display:flex;flex-direction:column;justify-content:center;gap:10px}
+  .continue h3{font-family:var(--fl-display);font-weight:700;font-size:24px;margin:4px 0 6px;color:var(--fl-navy)}
+  .continue p{margin:0 0 12px;color:var(--fl-ink2);font-size:14px}
+  @media (max-width:720px){.continue{grid-template-columns:1fr}}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .course{background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);box-shadow:var(--fl-sh);overflow:hidden;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s}
+  .course:hover{transform:translateY(-2px);box-shadow:var(--fl-sh-lg)}
+  .art{height:112px;position:relative;background:linear-gradient(135deg,var(--c,var(--fl-navy)),var(--fl-sun-d));background-size:cover;background-position:center}
+  .art .tag{position:absolute;inset-inline-start:12px;top:12px}
+  .art .due{position:absolute;inset-inline-end:12px;bottom:12px;background:rgba(0,0,0,.45);color:#fff;font:600 10px var(--fl-mono);letter-spacing:.06em;padding:4px 8px;border-radius:6px}
+  .body{padding:16px 18px 18px;flex:1;display:flex;flex-direction:column;gap:8px}
+  .body h3{font-family:var(--fl-display);font-weight:700;font-size:19px;line-height:1.2;margin:0;color:var(--fl-navy)}
+  .body p{margin:0;font-size:13px;color:var(--fl-ink2);line-height:1.5;flex:1}
+  .meta{font:500 11px var(--fl-mono);color:var(--fl-muted);letter-spacing:.02em;font-variant-numeric:tabular-nums}
+  .foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px}
+  .assigned{font-size:12px;color:var(--fl-sun-d);font-weight:600}
+  .msgs{margin-top:22px}
+  .msg{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--fl-line);font-size:13px}
+  .msg:first-child{border-top:none}
+  .msg .t{font:500 11px var(--fl-mono);color:var(--fl-faint);white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="hero"><div class="fl-wrap" style="padding-bottom:28px">
+  <div class="fl-eyebrow"><span data-fl-brand>Legal Affairs Department</span> · Freelance Lawyers Training</div>
+  <h1 id="hi">Welcome back.</h1>
+  <p>Everything you have been asked to complete, everything you can choose to learn, and where you have got to on each. Your progress is saved as you go.</p>
+</div></div>
+
+<div class="fl-wrap">
+  <div class="stats" id="stats"></div>
+  <div id="msg"></div>
+  <div id="continue"></div>
+  <h2 class="fl-h2" id="mineH">Your courses</h2>
+  <div class="grid" id="mine"><div class="fl-empty">Loading your courses…</div></div>
+  <h2 class="fl-h2" id="availH" style="display:none">Available to start</h2>
+  <div class="grid" id="avail"></div>
+  <div id="msgs" class="msgs"></div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var api=window.FL, $=function(id){return document.getElementById(id);};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function safeUrl(u){ u=String(u||''); return (/^(https?:\/\/|\/)/.test(u)&&!/["'()\\<>\s]/.test(u))?u:''; }
+  function accent(c){ return /^#[0-9a-fA-F]{6}$/.test(c||'')?c:''; }
+  function mins(s){ return Math.round((s||0)/60); }
+  function d(s){ return s?String(s).slice(0,10):''; }
+
+  var name=(window.FLShell&&window.FLShell.name)||'';
+  var h=new Date().getHours();
+  $('hi').textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+(name?', '+name.split(/\s+/)[0]:'')+'.';
+
+  function card(t,enrolled){
+    var e=t.enrolment;
+    var pct=e?e.percent:0, done=e&&e.status==='completed';
+    var art=safeUrl(t.hero_url), col=accent(t.accent);
+    var label=done?'Revisit':(e&&(e.percent>0||e.total_seconds>0)?'Continue':'Start');
+    var steps=[];
+    if(t.counts){ if(t.counts.scorm) steps.push(t.counts.scorm+' module'+(t.counts.scorm===1?'':'s')); if(t.counts.ai_lesson) steps.push(t.counts.ai_lesson+' AI session'+(t.counts.ai_lesson===1?'':'s')); if(t.counts.document) steps.push(t.counts.document+' reading'+(t.counts.document===1?'':'s')); }
+    return '<div class="course">'+
+      '<div class="art" style="'+(col?'--c:'+col+';':'')+(art?'background-image:linear-gradient(180deg,rgba(11,40,50,.35),rgba(11,40,50,.7)),url('+art+');':'')+'">'+
+        '<span class="tag fl-pill '+(done?'green':(e&&e.source==='assigned'?'sun':'teal'))+'">'+(done?'Completed':(e&&e.source==='assigned'?'Assigned to you':(e?'In progress':'Course')))+'</span>'+
+        (e&&e.due_at&&!done?'<span class="due">DUE '+esc(d(e.due_at))+'</span>':'')+'</div>'+
+      '<div class="body"><h3 translate="no">'+esc(t.title)+'</h3>'+
+        '<p>'+esc(t.summary||t.welcome||'')+'</p>'+
+        (e?'<div class="fl-track"><i style="width:'+pct+'%"></i></div>':'')+
+        '<div class="meta">'+(e?pct+'% · '+e.required_done+' of '+e.required_total+' steps'+(e.total_seconds?' · '+mins(e.total_seconds)+' min recorded':''):steps.join(' · '))+'</div>'+
+        (e&&e.source==='assigned'&&e.assigned_by_name?'<div class="assigned">Assigned by '+esc(e.assigned_by_name)+(e.note?' — '+esc(e.note):'')+'</div>':'')+
+        '<div class="foot"><span></span>'+
+          '<a class="fl-btn sm'+(done?' light':'')+'" href="course.html?topic='+encodeURIComponent(t.topic_id)+'">'+label+' →</a></div>'+
+      '</div></div>';
+  }
+
+  async function load(){
+    var cat;
+    try{ cat=await api.catalogue(); }
+    catch(e){ $('mine').innerHTML='<div class="fl-note err">Could not load your courses: '+esc(e.message)+'</div>'; return; }
+    var all=cat.topics||[];
+    var mine=all.filter(function(t){return t.enrolment&&t.enrolment.status!=='withdrawn';});
+    var avail=all.filter(function(t){return !t.enrolment||t.enrolment.status==='withdrawn';});
+
+    var done=mine.filter(function(t){return t.enrolment.status==='completed';}).length;
+    var going=mine.filter(function(t){return t.enrolment.status!=='completed'&&(t.enrolment.percent>0||t.enrolment.total_seconds>0);}).length;
+    var secs=mine.reduce(function(n,t){return n+(t.enrolment.total_seconds||0);},0);
+    $('stats').innerHTML=
+      '<div class="stat"><div class="v">'+mine.length+'</div><div class="l">Your courses</div></div>'+
+      '<div class="stat"><div class="v teal">'+done+'</div><div class="l">Completed</div></div>'+
+      '<div class="stat"><div class="v">'+going+'</div><div class="l">In progress</div></div>'+
+      '<div class="stat"><div class="v">'+(secs>=3600?(Math.round(secs/360)/10)+'h':mins(secs)+'m')+'</div><div class="l">Time recorded</div></div>';
+
+    // Pick up where you left off: the most recently active course that is not finished.
+    var open=mine.filter(function(t){return t.enrolment.status!=='completed'&&t.enrolment.last_active_at&&(t.enrolment.percent>0||t.enrolment.total_seconds>0);})
+      .sort(function(a,b){return String(b.enrolment.last_active_at).localeCompare(String(a.enrolment.last_active_at));})[0];
+    if(open){
+      $('continue').innerHTML='<div class="fl-card continue"><div class="l"><div class="fl-eyebrow">Pick up where you left off</div>'+
+        '<h3 translate="no">'+esc(open.title)+'</h3><p>'+esc(open.summary||open.welcome||'')+'</p>'+
+        '<div class="fl-track" style="max-width:360px"><i style="width:'+open.enrolment.percent+'%"></i></div>'+
+        '<div class="meta" style="margin-top:6px">'+open.enrolment.percent+'% complete · '+open.enrolment.required_done+' of '+open.enrolment.required_total+' steps · last opened '+esc(d(open.enrolment.last_active_at))+'</div></div>'+
+        '<div class="r"><a class="fl-btn" href="course.html?topic='+encodeURIComponent(open.topic_id)+'">Continue →</a>'+
+        (open.enrolment.due_at?'<span class="meta">Complete by '+esc(d(open.enrolment.due_at))+'</span>':'')+'</div></div>';
+    }
+
+    $('mine').innerHTML=mine.length?mine.map(function(t){return card(t,true);}).join(''):
+      '<div class="fl-empty">Nothing has been assigned to you yet'+(avail.length?' — choose a course below to begin.':'. Check back soon.')+'</div>';
+    if(avail.length){ $('availH').style.display=''; $('avail').innerHTML=avail.map(function(t){return card(t,false);}).join(''); }
+
+    try{
+      var n=await api.myNotifications();
+      var rows=(n.notifications||[]).slice(0,6);
+      if(rows.length){
+        $('msgs').innerHTML='<h2 class="fl-h2">Messages</h2><div class="fl-card">'+rows.map(function(m){
+          return '<div class="msg"><span class="t">'+esc(d(m.created_at))+'</span><div><b>'+esc(m.title||'')+'</b>'+(m.body?'<div class="fl-muted" style="font-size:12.5px">'+esc(m.body)+'</div>':'')+'</div></div>';
+        }).join('')+'</div>';
+      }
+    }catch(e){ /* messages are a nicety */ }
+  }
+  load();
+})();
+</script>
+</body>
+</html>

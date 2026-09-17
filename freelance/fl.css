@@ -1,0 +1,140 @@
+/* ─────────────────────────────────────────────────────────────────────
+ * fl.css — the freelance-lawyers training portal's one stylesheet
+ * ─────────────────────────────────────────────────────────────────────
+ * The Government of Dubai Legal Affairs Department identity, applied to
+ * the training-portal shell: tokens, the top bar, and the handful of
+ * components every page shares — buttons, cards, pills, forms, tables.
+ * Page-specific layout stays in the page. The palette and the typeface
+ * come from lad-brand.css (loaded first); the names below are the ones
+ * the pages were written against, re-pointed at the Department's tokens.
+ * ───────────────────────────────────────────────────────────────────── */
+:root {
+  --fl-ink:var(--lad-ink, #000000);            /* body copy on white */
+  --fl-ink2:var(--lad-grey-700, #575757);
+  --fl-muted:var(--lad-grey-700, #575757);
+  --fl-faint:var(--lad-grey-400, #999999);
+  --fl-teal:var(--lad-gold, #9D7714);          /* primary — LAD gold, an accent, never a field */
+  --fl-teal-d:var(--lad-gold-dark, #70550F);
+  --fl-teal-soft:var(--lad-gold-soft, #F6F0E0);
+  --fl-teal-line:var(--lad-gold-line, #DCC894);
+  --fl-sun:var(--lad-navy, #202A50);           /* the Department's dark colour — headings, bands */
+  --fl-sun-d:var(--lad-navy-deep, #161D38);
+  --fl-sun-soft:var(--lad-navy-soft, #E7E9F0);
+  --fl-navy:var(--lad-navy, #202A50);
+  --fl-paper:var(--lad-grey-100, #F5F5F5);     /* page ground */
+  --fl-paper2:var(--lad-grey-200, #E8E8E8);
+  --fl-white:var(--lad-white, #FFFFFF);
+  --fl-line:var(--lad-grey-200, #E8E8E8);
+  --fl-line2:var(--lad-grey-300, #CCCCCC);
+  --fl-green:#1F8A5A;                          /* status only */
+  --fl-green-soft:#E4F4EC;
+  --fl-red:var(--lad-error, #DC3131);
+  --fl-red-soft:#FBEAEA;
+  --fl-display:var(--lad-font, 'Dubai','Segoe UI',Tahoma,Arial,sans-serif);
+  --fl-sans:var(--lad-font, 'Dubai','Segoe UI',Tahoma,Arial,sans-serif);
+  --fl-mono:var(--lad-font, 'Dubai','Segoe UI',Tahoma,Arial,sans-serif);
+  --fl-r:8px;
+  --fl-sh:var(--lad-shadow, 0 2px 12px rgba(0,0,0,.08));
+  --fl-sh-lg:var(--lad-shadow, 0 2px 12px rgba(0,0,0,.08));
+  --fl-nav-h:60px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--fl-paper);color:var(--fl-ink);font:15px/1.6 var(--fl-sans);-webkit-font-smoothing:antialiased}
+a{color:var(--fl-teal)}
+button,input,select,textarea{font-family:inherit}
+img{max-width:100%}
+
+/* ─── Shell: top bar ───────────────────────────────────────────── */
+.fl-nav{position:sticky;top:0;z-index:600;height:var(--fl-nav-h);background:var(--fl-navy);color:#fff;display:flex;align-items:center;gap:18px;padding:0 22px;box-shadow:var(--fl-sh)}
+.fl-brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;flex-shrink:0}
+.fl-mark{width:30px;height:30px;border-radius:8px;background:var(--fl-teal);position:relative;flex-shrink:0}
+.fl-mark::after{content:'';position:absolute;left:8px;right:8px;top:14px;height:2px;background:#fff;border-radius:2px;opacity:.95}
+.fl-brand b{font-family:var(--fl-display);font-weight:700;font-size:17px;line-height:1}
+.fl-brand small{display:block;font:500 11px/1 var(--fl-mono);color:rgba(255,255,255,.7);margin-top:4px}
+.fl-links{display:flex;align-items:center;gap:2px;flex:1;min-width:0}
+.fl-links a{color:rgba(255,255,255,.78);text-decoration:none;font-size:13.5px;font-weight:500;padding:7px 12px;border-radius:8px;white-space:nowrap}
+.fl-links a:hover{background:rgba(255,255,255,.1);color:#fff}
+.fl-links a.active{background:rgba(255,255,255,.14);color:#fff}
+.fl-right{display:flex;align-items:center;gap:10px;margin-inline-start:auto;flex-shrink:0}
+.fl-user{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:4px 12px 4px 5px;font-size:12.5px;font-weight:600;color:#fff;max-width:240px}
+.fl-user .av{width:24px;height:24px;border-radius:50%;background:var(--fl-teal);color:#fff;display:grid;place-items:center;font:700 10px var(--fl-sans);flex-shrink:0}
+.fl-user span.n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-user .r{font:500 10px var(--fl-mono);color:rgba(255,255,255,.65);white-space:nowrap}
+.fl-signout{background:transparent;border:0;color:rgba(255,255,255,.65);font-size:12.5px;cursor:pointer;padding:6px 8px;border-radius:8px}
+.fl-signout:hover{color:#fff;background:rgba(255,255,255,.1)}
+@media (max-width:720px){.fl-nav{padding:0 14px;gap:10px}.fl-links{display:none}.fl-user{padding:4px 6px 4px 5px;gap:0}.fl-user .r,.fl-user span.n{display:none}.fl-brand b{font-size:16px}}
+html.fl-embed .fl-nav{display:none}
+
+/* ─── Shell: footer ────────────────────────────────────────────── */
+.fl-foot{max-width:1180px;margin:40px auto 0;padding:18px 22px 10px;border-top:1px solid var(--fl-line);color:var(--fl-muted);font:400 12.5px var(--fl-mono);display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between}
+html.fl-embed .fl-foot{display:none}
+
+/* ─── Layout helpers ───────────────────────────────────────────── */
+.fl-wrap{max-width:1180px;margin:0 auto;padding:26px 22px 40px}
+.fl-eyebrow{font:500 13px var(--fl-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fl-teal);margin-bottom:6px}
+.fl-h1{font-family:var(--fl-display);font-weight:700;font-size:clamp(28px,4vw,38px);line-height:1.15;color:var(--fl-navy);margin:0 0 8px;text-wrap:balance}
+.fl-h2{font-family:var(--fl-display);font-weight:500;font-size:22px;line-height:1.2;color:var(--fl-navy);margin:26px 0 10px}
+.fl-lede{color:var(--fl-ink2);max-width:66ch;margin:0 0 18px;font-size:15px}
+.fl-muted{color:var(--fl-muted)}
+.fl-mono{font-family:var(--fl-mono)}
+
+/* ─── Buttons ──────────────────────────────────────────────────── */
+.fl-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1.5px solid var(--fl-teal);background:var(--fl-teal);color:#fff;font:500 14px var(--fl-sans);padding:10px 18px;border-radius:8px;cursor:pointer;text-decoration:none;transition:background .15s,border-color .15s,transform .1s;white-space:nowrap}
+.fl-btn:hover{background:var(--fl-teal-d);border-color:var(--fl-teal-d)}
+.fl-btn:active{transform:translateY(1px)}
+.fl-btn:disabled{opacity:.45;cursor:not-allowed}
+.fl-btn.sun{background:var(--fl-sun);border-color:var(--fl-sun);color:#fff}
+.fl-btn.sun:hover{background:var(--fl-sun-d);border-color:var(--fl-sun-d)}
+.fl-btn.ghost{background:transparent;color:var(--fl-teal)}
+.fl-btn.ghost:hover{background:var(--fl-teal-soft)}
+.fl-btn.light{background:var(--fl-white);border-color:var(--fl-line2);color:var(--fl-ink)}
+.fl-btn.light:hover{background:var(--fl-paper)}
+.fl-btn.danger{background:transparent;border-color:var(--fl-red);color:var(--fl-red)}
+.fl-btn.danger:hover{background:var(--fl-red-soft)}
+.fl-btn.sm{padding:7px 12px;font-size:13px;border-radius:8px}
+.fl-btn.xs{padding:5px 10px;font-size:12px;border-radius:6px}
+.fl-btn.block{width:100%}
+
+/* ─── Cards, pills, notes ──────────────────────────────────────── */
+.fl-card{background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);box-shadow:var(--fl-sh);padding:20px 22px}
+.fl-pill{display:inline-block;font:500 11px var(--fl-mono);letter-spacing:.04em;text-transform:uppercase;padding:4px 9px;border-radius:999px;white-space:nowrap;background:var(--fl-paper2);color:var(--fl-muted);border:1px solid transparent}
+.fl-pill.teal{background:var(--fl-teal-soft);color:var(--fl-teal-d);border-color:var(--fl-teal-line)}
+.fl-pill.sun{background:var(--fl-sun-soft);color:var(--fl-navy)}
+.fl-pill.green{background:var(--fl-green);color:#fff}
+.fl-pill.red{background:var(--fl-red-soft);color:var(--fl-red)}
+.fl-note{border-radius:8px;padding:11px 15px;font-size:13px;line-height:1.5;border:1px solid var(--fl-line);background:var(--fl-white)}
+.fl-note.ok{background:var(--fl-green-soft);border-color:#BFE3CD;color:#1F5E3B}
+.fl-note.warn{background:#FDF1E3;border-color:#F5D3AA;color:#7A5312}
+.fl-note.err{background:var(--fl-red-soft);border-color:#EFC1C1;color:#8A2626}
+.fl-empty{color:var(--fl-muted);font-style:italic;padding:22px 0;text-align:center;font-size:13.5px}
+
+/* ─── Forms ────────────────────────────────────────────────────── */
+.fl-label{display:block;font:500 12px var(--fl-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--fl-muted);margin-bottom:6px}
+.fl-input,.fl-select,.fl-textarea{width:100%;font:14px var(--fl-sans);color:var(--fl-ink);background:var(--fl-white);border:1px solid var(--fl-line2);border-radius:8px;padding:10px 12px;transition:border-color .15s}
+.fl-input:focus,.fl-select:focus,.fl-textarea:focus{outline:none;border-color:var(--fl-teal);box-shadow:0 0 0 3px var(--fl-teal-soft)}
+.fl-textarea{min-height:96px;resize:vertical;line-height:1.55}
+.fl-field{margin-bottom:14px}
+.fl-help{font-size:11.5px;color:var(--fl-muted);margin-top:5px;line-height:1.45}
+
+/* ─── Progress ─────────────────────────────────────────────────── */
+.fl-track{height:8px;background:var(--fl-paper2);border-radius:99px;overflow:hidden}
+.fl-track i{display:block;height:100%;background:var(--fl-teal);border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* ─── Tables ───────────────────────────────────────────────────── */
+.fl-table{width:100%;border-collapse:collapse;font-size:13px}
+.fl-table th{font:500 12px var(--fl-mono);letter-spacing:.04em;text-transform:uppercase;color:#fff;text-align:start;padding:10px 12px;background:var(--fl-navy);border-bottom:1px solid var(--fl-line)}
+.fl-table td{padding:10px 12px;border-bottom:1px solid var(--fl-line);vertical-align:middle}
+.fl-table tbody tr:nth-child(even){background:var(--fl-paper)}
+.fl-table tbody tr:hover{background:var(--fl-teal-soft)}
+.fl-scroll{overflow-x:auto}
+
+/* ─── Session expired bar ──────────────────────────────────────── */
+#fl-expired{position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--fl-navy);color:#fff;padding:12px 18px;display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;font:600 13.5px var(--fl-sans);box-shadow:0 4px 14px rgba(0,0,0,.3)}
+#fl-expired button{background:var(--fl-teal);color:#fff;border:0;border-radius:8px;padding:8px 16px;font:600 13px var(--fl-sans);cursor:pointer}
+
+/* ─── Toast ────────────────────────────────────────────────────── */
+.fl-toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--fl-navy);color:#fff;padding:12px 20px;border-radius:8px;font:500 13.5px var(--fl-sans);box-shadow:var(--fl-sh-lg);opacity:0;transition:all .22s;z-index:1200;pointer-events:none;max-width:92vw}
+.fl-toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.fl-toast.err{background:var(--fl-red)}
+@media (prefers-reduced-motion:reduce){.fl-track i{transition:none}.fl-toast{transition:none}}

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AI trainer · Freelance Lawyers Training</title>
+<style>
+/* ─────────────────────────────────────────────────────────────────────
+   The trainer is a VOICE, not a face: a dark lesson hero, the objectives up front ("By the end of this
+   you can…"), and a glowing orb that shows whether the teacher is
+   listening, thinking or speaking. No camera. No avatar. No video stream.
+   ───────────────────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{
+  --indigo:#202A50;--indigo2:#161D38;--indigo3:#2C3765;
+  --cream:#F7F6F2;--white:#fff;
+  --ink:#000000;--slate:#575757;--slate2:#575757;
+  --purple:#9D7714;--purple-bg:#F6F0E0;
+  --orange:#9D7714;--orange2:#70550F;
+  --green:#1F8A5A;--green2:#2C3765;
+  --gold:#9D7714;
+  --line:#E4E6E3;
+  --head:'Fraunces',Georgia,serif;--sans:'Inter',system-ui,sans-serif;
+  --sh:0 4px 12px rgba(23,18,51,.07),0 20px 50px rgba(23,18,51,.09);
+}
+html,body{background:var(--cream);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1240px;margin:0 auto;padding:0 28px}
+.hidden{display:none!important}
+
+/* Top bar */
+.top{background:var(--indigo);color:#fff;position:sticky;top:0;z-index:30}
+.top-in{display:flex;align-items:center;gap:14px;height:72px}
+.wordmark{font-family:var(--head);font-weight:800;font-size:22px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+.wordmark .spark{color:var(--gold);font-size:18px}
+.wordmark em{font-style:normal;color:var(--orange2)}
+.wordmark small{display:block;font-family:var(--sans);font-weight:600;font-size:9px;letter-spacing:1.6px;color:rgba(255,255,255,.55);text-transform:uppercase;margin-top:1px}
+.top-spacer{flex:1}
+.pill{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:6px 12px;border-radius:999px;border:1px solid}
+.pill-live{background:rgba(63,178,187,.15);color:#3FB2BB;border-color:rgba(63,178,187,.5)}
+.pill-demo{background:rgba(232,182,76,.14);color:var(--gold);border-color:rgba(232,182,76,.5)}
+.backlink{font-size:13.5px;font-weight:600;color:#fff;border:1.5px solid rgba(255,255,255,.35);border-radius:999px;padding:10px 20px;transition:all .15s}
+.backlink:hover{background:rgba(255,255,255,.12)}
+
+/* ── Chooser (no ?lesson) — the "Morning, Isaac." pattern ── */
+.choose-hero{background:linear-gradient(135deg,#FFFCEF,#F6F0E0 60%,#E7E9F0);padding:64px 0 72px}
+.choose-date{font-size:13px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#70550F;margin-bottom:14px}
+.choose-hero h1{font-family:var(--head);font-weight:600;font-size:clamp(40px,6vw,68px);letter-spacing:-.03em;line-height:1.05;color:#202A50}
+.choose-sub{font-size:19px;color:#575757;margin-top:16px;max-width:640px}
+.choose-body{padding:44px 0 80px}
+.choose-body h2{font-family:var(--head);font-weight:800;font-size:clamp(26px,3.4vw,40px);letter-spacing:-.02em}
+.choose-note{font-size:13px;color:var(--slate2);margin-top:8px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px;margin-top:26px}
+.tile{border-radius:20px;padding:26px 24px 22px;color:#fff;cursor:pointer;position:relative;overflow:hidden;min-height:190px;display:flex;flex-direction:column;box-shadow:var(--sh);transition:transform .15s}
+.tile:hover{transform:translateY(-3px)}
+.tile .ic{font-size:24px;margin-bottom:auto;opacity:.95}
+.tile h3{font-family:var(--head);font-weight:800;font-size:22px;letter-spacing:-.01em;line-height:1.15;margin:18px 0 14px}
+.tile .meta{display:flex;gap:8px;flex-wrap:wrap}
+.tile .chip{font-size:11px;font-weight:700;background:rgba(0,0,0,.25);padding:4px 10px;border-radius:999px}
+.tile .bigicon{position:absolute;inset-inline-end:-18px;bottom:-24px;font-size:120px;opacity:.14;transform:rotate(-8deg)}
+
+/* ── Session hero ── */
+.hero{background:radial-gradient(120% 160% at 85% -20%,var(--indigo3),var(--indigo) 60%);color:#fff;padding:46px 0 34px}
+.hero h1{font-family:var(--head);font-weight:800;font-size:clamp(34px,4.6vw,58px);letter-spacing:-.03em;line-height:1.02}
+.hero-chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.hchip{font-size:13.5px;font-weight:700;padding:8px 16px;border-radius:999px}
+.hchip-purple{background:var(--purple);color:#fff}
+.hchip-ghost{background:rgba(255,255,255,.12);color:#fff}
+.segs{display:flex;gap:10px;margin-top:26px}
+.seg{height:9px;border-radius:999px;flex:1;background:rgba(255,255,255,.16);transition:background .4s}
+.seg.held{background:#fff}
+
+/* ── Session body ── */
+.session-grid{display:grid;grid-template-columns:1fr 380px;gap:26px;align-items:start;padding:34px 0 90px}
+@media(max-width:920px){.session-grid{grid-template-columns:1fr}}
+.lesson-card{background:var(--white);border-radius:22px;box-shadow:var(--sh);overflow:hidden;border-top:8px solid var(--purple)}
+.lesson-card-in{padding:34px 36px 30px}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:2.2px;text-transform:uppercase;color:var(--purple)}
+.lesson-card h2{font-family:var(--head);font-weight:800;font-size:clamp(28px,3.6vw,44px);letter-spacing:-.025em;line-height:1.05;margin-top:12px}
+.objs{margin-top:22px;display:flex;flex-direction:column;gap:13px}
+.obj{display:flex;gap:14px;align-items:flex-start;font-size:17px;color:var(--ink)}
+.obj .dash{width:22px;height:8px;border-radius:999px;background:var(--purple);flex-shrink:0;margin-top:8px;transition:background .3s}
+.obj.held{color:var(--slate2)}
+.obj.held .dash{background:var(--green2)}
+.obj .tick{display:none;color:var(--green);font-weight:800;margin-inline-start:6px}
+.obj.held .tick{display:inline}
+
+/* transcript */
+.talk{border-top:1.5px solid var(--line);margin-top:28px;padding-top:20px}
+.talk-h{font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--slate2)}
+.lines{margin-top:14px;max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-inline-end:6px}
+.line{font-size:15.5px;line-height:1.55}
+.line b{font-family:var(--head);font-weight:700}
+.line.trainer b{color:var(--orange)}
+.line.you b{color:var(--purple)}
+.replybox{display:flex;gap:10px;margin-top:18px}
+.replybox input{flex:1;font-family:var(--sans);font-size:15px;border:2px solid var(--line);border-radius:14px;padding:13px 16px;background:var(--cream)}
+.replybox input:focus{outline:none;border-color:var(--purple)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--head);font-size:15px;font-weight:700;padding:13px 22px;border-radius:999px;border:2px solid transparent;cursor:pointer;transition:all .15s}
+.btn-send{background:var(--ink);color:#fff}
+.btn-send:hover{transform:translateY(-1px)}
+
+/* ── Teacher card ── */
+.teacher{background:var(--indigo);border-radius:24px;box-shadow:var(--sh);color:#fff;padding:38px 30px 28px;text-align:center;position:sticky;top:96px}
+.orb-wrap{width:150px;height:150px;margin:0 auto;display:grid;place-items:center;position:relative}
+.orb{width:118px;height:118px;border-radius:50%;transition:all .4s;position:relative;z-index:2}
+.orb.listening{background:radial-gradient(circle at 32% 28%,#E9D9A6,#9D7714 55%,#70550F);box-shadow:0 10px 44px rgba(157,119,20,.45)}
+.orb.speaking{background:radial-gradient(circle at 32% 28%,#8C97C9,#2C3765 55%,#202A50);box-shadow:0 10px 44px rgba(32,42,80,.45)}
+.orb.thinking{background:radial-gradient(circle at 32% 28%,#BFD3DB,#4E7A8C 55%,#2B5566);box-shadow:0 10px 44px rgba(78,122,140,.55)}
+.orb.idle{background:radial-gradient(circle at 32% 28%,#d8d4e8,#8d87a8 55%,#5a5474);box-shadow:0 10px 34px rgba(0,0,0,.35)}
+.ring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,255,255,.35);opacity:0}
+.orb-wrap.live .ring{animation:ripple 1.9s infinite}
+.orb-wrap.live .ring:nth-child(2){animation-delay:.6s}
+@keyframes ripple{0%{transform:scale(.72);opacity:.75}100%{transform:scale(1.18);opacity:0}}
+.orb.speaking{animation:bob 1.1s ease-in-out infinite alternate}
+@keyframes bob{from{transform:scale(.96)}to{transform:scale(1.05)}}
+.teacher h3{font-family:var(--head);font-weight:800;font-size:24px;margin-top:22px}
+.tstate{font-size:14px;font-weight:800;letter-spacing:2.4px;text-transform:uppercase;margin-top:8px;min-height:20px}
+.tstate.listening{color:var(--orange2)}
+.tstate.speaking{color:#3FB2BB}
+.tstate.thinking{color:#BFD3DB}
+.tstate.idle{color:rgba(255,255,255,.55)}
+.phase{margin-top:20px;background:rgba(255,255,255,.1);border-radius:999px;padding:13px 18px;font-family:var(--head);font-weight:700;font-size:15px}
+.thelp{font-size:14.5px;line-height:1.6;color:rgba(255,255,255,.75);margin-top:18px}
+.tctl{display:flex;gap:10px;margin-top:24px}
+.tbtn{flex:1;font-family:var(--head);font-weight:700;font-size:14px;padding:12px 8px;border-radius:999px;cursor:pointer;transition:all .15s;border:2px solid rgba(255,255,255,.4);background:transparent;color:#fff}
+.tbtn:hover{background:rgba(255,255,255,.1)}
+.tbtn-solid{background:#fff;color:var(--indigo);border-color:#fff}
+.tnote{font-size:11.5px;color:rgba(255,255,255,.5);margin-top:14px;line-height:1.5}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:14px 22px;border-radius:999px;font-family:var(--head);font-weight:600;font-size:14px;box-shadow:0 12px 40px rgba(0,0,0,.3);z-index:50;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="wordmark" href="home.html"><span class="spark">✦</span>
+      <span><em>AI trainer</em><small><span data-fl-brand>Legal Affairs Department</span> · Freelance Lawyers Training</small></span></a>
+    <div class="top-spacer"></div>
+    <span id="enginePill" class="pill pill-demo">Checking…</span>
+    <a class="backlink" id="backLink" href="home.html">← My training</a>
+  </div>
+</header>
+
+<main>
+  <!-- Chooser: only when the page is opened without ?lesson= -->
+  <section id="choose" class="hidden">
+    <div class="choose-hero"><div class="wrap">
+      <div class="choose-date" id="chooseDate"></div>
+      <h1 id="chooseHi">Ready when you are.</h1>
+      <p class="choose-sub">One session, one topic. Your trainer talks — you talk back.</p>
+    </div></div>
+    <div class="wrap choose-body">
+      <h2>Your sessions</h2>
+      <p class="choose-note" id="chooseNote"></p>
+      <div id="tiles" class="tiles"></div>
+    </div>
+  </section>
+
+  <!-- The session -->
+  <section id="session" class="hidden">
+    <div class="hero"><div class="wrap">
+      <h1 id="lessonTitle">—</h1>
+      <div class="hero-chips">
+        <span class="hchip hchip-purple" id="chipTopic">Taught session</span>
+        <span class="hchip hchip-ghost" id="chipMeta"></span>
+      </div>
+      <div class="segs" id="segs"></div>
+    </div></div>
+    <div class="wrap session-grid">
+      <div class="lesson-card"><div class="lesson-card-in">
+        <div class="eyebrow" id="eyebrow">Taught session</div>
+        <h2>By the end of this you can…</h2>
+        <div class="objs lad-content" id="objs"></div>
+        <div class="talk">
+          <div class="talk-h">The conversation</div>
+          <div class="lines" id="lines"></div>
+          <div class="replybox">
+            <input id="replyInput" type="text" placeholder="Answer out loud — or type here and press Enter"/>
+            <button id="sendBtn" class="btn btn-send">Send</button>
+          </div>
+        </div>
+      </div></div>
+      <div class="teacher">
+        <div class="orb-wrap" id="orbWrap"><span class="ring"></span><span class="ring"></span><div class="orb idle" id="orb"></div></div>
+        <h3>Your trainer</h3>
+        <div class="tstate idle" id="tstate">Connecting</div>
+        <div class="phase" id="phase">Warming up</div>
+        <p class="thelp" id="thelp">Answer out loud — quick as you like. Or type below the conversation.</p>
+        <div class="tctl">
+          <button id="micBtn" class="tbtn tbtn-solid">🎤 Speak</button>
+          <button id="pauseBtn" class="tbtn">Pause</button>
+          <button id="endBtn" class="tbtn">Finish</button>
+        </div>
+        <p class="tnote">Voice runs in your browser. No camera, no video — just the conversation.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<!-- Government of Dubai Legal Affairs Department identity, then the portal's own stylesheet -->
+<link rel="stylesheet" href="lad-brand.css">
+<link rel="stylesheet" href="fl.css">
+<link rel="stylesheet" href="lad-rtl.css">
+<!-- Arabic interface: direction before first paint, dictionary-driven translation, language switch -->
+<script src="lad-i18n.js"></script>
+<script src="lad-brand.js" defer></script>
+<script src="runtime-config.js"></script>
+<script src="fl-api.js"></script>
+<script src="fl-shell.js" data-roles="learner"></script><script>
+(function(){
+  'use strict';
+  var api=window.LAD;
+  var S={lessons:[],selected:null,status:null,session:null,history:[],
+         brain:'fallback',reco:null,listening:false,startedAt:0,busy:false,ended:false,
+         coverage:{done:0,total:0}};
+  var el=function(id){return document.getElementById(id);};
+  function toast(m){var t=el('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2600);}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function q(name){var m=location.search.match(new RegExp('[?&]'+name+'=([^&]*)'));return m?decodeURIComponent(m[1]):'';}
+
+  var WANT_LESSON=q('lesson');
+  var RETURN_URL=q('return');
+  if(RETURN_URL){var b=el('backLink');b.textContent='← Back to the course';b.href=RETURN_URL;}
+  else{el('backLink').textContent='← My training';}
+
+  // DEMO mode = no backend configured, or ?demo=1 forced.
+  var DEMO = !api.enabled || /[?&]demo=1/.test(location.search);
+  var DEMO_LESSONS=[
+    {id:'demo-welcome',title:'Addressing the court',summary:'A short demo so you can try the trainer end-to-end.',duration_min:5,
+     objectives:['Address the bench and opposing counsel correctly','Explain the order of submissions at a hearing','Know what to do when a filing deadline cannot be met']},
+    {id:'demo-data',title:'Handling personal information',summary:'A quick taster of a trainer session.',duration_min:5,
+     objectives:['State what counts as personal information','Explain when it may be shared and with whom','Know how to report a possible breach']}
+  ];
+  function localBrain(lesson,history){
+    var objs=(lesson&&lesson.objectives)||[];var total=objs.length;
+    var lawyerTurns=history.filter(function(h){return h.role==='lawyer';}).length;
+    if(!total)return{say:'Tell me what you’d like to focus on today.',complete:false,coverage:{done:0,total:0}};
+    if(lawyerTurns===0)return{say:'Welcome — let’s begin. '+objs[0]+'. In your own words, what does that mean to you?',complete:false,coverage:{done:0,total:total}};
+    var idx=lawyerTurns;var done=Math.min(idx,total);
+    if(idx>=total)return{say:'Good — that covers everything we set out to. Well done; you can apply these now.',complete:true,coverage:{done:total,total:total}};
+    return{say:'Good. Next: '+objs[idx]+'. How would you apply that in your work?',complete:false,coverage:{done:done,total:total}};
+  }
+
+  // ─── Load lessons + engine state (called at the end, after every
+  //     constant below is assigned — var initialisers don't hoist) ──────
+  function loadAll(){
+    if(DEMO){
+      S.status={engines:{brain:false}};S.lessons=DEMO_LESSONS;boot();
+    } else {
+      Promise.all([api.trainerStatus(),api.trainerLessons()]).then(function(r){
+        S.status=r[0];S.lessons=r[1]||[];boot();
+      }).catch(function(e){toast('Could not load: '+e.message);});
+    }
+  }
+
+  function boot(){
+    var brainOn=!!(S.status&&S.status.engines&&S.status.engines.brain);
+    var p=el('enginePill');
+    var voiceOn=!!(S.status&&S.status.engines&&S.status.engines.voice);
+    if(brainOn&&!DEMO){p.className='pill pill-live';p.textContent='● Live'+(voiceOn?' · ElevenLabs voice':'');}
+    else{p.className='pill pill-demo';p.textContent='Preview mode';}
+    var match=WANT_LESSON&&S.lessons.filter(function(L){return String(L.id)===WANT_LESSON;})[0];
+    if(match){S.selected=match;start();return;}
+    if(WANT_LESSON&&!match){toast('That session isn’t available yet — choose one below.');}
+    renderChooser();
+  }
+
+  // ─── Chooser ─────────────────────────────────────────────────────────
+  var TILE_COLORS=['#4316d4','#cf0234','#B08A28','#9D7714','#b01212','#7c1fd1'];
+  var TILE_ICONS=['⚖️','📜','🏛️','🗂️','✍️','🔍'];
+  function renderChooser(){
+    el('choose').classList.remove('hidden');
+    var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var d=new Date();
+    el('chooseDate').textContent=days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()];
+    var h=d.getHours();el('chooseHi').textContent=(h<12?'Morning.':h<17?'Afternoon.':'Evening.');
+    el('chooseNote').textContent=S.lessons.length?String(S.lessons.length)+' taught session'+(S.lessons.length===1?'':'s')+' ready for you.':'No sessions published yet — an administrator adds them when building a course.';
+    var c=el('tiles');c.innerHTML='';
+    S.lessons.forEach(function(L,i){
+      var t=document.createElement('div');t.className='tile';t.style.background=TILE_COLORS[i%TILE_COLORS.length];
+      var ic=TILE_ICONS[i%TILE_ICONS.length];
+      var meta=[];if(L.duration_min)meta.push('<span class="chip">~'+L.duration_min+' min</span>');
+            if((L.objectives||[]).length)meta.push('<span class="chip">'+L.objectives.length+' key elements</span>');
+      t.innerHTML='<div class="ic">'+ic+'</div><h3>'+esc(L.title)+'</h3><div class="meta">'+meta.join('')+'</div><div class="bigicon">'+ic+'</div>';
+      t.onclick=function(){S.selected=L;start();};
+      c.appendChild(t);
+    });
+  }
+
+  // ─── Start the session ───────────────────────────────────────────────
+  function start(){
+    if(DEMO){proceedStart({sessionId:'demo',brain:'fallback',resumed:false});return;}
+    setState('thinking','Connecting');
+    api.trainerStartBrowserSession(S.selected.id).then(proceedStart)
+      .catch(function(e){toast('Could not start: '+e.message);renderChooser();});
+  }
+  function proceedStart(s){
+    S.session=s;S.brain=s.brain||'fallback';S.startedAt=Date.now();S.history=[];
+    el('choose').classList.add('hidden');el('session').classList.remove('hidden');
+    el('lessonTitle').textContent=S.selected.title;
+    if(S.selected.summary)el('chipTopic').textContent=S.selected.summary;
+    var meta=[];if(S.selected.duration_min)meta.push('~'+S.selected.duration_min+' min');
+        el('chipMeta').textContent=meta.join(' · ')||'Taught session';
+    if(!meta.length)el('chipMeta').style.display='none';
+    renderObjectives();
+    nextTurn();
+  }
+
+  function renderObjectives(){
+    var objs=S.selected.objectives||[];
+    var segs=el('segs');segs.innerHTML='';
+    var list=el('objs');list.innerHTML='';
+    objs.forEach(function(o){
+      var sg=document.createElement('span');sg.className='seg';segs.appendChild(sg);
+      var d=document.createElement('div');d.className='obj';
+      d.innerHTML='<span class="dash"></span><span>'+esc(o)+'<span class="tick">✓ held</span></span>';
+      list.appendChild(d);
+    });
+  }
+  function paintCoverage(cov){
+    cov=cov||{done:0,total:(S.selected.objectives||[]).length};S.coverage=cov;
+    var segs=el('segs').children,objs=el('objs').children;
+    for(var i=0;i<segs.length;i++){segs[i].classList.toggle('held',i<cov.done);}
+    for(var j=0;j<objs.length;j++){objs[j].classList.toggle('held',j<cov.done);}
+    var total=cov.total||segs.length;
+    if(cov.done>=total&&total>0){el('phase').textContent='Wrapping up';}
+    else{el('phase').textContent=total?('Key element '+Math.min(cov.done+1,total)+' of '+total):'Teaching';}
+  }
+
+  // ─── Orb + state ─────────────────────────────────────────────────────
+  function setState(state,label){
+    var orb=el('orb'),ts=el('tstate'),ow=el('orbWrap');
+    orb.className='orb '+state;ts.className='tstate '+state;
+    ts.textContent=label||state;
+    ow.classList.toggle('live',state==='listening'||state==='speaking');
+  }
+
+  // ─── The turn loop ───────────────────────────────────────────────────
+  // Ask for the turn as a stream: the server pushes the first sentence the
+  // moment the model has written it, so the trainer starts speaking while the
+  // rest of its answer is still being composed. Falls back to a plain reply.
+  function streamTurn(onFirst){
+    return fetch((window.LAD_API_BASE||'')+'/api/v1/trainer/turn',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+api.getToken()},
+      body:JSON.stringify({sessionId:S.session.sessionId,history:S.history,perception:{present:true},stream:1})
+    }).then(function(resp){
+      if(!resp.ok) throw new Error('turn '+resp.status);
+      if(!resp.body||!resp.body.getReader) return resp.json();
+      var reader=resp.body.getReader(), dec=new TextDecoder(), buf='', done=null;
+      function pump(){
+        return reader.read().then(function(res){
+          if(res.value) buf+=dec.decode(res.value,{stream:true});
+          var nl;
+          while((nl=buf.indexOf('\n'))>=0){
+            var line=buf.slice(0,nl).trim(); buf=buf.slice(nl+1);
+            if(!line) continue;
+            var ev; try{ ev=JSON.parse(line); }catch(e){ continue; }
+            if(ev.phase==='first'){ onFirst&&onFirst(ev.say); }
+            else { done=ev; }
+          }
+          if(res.done) return done||{say:'',coverage:null};
+          return pump();
+        });
+      }
+      return pump();
+    });
+  }
+
+  function nextTurn(){
+    if(S.busy||S.ended)return;S.busy=true;stopListening();stopSpeaking();
+    setState('thinking','Thinking');
+    var spokeFirst=null, turnId=(S.turnId||0)+1; S.turnId=turnId;
+    var p=DEMO
+      ? Promise.resolve(localBrain(S.selected,S.history))
+      : streamTurn(function(first){
+          // The opener is spoken here, before the full reply exists.
+          if(S.ended||turnId!==S.turnId) return;
+          spokeFirst=first;
+          addLine('trainer','Trainer',first);
+          speak(first,null);
+        });
+    p.then(function(r){
+      S.busy=false;
+      if(S.ended||turnId!==S.turnId) return;
+      S.history.push({role:'trainer',text:r.say});
+      paintCoverage(r.coverage);
+      // Say only what has not been said yet, and keep the transcript honest.
+      var rest=r.say||'';
+      if(spokeFirst && rest.indexOf(spokeFirst)===0){
+        rest=rest.slice(spokeFirst.length).trim();
+        if(rest) addLine('trainer','Trainer',rest);
+      } else if(spokeFirst){
+        addLine('trainer','Trainer',rest);
+      } else {
+        addLine('trainer','Trainer',rest);
+      }
+      var after=function(){ if(r.complete){finish(true);}else{startListening();} };
+      if(rest){ speakQueued(rest,after); } else { whenSpeechIdle(after); }
+    }).catch(function(e){S.busy=false;toast('Trainer error: '+(e.message||e));startListening();});
+  }
+
+  // Speak text WITHOUT cutting off the opener that is already playing.
+  function speakQueued(text,done){
+    var wait=S.speaking?S.speaking.catch(function(){}):Promise.resolve();
+    wait.then(function(){ if(!S.ended) speak(text,done); else done&&done(); });
+  }
+  function whenSpeechIdle(done){
+    var wait=S.speaking?S.speaking.catch(function(){}):Promise.resolve();
+    wait.then(function(){ done&&done(); });
+  }
+
+  function addLine(cls,who,text){
+    var L=el('lines');var d=document.createElement('div');d.className='line '+cls;
+    d.innerHTML='<b>'+who+':</b> <span class="lad-content" dir="auto">'+esc(text)+'</span>';L.appendChild(d);   // what was said is content, not interfaceL.scrollTop=L.scrollHeight;
+  }
+
+  function submitReply(text){
+    text=(text||'').trim();if(!text||S.busy||S.ended)return;
+    el('replyInput').value='';
+    S.history.push({role:'lawyer',text:text});
+    addLine('you','You',text);
+    nextTurn();
+  }
+
+  // ─── Speak ───────────────────────────────────────────────────────────
+  // The ElevenLabs voice when the
+  // server has the key; the browser's built-in voice otherwise. Either way
+  // the orb goes green while the trainer talks.
+  // S.speaking resolves when the current utterance has finished, so a follow-on
+  // line can be queued behind it instead of cutting it off mid-word.
+  function speak(text,done){
+    var voiceOn=!DEMO&&S.status&&S.status.engines&&S.status.engines.voice;
+    var p=new Promise(function(resolve){
+      var fin=function(){ try{ done&&done(); } finally { resolve(); } };
+      if(voiceOn){ speakEleven(text,fin); } else { speakBrowser(text,fin); }
+    });
+    S.speaking=p;
+    return p;
+  }
+  // Fetch one chunk of speech as audio the browser can play.
+  function ttsChunk(text){
+    return fetch((window.LAD_API_BASE||'')+'/api/v1/trainer/tts',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+api.getToken()},
+      body:JSON.stringify({text:text})
+    }).then(function(r){ if(!r.ok) throw new Error('tts '+r.status); return r.blob(); })
+      .then(function(b){ return URL.createObjectURL(b); });
+  }
+  // Every utterance carries the id of the turn that asked for it. Anything
+  // from an older turn is discarded rather than played — without this, tapping
+  // Speak mid-sentence left the previous audio running while the next reply
+  // started, and two trainers talked over each other.
+  function stopSpeaking(){
+    S.speechId=(S.speechId||0)+1;
+    if(S.audio){ try{S.audio.pause();}catch(e){} S.audio=null; }
+    if(window.speechSynthesis){ try{window.speechSynthesis.cancel();}catch(e){} }
+    return S.speechId;
+  }
+  function playUrl(url,id){
+    return new Promise(function(resolve){
+      if(S.ended||id!==S.speechId){ URL.revokeObjectURL(url); resolve(); return; }
+      var a=new Audio(url); S.audio=a;
+      a.onended=function(){URL.revokeObjectURL(url);resolve();};
+      a.onerror=function(){resolve();};
+      a.play().catch(function(){resolve();});
+    });
+  }
+  // Split on sentence ends so the FIRST sentence can be synthesised and played
+  // while the rest is still being generated. Waiting for a whole paragraph of
+  // audio before making a sound is what made the trainer feel dead.
+  function splitForSpeech(text){
+    var parts=String(text||'').match(/[^.!?…]+[.!?…]*\s*/g)||[text];
+    var out=[],buf='';
+    parts.forEach(function(p){
+      // Keep the opener short; group the remainder so the voice stays natural.
+      if(!out.length && buf.length+p.length>=12){ out.push((buf+p).trim()); buf=''; }
+      else { buf+=p; }
+    });
+    if(buf.trim()) out.push(buf.trim());
+    return out.filter(Boolean);
+  }
+  function speakEleven(text,done){
+    var id=stopSpeaking();          // silence anything still going
+    setState('speaking','Speaking');
+    var chunks=splitForSpeech(text);
+    if(!chunks.length){ done&&done(); return; }
+    // Start the first chunk immediately; fetch the rest in parallel so each is
+    // already in hand by the time the previous one finishes playing.
+    var pending=chunks.map(function(c){ return ttsChunk(c); });
+    pending[0].catch(function(){ /* handled in the chain below */ });
+    var chain=Promise.resolve();
+    var failed=false;
+    chunks.forEach(function(_,i){
+      chain=chain.then(function(){
+        if(failed||S.ended||id!==S.speechId) return;
+        return pending[i].then(function(u){ return playUrl(u,id); }).catch(function(){
+          if(i===0&&id===S.speechId){ failed=true; speakBrowser(text,done); } // nothing spoke → browser voice
+        });
+      });
+    });
+    chain.then(function(){ if(!failed&&id===S.speechId) done&&done(); });
+  }
+  function speakBrowser(text,done){
+    stopSpeaking();
+    if(window.speechSynthesis){
+      var u=new SpeechSynthesisUtterance(text);u.rate=1;u.pitch=1;
+      u.onstart=function(){setState('speaking','Speaking');};
+      u.onend=function(){done&&done();};
+      window.speechSynthesis.cancel();window.speechSynthesis.speak(u);
+    } else { setState('speaking','Speaking');setTimeout(function(){done&&done();},Math.min(14000,Math.max(2200,text.length*55))); }
+  }
+
+  // ─── Listen (browser speech recognition) ─────────────────────────────
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  function startListening(){
+    if(S.ended)return;
+    setState('listening','Listening');
+    el('thelp').textContent='Answer out loud — quick as you like. Or type below the conversation.';
+    if(!SR){el('thelp').textContent='This browser has no speech input — type your answer below the conversation.';setState('idle','Your turn');return;}
+    try{
+      S.reco=new SR();S.reco.lang='en-US';S.reco.interimResults=false;S.reco.maxAlternatives=1;
+      S.reco.onstart=function(){S.listening=true;el('micBtn').textContent='● Listening';};
+      S.reco.onresult=function(ev){var t=ev.results[0][0].transcript;submitReply(t);};
+      S.reco.onerror=function(){el('thelp').textContent='Didn’t catch that — tap Speak and try again, or type below.';};
+      S.reco.onend=function(){S.listening=false;el('micBtn').textContent='🎤 Speak';if(!S.busy&&!S.ended)setState('idle','Your turn');};
+      S.reco.start();
+    }catch(e){setState('idle','Your turn');}
+  }
+  function stopListening(){if(S.reco){try{S.reco.stop();}catch(e){}}S.listening=false;}
+
+  // Tapping Speak is the learner interrupting — the trainer stops talking and
+  // listens, the way a person would.
+  el('micBtn').onclick=function(){if(S.listening){stopListening();}else{stopSpeaking();startListening();}};
+  el('sendBtn').onclick=function(){submitReply(el('replyInput').value);};
+  el('replyInput').addEventListener('keydown',function(e){if(e.key==='Enter')submitReply(el('replyInput').value);});
+
+  // ─── Pause / Finish ──────────────────────────────────────────────────
+  function teardown(){S.ended=true;stopListening();stopSpeaking();}
+  function leave(){ if(RETURN_URL){location.href=RETURN_URL;} else {location.href='trainer.html';} }
+  el('pauseBtn').onclick=function(){teardown();var sec=Math.round((Date.now()-S.startedAt)/1000);
+    if(DEMO){toast('Paused (demo).');setTimeout(leave,1000);return;}
+    api.trainerPauseSession(S.session.sessionId,{seconds:sec}).catch(function(){}).then(function(){toast('Paused — resume anytime.');setTimeout(leave,1200);});};
+  el('endBtn').onclick=function(){finish(false);};
+  function finish(auto){ teardown(); var sec=Math.round((Date.now()-S.startedAt)/1000);
+    setState('idle','Session over');el('phase').textContent='Complete';
+    if(DEMO){toast('Session complete (demo). Well done.');setTimeout(leave,1500);return;}
+    api.trainerEndSession(S.session.sessionId,{seconds:sec}).then(function(r){var short=r&&r.cpd&&r.cpd.reason==='incomplete';toast(short?'Session ended — not everything was covered yet, so it stays in progress. Resume it any time.':'Session complete. Well done.');setTimeout(leave,short?2600:1600);}).catch(function(){toast('Session ended.');setTimeout(leave,1400);}); }
+
+  loadAll();
+})();
+</script>
+</body>
+</html>

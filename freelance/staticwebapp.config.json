@@ -1,0 +1,104 @@
+{
+  "routes": [
+    {
+      "route": "/runtime-config.js",
+      "headers": {
+        "cache-control": "no-store, must-revalidate"
+      }
+    },
+    {
+      "route": "/fl-api.js",
+      "headers": {
+        "cache-control": "no-store, must-revalidate"
+      }
+    },
+    {
+      "route": "/fl-shell.js",
+      "headers": {
+        "cache-control": "no-store, must-revalidate"
+      }
+    },
+    {
+      "route": "/fl.css",
+      "headers": {
+        "cache-control": "no-store, must-revalidate"
+      }
+    },
+    {
+      "route": "/lad-ar.js",
+      "headers": {
+        "cache-control": "public, max-age=3600"
+      }
+    },
+    {
+      "route": "/fonts/*",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "route": "/*.html",
+      "headers": {
+        "cache-control": "no-store, must-revalidate"
+      }
+    },
+    {
+      "route": "/",
+      "rewrite": "/index.html",
+      "headers": {
+        "cache-control": "no-store, must-revalidate"
+      }
+    },
+    {
+      "route": "/sign-in",
+      "rewrite": "/index.html"
+    },
+    {
+      "route": "/home",
+      "rewrite": "/home.html"
+    },
+    {
+      "route": "/my-training",
+      "rewrite": "/home.html"
+    },
+    {
+      "route": "/course",
+      "rewrite": "/course.html"
+    },
+    {
+      "route": "/trainer",
+      "rewrite": "/trainer.html"
+    },
+    {
+      "route": "/admin",
+      "rewrite": "/admin.html"
+    },
+    {
+      "route": "/change-password",
+      "rewrite": "/change-password.html"
+    },
+    {
+      "route": "/reset-password",
+      "rewrite": "/reset-password.html"
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/*.{html,css,js,json,png,jpg,jpeg,svg,ico,woff,woff2,webmanifest}"
+    ]
+  },
+  "globalHeaders": {
+    "X-Frame-Options": "SAMEORIGIN",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+    "Permissions-Policy": "camera=(), microphone=(self), geolocation=(), payment=(), usb=(), interest-cohort=()",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self' data: https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://*.azurewebsites.net https://*.blob.core.windows.net https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; frame-src 'self' blob: https://*.azurewebsites.net https://www.youtube-nocookie.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
+  },
+  "mimeTypes": {
+    ".json": "application/json",
+    ".svg": "image/svg+xml",
+    ".webmanifest": "application/manifest+json"
+  }
+}
