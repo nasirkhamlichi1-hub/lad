@@ -11,7 +11,7 @@
 # What gets seeded depends on APP_BRAND (src/brand.js):
 #   lad             — the CLPD dataset: roster, feedback, accredited
 #                     catalogue, knowledge hubs, FAQ, firm de-duplication.
-#   living-horizon  — none of that. The instance starts empty apart from the
+#   living-horizon, freelance — none of that. The instance starts empty apart from the
 #                     bootstrap admin (scripts/ensure-admin.js), and any LAD
 #                     demo sign-ins are switched off (scripts/harden-brand.js).
 set -u
