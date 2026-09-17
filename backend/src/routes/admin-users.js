@@ -22,6 +22,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const router = express.Router();
 const db = require('../db');
+const brand = require('../brand');
 const store = require('../services/store');
 const activity = require('../services/activity');
 const { requireAuth } = require('../middleware/auth');
@@ -229,8 +230,11 @@ router.post('/', requireRole('lad_super_admin', 'lad_admin', 'firm_compliance_of
     firm_id = actor.firm_id;
   }
 
-  // Lawyers and firm_compliance_officers require a firm
-  if (['lawyer', 'firm_compliance_officer'].includes(role) && !firm_id) {
+  // Lawyers and firm_compliance_officers require a firm — on a brand that
+  // has firms. The freelance portal's lawyers are licensed individually and
+  // belong to no firm.
+  const needsFirm = role === 'firm_compliance_officer' || (role === 'lawyer' && brand.firms);
+  if (needsFirm && !firm_id) {
     return res.status(400).json({ error: 'firm_id is required for this role' });
   }
 

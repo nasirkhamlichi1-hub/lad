@@ -387,12 +387,13 @@ router.get('/assignable', requireRole(...ASSIGN_ROLES), async (_req, res, next) 
   } catch (e) { next(e); }
 });
 
-// Staff learners who can be assigned a course — the assign dialog's search
-// on a staff-training instance. LAD roles only; a firm officer assigns
-// within their own firm through the lawyer search instead.
+// The instance's own learners who can be assigned a course — the assign
+// dialog's search on a staff-training or freelance-lawyers instance. LAD
+// roles only; a firm officer assigns within their own firm through the
+// lawyer search instead.
 router.get('/learners/search', requireRole(...LAD_REPORT_ROLES), (req, res) => {
   const q = String(req.query.q || '').trim();
-  res.json({ learners: q ? learners.searchStaffLearners(q) : learners.listStaffLearners().slice(0, 50) });
+  res.json({ learners: q ? learners.searchLearners(q) : learners.listLearners().slice(0, 50) });
 });
 
 router.post('/courses/:courseId/assign', requireRole(...ASSIGN_ROLES), async (req, res, next) => {
@@ -430,10 +431,11 @@ router.post('/courses/:courseId/assign', requireRole(...ASSIGN_ROLES), async (re
         wanted.set(l.id, Object.assign({ firm_id: firmId, kind: 'lawyer' }, l));
       }
     }
-    // "Everyone": every active staff learner. LAD roles only — a firm officer
-    // has no business enrolling the Department's own people.
+    // "Everyone": every active learner this instance teaches (staff on a
+    // staff-training portal, practising lawyers on the freelance portal).
+    // LAD roles only — a firm officer has no business enrolling them.
     if (b.everyone === true && isLAD(req)) {
-      for (const s of learners.listStaffLearners()) wanted.set(s.id, s);
+      for (const s of learners.listLearners()) wanted.set(s.id, s);
     }
     if (!wanted.size) return res.status(400).json({ error: 'nobody', message: 'Choose at least one person, a firm, or everyone.' });
 
