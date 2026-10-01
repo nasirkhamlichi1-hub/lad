@@ -132,7 +132,7 @@ const DRAFT_MAX_CHARS = 60000;
 
 // Loose containment test: the model reformats whitespace and quotes, so
 // compare on lowercase alphanumerics only.
-const normalise = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const normalise = (s) => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 
 router.post('/draft-lesson', requireRole(...ADMIN_ROLES), async (req, res, next) => {
   try {
@@ -206,7 +206,7 @@ router.post('/draft-lesson', requireRole(...ADMIN_ROLES), async (req, res, next)
       if (!objective) continue;
       // A quote of a few words proves nothing; require enough of it to be real.
       const nq = normalise(quote);
-      if (nq.length < 25 || !haystack.includes(nq)) { dropped++; continue; }
+      if (nq.length < 15 || !haystack.includes(nq)) { dropped++; continue; }
       kept.push({ text: objective, quote });
     }
 
