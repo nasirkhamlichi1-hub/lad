@@ -99,8 +99,8 @@
       '<div class="art" style="'+(col?'--c:'+col+';':'')+(art?'background-image:linear-gradient(180deg,rgba(11,40,50,.35),rgba(11,40,50,.7)),url('+art+');':'')+'">'+
         '<span class="tag fl-pill '+(done?'green':(e&&e.source==='assigned'?'sun':'teal'))+'">'+(done?'Completed':(e&&e.source==='assigned'?'Assigned to you':(e?'In progress':'Course')))+'</span>'+
         (e&&e.due_at&&!done?'<span class="due">DUE '+esc(d(e.due_at))+'</span>':'')+'</div>'+
-      '<div class="body"><h3 translate="no">'+esc(t.title)+'</h3>'+
-        '<p>'+esc(t.summary||t.welcome||'')+'</p>'+
+      '<div class="body"><h3 translate="no">'+esc(flPick(t,'title'))+'</h3>'+
+        '<p>'+esc(flPick(t,'summary')||flPick(t,'welcome'))+'</p>'+
         (e?'<div class="fl-track"><i style="width:'+pct+'%"></i></div>':'')+
         '<div class="meta">'+(e?pct+'% · '+e.required_done+' of '+e.required_total+' steps'+(e.total_seconds?' · '+mins(e.total_seconds)+' min recorded':''):steps.join(' · '))+'</div>'+
         (e&&e.source==='assigned'&&e.assigned_by_name?'<div class="assigned">Assigned by '+esc(e.assigned_by_name)+(e.note?' — '+esc(e.note):'')+'</div>':'')+
@@ -131,7 +131,7 @@
       .sort(function(a,b){return String(b.enrolment.last_active_at).localeCompare(String(a.enrolment.last_active_at));})[0];
     if(open){
       $('continue').innerHTML='<div class="fl-card continue"><div class="l"><div class="fl-eyebrow">Pick up where you left off</div>'+
-        '<h3 translate="no">'+esc(open.title)+'</h3><p>'+esc(open.summary||open.welcome||'')+'</p>'+
+        '<h3 translate="no">'+esc(flPick(open,'title'))+'</h3><p>'+esc(flPick(open,'summary')||flPick(open,'welcome'))+'</p>'+
         '<div class="fl-track" style="max-width:360px"><i style="width:'+open.enrolment.percent+'%"></i></div>'+
         '<div class="meta" style="margin-top:6px">'+open.enrolment.percent+'% complete · '+open.enrolment.required_done+' of '+open.enrolment.required_total+' steps · last opened '+esc(d(open.enrolment.last_active_at))+'</div></div>'+
         '<div class="r"><a class="fl-btn" href="course.html?topic='+encodeURIComponent(open.topic_id)+'">Continue →</a>'+

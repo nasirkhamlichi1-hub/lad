@@ -74,12 +74,15 @@ async function upsertModule(courseId, input = {}) {
   const id = input.id || db.genId('mod');
   const ts = db.now();
   await db.run(
-    `INSERT INTO course_module (id, course_id, title, summary, welcome, position, gate, published, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO course_module (id, course_id, title, summary, welcome, title_ar, summary_ar, welcome_ar, position, gate, published, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (id) DO UPDATE SET
        title = excluded.title,
        summary = excluded.summary,
        welcome = excluded.welcome,
+       title_ar = excluded.title_ar,
+       summary_ar = excluded.summary_ar,
+       welcome_ar = excluded.welcome_ar,
        position = excluded.position,
        gate = excluded.gate,
        published = excluded.published,
@@ -90,6 +93,11 @@ async function upsertModule(courseId, input = {}) {
       String(input.title || 'Untitled section').slice(0, 200),
       input.summary || null,
       input.welcome === undefined ? null : (input.welcome || null),
+      // Arabic twins. Trimmed so a cleared field stores NULL, not '' —
+      // the learner pages fall back to English on NULL.
+      String(input.title_ar || '').trim().slice(0, 200) || null,
+      String(input.summary_ar || '').trim() || null,
+      String(input.welcome_ar || '').trim() || null,
       Number(input.position) || 0,
       input.gate === 'sequential' ? 'sequential' : 'none',
       input.published === false ? 0 : 1,
@@ -135,15 +143,17 @@ async function upsertActivity(courseId, input = {}, userId = null) {
 
   await db.run(
     `INSERT INTO activity
-       (id, course_id, module_id, kind, title, summary, position, required, weight,
+       (id, course_id, module_id, kind, title, summary, title_ar, summary_ar, position, required, weight,
         cpd_minutes, pass_score, lesson_id, material_id, package_id, origin,
         published, created_by, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (id) DO UPDATE SET
        module_id = excluded.module_id,
        kind = excluded.kind,
        title = excluded.title,
        summary = excluded.summary,
+       title_ar = excluded.title_ar,
+       summary_ar = excluded.summary_ar,
        position = excluded.position,
        required = excluded.required,
        weight = excluded.weight,
@@ -161,6 +171,8 @@ async function upsertActivity(courseId, input = {}, userId = null) {
       kind,
       String(input.title || 'Untitled activity').slice(0, 300),
       input.summary || null,
+      String(input.title_ar || '').trim().slice(0, 300) || null,
+      String(input.summary_ar || '').trim() || null,
       Number(input.position) || 0,
       input.required === false ? 0 : 1,
       Math.max(1, Number(input.weight) || 1),
@@ -754,6 +766,7 @@ async function getOutline(courseId, lawyerId = null, { includeUnpublished = fals
       id: null,
       course_id: courseId,
       title: sections.length ? 'Further material' : 'Course material',
+      title_ar: sections.length ? 'مواد إضافية' : 'مواد الدورة',
       summary: null,
       position: 9999,
       gate: 'none',
@@ -788,6 +801,11 @@ async function getOutline(courseId, lawyerId = null, { includeUnpublished = fals
     title: modules.length ? modules[0].title : null,
     summary: modules.length ? modules[0].summary : null,
     welcome: modules.length ? (modules[0].welcome || null) : null,
+    // Arabic twins travel alongside so the learner page can pick the
+    // active language without reaching into the first section.
+    title_ar: modules.length ? (modules[0].title_ar || null) : null,
+    summary_ar: modules.length ? (modules[0].summary_ar || null) : null,
+    welcome_ar: modules.length ? (modules[0].welcome_ar || null) : null,
     sections: visible,
   };
 }

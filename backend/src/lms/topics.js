@@ -174,6 +174,10 @@ async function createTopic(input = {}, userId = null) {
     summary: input.summary || null,
     // The author's own words to the learner — rendered at the top of the hub.
     welcome: input.welcome || null,
+    // Arabic twins of title/summary/welcome, when the author gives them.
+    title_ar: input.title_ar || null,
+    summary_ar: input.summary_ar || null,
+    welcome_ar: input.welcome_ar || null,
     position: 0,
     gate,
   });
@@ -269,6 +273,9 @@ async function getTopic(courseId) {
     title: modules.length ? modules[0].title : courseId,
     summary: modules.length ? modules[0].summary : null,
     welcome: modules.length ? (modules[0].welcome || null) : null,
+    title_ar: modules.length ? (modules[0].title_ar || null) : null,
+    summary_ar: modules.length ? (modules[0].summary_ar || null) : null,
+    welcome_ar: modules.length ? (modules[0].welcome_ar || null) : null,
     gate: modules.length ? modules[0].gate : 'none',
     modules,
     activities: decorated,
@@ -304,6 +311,7 @@ async function listTopics() {
     out.push({
       topic_id: r.course_id,
       title: mods.length ? mods[0].title : r.course_id,
+      title_ar: mods.length ? (mods[0].title_ar || null) : null,
       activities: Number(r.activities) || 0,
       published: Number(r.published) || 0,
       counts: {

@@ -224,12 +224,24 @@ html.lad-embed .adm-wrap{padding-top:14px;max-width:none}
           <input class="adm-input" id="f-title" placeholder="e.g. Court etiquette and advocacy conduct">
         </div>
         <div class="adm-field">
+          <label class="adm-label" for="f-title-ar">العنوان بالعربية <span style="font-weight:400;color:var(--adm-muted,#8a8f98)">(Arabic title — shown on the Arabic site)</span></label>
+          <input class="adm-input" id="f-title-ar" dir="rtl" lang="ar" placeholder="مثال: آداب المحكمة وسلوك المرافعة">
+        </div>
+        <div class="adm-field">
           <label class="adm-label" for="f-sum">What it covers</label>
           <textarea class="adm-textarea" id="f-sum" style="min-height:60px" placeholder="One or two lines the lawyer sees on the course card."></textarea>
         </div>
         <div class="adm-field">
+          <label class="adm-label" for="f-sum-ar">ما تغطيه الدورة <span style="font-weight:400;color:var(--adm-muted,#8a8f98)">(Arabic)</span></label>
+          <textarea class="adm-textarea" id="f-sum-ar" dir="rtl" lang="ar" style="min-height:60px" placeholder="سطر أو سطران يراهما المحامي على بطاقة الدورة."></textarea>
+        </div>
+        <div class="adm-field">
           <label class="adm-label" for="f-wel">Welcome message <span style="font-weight:400;color:var(--adm-muted,#8a8f98)">(shown at the top of the course page)</span></label>
           <textarea class="adm-textarea" id="f-wel" style="min-height:60px" placeholder="Your words to the learner — why this course matters and what it gives them."></textarea>
+        </div>
+        <div class="adm-field">
+          <label class="adm-label" for="f-wel-ar">رسالة الترحيب <span style="font-weight:400;color:var(--adm-muted,#8a8f98)">(Arabic)</span></label>
+          <textarea class="adm-textarea" id="f-wel-ar" dir="rtl" lang="ar" style="min-height:60px" placeholder="كلماتك إلى المتعلم — لماذا تهم هذه الدورة وما الذي تقدمه له."></textarea>
         </div>
         <div class="adm-field">
           <label class="adm-label" for="f-gate">Order</label>
@@ -370,10 +382,23 @@ function renderDetail(){
           ? '<div class="adm-banner ok">Every step is published and live. Lawyers can open it from My training; use <b>Assign to lawyers</b> to put it on named people\'s lists.</div>'
           : '<div class="adm-banner ok">All steps are ready. Publish when you want lawyers to see them.</div>'))+
     '<div class="adm-field" style="margin:12px 0 16px">'+
-      '<label class="adm-label" for="hub-wel">Welcome message — your words to the learner, shown at the top of the course page</label>'+
-      '<textarea class="adm-textarea" id="hub-wel" style="min-height:64px" placeholder="Welcome the learner. Say why this course matters and what it will give them.">'+esc(t.welcome||'')+'</textarea>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+        '<div><label class="adm-label" for="hub-title">Title (English)</label>'+
+          '<input class="adm-input" id="hub-title" value="'+esc(t.title||'')+'"></div>'+
+        '<div><label class="adm-label" for="hub-title-ar">العنوان (Arabic)</label>'+
+          '<input class="adm-input" id="hub-title-ar" dir="rtl" lang="ar" value="'+esc(t.title_ar||'')+'"></div>'+
+        '<div><label class="adm-label" for="hub-sum">What it covers (English)</label>'+
+          '<textarea class="adm-textarea" id="hub-sum" style="min-height:52px">'+esc(t.summary||'')+'</textarea></div>'+
+        '<div><label class="adm-label" for="hub-sum-ar">ما تغطيه الدورة (Arabic)</label>'+
+          '<textarea class="adm-textarea" id="hub-sum-ar" dir="rtl" lang="ar" style="min-height:52px">'+esc(t.summary_ar||'')+'</textarea></div>'+
+        '<div><label class="adm-label" for="hub-wel">Welcome message (English) — shown at the top of the course page</label>'+
+          '<textarea class="adm-textarea" id="hub-wel" style="min-height:64px" placeholder="Welcome the learner. Say why this course matters and what it will give them.">'+esc(t.welcome||'')+'</textarea></div>'+
+        '<div><label class="adm-label" for="hub-wel-ar">رسالة الترحيب (Arabic)</label>'+
+          '<textarea class="adm-textarea" id="hub-wel-ar" dir="rtl" lang="ar" style="min-height:64px" placeholder="رحّب بالمتعلم. اذكر لماذا تهم هذه الدورة وما الذي ستقدمه له.">'+esc(t.welcome_ar||'')+'</textarea></div>'+
+      '</div>'+
+      '<p class="adm-hint" style="margin:6px 0 0">Lawyers see the version matching their language. Leave a box empty and the other language is shown in its place.</p>'+
       '<div style="display:flex;justify-content:flex-end;margin-top:6px">'+
-        '<button class="adm-btn-light adm-btn-sm" id="hub-wel-save">Save message</button></div>'+
+        '<button class="adm-btn-light adm-btn-sm" id="hub-wel-save">Save course text</button></div>'+
     '</div>'+
     '<div id="steps">'+steps.map(function(a,i){
       var k=KIND[a.kind]||KIND.document;
@@ -449,9 +474,16 @@ function renderDetail(){
       if(!m) throw new Error('this course has no section to hold the message yet');
       // upsertModule replaces every field, so send the whole existing row
       // with only the welcome changed — anything omitted would be wiped.
-      await api.saveTopicModules(t.topic_id,[Object.assign({},m,{welcome:$('hub-wel').value.trim()||null})]);
+      await api.saveTopicModules(t.topic_id,[Object.assign({},m,{
+        title:$('hub-title').value.trim()||m.title,
+        summary:$('hub-sum').value.trim()||null,
+        welcome:$('hub-wel').value.trim()||null,
+        title_ar:$('hub-title-ar').value.trim()||null,
+        summary_ar:$('hub-sum-ar').value.trim()||null,
+        welcome_ar:$('hub-wel-ar').value.trim()||null
+      })]);
       TOPIC=await api.getTopic(t.topic_id);
-      banner('Welcome message saved — lawyers see it at the top of the course page.','ok');
+      banner('Course text saved in both languages — lawyers see the one matching their site language.','ok');
       renderDetail();
     }catch(e){
       banner('Could not save the message: '+esc(e.message),'err');
@@ -846,9 +878,19 @@ var TABS = {
   other:     [['file','File']]
 };
 
+// The Arabic title box, if the open pane has one; else whatever the step
+// already carries. Trimmed to NULL so an emptied box clears the Arabic.
+function titleAr(a){
+  var el=$('x-title-ar');
+  if(!el) return a.title_ar||null;
+  return el.value.trim()||null;
+}
+
 function paneMaterial(a){
   return '<div class="adm-field"><label class="adm-label" for="x-title">Session title</label>'+
       '<input class="adm-input" id="x-title" value="'+esc(a.title)+'"></div>'+
+    '<div class="adm-field"><label class="adm-label" for="x-title-ar">عنوان الجلسة <span style="font-weight:400;color:var(--adm-muted,#8a8f98)">(Arabic — shown on the Arabic site)</span></label>'+
+      '<input class="adm-input" id="x-title-ar" dir="rtl" lang="ar" value="'+esc(a.title_ar||'')+'"></div>'+
     '<div class="adm-sect"><h4>What the bot teaches from</h4>'+
     '<p>Upload the training document and its text becomes the material the AI teaches from — the same text you can read and edit below. PDF, Word (.docx), PowerPoint (.pptx) or plain text. A scanned page has no text in it and will come back empty.</p>'+
     '<div class="adm-drop" id="x-drop"><div class="big">Drop a document here, or choose a file</div>'+
@@ -881,6 +923,8 @@ function paneFile(a){
   var isScorm=a.kind==='scorm';
   return '<div class="adm-field"><label class="adm-label" for="x-title">Title <span style="font-weight:400;color:var(--slate3)">— what the lawyer sees on the card</span></label>'+
       '<input class="adm-input" id="x-title" value="'+esc(a.title)+'" placeholder="e.g. Fire safety and evacuation"></div>'+
+    '<div class="adm-field"><label class="adm-label" for="x-title-ar">عنوان الخطوة <span style="font-weight:400;color:var(--adm-muted,#8a8f98)">(Arabic — shown on the Arabic site)</span></label>'+
+      '<input class="adm-input" id="x-title-ar" dir="rtl" lang="ar" value="'+esc(a.title_ar||'')+'"></div>'+
     '<div class="adm-field"><label class="adm-label" for="x-desc">Description <span style="font-weight:400;color:var(--slate3)">— one or two sentences on what it is</span></label>'+
       '<textarea class="adm-textarea" id="x-desc" style="min-height:64px" maxlength="600" placeholder="Write it yourself, or press Draft with AI once the file is in."></textarea>'+
       '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap">'+
@@ -1144,7 +1188,7 @@ $('dSave').onclick=async function(){
         teaching_brief:readBrief(),
         source_material_id:materialId
       }]);
-      await api.saveActivities(TOPIC.topic_id,[Object.assign({},a,{title:$('x-title').value.trim()||a.title})]);
+      await api.saveActivities(TOPIC.topic_id,[Object.assign({},a,{title:$('x-title').value.trim()||a.title, title_ar:titleAr(a)})]);
 
     }else{
       var url=($('x-url')&&$('x-url').value.trim())||'';
@@ -1169,6 +1213,7 @@ $('dSave').onclick=async function(){
       }
       var patch=Object.assign({},a,{
         title:$('x-title').value.trim()||a.title,
+        title_ar:titleAr(a),
         material_id:(m&&(m.id||(m.material&&m.material.id)))||a.material_id
       });
       if($('x-pass')) patch.pass_score=Number($('x-pass').value);
@@ -1197,10 +1242,14 @@ $('create').onclick=async function(){
       title:title,
       summary:$('f-sum').value.trim()||null,
       welcome:$('f-wel').value.trim()||null,
+      title_ar:$('f-title-ar').value.trim()||null,
+      summary_ar:$('f-sum-ar').value.trim()||null,
+      welcome_ar:$('f-wel-ar').value.trim()||null,
       gate:$('f-gate').value,
       steps:[{kind:$('f-first').value}]
     });
     $('f-title').value=''; $('f-sum').value=''; $('f-wel').value='';
+    $('f-title-ar').value=''; $('f-sum-ar').value=''; $('f-wel-ar').value='';
     TOPIC=t; selected=t.topic_id;
     banner('Created <b>'+esc(t.title)+'</b>. Add the rest of the sequence below, attach the content, then publish.','ok');
     await loadTopics(); renderDetail();

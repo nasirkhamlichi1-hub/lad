@@ -228,9 +228,28 @@
   function ready(fn) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn); else fn(); }
   ready(function () { draw(); loadBrand(); });
 
+  // ── Bilingual course text ───────────────────────────────────────────
+  // A course's own words (title, card line, welcome, step names) are stored
+  // twice — `title` in English and `title_ar` in Arabic — and the active
+  // site language (lad-i18n's LAD_LANG, 'ar' or 'en') decides which one
+  // the learner sees. Fall back to the other when the chosen one is empty,
+  // so a half-translated course still reads instead of going blank. The
+  // language switch reloads the page, so picking at render time is enough.
+  function pick(obj, key) {
+    if (!obj) return '';
+    var ar = obj[key + '_ar'], en = obj[key];
+    var lang = window.LAD_LANG || document.documentElement.getAttribute('lang') || 'ar';
+    var first = lang === 'ar' ? ar : en, second = lang === 'ar' ? en : ar;
+    first = first == null ? '' : String(first).trim();
+    second = second == null ? '' : String(second).trim();
+    return first || second;
+  }
+  window.flPick = pick;
+
   window.FLShell = {
     me: me, role: role, isAdmin: isAdmin, isLearner: isLearner, name: name,
     home: homeFor, signOut: signOut, brand: function () { return BRAND; },
+    pick: pick,
     toast: function (msg, err) {
       var t = document.getElementById('flToast');
       if (!t) { t = document.createElement('div'); t.id = 'flToast'; t.className = 'fl-toast'; document.body.appendChild(t); }

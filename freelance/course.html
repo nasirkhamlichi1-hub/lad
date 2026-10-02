@@ -344,11 +344,11 @@
     var first = data.sections[0] || {};
     // Topic identity comes top-level from the server, so it survives even
     // when every step is still an unpublished draft (empty sections).
-    $('title').textContent = data.title || first.title || TOPIC;
+    $('title').textContent = flPick(data, 'title') || flPick(first, 'title') || TOPIC;
     document.title = ($('title').textContent || 'Course') + ' · Freelance Lawyers Training';
 
     var w = $('welcome');
-    var welcome = data.welcome || first.welcome, summary = data.summary || first.summary;
+    var welcome = flPick(data, 'welcome') || flPick(first, 'welcome'), summary = flPick(data, 'summary') || flPick(first, 'summary');
     if (welcome) { w.textContent = welcome; w.classList.remove('quiet'); }
     else if (summary) { w.textContent = summary; w.classList.remove('quiet'); }
     else { w.textContent = 'Work through the steps below — your progress is recorded as you go, so you can leave and come back.'; }
@@ -384,7 +384,7 @@
     var n = 0;
     $('body').innerHTML = visible.map(function (s, si) {
       var head = (visible.length > 1 || si > 0)
-        ? '<h2 class="section-title" translate="no">' + esc(s.title) + '</h2>' +
+        ? '<h2 class="section-title" translate="no">' + esc(flPick(s, 'title')) + '</h2>' +
           '<p class="gate-note">' + (s.gate === 'sequential' ? 'In order — each step unlocks the next' : 'Any order') + '</p>' +
           (s.welcome && si > 0 ? '' : '')
         : '<h2 class="section-title">The pathway</h2>' +
@@ -404,7 +404,7 @@
           '<div class="card">' +
             '<span class="kind ' + (KINDCLS[a.kind] || '') + '">' + (KINDTXT[a.kind] || a.kind) + '</span>' +
             '<div class="grow"><div class="continue-tag">Continue here</div>' +
-              '<div class="t" translate="no">' + esc(a.title) + '</div>' +
+              '<div class="t" translate="no">' + esc(flPick(a, 'title')) + '</div>' +
               '<div class="m">' + esc(metaLine(a)) + '</div></div>' +
             pill +
             '<button data-id="' + a.id + '"' + (a.locked ? ' disabled' : '') + '>' + btn + '</button>' +
