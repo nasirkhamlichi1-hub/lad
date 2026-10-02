@@ -144,9 +144,9 @@ async function upsertActivity(courseId, input = {}, userId = null) {
   await db.run(
     `INSERT INTO activity
        (id, course_id, module_id, kind, title, summary, title_ar, summary_ar, position, required, weight,
-        cpd_minutes, pass_score, lesson_id, material_id, package_id, origin,
+        cpd_minutes, pass_score, lesson_id, material_id, material_id_ar, package_id, origin,
         published, created_by, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (id) DO UPDATE SET
        module_id = excluded.module_id,
        kind = excluded.kind,
@@ -161,6 +161,7 @@ async function upsertActivity(courseId, input = {}, userId = null) {
        pass_score = excluded.pass_score,
        lesson_id = excluded.lesson_id,
        material_id = excluded.material_id,
+       material_id_ar = excluded.material_id_ar,
        package_id = excluded.package_id,
        published = excluded.published,
        updated_at = excluded.updated_at`,
@@ -180,6 +181,8 @@ async function upsertActivity(courseId, input = {}, userId = null) {
       clampScore(input.pass_score),
       input.lesson_id || null,
       input.material_id || null,
+      // The Arabic site's file for this step, when the author uploaded one.
+      input.material_id_ar || null,
       input.package_id || null,
       origin,
       input.published === false ? 0 : 1,

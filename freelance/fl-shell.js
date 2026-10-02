@@ -246,10 +246,36 @@
   }
   window.flPick = pick;
 
+  // The file a step opens on the current site: the Arabic material on the
+  // Arabic site, the English one otherwise — and whichever exists when only
+  // one was uploaded.
+  function pickMaterial(a) {
+    if (!a) return null;
+    var lang = window.LAD_LANG || document.documentElement.getAttribute('lang') || 'ar';
+    var first = lang === 'ar' ? a.material_id_ar : a.material_id;
+    var second = lang === 'ar' ? a.material_id : a.material_id_ar;
+    return first || second || null;
+  }
+  window.flMat = pickMaterial;
+
+  // Whether a library material belongs on the current site. A row with a
+  // twin in the other language is shown only on its own site; an unpaired
+  // row (or one whose twin was deleted) is shown everywhere.
+  function materialVisible(m, all) {
+    if (!m || !m.pair_id) return true;
+    var twin = (all || []).some(function (x) { return x && x.id === m.pair_id; });
+    if (!twin) return true;
+    var lang = window.LAD_LANG || document.documentElement.getAttribute('lang') || 'ar';
+    return (m.lang || 'en') === lang;
+  }
+  window.flMatVisible = materialVisible;
+
   window.FLShell = {
     me: me, role: role, isAdmin: isAdmin, isLearner: isLearner, name: name,
     home: homeFor, signOut: signOut, brand: function () { return BRAND; },
     pick: pick,
+    pickMaterial: pickMaterial,
+    materialVisible: materialVisible,
     toast: function (msg, err) {
       var t = document.getElementById('flToast');
       if (!t) { t = document.createElement('div'); t.id = 'flToast'; t.className = 'fl-toast'; document.body.appendChild(t); }

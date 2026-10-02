@@ -438,15 +438,30 @@ function renderDetail(){
     '<div class="adm-field" style="margin-top:26px">'+
       '<label class="adm-label">Reference library — laws, regulations, guidance notes, links and videos the learner opens on the course page (not graded steps)</label>'+
       '<div id="lib-rows" style="margin:8px 0 4px"><span class="adm-count">Loading the library…</span></div>'+
-      '<div class="adm-addbar" style="margin-top:6px">'+
-        '<div class="f"><label class="adm-label" for="lib-title">Title</label>'+
-          '<input class="adm-input" id="lib-title" placeholder="e.g. Advocacy Law No. (32) of 2008"></div>'+
-        '<div class="f"><label class="adm-label" for="lib-url">Link — legislation page, article, YouTube</label>'+
-          '<input class="adm-input" id="lib-url" placeholder="https://…"></div>'+
-        '<div class="f"><label class="adm-label" for="lib-file">…or a file (PDF, Word, slides)</label>'+
-          '<input class="adm-input" id="lib-file" type="file"></div>'+
-        '<button class="adm-btn-green" id="lib-add">Add to library</button>'+
+      // One item, both languages: the English site opens the English file,
+      // the Arabic site the Arabic one. Fill in one side only and that
+      // version is shown on both sites.
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px">'+
+        '<div style="border:1px solid var(--adm-line,#e3e6ea);border-radius:10px;padding:12px">'+
+          '<div class="adm-label" style="margin-bottom:8px">English version</div>'+
+          '<div class="adm-field"><label class="adm-label" for="lib-title">Title</label>'+
+            '<input class="adm-input" id="lib-title" placeholder="e.g. Advocacy Law No. (32) of 2008"></div>'+
+          '<div class="adm-field"><label class="adm-label" for="lib-url">Link — legislation page, article, YouTube</label>'+
+            '<input class="adm-input" id="lib-url" placeholder="https://…"></div>'+
+          '<div class="adm-field"><label class="adm-label" for="lib-file">…or a file (PDF, Word, slides)</label>'+
+            '<input class="adm-input" id="lib-file" type="file"></div>'+
+        '</div>'+
+        '<div style="border:1px solid var(--adm-line,#e3e6ea);border-radius:10px;padding:12px">'+
+          '<div class="adm-label" style="margin-bottom:8px">النسخة العربية <span style="font-weight:400;color:var(--adm-muted,#8a8f98)">(Arabic version)</span></div>'+
+          '<div class="adm-field"><label class="adm-label" for="lib-title-ar">العنوان</label>'+
+            '<input class="adm-input" id="lib-title-ar" dir="rtl" lang="ar" placeholder="مثال: قانون المحاماة رقم (32) لسنة 2008"></div>'+
+          '<div class="adm-field"><label class="adm-label" for="lib-url-ar">الرابط</label>'+
+            '<input class="adm-input" id="lib-url-ar" placeholder="https://…"></div>'+
+          '<div class="adm-field"><label class="adm-label" for="lib-file-ar">…أو ملف</label>'+
+            '<input class="adm-input" id="lib-file-ar" type="file"></div>'+
+        '</div>'+
       '</div>'+
+      '<div style="margin-top:10px"><button class="adm-btn-green" id="lib-add">Add to library</button></div>'+
     '</div>'+
     // ── How the hub looks ─────────────────────────────────────────
     // A picture behind the title band and one accent colour the whole page
@@ -551,9 +566,12 @@ async function loadLibAdmin(){
     if(!mats.length){ box.innerHTML='<span class="adm-count">Nothing in the library yet — everything you add here appears on the course page for the learner.</span>'; return; }
     box.innerHTML=mats.map(function(m){
       var label=m.kind==='scorm'?'MODULE':(m.kind==='link'?(ytIdOf(m.url)?'VIDEO':'LINK'):'DOCUMENT');
+      var paired=!!(m.pair_id&&mats.some(function(x){return x.id===m.pair_id;}));
+      var langTag=paired?'<span class="adm-count" style="margin-inline-start:8px">'+((m.lang||'en')==='ar'?'Arabic site':'English site')+'</span>'
+                        :'<span class="adm-count" style="margin-inline-start:8px">Both sites</span>';
       return '<div class="adm-step ready" style="margin-bottom:6px">'+
         '<span class="adm-kind k-doc">'+label+'</span>'+
-        '<div class="adm-grow"><div class="t" translate="no">'+esc(m.title)+'</div>'+
+        '<div class="adm-grow"><div class="t" translate="no">'+esc(m.title)+(m.title_ar&&m.title_ar!==m.title?' <span dir="rtl" lang="ar" style="font-weight:400">· '+esc(m.title_ar)+'</span>':'')+langTag+'</div>'+
         (m.url?'<div class="s">'+esc(m.url)+'</div>':(m.file_name?'<div class="s">'+esc(m.file_name)+'</div>':''))+'</div>'+
         '<button class="adm-btn-icon adm-btn-danger" data-libdel="'+esc(m.id)+'" title="Remove from the library">&times;</button></div>';
     }).join('');
@@ -566,19 +584,34 @@ async function loadLibAdmin(){
     });
   }catch(e){ box.innerHTML='<span class="adm-count">Could not load the library: '+esc(e.message)+'</span>'; }
 }
+function matId(m){ return (m&&(m.id||(m.material&&m.material.id)))||null; }
+
+// One library item, up to two files. Both sides given → two paired rows,
+// one per language; one side given → a single row shown on both sites.
 async function doLibAdd(){
   var btn=$('lib-add'), was=btn.textContent;
-  var title=$('lib-title').value.trim();
-  var url=$('lib-url').value.trim();
-  var file=$('lib-file').files[0]||null;
-  if(!url&&!file){ banner('Give the library item a link or a file.','err'); return; }
-  if(!title&&!file){ banner('Give it a title the learner will recognise.','err'); return; }
+  var title=$('lib-title').value.trim(), titleAr=$('lib-title-ar').value.trim();
+  var url=$('lib-url').value.trim(), urlAr=$('lib-url-ar').value.trim();
+  var file=$('lib-file').files[0]||null, fileAr=$('lib-file-ar').files[0]||null;
+  var hasEn=!!(url||file), hasAr=!!(urlAr||fileAr);
+  if(!hasEn&&!hasAr){ banner('Give the library item a link or a file — in English, Arabic, or both.','err'); return; }
+  if(hasEn&&!title&&!file){ banner('Give the English version a title the learner will recognise.','err'); return; }
+  if(hasAr&&!titleAr&&!title&&!fileAr){ banner('Give the Arabic version a title.','err'); return; }
   btn.disabled=true; btn.textContent='Adding…';
   try{
-    if(file){ await uploadMaterial(TOPIC.topic_id,file,'file',title); }
-    else{ await api.addCourseMaterial(TOPIC.topic_id,{title:title,kind:'link',url:url}); }
-    $('lib-title').value='';$('lib-url').value='';$('lib-file').value='';
-    banner('Added to the course library.','ok');
+    var en=null, ar=null;
+    if(hasEn){
+      en = file ? await uploadMaterial(TOPIC.topic_id,file,'file',title,'',{title_ar:titleAr||null, lang:hasAr?'en':null})
+                : await api.addCourseMaterial(TOPIC.topic_id,{title:title,title_ar:titleAr||null,kind:'link',url:url,lang:hasAr?'en':null});
+    }
+    if(hasAr){
+      var arTitle=titleAr||title;
+      var extra={title_ar:titleAr||null, lang:hasEn?'ar':null, pair_id:matId(en)};
+      ar = fileAr ? await uploadMaterial(TOPIC.topic_id,fileAr,'file',arTitle,'',extra)
+                  : await api.addCourseMaterial(TOPIC.topic_id,Object.assign({title:arTitle,kind:'link',url:urlAr},extra));
+    }
+    ['lib-title','lib-title-ar','lib-url','lib-url-ar','lib-file','lib-file-ar'].forEach(function(id){ $(id).value=''; });
+    banner(hasEn&&hasAr?'Added to the course library in both languages.':'Added to the course library.','ok');
     loadLibAdmin();
   }catch(e){ banner('Could not add it: '+esc(e.message),'err'); }
   finally{ btn.disabled=false; btn.textContent=was; }
@@ -769,9 +802,10 @@ async function extractPptx(file){
 
 // Store the original file against the topic so learners can download it.
 // Small files go inline; anything larger needs cloud storage configured.
-async function uploadMaterial(courseId, file, kind, title, description){
+async function uploadMaterial(courseId, file, kind, title, description, extra){
   title = (title||'').trim() || titleFromFileName(file.name) || file.name;
   description = (description||'').trim() || null;
+  extra = extra || {};   // title_ar / lang / pair_id — the bilingual pairing
   if(file.size>MAX_INLINE){
     var sas;
     try{ sas=await api.materialUploadUrl(courseId,{file_name:file.name,mime:file.type||'application/octet-stream'}); }
@@ -779,8 +813,8 @@ async function uploadMaterial(courseId, file, kind, title, description){
     var put=await fetch(sas.upload_url,{method:'PUT',
       headers:{'x-ms-blob-type':'BlockBlob','Content-Type':file.type||'application/octet-stream'},body:file});
     if(!put.ok) throw new Error('The upload to cloud storage failed ('+put.status+').');
-    return api.addCourseMaterial(courseId,{title:title,description:description,kind:kind,file_name:file.name,
-      mime:file.type||null,size:file.size,storage_key:sas.storage_key});
+    return api.addCourseMaterial(courseId,Object.assign({title:title,description:description,kind:kind,file_name:file.name,
+      mime:file.type||null,size:file.size,storage_key:sas.storage_key},extra));
   }
   var b64=await new Promise(function(ok,fail){
     var r=new FileReader();
@@ -788,8 +822,8 @@ async function uploadMaterial(courseId, file, kind, title, description){
     r.onerror=function(){fail(new Error('Could not read that file.'));};
     r.readAsDataURL(file);
   });
-  return api.addCourseMaterial(courseId,{title:title,description:description,kind:kind,file_name:file.name,
-    mime:file.type||null,size:file.size,data:b64});
+  return api.addCourseMaterial(courseId,Object.assign({title:title,description:description,kind:kind,file_name:file.name,
+    mime:file.type||null,size:file.size,data:b64},extra));
 }
 
 // A drop target that also works as a plain file picker.
@@ -930,13 +964,26 @@ function paneFile(a){
       '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap">'+
         '<button class="adm-btn-light adm-btn-sm" id="x-summarise" type="button">✦ Draft title &amp; description with AI</button>'+
         '<span id="x-sumnote" style="font-size:12px;color:var(--slate3)"></span></div></div>'+
+    '<div class="adm-label" style="margin-top:4px">English version <span style="font-weight:400;color:var(--adm-muted,#8a8f98)">— what the English site opens</span></div>'+
     '<div class="adm-drop" id="x-drop"><div class="big">Drop the '+(isScorm?'SCORM package (.zip)':'reference document')+' here, or choose one</div>'+
       '<div class="sm">'+(isScorm?'Upload the .zip exactly as Articulate, Rise, Storyline or iSpring exported it — no need to unzip it. Up to 10 MB here; larger packages need cloud storage.':'PDF, Word or slides. Up to 10 MB here; larger files need cloud storage, or add a link below')+'</div></div>'+
     '<input type="file" id="x-file" style="display:none"'+(isScorm?' accept=".zip"':'')+'>'+
     '<div id="x-filemeta"></div><div class="adm-busy" id="x-busy"></div>'+
     '<div class="adm-field" style="margin-top:14px"><label class="adm-label" for="x-url">'+
       (isScorm?'…or a SCORM package URL':'…or a link')+'</label>'+
-      '<input class="adm-input" id="x-url" placeholder="https://…"></div>';
+      '<input class="adm-input" id="x-url" placeholder="https://…"></div>'+
+    // The Arabic site's file. Empty → the Arabic site opens the English one.
+    '<div class="adm-sect" style="margin-top:16px"><h4>النسخة العربية <span style="font-weight:400;color:var(--adm-muted,#8a8f98)">(Arabic version — what the Arabic site opens)</span></h4>'+
+      '<p>Upload the Arabic '+(isScorm?'package':'document')+' here. Leave it empty and the Arabic site opens the English file above.</p>'+
+      '<div id="x-ar-current"'+(a.material_id_ar?'':' style="display:none"')+' class="adm-file"><span class="nm" id="x-ar-name">Arabic file attached</span>'+
+        '<button type="button" class="adm-btn-light adm-btn-sm" id="x-ar-clear" style="margin-inline-start:10px">Remove</button></div>'+
+      '<div class="adm-drop" id="x-drop-ar"><div class="big">Drop the Arabic '+(isScorm?'SCORM package (.zip)':'document')+' here, or choose one</div></div>'+
+      '<input type="file" id="x-file-ar" style="display:none"'+(isScorm?' accept=".zip"':'')+'>'+
+      '<div id="x-filemeta-ar"></div>'+
+      '<div class="adm-field" style="margin-top:10px"><label class="adm-label" for="x-url-ar">'+
+        (isScorm?'…or an Arabic SCORM package URL':'…or an Arabic link')+'</label>'+
+        '<input class="adm-input" id="x-url-ar" placeholder="https://…"></div>'+
+    '</div>';
 }
 
 // "a-quick-guide-to-talking-about-disabilities-scorm12-X5jGH11z.zip"
@@ -1003,7 +1050,7 @@ function closeEditor(){
 
 function openEdit(id){
   var a=TOPIC.activities.filter(function(x){return x.id===id;})[0];
-  editing=a; pending=null;
+  editing=a; pending=null; pendingAr=null; clearAr=false;
   var kind=(KIND[a.kind]||KIND.document);
   $('dKind').textContent=kind.label+' · step '+(a.position+1);
   $('dTitle').textContent=a.title;
@@ -1058,13 +1105,20 @@ function openEdit(id){
     }
   } else {
     wireDrop('x-drop','x-file',onAttachFile);
+    wireDrop('x-drop-ar','x-file-ar',onAttachFileAr);
+    if($('x-ar-clear')) $('x-ar-clear').onclick=function(){
+      clearAr=true; pendingAr=null; $('x-ar-current').style.display='none'; $('x-filemeta-ar').innerHTML='';
+    };
     EXISTING_MAT=null;
     if($('x-summarise')) $('x-summarise').onclick=function(){ summariseMaterial(a); };
     // A step that already carries a material: show its saved description so
     // a rename or a rewrite does not start from a blank box.
-    if(a.material_id){
+    if(a.material_id||a.material_id_ar){
       api.listCourseMaterials(TOPIC.topic_id).then(function(r){
-        var m=((r&&r.materials)||[]).filter(function(x){return x.id===a.material_id;})[0];
+        var all=(r&&r.materials)||[];
+        var ma=all.filter(function(x){return x.id===a.material_id_ar;})[0];
+        if(ma && $('x-ar-name')) $('x-ar-name').textContent=(ma.file_name||ma.url||ma.title||'Arabic file attached');
+        var m=all.filter(function(x){return x.id===a.material_id;})[0];
         if(!m) return;
         EXISTING_MAT=m;
         if($('x-desc') && !$('x-desc').value) $('x-desc').value=m.description||'';
@@ -1104,6 +1158,13 @@ async function onTeachingFile(file){
 }
 
 // A file chosen for a material or SCORM step — nothing to extract.
+var pendingAr=null, clearAr=false;
+function onAttachFileAr(file){
+  pendingAr=file; clearAr=false;
+  $('x-filemeta-ar').innerHTML='<div class="adm-file"><span class="nm">'+esc(file.name)+
+    '</span><span class="sz">'+fmtSize(file.size)+'</span></div>'+
+    '<div class="adm-busy">'+(file.size>MAX_INLINE?'Over 10 MB — this will go to cloud storage if it is configured.':'Ready to save.')+'</div>';
+}
 function onAttachFile(file){
   pending=file;
   $('x-filemeta').innerHTML='<div class="adm-file"><span class="nm">'+esc(file.name)+
@@ -1192,29 +1253,47 @@ $('dSave').onclick=async function(){
 
     }else{
       var url=($('x-url')&&$('x-url').value.trim())||'';
-      if(!pending && !url && !a.material_id){ $('dStatus').textContent='No file or link yet.'; banner('Upload a file or give it a URL.','err'); return; }
+      var urlAr=($('x-url-ar')&&$('x-url-ar').value.trim())||'';
+      var keepAr=!!(a.material_id_ar&&!clearAr);
+      if(!pending && !url && !a.material_id && !pendingAr && !urlAr && !keepAr){
+        $('dStatus').textContent='No file or link yet.'; banner('Upload a file or give it a URL — in English, Arabic, or both.','err'); return;
+      }
 
-      var m;
+      var m=null;
       var mTitle=$('x-title').value.trim()||a.title;
       var mDesc=($('x-desc')&&$('x-desc').value.trim())||'';
+      var tAr=titleAr(a);
+      var matKind=a.kind==='scorm'?'scorm':'file', linkKind=a.kind==='scorm'?'scorm':'link';
       if(pending){
         $('x-busy').textContent='Uploading…';
-        m=await uploadMaterial(TOPIC.topic_id,pending,a.kind==='scorm'?'scorm':'file',mTitle,mDesc);
+        m=await uploadMaterial(TOPIC.topic_id,pending,matKind,mTitle,mDesc,{title_ar:tAr});
       }else if(a.material_id && !url){
         // Nothing new attached: this is a rename / description edit of the material already on the step.
-        m=await api.updateCourseMaterial(TOPIC.topic_id,a.material_id,{title:mTitle,description:mDesc});
-      }else{
-        m=await api.addCourseMaterial(TOPIC.topic_id,{
-          title:mTitle,
-          description:mDesc,
-          kind:a.kind==='scorm'?'scorm':'link',
-          url:url
-        });
+        m=await api.updateCourseMaterial(TOPIC.topic_id,a.material_id,{title:mTitle,description:mDesc,title_ar:tAr});
+      }else if(url){
+        m=await api.addCourseMaterial(TOPIC.topic_id,{title:mTitle,title_ar:tAr,description:mDesc,kind:linkKind,url:url});
       }
+      var enId=matId(m)||a.material_id||null;
+
+      // The Arabic file: a new upload or link replaces the old one; "Remove"
+      // drops it; otherwise the one already on the step stays (renamed to match).
+      var arId=keepAr?a.material_id_ar:null;
+      var arTitle=tAr||mTitle;
+      var arExtra={lang:'ar',title_ar:tAr,pair_id:enId};
+      if(pendingAr){
+        $('x-busy').textContent='Uploading the Arabic file…';
+        arId=matId(await uploadMaterial(TOPIC.topic_id,pendingAr,matKind,arTitle,mDesc,arExtra));
+      }else if(urlAr){
+        arId=matId(await api.addCourseMaterial(TOPIC.topic_id,Object.assign({title:arTitle,description:mDesc,kind:linkKind,url:urlAr},arExtra)));
+      }else if(arId){
+        await api.updateCourseMaterial(TOPIC.topic_id,arId,{title:arTitle,description:mDesc,title_ar:tAr,pair_id:enId});
+      }
+
       var patch=Object.assign({},a,{
         title:$('x-title').value.trim()||a.title,
-        title_ar:titleAr(a),
-        material_id:(m&&(m.id||(m.material&&m.material.id)))||a.material_id
+        title_ar:tAr,
+        material_id:enId,
+        material_id_ar:arId
       });
       if($('x-pass')) patch.pass_score=Number($('x-pass').value);
       await api.saveActivities(TOPIC.topic_id,[patch]);

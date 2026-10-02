@@ -315,6 +315,11 @@ function canAccessMaterials(courseId, user) {
 const materialMeta = (m) => ({
   id: m.id, course_id: m.course_id, title: m.title, kind: m.kind,
   description: m.description || null,
+  // Bilingual pairing (058): which site this row is for, its Arabic title,
+  // and the id of the same item in the other language.
+  lang: m.lang === 'ar' || m.lang === 'en' ? m.lang : null,
+  title_ar: m.title_ar || null,
+  pair_id: m.pair_id || null,
   url: m.kind === 'link' || m.kind === 'scorm' ? (m.url || null) : null,
   file_name: m.file_name || null, mime: m.mime || null, size: Number(m.size) || 0,
   has_file: !!m.data || !!m.storage_key,
@@ -394,10 +399,15 @@ router.post('/:id/materials', requireRole(...MATERIAL_ROLES), (req, res) => {
   }
   const id = _mid();
   const description = cleanDescription(req.body.description);
+  const lang = cleanLang(req.body.lang);
+  const titleAr = cleanTitleAr(req.body.title_ar);
+  const pairId = cleanPairId(req.params.id, req.body.pair_id);
   try {
-    db.prepare(`INSERT INTO course_materials (id, course_id, title, kind, url, file_name, mime, size, data, storage_key, created_by, description)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
-      .run(id, req.params.id, title, kind, url, (req.body.file_name || null), (req.body.mime || null), size, data, storageKey, (req.user && req.user.sub) || null, description);
+    db.prepare(`INSERT INTO course_materials (id, course_id, title, kind, url, file_name, mime, size, data, storage_key, created_by, description, lang, title_ar, pair_id)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(id, req.params.id, title, kind, url, (req.body.file_name || null), (req.body.mime || null), size, data, storageKey, (req.user && req.user.sub) || null, description, lang, titleAr, pairId);
+    // Pairing is symmetric: the twin learns about this row too.
+    if (pairId) db.prepare('UPDATE course_materials SET pair_id = ? WHERE id = ? AND course_id = ?').run(id, pairId, req.params.id);
   } catch (e) { return res.status(500).json({ error: 'save_failed', message: e.message }); }
   const row = db.prepare('SELECT * FROM course_materials WHERE id = ?').get(id);
   res.status(201).json(materialMeta(row));
@@ -406,6 +416,22 @@ router.post('/:id/materials', requireRole(...MATERIAL_ROLES), (req, res) => {
 function cleanDescription(v) {
   const d = String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, 600);
   return d || null;
+}
+function cleanLang(v) {
+  const l = String(v == null ? '' : v).trim().toLowerCase();
+  return l === 'ar' || l === 'en' ? l : null;
+}
+function cleanTitleAr(v) {
+  const t = String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, 300);
+  return t || null;
+}
+// A pair must be another material of the SAME course — never a row from
+// elsewhere, and never itself.
+function cleanPairId(courseId, v) {
+  const id = String(v == null ? '' : v).trim();
+  if (!id) return null;
+  const row = db.prepare('SELECT id FROM course_materials WHERE id = ? AND course_id = ?').get(id, courseId);
+  return row ? row.id : null;
 }
 
 // PATCH title / description of a material (admin). The file itself is not
@@ -417,7 +443,14 @@ router.patch('/:id/materials/:mid', requireRole(...MATERIAL_ROLES), (req, res) =
   const title = b.title === undefined ? row.title : String(b.title || '').trim();
   if (!title) return res.status(400).json({ error: 'title is required' });
   const description = b.description === undefined ? row.description : cleanDescription(b.description);
-  db.prepare('UPDATE course_materials SET title = ?, description = ? WHERE id = ?').run(title, description, row.id);
+  const lang = b.lang === undefined ? row.lang : cleanLang(b.lang);
+  const titleAr = b.title_ar === undefined ? row.title_ar : cleanTitleAr(b.title_ar);
+  const pairId = b.pair_id === undefined ? row.pair_id : (b.pair_id === null || b.pair_id === '' ? null : cleanPairId(req.params.id, b.pair_id));
+  db.prepare('UPDATE course_materials SET title = ?, description = ?, lang = ?, title_ar = ?, pair_id = ? WHERE id = ?')
+    .run(title, description, lang, titleAr, pairId && pairId !== row.id ? pairId : null, row.id);
+  if (pairId && pairId !== row.id && b.pair_id !== undefined) {
+    db.prepare('UPDATE course_materials SET pair_id = ? WHERE id = ? AND course_id = ?').run(row.id, pairId, req.params.id);
+  }
   res.json(materialMeta(db.prepare('SELECT * FROM course_materials WHERE id = ?').get(row.id)));
 });
 
@@ -514,6 +547,10 @@ router.get('/:id/materials/:mid/download-url', optionalAuth, (req, res) => {
 router.delete('/:id/materials/:mid', requireRole(...MATERIAL_ROLES), (req, res) => {
   const m = db.prepare('SELECT storage_key FROM course_materials WHERE id = ? AND course_id = ?').get(req.params.mid, req.params.id);
   const r = db.prepare('DELETE FROM course_materials WHERE id = ? AND course_id = ?').run(req.params.mid, req.params.id);
+  // The twin stands alone again: unpaired and shown to both sites.
+  db.prepare('UPDATE course_materials SET pair_id = NULL, lang = NULL WHERE pair_id = ? AND course_id = ?').run(req.params.mid, req.params.id);
+  // A step that opened this file in one language falls back to the other.
+  try { db.prepare('UPDATE activity SET material_id_ar = NULL WHERE material_id_ar = ?').run(req.params.mid); } catch (_) {}
   if (m && m.storage_key && blob.isConfigured()) { blob.deleteBlob(m.storage_key).catch(() => {}); }
   res.json({ deleted: r.changes });
 });

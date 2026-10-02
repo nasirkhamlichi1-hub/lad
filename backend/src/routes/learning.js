@@ -544,8 +544,11 @@ router.post('/attempts/:id/close', requireAuth, async (req, res, next) => {
       const open = await store.getAttempt(req.params.id);
       if (open && open.lawyer_id === userId(req) && open.status === 'open' && open.kind === 'scorm') {
         const act = await store.getActivity(open.activity_id);
-        const st = act && act.material_id
-          ? db.prepare('SELECT cmi FROM scorm_state WHERE material_id = ? AND lawyer_id = ?').get(act.material_id, userId(req))
+        // The learner may have played either language's package — read the
+        // most recently saved state across both.
+        const mids = act ? [act.material_id, act.material_id_ar].filter(Boolean) : [];
+        const st = mids.length
+          ? db.prepare(`SELECT cmi FROM scorm_state WHERE material_id IN (${mids.map(() => '?').join(',')}) AND lawyer_id = ? ORDER BY updated_at DESC LIMIT 1`).get(...mids, userId(req))
           : null;
         if (st && st.cmi) {
           const cmi = JSON.parse(st.cmi) || {};

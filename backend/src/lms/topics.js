@@ -104,13 +104,16 @@ function defaultTitle(topicTitle, slot, kind) {
 // every topic read so the builder can show the remaining work rather than
 // leaving someone to guess why nothing appears in the hub.
 function readiness(activity) {
+  // A file in either language is enough — the learner page falls back to
+  // whichever exists when only one was uploaded.
+  const hasFile = !!(activity.material_id || activity.material_id_ar);
   if (activity.kind === 'scorm') {
-    return activity.material_id || activity.package_id
+    return hasFile || activity.package_id
       ? { ready: true, needs: null }
       : { ready: false, needs: 'Upload or link the SCORM package' };
   }
   if (activity.kind === 'document' || activity.kind === 'link' || activity.kind === 'video') {
-    return activity.material_id
+    return hasFile
       ? { ready: true, needs: null }
       : { ready: false, needs: 'Attach the file or link' };
   }

@@ -266,7 +266,8 @@ async function settleFromState(materialId, lawyerId, cmi) {
   const v = verdictOf(cmi || {});
   if (!v.done) return 0;
   const spine = require('../lms/store');
-  const steps = db.prepare("SELECT id FROM activity WHERE kind = 'scorm' AND material_id = ? AND published = 1").all(materialId);
+  // A step's Arabic package settles the step exactly as its English one does.
+  const steps = db.prepare("SELECT id FROM activity WHERE kind = 'scorm' AND (material_id = ? OR material_id_ar = ?) AND published = 1").all(materialId, materialId);
   let n = 0;
   for (const a of steps) {
     const open = db.prepare("SELECT id, started_at FROM activity_attempt WHERE activity_id = ? AND lawyer_id = ? AND status = 'open' ORDER BY started_at DESC").all(a.id, lawyerId);
