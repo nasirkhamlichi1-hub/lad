@@ -312,8 +312,16 @@ a{color:inherit;text-decoration:none}
     nextTurn();
   }
 
+  // On the Arabic site, the Arabic key elements the author wrote (kept with
+  // the lesson's teaching brief); otherwise, and as a fallback, the originals.
+  function shownObjectives(L){
+    var lang=window.LAD_LANG||document.documentElement.getAttribute('lang');
+    var ar=L&&L.teaching_brief&&L.teaching_brief.objectives_ar;
+    if(lang==='ar'&&Array.isArray(ar)&&ar.length)return ar;
+    return (L&&L.objectives)||[];
+  }
   function renderObjectives(){
-    var objs=S.selected.objectives||[];
+    var objs=shownObjectives(S.selected);
     var segs=el('segs');segs.innerHTML='';
     var list=el('objs');list.innerHTML='';
     objs.forEach(function(o){

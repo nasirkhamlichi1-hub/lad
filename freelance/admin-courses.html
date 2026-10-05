@@ -912,6 +912,10 @@ function readBrief(){
   var out={};
   BRIEF.forEach(function(f){ var el=$('b-'+f[0]); if(el&&el.value) out[f[0]]=el.value; });
   var h=$('b-house'); if(h&&h.value.trim()) out.house_rules=h.value.trim();
+  // The Arabic key elements travel with the brief: the lesson record keeps
+  // the brief as it is given, so the Arabic site can show them as written.
+  var ar=$('x-obj-ar');
+  if(ar){ var lines=ar.value.split('\n').map(function(x){return x.trim();}).filter(Boolean); if(lines.length) out.objectives_ar=lines; }
   return Object.keys(out).length?out:null;
 }
 
@@ -970,6 +974,9 @@ function paneElements(){
     '<div class="adm-field" style="margin-top:12px">'+
       '<label class="adm-label" for="x-obj">One per line</label>'+
       '<textarea class="adm-textarea" id="x-obj" style="min-height:150px"></textarea></div>'+
+    '<div class="adm-field" style="margin-top:12px">'+
+      '<label class="adm-label" for="x-obj-ar">العناصر الرئيسية <span style="font-weight:400;color:var(--adm-muted,#8a8f98)">(Arabic — shown on the Arabic site; one per line, in the same order)</span></label>'+
+      '<textarea class="adm-textarea" id="x-obj-ar" dir="rtl" lang="ar" style="min-height:150px"></textarea></div>'+
     '</div>';
 }
 
@@ -1111,6 +1118,7 @@ function openEdit(id){
       if(!l) return;
       $('x-body').value=l.body||'';
       $('x-obj').value=(l.objectives||[]).join('\n');
+      if($('x-obj-ar')) $('x-obj-ar').value=((l.teaching_brief&&l.teaching_brief.objectives_ar)||[]).join('\n');
       if(l.teaching_brief){
         BRIEF.forEach(function(f){ var el=$('b-'+f[0]); if(el&&l.teaching_brief[f[0]]) el.value=l.teaching_brief[f[0]]; });
         if(l.teaching_brief.house_rules && $('b-house')) $('b-house').value=l.teaching_brief.house_rules;
