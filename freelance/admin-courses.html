@@ -976,7 +976,9 @@ function paneElements(){
       '<textarea class="adm-textarea" id="x-obj" style="min-height:150px"></textarea></div>'+
     '<div class="adm-field" style="margin-top:12px">'+
       '<label class="adm-label" for="x-obj-ar">العناصر الرئيسية <span style="font-weight:400;color:var(--adm-muted,#8a8f98)">(Arabic — shown on the Arabic site; one per line, in the same order)</span></label>'+
-      '<textarea class="adm-textarea" id="x-obj-ar" dir="rtl" lang="ar" style="min-height:150px"></textarea></div>'+
+      '<textarea class="adm-textarea" id="x-obj-ar" dir="rtl" lang="ar" style="min-height:150px"></textarea>'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-top:6px"><button class="adm-btn-light adm-btn-sm" id="x-translate" type="button">Translate to Arabic</button>'+
+      '<span id="x-tr-note" style="font-size:12px;color:var(--adm-muted,#8a8f98)">Filled in automatically from the English list when it is empty — read it before lawyers do.</span></div></div>'+
     '</div>';
 }
 
@@ -1125,6 +1127,7 @@ function openEdit(id){
       }
     }).catch(function(){});
     $('x-draft').onclick=draftFromMaterial;
+    if($('x-translate')) $('x-translate').onclick=function(){ translateKeyElements(true); };
     wireDrop('x-drop','x-file',onTeachingFile);
     // The material textarea is where people naturally drop the file too —
     // accept it there instead of letting the browser open the document.
@@ -1220,6 +1223,34 @@ function draftNote(html,color){
   $('x-drafted').innerHTML='<div style="margin-top:10px;font-size:12.5px;line-height:1.5;color:'+
     (color||'var(--slate2)')+'">'+html+'</div>';
 }
+// Translate the English key elements into the Arabic box, line for line.
+// `force` (the button) replaces what is there and reports failures; the
+// automatic calls only fill an empty box and stay quiet if the server has
+// no translator yet (an older backend answers 404).
+async function translateKeyElements(force){
+  var en=$('x-obj'), ar=$('x-obj-ar'), note=$('x-tr-note'), b=$('x-translate');
+  if(!en||!ar) return;
+  var lines=en.value.split('\n').map(function(x){return x.trim();}).filter(Boolean);
+  if(!lines.length){ if(force&&note) note.textContent='Write the English key elements first.'; return; }
+  if(!force && ar.value.trim()) return;
+  if(b){ b.disabled=true; b.textContent='Translating…'; }
+  try{
+    var r=await api.translateLines(lines);
+    if(r&&Array.isArray(r.lines)&&r.lines.length===lines.length){
+      ar.value=r.lines.join('\n');
+      if(note){ note.style.color='var(--green)'; note.textContent='Translated '+lines.length+' line'+(lines.length===1?'':'s')+'. Read them and correct anything before saving.'; }
+    }
+  }catch(e){
+    var missing=e.status===404||/not found/i.test(e.message||'');
+    if(note&&(force||!missing)){
+      note.style.color='var(--amber)';
+      note.textContent=missing
+        ? 'Automatic translation is not on this server yet — type the Arabic by hand.'
+        : 'Could not translate just now: '+(e.message||'')+' — type the Arabic by hand.';
+    }
+  }finally{ if(b){ b.disabled=false; b.textContent='Translate to Arabic'; } }
+}
+
 async function draftFromMaterial(){
   var text=($('x-body').value||'').trim();
   if(text.length<200){
@@ -1236,6 +1267,8 @@ async function draftFromMaterial(){
       draftNote('Nothing could be drafted that was actually quotable from this material. Write the key elements by hand, one per line below.','var(--amber)');
     }else{
       $('x-obj').value=objs.map(function(o){return o.text;}).join('\n');
+      if($('x-obj-ar')) $('x-obj-ar').value='';
+      translateKeyElements(false);
       $('x-drafted').innerHTML=
         '<div style="margin-top:10px;font-size:12.5px;color:var(--green);font-weight:600">Drafted '+objs.length+
           ' key element'+(objs.length===1?'':'s')+', each quoted from the document.'+
@@ -1260,6 +1293,14 @@ $('dSave').onclick=async function(){
   var btn=$('dSave'); btn.disabled=true; var was=btn.textContent; btn.textContent='Saving…';
   try{
     if(a.kind==='ai_lesson'){
+      // An English list with an empty Arabic box: translate it before saving,
+      // so the Arabic site never falls back to English. Best effort — on a
+      // server without the translator this saves exactly as before.
+      if($('x-obj-ar') && !$('x-obj-ar').value.trim() && $('x-obj').value.trim()){
+        btn.textContent='Translating…';
+        await translateKeyElements(false);
+        btn.textContent='Saving…';
+      }
       var body=($('x-body').value||'').trim();
       if(body.length<40){ $('dStatus').textContent='Nothing to teach from yet.'; stepTab('material'); banner('Give the trainer something to teach from — upload a document or paste the material.','err'); return; }
 

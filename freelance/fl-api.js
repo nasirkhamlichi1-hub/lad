@@ -141,6 +141,7 @@
     saveTopicModules: function (id, m) { return call('PUT', '/api/v1/learning/courses/' + enc(id) + '/modules', m); },
     saveActivities:  function (id, a) { return call('PUT', '/api/v1/learning/courses/' + enc(id) + '/activities', a); },
     draftLesson:     function (spec) { return call('POST', '/api/v1/learning/draft-lesson', spec); },
+    translateLines:  function (lines) { return call('POST', '/api/v1/learning/translate-lines', { lines: lines, to: 'ar' }); },
     addCourseMaterial: function (id, m) { return call('POST', '/api/v1/courses/' + enc(id) + '/materials', m); },
     updateCourseMaterial: function (id, mid, patch) { return call('PATCH', '/api/v1/courses/' + enc(id) + '/materials/' + enc(mid), patch || {}); },
     deleteCourseMaterial: function (id, mid) { return call('DELETE', '/api/v1/courses/' + enc(id) + '/materials/' + enc(mid)); },

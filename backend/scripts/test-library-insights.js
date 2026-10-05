@@ -50,6 +50,11 @@ aimodel.chat = async ({ system, messages }) => {
       steps: [{ step: ids.aiStep, documents: [ids.conduct, 'MT-INVENTED'] }, { step: 'ACT-NOPE', documents: [ids.fees] }],
     });
   }
+  if (/translate training content/.test(system)) {
+    const n = user.split('\n').filter(Boolean).length;
+    if (/MISMATCH/.test(user)) return JSON.stringify({ lines: ['واحد'] });
+    return 'Sure: ' + JSON.stringify({ lines: Array.from({ length: n }, (_, i) => 'سطر ' + (i + 1)) });
+  }
   if (/self-test/.test(system)) {
     return JSON.stringify({ questions: [
       { q: 'Who hears complaints?', options: ['The committee', 'The court', 'Nobody'], answer: 0, article: 'Article 2', why: 'Article 2 says so.' },
@@ -97,6 +102,7 @@ async function main() {
   const app = express();
   app.use(express.json());
   app.use('/api/v1/courses', require('../src/routes/courses'));
+  app.use('/api/v1/learning', require('../src/routes/learning'));
   const server = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
   const base = `http://127.0.0.1:${server.address().port}/api/v1/courses/${encodeURIComponent(course)}/materials`;
   const tok = jwt.sign({ sub: lawyerId, user_type: 'lawyer', role: 'lawyer' });
@@ -157,6 +163,15 @@ async function main() {
   check('a material of another course cannot be marked', (await axios.post(base + '/MT-NOPE/read', {}, as(tok))).status, 404);
   const adminTok = jwt.sign({ sub: adminId, user_type: 'staff', role: 'lad_admin' });
   check('another user does not see this trail', (await axios.get(base + '/reads', as(adminTok))).data.reads, {});
+
+  console.log('\ntranslate key elements');
+  const tr = `http://127.0.0.1:${server.address().port}/api/v1/learning/translate-lines`;
+  const adminT = jwt.sign({ sub: adminId, user_type: 'staff', role: 'lad_admin' });
+  check('a learner may not use it', (await axios.post(tr, { lines: ['a'] }, as(tok))).status, 403);
+  const t1 = await axios.post(tr, { lines: ['Calculate the hourly rate', '  ', 'Identify missing functions'] }, as(adminT));
+  check('lines come back one for one, blanks dropped', [t1.status, t1.data.lines], [200, ['سطر 1', 'سطر 2']]);
+  check('an empty list is refused', (await axios.post(tr, { lines: [] }, as(adminT))).status, 400);
+  check('a reply that does not line up is refused', (await axios.post(tr, { lines: ['MISMATCH one', 'two'] }, as(adminT))).status, 502);
 
   // ─── cleanup ───────────────────────────────────────────────────
   server.close();
