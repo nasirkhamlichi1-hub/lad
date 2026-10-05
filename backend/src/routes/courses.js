@@ -12,6 +12,7 @@ const tpl = require('../services/email-templates');
 const activity = require('../services/activity');
 const blob = require('../services/blobStorage');
 const aimodel = require('../services/aimodel');
+const materialIndex = require('../services/materialIndex');
 const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth');
 
 // Longest free-text comment accepted on the anonymous course-rating form.
@@ -320,6 +321,9 @@ const materialMeta = (m) => ({
   lang: m.lang === 'ar' || m.lang === 'en' ? m.lang : null,
   title_ar: m.title_ar || null,
   pair_id: m.pair_id || null,
+  // Whether "Ask the library" can read it (059): null = not read yet.
+  indexed: m.indexed_at ? !m.index_error : null,
+  index_error: m.index_error || null,
   url: m.kind === 'link' || m.kind === 'scorm' ? (m.url || null) : null,
   file_name: m.file_name || null, mime: m.mime || null, size: Number(m.size) || 0,
   has_file: !!m.data || !!m.storage_key,
@@ -411,6 +415,38 @@ router.post('/:id/materials', requireRole(...MATERIAL_ROLES), (req, res) => {
   } catch (e) { return res.status(500).json({ error: 'save_failed', message: e.message }); }
   const row = db.prepare('SELECT * FROM course_materials WHERE id = ?').get(id);
   res.status(201).json(materialMeta(row));
+  // Read it for "Ask the library" — after the reply, never in its way.
+  setImmediate(() => { materialIndex.indexMaterial(row).catch(() => {}); });
+});
+
+// ─── Ask the library ───────────────────────────────────────────────
+// A question answered from this course's documents and nothing else, each
+// sentence cited to the article it came from. Older materials are read on
+// the first question (within a time budget); new ones were read on upload.
+router.post('/:id/materials/ask', optionalAuth, async (req, res) => {
+  if (!courseOrTopicExists(req.params.id)) return res.status(404).json({ error: 'Course not found' });
+  if (!canAccessMaterials(req.params.id, req.user)) {
+    return res.status(403).json({ error: 'no_access', message: 'Book or complete this course to access its materials.' });
+  }
+  const question = String((req.body && req.body.question) || '').trim();
+  if (question.length < 3) return res.status(400).json({ error: 'question_required' });
+  const lang = (req.body && req.body.lang) === 'ar' ? 'ar' : 'en';
+  try {
+    const idx = await materialIndex.ensureIndexed(req.params.id, { budgetMs: 20000 });
+    const out = await materialIndex.answer({ courseId: req.params.id, question, lang });
+    res.json({ ...out, indexing: idx });
+  } catch (e) {
+    const status = e.status || (e.code === 'AIMODEL_NOT_CONFIGURED' ? 503 : 502);
+    res.status(status).json({ error: e.code || 'ask_failed', message: e.message });
+  }
+});
+
+// Re-read every material in the course (admin) — after replacing files, or
+// to pick up a page that could not be fetched the first time.
+router.post('/:id/materials/reindex', requireRole(...MATERIAL_ROLES), async (req, res) => {
+  if (!courseOrTopicExists(req.params.id)) return res.status(404).json({ error: 'Course not found' });
+  try { res.json({ results: await materialIndex.reindexCourse(req.params.id) }); }
+  catch (e) { res.status(500).json({ error: 'reindex_failed', message: e.message }); }
 });
 
 function cleanDescription(v) {

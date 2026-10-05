@@ -110,6 +110,8 @@
     hubGet:          function (id) { return call('GET', '/api/v1/hubs/' + enc(id)); },
     listCourseMaterials: function (id) { return call('GET', '/api/v1/courses/' + enc(id) + '/materials'); },
     materialDownloadUrl: function (id, mid) { return call('GET', '/api/v1/courses/' + enc(id) + '/materials/' + enc(mid) + '/download-url'); },
+    askLibrary:      function (id, body) { return call('POST', '/api/v1/courses/' + enc(id) + '/materials/ask', body); },
+    reindexLibrary:  function (id) { return call('POST', '/api/v1/courses/' + enc(id) + '/materials/reindex', {}); },
 
     // ─── The AI trainer ─────────────────────────────────────────
     trainerStatus:   function () { return call('GET', '/api/v1/trainer/status'); },
