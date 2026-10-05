@@ -112,6 +112,12 @@
     materialDownloadUrl: function (id, mid) { return call('GET', '/api/v1/courses/' + enc(id) + '/materials/' + enc(mid) + '/download-url'); },
     askLibrary:      function (id, body) { return call('POST', '/api/v1/courses/' + enc(id) + '/materials/ask', body); },
     reindexLibrary:  function (id) { return call('POST', '/api/v1/courses/' + enc(id) + '/materials/reindex', {}); },
+    libraryInsights: function (id) { return call('GET', '/api/v1/courses/' + enc(id) + '/materials/insights'); },
+    materialArticles: function (id, mid) { return call('GET', '/api/v1/courses/' + enc(id) + '/materials/' + enc(mid) + '/articles'); },
+    materialQuiz:    function (id, mid, lang) { return call('POST', '/api/v1/courses/' + enc(id) + '/materials/' + enc(mid) + '/quiz', { lang: lang }); },
+    libraryReads:    function (id) { return call('GET', '/api/v1/courses/' + enc(id) + '/materials/reads'); },
+    markMaterialRead: function (id, mid) { return call('POST', '/api/v1/courses/' + enc(id) + '/materials/' + enc(mid) + '/read', {}); },
+    pinMaterial:     function (id, mid, pinned) { return call('PUT', '/api/v1/courses/' + enc(id) + '/materials/' + enc(mid) + '/pin', { pinned: !!pinned }); },
 
     // ─── The AI trainer ─────────────────────────────────────────
     trainerStatus:   function () { return call('GET', '/api/v1/trainer/status'); },

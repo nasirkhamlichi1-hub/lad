@@ -230,9 +230,90 @@
   .lib-list-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:4px; }
   .lib-list-head h3 { font:700 19px var(--sans); color:var(--ink); margin:0; }
   .lib-list-head span { font-size:13px; color:var(--ink3); }
-  .lib-row { display:grid; grid-template-columns:180px 1fr 56px 86px; gap:20px; align-items:baseline; padding:17px 0;
-    border-top:1px solid var(--line); cursor:pointer; }
+  .lib-row { display:grid; grid-template-columns:24px 170px minmax(0,1fr) 56px 112px; gap:18px; align-items:baseline; padding:17px 0;
+    border-top:1px solid var(--line); cursor:pointer; transition:background .25s, box-shadow .25s; }
   .lib-row:last-child { border-bottom:1px solid var(--line); }
+  .lib-row.cited { background:var(--gold-soft); box-shadow:inset 3px 0 0 var(--gold); border-radius:8px; padding-inline:12px; margin-inline:-12px; }
+  [dir="rtl"] .lib-row.cited { box-shadow:inset -3px 0 0 var(--gold); }
+  .lib-main { display:block; min-width:0; }
+  .lx-sum { display:block; font-size:15.5px; font-weight:600; color:var(--ink); line-height:1.45; }
+  .lib-title.lx-sub { display:block; font-size:14px; font-weight:400; color:var(--ink2); margin-top:3px; }
+  .lib-title.lx-sub[dir="rtl"] { font-size:15px; }
+  .lx-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
+  .lx-tags:empty { display:none; }
+  .lx-tag { display:inline-block; font-size:11.5px; font-weight:600; color:var(--ink2); background:var(--surface); border:1px solid var(--line);
+    border-radius:999px; padding:2px 9px; white-space:nowrap; }
+  .lx-art { display:inline-block; font-size:11.5px; font-weight:700; color:var(--gold); border:1px solid var(--gold);
+    border-radius:6px; padding:1px 7px; white-space:nowrap; }
+  .lx-tags .lib-cited { margin-inline-start:0; }
+  .lx-tick { width:20px; height:20px; border-radius:50%; border:2px solid var(--ink3); opacity:.45; color:transparent; font-size:11px; font-weight:700;
+    display:inline-grid; place-items:center; align-self:center; }
+  .lx-tick.on { background:var(--green); border-color:var(--green); color:#fff; opacity:1; }
+  .lx-num { width:22px; height:22px; border-radius:50%; background:var(--ink); color:var(--surface); font-size:12px; font-weight:700;
+    display:inline-grid; place-items:center; align-self:center; }
+  .lx-pin { border:0; background:none; color:var(--line); font-size:17px; line-height:1; cursor:pointer; padding:0 8px 0 0; vertical-align:-1px; }
+  [dir="rtl"] .lx-pin { padding:0 0 0 8px; }
+  .lx-pin:hover { color:var(--ink3); }
+  .lx-pin.on { color:var(--gold); }
+
+  /* questions to try, situations, views, reading meter */
+  .lx-sugs { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:14px 0 0 20px; }
+  [dir="rtl"] .lx-sugs { margin:14px 20px 0 0; }
+  .lx-sugs:empty { display:none; }
+  .lx-sugs-label { font-size:13px; color:var(--ink3); }
+  .lx-sug { font:inherit; font-size:13.5px; color:var(--ink); background:var(--surface); border:1px dashed var(--line); border-radius:999px;
+    padding:6px 13px; cursor:pointer; text-align:start; }
+  .lx-sug:hover { border-color:var(--gold); border-style:solid; }
+  .lx-finder { margin-top:34px; }
+  .lx-finder:empty { display:none; }
+  .lx-finder-head { font:700 15px var(--sans); color:var(--ink); margin-bottom:10px; }
+  .lx-chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .lx-chip { font:inherit; font-size:14px; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:999px;
+    padding:8px 15px; cursor:pointer; text-align:start; }
+  .lx-chip:hover { border-color:var(--gold); }
+  .lx-chip.on { background:var(--ink); border-color:var(--ink); color:var(--surface); }
+  .lx-bar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin:10px 0 12px; }
+  .lx-views { display:inline-flex; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:3px; }
+  .lx-view { font:inherit; font-size:13px; font-weight:600; color:var(--ink2); background:none; border:0; border-radius:999px; padding:6px 14px; cursor:pointer; }
+  .lx-view.on { background:var(--ink); color:var(--surface); }
+  .lx-meter { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--ink2); }
+  .lx-meter i { display:block; width:140px; height:8px; border-radius:999px; background:var(--line); overflow:hidden; }
+  .lx-meter b { display:block; height:100%; background:var(--green); border-radius:999px; transition:width .3s; }
+  .lx-sit-note { font-size:14px; color:var(--ink2); margin:0 0 8px; }
+  .lx-link { font:inherit; font-size:14px; font-weight:600; color:var(--gold); background:none; border:0; padding:0; cursor:pointer; text-decoration:underline; }
+
+  /* timeline and by-subject views */
+  .lx-tl { position:relative; padding-inline-start:26px; }
+  .lx-tl::before { content:''; position:absolute; inset-inline-start:6px; top:10px; bottom:10px; width:2px; background:var(--line); }
+  .lx-tl-year { position:relative; margin-bottom:22px; }
+  .lx-tl-y { font:700 22px var(--sans); color:var(--gold); margin-bottom:10px; }
+  .lx-tl-y::before { content:''; position:absolute; inset-inline-start:-26px; top:9px; width:14px; height:14px; border-radius:50%;
+    background:var(--surface); border:3px solid var(--gold); }
+  .lx-tl-items, .lx-subj-items { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px; }
+  .lx-card { display:flex; flex-direction:column; gap:5px; background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    padding:13px 15px; cursor:pointer; transition:border-color .2s, background .2s, opacity .2s; min-width:0; }
+  .lx-card:hover, .lx-card:focus-visible { border-color:var(--gold); outline:none; }
+  .lx-card.hl { border-color:var(--gold); background:var(--gold-soft); }
+  .lx-tl.hovering .lx-card:not(.hl) { opacity:.45; }
+  .lx-card .lx-sum { font-size:14.5px; }
+  .lx-ct { font-size:13.5px; color:var(--ink2); line-height:1.5; }
+  .lx-ct[dir="rtl"] { font-size:14.5px; }
+  .lx-card .lx-tag { align-self:flex-start; margin-top:auto; }
+  .lx-subjects { display:grid; gap:18px; }
+  .lx-subj { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px 18px; }
+  .lx-subj .lx-card { background:var(--alt); border-color:transparent; }
+  .lx-subj .lx-card:hover { border-color:var(--gold); }
+  .lx-subj-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .lx-subj-head h4 { margin:0; font:700 16px var(--sans); color:var(--ink); flex:1; }
+  .lx-subj-head span:last-child { font-size:13px; color:var(--ink3); }
+  .lx-hub { width:12px; height:12px; border-radius:50%; background:var(--gold); box-shadow:0 0 0 4px var(--gold-soft); flex-shrink:0; }
+
+  /* the law behind a step, on the path */
+  .lx-steplaw { display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; margin:8px 4px 0; font-size:12.5px; color:var(--ink3); }
+  .lx-steplaw button { font:inherit; font-size:12.5px; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:8px;
+    padding:4px 10px; cursor:pointer; max-width:340px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lx-steplaw button:hover { border-color:var(--gold); }
+  .lx-steplaw button::before { content:'§ '; color:var(--gold); font-weight:700; }
   .lib-row:hover .lib-open, .lib-row:focus-visible .lib-open { text-decoration:underline; }
   .lib-row:focus-visible { outline:2px solid var(--gold); outline-offset:4px; border-radius:4px; }
   .lib-kind { font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--gold); font-weight:600; line-height:1.4; }
@@ -249,8 +330,11 @@
   [dir="rtl"] .lib-arrow { transform:scaleX(-1); }
   @media (max-width:720px) {
     .lib { padding:22px 18px 20px; }
-    .lib-row { grid-template-columns:1fr auto; gap:4px 12px; padding:14px 0; }
-    .lib-kind { grid-column:1 / -1; }
+    .lib-row { grid-template-columns:22px minmax(0,1fr) auto; gap:4px 12px; padding:14px 0; }
+    .lib-kind { grid-column:2 / -1; grid-row:1; }
+    .lib-row > .lx-tick, .lib-row > .lx-num, .lib-row > .lx-tick-sp { grid-row:1 / span 2; }
+    .lx-meter i { width:90px; }
+    .lx-sugs { margin-inline:0; }
     .lib-year { display:none; }
     .lib-ask { padding-inline-start:14px; }
     .lib-ask button { padding:10px 16px; }
@@ -275,6 +359,39 @@
   .rbody iframe { width:100%; height:100%; border:0; display:block; background:#fff; }
   .rbody .rtext { height:100%; overflow:auto; padding:34px 40px; background:var(--surface);
     font:15px/1.7 var(--sans); white-space:pre-wrap; }
+  .rart { display:grid; grid-template-columns:200px minmax(0,1fr); height:100%; background:var(--surface); }
+  .rart-nav { overflow:auto; border-inline-end:1px solid var(--line); padding:14px 10px; background:var(--alt); }
+  .rart-nav a { display:block; padding:6px 10px; border-radius:6px; font-size:13px; color:var(--ink2); text-decoration:none; }
+  .rart-nav a:hover, .rart-nav a.on { background:var(--surface); color:var(--ink); }
+  .rart-nav a.cited { color:var(--gold); font-weight:700; }
+  .rart-body { overflow:auto; padding:26px 34px 60px; }
+  .rart-a { padding:14px 16px; border-radius:10px; margin-bottom:6px; }
+  .rart-a.hl { background:var(--gold-soft); box-shadow:inset 0 0 0 2px var(--gold); }
+  .rart-a h4 { margin:0 0 6px; font:700 15px var(--sans); color:var(--ink); display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .rart-a h4 .lib-cited { margin:0; }
+  .rart-t { font-size:15.5px; line-height:1.85; color:var(--ink); white-space:pre-wrap; }
+  .rart[dir="rtl"] .rart-t { font-size:17px; }
+  .rquiz { height:100%; overflow:auto; padding:28px 34px 60px; background:var(--surface); }
+  .rquiz h3 { margin:0 0 4px; font:700 20px var(--sans); }
+  .rquiz .rq-note { margin:0 0 18px; color:var(--ink3); font-size:13.5px; }
+  .rq { margin:0 0 22px; max-width:760px; }
+  .rq > b { display:block; margin-bottom:8px; font-size:15.5px; line-height:1.5; }
+  .rq-opt { display:block; width:100%; text-align:start; font:inherit; font-size:15px; color:var(--ink); background:var(--surface);
+    border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin:6px 0; cursor:pointer; }
+  .rq-opt:hover:not(:disabled) { border-color:var(--gold); }
+  .rq-opt:disabled { cursor:default; color:var(--ink); opacity:1; }
+  .rq-opt.right { border-color:#1d8f5c; background:rgba(38,203,132,.12); }
+  .rq-opt.wrong { border-color:#DC3131; background:rgba(220,49,49,.08); }
+  .rq-why { font-size:14px; color:var(--ink2); margin-top:6px; }
+  .rq-why:empty { display:none; }
+  .rq-score { font:700 16px var(--sans); color:var(--ink); }
+  @media (max-width:720px) {
+    .rart { grid-template-columns:1fr; }
+    .rart-nav { display:none; }
+    .rart-body, .rquiz { padding:18px 16px 40px; }
+    .rhead { flex-wrap:wrap; }
+    .rhead .rt { flex-basis:100%; order:-1; }
+  }
   .rbody .rmsg { height:100%; display:grid; place-items:center; color:var(--ink3); font-size:14.5px; padding:30px; text-align:center; }
 
   .msg { background:var(--gold-soft); border:1px solid var(--line); border-radius:10px;
@@ -339,6 +456,9 @@
   <div class="rhead">
     <span class="kind" id="rKind">DOC</span>
     <span class="rt" id="rTitle"></span>
+    <button class="ghost" id="rText" style="display:none">Text</button>
+    <button class="ghost" id="rOrig" style="display:none">Original</button>
+    <button class="ghost" id="rQuiz" style="display:none">Test yourself</button>
     <button class="ghost" id="rOpen" style="display:none">Open in new tab</button>
     <button class="ghost" id="rDown" style="display:none">Download</button>
     <button class="ghost" id="rClose">Close</button>
@@ -448,6 +568,7 @@
           '<p class="gate-note">' + (s.gate === 'sequential' ? 'In order — each step unlocks the next' : 'Any order') + '</p>';
       var nodes = s.activities.map(function (a) {
         n++;
+        STEP_NO[a.id] = n;
         var done = isDone(a);
         var st = (a.progress || {}).status || 'not_started';
         var cls = done ? 'done' : (a.locked ? 'locked' : '');
@@ -485,6 +606,7 @@
     var acts = [];
     visible.forEach(function (s) { acts = acts.concat(s.activities); });
     spineActs = acts; // the library needs these to route a package through the tracked path
+    decoratePath();
     Array.prototype.forEach.call(document.querySelectorAll('[data-id]'), function (b) {
       b.onclick = function () {
         var a = acts.filter(function (x) { return x.id === b.dataset.id; })[0];
@@ -591,12 +713,24 @@
   function domainOf(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return 'link'; } }
 
   // ─── Reference library: ask, then read ──────────────────────────
-  // One question bar and one list. The answer comes only from this course's
+  // One question bar and one shelf. The answer comes only from this course's
   // documents, footnoted to the article it came from; the documents it drew
-  // on are marked in the list. Everything renders in the site's language.
+  // on rise to the top of the shelf, marked with those articles. Around the
+  // shelf: a plain line under each instrument saying what it does, questions
+  // to try, "what applies to me" situations that pick out the documents to
+  // read in order, three ways to browse (list, timeline, by subject), the
+  // learner's own reading trail (opened, pinned), and links between the
+  // documents and the course steps they support. Those extras are drafted
+  // by the server from the documents themselves and arrive after the list;
+  // without them the shelf is simply a list. Everything renders in the
+  // site's language.
   var LIB_MATS = [], LIB_LAWS = [];
+  var LIB = { insights: null, reads: {}, view: 'list', situation: -1, sits: [], cited: {} };
+  var STEP_NO = {};   // activity id → its number on the path
   function T(en, ar) { return (window.LAD_LANG || document.documentElement.getAttribute('lang')) === 'ar' ? ar : en; }
   function isAr() { return (window.LAD_LANG || document.documentElement.getAttribute('lang')) === 'ar'; }
+  function signedIn() { return !!(api.getToken && api.getToken()); }
+  function cssId(v) { return window.CSS && CSS.escape ? CSS.escape(v) : String(v).replace(/["\\]/g, '\\$&'); }
 
   // What kind of instrument a title names, in both languages, with a sort rank.
   function instrumentOf(m) {
@@ -624,26 +758,6 @@
     return y ? y[1] : '';
   }
 
-  function libRow(m, cited) {
-    var kind = instrumentOf(m);
-    var title = flPick(m, 'title') || m.file_name || '';
-    var rtl = /[؀-ۿ]/.test(title);
-    var year = yearOf(m);
-    var done = m.learner && m.learner.completed;
-    var right = m.kind === 'scorm'
-      ? (done ? '<span class="lib-year lib-done">' + (m.learner.score != null ? esc(String(m.learner.score)) + '%' : '✓') + '</span>' : '<span class="lib-year"></span>')
-      : '<span class="lib-year">' + esc(year) + '</span>';
-    var action = m.kind === 'brief' ? '' : (m.kind === 'scorm' ? (done ? T('Review', 'مراجعة') : T('Start', 'ابدأ')) : T('Open', 'افتح'));
-    return '<div class="lib-row' + (cited ? ' cited' : '') + (m.kind === 'brief' ? ' lib-brief' : '') + '" data-mid="' + esc(m.id) + '"' + (m.kind === 'brief' ? '' : ' role="button" tabindex="0"') + '>' +
-      '<span class="lib-kind">' + esc(isAr() ? kind.ar : kind.en) + '</span>' +
-      '<span class="lib-title" translate="no"' + (rtl ? ' dir="rtl" lang="ar"' : ' dir="ltr"') + '>' + esc(title) +
-        (cited ? '<span class="lib-cited">' + T('cited above', 'مُستشهد به أعلاه') + '</span>' : '') +
-        (m.description ? '<span class="lib-desc">' + esc(m.description) + '</span>' : '') + '</span>' +
-      right +
-      '<span class="lib-open">' + (action ? action + ' <span class="lib-arrow">→</span>' : '') + '</span>' +
-    '</div>';
-  }
-
   // The knowledge hub's briefs (title, year, summary) fold into the list: a
   // brief that names a document lends it its summary; one that names nothing
   // becomes a row of its own, without an Open link.
@@ -660,34 +774,309 @@
     return items;
   }
 
-  function renderLibList(citedIds) {
-    var cited = citedIds || {};
-    var mats = libItems().sort(function (a, b) {
+  // What the server drafted about a document (summary, subject) — shared by
+  // a document and its twin in the other language.
+  function insightFor(m) {
+    var I = LIB.insights;
+    if (!I || !I.documents) return null;
+    return I.documents[m.id] || (m.pair_id && I.documents[m.pair_id]) || null;
+  }
+  // One plain line saying what the document does. The author's own
+  // description wins on the English site; the Arabic site prefers the
+  // Arabic draft, since descriptions are usually written in English.
+  function summaryOf(m) {
+    var d = insightFor(m);
+    if (isAr()) return (d && d.summary_ar) || m.description || (d && d.summary_en) || '';
+    return m.description || (d && (d.summary_en || d.summary_ar)) || '';
+  }
+  function subjectOf(m) {
+    var d = insightFor(m);
+    if (!d || !d.subject) return null;
+    return (LIB.insights.subjects || []).filter(function (s) { return s.key === d.subject; })[0] || null;
+  }
+  function subjectName(s) { return s ? (isAr() ? (s.ar || s.en) : (s.en || s.ar)) : ''; }
+  function readOf(m) { return LIB.reads[m.id] || (m.pair_id && LIB.reads[m.pair_id]) || null; }
+  function citedOf(m) { return LIB.cited[m.id] || (m.pair_id && LIB.cited[m.pair_id]) || null; }
+  // The step numbers on the path that this document supports.
+  function stepsFor(m) {
+    var S = (LIB.insights && LIB.insights.steps) || {}, out = [];
+    Object.keys(S).forEach(function (aid) {
+      if (STEP_NO[aid] && S[aid].some(function (id) { return id === m.id || (m.pair_id && id === m.pair_id); })) out.push(STEP_NO[aid]);
+    });
+    return out.sort(function (a, b) { return a - b; });
+  }
+  // A material id from the server, resolved to the row shown on this site.
+  function findItem(items, id) {
+    return items.filter(function (x) { return x.id === id || (x.pair_id && x.pair_id === id); })[0] || null;
+  }
+
+  function titleBits(m) {
+    var title = flPick(m, 'title') || m.file_name || '';
+    return { text: title, dir: /[؀-ۿ]/.test(title) ? ' dir="rtl" lang="ar"' : ' dir="ltr"' };
+  }
+
+  function libRow(m, o) {
+    o = o || {};
+    var kind = instrumentOf(m);
+    var t = titleBits(m);
+    var year = yearOf(m);
+    var brief = m.kind === 'brief';
+    var done = m.learner && m.learner.completed;
+    var rd = readOf(m);
+    var sum = summaryOf(m);
+    var right = m.kind === 'scorm'
+      ? (done ? '<span class="lib-year lib-done">' + (m.learner.score != null ? esc(String(m.learner.score)) + '%' : '✓') + '</span>' : '<span class="lib-year"></span>')
+      : '<span class="lib-year">' + esc(year) + '</span>';
+    var action = brief ? '' : (m.kind === 'scorm' ? (done ? T('Review', 'مراجعة') : T('Start', 'ابدأ')) : T('Open', 'افتح'));
+    var tags = (o.arts || []).map(function (a) { return '<span class="lx-art" translate="no">' + esc(a) + '</span>'; }).join('') +
+      (o.cited ? '<span class="lib-cited">' + T('cited above', 'مُستشهد به أعلاه') + '</span>' : '') +
+      (brief ? [] : stepsFor(m)).map(function (n) { return '<span class="lx-tag">' + T('Used in step ', 'تُستخدم في الخطوة ') + n + '</span>'; }).join('');
+    var mark = o.step
+      ? '<span class="lx-num">' + o.step + '</span>'
+      : (brief || !signedIn() ? '<span class="lx-tick-sp"></span>'
+        : '<span class="lx-tick' + (rd && rd.opened ? ' on' : '') + '" title="' + (rd && rd.opened ? T('You have opened this', 'فتحت هذا المستند') : T('Not opened yet', 'لم يُفتح بعد')) + '">✓</span>');
+    var pinned = !!(rd && rd.pinned);
+    var pin = brief || !signedIn() ? '' : '<button type="button" class="lx-pin' + (pinned ? ' on' : '') + '" data-pin="' + esc(m.id) + '" aria-pressed="' + pinned + '" title="' +
+      (pinned ? T('Unpin', 'إلغاء التثبيت') : T('Pin to the top of the list', 'ثبّت في أعلى القائمة')) + '">★</button>';
+    return '<div class="lib-row' + (o.cited ? ' cited' : '') + (brief ? ' lib-brief' : '') + '" data-mid="' + esc(m.id) + '"' + (brief ? '' : ' role="button" tabindex="0"') + '>' +
+      mark +
+      '<span class="lib-kind">' + esc(isAr() ? kind.ar : kind.en) + '</span>' +
+      '<span class="lib-main">' +
+        (sum ? '<span class="lx-sum">' + esc(sum) + '</span>' : '') +
+        '<span class="lib-title' + (sum ? ' lx-sub' : '') + '" translate="no"' + t.dir + '>' + esc(t.text) + '</span>' +
+        '<span class="lx-tags">' + tags + '</span>' +
+      '</span>' +
+      right +
+      '<span class="lib-open">' + pin + (action ? action + ' <span class="lib-arrow">→</span>' : '') + '</span>' +
+    '</div>';
+  }
+
+  // A compact card — the timeline and by-subject views.
+  function libCard(m) {
+    var kind = instrumentOf(m);
+    var t = titleBits(m);
+    var s = subjectOf(m);
+    var sum = summaryOf(m);
+    var brief = m.kind === 'brief';
+    var rd = readOf(m);
+    return '<div class="lx-card" data-mid="' + esc(m.id) + '" data-subject="' + esc(s ? s.key : '') + '"' + (brief ? '' : ' role="button" tabindex="0"') + '>' +
+      '<span class="lib-kind">' + esc(isAr() ? kind.ar : kind.en) + (rd && rd.opened ? ' · ✓' : '') + '</span>' +
+      (sum ? '<span class="lx-sum">' + esc(sum) + '</span>' : '') +
+      '<span class="lx-ct" translate="no"' + t.dir + '>' + esc(t.text) + '</span>' +
+      (s && LIB.view !== 'subject' ? '<span class="lx-tag">' + esc(subjectName(s)) + '</span>' : '') +
+    '</div>';
+  }
+
+  function sortedItems() {
+    return libItems().sort(function (a, b) {
       var ra = instrumentOf(a).rank, rb = instrumentOf(b).rank;
       if (ra !== rb) return ra - rb;
       return (yearOf(a) || '9999').localeCompare(yearOf(b) || '9999');
     });
-    var docs = mats.filter(function (m) { return m.kind !== 'scorm'; }).length;
-    var mods = mats.length - docs;
+  }
+  function rowOpts(m) { var c = citedOf(m); return { cited: !!c, arts: c || [] }; }
+
+  function listBody(items) {
+    // Cited first, in the order the answer cited them; then pinned; then the rest.
+    var order = function (m) {
+      var c = citedOf(m);
+      if (c) return c.order;
+      var r = readOf(m);
+      return r && r.pinned ? 1000 : 2000;
+    };
+    var list = items.map(function (m, i) { return { m: m, i: i }; })
+      .sort(function (a, b) { return (order(a.m) - order(b.m)) || (a.i - b.i); })
+      .map(function (x) { return x.m; });
+    return '<div class="lx-rows">' + list.map(function (m) { return libRow(m, rowOpts(m)); }).join('') + '</div>';
+  }
+
+  function timelineBody(items) {
+    var by = {}, years = [];
+    items.forEach(function (m) { var y = yearOf(m) || ''; if (!by[y]) { by[y] = []; years.push(y); } by[y].push(m); });
+    years.sort(function (a, b) { return (a || '9999').localeCompare(b || '9999'); });
+    return '<div class="lx-tl" id="lx-tl">' + years.map(function (y) {
+      return '<div class="lx-tl-year"><div class="lx-tl-y">' + (y ? esc(y) : T('Undated', 'بلا تاريخ')) + '</div>' +
+        '<div class="lx-tl-items">' + by[y].map(libCard).join('') + '</div></div>';
+    }).join('') + '</div>';
+  }
+
+  function subjectBody(items) {
+    var groups = (LIB.insights.subjects || []).map(function (s) {
+      return { s: s, items: items.filter(function (m) { var x = subjectOf(m); return x && x.key === s.key; }) };
+    }).filter(function (g) { return g.items.length; });
+    var rest = items.filter(function (m) { return !subjectOf(m); });
+    if (rest.length) groups.push({ s: { key: '', en: 'Other material', ar: 'مواد أخرى' }, items: rest });
+    return '<div class="lx-subjects">' + groups.map(function (g) {
+      return '<section class="lx-subj"><div class="lx-subj-head"><span class="lx-hub"></span><h4>' + esc(subjectName(g.s)) + '</h4><span>' + g.items.length + '</span></div>' +
+        '<div class="lx-subj-items">' + g.items.map(libCard).join('') + '</div></section>';
+    }).join('') + '</div>';
+  }
+
+  function situationBody(items) {
+    var s = LIB.sits[LIB.situation];
+    var seen = {}, list = [];
+    s.documents.forEach(function (id) { var m = findItem(items, id); if (m && !seen[m.id]) { seen[m.id] = 1; list.push(m); } });
+    return '<p class="lx-sit-note">' + T('Read these in this order.', 'اقرأ هذه المستندات بهذا الترتيب.') +
+      ' <button type="button" class="lx-link" id="lx-all">' + T('Show all documents', 'اعرض كل المستندات') + '</button></p>' +
+      '<div class="lx-rows">' + list.map(function (m, i) { var o = rowOpts(m); o.step = i + 1; return libRow(m, o); }).join('') + '</div>';
+  }
+
+  function renderLibList() {
+    var host = $('lib-list');
+    if (!host) return;
+    var items = sortedItems();
+    var docs = items.filter(function (m) { return m.kind !== 'scorm'; }).length;
+    var mods = items.length - docs;
     var count = isAr()
       ? (docs + ' ' + (docs === 1 ? 'مستند' : 'مستندات') + (mods ? ' · ' + mods + ' ' + (mods === 1 ? 'وحدة' : 'وحدات') : ''))
       : (docs + ' ' + (docs === 1 ? 'document' : 'documents') + (mods ? ' · ' + mods + ' ' + (mods === 1 ? 'module' : 'modules') : ''));
-    var html = '<div class="lib-list-head"><h3>' + T('In this course', 'في هذه الدورة') + '</h3><span>' + count + '</span></div>' +
-      mats.map(function (m) { return libRow(m, !!cited[m.id] || (m.pair_id && !!cited[m.pair_id])); }).join('');
-    $('lib-list').innerHTML = html;
-    $('lib-list').querySelectorAll('.lib-row').forEach(function (n) {
-      var m = LIB_MATS.filter(function (x) { return x.id === n.getAttribute('data-mid'); })[0];
-      var go = function () { if (m) openReference(m); };
-      n.onclick = go;
-      n.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+    var I = LIB.insights;
+    var views = [['list', T('List', 'قائمة')], ['timeline', T('Timeline', 'خط زمني')]];
+    if (I && I.subjects && I.subjects.length > 1) views.push(['subject', T('By subject', 'حسب الموضوع')]);
+    if (!views.some(function (v) { return v[0] === LIB.view; })) LIB.view = 'list';
+    var readable = items.filter(function (m) { return m.kind !== 'brief'; });
+    var opened = readable.filter(function (m) { var r = readOf(m); return r && r.opened; }).length;
+    var meter = signedIn() && readable.length
+      ? '<div class="lx-meter"><span>' + (isAr() ? ('فتحت ' + opened + ' من ' + readable.length) : (opened + ' of ' + readable.length + ' opened')) + '</span>' +
+        '<i><b style="width:' + Math.round(opened / readable.length * 100) + '%"></b></i></div>'
+      : '<span></span>';
+    var inSituation = LIB.situation >= 0 && LIB.sits[LIB.situation];
+    var head = '<div class="lib-list-head"><h3>' + T('In this course', 'في هذه الدورة') + '</h3><span>' + count + '</span></div>' +
+      '<div class="lx-bar">' + (inSituation ? '<span></span>' :
+        '<div class="lx-views" role="group" aria-label="' + T('View', 'العرض') + '">' + views.map(function (v) {
+          return '<button type="button" class="lx-view' + (LIB.view === v[0] ? ' on' : '') + '" data-view="' + v[0] + '" aria-pressed="' + (LIB.view === v[0]) + '">' + v[1] + '</button>';
+        }).join('') + '</div>') + meter + '</div>';
+    var body = inSituation ? situationBody(items)
+      : LIB.view === 'timeline' ? timelineBody(items)
+      : LIB.view === 'subject' ? subjectBody(items)
+      : listBody(items);
+    host.innerHTML = head + body;
+
+    host.querySelectorAll('.lib-row, .lx-card').forEach(function (n) {
+      var mid = n.getAttribute('data-mid');
+      var m = LIB_MATS.filter(function (x) { return x.id === mid; })[0];
+      if (!m) return;
+      var go = function () { var c = citedOf(m); openReference(m, null, { article: c && c[0] }); };
+      n.onclick = function (e) { if (e.target.closest('.lx-pin')) return; go(); };
+      n.onkeydown = function (e) { if (e.target !== n) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
     });
+    host.querySelectorAll('.lx-pin').forEach(function (b) {
+      b.onclick = function (e) {
+        e.stopPropagation();
+        var mid = b.getAttribute('data-pin');
+        var on = b.getAttribute('aria-pressed') !== 'true';
+        LIB.reads[mid] = Object.assign({}, LIB.reads[mid] || { opened: false }, { pinned: on });
+        renderLibList();
+        api.pinMaterial(TOPIC, mid, on).then(function (r) { if (r) LIB.reads[mid] = r; }).catch(function () {
+          LIB.reads[mid].pinned = !on; renderLibList();
+        });
+      };
+    });
+    host.querySelectorAll('.lx-view').forEach(function (b) {
+      b.onclick = function () { LIB.view = b.getAttribute('data-view'); renderLibList(); };
+    });
+    var all = $('lx-all');
+    if (all) all.onclick = function () { LIB.situation = -1; renderFinder(); renderLibList(); };
+    // Timeline: hovering a document lights up the others on the same subject.
+    var tl = $('lx-tl');
+    if (tl) tl.querySelectorAll('.lx-card').forEach(function (c) {
+      c.onmouseenter = function () {
+        var k = c.getAttribute('data-subject');
+        if (!k) return;
+        tl.classList.add('hovering');
+        tl.querySelectorAll('.lx-card').forEach(function (o) { o.classList.toggle('hl', o.getAttribute('data-subject') === k); });
+      };
+      c.onmouseleave = function () { tl.classList.remove('hovering'); tl.querySelectorAll('.lx-card').forEach(function (o) { o.classList.remove('hl'); }); };
+    });
+  }
+
+  // "What applies to me?" — a situation picks out the documents to read, in order.
+  function renderFinder() {
+    var box = $('lx-finder');
+    if (!box) return;
+    var items = libItems();
+    var S = (LIB.insights && LIB.insights.situations) || [];
+    LIB.sits = S.filter(function (s) { return (s.documents || []).some(function (id) { return findItem(items, id); }); });
+    if (LIB.situation >= LIB.sits.length) LIB.situation = -1;
+    if (!LIB.sits.length) { box.innerHTML = ''; return; }
+    box.innerHTML = '<div class="lx-finder-head">' + T('What applies to me?', 'ما الذي ينطبق عليّ؟') + '</div>' +
+      '<div class="lx-chips">' + LIB.sits.map(function (s, i) {
+        return '<button type="button" class="lx-chip' + (LIB.situation === i ? ' on' : '') + '" data-sit="' + i + '" aria-pressed="' + (LIB.situation === i) + '">' +
+          esc(isAr() ? (s.ar || s.en) : (s.en || s.ar)) + '</button>';
+      }).join('') + '</div>';
+    box.querySelectorAll('.lx-chip').forEach(function (c) {
+      c.onclick = function () {
+        var i = Number(c.getAttribute('data-sit'));
+        LIB.situation = LIB.situation === i ? -1 : i;
+        renderFinder(); renderLibList();
+      };
+    });
+  }
+
+  // Questions worth asking, drafted from the documents — one click asks.
+  function renderSuggestions() {
+    var box = $('lx-sugs');
+    if (!box) return;
+    var Q = LIB.insights && LIB.insights.questions;
+    var list = Q ? ((isAr() ? Q.ar : Q.en) || []) : [];
+    if (!list.length) { box.innerHTML = ''; return; }
+    box.innerHTML = '<span class="lx-sugs-label">' + T('Try:', 'جرّب:') + '</span>' +
+      list.map(function (q) { return '<button type="button" class="lx-sug">' + esc(q) + '</button>'; }).join('');
+    box.querySelectorAll('.lx-sug').forEach(function (b) {
+      b.onclick = function () { $('lib-q').value = b.textContent; askLibrary(); };
+    });
+  }
+
+  // The documents behind each step, shown under the step on the path.
+  function decoratePath() {
+    document.querySelectorAll('.lx-steplaw').forEach(function (n) { n.remove(); });
+    var S = LIB.insights && LIB.insights.steps;
+    if (!S || !LIB_MATS.length) return;
+    var items = libItems();
+    Object.keys(S).forEach(function (aid) {
+      var btn = document.querySelector('#body button[data-id="' + cssId(aid) + '"]');
+      var node = btn && btn.closest('.node');
+      if (!node) return;
+      var a = spineActs.filter(function (x) { return x.id === aid; })[0];
+      var mats = [];
+      S[aid].forEach(function (id) {
+        var m = findItem(items, id);
+        if (!m || m.kind === 'scorm' || m.kind === 'brief' || mats.indexOf(m) >= 0) return;
+        // A document step IS its document — it need not point at itself.
+        if (a && (a.material_id === m.id || a.material_id_ar === m.id || (m.pair_id && (a.material_id === m.pair_id || a.material_id_ar === m.pair_id)))) return;
+        mats.push(m);
+      });
+      if (!mats.length) return;
+      var d = document.createElement('div');
+      d.className = 'lx-steplaw';
+      d.innerHTML = '<span>' + T('The law behind this step:', 'النصوص التي تستند إليها هذه الخطوة:') + '</span>' +
+        mats.map(function (m) {
+          var t = titleBits(m);
+          return '<button type="button" data-lawmid="' + esc(m.id) + '" title="' + esc(t.text) + '">' + esc(summaryOf(m) || t.text) + '</button>';
+        }).join('');
+      node.appendChild(d);
+      d.querySelectorAll('button').forEach(function (b) {
+        b.onclick = function () {
+          var m = LIB_MATS.filter(function (x) { return x.id === b.getAttribute('data-lawmid'); })[0];
+          if (m) openReference(m);
+        };
+      });
+    });
+  }
+
+  function refreshLibrary() {
+    renderSuggestions(); renderFinder(); renderLibList(); decoratePath();
   }
 
   function renderAnswer(out, question) {
     var box = $('lib-answer');
-    if (!out) { box.innerHTML = ''; box.style.display = 'none'; renderLibList({}); return; }
-    var cited = {};
-    (out.citations || []).forEach(function (c) { cited[c.material_id] = true; });
+    LIB.cited = {};
+    if (!out) { box.innerHTML = ''; box.style.display = 'none'; renderLibList(); return; }
+    (out.citations || []).forEach(function (c) {
+      var e = LIB.cited[c.material_id] || (LIB.cited[c.material_id] = []);
+      if (e.order == null) e.order = Object.keys(LIB.cited).length;
+      if (c.label && e.indexOf(c.label) < 0) e.push(c.label);
+    });
     var text = esc(out.answer || '').replace(/\s*\[(\d+)\]/g, function (_, n) {
       return '<sup class="lib-fn" data-n="' + n + '">' + n + '</sup>';
     });
@@ -706,13 +1095,15 @@
     box.querySelectorAll('.lib-src, .lib-fn').forEach(function (n) {
       n.onclick = function (e) {
         e.preventDefault();
-        var mid = n.getAttribute('data-mid');
-        if (!mid) { var c = (out.citations || []).filter(function (x) { return String(x.n) === n.getAttribute('data-n'); })[0]; mid = c && c.material_id; }
+        var c = (out.citations || []).filter(function (x) { return String(x.n) === n.getAttribute('data-n'); })[0];
+        var mid = n.getAttribute('data-mid') || (c && c.material_id);
         var m = LIB_MATS.filter(function (x) { return x.id === mid || x.pair_id === mid; })[0];
-        if (m) openReference(m);
+        if (m) openReference(m, null, { article: c && c.label });
       };
     });
-    renderLibList(cited);
+    // The sources rise to the top of the list, so show the list.
+    if (out.found) { LIB.situation = -1; LIB.view = 'list'; renderFinder(); }
+    renderLibList();
   }
 
   async function askLibrary() {
@@ -733,6 +1124,29 @@
         : T('Could not answer that just now — please try again.', 'تعذّر الحصول على إجابة الآن — حاول مرة أخرى.');
       box.innerHTML = '<p class="lib-answer-text">' + esc(friendly) + '</p>';
     } finally { btn.disabled = false; input.disabled = false; }
+  }
+
+  // The drafted extras arrive after the list. A first visit to a course
+  // starts the draft on the server; the page checks back until it lands.
+  async function loadInsights(tries) {
+    tries = tries || 0;
+    var I = null;
+    try { I = await api.libraryInsights(TOPIC); } catch (e) { return; }
+    if (!I || !I.available) return;
+    if (I.documents) { LIB.insights = I; refreshLibrary(); }
+    if ((I.pending || I.stale) && tries < 15) setTimeout(function () { loadInsights(tries + 1); }, 6000);
+  }
+  async function loadReads() {
+    if (!signedIn()) return;
+    try { var r = await api.libraryReads(TOPIC); LIB.reads = (r && r.reads) || {}; renderLibList(); } catch (e) { /* not signed in for this course */ }
+  }
+  // Opening a document is remembered for the learner's own trail.
+  function noteRead(m, courseId) {
+    if (!signedIn() || !m || m.kind === 'brief' || (courseId && courseId !== TOPIC)) return;
+    if (!LIB_MATS.some(function (x) { return x.id === m.id; })) return;
+    LIB.reads[m.id] = Object.assign({}, LIB.reads[m.id] || { pinned: false }, { opened: true });
+    renderLibList();
+    api.markMaterialRead(TOPIC, m.id).then(function (r) { if (r) { LIB.reads[m.id] = r; renderLibList(); } }).catch(function () {});
   }
 
   async function loadLibrary() {
@@ -759,7 +1173,9 @@
           '<button type="submit" id="lib-ask">' + T('Ask', 'اسأل') + '</button></form>' +
         '<div class="lib-hint">' + T('Answers come only from the documents below, and cite the article they came from.',
                                       'تأتي الإجابات من المستندات أدناه فقط، مع الإشارة إلى المادة التي أُخذت منها.') + '</div>' +
+        '<div class="lx-sugs" id="lx-sugs"></div>' +
         '<div class="lib-answer" id="lib-answer" style="display:none"></div>' +
+        '<div class="lx-finder" id="lx-finder"></div>' +
         '<div class="lib-list" id="lib-list"></div>' +
       '</div>';
     }
@@ -774,16 +1190,20 @@
     box.innerHTML = html;
     box.style.display = 'block';
     if (LIB_MATS.length) {
-      renderLibList({});
+      renderLibList();
       $('lib-form').onsubmit = function (e) { e.preventDefault(); askLibrary(); };
+      loadReads();
+      loadInsights();
     }
   }
 
   // ─── The reader ─────────────────────────────────────────────────
   function readerShow(kindLabel, title) {
     $('rKind').textContent = kindLabel; $('rTitle').textContent = title;
-    $('rOpen').style.display = 'none'; $('rDown').style.display = 'none';
-    $('rBody').innerHTML = '<div class="rmsg">Opening…</div>';
+    ['rOpen', 'rDown', 'rText', 'rOrig', 'rQuiz'].forEach(function (id) { $(id).style.display = 'none'; });
+    $('rText').textContent = T('Text', 'النص'); $('rOrig').textContent = T('Original', 'الأصل');
+    $('rQuiz').textContent = T('Test yourself', 'اختبر نفسك');
+    $('rBody').innerHTML = '<div class="rmsg">' + T('Opening…', 'جارٍ الفتح…') + '</div>';
     $('reader').showModal();
   }
   function readerFrame(url, sandboxed) {
@@ -828,9 +1248,11 @@
     return resp.blob();
   }
 
-  async function openReference(m, courseId) {
+  async function openReference(m, courseId, opts) {
     courseId = courseId || TOPIC;
+    opts = opts || {};
     if (!m) return;
+    noteRead(m, courseId);
     var vid = m.kind === 'link' ? ytId(m.url) : null;
     if (vid) {
       readerShow('VIDEO', flPick(m, 'title'));
@@ -850,15 +1272,111 @@
       catch (e) { $('rBody').innerHTML = '<div class="rmsg">' + esc(e.message || 'Could not open the package.') + '</div>'; }
       return;
     }
-    if (m.kind === 'link' || m.kind === 'scorm') {
+    if (m.kind === 'scorm' || (m.kind === 'link' && m.indexed === false)) {
       // External sites usually refuse to be embedded — open them properly.
       window.open(m.url, '_blank');
+      return;
+    }
+    // A document the library can read opens as text, article by article, at
+    // the article an answer cited; the original file is one click away.
+    var isPdf = /pdf/i.test(m.mime || '') || /\.pdf$/i.test(m.file_name || '');
+    readerShow(m.kind === 'link' ? 'PAGE' : (isPdf ? 'PDF' : 'DOC'), flPick(m, 'title'));
+    if (m.indexed !== false) {
+      try {
+        var doc = await api.materialArticles(courseId, m.id);
+        if (doc && doc.articles && doc.articles.length > 1) { readerArticles(m, courseId, doc.articles, opts.article); return; }
+      } catch (e) { /* fall back to the original */ }
+    }
+    await openOriginal(m, courseId);
+  }
+
+  function readerArticles(m, courseId, arts, target) {
+    var rtl = arts.some(function (a) { return /[؀-ۿ]/.test(a.label + ' ' + a.body.slice(0, 300)); });
+    var hit = -1;
+    arts.forEach(function (a, i) { if (hit < 0 && target && a.label === target) hit = i; });
+    $('rBody').innerHTML = '<div class="rart"' + (rtl ? ' dir="rtl" lang="ar"' : ' dir="ltr"') + ' translate="no">' +
+      '<nav class="rart-nav">' + arts.map(function (a, i) {
+        return '<a href="#" data-i="' + i + '"' + (i === hit ? ' class="cited"' : '') + '>' + esc(a.label) + '</a>';
+      }).join('') + '</nav>' +
+      '<div class="rart-body" id="rArtBody">' + arts.map(function (a, i) {
+        return '<section class="rart-a' + (i === hit ? ' hl' : '') + '" id="rart-' + i + '"><h4>' + esc(a.label) +
+          (i === hit ? '<span class="lib-cited">' + T('cited in the answer', 'مُستشهد بها في الإجابة') + '</span>' : '') + '</h4>' +
+          '<div class="rart-t">' + esc(a.body) + '</div></section>';
+      }).join('') + '</div></div>';
+    var body = $('rArtBody');
+    var jump = function (i) { var sec = $('rart-' + i); if (sec) body.scrollTop = sec.offsetTop - body.offsetTop - 10; };
+    $('rBody').querySelectorAll('.rart-nav a').forEach(function (a) {
+      a.onclick = function (e) { e.preventDefault(); jump(Number(a.getAttribute('data-i'))); };
+    });
+    if (hit >= 0) requestAnimationFrame(function () { jump(hit); });
+    $('rText').style.display = 'none';
+    var o = $('rOrig'); o.style.display = '';
+    o.onclick = function () {
+      o.style.display = 'none';
+      var t = $('rText'); t.style.display = '';
+      t.onclick = function () { readerArticles(m, courseId, arts, target); };
+      openOriginal(m, courseId);
+    };
+    var q = $('rQuiz'); q.style.display = '';
+    q.onclick = function () { readerQuiz(m, courseId, arts); };
+  }
+
+  async function readerQuiz(m, courseId, arts) {
+    $('rQuiz').style.display = 'none'; $('rOrig').style.display = 'none';
+    var t = $('rText'); t.style.display = '';
+    t.onclick = function () { readerArticles(m, courseId, arts); };
+    $('rBody').innerHTML = '<div class="rmsg">' + T('Writing three questions on this document…', 'جارٍ إعداد ثلاثة أسئلة على هذا المستند…') + '</div>';
+    var qz;
+    try { qz = await api.materialQuiz(courseId, m.id, isAr() ? 'ar' : 'en'); }
+    catch (e) {
+      $('rBody').innerHTML = '<div class="rmsg">' + esc(/AIMODEL|configured/i.test((e && e.message) || '')
+        ? T('Self-tests are not available on this server yet.', 'الاختبارات الذاتية غير متاحة على هذا الخادم بعد.')
+        : T('Could not write questions on this document just now — please try again.', 'تعذّر إعداد أسئلة على هذا المستند الآن — حاول مرة أخرى.')) + '</div>';
+      return;
+    }
+    var Q = (qz && qz.questions) || [];
+    var answered = 0, right = 0;
+    $('rBody').innerHTML = '<div class="rquiz"' + (isAr() ? ' dir="rtl"' : '') + '>' +
+      '<h3>' + T('Test yourself', 'اختبر نفسك') + '</h3>' +
+      '<p class="rq-note">' + T('Three questions from this document. Not graded — for your own practice.', 'ثلاثة أسئلة من هذا المستند. غير محتسبة — للتدرّب فقط.') + '</p>' +
+      Q.map(function (q, i) {
+        return '<div class="rq"><b>' + (i + 1) + '. ' + esc(q.q) + '</b>' +
+          q.options.map(function (o, j) { return '<button type="button" class="rq-opt" data-q="' + i + '" data-j="' + j + '">' + esc(o) + '</button>'; }).join('') +
+          '<div class="rq-why" id="rq-why-' + i + '"></div></div>';
+      }).join('') + '<p class="rq-score" id="rqScore"></p></div>';
+    $('rBody').querySelectorAll('.rq-opt').forEach(function (b) {
+      b.onclick = function () {
+        var qi = Number(b.getAttribute('data-q')), q = Q[qi];
+        var ok = Number(b.getAttribute('data-j')) === q.answer;
+        $('rBody').querySelectorAll('.rq-opt[data-q="' + qi + '"]').forEach(function (o) {
+          o.disabled = true;
+          if (Number(o.getAttribute('data-j')) === q.answer) o.classList.add('right');
+        });
+        if (!ok) b.classList.add('wrong'); else right++;
+        answered++;
+        var why = $('rq-why-' + qi);
+        why.innerHTML = (ok ? T('Correct. ', 'إجابة صحيحة. ') : T('Not quite. ', 'ليس تماماً. ')) + esc(q.why || '') +
+          (q.article ? ' <button type="button" class="lx-link" data-art="' + esc(q.article) + '">' + T('Read ', 'اقرأ ') + esc(q.article) + '</button>' : '');
+        var link = why.querySelector('[data-art]');
+        if (link) link.onclick = function () { readerArticles(m, courseId, arts, link.getAttribute('data-art')); };
+        if (answered === Q.length) {
+          $('rqScore').textContent = isAr() ? ('أجبت إجابة صحيحة عن ' + right + ' من ' + Q.length + '.') : ('You got ' + right + ' of ' + Q.length + ' right.');
+        }
+      };
+    });
+  }
+
+  // The material as it was uploaded or linked: the PDF itself, the file, or the page.
+  async function openOriginal(m, courseId) {
+    $('rBody').innerHTML = '<div class="rmsg">' + T('Opening…', 'جارٍ الفتح…') + '</div>';
+    if (m.kind === 'link') {
+      $('rBody').innerHTML = '<div class="rmsg">' + T('This page opens on its own site.', 'تُفتح هذه الصفحة على موقعها.') + '</div>';
+      readerNewTab(m.url);
       return;
     }
     // A file: inline (fetch with the token) or cloud blob (short-lived URL).
     var isPdf = /pdf/i.test(m.mime || '') || /\.pdf$/i.test(m.file_name || '');
     var isText = /^text\/|json|html/i.test(m.mime || '');
-    readerShow(isPdf ? 'PDF' : (isText ? 'TEXT' : 'FILE'), flPick(m, 'title'));
     try {
       if (m.download_kind === 'blob') {
         var u = await api.materialDownloadUrl(courseId, m.id);
