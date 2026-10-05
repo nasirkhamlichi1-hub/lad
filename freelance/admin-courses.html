@@ -929,6 +929,15 @@ var TABS = {
   other:     [['file','File']]
 };
 
+// The English title box. Emptying it used to fall back to the step's old
+// title, so a placeholder like "Course — taught session" came back on every
+// save. An emptied box now takes the Arabic title (a step needs one title
+// for the English site); only with both boxes empty does the old one stay.
+function titleEn(a){
+  var en=$('x-title')?$('x-title').value.trim():'';
+  return en||titleAr(a)||a.title;
+}
+
 // The Arabic title box, if the open pane has one; else whatever the step
 // already carries. Trimmed to NULL so an emptied box clears the Arabic.
 function titleAr(a){
@@ -1257,7 +1266,7 @@ $('dSave').onclick=async function(){
 
       await api.trainerSaveLessons([{
         id:a.lesson_id,
-        title:$('x-title').value.trim()||a.title,
+        title:titleEn(a),
         body:body,
         objectives:$('x-obj').value.split('\n').map(function(s){return s.trim();}).filter(Boolean),
         course_id:TOPIC.topic_id,
@@ -1266,7 +1275,7 @@ $('dSave').onclick=async function(){
         teaching_brief:readBrief(),
         source_material_id:materialId
       }]);
-      await api.saveActivities(TOPIC.topic_id,[Object.assign({},a,{title:$('x-title').value.trim()||a.title, title_ar:titleAr(a)})]);
+      await api.saveActivities(TOPIC.topic_id,[Object.assign({},a,{title:titleEn(a), title_ar:titleAr(a)})]);
 
     }else{
       var url=($('x-url')&&$('x-url').value.trim())||'';
@@ -1277,7 +1286,7 @@ $('dSave').onclick=async function(){
       }
 
       var m=null;
-      var mTitle=$('x-title').value.trim()||a.title;
+      var mTitle=titleEn(a);
       var mDesc=($('x-desc')&&$('x-desc').value.trim())||'';
       var tAr=titleAr(a);
       var matKind=a.kind==='scorm'?'scorm':'file', linkKind=a.kind==='scorm'?'scorm':'link';
@@ -1307,7 +1316,7 @@ $('dSave').onclick=async function(){
       }
 
       var patch=Object.assign({},a,{
-        title:$('x-title').value.trim()||a.title,
+        title:titleEn(a),
         title_ar:tAr,
         material_id:enId,
         material_id_ar:arId
