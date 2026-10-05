@@ -1247,7 +1247,10 @@
       catch (e) { $('rBody').innerHTML = '<div class="rmsg">' + esc(e.message || 'Could not open the package.') + '</div>'; }
       return;
     }
-    if (m.kind === 'scorm' || (m.kind === 'link' && m.indexed === false)) {
+    // A web link opens on its own site unless the library has actually read
+    // its text — only then is there an article-by-article view to show. The
+    // tab opens here, inside the click, so the browser does not block it.
+    if (m.kind === 'scorm' || (m.kind === 'link' && m.indexed !== true)) {
       // External sites usually refuse to be embedded — open them properly.
       window.open(m.url, '_blank');
       return;
@@ -1345,7 +1348,9 @@
   async function openOriginal(m, courseId) {
     $('rBody').innerHTML = '<div class="rmsg">' + T('Opening…', 'جارٍ الفتح…') + '</div>';
     if (m.kind === 'link') {
-      $('rBody').innerHTML = '<div class="rmsg">' + T('This page opens on its own site.', 'تُفتح هذه الصفحة على موقعها.') + '</div>';
+      $('rBody').innerHTML = '<div class="rmsg"><div>' + T('This page opens on its own site.', 'تُفتح هذه الصفحة على موقعها.') +
+        '<br><br><button id="rGoLink">' + T('Open the page', 'افتح الصفحة') + '</button></div></div>';
+      $('rGoLink').onclick = function () { window.open(m.url, '_blank'); };
       readerNewTab(m.url);
       return;
     }
