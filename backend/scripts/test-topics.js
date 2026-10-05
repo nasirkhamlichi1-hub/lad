@@ -174,6 +174,12 @@ async function main() {
   await store.closeAttempt(ka.id, LAWYER, { completed: true, seconds: 60 });
   const retired = await topics.removeStep(seq.topic_id, keep.id);
   check('a step with attempts is retired instead', retired.mode, 'retired');
+  check('a retired step leaves the builder', retired.topic.activities.some((a) => a.id === keep.id), false);
+  await topics.publishTopic(seq.topic_id, { force: true });
+  check('and Publish does not bring it back', !!(await store.getActivity(keep.id)).published, false);
+  check('nor does the learner see it', (await store.listActivities(seq.topic_id)).some((a) => a.id === keep.id), false);
+  check('its attempt is kept', (await db.one('SELECT COUNT(*) AS n FROM activity_attempt WHERE activity_id = ?', [keep.id])).n, 1);
+  check('the topic list does not count it', (await topics.listTopics()).find((t) => t.topic_id === seq.topic_id).activities, 5);
 
   for (const id of [seq.topic_id, bulk.topic_id]) {
     for (const sql of [

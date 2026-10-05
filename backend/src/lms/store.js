@@ -121,10 +121,13 @@ async function deleteModule(id) {
 
 // ─── Activities ──────────────────────────────────────────────────────
 
-async function listActivities(courseId, { includeUnpublished = false } = {}) {
+// Retired steps (removed from the course but kept for their attempts) are
+// left out unless asked for; they are never drafts waiting to be published.
+async function listActivities(courseId, { includeUnpublished = false, includeRetired = false } = {}) {
   const rows = await db.all(
     `SELECT * FROM activity
      WHERE course_id = ? ${includeUnpublished ? '' : 'AND published = 1'}
+       ${includeRetired ? '' : 'AND retired_at IS NULL'}
      ORDER BY position, title`,
     [courseId]
   );
@@ -204,7 +207,8 @@ async function upsertActivity(courseId, input = {}, userId = null) {
 async function retireActivity(id) {
   const activity = await getActivity(id);
   if (!activity) return null;
-  await db.run('UPDATE activity SET published = 0, updated_at = ? WHERE id = ?', [db.now(), id]);
+  const ts = db.now();
+  await db.run('UPDATE activity SET published = 0, retired_at = ?, updated_at = ? WHERE id = ?', [ts, ts, id]);
   await recomputeCourse(activity.course_id);
   return getActivity(id);
 }
