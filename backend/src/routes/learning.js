@@ -134,6 +134,56 @@ const DRAFT_MAX_CHARS = 60000;
 // compare on lowercase alphanumerics only.
 const normalise = (s) => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 
+// ─── Translate key elements into Arabic ─────────────────────────────
+// The Arabic site shows the Arabic key elements an author keeps with the
+// lesson. Rather than retype every list, the author's English lines are
+// translated here, one for one and in order, and come back into the Arabic
+// box for the author to read and correct before saving. Nothing is stored.
+router.post('/translate-lines', requireRole(...ADMIN_ROLES), async (req, res) => {
+  if (!aimodel.configured()) {
+    return res.status(501).json({ error: 'ai_not_configured', message: 'No AI model is configured on this server, so nothing can be translated automatically.' });
+  }
+  const lines = (Array.isArray(req.body && req.body.lines) ? req.body.lines : [])
+    .map((x) => String(x == null ? '' : x).replace(/\s+/g, ' ').trim().slice(0, 500))
+    .filter(Boolean)
+    .slice(0, 30);
+  if (!lines.length) return res.status(400).json({ error: 'no_lines', message: 'Nothing to translate.' });
+  const system = [
+    'You translate training content for The Government of Dubai Legal Affairs Department',
+    'from English into formal Modern Standard Arabic, as used in UAE government documents.',
+    'Translate each numbered line on its own, keeping its meaning, its order and its',
+    'instruction form (each line is something a lawyer must be able to do). Do not add,',
+    'merge, drop or explain anything. Keep names of laws, numbers and dates exactly.',
+    'Use Western digits (0-9).',
+    'Reply with JSON only: {"lines":["...","..."]} with exactly as many lines as given.',
+  ].join('\n');
+  let answer;
+  try {
+    answer = await aimodel.chat({
+      system,
+      messages: [{ role: 'user', content: lines.map((l, i) => `${i + 1}. ${l}`).join('\n') }],
+      maxTokens: 2000,
+      temperature: 0,
+    });
+  } catch (e) {
+    log.error('translate_lines_ai_failed', { code: e.code, error: e.message });
+    return res.status(502).json({ error: 'ai_unreachable', message: 'The AI service could not be reached: ' + e.message });
+  }
+  let out = [];
+  try {
+    const m = String(answer || '').match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(m ? m[0] : answer);
+    out = Array.isArray(parsed.lines) ? parsed.lines.map((x) => String(x == null ? '' : x).replace(/\s+/g, ' ').trim()) : [];
+  } catch (_) { out = []; }
+  // One line in, one line out — anything else cannot be lined up with the
+  // English and would mislabel the coverage ticks on the trainer page.
+  if (out.length !== lines.length || out.some((x) => !x)) {
+    log.error('translate_lines_mismatch', { asked: lines.length, got: out.length });
+    return res.status(502).json({ error: 'bad_translation', message: 'The translation did not come back line for line. Try again, or type the Arabic by hand.' });
+  }
+  res.json({ lines: out, lang: 'ar' });
+});
+
 router.post('/draft-lesson', requireRole(...ADMIN_ROLES), async (req, res, next) => {
   try {
     if (!aimodel.configured()) {
