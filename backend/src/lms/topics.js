@@ -296,11 +296,11 @@ async function getTopic(courseId) {
 async function listTopics() {
   const rows = await db.all(
     `SELECT a.course_id,
-            COUNT(*) AS activities,
+            SUM(CASE WHEN a.retired_at IS NULL THEN 1 ELSE 0 END) AS activities,
             SUM(CASE WHEN a.published = 1 THEN 1 ELSE 0 END) AS published,
-            SUM(CASE WHEN a.kind = 'scorm' THEN 1 ELSE 0 END) AS scorms,
-            SUM(CASE WHEN a.kind = 'ai_lesson' THEN 1 ELSE 0 END) AS ai_bots,
-            SUM(CASE WHEN a.kind IN ('document','link','video') THEN 1 ELSE 0 END) AS documents,
+            SUM(CASE WHEN a.kind = 'scorm' AND a.retired_at IS NULL THEN 1 ELSE 0 END) AS scorms,
+            SUM(CASE WHEN a.kind = 'ai_lesson' AND a.retired_at IS NULL THEN 1 ELSE 0 END) AS ai_bots,
+            SUM(CASE WHEN a.kind IN ('document','link','video') AND a.retired_at IS NULL THEN 1 ELSE 0 END) AS documents,
             MAX(a.updated_at) AS updated_at
      FROM activity a
      GROUP BY a.course_id
@@ -507,7 +507,7 @@ async function removeStep(courseId, activityId) {
 // reference materials all go. Meant for clearing out old and test topics —
 // the route gates it behind admin roles and the UI asks for confirmation.
 async function deleteTopic(courseId) {
-  const acts = await store.listActivities(courseId, { includeUnpublished: true });
+  const acts = await store.listActivities(courseId, { includeUnpublished: true, includeRetired: true });
   const hasModule = await db.one('SELECT id FROM course_module WHERE course_id = ? LIMIT 1', [courseId]);
   if (!acts.length && !hasModule) {
     const err = new Error('No such topic');
