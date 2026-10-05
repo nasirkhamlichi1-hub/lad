@@ -63,7 +63,9 @@ button{font-family:inherit;cursor:pointer}
 .adm-panel-title{font-family:var(--serif);font-size:17px;font-weight:500;margin:0 0 3px;letter-spacing:-.01em}
 .adm-hint{font-size:11.5px;color:var(--slate3);margin:0 0 14px;line-height:1.45}
 
-.adm-cols{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
+.adm-cols{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+.adm-cols>*{min-width:0}
+.adm-panel{min-width:0;overflow-wrap:anywhere}
 @media (max-width:960px){.adm-cols{grid-template-columns:1fr}}
 
 .adm-label{display:block;font-family:var(--mono);font-size:9px;color:var(--slate3);letter-spacing:.8px;
@@ -575,8 +577,8 @@ async function loadLibAdmin(){
     box.innerHTML=mats.map(function(m){
       var label=m.kind==='scorm'?'MODULE':(m.kind==='link'?(ytIdOf(m.url)?'VIDEO':'LINK'):'DOCUMENT');
       var paired=!!(m.pair_id&&mats.some(function(x){return x.id===m.pair_id;}));
-      var langTag=paired?'<span class="adm-count" style="margin-inline-start:8px">'+((m.lang||'en')==='ar'?'Arabic site':'English site')+'</span>'
-                        :'<span class="adm-count" style="margin-inline-start:8px">Both sites</span>';
+      var langTag=paired?'<span class="adm-count">'+((m.lang||'en')==='ar'?'Arabic site':'English site')+'</span>'
+                        :'<span class="adm-count">Both sites</span>';
       // Whether "Ask the library" on the course page can read this item.
       var readTag = m.kind==='scorm' ? '' :
         (m.indexed===true ? '<span class="adm-count" style="margin-inline-start:8px;color:#1d8f5c">· readable by Ask</span>'
@@ -585,7 +587,7 @@ async function loadLibAdmin(){
       langTag += readTag;
       return '<div class="adm-step ready" style="margin-bottom:6px">'+
         '<span class="adm-kind k-doc">'+label+'</span>'+
-        '<div class="adm-grow"><div class="t" translate="no">'+esc(m.title)+(m.title_ar&&m.title_ar!==m.title?' <span dir="rtl" lang="ar" style="font-weight:400">· '+esc(m.title_ar)+'</span>':'')+langTag+'</div>'+
+        '<div class="adm-grow"><div class="t" translate="no">'+esc(m.title)+(m.title_ar&&m.title_ar!==m.title?' <span dir="rtl" lang="ar" style="font-weight:400">· '+esc(m.title_ar)+'</span>':'')+'</div>'+'<div class="s" style="white-space:normal">'+langTag+'</div>'+
         (m.url?'<div class="s">'+esc(m.url)+'</div>':(m.file_name?'<div class="s">'+esc(m.file_name)+'</div>':''))+'</div>'+
         '<button class="adm-btn-icon adm-btn-danger" data-libdel="'+esc(m.id)+'" title="Remove from the library">&times;</button></div>';
     }).join('');
