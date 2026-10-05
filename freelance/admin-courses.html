@@ -572,7 +572,8 @@ async function loadLibAdmin(){
   var box=$('lib-rows'); if(!box||!TOPIC) return;
   try{
     var r=await api.listCourseMaterials(TOPIC.topic_id);
-    var mats=(r&&r.materials)||[];
+    // Packages uploaded to a step are that step's content, not library items.
+    var mats=((r&&r.materials)||[]).filter(function(m){ return m.kind!=='scorm'; });
     if(!mats.length){ box.innerHTML='<span class="adm-count">Nothing in the library yet — everything you add here appears on the course page for the learner.</span>'; return; }
     box.innerHTML=mats.map(function(m){
       var label=m.kind==='scorm'?'MODULE':(m.kind==='link'?(ytIdOf(m.url)?'VIDEO':'LINK'):'DOCUMENT');

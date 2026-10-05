@@ -1129,7 +1129,9 @@
     catch (e) { /* anonymous preview, or no access yet */ }
     // A paired item exists once per language — keep the row for this site.
     var allMats = mats;
-    LIB_MATS = mats.filter(function (m) { return flMatVisible(m, allMats); });
+    // E-learning packages are course steps, uploaded through the step's own
+    // "Upload module" — they belong on the pathway, not on the shelf.
+    LIB_MATS = mats.filter(function (m) { return m.kind !== 'scorm' && flMatVisible(m, allMats); });
     LIB_LAWS = (HUB && HUB.legislation) || [];
     var faq = (HUB && HUB.faq) || [];
     if (!LIB_MATS.length && !faq.length) { box.style.display = 'none'; return; }
