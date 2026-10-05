@@ -13,6 +13,7 @@ const activity = require('../services/activity');
 const blob = require('../services/blobStorage');
 const aimodel = require('../services/aimodel');
 const materialIndex = require('../services/materialIndex');
+const libraryInsights = require('../services/libraryInsights');
 const { requireAuth, requireRole, optionalAuth } = require('../middleware/auth');
 
 // Longest free-text comment accepted on the anonymous course-rating form.
@@ -447,6 +448,60 @@ router.post('/:id/materials/reindex', requireRole(...MATERIAL_ROLES), async (req
   if (!courseOrTopicExists(req.params.id)) return res.status(404).json({ error: 'Course not found' });
   try { res.json({ results: await materialIndex.reindexCourse(req.params.id) }); }
   catch (e) { res.status(500).json({ error: 'reindex_failed', message: e.message }); }
+});
+
+// ─── Library insights, the reader, self-tests, the reading trail ──
+// Everything around the documents that the course page shows: summaries,
+// subjects, situations, questions and step links (drafted once by the model
+// and cached), a document's text article by article, a three-question
+// self-test, and the learner's own record of what they opened and pinned.
+function libraryGate(req, res) {
+  if (!courseOrTopicExists(req.params.id)) { res.status(404).json({ error: 'Course not found' }); return false; }
+  if (!canAccessMaterials(req.params.id, req.user)) {
+    res.status(403).json({ error: 'no_access', message: 'Book or complete this course to access its materials.' });
+    return false;
+  }
+  return true;
+}
+
+router.get('/:id/materials/insights', optionalAuth, (req, res) => {
+  if (!libraryGate(req, res)) return;
+  try { res.json(libraryInsights.insights(req.params.id)); }
+  catch (e) { res.status(500).json({ error: 'insights_failed', message: e.message }); }
+});
+
+router.get('/:id/materials/reads', requireAuth, (req, res) => {
+  if (!libraryGate(req, res)) return;
+  res.json({ reads: libraryInsights.reads(req.params.id, req.user.sub) });
+});
+
+router.post('/:id/materials/:mid/read', requireAuth, (req, res) => {
+  if (!libraryGate(req, res)) return;
+  const r = libraryInsights.markRead(req.params.id, req.user.sub, req.params.mid);
+  if (!r) return res.status(404).json({ error: 'Material not found' });
+  res.json(r);
+});
+
+router.put('/:id/materials/:mid/pin', requireAuth, (req, res) => {
+  if (!libraryGate(req, res)) return;
+  const r = libraryInsights.setPinned(req.params.id, req.user.sub, req.params.mid, !!(req.body && req.body.pinned));
+  if (!r) return res.status(404).json({ error: 'Material not found' });
+  res.json(r);
+});
+
+router.get('/:id/materials/:mid/articles', optionalAuth, async (req, res) => {
+  if (!libraryGate(req, res)) return;
+  try {
+    const out = await libraryInsights.articles(req.params.id, req.params.mid);
+    if (!out) return res.status(404).json({ error: 'Material not found' });
+    res.json(out);
+  } catch (e) { res.status(500).json({ error: 'articles_failed', message: e.message }); }
+});
+
+router.post('/:id/materials/:mid/quiz', optionalAuth, async (req, res) => {
+  if (!libraryGate(req, res)) return;
+  try { res.json(await libraryInsights.quiz(req.params.id, req.params.mid, (req.body && req.body.lang) === 'ar' ? 'ar' : 'en')); }
+  catch (e) { res.status(e.status || 502).json({ error: e.code || 'quiz_failed', message: e.message }); }
 });
 
 function cleanDescription(v) {
