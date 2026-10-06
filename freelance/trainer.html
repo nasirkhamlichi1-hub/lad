@@ -266,6 +266,17 @@ a{color:inherit;text-decoration:none}
     else{p.className='pill pill-demo';p.textContent='Preview mode';}
     var match=WANT_LESSON&&S.lessons.filter(function(L){return String(L.id)===WANT_LESSON;})[0];
     if(match){S.selected=match;start();return;}
+    // The step on the course links to its lesson by id. A lesson missing from
+    // the open list (switched off by an edit in the admin console) is still
+    // the lesson that step teaches — load it directly rather than turn the
+    // learner away.
+    if(WANT_LESSON&&!DEMO&&api.trainerLesson){
+      api.trainerLesson(WANT_LESSON).then(function(L){
+        if(L&&L.id){S.selected=L;start();}
+        else{toast('That session isn’t available yet — choose one below.');renderChooser();}
+      }).catch(function(){toast('That session isn’t available yet — choose one below.');renderChooser();});
+      return;
+    }
     if(WANT_LESSON&&!match){toast('That session isn’t available yet — choose one below.');}
     renderChooser();
   }

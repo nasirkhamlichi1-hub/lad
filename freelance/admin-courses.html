@@ -1337,7 +1337,10 @@ $('dSave').onclick=async function(){
         objectives:$('x-obj').value.split('\n').map(function(s){return s.trim();}).filter(Boolean),
         course_id:TOPIC.topic_id,
         duration_min:30,
-        active:false,
+        // A live step's session stays live when it is edited — saving used to
+        // switch it off, and Publish only switches on steps not yet live, so
+        // the trainer page lost the session. A draft stays off until Publish.
+        active:!!a.published,
         teaching_brief:readBrief(),
         source_material_id:materialId
       }]);
