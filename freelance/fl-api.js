@@ -123,6 +123,7 @@
     trainerStatus:   function () { return call('GET', '/api/v1/trainer/status'); },
     trainerLessons:  function () { return call('GET', '/api/v1/trainer/lessons'); },
     trainerAllLessons: function () { return call('GET', '/api/v1/trainer/lessons?all=1'); },
+    trainerLesson:   function (id) { return call('GET', '/api/v1/trainer/lessons/' + encodeURIComponent(id)); },
     trainerSaveLessons: function (lessons) { return call('PUT', '/api/v1/trainer/lessons', lessons); },
     trainerStartBrowserSession: function (lessonId) { return call('POST', '/api/v1/trainer/sessions', { lessonId: lessonId, engine: 'browser' }); },
     trainerPauseSession: function (id, info) { return call('POST', '/api/v1/trainer/sessions/' + enc(id) + '/pause', info || {}); },
