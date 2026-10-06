@@ -53,7 +53,7 @@
   html { scroll-behavior:smooth; }
   body { margin:0; background:var(--ground); color:var(--ink); padding-top:0;
     font:15.5px/1.6 var(--sans); -webkit-font-smoothing:antialiased; }
-  .wrap { max-width:900px; margin:0 auto; padding:0 22px 72px; }
+  .wrap { max-width:1120px; margin:0 auto; padding:0 22px 72px; }
 
   /* ─── Hero: the journey's front door ─────────────────────────── */
   .hero {
@@ -169,16 +169,16 @@
      shadow; the gold carries accents only. A lesson card turns on hover to
      its pale-gold side with the ways in; a click opens the drawer below. */
   .pw-grid { --pw-gold:#9C771F; --pw-gold-d:#70550F; --pw-soft:#F5EEDC; --pw-back:#FBF7EC; --pw-ok:#1d8f5c; --pw-line:var(--line);
-    display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-bottom:8px; }
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:14px; margin-bottom:8px; }
   @media (prefers-color-scheme: dark){ .pw-grid { --pw-gold:#C9A24A; --pw-gold-d:#E2C27A; --pw-soft:#2A2315; --pw-back:#1F1C14; --pw-ok:#3FB98A; } }
-  .pw-card { perspective:1100px; height:236px; cursor:pointer; outline:none; border-radius:8px; }
+  .pw-card { perspective:1100px; height:204px; cursor:pointer; outline:none; border-radius:8px; }
   .pw-in { position:relative; width:100%; height:100%; transition:transform .7s cubic-bezier(.2,.8,.2,1); transform-style:preserve-3d; }
   @media (hover:hover){ .pw-card:hover .pw-in { transform:rotateY(180deg); } }
   .pw-card.sel .pw-in { transform:rotateY(180deg); }
   .pw-face { position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:8px;
-    padding:20px; display:flex; flex-direction:column; overflow:hidden; background:var(--surface);
+    padding:16px 18px; display:flex; flex-direction:column; overflow:hidden; background:var(--surface);
     box-shadow:0 2px 12px rgba(0,0,0,.08); border-top:3px solid var(--pw-gold); }
-  .pw-back { transform:rotateY(180deg); background:var(--pw-back); gap:9px; }
+  .pw-back { transform:rotateY(180deg); background:var(--pw-back); gap:7px; }
   .pw-card.sel .pw-back { box-shadow:0 0 0 2px var(--pw-gold), 0 2px 12px rgba(0,0,0,.08); }
   .pw-card:focus-visible .pw-face { box-shadow:0 0 0 3px var(--pw-gold); }
   .pw-card.done .pw-front { border-top-color:var(--pw-ok); }
@@ -189,7 +189,7 @@
   .pw-num { font:700 12px var(--sans); letter-spacing:.06em; text-transform:uppercase; color:var(--pw-gold-d); }
   [dir="rtl"] .pw-num { letter-spacing:0; }
   .pw-here { font:700 11px var(--sans); color:var(--pw-gold-d); background:var(--pw-soft); border-radius:999px; padding:2px 10px; }
-  .pw-title { font-weight:700; font-size:16.5px; line-height:1.5; margin-top:10px; color:var(--ink);
+  .pw-title { font-weight:700; font-size:15.5px; line-height:1.45; margin-top:8px; color:var(--ink);
     display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; position:relative; z-index:1; }
   .pw-title[dir="rtl"] { font-size:17.5px; }
   .pw-foot { display:flex; align-items:center; gap:10px; margin-top:auto; position:relative; z-index:1; }
@@ -209,7 +209,7 @@
   .pw-pattern { position:absolute; inset:0; opacity:.07; pointer-events:none;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%239C771F' stroke-width='1'%3E%3Cpath d='M28 6l6 16 16 6-16 6-6 16-6-16-16-6 16-6z'/%3E%3Crect x='17' y='17' width='22' height='22' transform='rotate(45 28 28)'/%3E%3Crect x='17' y='17' width='22' height='22'/%3E%3C/g%3E%3C/svg%3E"); }
   .pw-back > *:not(.pw-pattern) { position:relative; }
-  .pw-opt { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:9px 12px; }
+  .pw-opt { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:7px 10px; }
   .pw-opt > div { flex:1; min-width:0; }
   .pw-opt b { display:block; font-size:14px; color:var(--ink); }
   .pw-opt span:not(.pw-ic):not(.pw-st) { display:block; font-size:12px; color:var(--ink3); }
@@ -246,7 +246,6 @@
   .pw-both { margin-top:12px; padding:10px 14px; border-radius:8px; background:var(--pw-soft); color:var(--pw-gold-d); font-size:13.5px; font-weight:600; }
   .pw-law:empty { display:none; }
   .pw-law .lx-steplaw { margin:14px 0 0; }
-  @media (max-width:900px){ .pw-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
   @media (max-width:620px){
     .pw-grid { grid-template-columns:minmax(0,1fr); }
     .pw-card { height:auto; min-height:170px; }
@@ -259,6 +258,76 @@
     .pw-dtitle { max-width:none; padding-inline-end:40px; }
   }
   @media (prefers-reduced-motion:reduce){ .pw-in { transition:none; } .pw-drawer { animation:none; } }
+
+  /* ─── A long pathway: up next, find, filter, list ─────────────── */
+  /* A course with many lessons gets a bar to jump to the next one, a way to
+     find a lesson by name, a filter by status, and a one-line-per-lesson
+     list. Sections fold, and a finished section starts folded. */
+  .pw-next { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:30px 0 0; padding:14px 18px; background:var(--surface);
+    border:1px solid var(--line); border-inline-start:4px solid #9C771F; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+  .pw-next .k { font:700 11px var(--sans); letter-spacing:.08em; text-transform:uppercase; color:#70550F; }
+  [dir="rtl"] .pw-next .k { letter-spacing:0; }
+  .pw-next .nt { flex:1; min-width:200px; font-weight:700; font-size:15.5px; color:var(--ink); }
+  .pw-next .nt small { display:block; font-weight:500; font-size:12.5px; color:var(--ink3); }
+  .pw-next button { background:#9C771F; border-color:#9C771F; }
+  .pw-next button:hover { background:#70550F; border-color:#70550F; }
+  .pw-tools { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:22px 0 4px; }
+  .pw-find { position:relative; flex:1 1 240px; min-width:0; }
+  .pw-find input { width:100%; font:inherit; font-size:14.5px; color:var(--ink); background:var(--surface); border:1px solid var(--line);
+    border-radius:8px; padding:9px 12px; padding-inline-start:34px; }
+  .pw-find input:focus { outline:none; border-color:#9C771F; box-shadow:0 0 0 3px rgba(156,119,31,.15); }
+  .pw-find svg { position:absolute; inset-inline-start:11px; top:50%; transform:translateY(-50%); width:15px; height:15px; stroke:var(--ink3); fill:none; stroke-width:2; pointer-events:none; }
+  .pw-seg { display:inline-flex; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:3px; }
+  .pw-seg button { font:600 13px var(--sans); color:var(--ink2); background:none; border:0; border-radius:999px; padding:6px 13px; }
+  .pw-seg button:hover { background:var(--alt); color:var(--ink); }
+  .pw-seg button[aria-pressed="true"] { background:var(--ink); color:var(--surface); }
+  .pw-seg button .c { font-weight:500; opacity:.7; margin-inline-start:4px; font-variant-numeric:tabular-nums; }
+  .pw-none { padding:26px; text-align:center; color:var(--ink3); background:var(--surface); border:1px dashed var(--line); border-radius:8px; margin-top:18px; }
+  .pw-sec { margin-top:6px; }
+  .pw-sec-h { display:flex; align-items:baseline; gap:12px; cursor:pointer; user-select:none; }
+  .pw-sec-h .section-title { flex:1; }
+  .pw-sec-h .sc { font-size:13px; color:var(--ink3); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .pw-sec-h .chev { display:inline-block; transition:transform .2s; color:var(--ink3); font-size:13px; }
+  .pw-sec.folded .chev { transform:rotate(-90deg); }
+  [dir="rtl"] .pw-sec.folded .chev { transform:rotate(90deg); }
+  .pw-sec.folded .gate-note, .pw-sec.folded .pw-grid { display:none; }
+  .pw-sec.single .pw-sec-h { cursor:default; }
+  .pw-sec.single .chev { display:none; }
+  .pw-card.hide { display:none; }
+
+  /* list view — one line per lesson */
+  .pw-grid.pw-list { grid-template-columns:minmax(0,1fr); gap:0; background:var(--surface); border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.08); overflow:hidden; }
+  .pw-list .pw-card { height:auto; perspective:none; border-radius:0; border-top:1px solid var(--line-soft); }
+  .pw-list .pw-card:first-child { border-top:0; }
+  .pw-list .pw-in { transform:none !important; display:flex; align-items:center; gap:14px; padding:11px 18px; transition:background .12s; }
+  .pw-list .pw-face { display:none; }
+  .pw-list .pw-card:hover .pw-in, .pw-list .pw-card.sel .pw-in { background:var(--pw-back); }
+  .pw-list .pw-card.sel .pw-in { box-shadow:inset 3px 0 0 #9C771F; }
+  [dir="rtl"] .pw-list .pw-card.sel .pw-in { box-shadow:inset -3px 0 0 #9C771F; }
+  .pw-list .pw-card.locked .pw-in { opacity:.55; }
+  .pw-list .pw-card:focus-visible .pw-in { box-shadow:inset 0 0 0 2px #9C771F; }
+  .pw-li { display:none; }
+  .pw-list .pw-li { display:contents; }
+  .pw-li .n { flex:0 0 34px; height:34px; border-radius:50%; display:grid; place-items:center; font:700 12.5px var(--sans);
+    border:2px solid var(--line); color:var(--ink3); background:var(--surface); font-variant-numeric:tabular-nums; }
+  .pw-card.done .pw-li .n { background:var(--pw-ok); border-color:var(--pw-ok); color:#fff; }
+  .pw-card.current .pw-li .n { border-color:var(--pw-gold); color:var(--pw-gold-d); box-shadow:0 0 0 4px var(--pw-soft); }
+  .pw-li .lt { flex:1; min-width:0; font-weight:600; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pw-li .ways { display:flex; gap:5px; flex-shrink:0; }
+  .pw-li .ways .pw-ic { width:24px; height:24px; }
+  .pw-li .pct { flex:0 0 92px; display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink3); font-variant-numeric:tabular-nums; }
+  .pw-li .pct i { flex:1; height:5px; border-radius:99px; background:var(--line); overflow:hidden; }
+  .pw-li .pct i b { display:block; height:100%; background:var(--pw-gold); }
+  .pw-card.done .pw-li .pct i b { background:var(--pw-ok); }
+  .pw-li .here { font:700 11px var(--sans); color:var(--pw-gold-d); background:var(--pw-soft); border-radius:999px; padding:2px 9px; white-space:nowrap; }
+  .pw-list .pw-drawer { border-radius:0; box-shadow:none; border-top:1px solid var(--line-soft); background:var(--pw-back); }
+  @media (max-width:620px){
+    .pw-list .pw-card { min-height:0; }
+    .pw-list .pw-in { padding:10px 12px; gap:10px; }
+    .pw-li .lt { white-space:normal; font-size:14.5px; }
+    .pw-li .pct, .pw-li .here { display:none; }
+    .pw-next .nt { min-width:0; flex-basis:100%; }
+  }
 
   /* ─── The reference library ──────────────────────────────────── */
   /* A brief on each source — what it is and the
@@ -639,7 +708,7 @@
   // Each card turns on hover to show its ways in; clicking it opens a
   // full-width drawer under its row with a panel per way, each with its own
   // status and button. Locked steps (sequential courses) stay locked.
-  var PATH = { lessons: [], open: -1 };
+  var PATH = { lessons: [], open: -1, current: -1, view: '', q: '', st: 'all' };
 
   function headOf(t) {
     return String(t || '').split(/\s[—–-]\s/)[0].replace(/[^\p{L}\p{N}]+/gu, ' ').trim().toLowerCase();
@@ -728,30 +797,66 @@
     });
     PATH.current = current;
 
+    var many = lessons.length > 8;
+    if (PATH.view !== 'grid' && PATH.view !== 'list') PATH.view = savedView() || (lessons.length > 12 ? 'list' : 'grid');
     var html = '';
+
+    // Up next: with a long pathway the lesson to carry on with may be far down
+    // the page, so it is named at the top with a way straight to it.
+    if (many && current >= 0) {
+      var C = lessons[current];
+      html += '<div class="pw-next"><span class="k">' + T('Up next', 'التالي') + '</span>' +
+        '<div class="nt"><span translate="no" dir="auto">' + esc(C.title) + '</span><small>' + T('Lesson', 'الدرس') + ' ' + (current + 1) + ' ' + T('of', 'من') + ' ' + lessons.length + '</small></div>' +
+        '<button type="button" id="pwJump">' + (lessonPct(C) > 0 ? T('Resume', 'استئناف') : T('Start', 'ابدأ')) + ' →</button></div>';
+    }
+    if (many) {
+      html += '<div class="pw-tools">' +
+        '<label class="pw-find"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' +
+          '<input type="search" id="pwQ" placeholder="' + T('Find a lesson', 'ابحث عن درس') + '" aria-label="' + T('Find a lesson', 'ابحث عن درس') + '" autocomplete="off"></label>' +
+        '<div class="pw-seg" id="pwSt" role="group" aria-label="' + T('Show', 'عرض') + '"></div>' +
+        '<div class="pw-seg" id="pwView" role="group" aria-label="' + T('View', 'العرض') + '">' +
+          '<button type="button" data-v="list">' + T('List', 'قائمة') + '</button><button type="button" data-v="grid">' + T('Cards', 'بطاقات') + '</button></div>' +
+      '</div>';
+    }
+
     var lastSec = -1;
     lessons.forEach(function (L, i) {
       if (L.section !== lastSec) {
-        if (lastSec >= 0) html += '</div>';
+        if (lastSec >= 0) html += '</div></section>';
         var s = visible[L.section];
-        html += (visible.length > 1
-          ? '<h2 class="section-title" translate="no">' + esc(flPick(s, 'title')) + '</h2>'
-          : '<h2 class="section-title">' + T('The pathway', 'مسار الدورة') + '</h2>') +
+        var inSec = lessons.filter(function (x) { return x.section === L.section; });
+        var secDone = inSec.filter(function (x) { return lessonPct(x) >= 100; }).length;
+        // A finished section starts folded, unless it holds the only lessons.
+        var fold = visible.length > 1 && secDone === inSec.length && (current < 0 || lessons[current].section !== L.section);
+        html += '<section class="pw-sec' + (visible.length > 1 ? '' : ' single') + (fold ? ' folded' : '') + '" data-sec="' + L.section + '">' +
+          '<div class="pw-sec-h"' + (visible.length > 1 ? ' role="button" tabindex="0" aria-expanded="' + !fold + '"' : '') + '>' +
+            (visible.length > 1
+              ? '<h2 class="section-title" translate="no">' + esc(flPick(s, 'title')) + '</h2>'
+              : '<h2 class="section-title">' + T('The pathway', 'مسار الدورة') + '</h2>') +
+            '<span class="sc">' + secDone + ' / ' + inSec.length + ' ' + T('lessons done', 'دروس مكتملة') + '</span><span class="chev" aria-hidden="true">▾</span></div>' +
           '<p class="gate-note">' + (s.gate === 'sequential' ? T('In order — each step unlocks the next', 'بالترتيب — كل خطوة تفتح التالية') : T('Any order', 'بأي ترتيب')) +
-          ' · ' + T('take one way or both', 'اختر طريقة واحدة أو كلتيهما') + '</p><div class="pw-grid">';
+          ' · ' + T('take one way or both', 'اختر طريقة واحدة أو كلتيهما') + '</p><div class="pw-grid' + (PATH.view === 'list' ? ' pw-list' : '') + '">';
         lastSec = L.section;
       }
       var p = lessonPct(L);
       var locked = L.steps.every(function (a) { return a.locked; });
       var rtl = /[؀-ۿ]/.test(L.title);
+      var nn = (i < 9 ? '0' : '') + (i + 1);
       html += '<div class="pw-card' + (i === current ? ' current' : '') + (p >= 100 ? ' done' : '') + (locked ? ' locked' : '') + '" data-l="' + i + '" role="button" tabindex="0" aria-expanded="false">' +
         '<div class="pw-in">' +
+          '<div class="pw-li">' +
+            '<span class="n">' + (p >= 100 ? '✓' : (locked ? '🔒' : (i + 1))) + '</span>' +
+            '<span class="lt" translate="no"' + (rtl ? ' dir="rtl" lang="ar"' : '') + '>' + esc(L.title) + '</span>' +
+            (i === current ? '<span class="here">' + T('Continue here', 'تابِع من هنا') + '</span>' : '') +
+            '<span class="ways">' + L.steps.map(function (a) { var w = wayOf(a); return '<span class="pw-ic ' + w.cls + '" title="' + esc(isAr() ? w.what[1] : w.what[0]) + '">' + w.icon + '</span>'; }).join('') + '</span>' +
+            '<span class="pct"><i><b style="width:' + p + '%"></b></i>' + p + '%</span>' +
+          '</div>' +
           '<div class="pw-face pw-front">' +
-            '<div class="pw-top"><span class="pw-num">' + T('Lesson', 'الدرس') + ' ' + (i < 9 ? '0' : '') + (i + 1) + '</span>' +
+            '<div class="pw-top"><span class="pw-num">' + T('Lesson', 'الدرس') + ' ' + nn + '</span>' +
               (i === current ? '<span class="pw-here">' + T('Continue here', 'تابِع من هنا') + '</span>' : '') + '</div>' +
             '<div class="pw-title" translate="no"' + (rtl ? ' dir="rtl" lang="ar"' : '') + '>' + esc(L.title) + '</div>' +
             '<div class="pw-foot">' + miniRing(p) + '<div class="pw-chips">' + L.steps.map(wayChip).join('') + '</div></div>' +
-            '<span class="pw-big" aria-hidden="true">' + (i < 9 ? '0' : '') + (i + 1) + '</span>' +
+            '<span class="pw-big" aria-hidden="true">' + nn + '</span>' +
           '</div>' +
           '<div class="pw-face pw-back" aria-hidden="true"><div class="pw-pattern"></div>' +
             '<div class="pw-num">' + (L.steps.length > 1 ? T('Two ways to learn this', 'طريقتان لتعلّم هذا الدرس') : T('How to learn this', 'طريقة تعلّم هذا الدرس')) + '</div>' +
@@ -762,8 +867,9 @@
           '</div>' +
         '</div></div>';
     });
-    html += '</div>';
+    html += '</div></section><div class="pw-none" id="pwNone" hidden>' + T('No lessons match.', 'لا توجد دروس مطابقة.') + '</div>';
     $('body').innerHTML = html;
+    wirePathTools();
 
     document.querySelectorAll('.pw-card').forEach(function (c) {
       var i = +c.getAttribute('data-l');
@@ -783,6 +889,85 @@
     openLesson(PATH.open >= 0 && PATH.open < lessons.length ? PATH.open : current, false);
   }
 
+  // ─── Finding your way round a long pathway ─────────────────────
+  // The view is this visitor's choice and stays in this browser; the search
+  // and the status filter last as long as the page.
+  function savedView() { try { var v = localStorage.getItem('fl_path_view'); return v === 'list' || v === 'grid' ? v : ''; } catch (e) { return ''; } }
+  function lessonState(L) {
+    var p = lessonPct(L);
+    return p >= 100 ? 'done' : 'todo';
+  }
+  function wirePathTools() {
+    var lessons = PATH.lessons;
+    var jump = $('pwJump');
+    if (jump) jump.onclick = function () { revealLesson(PATH.current); openLesson(PATH.current, true); };
+    document.querySelectorAll('.pw-sec:not(.single) .pw-sec-h').forEach(function (h) {
+      var toggle = function () {
+        var sec = h.parentNode, f = !sec.classList.contains('folded');
+        sec.classList.toggle('folded', f); h.setAttribute('aria-expanded', String(!f));
+        if (f && PATH.open >= 0 && PATH.lessons[PATH.open].section === +sec.getAttribute('data-sec')) openLesson(-1);
+      };
+      h.onclick = toggle;
+      h.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } };
+    });
+    if (!$('pwQ')) return;
+    var counts = { all: lessons.length, todo: 0, done: 0 };
+    lessons.forEach(function (L) { counts[lessonState(L)]++; });
+    var opts = [['all', T('All', 'الكل')], ['todo', T('To do', 'المتبقي')], ['done', T('Done', 'المكتمل')]];
+    $('pwSt').innerHTML = opts.map(function (o) {
+      return '<button type="button" data-st="' + o[0] + '" aria-pressed="' + (PATH.st === o[0]) + '">' + o[1] + '<span class="c">' + counts[o[0]] + '</span></button>';
+    }).join('');
+    $('pwQ').value = PATH.q || '';
+    var t;
+    $('pwQ').oninput = function () { clearTimeout(t); t = setTimeout(function () { PATH.q = $('pwQ').value.trim(); filterPath(); }, 100); };
+    $('pwSt').onclick = function (e) { var b = e.target.closest('[data-st]'); if (!b) return; PATH.st = b.getAttribute('data-st');
+      $('pwSt').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); filterPath(); };
+    $('pwView').querySelectorAll('button').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === PATH.view));
+      b.onclick = function () {
+        PATH.view = b.getAttribute('data-v');
+        try { localStorage.setItem('fl_path_view', PATH.view); } catch (e) {}
+        $('pwView').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        document.querySelectorAll('.pw-grid').forEach(function (g) { g.classList.toggle('pw-list', PATH.view === 'list'); });
+        if (PATH.open >= 0) openLesson(PATH.open, false);
+      };
+    });
+    filterPath(true);
+  }
+  function filterPath(quiet) {
+    var words = String(PATH.q || '').toLowerCase().split(/\s+/).filter(Boolean);
+    var st = PATH.st || 'all', any = false, filtering = !!words.length || st !== 'all';
+    PATH.lessons.forEach(function (L, i) {
+      var hay = (L.title + ' ' + L.steps.map(function (a) { return (a.title || '') + ' ' + (a.title_ar || ''); }).join(' ') + ' ' + (i + 1)).toLowerCase();
+      var ok = (st === 'all' || lessonState(L) === st) && words.every(function (w) { return hay.indexOf(w) >= 0; });
+      var c = document.querySelector('.pw-card[data-l="' + i + '"]');
+      if (c) c.classList.toggle('hide', !ok);
+      if (ok) any = true;
+    });
+    document.querySelectorAll('.pw-sec').forEach(function (sec) {
+      var shown = sec.querySelectorAll('.pw-card:not(.hide)').length;
+      sec.hidden = !shown;
+      // While searching, a folded section with a match opens to show it.
+      if (filtering && shown) sec.classList.remove('folded');
+    });
+    $('pwNone').hidden = any;
+    if (!quiet && PATH.open >= 0) {
+      var oc = document.querySelector('.pw-card[data-l="' + PATH.open + '"]');
+      openLesson(oc && !oc.classList.contains('hide') ? PATH.open : -1, false);
+    }
+  }
+  function revealLesson(i) {
+    var c = document.querySelector('.pw-card[data-l="' + i + '"]');
+    if (!c) return;
+    if (c.classList.contains('hide')) {
+      PATH.q = ''; PATH.st = 'all';
+      if ($('pwQ')) { $('pwQ').value = ''; $('pwSt').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x.getAttribute('data-st') === 'all')); }); }
+      filterPath(true);
+    }
+    var sec = c.closest('.pw-sec');
+    if (sec && sec.classList.contains('folded')) { sec.classList.remove('folded'); var h = sec.querySelector('.pw-sec-h'); if (h) h.setAttribute('aria-expanded', 'true'); }
+  }
+
   function openLesson(i, scroll) {
     var old = document.querySelector('.pw-drawer');
     if (old) old.remove();
@@ -793,12 +978,13 @@
     PATH.open = i;
     if (i < 0 || !PATH.lessons[i]) return;
     var L = PATH.lessons[i];
+    revealLesson(i);
     var card = document.querySelector('.pw-card[data-l="' + i + '"]');
     var grid = card.parentNode;
     // The drawer goes after the last card of this card's row.
     var cards = Array.prototype.slice.call(grid.querySelectorAll('.pw-card'));
     var top = card.offsetTop, last = card;
-    cards.forEach(function (c) { if (c.offsetTop === top) last = c; });
+    cards.forEach(function (c) { if (c.offsetParent && c.offsetTop === top) last = c; });
     var rtl = /[؀-ۿ]/.test(L.title);
     var d = document.createElement('div');
     d.className = 'pw-drawer';
@@ -827,7 +1013,12 @@
 
   // Re-place an open drawer when the grid reflows (window resized).
   var pwResize;
-  window.addEventListener('resize', function () { clearTimeout(pwResize); pwResize = setTimeout(function () { if (PATH.open >= 0) openLesson(PATH.open, false); }, 150); });
+  // Only a change of width can move a card to another row; a phone's address
+  // bar hiding on scroll changes the height alone and must not redraw it.
+  var pwWidth = window.innerWidth;
+  window.addEventListener('resize', function () { clearTimeout(pwResize); pwResize = setTimeout(function () {
+    if (window.innerWidth === pwWidth) return; pwWidth = window.innerWidth;
+    if (PATH.open >= 0) openLesson(PATH.open, false); }, 150); });
 
   async function load() {
     if (!TOPIC) {
