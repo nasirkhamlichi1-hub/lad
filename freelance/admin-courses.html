@@ -1227,6 +1227,23 @@ function draftNote(html,color){
 // `force` (the button) replaces what is there and reports failures; the
 // automatic calls only fill an empty box and stay quiet if the server has
 // no translator yet (an older backend answers 404).
+// Whether a file is something the SCORM player can run: a .zip with an
+// imsmanifest.xml inside. Zip file names sit uncompressed in the central
+// directory at the end of the file, so reading the tail is enough. Returns
+// a message explaining what to do, or '' when the file looks right.
+async function notScorm(file){
+  var name=(file&&file.name)||'';
+  var how='In Articulate Rise or Storyline: Publish → LMS → SCORM 1.2 (or 2004), then upload the .zip it downloads as it is — do not unzip it or choose "Web".';
+  if(!/\.zip$/i.test(name)) return '“'+esc(name)+'” is not a .zip file. '+how;
+  try{
+    var tail=file.slice(Math.max(0,file.size-4*1024*1024));
+    var bytes=new Uint8Array(await tail.arrayBuffer());
+    var txt=''; for(var i=0;i<bytes.length;i+=65536){ txt+=String.fromCharCode.apply(null,bytes.subarray(i,Math.min(bytes.length,i+65536))); }
+    if(txt.indexOf('imsmanifest.xml')<0) return '“'+esc(name)+'” has no imsmanifest.xml, so it is not a SCORM package (a “Web” export, or a re-zipped folder). '+how;
+  }catch(e){ return ''; }
+  return '';
+}
+
 async function translateKeyElements(force){
   var en=$('x-obj'), ar=$('x-obj-ar'), note=$('x-tr-note'), b=$('x-translate');
   if(!en||!ar) return;
@@ -1339,6 +1356,12 @@ $('dSave').onclick=async function(){
       var mDesc=($('x-desc')&&$('x-desc').value.trim())||'';
       var tAr=titleAr(a);
       var matKind=a.kind==='scorm'?'scorm':'file', linkKind=a.kind==='scorm'?'scorm':'link';
+      // A module must be a SCORM zip, or the player refuses it and lawyers
+      // see "this module cannot be played". Check before uploading.
+      if(a.kind==='scorm'){
+        var bad=(pending&&await notScorm(pending))||(pendingAr&&await notScorm(pendingAr));
+        if(bad){ $('dStatus').textContent='Not a SCORM package.'; banner(bad,'err'); return; }
+      }
       if(pending){
         $('x-busy').textContent='Uploading…';
         m=await uploadMaterial(TOPIC.topic_id,pending,matKind,mTitle,mDesc,{title_ar:tAr});
