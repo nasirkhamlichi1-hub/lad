@@ -14,7 +14,7 @@ Everything a lawyer sees:
 | Page | What it is |
 |---|---|
 | `index.html` | Sign in (email + password). Routes lawyers to **My training**, admins to the **Admin console**. |
-| `home.html` | My training — assigned and started courses with progress, "pick up where you left off", everything else available. |
+| `home.html` | My training — "pick up where you left off", a short **To do** list (what is due first), and **All courses**: search, status and format filters, sort, card or list view, twelve at a time. |
 | `course.html?topic=ID` | A course: the welcome, the pathway of steps (e-learning modules, reference documents, AI trainer sessions) with the learner's state on each, and the reference library. Progress is saved as they go. |
 | `trainer.html?lesson=ID` | The one-to-one AI trainer for a step (voice or typing). Pause keeps the place; Finish completes the step once every key element is covered. |
 | `change-password.html`, `reset-password.html` | First sign-in and forgotten-password flows. |

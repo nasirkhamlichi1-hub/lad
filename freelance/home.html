@@ -38,18 +38,83 @@
   .continue p{margin:0 0 12px;color:var(--fl-ink2);font-size:14px}
   @media (max-width:720px){.continue{grid-template-columns:1fr}}
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-  .course{background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);box-shadow:var(--fl-sh);overflow:hidden;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s}
-  .course:hover{transform:translateY(-2px);box-shadow:var(--fl-sh-lg)}
-  .art{height:112px;position:relative;background:linear-gradient(135deg,var(--c,var(--fl-navy)),var(--fl-sun-d));background-size:cover;background-position:center}
-  .art .tag{position:absolute;inset-inline-start:12px;top:12px}
-  .art .due{position:absolute;inset-inline-end:12px;bottom:12px;background:rgba(0,0,0,.45);color:#fff;font:600 10px var(--fl-mono);letter-spacing:.06em;padding:4px 8px;border-radius:6px}
-  .body{padding:16px 18px 18px;flex:1;display:flex;flex-direction:column;gap:8px}
-  .body h3{font-family:var(--fl-display);font-weight:700;font-size:19px;line-height:1.2;margin:0;color:var(--fl-navy)}
-  .body p{margin:0;font-size:13px;color:var(--fl-ink2);line-height:1.5;flex:1}
-  .meta{font:500 11px var(--fl-mono);color:var(--fl-muted);letter-spacing:.02em;font-variant-numeric:tabular-nums}
-  .foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px}
-  .assigned{font-size:12px;color:var(--fl-sun-d);font-weight:600}
+  /* ─── To do: the courses on the lawyer's list, as compact rows ─── */
+  .sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:30px 0 12px}
+  .sec-h[hidden],#catWrap[hidden]{display:none}
+  .sec-h .fl-h2{margin:0}
+  .sec-h .n{font:500 13px var(--fl-mono);color:var(--fl-muted);font-variant-numeric:tabular-nums}
+  .rows{background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);box-shadow:var(--fl-sh);overflow:hidden}
+  .row{display:grid;grid-template-columns:6px minmax(0,1fr) 180px auto;align-items:center;gap:16px;padding:14px 18px 14px 0;border-top:1px solid var(--fl-line);text-decoration:none;color:inherit;transition:background .12s}
+  .row:first-child{border-top:none}
+  .row:hover{background:var(--fl-teal-soft)}
+  .row .bar{align-self:stretch;margin-block:-14px;background:var(--c,var(--fl-navy))}
+  .row .t{min-width:0}
+  .row h3{font-family:var(--fl-display);font-weight:700;font-size:16px;line-height:1.3;margin:0;color:var(--fl-navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .sub{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px}
+  .row .due-s{font:600 12px var(--fl-mono);color:var(--fl-navy)}
+  .row .due-s.late{color:var(--fl-red)}
+  .row .prog .meta{margin-top:5px}
+  .more-row{display:block;width:100%;background:var(--fl-paper);border:0;border-top:1px solid var(--fl-line);padding:11px;font:500 13px var(--fl-sans);color:var(--fl-teal-d);cursor:pointer}
+  .more-row:hover{background:var(--fl-teal-soft)}
+  @media (max-width:720px){
+    .row{grid-template-columns:5px minmax(0,1fr) auto;gap:12px;padding-inline-end:14px}
+    .row .prog{grid-column:2/4;grid-row:2}
+    .row h3{white-space:normal}
+  }
+
+  /* ─── The catalogue: every course, searchable, filtered, paged ─── */
+  .tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);padding:12px;margin-bottom:14px;box-shadow:var(--fl-sh)}
+  .search{position:relative;flex:1 1 260px;min-width:0}
+  .search svg{position:absolute;inset-inline-start:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;stroke:var(--fl-faint);fill:none;stroke-width:2;pointer-events:none}
+  .search .fl-input{padding-inline-start:36px}
+  .tools .fl-select{width:auto;flex:0 0 auto}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+  .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--fl-line2);background:var(--fl-white);color:var(--fl-ink2);border-radius:999px;padding:5px 12px;font:500 13px var(--fl-sans);cursor:pointer;transition:all .12s}
+  .chip:hover{border-color:var(--fl-teal-line);background:var(--fl-teal-soft)}
+  .chip[aria-pressed="true"]{background:var(--fl-navy);border-color:var(--fl-navy);color:#fff}
+  .chip .c{font:600 11px var(--fl-mono);opacity:.7;font-variant-numeric:tabular-nums}
+  .views{display:inline-flex;border:1px solid var(--fl-line2);border-radius:8px;overflow:hidden;flex:0 0 auto}
+  .views button{background:var(--fl-white);border:0;padding:8px 10px;cursor:pointer;color:var(--fl-muted);display:grid;place-items:center}
+  .views button+button{border-inline-start:1px solid var(--fl-line2)}
+  .views button[aria-pressed="true"]{background:var(--fl-navy);color:#fff}
+  .views svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+  .count{font:500 12.5px var(--fl-mono);color:var(--fl-muted);margin:0 0 10px;font-variant-numeric:tabular-nums}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+  .course{background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);box-shadow:var(--fl-sh);overflow:hidden;display:flex;flex-direction:column;text-decoration:none;color:inherit;transition:transform .15s,box-shadow .15s,border-color .15s}
+  .course:hover{transform:translateY(-2px);border-color:var(--fl-teal-line)}
+  .course:focus-visible,.row:focus-visible{outline:2px solid var(--fl-teal);outline-offset:2px}
+  .art{height:76px;position:relative;background:linear-gradient(135deg,var(--c,var(--fl-navy)),var(--fl-sun-d));background-size:cover;background-position:center}
+  .art .tag{position:absolute;inset-inline-start:10px;top:10px}
+  .art .due{position:absolute;inset-inline-end:10px;bottom:10px;background:rgba(0,0,0,.45);color:#fff;font:600 10px var(--fl-mono);letter-spacing:.06em;padding:3px 7px;border-radius:6px}
+  .body{padding:13px 15px 15px;flex:1;display:flex;flex-direction:column;gap:7px}
+  .body h3{font-family:var(--fl-display);font-weight:700;font-size:16.5px;line-height:1.25;margin:0;color:var(--fl-navy);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .body p{margin:0;font-size:13px;color:var(--fl-ink2);line-height:1.5;flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .meta{font:500 11.5px var(--fl-mono);color:var(--fl-muted);letter-spacing:.02em;font-variant-numeric:tabular-nums}
+  .foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:2px}
+  .body .t{display:flex;flex-direction:column;gap:7px;flex:1}
+  .go{font:600 13px var(--fl-sans);color:var(--fl-teal-d);white-space:nowrap}
+
+  /* List view: the same courses, one line each — for scanning a long list. */
+  .grid.list{grid-template-columns:1fr;gap:0;background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);box-shadow:var(--fl-sh);overflow:hidden}
+  .grid.list .course{flex-direction:row;align-items:center;border:0;border-top:1px solid var(--fl-line);border-radius:0;box-shadow:none}
+  .grid.list .course:first-child{border-top:0}
+  .grid.list .course:hover{transform:none;background:var(--fl-teal-soft)}
+  .grid.list .art{width:6px;height:auto;align-self:stretch;flex:0 0 6px;background-image:none!important}
+  .grid.list .art>*{display:none}
+  .grid.list .body{flex-direction:row;align-items:center;gap:16px;padding:12px 18px}
+  .grid.list .body .t{flex:1;min-width:0}
+  .grid.list .body h3{-webkit-line-clamp:1;font-size:15.5px}
+  .grid.list .body p{-webkit-line-clamp:1;margin-top:2px}
+  .grid.list .meta{flex:0 0 190px}
+  .grid.list .foot{margin:0;flex:0 0 auto;min-width:200px;justify-content:flex-end;gap:14px}
+  .grid.list .lpill{display:inline-block}
+  .lpill{display:none}
+  @media (max-width:720px){.grid.list .body{flex-wrap:wrap;gap:6px 12px}.grid.list .meta{flex:1 1 auto}.grid.list .foot{min-width:0}}
+
+  .pager{display:flex;justify-content:center;margin-top:18px}
+  .nores{background:var(--fl-white);border:1px dashed var(--fl-line2);border-radius:var(--fl-r);padding:30px 20px;text-align:center;color:var(--fl-muted)}
+  .nores b{display:block;color:var(--fl-navy);font-size:15px;margin-bottom:4px}
   .msgs{margin-top:22px}
   .msg{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--fl-line);font-size:13px}
   .msg:first-child{border-top:none}
@@ -67,10 +132,37 @@
   <div class="stats" id="stats"></div>
   <div id="msg"></div>
   <div id="continue"></div>
-  <h2 class="fl-h2" id="mineH">Your courses</h2>
-  <div class="grid" id="mine"><div class="fl-empty">Loading your courses…</div></div>
-  <h2 class="fl-h2" id="availH" style="display:none">Available to start</h2>
-  <div class="grid" id="avail"></div>
+
+  <div class="sec-h" id="todoH" hidden><h2 class="fl-h2">To do</h2><span class="n" id="todoN"></span></div>
+  <div id="todo"><div class="fl-empty">Loading your courses…</div></div>
+
+  <div class="sec-h" id="catH" hidden><h2 class="fl-h2">All courses</h2><span class="n" id="catN"></span></div>
+  <div id="catWrap" hidden>
+    <div class="tools" role="search">
+      <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input class="fl-input" id="q" type="search" placeholder="Search courses" aria-label="Search courses" autocomplete="off"></label>
+      <select class="fl-select" id="kind" aria-label="Type of step">
+        <option value="">Any format</option>
+        <option value="scorm">With e-learning modules</option>
+        <option value="ai_lesson">With AI trainer sessions</option>
+        <option value="document">With readings</option>
+      </select>
+      <select class="fl-select" id="sort" aria-label="Sort">
+        <option value="new">Newest first</option>
+        <option value="az">A to Z</option>
+        <option value="popular">Most taken</option>
+        <option value="short">Fewest steps</option>
+      </select>
+      <div class="views" role="group" aria-label="View">
+        <button type="button" data-view="grid" aria-pressed="true" title="Cards" aria-label="Cards"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg></button>
+        <button type="button" data-view="list" aria-pressed="false" title="List" aria-label="List"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      </div>
+      <div class="chips" id="chips" role="group" aria-label="Status"></div>
+    </div>
+    <p class="count" id="count" aria-live="polite"></p>
+    <div class="grid" id="cat"></div>
+    <div class="pager" id="pager"></div>
+  </div>
   <div id="msgs" class="msgs"></div>
 </div>
 
@@ -88,37 +180,140 @@
   var h=new Date().getHours();
   $('hi').textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+(name?', '+name.split(/\s+/)[0]:'')+'.';
 
-  function card(t,enrolled){
+  function status(t){
     var e=t.enrolment;
-    var pct=e?e.percent:0, done=e&&e.status==='completed';
+    if(!e||e.status==='withdrawn') return 'new';
+    if(e.status==='completed') return 'done';
+    return (e.percent>0||e.total_seconds>0)?'going':'todo';
+  }
+  function stepsText(t){
+    var c=t.counts||{}, out=[];
+    if(c.scorm) out.push(c.scorm+' module'+(c.scorm===1?'':'s'));
+    if(c.ai_lesson) out.push(c.ai_lesson+' AI session'+(c.ai_lesson===1?'':'s'));
+    if(c.document) out.push(c.document+' reading'+(c.document===1?'':'s'));
+    return out.join(' · ');
+  }
+  function href(t){ return 'course.html?topic='+encodeURIComponent(t.topic_id); }
+  function pill(t){
+    var st=status(t), e=t.enrolment;
+    if(st==='done') return '<span class="fl-pill green">Completed</span>';
+    if(e&&e.source==='assigned'&&st!=='new') return '<span class="fl-pill sun">Assigned to you</span>';
+    if(st==='going') return '<span class="fl-pill teal">In progress</span>';
+    if(st==='todo') return '<span class="fl-pill teal">On your list</span>';
+    return '<span class="fl-pill">Course</span>';
+  }
+  function today(){ return new Date().toISOString().slice(0,10); }
+
+  // A course on the catalogue: a compact card (or one line, in list view).
+  function card(t){
+    var e=t.enrolment, st=status(t), live=st!=='new';
     var art=safeUrl(t.hero_url), col=accent(t.accent);
-    var label=done?'Revisit':(e&&(e.percent>0||e.total_seconds>0)?'Continue':'Start');
-    var steps=[];
-    if(t.counts){ if(t.counts.scorm) steps.push(t.counts.scorm+' module'+(t.counts.scorm===1?'':'s')); if(t.counts.ai_lesson) steps.push(t.counts.ai_lesson+' AI session'+(t.counts.ai_lesson===1?'':'s')); if(t.counts.document) steps.push(t.counts.document+' reading'+(t.counts.document===1?'':'s')); }
-    return '<div class="course">'+
+    var label=st==='done'?'Revisit':(st==='going'?'Continue':'Start');
+    return '<a class="course" href="'+href(t)+'">'+
       '<div class="art" style="'+(col?'--c:'+col+';':'')+(art?'background-image:linear-gradient(180deg,rgba(11,40,50,.35),rgba(11,40,50,.7)),url('+art+');':'')+'">'+
-        '<span class="tag fl-pill '+(done?'green':(e&&e.source==='assigned'?'sun':'teal'))+'">'+(done?'Completed':(e&&e.source==='assigned'?'Assigned to you':(e?'In progress':'Course')))+'</span>'+
-        (e&&e.due_at&&!done?'<span class="due">DUE '+esc(d(e.due_at))+'</span>':'')+'</div>'+
-      '<div class="body"><h3 translate="no">'+esc(flPick(t,'title'))+'</h3>'+
-        '<p>'+esc(flPick(t,'summary')||flPick(t,'welcome'))+'</p>'+
-        (e?'<div class="fl-track"><i style="width:'+pct+'%"></i></div>':'')+
-        '<div class="meta">'+(e?pct+'% · '+e.required_done+' of '+e.required_total+' steps'+(e.total_seconds?' · '+mins(e.total_seconds)+' min recorded':''):steps.join(' · '))+'</div>'+
-        (e&&e.source==='assigned'&&e.assigned_by_name?'<div class="assigned">Assigned by '+esc(e.assigned_by_name)+(e.note?' — '+esc(e.note):'')+'</div>':'')+
-        '<div class="foot"><span></span>'+
-          '<a class="fl-btn sm'+(done?' light':'')+'" href="course.html?topic='+encodeURIComponent(t.topic_id)+'">'+label+' →</a></div>'+
-      '</div></div>';
+        '<span class="tag">'+pill(t)+'</span>'+
+        (live&&e.due_at&&st!=='done'?'<span class="due">DUE '+esc(d(e.due_at))+'</span>':'')+'</div>'+
+      '<div class="body"><div class="t"><h3 translate="no">'+esc(flPick(t,'title'))+'</h3>'+
+        '<p translate="no">'+esc(flPick(t,'summary')||flPick(t,'welcome'))+'</p></div>'+
+        (live&&st!=='todo'?'<div class="fl-track"><i style="width:'+e.percent+'%"></i></div>':'')+
+        '<div class="meta">'+(live&&st!=='todo'?e.percent+'% · '+e.required_done+' of '+e.required_total+' steps':esc(stepsText(t)))+'</div>'+
+        '<div class="foot"><span class="lpill">'+pill(t)+'</span><span class="go">'+label+' →</span></div>'+
+      '</div></a>';
+  }
+
+  // A course on the lawyer's own list: one row, what is due and how far.
+  function row(t){
+    var e=t.enrolment, st=status(t), col=accent(t.accent);
+    var late=e.due_at&&d(e.due_at)<today();
+    return '<a class="row" href="'+href(t)+'" style="'+(col?'--c:'+col:'')+'">'+
+      '<span class="bar"></span>'+
+      '<div class="t"><h3 translate="no">'+esc(flPick(t,'title'))+'</h3>'+
+        '<div class="sub">'+pill(t)+
+          (e.due_at?'<span class="due-s'+(late?' late':'')+'">'+(late?'Overdue':'Due')+' '+esc(d(e.due_at))+'</span>':'')+
+          (e.source==='assigned'&&e.assigned_by_name?'<span class="meta">Assigned by '+esc(e.assigned_by_name)+'</span>':'')+
+        '</div></div>'+
+      '<div class="prog"><div class="fl-track"><i style="width:'+e.percent+'%"></i></div>'+
+        '<div class="meta">'+e.percent+'% · '+e.required_done+' of '+e.required_total+' steps</div></div>'+
+      '<span class="fl-btn sm">'+(st==='going'?'Continue':'Start')+' →</span>'+
+    '</a>';
+  }
+
+  // The catalogue's own state. Filter and sort are this visitor's
+  // conveniences, so they are remembered in this browser only.
+  var PAGE=12, ALL=[], shown=PAGE;
+  var S={q:'',st:'all',kind:'',sort:'new',view:'grid'};
+  try{ var saved=JSON.parse(localStorage.getItem('fl_home_cat')||'{}'); ['sort','view'].forEach(function(k){ if(saved[k]) S[k]=saved[k]; }); }catch(e){}
+  function remember(){ try{ localStorage.setItem('fl_home_cat',JSON.stringify({sort:S.sort,view:S.view})); }catch(e){} }
+
+  var CHIPS=[['all','All'],['new','Not started'],['going','In progress'],['done','Completed']];
+  function norm(s){ return String(s||'').toLowerCase(); }
+  function matches(t){
+    if(S.st!=='all'){ var st=status(t); if(S.st==='going'?(st!=='going'&&st!=='todo'):st!==S.st) return false; }
+    if(S.kind&&!((t.counts||{})[S.kind]>0)) return false;
+    if(S.q){
+      var hay=norm([t.title,t.title_ar,t.summary,t.summary_ar,t.welcome,t.welcome_ar].join(' '));
+      var words=norm(S.q).split(/\s+/).filter(Boolean);
+      for(var i=0;i<words.length;i++) if(hay.indexOf(words[i])<0) return false;
+    }
+    return true;
+  }
+  function sorted(list){
+    var by={
+      az:function(a,b){ return flPick(a,'title').localeCompare(flPick(b,'title')); },
+      popular:function(a,b){ return (b.learners||0)-(a.learners||0); },
+      short:function(a,b){ return (a.steps||0)-(b.steps||0); },
+      new:function(a,b){ return String(b.updated_at||'').localeCompare(String(a.updated_at||'')); }
+    }[S.sort]||function(){return 0;};
+    return list.slice().sort(by);
+  }
+  function drawCat(){
+    var base=ALL.filter(function(t){ var keep=S.st; S.st='all'; var m=matches(t); S.st=keep; return m; });
+    $('chips').innerHTML=CHIPS.map(function(c){
+      var n=c[0]==='all'?base.length:base.filter(function(t){ var st=status(t); return c[0]==='going'?(st==='going'||st==='todo'):st===c[0]; }).length;
+      return '<button type="button" class="chip" data-st="'+c[0]+'" aria-pressed="'+(S.st===c[0])+'">'+c[1]+' <span class="c">'+n+'</span></button>';
+    }).join('');
+    var list=sorted(ALL.filter(matches));
+    var page=list.slice(0,shown);
+    $('cat').className='grid'+(S.view==='list'?' list':'');
+    $('cat').innerHTML=page.length?page.map(card).join(''):
+      '<div class="nores" style="grid-column:1/-1"><b>No courses match.</b>Try another word, or clear the filters. <button type="button" class="fl-btn sm light" id="clear" style="margin-inline-start:8px">Clear filters</button></div>';
+    $('count').textContent=list.length?(list.length>page.length?'Showing '+page.length+' of '+list.length+' courses':list.length+(list.length===1?' course':' courses')):'';
+    var left=list.length-page.length;
+    $('pager').innerHTML=left>0?'<button type="button" class="fl-btn light" id="more">Show '+Math.min(PAGE,left)+' more</button>':'';
+    document.querySelectorAll('.views button').forEach(function(b){ b.setAttribute('aria-pressed',String(b.getAttribute('data-view')===S.view)); });
+  }
+  function wireCat(){
+    var timer;
+    $('q').addEventListener('input',function(){ clearTimeout(timer); timer=setTimeout(function(){ S.q=$('q').value.trim(); shown=PAGE; drawCat(); },120); });
+    $('kind').addEventListener('change',function(){ S.kind=this.value; shown=PAGE; drawCat(); });
+    $('sort').value=S.sort;
+    $('sort').addEventListener('change',function(){ S.sort=this.value; shown=PAGE; remember(); drawCat(); });
+    $('chips').addEventListener('click',function(ev){ var b=ev.target.closest('[data-st]'); if(!b) return; S.st=b.getAttribute('data-st'); shown=PAGE; drawCat(); });
+    document.querySelector('.views').addEventListener('click',function(ev){ var b=ev.target.closest('[data-view]'); if(!b) return; S.view=b.getAttribute('data-view'); remember(); drawCat(); });
+    $('pager').addEventListener('click',function(ev){ if(ev.target.closest('#more')){ shown+=PAGE; drawCat(); } });
+    $('cat').addEventListener('click',function(ev){ if(ev.target.closest('#clear')){ S.q='';S.st='all';S.kind=''; $('q').value=''; $('kind').value=''; shown=PAGE; drawCat(); } });
+  }
+
+  var TODO_N=5;
+  function drawTodo(todo,showAll){
+    $('todoH').hidden=false;
+    $('todoN').textContent=todo.length?todo.length+(todo.length===1?' course':' courses'):'';
+    if(!todo.length){ $('todo').innerHTML='<div class="fl-card fl-muted" style="font-size:14px">Nothing waiting for you — every course on your list is complete. Choose another below whenever you like.</div>'; return; }
+    var list=showAll?todo:todo.slice(0,TODO_N);
+    $('todo').innerHTML='<div class="rows">'+list.map(row).join('')+
+      (todo.length>TODO_N?'<button type="button" class="more-row" id="todoMore">'+(showAll?'Show fewer':'Show all '+todo.length)+'</button>':'')+'</div>';
+    var m=$('todoMore'); if(m) m.onclick=function(){ drawTodo(todo,!showAll); };
   }
 
   async function load(){
     var cat;
     try{ cat=await api.catalogue(); }
-    catch(e){ $('mine').innerHTML='<div class="fl-note err">Could not load your courses: '+esc(e.message)+'</div>'; return; }
-    var all=cat.topics||[];
-    var mine=all.filter(function(t){return t.enrolment&&t.enrolment.status!=='withdrawn';});
-    var avail=all.filter(function(t){return !t.enrolment||t.enrolment.status==='withdrawn';});
+    catch(e){ $('todo').innerHTML='<div class="fl-note err">Could not load your courses: '+esc(e.message)+'</div>'; return; }
+    var all=ALL=cat.topics||[];
+    var mine=all.filter(function(t){return status(t)!=='new';});
 
-    var done=mine.filter(function(t){return t.enrolment.status==='completed';}).length;
-    var going=mine.filter(function(t){return t.enrolment.status!=='completed'&&(t.enrolment.percent>0||t.enrolment.total_seconds>0);}).length;
+    var done=mine.filter(function(t){return status(t)==='done';}).length;
+    var going=mine.filter(function(t){return status(t)==='going';}).length;
     var secs=mine.reduce(function(n,t){return n+(t.enrolment.total_seconds||0);},0);
     $('stats').innerHTML=
       '<div class="stat"><div class="v">'+mine.length+'</div><div class="l">Your courses</div></div>'+
@@ -127,20 +322,34 @@
       '<div class="stat"><div class="v">'+(secs>=3600?(Math.round(secs/360)/10)+'h':mins(secs)+'m')+'</div><div class="l">Time recorded</div></div>';
 
     // Pick up where you left off: the most recently active course that is not finished.
-    var open=mine.filter(function(t){return t.enrolment.status!=='completed'&&t.enrolment.last_active_at&&(t.enrolment.percent>0||t.enrolment.total_seconds>0);})
+    var open=mine.filter(function(t){return status(t)==='going'&&t.enrolment.last_active_at;})
       .sort(function(a,b){return String(b.enrolment.last_active_at).localeCompare(String(a.enrolment.last_active_at));})[0];
     if(open){
       $('continue').innerHTML='<div class="fl-card continue"><div class="l"><div class="fl-eyebrow">Pick up where you left off</div>'+
-        '<h3 translate="no">'+esc(flPick(open,'title'))+'</h3><p>'+esc(flPick(open,'summary')||flPick(open,'welcome'))+'</p>'+
+        '<h3 translate="no">'+esc(flPick(open,'title'))+'</h3><p translate="no">'+esc(flPick(open,'summary')||flPick(open,'welcome'))+'</p>'+
         '<div class="fl-track" style="max-width:360px"><i style="width:'+open.enrolment.percent+'%"></i></div>'+
         '<div class="meta" style="margin-top:6px">'+open.enrolment.percent+'% complete · '+open.enrolment.required_done+' of '+open.enrolment.required_total+' steps · last opened '+esc(d(open.enrolment.last_active_at))+'</div></div>'+
-        '<div class="r"><a class="fl-btn" href="course.html?topic='+encodeURIComponent(open.topic_id)+'">Continue →</a>'+
+        '<div class="r"><a class="fl-btn" href="'+href(open)+'">Continue →</a>'+
         (open.enrolment.due_at?'<span class="meta">Complete by '+esc(d(open.enrolment.due_at))+'</span>':'')+'</div></div>';
     }
 
-    $('mine').innerHTML=mine.length?mine.map(function(t){return card(t,true);}).join(''):
-      '<div class="fl-empty">Nothing has been assigned to you yet'+(avail.length?' — choose a course below to begin.':'. Check back soon.')+'</div>';
-    if(avail.length){ $('availH').style.display=''; $('avail').innerHTML=avail.map(function(t){return card(t,false);}).join(''); }
+    // To do: everything on the list and not finished — what is due first,
+    // then what was touched last. The course above is not repeated.
+    var todo=mine.filter(function(t){ var st=status(t); return (st==='going'||st==='todo')&&t!==open; })
+      .sort(function(a,b){
+        var da=a.enrolment.due_at?d(a.enrolment.due_at):'9999', db=b.enrolment.due_at?d(b.enrolment.due_at):'9999';
+        if(da!==db) return da<db?-1:1;
+        return String(b.enrolment.last_active_at||b.enrolment.started_at||'').localeCompare(String(a.enrolment.last_active_at||a.enrolment.started_at||''));
+      });
+    if(todo.length||(mine.length&&!open)) drawTodo(todo,false); else $('todo').innerHTML='';
+
+    if(all.length){
+      $('catH').hidden=false; $('catWrap').hidden=false;
+      $('catN').textContent=all.length+(all.length===1?' course':' courses');
+      wireCat(); drawCat();
+    } else if(!mine.length){
+      $('todo').innerHTML='<div class="fl-empty">No courses have been published yet. Check back soon.</div>';
+    }
 
     try{
       var n=await api.myNotifications();

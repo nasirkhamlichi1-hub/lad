@@ -265,5 +265,10 @@ html.fl-embed .fl-foot{display:none}
   .lad-car{height:380px}
   .lad-logos img:first-child{display:none}
   .lad-logos-sep{display:none}
+  /* The name chip shrinks to its initials so the bar fits a phone. */
+  .lad-profile-chip{padding:4px}
+  .lad-profile-chip .nm,.lad-profile-chip .rl{display:none}
+  .lad-nav-inner{padding:0 14px}
+  .lad-logos{padding-inline-end:12px;margin-inline-end:10px}
   .fl-band{padding:48px 20px}
 }
