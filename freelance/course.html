@@ -1690,6 +1690,7 @@
     } catch (e) { note('Could not start this activity: ' + esc(e.message), true); return; }
 
     var stepMat = flMat(a);
+    var launchErr = null;
     if (a.kind === 'scorm' && stepMat) {
       try {
         var pUrl = await scormPlayerUrl(a.course_id || TOPIC, stepMat);
@@ -1697,18 +1698,35 @@
         readerShow('MODULE', flPick(a, 'title'));
         readerFrame(pUrl);
         return;
-      } catch (e) { /* a link-only package falls through to the old flow */ }
+      } catch (e) { launchErr = e; }
     }
+    current.launchErr = launchErr;
 
+    // A module that cannot be played here. A link-only package opens on its
+    // own site, and can be marked done; an uploaded package the player
+    // refused (no SCORM manifest, a broken zip) says why, and offers nothing
+    // that would only bring the learner back to this dialog.
+    var broken = a.kind === 'scorm' && (!stepMat || (launchErr && !launchErr.link));
     $('dlgTitle').textContent = flPick(a, 'title');
-    $('dlgBody').innerHTML = a.kind === 'scorm'
-      ? 'Opens the module in a new tab — mark it done here when you have finished it.'
-      : 'Opens in a new tab. Mark it done when you have read it and the time you spent is recorded.';
+    $('dlgBody').innerHTML = a.kind !== 'scorm'
+      ? T('Opens in a new tab. Mark it done when you have read it and the time you spent is recorded.', 'يُفتح في علامة تبويب جديدة. علّمه كمكتمل بعد قراءته ليُسجَّل الوقت الذي أمضيته.')
+      : broken
+        ? '<b>' + T('This module cannot be played yet.', 'لا يمكن تشغيل هذه الوحدة بعد.') + '</b><br>' +
+          esc(launchErr && launchErr.message ? launchErr.message : T('No package is attached to this step.', 'لا توجد حزمة مرفقة بهذه الخطوة.')) + '<br><br>' +
+          T('Please let the course administrator know.', 'يُرجى إبلاغ مسؤول الدورة.')
+        : T('This module opens on its own site in a new tab — mark it done here when you have finished it.', 'تُفتح هذه الوحدة على موقعها في علامة تبويب جديدة — علّمها كمكتملة هنا بعد إنهائها.');
+    $('dlgGo').style.display = broken ? 'none' : '';
+    $('dlgDone').style.display = broken ? 'none' : '';
+    $('dlgGo').textContent = T('Open', 'افتح'); $('dlgDone').textContent = T('Mark as done', 'تعليم كمكتمل'); $('dlgClose').textContent = T('Close', 'إغلاق');
     $('dlg').showModal();
   }
 
   async function openMaterial() {
     if (!current) return;
+    // A link-only package: straight to its own site — going through the
+    // library would launch the step again and bring back this dialog.
+    if (current.launchErr && current.launchErr.link) { window.open(current.launchErr.link, '_blank'); return; }
+    if (current.kind === 'scorm') { note(T('This module cannot be played here.', 'لا يمكن تشغيل هذه الوحدة هنا.'), true); return; }
     var wantMat = flMat(current);
     if (!wantMat) { note('No file is attached to this item yet.', true); return; }
     // Open through the reader with the sign-in token attached — a bare tab
