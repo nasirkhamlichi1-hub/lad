@@ -46,6 +46,7 @@ const db = require('../db');
 const store = require('../services/store');
 const blob = require('../services/blobStorage');
 const config = require('../config');
+const log = require('../logger');
 const { requireAuth } = require('../middleware/auth');
 
 router.use(express.json({ limit: '4mb' })); // suspend_data can be generous
@@ -209,6 +210,13 @@ async function extractOnce(m) {
   const parsed = readManifest(fs.readFileSync(manifestPath, 'utf8'));
   if (!parsed) throw Object.assign(new Error('The package manifest names no launchable resource.'), { status: 422 });
   const info = { entry: prefix + parsed.entry, version: parsed.version };
+  // The file the manifest launches must be in the zip, or the module opens
+  // onto nothing. Said at upload (the admin's check) rather than to a lawyer.
+  caseIndex.delete(dir);
+  if (!findFile(dir, info.entry.split('?')[0].split('#')[0])) {
+    fs.rmSync(dir, { recursive: true, force: true });
+    throw Object.assign(new Error('The package names ' + info.entry + ' as the file to open, but that file is not in the zip. Export the module again from Articulate (Publish → LMS → SCORM) and upload the zip as downloaded.'), { status: 422 });
+  }
   fs.writeFileSync(meta, JSON.stringify(info));
   return info;
 }
@@ -393,23 +401,54 @@ const MIME = {
 
 router.get('/play/:token/*', async (req, res) => {
   const t = verifyPlayToken(req.params.token);
-  if (!t) return res.status(401).json({ error: 'bad_token' });
-  const rel = decodeURIComponent(req.params[0] || '').replace(/\\/g, '/');
-  if (!rel || rel.split('/').some((p) => p === '..')) return res.status(400).json({ error: 'bad_path' });
+  if (!t) return playError(res, 401, 'This module link has expired — close it and open the module again from the course page.');
+  // Express has already decoded the path once; decoding it again broke any
+  // file name with a "%" in it.
+  const rel = String(req.params[0] || '').replace(/\\/g, '/').split('?')[0];
+  if (!rel || rel.split('/').some((p) => p === '..')) return playError(res, 400, 'That file path is not allowed.');
   const dir = extractedDir(t.mid);
   if (!fs.existsSync(path.join(dir, '.lad-entry.json'))) {
     const p = await preparedInfo(t);
     if (p.error) return playError(res, p.error[0], p.error[1]);
   }
-  const file = path.join(dir, rel.split('?')[0]);
-  if (!file.startsWith(dir + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
-    return res.status(404).json({ error: 'not_found' });
+  const file = findFile(dir, rel);
+  if (!file) {
+    // Said in words, inside the frame: a bare 404 here carried the API's
+    // "frame nothing" rule, and Chrome showed "This content is blocked"
+    // in place of the whole module.
+    log.warn('scorm_file_missing', { material: t.mid, path: rel });
+    return playError(res, 404, 'This module is missing a file it needs: ' + rel +
+      '. Export it again from Articulate (Publish → LMS → SCORM) and upload the zip to this step as downloaded.');
   }
   const ext = path.extname(file).slice(1).toLowerCase();
   playHeaders(res, MIME[ext] || 'application/octet-stream');
   res.setHeader('Cache-Control', 'private, max-age=3600');
   fs.createReadStream(file).pipe(res);
 });
+
+// A file in the unpacked package. Packages are made on Windows and macOS,
+// whose file names ignore case, so a module asking for "Story.html" when
+// the zip holds "story.html" works there — the server's disk does not
+// ignore case, so an exact miss falls back to a case-insensitive match.
+const caseIndex = new Map();
+function findFile(dir, rel) {
+  const exact = path.join(dir, rel);
+  if (!exact.startsWith(dir + path.sep)) return null;
+  if (fs.existsSync(exact) && fs.statSync(exact).isFile()) return exact;
+  if (!caseIndex.has(dir)) {
+    const idx = new Map();
+    const walk = (d) => {
+      for (const n of fs.readdirSync(d)) {
+        const p = path.join(d, n);
+        if (fs.statSync(p).isDirectory()) walk(p);
+        else idx.set(path.relative(dir, p).split(path.sep).join('/').toLowerCase(), p);
+      }
+    };
+    try { walk(dir); } catch (_) { /* nothing unpacked */ }
+    caseIndex.set(dir, idx);
+  }
+  return caseIndex.get(dir).get(rel.toLowerCase()) || null;
+}
 
 // ─── The runtime the package talks to ────────────────────────────────
 // One page, both dialects. The cmi data model is a flat key→value map:
