@@ -396,6 +396,21 @@ async function publishTopic(courseId, { force = false } = {}) {
 // before; omit it to append. Everything at or after that index shifts
 // down, so inserting an AI session between two SCORMs is one call.
 async function insertSteps(courseId, { kind, count = 1, at = null, title = null, pass_score } = {}, userId = null) {
+  // A whole lesson: an AI trainer session and its e-learning module, added
+  // side by side and paired, so the course page shows them as one lesson.
+  if (String(kind || '').toLowerCase().trim() === 'lesson') {
+    const n = Math.max(1, clampCount(count));
+    const before = await store.listActivities(courseId, { includeUnpublished: true });
+    const start = at === null || at === undefined ? before.length : Math.max(0, Math.min(before.length, Math.floor(Number(at)) || 0));
+    for (let i = 0; i < n; i++) {
+      const pos = start + i * 2;
+      await insertSteps(courseId, { kind: 'ai_lesson', count: 1, at: pos, title }, userId);
+      await insertSteps(courseId, { kind: 'scorm', count: 1, at: pos + 1, title, pass_score }, userId);
+      const now = (await store.listActivities(courseId, { includeUnpublished: true })).slice().sort((a, b) => a.position - b.position);
+      await pairSteps(courseId, now[pos].id, now[pos + 1].id);
+    }
+    return getTopic(courseId);
+  }
   const k = normaliseKind(kind);
   if (!k) {
     const err = new Error('Unknown step type');
@@ -462,6 +477,40 @@ async function insertSteps(courseId, { kind, count = 1, at = null, title = null,
   return getTopic(courseId);
 }
 
+// Pair two steps as one lesson taught two ways — an AI trainer session and
+// an e-learning module or reading — or, with no partner, unpair a step.
+// Each step's earlier partner is let go. The partner is moved to sit right
+// after the step it joins, so the builder lists them together and the
+// course page numbers them as one lesson.
+async function pairSteps(courseId, activityId, withId) {
+  const steps = (await store.listActivities(courseId, { includeUnpublished: true }))
+    .slice().sort((a, b) => a.position - b.position);
+  const a = steps.find((x) => x.id === activityId);
+  if (!a) throw Object.assign(new Error('No such step in this topic'), { status: 404 });
+  const free = async (id) => db.run('UPDATE activity SET pair_id = NULL WHERE (id = ? OR pair_id = ?) AND course_id = ?', [id, id, courseId]);
+  if (!withId) { await free(a.id); return getTopic(courseId); }
+  const b = steps.find((x) => x.id === withId);
+  if (!b || b.id === a.id) throw Object.assign(new Error('Choose another step in this course to pair with'), { status: 400 });
+  if ((a.kind === 'ai_lesson') === (b.kind === 'ai_lesson')) {
+    throw Object.assign(new Error('A lesson pairs an AI trainer session with an e-learning module or reading — one of each'), { status: 400 });
+  }
+  await free(a.id); await free(b.id);
+  await db.run('UPDATE activity SET pair_id = ?, updated_at = ? WHERE id = ?', [b.id, db.now(), a.id]);
+  await db.run('UPDATE activity SET pair_id = ?, updated_at = ? WHERE id = ?', [a.id, db.now(), b.id]);
+  // Side by side: the later of the two moves up to follow the earlier.
+  const ia = steps.indexOf(a), ib = steps.indexOf(b);
+  const [first, second] = ia < ib ? [a, b] : [b, a];
+  const order = steps.filter((x) => x.id !== second.id);
+  order.splice(order.indexOf(first) + 1, 0, second);
+  if (order.some((x, i) => x.id !== steps[i].id)) {
+    await db.tx(async (t) => {
+      const ts = db.now();
+      for (let i = 0; i < order.length; i++) await t.run('UPDATE activity SET position = ?, updated_at = ? WHERE id = ?', [i, ts, order[i].id]);
+    });
+  }
+  return getTopic(courseId);
+}
+
 // Move one step to a new index, closing the gap behind it. Positions are
 // rewritten densely afterwards so they never drift.
 async function moveStep(courseId, activityId, toIndex) {
@@ -512,6 +561,8 @@ async function removeStep(courseId, activityId) {
     await db.run('DELETE FROM activity WHERE id = ?', [activityId]);
     mode = 'deleted';
   }
+  // Its partner stands alone again.
+  try { await db.run('UPDATE activity SET pair_id = NULL WHERE (pair_id = ? OR id = ?) AND course_id = ?', [activityId, activityId, courseId]); } catch (_) { /* before migration 062 */ }
 
   // Close the gap so the sequence stays dense and 1..n reads correctly.
   const rest = (await store.listActivities(courseId, { includeUnpublished: true }))
@@ -553,6 +604,6 @@ async function deleteTopic(courseId) {
 
 module.exports = {
   createTopic, addToTopic, getTopic, listTopics, publishTopic,
-  insertSteps, moveStep, removeStep, deleteTopic,
+  insertSteps, moveStep, removeStep, deleteTopic, pairSteps,
   readiness, slugify, normaliseSteps,
 };

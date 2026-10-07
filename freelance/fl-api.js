@@ -134,6 +134,8 @@
     listTopics:      function () { return call('GET', '/api/v1/learning/topics'); },
     createTopic:     function (spec) { return call('POST', '/api/v1/learning/topics', spec); },
     getTopic:        function (id) { return call('GET', '/api/v1/learning/topics/' + enc(id)); },
+    // Pair two steps as one lesson (AI session + module); null unpairs.
+    pairTopicStep:   function (id, act, withId) { return call('PUT', '/api/v1/learning/topics/' + enc(id) + '/steps/' + enc(act) + '/pair', { with: withId || null }); },
     addTopicSteps:   function (id, spec) { return call('POST', '/api/v1/learning/topics/' + enc(id) + '/steps', spec); },
     moveTopicStep:   function (id, act, to) { return call('POST', '/api/v1/learning/topics/' + enc(id) + '/steps/' + enc(act) + '/move', { to: to }); },
     removeTopicStep: function (id, act) { return call('DELETE', '/api/v1/learning/topics/' + enc(id) + '/steps/' + enc(act)); },

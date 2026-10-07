@@ -89,6 +89,14 @@ router.post('/topics/:topicId/steps/:activityId/move', requireRole(...ADMIN_ROLE
   } catch (e) { next(e); }
 });
 
+// Pair two steps as one lesson (an AI session and its module), or unpair
+// with { with: null }.
+router.put('/topics/:topicId/steps/:activityId/pair', requireRole(...ADMIN_ROLES), async (req, res, next) => {
+  try {
+    res.json(await topics.pairSteps(req.params.topicId, req.params.activityId, (req.body || {}).with || null));
+  } catch (e) { next(e); }
+});
+
 router.delete('/topics/:topicId/steps/:activityId', requireRole(...ADMIN_ROLES), async (req, res, next) => {
   try {
     res.json(await topics.removeStep(req.params.topicId, req.params.activityId));

@@ -723,17 +723,29 @@
     return short.split(' ').length >= 2 && long.indexOf(short) === 0;
   }
   function groupLessons(acts) {
-    var out = [];
+    // Steps the author paired in the builder are one lesson wherever they
+    // sit; steps nobody paired fall back to the title match with a neighbour.
+    var out = [], used = {};
+    var byId = {}; acts.forEach(function (x) { byId[x.id] = x; });
     for (var i = 0; i < acts.length; i++) {
-      var a = acts[i], b = acts[i + 1];
-      if (b && sameLesson(a, b)) { out.push([a, b]); i++; } else out.push([a]);
+      var a = acts[i];
+      if (used[a.id]) continue;
+      used[a.id] = true;
+      var p = a.pair_id && byId[a.pair_id];
+      if (p && !used[p.id]) { used[p.id] = true; out.push([a, p]); continue; }
+      var b = acts[i + 1];
+      if (b && !used[b.id] && !a.pair_id && !b.pair_id && sameLesson(a, b)) { used[b.id] = true; out.push([a, b]); i++; }
+      else out.push([a]);
     }
     return out.map(function (steps) {
       var ai = steps.filter(function (s) { return s.kind === 'ai_lesson'; })[0] || null;
       var rest = steps.filter(function (s) { return s !== ai; });
       // The card's title: the module's (usually the fuller one), else the step's own.
       var lead = rest[0] || ai;
-      return { steps: steps, ai: ai, other: rest[0] || null, title: flPick(lead, 'title') };
+      var title = flPick(lead, 'title');
+      // A title that is still a file name ("Lesson-one-final") reads as one.
+      if (!/\s/.test(title) && /[-_]/.test(title)) title = title.replace(/[-_]+/g, ' ').trim();
+      return { steps: steps, ai: ai, other: rest[0] || null, title: title };
     });
   }
   function stepStatus(a) { return (a && a.progress && a.progress.status) || 'not_started'; }
