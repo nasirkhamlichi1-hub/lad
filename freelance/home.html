@@ -40,7 +40,7 @@
 
   /* ─── To do: the courses on the lawyer's list, as compact rows ─── */
   .sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:30px 0 12px}
-  .sec-h[hidden],#catWrap[hidden],.prog[hidden],.stats[hidden]{display:none}
+  .sec-h[hidden],#catWrap[hidden],.progs[hidden],.stats[hidden]{display:none}
   .sec-h .fl-h2{margin:0}
   .sec-h .n{font:500 13px var(--fl-mono);color:var(--fl-muted);font-variant-numeric:tabular-nums}
   .rows{background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);box-shadow:var(--fl-sh);overflow:hidden}
@@ -81,7 +81,7 @@
   .count{font:500 12.5px var(--fl-mono);color:var(--fl-muted);margin:0 0 10px;font-variant-numeric:tabular-nums}
 
   /* ─── The two programmes: a card each, over the hero's edge ──── */
-  .prog{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:-44px;position:relative;z-index:2}
+  .progs{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:-44px;position:relative;z-index:2}
   .pc{background:var(--fl-white);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.10);overflow:hidden;display:grid;grid-template-rows:auto 1fr}
   .pc .band{padding:20px 22px 16px;color:#fff;position:relative;overflow:hidden;display:flex;align-items:center;gap:14px}
   .pc.tr-legal .band{background:linear-gradient(135deg,#161D38,#202A50 60%,#2C3765)}
@@ -102,7 +102,7 @@
   .pc .row2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .pc.tr-legal .fl-btn:not(.light){background:var(--fl-navy);border-color:var(--fl-navy)}
   .pc.tr-ops .fl-btn:not(.light){background:var(--fl-teal);border-color:var(--fl-teal)}
-  @media (max-width:860px){.prog{grid-template-columns:1fr;margin-top:-30px}}
+  @media (max-width:860px){.progs{grid-template-columns:1fr;margin-top:-30px}}
   @media (max-width:420px){.pc .pbody{grid-template-columns:1fr}.ring{width:72px;height:72px}}
 
   /* the catalogue grouped by programme */
@@ -165,7 +165,7 @@
 </div></div>
 
 <div class="fl-wrap">
-  <div class="prog" id="prog" hidden></div>
+  <div class="progs" id="prog" hidden></div>
   <div class="stats" id="stats"></div>
   <div id="msg"></div>
   <div id="continue"></div>
@@ -407,7 +407,7 @@
 
     // To do: everything on the list and not finished — what is due first,
     // then what was touched last. The course above is not repeated.
-    var todo=mine.filter(function(t){ var st=status(t); return (st==='going'||st==='todo')&&t!==open; })
+    var todo=mine.filter(function(t){ var st=status(t); return (st==='going'||st==='todo')&&(progs.length||t!==open); })
       .sort(function(a,b){
         var da=a.enrolment.due_at?d(a.enrolment.due_at):'9999', db=b.enrolment.due_at?d(b.enrolment.due_at):'9999';
         if(da!==db) return da<db?-1:1;
