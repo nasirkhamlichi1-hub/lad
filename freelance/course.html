@@ -1795,7 +1795,7 @@
     var j = null; try { j = await resp.json(); } catch (e) { }
     if (!resp.ok) {
       var err = new Error((j && j.message) || 'Could not open the package (' + resp.status + ')');
-      err.link = j && j.url; throw err;
+      err.link = j && j.url; err.code = j && j.error; throw err;
     }
     return (window.LAD_API_BASE || '') + j.player_url;
   }
@@ -1884,7 +1884,15 @@
     var launchErr = null;
     if (a.kind === 'scorm' && stepMat) {
       try {
-        var pUrl = await scormPlayerUrl(a.course_id || TOPIC, stepMat);
+        var pUrl;
+        try { pUrl = await scormPlayerUrl(a.course_id || TOPIC, stepMat); }
+        catch (e1) {
+          // This site's package is missing: the other language's, if the
+          // step has one, is better than a module nobody can open.
+          var other = stepMat === a.material_id ? a.material_id_ar : a.material_id;
+          if (e1.code !== 'package_missing' || !other || other === stepMat) throw e1;
+          pUrl = await scormPlayerUrl(a.course_id || TOPIC, other);
+        }
         scormSession = { attempt: openAttempt, activity: a, done: false };
         readerShow('MODULE', flPick(a, 'title'));
         readerFrame(pUrl);

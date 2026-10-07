@@ -641,7 +641,15 @@ router.delete('/:id/materials/:mid', requireRole(...MATERIAL_ROLES), (req, res) 
   // The twin stands alone again: unpaired and shown to both sites.
   db.prepare('UPDATE course_materials SET pair_id = NULL, lang = NULL WHERE pair_id = ? AND course_id = ?').run(req.params.mid, req.params.id);
   // A step that opened this file in one language falls back to the other.
-  try { db.prepare('UPDATE activity SET material_id_ar = NULL WHERE material_id_ar = ?').run(req.params.mid); } catch (_) {}
+  // That holds for the English file too: a step left naming a deleted file
+  // sends the learner to "this module cannot be played".
+  if (r.changes) {
+    try { db.prepare('UPDATE activity SET material_id_ar = NULL WHERE material_id_ar = ? AND course_id = ?').run(req.params.mid, req.params.id); } catch (_) {}
+    try {
+      db.prepare('UPDATE activity SET material_id = material_id_ar, material_id_ar = NULL WHERE material_id = ? AND material_id_ar IS NOT NULL AND course_id = ?').run(req.params.mid, req.params.id);
+      db.prepare('UPDATE activity SET material_id = NULL WHERE material_id = ? AND course_id = ?').run(req.params.mid, req.params.id);
+    } catch (_) {}
+  }
   if (m && m.storage_key && blob.isConfigured()) { blob.deleteBlob(m.storage_key).catch(() => {}); }
   res.json({ deleted: r.changes });
 });

@@ -409,7 +409,9 @@ function renderDetail(){
         '<span class="adm-kind '+k.cls+'">'+k.label+'</span>'+
         '<div class="adm-grow"><div class="t" translate="no">'+esc(a.title)+'</div>'+
         (a.ready?'<div class="s">Ready'+(a.pass_score?' · pass mark '+a.pass_score:'')+'</div>'
-                :'<div class="s needs">'+esc(a.needs)+'</div>')+'</div>'+
+                :'<div class="s needs">'+esc(a.needs)+'</div>')+
+        (a.ready&&a.file_missing&&a.file_missing.length&&a.file_missing[0]!=='all'
+          ? '<div class="s needs">'+(a.file_missing[0]==='ar'?'The Arabic':'The English')+' file is missing from the server — the other language plays instead. Upload it again.</div>':'')+'</div>'+
         '<span class="adm-chip'+(a.published?' live':'')+'">'+(a.published?'live':'draft')+'</span>'+
         '<div class="adm-tools">'+
           '<button class="adm-btn-icon" data-up="'+a.id+'"'+(i===0?' disabled':'')+' title="Move up">&#9650;</button>'+
@@ -1308,6 +1310,7 @@ async function draftFromMaterial(){
 $('dSave').onclick=async function(){
   var a=editing; if(!a) return;
   var btn=$('dSave'); btn.disabled=true; var was=btn.textContent; btn.textContent='Saving…';
+  var checkFail='';
   try{
     if(a.kind==='ai_lesson'){
       // An English list with an empty Arabic box: translate it before saving,
@@ -1398,11 +1401,25 @@ $('dSave').onclick=async function(){
       });
       if($('x-pass')) patch.pass_score=Number($('x-pass').value);
       await api.saveActivities(TOPIC.topic_id,[patch]);
+
+      // Open each newly uploaded package the way a lawyer will, so a module
+      // that will not play is found here rather than by the lawyer.
+      if(a.kind==='scorm'&&(pending||pendingAr)){
+        $('x-busy').textContent='Checking the module opens…';
+        var checks=[];
+        if(pending&&enId) checks.push(['English',enId]);
+        if(pendingAr&&arId) checks.push(['Arabic',arId]);
+        for(var ci=0;ci<checks.length;ci++){
+          try{ await api.scormCheck(TOPIC.topic_id,checks[ci][1]); }
+          catch(ce){ checkFail=(checkFail?checkFail+'<br>':'')+'<b>'+checks[ci][0]+' module:</b> '+esc(ce.message); }
+        }
+      }
     }
 
     closeEditor();
     TOPIC=await api.getTopic(TOPIC.topic_id);
     banner(''); await loadTopics(); renderDetail();
+    if(checkFail) banner('Saved, but the module will not play for lawyers yet. '+checkFail,'err');
   }catch(e){ banner('Could not save: '+esc(e.message),'err'); }
   finally{ btn.disabled=false; btn.textContent=was; }
 };

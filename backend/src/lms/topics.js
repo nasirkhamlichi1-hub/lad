@@ -253,13 +253,34 @@ async function getTopic(courseId) {
     store.listActivities(courseId, { includeUnpublished: true }),
   ]);
 
+  // Which of the files the steps name still exist. A step whose files were
+  // all removed (or whose upload never landed) is not ready, whatever its
+  // ids say — otherwise the builder shows "Ready" while lawyers are told
+  // the module cannot be played.
+  const ids = [...new Set(activities.flatMap((a) => [a.material_id, a.material_id_ar]).filter(Boolean))];
+  const held = new Set(ids.length
+    ? (await db.all(`SELECT id FROM course_materials WHERE id IN (${ids.map(() => '?').join(',')})`, ids)).map((m) => m.id)
+    : []);
+
   const decorated = activities.map((a) => {
-    const r = readiness(a);
+    let r = readiness(a);
+    const named = [a.material_id, a.material_id_ar].filter(Boolean);
+    const missing = named.filter((id) => !held.has(id));
+    if (named.length && missing.length === named.length && !a.package_id) {
+      r = { ready: false, needs: a.kind === 'scorm'
+        ? 'The package is missing from the server — upload the SCORM zip again'
+        : 'The file is missing from the server — attach it again' };
+    }
     const lesson = a.kind === 'ai_lesson' && a.lesson_id ? trainerStore.getLesson(a.lesson_id) : null;
     return {
       ...a,
       ready: r.ready,
       needs: r.needs,
+      // A step with one language's file gone still plays the other; the
+      // builder names the one to upload again.
+      file_missing: missing.length && missing.length < named.length
+        ? missing.map((id) => (id === a.material_id ? 'en' : 'ar'))
+        : (missing.length ? ['all'] : []),
       lesson: lesson
         ? { id: lesson.id, title: lesson.title, objectives: lesson.objectives, has_body: !!(lesson.body || '').trim(), active: lesson.active }
         : null,

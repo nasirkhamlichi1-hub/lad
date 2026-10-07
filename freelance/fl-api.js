@@ -145,6 +145,9 @@
     translateLines:  function (lines) { return call('POST', '/api/v1/learning/translate-lines', { lines: lines, to: 'ar' }); },
     addCourseMaterial: function (id, m) { return call('POST', '/api/v1/courses/' + enc(id) + '/materials', m); },
     updateCourseMaterial: function (id, mid, patch) { return call('PATCH', '/api/v1/courses/' + enc(id) + '/materials/' + enc(mid), patch || {}); },
+    // Opens a module through the SCORM player exactly as a lawyer would, so
+    // the console can tell at once whether an uploaded package will play.
+    scormCheck:      function (id, mid) { return call('POST', '/api/v1/scorm/' + enc(id) + '/' + enc(mid) + '/launch'); },
     deleteCourseMaterial: function (id, mid) { return call('DELETE', '/api/v1/courses/' + enc(id) + '/materials/' + enc(mid)); },
     summariseMaterial: function (id, spec) { return call('POST', '/api/v1/courses/' + enc(id) + '/materials/summarise', spec || {}); },
     materialUploadUrl: function (id, spec) { return call('POST', '/api/v1/courses/' + enc(id) + '/materials/upload-url', spec); },
