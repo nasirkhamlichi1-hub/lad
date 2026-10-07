@@ -8,6 +8,8 @@ Three separate Arabic (RTL) courses, each delivered two ways: an Articulate Rise
 | M3 — تنفيذ عقد الإيجار، وأسباب وإجراءات إنهائه أو فسخه | `lad-m3/LAD-M3-rise-build-spec.md` | `backend/scripts/seed-trainer-lad-m3.js` | `lad-m3/LAD-M3-notice-quick-reference.docx` |
 | M4 — إخلاء المستأجر ومقترحات حماية حقوق الجهات الحكومية | `lad-m4/LAD-M4-rise-build-spec.md` | `backend/scripts/seed-trainer-lad-m4.js` | `lad-m4/LAD-M4-protective-measures-checklist.docx` |
 
+**Word documents (upload these):** each course folder has `LAD-Mx-Articulate-Rise-course.docx` (the full Rise build, for Articulate) and `LAD-Mx-AI-Trainer-instructions.docx` (the full instruction set for the AI trainer / AI builder). They are generated from the build spec and the seed script, so edit those and regenerate.
+
 **Rise:** open each spec and build it block by block in Rise (set course language to Arabic first). Every block, its type and its final copy are given; `[ASSET NEEDED]` lines are listed in each spec's asset table.
 
 **AI Trainer:** `cd backend && node scripts/seed-trainer-lad-m2.js` (likewise for `-m3`, `-m4`). Each lesson carries its key elements (objectives), teaching notes, and a teaching brief: teach in Arabic, practitioner/mentor persona, scenario questions, and house rules that keep the trainer to the source material.

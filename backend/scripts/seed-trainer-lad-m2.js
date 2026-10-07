@@ -18,7 +18,6 @@
 // current consolidated text before use in live CLPD.
 
 require('dotenv').config();
-const trainerStore = require('../src/services/trainerStore');
 
 const COURSE = 'lad-m2-rental-documents';
 
@@ -212,6 +211,7 @@ const LESSONS = [
 ];
 
 function main() {
+  const trainerStore = require('../src/services/trainerStore');
   console.log(`[seed] loading ${LESSONS.length} lessons for course "${COURSE}"…`);
   for (const L of LESSONS) {
     const saved = trainerStore.upsertLesson(
@@ -225,4 +225,6 @@ function main() {
   console.log(`\n[seed] done — ${LESSONS.length} lessons, ~${totalMin} min total, ${totalCpd} CPD points.`);
 }
 
-main();
+if (require.main === module) main();
+
+module.exports = { COURSE, BRIEF, LESSONS };
