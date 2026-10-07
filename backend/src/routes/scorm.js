@@ -235,6 +235,53 @@ function verifyPlayToken(token) {
 }
 
 // ─── Launch ──────────────────────────────────────────────────────────
+// ─── Inspect a package (admin) ──────────────────────────────────────
+// What the server actually holds for a module, read from the live package:
+// which course it is filed under, its size and storage, what the manifest
+// launches and whether that file is there, the folders inside, and every
+// other website its pages load. One click in the admin console answers
+// "why will this module not play?" without opening developer tools.
+router.get('/:courseId/:materialId/inspect', (req, res, next) => (req.params.courseId === 'play' ? next('route') : next()), requireAuth, async (req, res) => {
+  if (!MATERIAL_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'admins_only' });
+  const m = db.prepare('SELECT * FROM course_materials WHERE id = ?').get(req.params.materialId);
+  if (!m) return res.json({ found: false, message: MISSING });
+  const out = {
+    found: true,
+    material: { id: m.id, title: m.title, file_name: m.file_name, kind: m.kind, lang: m.lang || null,
+      filed_under_course: m.course_id, step_course: req.params.courseId,
+      storage: m.storage_key ? 'cloud' : (m.data ? 'inline' : (m.url ? 'link' : 'none')),
+      size_mb: Math.round(((m.size || 0) / 1048576) * 10) / 10, link: m.url || null },
+    steps: db.prepare('SELECT id, course_id, title FROM activity WHERE material_id = ? OR material_id_ar = ?').all(m.id, m.id),
+  };
+  try {
+    const info = await ensureExtracted(m);
+    const dir = extractedDir(m.id);
+    const files = [];
+    const walk = (d) => { for (const n of fs.readdirSync(d)) { const p = path.join(d, n); if (fs.statSync(p).isDirectory()) walk(p); else files.push(path.relative(dir, p).split(path.sep).join('/')); } };
+    walk(dir);
+    const hosts = {};
+    for (const f of files.filter((x) => /\.(html?|js)$/i.test(x)).slice(0, 400)) {
+      const txt = fs.readFileSync(path.join(dir, f), 'utf8');
+      for (const mm of txt.matchAll(/(?:https?:)?\/\/([a-z0-9.-]+\.[a-z]{2,})(?=[\/"'?:])/gi)) {
+        const h = mm[1].toLowerCase();
+        if (/^(www\.)?(w3\.org|adlnet\.(org|gov)|imsglobal\.org|imsproject\.org|xmlns\.com|schemas\.)/.test(h)) continue;
+        (hosts[h] = hosts[h] || new Set()).add(f);
+      }
+    }
+    const entryFile = findFile(dir, info.entry.split('?')[0].split('#')[0]);
+    out.package = {
+      launches: info.entry, scorm: info.version, launch_file_present: !!entryFile,
+      files: files.length - 1,
+      folders: [...new Set(files.filter((f) => f !== '.lad-entry.json').map((f) => f.split('/')[0]))].slice(0, 20),
+      launch_page_start: entryFile ? fs.readFileSync(entryFile, 'utf8').slice(0, 1200) : null,
+      other_websites: Object.fromEntries(Object.entries(hosts).slice(0, 20).map(([h, s]) => [h, [...s].slice(0, 3)])),
+    };
+  } catch (e) {
+    out.package_error = e.message;
+  }
+  res.json(out);
+});
+
 router.post('/:courseId/:materialId/launch', requireAuth, async (req, res) => {
   if (!canAccess(req.params.courseId, req.user)) {
     return res.status(403).json({ error: 'no_access', message: 'Enrol on this topic to open its assessment.' });

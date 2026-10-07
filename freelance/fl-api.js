@@ -149,6 +149,7 @@
     updateCourseMaterial: function (id, mid, patch) { return call('PATCH', '/api/v1/courses/' + enc(id) + '/materials/' + enc(mid), patch || {}); },
     // Opens a module through the SCORM player exactly as a lawyer would, so
     // the console can tell at once whether an uploaded package will play.
+    scormInspect:    function (id, mid) { return call('GET', '/api/v1/scorm/' + enc(id) + '/' + enc(mid) + '/inspect'); },
     scormCheck:      function (id, mid) { return call('POST', '/api/v1/scorm/' + enc(id) + '/' + enc(mid) + '/launch'); },
     deleteCourseMaterial: function (id, mid) { return call('DELETE', '/api/v1/courses/' + enc(id) + '/materials/' + enc(mid)); },
     summariseMaterial: function (id, spec) { return call('POST', '/api/v1/courses/' + enc(id) + '/materials/summarise', spec || {}); },

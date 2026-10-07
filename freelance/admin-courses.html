@@ -439,6 +439,7 @@ function renderDetail(){
         '<div class="adm-tools">'+pairSel+
           '<button class="adm-btn-icon" data-up="'+a.id+'"'+(i===0?' disabled':'')+' title="Move up">&#9650;</button>'+
           '<button class="adm-btn-icon" data-down="'+a.id+'"'+(i===steps.length-1?' disabled':'')+' title="Move down">&#9660;</button>'+
+          (a.kind==='scorm'&&(a.material_id||a.material_id_ar)?'<button class="adm-btn-light adm-btn-sm" data-inspect="'+a.id+'" title="Read the uploaded package on the server and report what is in it">Check module</button>':'')+
           '<button class="adm-btn-light adm-btn-sm" data-edit="'+a.id+'">'+(a.kind==='ai_lesson'?'Teach':(a.kind==='scorm'?'Upload module':'Attach document'))+'</button>'+
           '<button class="adm-btn-icon adm-btn-danger" data-del="'+a.id+'" title="Remove">&times;</button>'+
         '</div></div>';
@@ -557,6 +558,8 @@ function renderDetail(){
     b.onclick=function(){ openEdit(b.dataset.edit); }; });
   Array.prototype.forEach.call(document.querySelectorAll('[data-del]'),function(b){
     b.onclick=function(){ remove(b.dataset.del); }; });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-inspect]'),function(b){
+    b.onclick=function(){ inspectModule(b.dataset.inspect,b); }; });
   Array.prototype.forEach.call(document.querySelectorAll('[data-pair]'),function(sel){
     sel.onchange=async function(){
       sel.disabled=true;
@@ -564,6 +567,38 @@ function renderDetail(){
       catch(e){ banner('Could not pair those steps: '+esc(e.message),'err'); sel.disabled=false; }
     };
   });
+}
+
+// "Check module": what the server holds for a step's package, read from the
+// live package — said in plain lines, with the full report underneath.
+async function inspectModule(id,btn){
+  var a=TOPIC.activities.filter(function(x){return x.id===id;})[0]; if(!a) return;
+  var was=btn.textContent; btn.disabled=true; btn.textContent='Checking…';
+  var parts=[['English',a.material_id],['Arabic',a.material_id_ar]].filter(function(p){return p[1];});
+  var html='';
+  for(var i=0;i<parts.length;i++){
+    var label=parts[i][0], r;
+    try{ r=await api.scormInspect(TOPIC.topic_id,parts[i][1]); }catch(e){ html+='<p><b>'+label+' package:</b> could not be checked — '+esc(e.message)+'</p>'; continue; }
+    var lines=[];
+    if(!r.found){ lines.push('✗ '+esc(r.message)); }
+    else{
+      var m=r.material, p=r.package||{};
+      lines.push((m.filed_under_course===m.step_course?'✓':'⚠')+' Filed under course <b>'+esc(m.filed_under_course)+'</b>'+(m.filed_under_course===m.step_course?'':' — this step is in <b>'+esc(m.step_course)+'</b>'));
+      lines.push('Stored: '+esc(m.storage)+(m.size_mb?' · '+m.size_mb+' MB':'')+(m.file_name?' · '+esc(m.file_name):''));
+      if(r.package_error) lines.push('✗ The package cannot be opened: '+esc(r.package_error));
+      else{
+        lines.push((p.launch_file_present?'✓':'✗')+' Opens <code>'+esc(p.launches)+'</code> (SCORM '+esc(p.scorm)+')'+(p.launch_file_present?'':' — not in the zip'));
+        lines.push(p.files+' files · folders: '+esc((p.folders||[]).join(', ')));
+        var sites=Object.keys(p.other_websites||{});
+        lines.push(sites.length?'⚠ Loads other websites: <b>'+esc(sites.join(', '))+'</b>':'✓ Loads nothing from other websites');
+      }
+    }
+    html+='<p style="margin:6px 0 2px"><b>'+label+' package</b></p><div style="font-size:13px;line-height:1.7">'+lines.join('<br>')+'</div>'+
+      '<details style="margin:4px 0 10px"><summary style="cursor:pointer;font-size:12px">Full report</summary><pre style="white-space:pre-wrap;font-size:11px;max-height:300px;overflow:auto;background:#f6f6f6;padding:8px;border-radius:6px">'+esc(JSON.stringify(r,null,2))+'</pre></details>';
+  }
+  banner('<b>Check module — '+esc(a.title)+'</b>'+html,'ok');
+  if($('banner').scrollIntoView) $('banner').scrollIntoView({behavior:'smooth',block:'start'});
+  btn.disabled=false; btn.textContent=was;
 }
 
 async function doAdd(){
