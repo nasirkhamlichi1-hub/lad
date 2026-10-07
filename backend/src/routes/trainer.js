@@ -385,13 +385,23 @@ router.post('/turn', requireAuth, async (req, res, next) => {
     }
 
     const lesson = session.lesson_id ? trainerStore.getLesson(session.lesson_id) : null;
+    const objectives = (lesson && Array.isArray(lesson.objectives)) ? lesson.objectives : [];
+    const total = objectives.length;
+    const progress = session.progress_id ? trainerStore.getProgressById(session.progress_id) : null;
     let resume = null;
-    if (session.progress_id) {
-      const p = trainerStore.getProgressById(session.progress_id);
-      if (p && session.resumed_from_id && p.resume_context) {
-        resume = { context: p.resume_context, percent: p.percent_complete };
-      }
+    if (progress && session.resumed_from_id && progress.resume_context) {
+      resume = { context: progress.resume_context, percent: progress.percent_complete };
     }
+
+    // What is already held. While a lesson is under way that is the server's
+    // own record, which every turn adds to. A finished lesson being revisited
+    // keeps its record untouched, so the session's own tally — sent back by
+    // the page — drives the bar instead; it is shown, never saved.
+    const tracked = !!(progress && progress.status !== 'completed' && total);
+    const valid = (n) => Number.isInteger(n) && n >= 1 && n <= total;
+    const prior = tracked
+      ? (progress.objectives_done || []).map(o => objectives.indexOf(o) + 1).filter(valid)
+      : (Array.isArray(req.body && req.body.covered) ? req.body.covered : []).map(n => parseInt(n, 10)).filter(valid);
 
     // When the client asks to stream, the first complete sentence is pushed the
     // instant the model has written it — the browser starts speaking while the
@@ -408,22 +418,26 @@ router.post('/turn', requireAuth, async (req, res, next) => {
     };
 
     const turn = await trainerBrain.nextTurn({
-      lesson, history, perception, resume,
+      lesson, history, perception, resume, covered: prior,
       onFirstSentence: wantsStream ? (sentence) => {
         openStream();
         res.write(JSON.stringify({ phase: 'first', say: sentence }) + '\n');
       } : null,
     });
 
-    // Persist coverage → progress (hard key-element tracking).
-    const total = (lesson && Array.isArray(lesson.objectives)) ? lesson.objectives.length : 0;
-    let coverage = { done: 0, total };
-    if (session.progress_id && total) {
-      const objectivesDone = (turn.covered || []).map(n => lesson.objectives[n - 1]).filter(Boolean);
-      const percent = turn.complete ? 100 : Math.round((objectivesDone.length / total) * 100);
+    // Coverage only grows: a reply that leaves out an element covered earlier
+    // does not take it away. Persist it → progress (hard key-element tracking).
+    let held = [...new Set(prior.concat((turn.covered || []).filter(valid)))];
+    if (turn.complete) held = objectives.map((_, i) => i + 1);
+    held.sort((a, b) => a - b);
+    const next = objectives.map((_, i) => i + 1).find(n => held.indexOf(n) < 0);
+    const current = valid(turn.current) ? turn.current : (next || total);
+    if (tracked) {
+      const objectivesDone = held.map(n => objectives[n - 1]);
+      const percent = turn.complete ? 100 : Math.round((held.length / total) * 100);
       trainerStore.updateProgressLearning(session.progress_id, { objectivesDone, percent });
-      coverage = { done: objectivesDone.length, total };
     }
+    const coverage = { done: held.length, total, covered: held, current };
 
     const payload = {
       say: turn.say,

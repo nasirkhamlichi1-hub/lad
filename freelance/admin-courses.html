@@ -131,6 +131,11 @@ a.adm-btn-light{text-decoration:none;display:inline-flex;align-items:center}
   padding:4px 8px;border-radius:5px;background:var(--paper2);color:var(--slate2);white-space:nowrap}
 .adm-chip.live{background:var(--green);color:#fff}
 .adm-tools{display:flex;gap:4px}
+/* two steps paired as one lesson: drawn as one block */
+.adm-step.pair-top{margin-bottom:0;border-end-start-radius:0;border-end-end-radius:0}
+.adm-step.pair-bottom{border-top:1px dashed var(--line2);border-start-start-radius:0;border-start-end-radius:0}
+.adm-pairtag{display:inline-block;font-size:10.5px;font-weight:600;color:var(--purple);background:var(--purple-bg);border:1px solid var(--purple-border);border-radius:999px;padding:1px 8px;margin-inline-start:6px;vertical-align:1px}
+.adm-pair{font:inherit;font-size:11.5px;max-width:170px;padding:5px 6px;border:1px solid var(--line2);border-radius:7px;background:var(--white);color:var(--slate2)}
 
 /* add-step bar */
 .adm-addbar{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;background:var(--paper);
@@ -404,14 +409,28 @@ function renderDetail(){
     '</div>'+
     '<div id="steps">'+steps.map(function(a,i){
       var k=KIND[a.kind]||KIND.document;
-      return '<div class="adm-step '+(a.ready?'ready':'blocked')+'">'+
+      // Paired steps: one lesson taught two ways (AI session + module).
+      var mate=a.pair_id?steps.filter(function(x){return x.id===a.pair_id;})[0]:null;
+      var mi=mate?steps.indexOf(mate):-1;
+      var pcls=mate?(mi===i+1?' pair-top':(mi===i-1?' pair-bottom':'')):'';
+      var isAi=a.kind==='ai_lesson';
+      var cands=steps.filter(function(x){return x.id!==a.id&&((x.kind==='ai_lesson')!==isAi);});
+      var pairSel=cands.length?'<select class="adm-pair" data-pair="'+a.id+'" title="Teach this step and another as one lesson">'+
+        '<option value="">'+(mate?'Unpair':'Same lesson as…')+'</option>'+
+        cands.map(function(x){var xi=steps.indexOf(x);
+          return '<option value="'+x.id+'"'+(mate&&x.id===mate.id?' selected':'')+'>Step '+(xi+1)+' · '+esc((KIND[x.kind]||KIND.document).label)+' — '+esc(String(x.title||'').slice(0,40))+'</option>';}).join('')+
+        '</select>':'';
+      return '<div class="adm-step '+(a.ready?'ready':'blocked')+pcls+'">'+
         '<span class="adm-idx">'+(i+1)+'</span>'+
         '<span class="adm-kind '+k.cls+'">'+k.label+'</span>'+
         '<div class="adm-grow"><div class="t" translate="no">'+esc(a.title)+'</div>'+
+        (mate?'<div class="s"><span class="adm-pairtag">One lesson with step '+(mi+1)+' · '+(isAi?'the module':'the AI session')+'</span></div>':'')+
         (a.ready?'<div class="s">Ready'+(a.pass_score?' · pass mark '+a.pass_score:'')+'</div>'
-                :'<div class="s needs">'+esc(a.needs)+'</div>')+'</div>'+
+                :'<div class="s needs">'+esc(a.needs)+'</div>')+
+        (a.ready&&a.file_missing&&a.file_missing.length&&a.file_missing[0]!=='all'
+          ? '<div class="s needs">'+(a.file_missing[0]==='ar'?'The Arabic':'The English')+' file is missing from the server — the other language plays instead. Upload it again.</div>':'')+'</div>'+
         '<span class="adm-chip'+(a.published?' live':'')+'">'+(a.published?'live':'draft')+'</span>'+
-        '<div class="adm-tools">'+
+        '<div class="adm-tools">'+pairSel+
           '<button class="adm-btn-icon" data-up="'+a.id+'"'+(i===0?' disabled':'')+' title="Move up">&#9650;</button>'+
           '<button class="adm-btn-icon" data-down="'+a.id+'"'+(i===steps.length-1?' disabled':'')+' title="Move down">&#9660;</button>'+
           '<button class="adm-btn-light adm-btn-sm" data-edit="'+a.id+'">'+(a.kind==='ai_lesson'?'Teach':(a.kind==='scorm'?'Upload module':'Attach document'))+'</button>'+
@@ -421,6 +440,7 @@ function renderDetail(){
     '<div class="adm-addbar">'+
       '<div class="f"><label class="adm-label" for="a-kind">Add step</label>'+
         '<select class="adm-select" id="a-kind">'+
+          '<option value="lesson">Lesson: AI trainer + e-learning module</option>'+
           '<option value="scorm">E-learning module (SCORM)</option>'+
           '<option value="document">Reference document</option>'+
           '<option value="ai_lesson">AI trainer session</option></select></div>'+
@@ -531,6 +551,13 @@ function renderDetail(){
     b.onclick=function(){ openEdit(b.dataset.edit); }; });
   Array.prototype.forEach.call(document.querySelectorAll('[data-del]'),function(b){
     b.onclick=function(){ remove(b.dataset.del); }; });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-pair]'),function(sel){
+    sel.onchange=async function(){
+      sel.disabled=true;
+      try{ TOPIC=await api.pairTopicStep(TOPIC.topic_id,sel.dataset.pair,sel.value||null); banner(''); renderDetail(); }
+      catch(e){ banner('Could not pair those steps: '+esc(e.message),'err'); sel.disabled=false; }
+    };
+  });
 }
 
 async function doAdd(){
@@ -1308,6 +1335,7 @@ async function draftFromMaterial(){
 $('dSave').onclick=async function(){
   var a=editing; if(!a) return;
   var btn=$('dSave'); btn.disabled=true; var was=btn.textContent; btn.textContent='Saving…';
+  var checkFail='';
   try{
     if(a.kind==='ai_lesson'){
       // An English list with an empty Arabic box: translate it before saving,
@@ -1398,11 +1426,25 @@ $('dSave').onclick=async function(){
       });
       if($('x-pass')) patch.pass_score=Number($('x-pass').value);
       await api.saveActivities(TOPIC.topic_id,[patch]);
+
+      // Open each newly uploaded package the way a lawyer will, so a module
+      // that will not play is found here rather than by the lawyer.
+      if(a.kind==='scorm'&&(pending||pendingAr)){
+        $('x-busy').textContent='Checking the module opens…';
+        var checks=[];
+        if(pending&&enId) checks.push(['English',enId]);
+        if(pendingAr&&arId) checks.push(['Arabic',arId]);
+        for(var ci=0;ci<checks.length;ci++){
+          try{ await api.scormCheck(TOPIC.topic_id,checks[ci][1]); }
+          catch(ce){ checkFail=(checkFail?checkFail+'<br>':'')+'<b>'+checks[ci][0]+' module:</b> '+esc(ce.message); }
+        }
+      }
     }
 
     closeEditor();
     TOPIC=await api.getTopic(TOPIC.topic_id);
     banner(''); await loadTopics(); renderDetail();
+    if(checkFail) banner('Saved, but the module will not play for lawyers yet. '+checkFail,'err');
   }catch(e){ banner('Could not save: '+esc(e.message),'err'); }
   finally{ btn.disabled=false; btn.textContent=was; }
 };

@@ -100,12 +100,26 @@ db.prepare(`CREATE TABLE IF NOT EXISTS scorm_state (
 )`).run();
 
 // ─── The package on disk ─────────────────────────────────────────────
+const MISSING = 'The package for this module is not on the server — it was removed, or its upload did not finish. The course administrator needs to upload the SCORM zip to this step again.';
+
 async function zipBuffer(m) {
   if (m.data) return Buffer.from(m.data, 'base64');
   if (m.storage_key && blob.isConfigured()) {
     const url = blob.getDownloadUrl(m.storage_key, m.file_name || 'package.zip');
-    const r = await axios.get(url, { responseType: 'arraybuffer', maxContentLength: MAX_ZIP_BYTES, maxBodyLength: MAX_ZIP_BYTES });
+    let r;
+    try {
+      r = await axios.get(url, { responseType: 'arraybuffer', maxContentLength: MAX_ZIP_BYTES, maxBodyLength: MAX_ZIP_BYTES });
+    } catch (e) {
+      const st = e.response && e.response.status;
+      // The record exists but cloud storage has no file behind it: the
+      // browser's upload to storage never completed.
+      if (st === 404) throw Object.assign(new Error(MISSING), { status: 404, code: 'package_missing' });
+      throw Object.assign(new Error('Cloud storage could not be reached to open this module' + (st ? ' (' + st + ')' : '') + '. Try again in a minute.'), { status: 502 });
+    }
     return Buffer.from(r.data);
+  }
+  if (m.storage_key) {
+    throw Object.assign(new Error('This module is stored in cloud storage, which is not configured on this server.'), { status: 503 });
   }
   throw Object.assign(new Error('This SCORM step has a link, not an uploaded package — links still open in their own tab.'), { status: 409 });
 }
@@ -200,9 +214,18 @@ router.post('/:courseId/:materialId/launch', requireAuth, async (req, res) => {
   if (!canAccess(req.params.courseId, req.user)) {
     return res.status(403).json({ error: 'no_access', message: 'Enrol on this topic to open its assessment.' });
   }
-  const m = db.prepare('SELECT * FROM course_materials WHERE id = ? AND course_id = ?')
+  let m = db.prepare('SELECT * FROM course_materials WHERE id = ? AND course_id = ?')
     .get(req.params.materialId, req.params.courseId);
-  if (!m) return res.status(404).json({ error: 'Material not found' });
+  // A package filed under another course is still this course's to play when
+  // one of its own steps opens it.
+  if (!m) {
+    const ref = db.prepare('SELECT 1 FROM activity WHERE course_id = ? AND (material_id = ? OR material_id_ar = ?) LIMIT 1')
+      .get(req.params.courseId, req.params.materialId, req.params.materialId);
+    if (ref) m = db.prepare('SELECT * FROM course_materials WHERE id = ?').get(req.params.materialId);
+  }
+  // The step names a package the server does not hold — it was removed, or
+  // its upload never finished. Say so in words, not as a bare 404.
+  if (!m) return res.status(404).json({ error: 'package_missing', message: MISSING });
   if (!m.data && !m.storage_key) {
     return res.status(409).json({ error: 'link_only', message: 'This SCORM step is a link, not an uploaded package.', url: m.url || null });
   }
@@ -215,7 +238,7 @@ router.post('/:courseId/:materialId/launch', requireAuth, async (req, res) => {
       version: info.version,
     });
   } catch (e) {
-    res.status(e.status || 500).json({ error: 'launch_failed', message: e.message });
+    res.status(e.status || 500).json({ error: e.code || 'launch_failed', message: e.message });
   }
 });
 

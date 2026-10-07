@@ -45,7 +45,7 @@ function perceptionNote(p) {
 }
 
 // The per-turn instruction appended to the shared teaching charter.
-function systemFor(lesson, resume) {
+function systemFor(lesson, resume, covered) {
   const total = (lesson && Array.isArray(lesson.objectives)) ? lesson.objectives.length : 0;
   const parts = [
     // The charter, plus this lesson's teaching brief if its author set one.
@@ -62,12 +62,20 @@ function systemFor(lesson, resume) {
       'Greet them back briefly, then continue from where they left off.'
     );
   }
+  // The model sees only what was said, not the numbers it reported, so it is
+  // told which key elements are already held — otherwise it forgets them and
+  // the learner's progress bar stands still while the lesson moves on.
+  const held = (covered || []).filter(n => Number.isInteger(n) && n >= 1 && n <= total).sort((a, b) => a - b);
   parts.push(
     '',
     'OUTPUT FORMAT — IMPORTANT:',
     'Respond with ONLY a JSON object, no other text, of exactly this shape:',
-    '{"say": "<your short spoken turn>", "covered": [<1-based numbers of the key elements fully taught AND understood so far>], "complete": <true|false>}',
+    '{"say": "<your short spoken turn>", "covered": [<1-based numbers of ALL the key elements taught AND understood so far, including earlier ones>], "current": <1-based number of the key element you are teaching now>, "complete": <true|false>}',
     `There are ${total} key elements. "say" must be short and conversational (one or two sentences).`,
+    held.length
+      ? `Key elements already covered in this session: ${held.join(', ')}. Keep them in "covered".`
+      : 'No key element has been covered yet.',
+    `The moment you tell the ${L} an element is done, or move on to the next one, the finished element belongs in "covered" in that same reply.`,
     'Set "complete" to true ONLY after every key element is covered, understood, and you have given a one-line recap in "say".',
     'React naturally and briefly to any camera note before continuing to teach.'
   );
@@ -103,12 +111,14 @@ function parseReply(text, total) {
     if (m) { try { obj = JSON.parse(m[0]); } catch { /* fall through */ } }
   }
   if (!obj || typeof obj.say !== 'string') {
-    return { say: (text || '').trim() || 'Let\'s continue.', covered: [], complete: false };
+    return { say: (text || '').trim() || 'Let\'s continue.', covered: [], current: null, complete: false };
   }
   const covered = Array.isArray(obj.covered)
     ? obj.covered.map(n => parseInt(n, 10)).filter(n => Number.isInteger(n) && n >= 1 && n <= total)
     : [];
-  return { say: String(obj.say).trim(), covered: [...new Set(covered)], complete: obj.complete === true };
+  const cur = parseInt(obj.current, 10);
+  const current = Number.isInteger(cur) && cur >= 1 && cur <= total ? cur : null;
+  return { say: String(obj.say).trim(), covered: [...new Set(covered)], current, complete: obj.complete === true };
 }
 
 // ─── Deterministic fallback (no API key) ─────────────────────────────
@@ -123,14 +133,14 @@ function fallbackTurn({ lesson, history, perception }) {
     return { say: 'Thanks for joining. Tell me what you\'d like to focus on today.', covered: [], complete: false };
   }
   if (lawyerTurns === 0) {
-    return { say: `${nudge}Welcome — let's begin. ${objectives[0]}. In your own words, what do you understand by that?`, covered: [], complete: false };
+    return { say: `${nudge}Welcome — let's begin. ${objectives[0]}. In your own words, what do you understand by that?`, covered: [], current: 1, complete: false };
   }
   const idx = lawyerTurns; // next element to introduce
   const covered = Array.from({ length: Math.min(idx, total) }, (_, i) => i + 1);
   if (idx >= total) {
-    return { say: `${nudge}Good — that covers everything: ${objectives.map((o, i) => i + 1 + ') ' + o).join('; ')}. Well done; you can apply these now.`, covered, complete: true };
+    return { say: `${nudge}Good — that covers everything: ${objectives.map((o, i) => i + 1 + ') ' + o).join('; ')}. Well done; you can apply these now.`, covered, current: total, complete: true };
   }
-  return { say: `${nudge}Good. Next: ${objectives[idx]}. How would you apply that?`, covered, complete: false };
+  return { say: `${nudge}Good. Next: ${objectives[idx]}. How would you apply that?`, covered, current: idx + 1, complete: false };
 }
 
 // ─── Main entry ──────────────────────────────────────────────────────
@@ -158,14 +168,14 @@ function firstSentenceSoFar(partial) {
   return null;
 }
 
-async function nextTurn({ lesson, history, perception, resume, onFirstSentence }) {
+async function nextTurn({ lesson, history, perception, resume, covered, onFirstSentence }) {
   const total = (lesson && Array.isArray(lesson.objectives)) ? lesson.objectives.length : 0;
 
   if (!isConfigured()) {
     return { ...fallbackTurn({ lesson, history, perception }), engine: 'fallback' };
   }
 
-  const system = systemFor(lesson, resume);
+  const system = systemFor(lesson, resume, covered);
   const messages = toMessages(history, perception);
 
   // ─── Preferred: AiModel ───────────────────────────────────────────

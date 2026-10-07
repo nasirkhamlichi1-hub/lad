@@ -85,6 +85,8 @@ a{color:inherit;text-decoration:none}
 .obj.held .dash{background:var(--green2)}
 .obj .tick{display:none;color:var(--green);font-weight:800;margin-inline-start:6px}
 .obj.held .tick{display:inline}
+.obj.now{font-weight:700}
+.obj.now .dash{background:var(--gold,#9D7714);box-shadow:0 0 0 4px rgba(157,119,20,.18)}
 
 /* transcript */
 .talk{border-top:1.5px solid var(--line);margin-top:28px;padding-top:20px}
@@ -320,6 +322,13 @@ a{color:inherit;text-decoration:none}
         el('chipMeta').textContent=meta.join(' · ')||'Taught session';
     if(!meta.length)el('chipMeta').style.display='none';
     renderObjectives();
+    // Resuming: the bar starts from what the lesson already holds, not empty.
+    var objs=S.selected.objectives||[], pr=s.progress, held=[];
+    if(pr&&pr.status!=='completed'&&Array.isArray(pr.objectives_done)){
+      pr.objectives_done.forEach(function(o){var n=objs.indexOf(o)+1;if(n>0&&held.indexOf(n)<0)held.push(n);});
+    }
+    S.coverage=null;
+    paintCoverage({done:held.length,total:objs.length,covered:held});
     nextTurn();
   }
 
@@ -342,14 +351,21 @@ a{color:inherit;text-decoration:none}
       list.appendChild(d);
     });
   }
+  // The server says which key elements are held (by number — they need not
+  // be finished in order) and which one is being taught now. A reply without
+  // coverage keeps what is already shown rather than emptying the bar.
   function paintCoverage(cov){
-    cov=cov||{done:0,total:(S.selected.objectives||[]).length};S.coverage=cov;
+    if(!cov)cov=S.coverage&&S.coverage.total?S.coverage:{done:0,total:(S.selected.objectives||[]).length};
     var segs=el('segs').children,objs=el('objs').children;
-    for(var i=0;i<segs.length;i++){segs[i].classList.toggle('held',i<cov.done);}
-    for(var j=0;j<objs.length;j++){objs[j].classList.toggle('held',j<cov.done);}
     var total=cov.total||segs.length;
-    if(cov.done>=total&&total>0){el('phase').textContent='Wrapping up';}
-    else{el('phase').textContent=total?('Key element '+Math.min(cov.done+1,total)+' of '+total):'Teaching';}
+    var held=Array.isArray(cov.covered)?cov.covered:Array.from({length:Math.min(cov.done||0,total)},function(_,i){return i+1;});
+    S.coverage={done:held.length,total:total,covered:held,current:cov.current};
+    for(var i=0;i<segs.length;i++){segs[i].classList.toggle('held',held.indexOf(i+1)>=0);}
+    for(var j=0;j<objs.length;j++){objs[j].classList.toggle('held',held.indexOf(j+1)>=0);objs[j].classList.toggle('now',cov.current===j+1&&held.indexOf(j+1)<0);}
+    var next=1;while(held.indexOf(next)>=0)next++;
+    var now=cov.current>=1&&cov.current<=total?cov.current:Math.min(next,total);
+    if(held.length>=total&&total>0){el('phase').textContent='Wrapping up';}
+    else{el('phase').textContent=total?('Key element '+now+' of '+total):'Teaching';}
   }
 
   // ─── Orb + state ─────────────────────────────────────────────────────
@@ -368,7 +384,7 @@ a{color:inherit;text-decoration:none}
     return fetch((window.LAD_API_BASE||'')+'/api/v1/trainer/turn',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+api.getToken()},
-      body:JSON.stringify({sessionId:S.session.sessionId,history:S.history,perception:{present:true},stream:1})
+      body:JSON.stringify({sessionId:S.session.sessionId,history:S.history,perception:{present:true},covered:(S.coverage&&S.coverage.covered)||[],stream:1})
     }).then(function(resp){
       if(!resp.ok) throw new Error('turn '+resp.status);
       if(!resp.body||!resp.body.getReader) return resp.json();

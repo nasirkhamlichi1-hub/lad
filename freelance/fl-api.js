@@ -134,6 +134,8 @@
     listTopics:      function () { return call('GET', '/api/v1/learning/topics'); },
     createTopic:     function (spec) { return call('POST', '/api/v1/learning/topics', spec); },
     getTopic:        function (id) { return call('GET', '/api/v1/learning/topics/' + enc(id)); },
+    // Pair two steps as one lesson (AI session + module); null unpairs.
+    pairTopicStep:   function (id, act, withId) { return call('PUT', '/api/v1/learning/topics/' + enc(id) + '/steps/' + enc(act) + '/pair', { with: withId || null }); },
     addTopicSteps:   function (id, spec) { return call('POST', '/api/v1/learning/topics/' + enc(id) + '/steps', spec); },
     moveTopicStep:   function (id, act, to) { return call('POST', '/api/v1/learning/topics/' + enc(id) + '/steps/' + enc(act) + '/move', { to: to }); },
     removeTopicStep: function (id, act) { return call('DELETE', '/api/v1/learning/topics/' + enc(id) + '/steps/' + enc(act)); },
@@ -145,6 +147,9 @@
     translateLines:  function (lines) { return call('POST', '/api/v1/learning/translate-lines', { lines: lines, to: 'ar' }); },
     addCourseMaterial: function (id, m) { return call('POST', '/api/v1/courses/' + enc(id) + '/materials', m); },
     updateCourseMaterial: function (id, mid, patch) { return call('PATCH', '/api/v1/courses/' + enc(id) + '/materials/' + enc(mid), patch || {}); },
+    // Opens a module through the SCORM player exactly as a lawyer would, so
+    // the console can tell at once whether an uploaded package will play.
+    scormCheck:      function (id, mid) { return call('POST', '/api/v1/scorm/' + enc(id) + '/' + enc(mid) + '/launch'); },
     deleteCourseMaterial: function (id, mid) { return call('DELETE', '/api/v1/courses/' + enc(id) + '/materials/' + enc(mid)); },
     summariseMaterial: function (id, spec) { return call('POST', '/api/v1/courses/' + enc(id) + '/materials/summarise', spec || {}); },
     materialUploadUrl: function (id, spec) { return call('POST', '/api/v1/courses/' + enc(id) + '/materials/upload-url', spec); },
