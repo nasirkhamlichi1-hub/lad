@@ -40,7 +40,7 @@
 
   /* ─── To do: the courses on the lawyer's list, as compact rows ─── */
   .sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:30px 0 12px}
-  .sec-h[hidden],#catWrap[hidden]{display:none}
+  .sec-h[hidden],#catWrap[hidden],.tstats[hidden]{display:none}
   .sec-h .fl-h2{margin:0}
   .sec-h .n{font:500 13px var(--fl-mono);color:var(--fl-muted);font-variant-numeric:tabular-nums}
   .rows{background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);box-shadow:var(--fl-sh);overflow:hidden}
@@ -79,6 +79,26 @@
   .views button[aria-pressed="true"]{background:var(--fl-navy);color:#fff}
   .views svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
   .count{font:500 12.5px var(--fl-mono);color:var(--fl-muted);margin:0 0 10px;font-variant-numeric:tabular-nums}
+
+  /* the tracks: one tab each, above the catalogue */
+  .tracks{display:flex;gap:4px;border-bottom:2px solid var(--fl-line);margin:0 0 14px}
+  .tracks button{display:inline-flex;align-items:center;gap:8px;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:10px 14px;font:600 14px var(--fl-sans);color:var(--fl-ink2);cursor:pointer}
+  .tracks button svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linejoin:round}
+  .tracks button .c{font:500 12px var(--fl-mono);color:var(--fl-muted);font-variant-numeric:tabular-nums}
+  .tracks button:hover{color:var(--fl-navy)}
+  .tracks button[aria-pressed="true"]{color:var(--fl-navy);border-bottom-color:var(--fl-teal)}
+  .tracks button[aria-pressed="true"].tr-legal{border-bottom-color:var(--fl-navy)}
+  .tracks button[aria-pressed="true"].tr-ops{border-bottom-color:var(--fl-teal)}
+  /* progress per track, under the stats */
+  .tstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
+  .tstat{background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);box-shadow:var(--fl-sh);padding:12px 16px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center}
+  .tstat .n{font-family:var(--fl-display);font-weight:700;font-size:15px;color:var(--fl-navy);display:flex;align-items:center;gap:8px}
+  .tstat .n svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linejoin:round}
+  .tstat.tr-ops .n{color:var(--fl-teal-d)}
+  .tstat .v{font:600 13px var(--fl-mono);color:var(--fl-muted);font-variant-numeric:tabular-nums}
+  .tstat .fl-track{grid-column:1/-1}
+  .tstat.tr-legal .fl-track i{background:var(--fl-navy)}
+  @media (max-width:720px){.tracks button{padding:10px 10px;font-size:13px}}
 
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
   .course{background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);box-shadow:var(--fl-sh);overflow:hidden;display:flex;flex-direction:column;text-decoration:none;color:inherit;transition:transform .15s,box-shadow .15s,border-color .15s}
@@ -130,6 +150,7 @@
 
 <div class="fl-wrap">
   <div class="stats" id="stats"></div>
+  <div class="tstats" id="tstats" hidden></div>
   <div id="msg"></div>
   <div id="continue"></div>
 
@@ -138,6 +159,7 @@
 
   <div class="sec-h" id="catH" hidden><h2 class="fl-h2">All courses</h2><span class="n" id="catN"></span></div>
   <div id="catWrap" hidden>
+    <div class="tracks" id="tracks" role="tablist" aria-label="Track" hidden></div>
     <div class="tools" role="search">
       <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         <input class="fl-input" id="q" type="search" placeholder="Search courses" aria-label="Search courses" autocomplete="off"></label>
@@ -217,7 +239,7 @@
         '<p translate="no">'+esc(flPick(t,'summary')||flPick(t,'welcome'))+'</p></div>'+
         (live&&st!=='todo'?'<div class="fl-track"><i style="width:'+e.percent+'%"></i></div>':'')+
         '<div class="meta">'+(live&&st!=='todo'?e.percent+'% · '+e.required_done+' of '+e.required_total+' steps':esc(stepsText(t)))+'</div>'+
-        '<div class="foot"><span class="lpill">'+pill(t)+'</span><span class="go">'+label+' →</span></div>'+
+        '<div class="foot"><span class="lpill">'+pill(t)+'</span>'+flTrackBadge(t.track)+'<span class="go">'+label+' →</span></div>'+
       '</div></a>';
   }
 
@@ -228,7 +250,7 @@
     return '<a class="row" href="'+href(t)+'" style="'+(col?'--c:'+col:'')+'">'+
       '<span class="bar"></span>'+
       '<div class="t"><h3 translate="no">'+esc(flPick(t,'title'))+'</h3>'+
-        '<div class="sub">'+pill(t)+
+        '<div class="sub">'+pill(t)+flTrackBadge(t.track)+
           (e.due_at?'<span class="due-s'+(late?' late':'')+'">'+(late?'Overdue':'Due')+' '+esc(d(e.due_at))+'</span>':'')+
           (e.source==='assigned'&&e.assigned_by_name?'<span class="meta">Assigned by '+esc(e.assigned_by_name)+'</span>':'')+
         '</div></div>'+
@@ -241,13 +263,14 @@
   // The catalogue's own state. Filter and sort are this visitor's
   // conveniences, so they are remembered in this browser only.
   var PAGE=12, ALL=[], shown=PAGE;
-  var S={q:'',st:'all',kind:'',sort:'new',view:'grid'};
-  try{ var saved=JSON.parse(localStorage.getItem('fl_home_cat')||'{}'); ['sort','view'].forEach(function(k){ if(saved[k]) S[k]=saved[k]; }); }catch(e){}
-  function remember(){ try{ localStorage.setItem('fl_home_cat',JSON.stringify({sort:S.sort,view:S.view})); }catch(e){} }
+  var S={q:'',st:'all',kind:'',sort:'new',view:'grid',track:'all'};
+  try{ var saved=JSON.parse(localStorage.getItem('fl_home_cat')||'{}'); ['sort','view','track'].forEach(function(k){ if(saved[k]) S[k]=saved[k]; }); }catch(e){}
+  function remember(){ try{ localStorage.setItem('fl_home_cat',JSON.stringify({sort:S.sort,view:S.view,track:S.track})); }catch(e){} }
 
   var CHIPS=[['all','All'],['new','Not started'],['going','In progress'],['done','Completed']];
   function norm(s){ return String(s||'').toLowerCase(); }
   function matches(t){
+    if(S.track!=='all'&&t.track!==S.track) return false;
     if(S.st!=='all'){ var st=status(t); if(S.st==='going'?(st!=='going'&&st!=='todo'):st!==S.st) return false; }
     if(S.kind&&!((t.counts||{})[S.kind]>0)) return false;
     if(S.q){
@@ -266,7 +289,20 @@
     }[S.sort]||function(){return 0;};
     return list.slice().sort(by);
   }
+  function drawTracks(){
+    var tabs=$('tracks');
+    var any=ALL.some(function(t){return !!flTrack(t.track);});
+    tabs.hidden=!any; if(!any){ S.track='all'; return; }
+    if(S.track!=='all'&&!flTrack(S.track)) S.track='all';
+    var items=[{key:'all',cls:'',icon:'',name:'All',n:ALL.length}].concat(window.FL_TRACKS.map(function(tr){
+      var t=flTrack(tr.key); return {key:t.key,cls:t.cls,icon:t.icon,name:t.name,n:ALL.filter(function(x){return x.track===t.key;}).length};
+    }));
+    tabs.innerHTML=items.map(function(i){
+      return '<button type="button" role="tab" class="'+i.cls+'" data-track="'+i.key+'" aria-pressed="'+(S.track===i.key)+'">'+i.icon+'<span'+(i.key==='all'?'':' translate="no"')+'>'+esc(i.name)+'</span><span class="c">'+i.n+'</span></button>';
+    }).join('');
+  }
   function drawCat(){
+    drawTracks();
     var base=ALL.filter(function(t){ var keep=S.st; S.st='all'; var m=matches(t); S.st=keep; return m; });
     $('chips').innerHTML=CHIPS.map(function(c){
       var n=c[0]==='all'?base.length:base.filter(function(t){ var st=status(t); return c[0]==='going'?(st==='going'||st==='todo'):st===c[0]; }).length;
@@ -289,6 +325,7 @@
     $('sort').value=S.sort;
     $('sort').addEventListener('change',function(){ S.sort=this.value; shown=PAGE; remember(); drawCat(); });
     $('chips').addEventListener('click',function(ev){ var b=ev.target.closest('[data-st]'); if(!b) return; S.st=b.getAttribute('data-st'); shown=PAGE; drawCat(); });
+    $('tracks').addEventListener('click',function(ev){ var b=ev.target.closest('[data-track]'); if(!b) return; S.track=b.getAttribute('data-track'); shown=PAGE; remember(); drawCat(); });
     document.querySelector('.views').addEventListener('click',function(ev){ var b=ev.target.closest('[data-view]'); if(!b) return; S.view=b.getAttribute('data-view'); remember(); drawCat(); });
     $('pager').addEventListener('click',function(ev){ if(ev.target.closest('#more')){ shown+=PAGE; drawCat(); } });
     $('cat').addEventListener('click',function(ev){ if(ev.target.closest('#clear')){ S.q='';S.st='all';S.kind=''; $('q').value=''; $('kind').value=''; shown=PAGE; drawCat(); } });
@@ -320,6 +357,12 @@
       '<div class="stat"><div class="v teal">'+done+'</div><div class="l">Completed</div></div>'+
       '<div class="stat"><div class="v">'+going+'</div><div class="l">In progress</div></div>'+
       '<div class="stat"><div class="v">'+(secs>=3600?(Math.round(secs/360)/10)+'h':mins(secs)+'m')+'</div><div class="l">Time recorded</div></div>';
+
+    // Progress per track, when the courses have tracks: a goal per programme.
+    var tracked=window.FL_TRACKS.map(function(tr){ var t=flTrack(tr.key); var on=mine.filter(function(x){return x.track===t.key;}); var d=on.filter(function(x){return status(x)==='done';}).length; return {t:t,n:on.length,d:d}; }).filter(function(x){return x.n;});
+    $('tstats').hidden=!tracked.length;
+    $('tstats').innerHTML=tracked.map(function(x){ var pct=Math.round(x.d/x.n*100);
+      return '<div class="tstat '+x.t.cls+'"><div class="n">'+x.t.icon+'<span translate="no">'+esc(x.t.name)+'</span></div><div class="v">'+x.d+' / '+x.n+'</div><div class="fl-track"><i style="width:'+pct+'%"></i></div></div>'; }).join('');
 
     // Pick up where you left off: the most recently active course that is not finished.
     var open=mine.filter(function(t){return status(t)==='going'&&t.enrolment.last_active_at;})

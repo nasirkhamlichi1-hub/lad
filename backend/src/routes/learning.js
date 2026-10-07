@@ -384,6 +384,7 @@ router.get('/catalogue', requireAuth, async (req, res, next) => {
         summary_ar: m.summary_ar || null,
         welcome_ar: m.welcome_ar || null,
         gate: m.gate || 'none',
+        track: m.track || null,
         steps: t.published,
         counts: t.counts,
         learners: t.learners,

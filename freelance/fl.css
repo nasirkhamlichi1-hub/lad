@@ -113,6 +113,12 @@ html.fl-embed .fl-foot{display:none}
 .fl-note.err{background:var(--fl-red-soft);border-color:#EFC1C1;color:#8A2626}
 .fl-empty{color:var(--fl-muted);font-style:italic;padding:22px 0;text-align:center;font-size:13.5px}
 
+/* ─── Tracks: a course is legal practice or practice operations ─── */
+.fl-track-badge{display:inline-flex;align-items:center;gap:5px;font:600 11px var(--fl-sans);letter-spacing:.02em;border-radius:999px;padding:3px 9px 3px 7px;white-space:nowrap;vertical-align:middle}
+.fl-track-badge svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linejoin:round;flex-shrink:0}
+.fl-track-badge.tr-legal{background:var(--fl-sun-soft);color:var(--fl-navy)}
+.fl-track-badge.tr-ops{background:var(--fl-teal-soft);color:var(--fl-teal-d)}
+
 /* ─── Forms ────────────────────────────────────────────────────── */
 .fl-label{display:block;font:500 12px var(--fl-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--fl-muted);margin-bottom:6px}
 .fl-input,.fl-select,.fl-textarea{width:100%;font:14px var(--fl-sans);color:var(--fl-ink);background:var(--fl-white);border:1px solid var(--fl-line2);border-radius:8px;padding:10px 12px;transition:border-color .15s}

@@ -107,6 +107,18 @@ a.adm-btn-light{text-decoration:none;display:inline-flex;align-items:center}
 .adm-trow:hover .adm-tdel{border-color:var(--line2)}
 .adm-tdel:hover{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
 .adm-trow[aria-current="true"]{border-color:var(--green);background:var(--green-bg)}
+.adm-trow.tr-legal{border-inline-start:3px solid var(--lad-navy,#202A50)}
+.adm-trow.tr-ops{border-inline-start:3px solid var(--lad-gold,#9D7714)}
+.adm-shelf{display:flex;align-items:center;gap:8px;margin:14px 0 6px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--slate3)}
+.adm-shelf:first-child{margin-top:0}
+.adm-shelf::after{content:'';flex:1;height:1px;background:var(--line)}
+.adm-shelf .fl-track-badge{font-size:11px;letter-spacing:0;text-transform:none}
+/* the track picker: one button per track */
+.adm-seg{display:flex;gap:6px;flex-wrap:wrap}
+.adm-seg button{display:inline-flex;align-items:center;gap:7px;font:600 13px var(--sans,inherit);padding:8px 14px;border-radius:9px;border:1.5px solid var(--line2);background:var(--white);color:var(--slate2);cursor:pointer}
+.adm-seg button svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linejoin:round}
+.adm-seg button[aria-pressed="true"].tr-legal{background:var(--lad-navy,#202A50);border-color:var(--lad-navy,#202A50);color:#fff}
+.adm-seg button[aria-pressed="true"].tr-ops{background:var(--lad-gold,#9D7714);border-color:var(--lad-gold,#9D7714);color:#fff}
 .adm-trow .n{font-weight:600;font-size:13px}
 .adm-trow .c{font-family:var(--mono);font-size:10px;color:var(--slate3);letter-spacing:.2px}
 .adm-grow{flex:1;min-width:0}
@@ -231,6 +243,11 @@ html.lad-embed .adm-wrap{padding-top:14px;max-width:none}
           <input class="adm-input" id="f-title" placeholder="e.g. Court etiquette and advocacy conduct">
         </div>
         <div class="adm-field">
+          <label class="adm-label">Track</label>
+          <div class="adm-seg" id="f-track" role="group" aria-label="Track"></div>
+          <p class="adm-hint" style="margin:6px 0 0">Legal Practice is the law; Practice Operations is running a practice. Lawyers see the two on separate tabs, with progress counted per track.</p>
+        </div>
+        <div class="adm-field">
           <label class="adm-label" for="f-title-ar">العنوان بالعربية <span style="font-weight:400;color:var(--adm-muted,#8a8f98)">(Arabic title — shown on the Arabic site)</span></label>
           <input class="adm-input" id="f-title-ar" dir="rtl" lang="ar" placeholder="مثال: آداب المحكمة وسلوك المرافعة">
         </div>
@@ -322,6 +339,19 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
 // An error is shown where it will be seen: the banner sits at the top of
 // the workspace, so when the admin is working further down the page it is
 // brought into view rather than appearing off-screen.
+// The track picker: one button per track; a second click on the chosen
+// one clears it (a course with no track is shown to everyone, as before).
+function buildSeg(id,value){
+  var box=$(id); if(!box) return;
+  box.innerHTML=window.FL_TRACKS.map(function(tr){
+    return '<button type="button" class="'+tr.cls+'" data-track="'+tr.key+'" aria-pressed="'+(value===tr.key)+'">'+tr.icon+esc(tr.en)+'</button>';
+  }).join('');
+  box.onclick=function(ev){ var b=ev.target.closest('[data-track]'); if(!b) return;
+    var on=b.getAttribute('aria-pressed')==='true';
+    box.querySelectorAll('button').forEach(function(x){ x.setAttribute('aria-pressed','false'); });
+    if(!on) b.setAttribute('aria-pressed','true'); };
+}
+function segValue(id){ var b=$(id)&&$(id).querySelector('[aria-pressed="true"]'); return b?b.getAttribute('data-track'):null; }
 function banner(t,k){
   $('banner').innerHTML=t?'<div class="adm-banner '+(k||'warn')+'">'+t+'</div>':'';
   if(t&&k==='err'&&$('banner').scrollIntoView) $('banner').scrollIntoView({behavior:'smooth',block:'center'});
@@ -332,8 +362,13 @@ async function loadTopics(){
   try{
     var r=await api.listTopics();
     if(!r.topics.length){ $('tlist').innerHTML='<div class="adm-empty">No courses yet.</div>'; return; }
-    $('tlist').innerHTML=r.topics.map(function(t){
-      return '<button class="adm-trow" data-t="'+esc(t.topic_id)+'"'+(selected===t.topic_id?' aria-current="true"':'')+'>'+
+    // One shelf per track, then whatever has not been placed yet.
+    var shelves=window.FL_TRACKS.map(function(tr){return {key:tr.key,label:flTrackBadge(tr.key),rows:r.topics.filter(function(t){return t.track===tr.key;})};});
+    shelves.push({key:'',label:'<span>Not placed in a track</span>',rows:r.topics.filter(function(t){return !flTrack(t.track);})});
+    $('tlist').innerHTML=shelves.filter(function(s){return s.rows.length;}).map(function(s){
+      return '<div class="adm-shelf">'+s.label+'<span class="adm-count">'+s.rows.length+'</span></div>'+s.rows.map(function(t){
+      var tr=flTrack(t.track);
+      return '<button class="adm-trow'+(tr?' '+tr.cls:'')+'" data-t="'+esc(t.topic_id)+'"'+(selected===t.topic_id?' aria-current="true"':'')+'>'+
         '<div class="adm-grow"><div class="n" translate="no">'+esc(t.title)+'</div>'+
         '<div class="c">'+t.activities+' steps · '+t.learners+' on it</div></div>'+
         '<span class="adm-chip'+(t.published===t.activities&&t.activities?' live':'')+'">'+t.published+'/'+t.activities+'</span>'+
@@ -342,6 +377,7 @@ async function loadTopics(){
           '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>'+
           '<path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></span>'+
       '</button>';
+      }).join('');
     }).join('');
     Array.prototype.forEach.call(document.querySelectorAll('[data-t]'),function(b){
       b.onclick=function(){ open(b.dataset.t); };
@@ -396,6 +432,7 @@ function renderDetail(){
           : '<div class="adm-banner ok">All steps are ready. Publish when you want lawyers to see them.</div>'))+
     '<div class="adm-field" style="margin:12px 0 16px">'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+        '<div style="grid-column:1/-1"><label class="adm-label">Track</label><div class="adm-seg" id="hub-track" role="group" aria-label="Track"></div></div>'+
         '<div><label class="adm-label" for="hub-title">Title (English)</label>'+
           '<input class="adm-input" id="hub-title" value="'+esc(t.title||'')+'"></div>'+
         '<div><label class="adm-label" for="hub-title-ar">العنوان (Arabic)</label>'+
@@ -511,6 +548,7 @@ function renderDetail(){
     '</div>';
 
   $('preview').onclick=function(){ window.open('course.html?topic='+encodeURIComponent(t.topic_id),'_blank','noopener'); };
+  buildSeg('hub-track',t.track);
   $('hub-wel-save').onclick=async function(){
     var btn=$('hub-wel-save'), was=btn.textContent;
     btn.disabled=true; btn.textContent='Saving…';
@@ -520,6 +558,7 @@ function renderDetail(){
       // upsertModule replaces every field, so send the whole existing row
       // with only the welcome changed — anything omitted would be wiped.
       await api.saveTopicModules(t.topic_id,[Object.assign({},m,{
+        track:segValue('hub-track'),
         title:$('hub-title').value.trim()||m.title,
         summary:$('hub-sum').value.trim()||null,
         welcome:$('hub-wel').value.trim()||null,
@@ -1505,12 +1544,16 @@ document.addEventListener('keydown',function(e){
 });
 
 // ─── create ────────────────────────────────────────────────────
+buildSeg('f-track',null);
 $('create').onclick=async function(){
   var title=$('f-title').value.trim();
   if(!title){ banner('Give the course a title first.','err'); $('f-title').focus(); return; }
+  var track=segValue('f-track');
+  if(!track){ banner('Choose a track for the course — Legal Practice or Practice Operations.','err'); return; }
   try{
     var t=await api.createTopic({
       title:title,
+      track:track,
       summary:$('f-sum').value.trim()||null,
       welcome:$('f-wel').value.trim()||null,
       title_ar:$('f-title-ar').value.trim()||null,

@@ -173,6 +173,7 @@ async function createTopic(input = {}, userId = null) {
     : Math.max(0, Math.min(100, Number(input.pass_score) || 0));
 
   const moduleRow = await store.upsertModule(courseId, {
+    track: input.track,
     title: input.module_title || title,
     summary: input.summary || null,
     // The author's own words to the learner — rendered at the top of the hub.
@@ -301,6 +302,7 @@ async function getTopic(courseId) {
     summary_ar: modules.length ? (modules[0].summary_ar || null) : null,
     welcome_ar: modules.length ? (modules[0].welcome_ar || null) : null,
     gate: modules.length ? modules[0].gate : 'none',
+    track: modules.length ? (modules[0].track || null) : null,
     modules,
     activities: decorated,
     counts: {
@@ -336,6 +338,7 @@ async function listTopics() {
       topic_id: r.course_id,
       title: mods.length ? mods[0].title : r.course_id,
       title_ar: mods.length ? (mods[0].title_ar || null) : null,
+      track: mods.length ? (mods[0].track || null) : null,
       activities: Number(r.activities) || 0,
       published: Number(r.published) || 0,
       counts: {

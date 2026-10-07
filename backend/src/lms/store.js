@@ -74,8 +74,8 @@ async function upsertModule(courseId, input = {}) {
   const id = input.id || db.genId('mod');
   const ts = db.now();
   await db.run(
-    `INSERT INTO course_module (id, course_id, title, summary, welcome, title_ar, summary_ar, welcome_ar, position, gate, published, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO course_module (id, course_id, title, summary, welcome, title_ar, summary_ar, welcome_ar, position, gate, published, track, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (id) DO UPDATE SET
        title = excluded.title,
        summary = excluded.summary,
@@ -86,6 +86,7 @@ async function upsertModule(courseId, input = {}) {
        position = excluded.position,
        gate = excluded.gate,
        published = excluded.published,
+       track = excluded.track,
        updated_at = excluded.updated_at`,
     [
       id,
@@ -101,6 +102,8 @@ async function upsertModule(courseId, input = {}) {
       Number(input.position) || 0,
       input.gate === 'sequential' ? 'sequential' : 'none',
       input.published === false ? 0 : 1,
+      // The course's track (legal / operations), kept on its first section.
+      require('./tracks').cleanTrack(input.track),
       ts,
       ts,
     ]
@@ -813,6 +816,7 @@ async function getOutline(courseId, lawyerId = null, { includeUnpublished = fals
     title_ar: modules.length ? (modules[0].title_ar || null) : null,
     summary_ar: modules.length ? (modules[0].summary_ar || null) : null,
     welcome_ar: modules.length ? (modules[0].welcome_ar || null) : null,
+    track: modules.length ? (modules[0].track || null) : null,
     sections: visible,
   };
 }

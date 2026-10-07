@@ -78,7 +78,8 @@
     display:inline-flex; align-items:center; gap:6px; margin-bottom:22px; }
   a.back:hover { color:#fff; }
   .eyebrow { font:600 10px/1 var(--mono); letter-spacing:.22em; text-transform:uppercase;
-    color:rgba(255,255,255,.55); margin-bottom:10px; }
+    color:rgba(255,255,255,.55); margin-bottom:10px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .eyebrow .fl-track-badge { letter-spacing:0; text-transform:none; background:rgba(255,255,255,.14); color:#fff; }
   .hero-grid { display:flex; gap:34px; align-items:center; }
   .hero-main { flex:1; min-width:0; }
   h1 { font-family:var(--serif); font-weight:400; font-size:clamp(30px,5vw,44px);
@@ -563,7 +564,7 @@
 <header class="hero">
   <div class="wrap">
     <a class="back" href="home.html">← My training</a>
-    <div class="eyebrow"><span data-fl-brand>Legal Affairs Department</span> · Freelance Lawyers Training</div>
+    <div class="eyebrow" id="eyebrow"><span data-fl-brand>Legal Affairs Department</span> · Freelance Lawyers Training</div>
     <div class="hero-grid">
       <div class="hero-main">
         <h1 id="title">Course</h1>
@@ -672,6 +673,17 @@
     // Topic identity comes top-level from the server, so it survives even
     // when every step is still an unpublished draft (empty sections).
     $('title').textContent = flPick(data, 'title') || flPick(first, 'title') || TOPIC;
+    // The track above the title, and the hero in the track's colour unless
+    // the admin gave this course a colour of its own.
+    var track = window.flTrack && flTrack(data.track);
+    if (track) {
+      $('eyebrow').innerHTML = '<span data-fl-brand>Legal Affairs Department</span> · <span class="fl-track-badge ' + track.cls + '" translate="no">' + track.icon + esc(track.name) + '</span>';
+      if (!HUB_ACCENT) {
+        var root = document.documentElement;
+        var shades = track.key === 'legal' ? ['#161D38', '#202A50', '#2C3765'] : ['#4A3608', '#70550F', '#9D7714'];
+        root.style.setProperty('--hero-a', shades[0]); root.style.setProperty('--hero-b', shades[1]); root.style.setProperty('--hero-c', shades[2]);
+      }
+    }
     document.title = ($('title').textContent || 'Course') + ' · Freelance Lawyers Training';
 
     var w = $('welcome');
@@ -1065,6 +1077,7 @@
   // gradient — is derived from that one accent, so a single choice re-skins
   // the hub without anyone picking six shades by hand.
   var HUB = null;
+  var HUB_ACCENT = false;   // the admin gave this course its own colour
   function toRgb(h) {
     h = String(h || '').replace('#', '');
     return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
@@ -1084,6 +1097,7 @@
 
     var accent = String(hub.accent || '').trim();
     if (/^#[0-9a-fA-F]{6}$/.test(accent)) {
+      HUB_ACCENT = true;
       var c = toRgb(accent);
       var dark = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
       var paper = dark ? [22, 26, 22] : [255, 255, 255];
