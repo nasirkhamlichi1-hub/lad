@@ -164,7 +164,17 @@ function extractedDir(materialId) {
   return path.join(CACHE_ROOT, String(materialId).replace(/[^A-Za-z0-9_-]/g, '_'));
 }
 
-async function ensureExtracted(m) {
+// One unpack per package at a time: a package's first screen asks for many
+// files at once, and each must not start its own extraction.
+const extracting = new Map();
+function ensureExtracted(m) {
+  if (!extracting.has(m.id)) {
+    extracting.set(m.id, extractOnce(m).finally(() => extracting.delete(m.id)));
+  }
+  return extracting.get(m.id);
+}
+
+async function extractOnce(m) {
   const dir = extractedDir(m.id);
   const meta = path.join(dir, '.lad-entry.json');
   if (fs.existsSync(meta)) {
@@ -336,18 +346,40 @@ function playHeaders(res, contentType) {
     "font-src 'self' data:; connect-src 'self' data: blob:; frame-src 'self' blob:; " +
     'frame-ancestors ' + FRAME_ANCESTORS);
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  // Helmet also sends X-Frame-Options: SAMEORIGIN, which would forbid the
+  // portal (another origin) to frame the player. frame-ancestors above is
+  // the rule that applies here.
+  res.removeHeader('X-Frame-Options');
 }
 
-router.get('/play/:token/__player', (req, res) => {
-  const t = verifyPlayToken(req.params.token);
-  if (!t) return res.status(401).send('This assessment link has expired — go back to the hub and start it again.');
-  const m = db.prepare('SELECT * FROM course_materials WHERE id = ?').get(t.mid);
-  if (!m) return res.status(404).send('Package not found');
-  let info;
-  try { info = JSON.parse(fs.readFileSync(path.join(extractedDir(t.mid), '.lad-entry.json'), 'utf8')); }
-  catch (_) { return res.status(409).send('Package not prepared — go back to the hub and start it again.'); }
+// What the player answers when it cannot play. It is shown inside the
+// portal's frame, so it carries the player's framing rules — with the API's
+// own rules ("frame nothing") Chrome hides it behind "This content is
+// blocked", and the reason never reaches the learner or the admin.
+function playError(res, status, message) {
   playHeaders(res, 'text/html; charset=utf-8');
-  res.send(playerPage(req.params.token, info));
+  res.status(status).send('<!doctype html><meta charset="utf-8"><body style="font:15px/1.6 system-ui,sans-serif;color:#333;' +
+    'display:grid;place-items:center;height:100vh;margin:0;padding:24px;text-align:center"><p>' +
+    String(message).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) + '</p></body>');
+}
+
+// The package's unpacked files live in this instance's temp folder. A
+// second instance behind the load balancer, or a restart, starts without
+// them — so a play request unpacks on demand instead of failing.
+async function preparedInfo(t) {
+  const m = db.prepare('SELECT * FROM course_materials WHERE id = ?').get(t.mid);
+  if (!m) return { error: [404, MISSING] };
+  try { return { info: await ensureExtracted(m) }; }
+  catch (e) { return { error: [e.status || 500, e.message || 'The module could not be opened.'] }; }
+}
+
+router.get('/play/:token/__player', async (req, res) => {
+  const t = verifyPlayToken(req.params.token);
+  if (!t) return playError(res, 401, 'This module link has expired — close it and open the module again from the course page.');
+  const p = await preparedInfo(t);
+  if (p.error) return playError(res, p.error[0], p.error[1]);
+  playHeaders(res, 'text/html; charset=utf-8');
+  res.send(playerPage(req.params.token, p.info));
 });
 
 const MIME = {
@@ -359,12 +391,16 @@ const MIME = {
   txt: 'text/plain; charset=utf-8', csv: 'text/csv', map: 'application/json', wasm: 'application/wasm', pdf: 'application/pdf',
 };
 
-router.get('/play/:token/*', (req, res) => {
+router.get('/play/:token/*', async (req, res) => {
   const t = verifyPlayToken(req.params.token);
   if (!t) return res.status(401).json({ error: 'bad_token' });
   const rel = decodeURIComponent(req.params[0] || '').replace(/\\/g, '/');
   if (!rel || rel.split('/').some((p) => p === '..')) return res.status(400).json({ error: 'bad_path' });
   const dir = extractedDir(t.mid);
+  if (!fs.existsSync(path.join(dir, '.lad-entry.json'))) {
+    const p = await preparedInfo(t);
+    if (p.error) return playError(res, p.error[0], p.error[1]);
+  }
   const file = path.join(dir, rel.split('?')[0]);
   if (!file.startsWith(dir + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
     return res.status(404).json({ error: 'not_found' });
