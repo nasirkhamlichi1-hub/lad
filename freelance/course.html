@@ -417,13 +417,6 @@
   .lx-pin.on { color:var(--gold); }
 
   /* questions to try, situations, views, reading meter */
-  .lx-sugs { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:14px 0 0 20px; }
-  [dir="rtl"] .lx-sugs { margin:14px 20px 0 0; }
-  .lx-sugs:empty { display:none; }
-  .lx-sugs-label { font-size:13px; color:var(--ink3); }
-  .lx-sug { font:inherit; font-size:13.5px; color:var(--ink); background:var(--surface); border:1px dashed var(--line); border-radius:999px;
-    padding:6px 13px; cursor:pointer; text-align:start; }
-  .lx-sug:hover { border-color:var(--gold); border-style:solid; }
   .lx-finder { margin-top:34px; }
   .lx-finder:empty { display:none; }
   .lx-finder-head { font:700 15px var(--sans); color:var(--ink); margin-bottom:10px; }
@@ -486,7 +479,6 @@
     .lib { padding:22px 18px 20px; }
     .lx-grid, .lx-tl-items, .lx-subj-items { grid-template-columns:1fr; }
     .lx-meter i { width:90px; }
-    .lx-sugs { margin-inline:0; }
       .lib-ask { padding-inline-start:14px; }
     .lib-ask button { padding:10px 16px; }
   }
@@ -1418,20 +1410,6 @@
     });
   }
 
-  // Questions worth asking, drafted from the documents — one click asks.
-  function renderSuggestions() {
-    var box = $('lx-sugs');
-    if (!box) return;
-    var Q = LIB.insights && LIB.insights.questions;
-    var list = Q ? ((isAr() ? Q.ar : Q.en) || []) : [];
-    if (!list.length) { box.innerHTML = ''; return; }
-    box.innerHTML = '<span class="lx-sugs-label">' + T('Try:', 'جرّب:') + '</span>' +
-      list.map(function (q) { return '<button type="button" class="lx-sug">' + esc(q) + '</button>'; }).join('');
-    box.querySelectorAll('.lx-sug').forEach(function (b) {
-      b.onclick = function () { $('lib-q').value = b.textContent; askLibrary(); };
-    });
-  }
-
   // The documents behind the open lesson's steps, shown in its drawer.
   function decoratePath() {
     var box = document.querySelector('.pw-drawer .pw-law');
@@ -1465,7 +1443,7 @@
   }
 
   function refreshLibrary() {
-    renderSuggestions(); renderFinder(); renderLibList(); decoratePath();
+    renderFinder(); renderLibList(); decoratePath();
   }
 
   function renderAnswer(out, question) {
@@ -1575,7 +1553,6 @@
           '<button type="submit" id="lib-ask">' + T('Ask', 'اسأل') + '</button></form>' +
         '<div class="lib-hint">' + T('Answers come only from the documents below, and cite the article they came from.',
                                       'تأتي الإجابات من المستندات أدناه فقط، مع الإشارة إلى المادة التي أُخذت منها.') + '</div>' +
-        '<div class="lx-sugs" id="lx-sugs"></div>' +
         '<div class="lib-answer" id="lib-answer" style="display:none"></div>' +
         '<div class="lx-finder" id="lx-finder"></div>' +
         '<div class="lib-list" id="lib-list"></div>' +
