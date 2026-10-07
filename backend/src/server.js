@@ -353,6 +353,10 @@ if (config.isDev) {
   log.info('playground_enabled', { url: `http://localhost:${config.port}/playground` });
 }
 
+// A playing SCORM package's request that strayed outside its folder is
+// still the package's: answered from it, or in words — never the bare 404.
+app.use(require('./routes/scorm').strayFromPlayer);
+
 // 404
 app.use((req, res) => {
   res.status(404).json({ error: 'Not Found', path: req.path, request_id: req.id });
