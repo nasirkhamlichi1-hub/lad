@@ -390,15 +390,31 @@ router.settleFromState = settleFromState;
 router.verdictOf = verdictOf;
 
 // ─── The player ──────────────────────────────────────────────────────
+// Websites a package may load its content from. Articulate's newer Rise
+// exports are "hosted" packages: the zip is a thin shell (imsmanifest.xml,
+// indexAPI.html, a few schemas) whose launch page loads the real course from
+// Articulate's content servers. Without this, the player's policy refused
+// that script and that frame, and Chrome showed "This content is blocked"
+// in place of every such module. SCORM_CONTENT_HOSTS adds more, comma-separated.
+const CONTENT_HOSTS = [
+  'https://*.articulateusercontent.com',
+  'https://articulateusercontent.com',
+  'https://*.articulate.com',
+].concat(String(process.env.SCORM_CONTENT_HOSTS || '').split(',').map((s) => s.trim()).filter((s) => /^https:\/\//.test(s)))
+  .filter((v, i, a) => a.indexOf(v) === i)
+  .join(' ');
+
 function playHeaders(res, contentType) {
   res.setHeader('Content-Type', contentType);
   // Helmet's API-wide CSP says default-src 'none' / frame-ancestors 'none';
   // this route genuinely serves embeddable HTML, so it overrides with a
-  // policy scoped to the package sandbox.
+  // policy scoped to the package sandbox — plus the content hosts above.
+  const H = ' ' + CONTENT_HOSTS;
   res.setHeader('Content-Security-Policy',
-    "default-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; " +
-    "style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; " +
-    "font-src 'self' data:; connect-src 'self' data: blob:; frame-src 'self' blob:; " +
+    "default-src 'self' blob:" + H + "; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:" + H + '; ' +
+    "style-src 'self' 'unsafe-inline'" + H + "; img-src 'self' data: blob:" + H + "; media-src 'self' data: blob:" + H + '; ' +
+    "font-src 'self' data:" + H + "; connect-src 'self' data: blob:" + H + "; frame-src 'self' blob:" + H + '; ' +
+    "worker-src 'self' blob:" + H + '; ' +
     'frame-ancestors ' + FRAME_ANCESTORS);
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   // Helmet's "no-referrer" would strip the Referer from the package's own
