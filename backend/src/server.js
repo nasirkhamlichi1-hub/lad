@@ -81,12 +81,13 @@ app.use(helmet({
 }));
 
 // ─── CORS ───────────────────────────────────────────────────────────────
-const allowedOrigins = (config.corsOrigin || '').split(',').map(s => s.trim()).filter(Boolean);
+const allowedOrigins = (config.corsOrigin || '').split(',').map(s => s.trim().replace(/\/+$/, '')).filter(Boolean);
 // Always-allowed production origins, independent of any env config — so the
 // live site works even if CORS_ORIGIN(S) isn't set on the host.
 const ALWAYS_ALLOW = [
   'https://legalaffairstraining.com',
   'https://www.legalaffairstraining.com',
+  'https://freelance.legalaffairstraining.com',
   'https://icy-mud-07d00dc03.7.azurestaticapps.net',
   'https://nice-ocean-0a45eff10.7.azurestaticapps.net',
 ];

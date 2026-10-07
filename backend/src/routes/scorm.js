@@ -60,14 +60,21 @@ const MAX_ZIP_BYTES = 600 * 1024 * 1024;
 // another host (the Living Horizon Static Web App) can frame the player
 // without a code change: the same setting that lets it call the API lets
 // it play a package.
+// CORS_ORIGIN=* lets any site call the API, so it lets any https page frame
+// the player too — it used to be dropped here, which left the API answering
+// a portal whose every module Chrome then refused to show ("This content is
+// blocked"). Origins are compared without a trailing slash.
+const CORS_LIST = String(config.corsOrigin || '').split(',').map((s) => s.trim().replace(/\/+$/, '')).filter(Boolean);
 const FRAME_ANCESTORS = [
   "'self'",
   'https://legalaffairstraining.com',
   'https://www.legalaffairstraining.com',
+  'https://freelance.legalaffairstraining.com',
   'https://icy-mud-07d00dc03.7.azurestaticapps.net',
   'https://nice-ocean-0a45eff10.7.azurestaticapps.net',
 ]
-  .concat(String(config.corsOrigin || '').split(',').map((s) => s.trim()).filter((s) => /^https?:\/\//.test(s)))
+  .concat(CORS_LIST.filter((s) => /^https?:\/\//.test(s)))
+  .concat(CORS_LIST.includes('*') ? ['https:'] : [])
   .concat(config.isDev ? ['http://localhost:*', 'http://127.0.0.1:*'] : [])
   .filter((v, i, a) => a.indexOf(v) === i)
   .join(' ');

@@ -319,7 +319,13 @@ var KIND={
 };
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
-function banner(t,k){ $('banner').innerHTML=t?'<div class="adm-banner '+(k||'warn')+'">'+t+'</div>':''; }
+// An error is shown where it will be seen: the banner sits at the top of
+// the workspace, so when the admin is working further down the page it is
+// brought into view rather than appearing off-screen.
+function banner(t,k){
+  $('banner').innerHTML=t?'<div class="adm-banner '+(k||'warn')+'">'+t+'</div>':'';
+  if(t&&k==='err'&&$('banner').scrollIntoView) $('banner').scrollIntoView({behavior:'smooth',block:'center'});
+}
 
 // ─── topic list ────────────────────────────────────────────────
 async function loadTopics(){
@@ -561,16 +567,24 @@ function renderDetail(){
 }
 
 async function doAdd(){
-  var at=$('a-at').value;
+  var at=$('a-at').value, kind=$('a-kind').value, btn=$('a-go'), was=btn.textContent;
+  btn.disabled=true; btn.textContent='Adding…';
   try{
     TOPIC=await api.addTopicSteps(TOPIC.topic_id,{
-      kind:$('a-kind').value,
+      kind:kind,
       count:Number($('a-count').value)||1,
       at:at===''?null:Number(at)
     });
     banner('');
     await loadTopics(); renderDetail();
-  }catch(e){ banner('Could not add that: '+esc(e.message),'err'); }
+  }catch(e){
+    // A server older than this page does not know the paired lesson yet.
+    var old=kind==='lesson'&&/unknown step type/i.test(e.message||'');
+    banner(old
+      ? 'The server has not been updated for paired lessons yet — the update is on its way. Try again in a few minutes.'
+      : 'Could not add that: '+esc(e.message),'err');
+    btn.disabled=false; btn.textContent=was;
+  }
 }
 
 async function move(id,delta){
