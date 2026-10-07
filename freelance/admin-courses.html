@@ -109,6 +109,14 @@ a.adm-btn-light{text-decoration:none;display:inline-flex;align-items:center}
 .adm-trow[aria-current="true"]{border-color:var(--green);background:var(--green-bg)}
 .adm-trow.tr-legal{border-inline-start:3px solid var(--lad-navy,#202A50)}
 .adm-trow.tr-ops{border-inline-start:3px solid var(--lad-gold,#9D7714)}
+.adm-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}
+.adm-tile{border-radius:10px;padding:12px 14px;color:#fff;position:relative;overflow:hidden;display:grid;gap:8px}
+.adm-tile.tr-legal{background:linear-gradient(135deg,#161D38,#2C3765)}.adm-tile.tr-ops{background:linear-gradient(135deg,#4A3608,#9D7714)}
+.adm-tile .h{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px}
+.adm-tile .h svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2;stroke-linejoin:round}
+.adm-tile .c{font-size:12px;color:rgba(255,255,255,.75)}
+.adm-tile button{justify-self:start;font:600 12px var(--sans,inherit);padding:6px 11px;border-radius:7px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;cursor:pointer}
+.adm-tile button:hover{background:rgba(255,255,255,.22)}
 .adm-shelf{display:flex;align-items:center;gap:8px;margin:14px 0 6px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--slate3)}
 .adm-shelf:first-child{margin-top:0}
 .adm-shelf::after{content:'';flex:1;height:1px;background:var(--line)}
@@ -365,7 +373,11 @@ async function loadTopics(){
     // One shelf per track, then whatever has not been placed yet.
     var shelves=window.FL_TRACKS.map(function(tr){return {key:tr.key,label:flTrackBadge(tr.key),rows:r.topics.filter(function(t){return t.track===tr.key;})};});
     shelves.push({key:'',label:'<span>Not placed in a track</span>',rows:r.topics.filter(function(t){return !flTrack(t.track);})});
-    $('tlist').innerHTML=shelves.filter(function(s){return s.rows.length;}).map(function(s){
+    // The two programmes, a tile each: its count, and a way to add a course
+    // to it — the New course form opens already placed in that track.
+    var tiles='<div class="adm-tiles">'+window.FL_TRACKS.map(function(tr){ var n=r.topics.filter(function(t){return t.track===tr.key;}).length;
+      return '<div class="adm-tile '+tr.cls+'"><div class="h">'+tr.icon+esc(tr.en)+'</div><div class="c">'+n+(n===1?' course':' courses')+'</div><button type="button" data-addto="'+tr.key+'">+ Add course</button></div>'; }).join('')+'</div>';
+    $('tlist').innerHTML=tiles+shelves.filter(function(s){return s.rows.length;}).map(function(s){
       return '<div class="adm-shelf">'+s.label+'<span class="adm-count">'+s.rows.length+'</span></div>'+s.rows.map(function(t){
       var tr=flTrack(t.track);
       return '<button class="adm-trow'+(tr?' '+tr.cls:'')+'" data-t="'+esc(t.topic_id)+'"'+(selected===t.topic_id?' aria-current="true"':'')+'>'+
@@ -381,6 +393,8 @@ async function loadTopics(){
     }).join('');
     Array.prototype.forEach.call(document.querySelectorAll('[data-t]'),function(b){
       b.onclick=function(){ open(b.dataset.t); };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-addto]'),function(b){
+      b.onclick=function(){ buildSeg('f-track',b.dataset.addto); $('f-title').focus(); $('f-title').scrollIntoView({behavior:'smooth',block:'center'}); }; });
     });
     // Deleting is deliberate: it names the topic, warns when learners are
     // enrolled, and takes the whole thing — steps, lessons, progress, library.

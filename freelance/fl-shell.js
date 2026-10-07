@@ -251,8 +251,8 @@
   var ICON_SCALES = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M5 21h14M12 6l-6 2 6 2 6-2z"/><path d="M6 8l-3 7h6zM18 8l-3 7h6z"/></svg>';
   var ICON_GEAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
   var TRACKS = [
-    { key: 'legal', en: 'Legal Practice', ar: 'الممارسة القانونية', cls: 'tr-legal', icon: ICON_SCALES },
-    { key: 'operations', en: 'Practice Operations', ar: 'إدارة المكتب', cls: 'tr-ops', icon: ICON_GEAR }
+    { key: 'legal', en: 'Legal Practice', ar: 'الممارسة القانونية', tag_en: 'The law you practise', tag_ar: 'القانون الذي تمارسه', cls: 'tr-legal', icon: ICON_SCALES },
+    { key: 'operations', en: 'Practice Operations', ar: 'إدارة المكتب', tag_en: 'Running your practice', tag_ar: 'إدارة مكتبك', cls: 'tr-ops', icon: ICON_GEAR }
   ];
   window.FL_TRACKS = TRACKS;
   // The track for a key, with its name in the current language; null for none.
@@ -261,7 +261,7 @@
     for (var i = 0; i < TRACKS.length; i++) if (TRACKS[i].key === k) t = TRACKS[i];
     if (!t) return null;
     var lang = window.LAD_LANG || document.documentElement.getAttribute('lang') || 'ar';
-    return { key: t.key, cls: t.cls, icon: t.icon, name: lang === 'ar' ? t.ar : t.en, en: t.en, ar: t.ar };
+    return { key: t.key, cls: t.cls, icon: t.icon, name: lang === 'ar' ? t.ar : t.en, tag: lang === 'ar' ? t.tag_ar : t.tag_en, en: t.en, ar: t.ar };
   };
   // A small badge naming the track, or '' when the course has none.
   window.flTrackBadge = function (key) {

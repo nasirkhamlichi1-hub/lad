@@ -40,7 +40,7 @@
 
   /* ─── To do: the courses on the lawyer's list, as compact rows ─── */
   .sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:30px 0 12px}
-  .sec-h[hidden],#catWrap[hidden],.tstats[hidden]{display:none}
+  .sec-h[hidden],#catWrap[hidden],.prog[hidden],.stats[hidden]{display:none}
   .sec-h .fl-h2{margin:0}
   .sec-h .n{font:500 13px var(--fl-mono);color:var(--fl-muted);font-variant-numeric:tabular-nums}
   .rows{background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);box-shadow:var(--fl-sh);overflow:hidden}
@@ -80,25 +80,41 @@
   .views svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
   .count{font:500 12.5px var(--fl-mono);color:var(--fl-muted);margin:0 0 10px;font-variant-numeric:tabular-nums}
 
-  /* the tracks: one tab each, above the catalogue */
-  .tracks{display:flex;gap:4px;border-bottom:2px solid var(--fl-line);margin:0 0 14px}
-  .tracks button{display:inline-flex;align-items:center;gap:8px;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:10px 14px;font:600 14px var(--fl-sans);color:var(--fl-ink2);cursor:pointer}
-  .tracks button svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linejoin:round}
-  .tracks button .c{font:500 12px var(--fl-mono);color:var(--fl-muted);font-variant-numeric:tabular-nums}
-  .tracks button:hover{color:var(--fl-navy)}
-  .tracks button[aria-pressed="true"]{color:var(--fl-navy);border-bottom-color:var(--fl-teal)}
-  .tracks button[aria-pressed="true"].tr-legal{border-bottom-color:var(--fl-navy)}
-  .tracks button[aria-pressed="true"].tr-ops{border-bottom-color:var(--fl-teal)}
-  /* progress per track, under the stats */
-  .tstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
-  .tstat{background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);box-shadow:var(--fl-sh);padding:12px 16px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center}
-  .tstat .n{font-family:var(--fl-display);font-weight:700;font-size:15px;color:var(--fl-navy);display:flex;align-items:center;gap:8px}
-  .tstat .n svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linejoin:round}
-  .tstat.tr-ops .n{color:var(--fl-teal-d)}
-  .tstat .v{font:600 13px var(--fl-mono);color:var(--fl-muted);font-variant-numeric:tabular-nums}
-  .tstat .fl-track{grid-column:1/-1}
-  .tstat.tr-legal .fl-track i{background:var(--fl-navy)}
-  @media (max-width:720px){.tracks button{padding:10px 10px;font-size:13px}}
+  /* ─── The two programmes: a card each, over the hero's edge ──── */
+  .prog{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:-44px;position:relative;z-index:2}
+  .pc{background:var(--fl-white);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.10);overflow:hidden;display:grid;grid-template-rows:auto 1fr}
+  .pc .band{padding:20px 22px 16px;color:#fff;position:relative;overflow:hidden;display:flex;align-items:center;gap:14px}
+  .pc.tr-legal .band{background:linear-gradient(135deg,#161D38,#202A50 60%,#2C3765)}
+  .pc.tr-ops .band{background:linear-gradient(135deg,#4A3608,#70550F 60%,#9D7714)}
+  .pc .band::after{content:'';position:absolute;inset:0;opacity:.10;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23fff' stroke-width='1'%3E%3Cpath d='M28 6l6 16 16 6-16 6-6 16-6-16-16-6 16-6z'/%3E%3Crect x='17' y='17' width='22' height='22' transform='rotate(45 28 28)'/%3E%3C/g%3E%3C/svg%3E")}
+  .pc .band>*{position:relative;z-index:1}
+  .pc .ic{width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center;flex-shrink:0}
+  .pc .ic svg{width:25px;height:25px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linejoin:round}
+  .pc .band h2{font-family:var(--fl-display);font-weight:700;font-size:23px;margin:0;line-height:1.15}
+  .pc .band small{display:block;font-size:13px;color:rgba(255,255,255,.75);margin-top:3px}
+  .pc .pbody{padding:18px 22px 20px;display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+  .ring{width:84px;height:84px;position:relative;flex-shrink:0}
+  .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .ring b{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--fl-display);font-weight:700;font-size:19px;color:var(--fl-navy);font-variant-numeric:tabular-nums}
+  .pc .k{font:500 11px var(--fl-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fl-muted)}
+  .pc .next{font-family:var(--fl-display);font-weight:700;font-size:16px;color:var(--fl-navy);margin:2px 0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pc .next.quiet{color:var(--fl-muted);font-weight:500}
+  .pc .row2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .pc.tr-legal .fl-btn:not(.light){background:var(--fl-navy);border-color:var(--fl-navy)}
+  .pc.tr-ops .fl-btn:not(.light){background:var(--fl-teal);border-color:var(--fl-teal)}
+  @media (max-width:860px){.prog{grid-template-columns:1fr;margin-top:-30px}}
+  @media (max-width:420px){.pc .pbody{grid-template-columns:1fr}.ring{width:72px;height:72px}}
+
+  /* the catalogue grouped by programme */
+  .grp{display:flex;align-items:center;gap:12px;margin:30px 0 14px}
+  .grp h2{font-family:var(--fl-display);font-weight:700;font-size:20px;margin:0;color:var(--fl-navy);display:flex;align-items:center;gap:10px}
+  .grp h2 i{display:inline-block;width:10px;height:26px;border-radius:3px;background:var(--fl-line2)}
+  .grp.tr-legal h2 i{background:var(--fl-navy)}.grp.tr-ops h2 i{background:var(--fl-teal)}
+  .grp .n{font:500 13px var(--fl-mono);color:var(--fl-muted);font-variant-numeric:tabular-nums}
+  .grp::after{content:'';flex:1;height:1px;background:var(--fl-line)}
+  .grid.tr-legal .art{--c:#202A50}.grid.tr-ops .art{--c:#9D7714}
+  .grid.tr-legal .go{color:var(--fl-navy)}
+  .gpager{display:flex;justify-content:center;margin:14px 0 4px}
 
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
   .course{background:var(--fl-white);border:1px solid var(--fl-line);border-radius:var(--fl-r);box-shadow:var(--fl-sh);overflow:hidden;display:flex;flex-direction:column;text-decoration:none;color:inherit;transition:transform .15s,box-shadow .15s,border-color .15s}
@@ -149,8 +165,8 @@
 </div></div>
 
 <div class="fl-wrap">
+  <div class="prog" id="prog" hidden></div>
   <div class="stats" id="stats"></div>
-  <div class="tstats" id="tstats" hidden></div>
   <div id="msg"></div>
   <div id="continue"></div>
 
@@ -159,7 +175,6 @@
 
   <div class="sec-h" id="catH" hidden><h2 class="fl-h2">All courses</h2><span class="n" id="catN"></span></div>
   <div id="catWrap" hidden>
-    <div class="tracks" id="tracks" role="tablist" aria-label="Track" hidden></div>
     <div class="tools" role="search">
       <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         <input class="fl-input" id="q" type="search" placeholder="Search courses" aria-label="Search courses" autocomplete="off"></label>
@@ -239,7 +254,7 @@
         '<p translate="no">'+esc(flPick(t,'summary')||flPick(t,'welcome'))+'</p></div>'+
         (live&&st!=='todo'?'<div class="fl-track"><i style="width:'+e.percent+'%"></i></div>':'')+
         '<div class="meta">'+(live&&st!=='todo'?e.percent+'% · '+e.required_done+' of '+e.required_total+' steps':esc(stepsText(t)))+'</div>'+
-        '<div class="foot"><span class="lpill">'+pill(t)+'</span>'+flTrackBadge(t.track)+'<span class="go">'+label+' →</span></div>'+
+        '<div class="foot"><span class="lpill">'+pill(t)+'</span><span class="go">'+label+' →</span></div>'+
       '</div></a>';
   }
 
@@ -263,14 +278,13 @@
   // The catalogue's own state. Filter and sort are this visitor's
   // conveniences, so they are remembered in this browser only.
   var PAGE=12, ALL=[], shown=PAGE;
-  var S={q:'',st:'all',kind:'',sort:'new',view:'grid',track:'all'};
-  try{ var saved=JSON.parse(localStorage.getItem('fl_home_cat')||'{}'); ['sort','view','track'].forEach(function(k){ if(saved[k]) S[k]=saved[k]; }); }catch(e){}
-  function remember(){ try{ localStorage.setItem('fl_home_cat',JSON.stringify({sort:S.sort,view:S.view,track:S.track})); }catch(e){} }
+  var S={q:'',st:'all',kind:'',sort:'new',view:'grid'};
+  try{ var saved=JSON.parse(localStorage.getItem('fl_home_cat')||'{}'); ['sort','view'].forEach(function(k){ if(saved[k]) S[k]=saved[k]; }); }catch(e){}
+  function remember(){ try{ localStorage.setItem('fl_home_cat',JSON.stringify({sort:S.sort,view:S.view})); }catch(e){} }
 
   var CHIPS=[['all','All'],['new','Not started'],['going','In progress'],['done','Completed']];
   function norm(s){ return String(s||'').toLowerCase(); }
   function matches(t){
-    if(S.track!=='all'&&t.track!==S.track) return false;
     if(S.st!=='all'){ var st=status(t); if(S.st==='going'?(st!=='going'&&st!=='todo'):st!==S.st) return false; }
     if(S.kind&&!((t.counts||{})[S.kind]>0)) return false;
     if(S.q){
@@ -289,46 +303,48 @@
     }[S.sort]||function(){return 0;};
     return list.slice().sort(by);
   }
-  function drawTracks(){
-    var tabs=$('tracks');
-    var any=ALL.some(function(t){return !!flTrack(t.track);});
-    tabs.hidden=!any; if(!any){ S.track='all'; return; }
-    if(S.track!=='all'&&!flTrack(S.track)) S.track='all';
-    var items=[{key:'all',cls:'',icon:'',name:'All',n:ALL.length}].concat(window.FL_TRACKS.map(function(tr){
-      var t=flTrack(tr.key); return {key:t.key,cls:t.cls,icon:t.icon,name:t.name,n:ALL.filter(function(x){return x.track===t.key;}).length};
-    }));
-    tabs.innerHTML=items.map(function(i){
-      return '<button type="button" role="tab" class="'+i.cls+'" data-track="'+i.key+'" aria-pressed="'+(S.track===i.key)+'">'+i.icon+'<span'+(i.key==='all'?'':' translate="no"')+'>'+esc(i.name)+'</span><span class="c">'+i.n+'</span></button>';
-    }).join('');
+  // The catalogue's groups: one per programme the courses use, then
+  // whatever has no programme. With no programmes at all, one plain list.
+  var shownBy={};
+  function groups(){
+    var tracked=window.FL_TRACKS.map(function(tr){ return flTrack(tr.key); }).filter(function(t){ return ALL.some(function(x){ return x.track===t.key; }); });
+    if(!tracked.length) return [{key:'',cls:'',name:'',of:function(t){return true;}}];
+    var g=tracked.map(function(t){ return {key:t.key,cls:t.cls,name:t.name,icon:t.icon,of:function(x){return x.track===t.key;}}; });
+    if(ALL.some(function(x){ return !flTrack(x.track); })) g.push({key:'other',cls:'',name:'Other courses',icon:'',of:function(x){ return !flTrack(x.track); }});
+    return g;
   }
   function drawCat(){
-    drawTracks();
     var base=ALL.filter(function(t){ var keep=S.st; S.st='all'; var m=matches(t); S.st=keep; return m; });
     $('chips').innerHTML=CHIPS.map(function(c){
       var n=c[0]==='all'?base.length:base.filter(function(t){ var st=status(t); return c[0]==='going'?(st==='going'||st==='todo'):st===c[0]; }).length;
       return '<button type="button" class="chip" data-st="'+c[0]+'" aria-pressed="'+(S.st===c[0])+'">'+c[1]+' <span class="c">'+n+'</span></button>';
     }).join('');
-    var list=sorted(ALL.filter(matches));
-    var page=list.slice(0,shown);
-    $('cat').className='grid'+(S.view==='list'?' list':'');
-    $('cat').innerHTML=page.length?page.map(card).join(''):
-      '<div class="nores" style="grid-column:1/-1"><b>No courses match.</b>Try another word, or clear the filters. <button type="button" class="fl-btn sm light" id="clear" style="margin-inline-start:8px">Clear filters</button></div>';
-    $('count').textContent=list.length?(list.length>page.length?'Showing '+page.length+' of '+list.length+' courses':list.length+(list.length===1?' course':' courses')):'';
-    var left=list.length-page.length;
-    $('pager').innerHTML=left>0?'<button type="button" class="fl-btn light" id="more">Show '+Math.min(PAGE,left)+' more</button>':'';
+    var list=sorted(ALL.filter(matches)), total=0, html='';
+    groups().forEach(function(g){
+      var items=list.filter(g.of); if(!items.length) return;
+      var n=shownBy[g.key]||PAGE, page=items.slice(0,n), done=items.filter(function(t){return status(t)==='done';}).length;
+      total+=page.length;
+      if(g.name) html+='<div class="grp '+g.cls+'" id="grp-'+g.key+'"><h2><i></i><span'+(g.key==='other'?'':' translate="no"')+'>'+esc(g.name)+'</span></h2><span class="n">'+items.length+(items.length===1?' course':' courses')+(done?' · '+done+' complete':'')+'</span></div>';
+      html+='<div class="grid '+g.cls+(S.view==='list'?' list':'')+'">'+page.map(card).join('')+'</div>';
+      if(items.length>page.length) html+='<div class="gpager"><button type="button" class="fl-btn light" data-more="'+g.key+'">Show '+Math.min(PAGE,items.length-page.length)+' more</button></div>';
+    });
+    $('cat').className='';
+    $('cat').innerHTML=html||'<div class="nores"><b>No courses match.</b>Try another word, or clear the filters. <button type="button" class="fl-btn sm light" id="clear" style="margin-inline-start:8px">Clear filters</button></div>';
+    $('count').textContent=list.length?(list.length>total?'Showing '+total+' of '+list.length+' courses':list.length+(list.length===1?' course':' courses')):'';
+    $('pager').innerHTML='';
     document.querySelectorAll('.views button').forEach(function(b){ b.setAttribute('aria-pressed',String(b.getAttribute('data-view')===S.view)); });
   }
   function wireCat(){
     var timer;
-    $('q').addEventListener('input',function(){ clearTimeout(timer); timer=setTimeout(function(){ S.q=$('q').value.trim(); shown=PAGE; drawCat(); },120); });
-    $('kind').addEventListener('change',function(){ S.kind=this.value; shown=PAGE; drawCat(); });
+    $('q').addEventListener('input',function(){ clearTimeout(timer); timer=setTimeout(function(){ S.q=$('q').value.trim(); shownBy={}; drawCat(); },120); });
+    $('kind').addEventListener('change',function(){ S.kind=this.value; shownBy={}; drawCat(); });
     $('sort').value=S.sort;
-    $('sort').addEventListener('change',function(){ S.sort=this.value; shown=PAGE; remember(); drawCat(); });
-    $('chips').addEventListener('click',function(ev){ var b=ev.target.closest('[data-st]'); if(!b) return; S.st=b.getAttribute('data-st'); shown=PAGE; drawCat(); });
-    $('tracks').addEventListener('click',function(ev){ var b=ev.target.closest('[data-track]'); if(!b) return; S.track=b.getAttribute('data-track'); shown=PAGE; remember(); drawCat(); });
+    $('sort').addEventListener('change',function(){ S.sort=this.value; shownBy={}; remember(); drawCat(); });
+    $('chips').addEventListener('click',function(ev){ var b=ev.target.closest('[data-st]'); if(!b) return; S.st=b.getAttribute('data-st'); shownBy={}; drawCat(); });
     document.querySelector('.views').addEventListener('click',function(ev){ var b=ev.target.closest('[data-view]'); if(!b) return; S.view=b.getAttribute('data-view'); remember(); drawCat(); });
-    $('pager').addEventListener('click',function(ev){ if(ev.target.closest('#more')){ shown+=PAGE; drawCat(); } });
-    $('cat').addEventListener('click',function(ev){ if(ev.target.closest('#clear')){ S.q='';S.st='all';S.kind=''; $('q').value=''; $('kind').value=''; shown=PAGE; drawCat(); } });
+    $('cat').addEventListener('click',function(ev){
+      var m=ev.target.closest('[data-more]'); if(m){ shownBy[m.getAttribute('data-more')]=(shownBy[m.getAttribute('data-more')]||PAGE)+PAGE; drawCat(); return; }
+      if(ev.target.closest('#clear')){ S.q='';S.st='all';S.kind=''; $('q').value=''; $('kind').value=''; shownBy={}; drawCat(); } });
   }
 
   var TODO_N=5;
@@ -358,16 +374,29 @@
       '<div class="stat"><div class="v">'+going+'</div><div class="l">In progress</div></div>'+
       '<div class="stat"><div class="v">'+(secs>=3600?(Math.round(secs/360)/10)+'h':mins(secs)+'m')+'</div><div class="l">Time recorded</div></div>';
 
-    // Progress per track, when the courses have tracks: a goal per programme.
-    var tracked=window.FL_TRACKS.map(function(tr){ var t=flTrack(tr.key); var on=mine.filter(function(x){return x.track===t.key;}); var d=on.filter(function(x){return status(x)==='done';}).length; return {t:t,n:on.length,d:d}; }).filter(function(x){return x.n;});
-    $('tstats').hidden=!tracked.length;
-    $('tstats').innerHTML=tracked.map(function(x){ var pct=Math.round(x.d/x.n*100);
-      return '<div class="tstat '+x.t.cls+'"><div class="n">'+x.t.icon+'<span translate="no">'+esc(x.t.name)+'</span></div><div class="v">'+x.d+' / '+x.n+'</div><div class="fl-track"><i style="width:'+pct+'%"></i></div></div>'; }).join('');
+    // The two programmes, a card each: how far through, and the course to
+    // carry on with. They take the place of the stats and the continue
+    // panel, which they fold in.
+    var progs=window.FL_TRACKS.map(function(tr){ var t=flTrack(tr.key); var on=all.filter(function(x){return x.track===t.key;}); return {t:t,on:on}; }).filter(function(p){return p.on.length;});
+    $('prog').hidden=!progs.length; $('stats').hidden=!!progs.length;
+    $('prog').innerHTML=progs.map(function(p){
+      var n=p.on.length, d=p.on.filter(function(x){return status(x)==='done';}).length, r=36, c=2*Math.PI*r;
+      var going=p.on.filter(function(x){return status(x)==='going'&&x.enrolment.last_active_at;}).sort(function(a,b){return String(b.enrolment.last_active_at).localeCompare(String(a.enrolment.last_active_at));})[0];
+      var fresh=p.on.filter(function(x){return status(x)!=='done';})[0];
+      var next=going||fresh;
+      return '<div class="pc '+p.t.cls+'"><div class="band"><span class="ic">'+p.t.icon+'</span><div><h2 translate="no">'+esc(p.t.name)+'</h2><small><span translate="no">'+esc(p.t.tag)+'</span> — '+n+(n===1?' course':' courses')+'</small></div></div>'+
+        '<div class="pbody"><div class="ring"><svg viewBox="0 0 84 84"><circle cx="42" cy="42" r="'+r+'" fill="none" stroke="#E8E8E8" stroke-width="8"/><circle cx="42" cy="42" r="'+r+'" fill="none" stroke="'+(p.t.key==='legal'?'#202A50':'#9D7714')+'" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+(c*d/n)+' '+c+'"/></svg><b>'+d+'/'+n+'</b></div>'+
+        '<div>'+(next
+          ? '<div class="k">'+(going?'Continue with':'Start with')+'</div><div class="next" translate="no">'+esc(flPick(next,'title'))+'</div>'
+          : '<div class="k">Programme complete</div><div class="next quiet">Every course is done.</div>')+
+        '<div class="row2">'+(next?'<a class="fl-btn sm" href="'+href(next)+'">'+(going?'Continue':'Start')+' →</a>':'')+
+        '<a class="fl-btn sm light" href="#grp-'+p.t.key+'">All '+n+' courses</a></div></div></div></div>';
+    }).join('');
 
     // Pick up where you left off: the most recently active course that is not finished.
     var open=mine.filter(function(t){return status(t)==='going'&&t.enrolment.last_active_at;})
       .sort(function(a,b){return String(b.enrolment.last_active_at).localeCompare(String(a.enrolment.last_active_at));})[0];
-    if(open){
+    if(open&&!progs.length){
       $('continue').innerHTML='<div class="fl-card continue"><div class="l"><div class="fl-eyebrow">Pick up where you left off</div>'+
         '<h3 translate="no">'+esc(flPick(open,'title'))+'</h3><p translate="no">'+esc(flPick(open,'summary')||flPick(open,'welcome'))+'</p>'+
         '<div class="fl-track" style="max-width:360px"><i style="width:'+open.enrolment.percent+'%"></i></div>'+
