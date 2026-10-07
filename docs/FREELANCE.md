@@ -93,6 +93,7 @@ re-run. The manual steps below are the same thing by hand.
    | `DATABASE_URL` | `/home/data/freelance.sqlite` |
    | `JWT_SECRET` | a fresh random value — never the CLPD instance's |
    | `JWT_EXPIRES_IN` | `8h` |
+   | `SCORM_CONTENT_HOSTS` | optional, comma-separated `https://` hosts a module may load content from. Articulate's hosted Rise exports (`*.articulateusercontent.com`) are always allowed. |
    | `CORS_ORIGIN` | `https://freelance.legalaffairstraining.com,https://<swa-host>.azurestaticapps.net` — also lets the portal frame the SCORM player |
    | `PUBLIC_API_BASE` | `https://lad-freelance-api.azurewebsites.net` |
    | `FRONTEND_POST_LOGIN_URL` | `https://freelance.legalaffairstraining.com/index.html` (required by the boot check; UAE Pass is not used) |
