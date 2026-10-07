@@ -354,6 +354,10 @@ function playHeaders(res, contentType) {
     "font-src 'self' data:; connect-src 'self' data: blob:; frame-src 'self' blob:; " +
     'frame-ancestors ' + FRAME_ANCESTORS);
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  // Helmet's "no-referrer" would strip the Referer from the package's own
+  // requests; same-origin keeps it for this host only, which is how a
+  // request that strays outside the package is still known to be its.
+  res.setHeader('Referrer-Policy', 'same-origin');
   // Helmet also sends X-Frame-Options: SAMEORIGIN, which would forbid the
   // portal (another origin) to frame the player. frame-ancestors above is
   // the rule that applies here.
@@ -401,7 +405,9 @@ const MIME = {
 
 router.get('/play/:token/*', async (req, res) => {
   const t = verifyPlayToken(req.params.token);
-  if (!t) return playError(res, 401, 'This module link has expired — close it and open the module again from the course page.');
+  // Not a token at all but a package path one "../" too high (it climbed
+  // out over the token): the package that asked for it answers.
+  if (!t) return strayFromPlayer(req, res, () => playError(res, 401, 'This module link has expired — close it and open the module again from the course page.'));
   // Express has already decoded the path once; decoding it again broke any
   // file name with a "%" in it.
   const rel = String(req.params[0] || '').replace(/\\/g, '/').split('?')[0];
@@ -569,5 +575,41 @@ function playerPage(token, info) {
 </script>
 </body></html>`;
 }
+
+// ─── Requests that stray outside the package ─────────────────────────
+// A package can ask for a file by an address outside /play/<token>/ — a
+// root-relative "/scormcontent/index.html", or a "../" too many. Those
+// used to reach the API's 404, whose "frame-ancestors 'none'" Chrome shows
+// as "This content is blocked" over the whole module. Mounted just before
+// the 404: a request whose Referer is a playing package is answered from
+// that package if the file is in it, and otherwise in words, naming the
+// address it asked for.
+function strayFromPlayer(req, res, next) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  let ref;
+  try { ref = new URL(req.get('referer') || ''); } catch (_) { return next(); }
+  if (ref.host !== String(req.headers.host || '').toLowerCase()) return next();
+  const m = ref.pathname.match(/^\/api\/v1\/scorm\/play\/([^/]+)\//);
+  const t = m && verifyPlayToken(m[1]);
+  if (!t) return next();
+  const dir = extractedDir(t.mid);
+  const asked = req.path.replace(/^\/+/, '');
+  // The path as asked, and without the API prefix it picked up by climbing
+  // (inside this router req.path starts at "play/").
+  const tries = [asked, asked.replace(/^(api\/v1\/scorm\/)?(play\/)?/, '')].filter(Boolean);
+  for (const rel of tries) {
+    if (rel.split('/').some((p) => p === '..')) continue;
+    const file = fs.existsSync(dir) && findFile(dir, rel);
+    if (file) {
+      playHeaders(res, MIME[path.extname(file).slice(1).toLowerCase()] || 'application/octet-stream');
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      return fs.createReadStream(file).pipe(res);
+    }
+  }
+  log.warn('scorm_stray_request', { material: t.mid, path: req.path, from: ref.pathname.replace(/play\/[^/]+/, 'play/<token>') });
+  return playError(res, 404, 'This module asked for ' + req.path + ', which is not in its package. ' +
+    'Export it again from Articulate (Publish → LMS → SCORM) and upload the zip to this step as downloaded.');
+}
+router.strayFromPlayer = strayFromPlayer;
 
 module.exports = router;
