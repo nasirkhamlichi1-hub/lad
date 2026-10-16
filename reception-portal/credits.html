@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Credits — Legal Affairs Department · CLPD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{--green:#006B3F;--green2:#008549;--green-d:#004d2e;--green-bg:#eaf6ef;--green-border:#bfe0cd;--gold:#C9913A;--gold-l:#f0cc88;--sky:#0e6ba8;--sky-bg:#eaf4fb;--ink:#0a0e14;--navy:#1c1f2e;--slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;--line:#e8ecf1;--line2:#d8dfe7;--paper:#f8fafb;--paper2:#f1f4f7;--white:#fff;--red:#c0392b;
+--serif:'Instrument Serif',Georgia,serif;--sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--sh:0 2px 4px rgba(10,14,20,.06),0 8px 24px rgba(10,14,20,.06)}
+html,body{color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;background:var(--paper);min-height:100vh}
+a{color:var(--green2);text-decoration:none}.wrap{max-width:820px;margin:0 auto;padding:0 24px}.muted{color:var(--slate3)}
+.top{background:var(--navy)}.top-in{display:flex;align-items:center;gap:13px;height:62px;max-width:820px;margin:0 auto;padding:0 24px;color:#fff}
+.emblem{width:36px;height:36px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:9px;display:grid;place-items:center}.emblem svg{width:18px;height:22px}
+.brand-t{font-family:var(--serif);font-size:17px}.brand-s{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.5);letter-spacing:1.2px;text-transform:uppercase;font-weight:600}
+.spacer{flex:1}.top a,.top span{color:rgba(255,255,255,.8);font-size:12.5px;font-weight:500}
+.hero{background:linear-gradient(160deg,#1c1407,#0a0e14 66%);color:#fff;position:relative;overflow:hidden}.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(700px 300px at 84% -10%,rgba(201,145,58,.22),transparent 70%)}
+.hero-in{position:relative;max-width:820px;margin:0 auto;padding:38px 24px 32px}
+.eyebrow{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold-l);margin-bottom:12px}
+.bal{display:flex;align-items:flex-end;gap:16px;margin-top:8px}.bal-n{font-family:var(--serif);font-size:60px;line-height:.9}.bal-l{font-size:14px;color:rgba(255,255,255,.74);padding-bottom:8px}
+main{padding:28px 0 70px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh);margin-bottom:18px}.card-b{padding:22px}
+.h2{font-size:15px;font-weight:700;margin-bottom:6px}.sub{color:var(--slate2);font-size:13px;margin-bottom:16px}
+.packs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.pack{border:1.5px solid var(--line2);border-radius:14px;padding:16px;text-align:center;cursor:pointer;transition:border-color .15s,transform .12s,box-shadow .15s}
+.pack:hover{transform:translateY(-2px);box-shadow:var(--sh)}.pack.on{border-color:var(--green2);background:var(--green-bg)}
+.pack-n{font-family:var(--serif);font-size:30px}.pack-c{font-size:12px;color:var(--slate2);margin-top:4px}
+.row{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}
+input{padding:11px 13px;border:1.5px solid var(--line2);border-radius:10px;font-size:14px;max-width:140px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600;padding:13px 22px;border-radius:12px;border:0;cursor:pointer;background:linear-gradient(135deg,var(--green2),var(--green));color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.tx{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line);font-size:13px}
+.tx:first-child{border-top:0}.tx .d{font-family:var(--mono);font-weight:700;min-width:54px}.d.pos{color:var(--green2)}.d.neg{color:var(--red)}
+.empty{color:var(--slate3);text-align:center;padding:30px 18px}
+.gate{max-width:400px;margin:8vh auto;padding:0 24px}.gate .card{padding:0}.gate label{display:block;font-size:12px;font-weight:650;color:var(--slate);margin:10px 0 5px}.gate input{width:100%;max-width:none}
+.err{color:#c0392b;font-size:13px;margin-top:8px;display:none}
+.ok{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green-d);padding:13px 15px;border-radius:11px;font-size:13.5px;display:none;margin-bottom:14px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:11px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:100}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <div class="emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="#fff"/></svg></div>
+  <div><div class="brand-t">Credits</div><div class="brand-s">Dubai Legal Affairs · CLPD</div></div>
+  <div class="spacer"></div><span id="who"></span><a href="/portal" style="margin-left:14px">← Platform</a>
+</div></header>
+
+<section id="gate" class="gate" style="display:none">
+  <h2 style="font-family:var(--serif);font-size:26px;font-weight:400;text-align:center;margin-bottom:14px">Sign in to manage credits</h2>
+  <div class="card"><div class="card-b">
+    <label>Email</label><input id="gEmail" type="email" placeholder="you@firm.ae"/>
+    <label>Password</label><input id="gPass" type="password" placeholder="Password"/>
+    <div id="gErr" class="err"></div>
+    <button class="btn" id="gBtn" style="margin-top:14px;width:100%">Sign in</button>
+  </div></div>
+</section>
+
+<main id="app" style="display:none">
+  <header class="hero"><div class="hero-in">
+    <div class="eyebrow">Continuing Legal Professional Development</div>
+    <div class="bal"><div class="bal-n" id="balNum">0</div><div class="bal-l">credits available</div></div>
+  </div></header>
+  <div class="wrap">
+    <div class="card"><div class="card-b">
+      <div id="buyOk" class="ok"></div>
+      <div class="h2">Buy credits</div>
+      <div class="sub" id="priceLine">Credits are used to book and attend CLPD courses.</div>
+      <div class="packs" id="packs"></div>
+      <div class="row"><input id="customAmt" type="number" min="1" placeholder="Other amount"/><button class="btn" id="buyBtn">Buy credits</button></div>
+    </div></div>
+    <div class="card"><div class="card-b">
+      <div class="h2">Transactions</div>
+      <div id="ledger" style="margin-top:8px"></div>
+    </div></div>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var el=function(i){return document.getElementById(i);};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function toast(m){var t=el('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},2800);}
+  function token(){try{return localStorage.getItem('tr_token')||'';}catch(e){return '';}}
+  var PRICE=50, sel=0;
+  function gate(){el('app').style.display='none';el('gate').style.display='';}
+  function show(){el('gate').style.display='none';el('app').style.display='';load();}
+
+  function load(){
+    fetch('/api/credits?token='+encodeURIComponent(token())).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      if(!j){gate();return;}
+      PRICE=j.pricePerCredit||50;
+      el('balNum').textContent=j.balance||0;
+      el('priceLine').textContent='Credits are used to book and attend CLPD courses. AED '+PRICE+' per credit.';
+      var packs=[5,10,25,50];
+      el('packs').innerHTML=packs.map(function(n){return '<div class="pack" data-n="'+n+'"><div class="pack-n">'+n+'</div><div class="pack-c">AED '+(n*PRICE)+'</div></div>';}).join('');
+      Array.prototype.forEach.call(document.querySelectorAll('.pack'),function(p){p.onclick=function(){Array.prototype.forEach.call(document.querySelectorAll('.pack'),function(x){x.classList.remove('on');});p.classList.add('on');sel=Number(p.getAttribute('data-n'));el('customAmt').value='';};});
+      var tx=j.ledger||[];
+      el('ledger').innerHTML=tx.length?tx.map(function(t){var pos=(t.delta||0)>=0;return '<div class="tx"><span class="d '+(pos?'pos':'neg')+'">'+(pos?'+':'')+esc(t.delta)+'</span><span style="flex:1">'+esc(t.note||t.type)+'</span><span class="muted">'+esc((t.at||'').slice(0,10))+'</span></div>';}).join(''):'<div class="empty">No transactions yet.</div>';
+    }).catch(function(){gate();});
+  }
+  el('buyBtn').onclick=function(){
+    var amt=Number(el('customAmt').value)||sel;
+    if(!amt||amt<1){toast('Choose a pack or enter an amount.');return;}
+    var btn=el('buyBtn');btn.disabled=true;btn.textContent='Processing…';el('buyOk').style.display='none';
+    fetch('/api/credits',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'buy',amount:amt,token:token()})})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+      .then(function(o){ btn.disabled=false;btn.textContent='Buy credits';
+        if(!o.ok){toast((o.j&&o.j.error)||'Could not start the purchase.');return;}
+        if(o.j.checkoutUrl){ location.href=o.j.checkoutUrl; return; }
+        el('buyOk').textContent=o.j.message||'Purchase request received.';el('buyOk').style.display='block';load();
+      }).catch(function(){btn.disabled=false;btn.textContent='Buy credits';toast('Network error.');});
+  };
+
+  el('gBtn').onclick=function(){
+    var email=(el('gEmail').value||'').trim().toLowerCase(),pass=el('gPass').value||'';
+    if(!email||!pass){el('gErr').textContent='Enter your email and password.';el('gErr').style.display='block';return;}
+    el('gBtn').disabled=true;el('gErr').style.display='none';
+    fetch('/api/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:email,password:pass})})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+      .then(function(o){ el('gBtn').disabled=false;
+        if(!o.ok||!o.j.token){el('gErr').textContent=(o.j&&o.j.error)||'Could not sign in.';el('gErr').style.display='block';return;}
+        try{localStorage.setItem('tr_token',o.j.token);localStorage.setItem('tr_name',o.j.name||email);}catch(e){}
+        el('who').textContent='👤 '+(o.j.name||email);show();
+      }).catch(function(){el('gBtn').disabled=false;el('gErr').textContent='Network error.';el('gErr').style.display='block';});
+  };
+  el('gPass').addEventListener('keydown',function(e){if(e.key==='Enter')el('gBtn').click();});
+  (function boot(){ if(!token()){gate();return;} try{var n=localStorage.getItem('tr_name');if(n)el('who').textContent='👤 '+n;}catch(e){} show(); })();
+})();
+</script>
+</body>
+</html>

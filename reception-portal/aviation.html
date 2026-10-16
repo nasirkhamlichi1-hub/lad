@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Aviation Law — Litigation & Arbitration · Legal Affairs Department, Government of Dubai</title>
+<meta name="description" content="Aviation law knowledge hub for Dubai Legal Affairs Department: international conventions, UAE legislation, Q&A with Maryam, and a live AI training module."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{
+  --green:#006B3F;--green2:#008549;--green-d:#004d2e;--green-l:#00a85e;
+  --gold:#C9913A;--gold2:#dba84e;--gold-l:#f0cc88;--gold-bg:#fdf6e8;
+  --sky:#0e6ba8;--sky2:#1488cc;--sky-d:#0a4f7a;--sky-l:#7cc4ef;--sky-bg:#eaf4fb;
+  --ink:#0a0e14;--navy:#1c1f2e;--navy2:#12141e;
+  --slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;--line:#e8ecf1;--line2:#d8dfe7;--amber:#92540a;
+  --paper:#f8fafb;--paper2:#f1f4f7;--white:#fff;--red:#c0392b;
+  --serif:'Instrument Serif',Georgia,serif;--sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:12px;--r-lg:18px;--r-xl:24px;
+  --sh:0 2px 4px rgba(10,14,20,.06),0 8px 24px rgba(10,14,20,.06);
+  --sh-md:0 4px 8px rgba(10,14,20,.08),0 16px 40px rgba(10,14,20,.08);
+  --sh-xl:0 16px 32px rgba(10,14,20,.12),0 48px 96px rgba(10,14,20,.14);
+}
+html{scroll-behavior:smooth}
+html,body{color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;background:var(--paper)}
+a{color:var(--green2);text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+em{font-style:italic}
+
+/* ── Nav ── */
+.nav{background:var(--navy);position:sticky;top:0;z-index:200;box-shadow:0 3px 14px rgba(0,0,0,.38)}
+.nav-in{display:flex;align-items:center;gap:16px;height:62px;max-width:1180px;margin:0 auto;padding:0 24px}
+.logos{display:flex;align-items:center;gap:11px;cursor:pointer}
+.emblem{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:10px;display:grid;place-items:center;flex-shrink:0}
+.emblem svg{width:20px;height:24px}
+.brand-t{font-family:var(--serif);font-size:18px;color:#fff;line-height:1.05}
+.brand-s{font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.5);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:2px}
+.nav-links{display:flex;align-items:center;gap:2px;margin-left:auto}
+.nav-link{color:rgba(255,255,255,.82);font-size:12.5px;font-weight:500;padding:8px 11px;border-radius:7px;cursor:pointer;transition:background .15s,color .15s}
+.nav-link:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-cta{display:inline-flex;align-items:center;gap:7px;background:var(--gold);color:#fff;font-size:12.5px;font-weight:700;padding:9px 15px;border-radius:8px;margin-left:8px;white-space:nowrap}
+.nav-cta:hover{background:var(--gold2);color:#fff}
+@media(max-width:880px){.brand-s,.nav-link{display:none}.nav-links{margin-left:auto}}
+
+/* ── Hero ── */
+.hero{position:relative;overflow:hidden;background:linear-gradient(160deg,#0a1c2c,#0a0e14 62%);color:#fff}
+.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(900px 360px at 78% -10%,rgba(20,136,204,.30),transparent 70%),radial-gradient(700px 320px at 10% 120%,rgba(201,145,58,.12),transparent 70%)}
+.hero-in{position:relative;max-width:1180px;margin:0 auto;padding:clamp(40px,7vw,84px) 24px clamp(34px,6vw,64px)}
+.eyebrow{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;color:var(--sky-l);margin-bottom:16px}
+.hero h1{font-family:var(--serif);font-size:clamp(34px,6vw,60px);font-weight:400;line-height:1.02;letter-spacing:-.015em;max-width:14ch}
+.hero p{font-size:clamp(15px,2.2vw,18px);color:rgba(255,255,255,.78);max-width:62ch;margin-top:18px;line-height:1.55}
+.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.btn{display:inline-flex;align-items:center;gap:9px;font-size:14px;font-weight:600;padding:14px 22px;border-radius:12px;cursor:pointer;border:1px solid transparent;transition:transform .12s,box-shadow .12s,background .2s}
+.btn-pri{background:linear-gradient(135deg,var(--green2),var(--green));color:#fff;box-shadow:0 10px 28px rgba(0,133,73,.36)}
+.btn-pri:hover{transform:translateY(-1px);color:#fff}
+.btn-ghost{background:rgba(255,255,255,.07);color:#fff;border-color:rgba(255,255,255,.2)}
+.btn-ghost:hover{background:rgba(255,255,255,.14);color:#fff}
+.hero-stats{display:flex;flex-wrap:wrap;gap:30px;margin-top:38px;padding-top:28px;border-top:1px solid rgba(255,255,255,.12)}
+.stat-v{font-family:var(--serif);font-size:30px;color:#fff;line-height:1}
+.stat-l{font-size:11.5px;color:rgba(255,255,255,.6);margin-top:5px;max-width:20ch}
+
+/* ── Sections ── */
+section{padding:clamp(44px,7vw,80px) 0}
+.sec-head{max-width:680px;margin-bottom:34px}
+.sec-kicker{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--sky);margin-bottom:10px}
+.sec-head h2{font-family:var(--serif);font-size:clamp(27px,4.4vw,40px);font-weight:400;letter-spacing:-.01em;line-height:1.08}
+.sec-head p{color:var(--slate2);font-size:15px;margin-top:12px;line-height:1.6}
+.group-label{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--slate3);margin:6px 0 16px;display:flex;align-items:center;gap:10px}
+.group-label:after{content:"";flex:1;height:1px;background:var(--line)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+.law{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;box-shadow:var(--sh);transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden}
+.law:hover{transform:translateY(-3px);box-shadow:var(--sh-md)}
+.law:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(var(--sky2),var(--sky-d))}
+.law.uae:before{background:linear-gradient(var(--gold),var(--amber))}
+.law-top{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.tag{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:4px 9px;border-radius:999px;background:var(--paper2);color:var(--slate2);border:1px solid var(--line)}
+.tag.yr{background:var(--sky-bg);color:var(--sky-d);border-color:#bcdcf0}
+.law.uae .tag.yr{background:var(--gold-bg);color:var(--amber);border-color:#e6d6ad}
+.law h3{font-family:var(--serif);font-size:22px;font-weight:400;line-height:1.12;margin-bottom:4px}
+.law-sub{font-size:12px;color:var(--slate3);font-weight:500;margin-bottom:12px}
+.law p{font-size:13.5px;color:var(--slate);line-height:1.6}
+.law ul{list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:7px}
+.law li{font-size:12.5px;color:var(--slate2);line-height:1.5;padding-left:18px;position:relative}
+.law li:before{content:"";position:absolute;left:0;top:7px;width:7px;height:7px;border-radius:2px;background:var(--sky2)}
+.law.uae li:before{background:var(--gold)}
+
+/* ── Q&A ── */
+.qa-wrap{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh);overflow:hidden}
+.qa{border-bottom:1px solid var(--line)}
+.qa:last-child{border-bottom:0}
+.qa summary{list-style:none;cursor:pointer;padding:18px 22px;display:flex;align-items:center;gap:14px;font-size:15px;font-weight:600;color:var(--ink)}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary:hover{background:var(--paper)}
+.qa-ic{width:24px;height:24px;flex-shrink:0;border-radius:7px;background:var(--paper2);color:var(--sky);display:grid;place-items:center;font-size:17px;transition:transform .2s,background .2s,color .2s}
+.qa[open] .qa-ic{transform:rotate(45deg);background:var(--sky);color:#fff}
+.qa-a{padding:0 22px 20px 60px;font-size:14px;color:var(--slate);line-height:1.65}
+.qa-a b{color:var(--sky-d);font-weight:650}
+
+/* ── Training CTA ── */
+.train{background:linear-gradient(135deg,#0d2018,#0a0e14);border-radius:var(--r-xl);padding:clamp(30px,5vw,52px);color:#fff;position:relative;overflow:hidden}
+.train:before{content:"";position:absolute;right:-60px;top:-60px;width:300px;height:300px;background:radial-gradient(circle,rgba(0,168,94,.3),transparent 65%)}
+.train-in{position:relative;display:flex;align-items:center;gap:34px;flex-wrap:wrap}
+.train-tx{flex:1;min-width:280px}
+.train .eyebrow{color:var(--sky-l)}
+.train h2{font-family:var(--serif);font-size:clamp(26px,4vw,38px);font-weight:400;line-height:1.08;margin-bottom:12px}
+.train p{color:rgba(255,255,255,.78);font-size:15px;line-height:1.6;max-width:54ch}
+.train-feats{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.feat{font-size:12px;font-weight:600;color:rgba(255,255,255,.85);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);padding:7px 12px;border-radius:999px}
+
+/* ── Footer ── */
+footer{background:var(--navy2);color:rgba(255,255,255,.65);padding:40px 0;font-size:12.5px}
+.foot-in{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between}
+.foot-in a{color:rgba(255,255,255,.8)}
+
+/* ── Maryam widget ── */
+.lex-fab{position:fixed;bottom:22px;right:22px;z-index:1500;display:inline-flex;align-items:center;gap:9px;background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;border:none;border-radius:30px;padding:13px 20px;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 8px 26px rgba(0,107,63,.34);transition:transform .15s}
+.lex-fab:hover{transform:translateY(-2px)}
+.lex-fab svg{width:18px;height:18px;fill:var(--gold-l)}
+.lex-panel{position:fixed;bottom:22px;right:22px;z-index:1600;width:390px;max-width:calc(100vw - 28px);height:580px;max-height:calc(100vh - 40px);background:#fff;border-radius:18px;box-shadow:var(--sh-xl);display:none;flex-direction:column;overflow:hidden}
+.lex-panel.on{display:flex}
+.lex-head{background:var(--navy);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:11px}
+.lex-orb{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--green),var(--green2));display:grid;place-items:center;flex-shrink:0}
+.lex-orb svg{width:18px;height:18px;stroke:var(--gold-l);fill:none;stroke-width:2}
+.lex-h-t{font-family:var(--serif);font-size:18px;line-height:1.05}
+.lex-h-s{font-size:11px;color:rgba(255,255,255,.6)}
+.lex-close{margin-left:auto;background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:22px;line-height:1;padding:2px 6px}
+.lex-close:hover{color:#fff}
+.lex-body{flex:1;overflow-y:auto;padding:16px;background:var(--paper);display:flex;flex-direction:column;gap:11px}
+.lex-msg{max-width:88%;padding:11px 14px;border-radius:14px;font-size:13.5px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word}
+.lex-msg.user{align-self:flex-end;background:var(--green);color:#fff;border-bottom-right-radius:4px}
+.lex-msg.bot{align-self:flex-start;background:#fff;color:var(--slate);border:1px solid var(--line);border-bottom-left-radius:4px}
+.lex-msg.bot b{color:var(--green);font-weight:650}
+.lex-typing{align-self:flex-start;display:flex;gap:4px;padding:13px 15px;background:#fff;border:1px solid var(--line);border-radius:14px}
+.lex-typing span{width:7px;height:7px;border-radius:50%;background:var(--slate3);animation:lexdot 1s infinite}
+.lex-typing span:nth-child(2){animation-delay:.15s}.lex-typing span:nth-child(3){animation-delay:.3s}
+@keyframes lexdot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.lex-suggest{display:flex;flex-wrap:wrap;gap:7px;padding:0 16px 10px;background:var(--paper)}
+.lex-chip{font-size:12px;font-weight:500;color:var(--green-d);background:#fff;border:1px solid var(--line2);border-radius:999px;padding:7px 12px;cursor:pointer}
+.lex-chip:hover{border-color:var(--green);background:#eaf6ef}
+.lex-foot{display:flex;gap:8px;padding:11px 13px;border-top:1px solid var(--line);background:#fff}
+.lex-input{flex:1;border:1.5px solid var(--line2);border-radius:11px;padding:10px 12px;font-family:var(--sans);font-size:13.5px;outline:none;resize:none;max-height:88px;line-height:1.4}
+.lex-input:focus{border-color:var(--green)}
+.lex-send{background:var(--green);border:none;color:#fff;border-radius:11px;width:44px;display:grid;place-items:center;cursor:pointer;flex-shrink:0}
+.lex-send:hover{background:var(--green-d)}.lex-send:disabled{opacity:.5}
+.lex-send svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2.2}
+.lex-note{font-size:9px;color:var(--slate3);text-align:center;padding:0 14px 8px;background:#fff;line-height:1.4}
+@media(max-width:520px){.lex-fab span{display:none}}
+</style>
+</head>
+<body>
+
+<nav class="nav"><div class="nav-in">
+  <div class="logos" onclick="location.href='/'">
+    <div class="emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="#fff" opacity=".95"/></svg></div>
+    <div><div class="brand-t">Aviation Law</div><div class="brand-s">Dubai Legal Affairs Department · CLPD</div></div>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="#legislation">Legislation</a>
+    <a class="nav-link" href="#qa">Q&amp;A</a>
+    <a class="nav-link" onclick="lexToggle(true)">Ask Maryam</a>
+    <a class="nav-link" href="/portal">⊞ Platform</a>
+    <a class="nav-cta" href="/ai-trainer-live.html">🎓 AI Training</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="hero-in">
+  <div class="eyebrow">Continuing Legal Professional Development</div>
+  <h1>Litigation &amp; Arbitration in Aviation Law</h1>
+  <p>The international conventions and the UAE statutory regime that govern carrier liability, unfair competition, and the arbitration and enforcement of aviation disputes — with a live AI trainer to take you through it, one-to-one.</p>
+  <div class="hero-cta">
+    <a class="btn btn-pri" href="/ai-trainer-live.html">🎓 Start the AI Training</a>
+    <a class="btn btn-ghost" href="#legislation">Browse the legislation</a>
+  </div>
+  <div class="hero-stats">
+    <div><div class="stat-v">6</div><div class="stat-l">International &amp; UAE instruments</div></div>
+    <div><div class="stat-v">3</div><div class="stat-l">Pillars: liability · competition · arbitration</div></div>
+    <div><div class="stat-v">7</div><div class="stat-l">Interactive training sections</div></div>
+    <div><div class="stat-v">~1 hr</div><div class="stat-l">Full programme with assessment</div></div>
+  </div>
+</div></header>
+
+<!-- ── LEGISLATION ── -->
+<section id="legislation"><div class="wrap">
+  <div class="sec-head">
+    <div class="sec-kicker">The Framework</div>
+    <h2>Relevant legislation &amp; treaties</h2>
+    <p>Aviation liability is layered: the international conventions apply first, and UAE law applies "without prejudice to the international agreements to which the State is a party." Here is the core of both.</p>
+  </div>
+
+  <div class="group-label">International conventions</div>
+  <div class="cards" id="intlCards"></div>
+
+  <div class="group-label" style="margin-top:34px">UAE legislation</div>
+  <div class="cards" id="uaeCards"></div>
+</div></section>
+
+<!-- ── Q&A ── -->
+<section id="qa" style="background:var(--paper2)"><div class="wrap">
+  <div class="sec-head">
+    <div class="sec-kicker">Quick answers</div>
+    <h2>Aviation law — Q&amp;A</h2>
+    <p>The questions practitioners ask most. For anything deeper, ask Maryam or take the interactive training.</p>
+  </div>
+  <div class="qa-wrap" id="qaList"></div>
+  <div style="margin-top:18px;font-size:13px;color:var(--slate2)">Have a different question? <a onclick="lexToggle(true)" style="font-weight:650;cursor:pointer">Ask Maryam →</a></div>
+</div></section>
+
+<!-- ── TRAINING CTA ── -->
+<section><div class="wrap"><div class="train"><div class="train-in">
+  <div class="train-tx">
+    <div class="eyebrow">Live AI Trainer</div>
+    <h2>Learn it one-to-one with the AI trainer</h2>
+    <p>A photoreal trainer takes you through carrier liability, unfair competition, arbitration and enforcement — teaching, checking your understanding, and tracking your CPD. About an hour, with a scored assessment.</p>
+    <div class="train-feats"><span class="feat">Interactive 1-2-1</span><span class="feat">Voice &amp; on-screen slides</span><span class="feat">Engagement scored</span><span class="feat">Progress &amp; CPD saved</span></div>
+  </div>
+  <div><a class="btn btn-pri" href="/ai-trainer-live.html" style="font-size:15px;padding:16px 28px">🎓 Open the AI Training module →</a></div>
+</div></div></div></section>
+
+<footer><div class="wrap foot-in">
+  <div>© Government of Dubai · Legal Affairs Department · Aviation Law CLPD. Information only — not legal advice.</div>
+  <div><a href="/index.html">Service Hub</a> &nbsp;·&nbsp; <a href="/ai-trainer-live.html">AI Training</a></div>
+</div></footer>
+
+<!-- ── Maryam ── -->
+<button class="lex-fab" id="lexFab" onclick="lexToggle(true)">
+  <svg viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4z"/></svg>
+  <span>Ask Maryam</span>
+</button>
+<div class="lex-panel" id="lexPanel">
+  <div class="lex-head">
+    <div class="lex-orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4z"/></svg></div>
+    <div><div class="lex-h-t">Maryam</div><div class="lex-h-s">Aviation law assistant</div></div>
+    <button class="lex-close" onclick="lexToggle(false)">&times;</button>
+  </div>
+  <div class="lex-body" id="lexBody"></div>
+  <div class="lex-suggest" id="lexSuggest"></div>
+  <div class="lex-foot">
+    <textarea class="lex-input" id="lexInput" rows="1" placeholder="Ask about carrier liability, limits, arbitration…" onkeydown="lexKey(event)"></textarea>
+    <button class="lex-send" id="lexSend" onclick="lexSend()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+  </div>
+  <div class="lex-note">Maryam is an AI aid grounded in the aviation programme — CLPD information, not legal advice. Verify anything critical.</div>
+</div>
+
+<script>
+var el=function(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
+var esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');};
+
+/* ── Legislation data ── */
+var INTL=[
+  {yr:'1929',tag:'Warsaw',title:'Warsaw Convention',sub:'Unification of certain rules relating to international carriage by air',
+   p:'The foundation of carrier liability. Its key move is to reverse the burden of proof in favour of the passenger or shipper.',
+   pts:['The consumer need not prove the carrier’s fault','Carrier escapes liability only by proving it took all necessary measures — or that this was impossible','Contributory fault of the injured party is a defence']},
+  {yr:'1944',tag:'Chicago',title:'Chicago Convention',sub:'International civil aviation — established ICAO',
+   p:'Harmonises international air navigation and underpins the closed list of jurisdictions that constrains where aviation disputes may be brought.',
+   pts:['Created the International Civil Aviation Organization (ICAO)','Source of harmonised air-transport rules','Frames the mandatory local jurisdiction that carries into arbitration']},
+  {yr:'1963',tag:'Tokyo',title:'Tokyo Convention',sub:'Offences and certain other acts committed on board aircraft',
+   p:'Governs jurisdiction over offences and acts affecting safety committed on board, and the powers of the aircraft commander.',
+   pts:['Jurisdiction of the state of registration','Powers of the aircraft commander','Part of the wider safety-and-security framework']},
+  {yr:'1999',tag:'Montreal',title:'Montreal Convention',sub:'Unification of certain rules for international carriage by air',
+   p:'Modernises Warsaw: introduces objective (risk-based) liability, mixed with fault, across three categories of claim.',
+   pts:['Three categories: passenger death/injury & baggage; cargo; delay','Two-tier passenger liability around the SDR threshold (strict up to it; defence of no-fault above)','Each category carries its own defences']},
+  {yr:'1958',tag:'New York',title:'New York Convention',sub:'Recognition & enforcement of foreign arbitral awards',
+   p:'The backbone of cross-border enforcement. The UAE is a party, so foreign aviation arbitral awards are recognised and enforced subject to its limited grounds of refusal.',
+   pts:['Pro-enforcement regime for foreign awards','Narrow, exhaustive grounds to refuse recognition','Central to enforcing aviation arbitration outcomes']}
+];
+var UAE=[
+  {yr:'Law 18/1993',tag:'Ch. V',title:'Commercial Transactions Law',sub:'Chapter V — air transportation · amended by Decree-Law 14/2020',
+   p:'The onshore UAE carrier-liability regime, applying without prejudice to the international conventions. Covers death/injury, baggage and cargo, and delay.',
+   pts:['Death/injury: not less than the Sharia diyah','Baggage & goods: 150 AED per kg · small items 3,000 AED','Notice: 7 days baggage · 14 days goods · 21 days delay · 2-year limitation','Limitation lost for intent or reckless conduct with knowledge']},
+  {yr:'Law 20/1991',tag:'Civil Aviation',title:'Civil Aviation Law',sub:'Federal Act on Civil Aviation',
+   p:'The principal UAE statute organising civil aviation — registration, operation and safety of aircraft — within which the liability and dispute rules operate.',
+   pts:['Framework for civil aviation in the UAE','Operates alongside the international conventions','Context for the commercial-liability regime']},
+  {yr:'Law 11/1992',tag:'Art. 235',title:'Civil Procedure Law',sub:'Article 235 (as amended) — enforcement of foreign judgments & awards',
+   p:'The route to enforce a foreign judgment or arbitral award in the UAE: petition the enforcement judge, who issues an order within 5 working days, challengeable by appeal.',
+   pts:['Enforcement on the same conditions that country applies to UAE judgments','Order within 5 working days · appealable','Conditions: jurisdiction, due process, finality, no conflict, public order']},
+  {yr:'Law 6/2018',tag:'Arbitration',title:'Federal Arbitration Law',sub:'Federal Decree-Law on Arbitration',
+   p:'The modern UAE arbitration framework that supports aviation arbitration — the courts’ supporting role (tribunal, interim measures, evidence) and supervisory role over the award.',
+   pts:['Supporting role: constituting the tribunal, interim measures, evidence','Supervisory role: recognition, enforcement and challenge','Works with the New York Convention for foreign awards']}
+];
+function lawCard(d,isUae){
+  var li=(d.pts||[]).map(function(x){return '<li>'+esc(x)+'</li>';}).join('');
+  return '<div class="law'+(isUae?' uae':'')+'">'+
+    '<div class="law-top"><span class="tag yr">'+esc(d.yr)+'</span><span class="tag">'+esc(d.tag)+'</span></div>'+
+    '<h3>'+esc(d.title)+'</h3><div class="law-sub">'+esc(d.sub)+'</div>'+
+    '<p>'+esc(d.p)+'</p><ul>'+li+'</ul></div>';
+}
+document.getElementById('intlCards').innerHTML=INTL.map(function(d){return lawCard(d,false);}).join('');
+document.getElementById('uaeCards').innerHTML=UAE.map(function(d){return lawCard(d,true);}).join('');
+
+/* ── Q&A data ── */
+var QA=[
+  ['Which applies first — the conventions or UAE law?','The international conventions take precedence. UAE law (Chapter V of Law 18/1993, as amended by Decree-Law 14/2020) applies <b>without prejudice to the international agreements to which the State is a party</b> — so where Warsaw 1929 or Montreal 1999 governs, they come first; UAE law fills the onshore detail.'],
+  ['How does the Warsaw Convention change the burden of proof?','It <b>reverses</b> it. The passenger or shipper does not have to prove the carrier’s fault. To escape liability the carrier must prove it and its agents took all necessary measures to prevent the damage (or that doing so was impossible), and may rely on the injured party’s contributory fault.'],
+  ['What are the three Montreal liability categories?','(1) <b>Passenger death/injury and baggage</b>; (2) <b>cargo</b>; and (3) <b>delay</b>. Montreal mixes objective (risk-based) liability with fault-based liability, and each category carries its own defences. Passenger death/injury is two-tier around the SDR threshold — strict up to it, with a no-fault defence above.'],
+  ['What are the UAE compensation limits?','For death or injury, <b>not less than the Sharia diyah</b>. For baggage and goods, <b>150 AED per kilogram</b>; for small personal items kept by the passenger, <b>3,000 AED</b>. A higher limit applies where the value was declared and any supplementary fee paid (the declared-value exception).'],
+  ['What notice deadlines and limitation period apply under UAE law?','Notice must be given within <b>7 days</b> for baggage, <b>14 days</b> for goods and <b>21 days</b> for delay. The limitation period for the claim is <b>2 years</b>.'],
+  ['When does the carrier lose the limitation of liability?','Where the damage results from the carrier’s <b>intent</b>, or from <b>recklessness with knowledge</b> that damage would probably result. In those cases the statutory caps fall away.'],
+  ['Can the parties freely choose the arbitration seat?','No — the freedom is <b>restricted</b>. ICAO/Chicago harmonisation and the Montreal Convention 1999 set a closed list of options for where proceedings may be brought, and deviation is null and void. Because the seat shapes the whole arbitration, this matters a great deal.'],
+  ['How is a foreign award enforced in the UAE?','Through <b>Article 235</b> of the Civil Procedure Law (Law 11/1992, as amended): petition the enforcement judge, who issues an order within <b>5 working days</b>, challengeable by appeal — enforcement on the same conditions that country applies to UAE judgments. For arbitral awards the <b>New York Convention 1958</b> governs recognition and enforcement.'],
+  ['What is the unfair-competition claim in air transport?','A <b>special claim</b> (not an ordinary tort) giving civil and criminal protection across borders. Three conditions: an act of unfair competition, damage, and a causal link. Unlawful methods include <b>distortion</b> (denigration), <b>confusion</b>, and <b>disruption</b>; remedies run from stopping the acts and compensation to publication of the judgment and custodial sentences.']
+];
+document.getElementById('qaList').innerHTML=QA.map(function(q){
+  return '<details class="qa"><summary><span class="qa-ic">+</span>'+esc(q[0])+'</summary><div class="qa-a">'+q[1]+'</div></details>';
+}).join('');
+
+/* ── Maryam ── */
+var lexHistory=[],lexBusy=false;
+var LEX_SUGGEST=['What are the UAE compensation limits?','How does Montreal 1999 work?','How is a foreign award enforced here?','What is the unfair-competition claim?'];
+function lexToggle(open){
+  var p=document.getElementById('lexPanel'),f=document.getElementById('lexFab');
+  p.classList.toggle('on',open);f.style.display=open?'none':'inline-flex';
+  if(open){ if(!lexHistory.length)lexGreet(); setTimeout(function(){document.getElementById('lexInput').focus();},60); }
+}
+function lexGreet(){
+  lexAdd('bot',"Hello — I'm Maryam, your aviation-law assistant. Ask me about carrier liability, the conventions, the UAE limits, arbitration or enforcement. For the full treatment, take the AI Training module.");
+  var s=document.getElementById('lexSuggest');s.innerHTML='';
+  LEX_SUGGEST.forEach(function(t){var c=el('button','lex-chip',esc(t));c.onclick=function(){document.getElementById('lexInput').value=t;lexSend();};s.appendChild(c);});
+}
+function lexAdd(role,text){
+  var b=document.getElementById('lexBody');var m=el('div','lex-msg '+(role==='user'?'user':'bot'));
+  m.innerHTML=role==='bot'?esc(text).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>'):esc(text);
+  b.appendChild(m);b.scrollTop=b.scrollHeight;return m;
+}
+function lexKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();lexSend();}}
+function lexSend(){
+  if(lexBusy)return;
+  var inp=document.getElementById('lexInput'),q=(inp.value||'').trim();if(!q)return;
+  document.getElementById('lexSuggest').innerHTML='';
+  lexAdd('user',q);lexHistory.push({role:'user',content:q});inp.value='';
+  lexBusy=true;document.getElementById('lexSend').disabled=true;
+  var b=document.getElementById('lexBody');
+  var typing=el('div','lex-typing','<span></span><span></span><span></span>');b.appendChild(typing);b.scrollTop=b.scrollHeight;
+  fetch('/api/aviation-qa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:lexHistory})})
+    .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+    .then(function(res){
+      typing.remove();
+      if(res.ok&&res.j.answer){lexAdd('bot',res.j.answer);lexHistory.push({role:'assistant',content:res.j.answer});}
+      else if(res.j&&res.j.error==='not_configured'){lexAdd('bot',"I'm not switched on yet — an administrator needs to finish my setup. In the meantime, the legislation and Q&A above cover the essentials.");}
+      else {lexAdd('bot',(res.j&&res.j.message)||"I couldn't answer just now — please try again, or take the AI Training module.");}
+    })
+    .catch(function(){typing.remove();lexAdd('bot',"I'm not reachable right now — please try again in a moment.");})
+    .finally(function(){lexBusy=false;document.getElementById('lexSend').disabled=false;});
+}
+</script>
+</body>
+</html>

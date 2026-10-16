@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Academy · Trainer Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<style>
+:root{--ink:#e8ecf6;--mut:#8a93b0;--line:rgba(255,255,255,.10);--panel:rgba(14,18,34,.78);--green:#34d399;--amber:#fbbf24;--gold:#ffd479;--violet:#a78bfa;--blue:#6aa6ff;--red:#f87171}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(120% 90% at 50% 0,#0c1430,#05060f 60%);color:var(--ink);font-family:'Inter',sans-serif;min-height:100vh}
+.wrap{max-width:1140px;margin:0 auto;padding:30px 22px 70px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.hubBack{margin-left:auto;color:var(--mut);text-decoration:none;font-size:12.5px;border:1px solid var(--line);border-radius:9px;padding:8px 13px;white-space:nowrap}
+.hubBack:hover{color:#fff;background:rgba(255,255,255,.06)}
+.logo{width:38px;height:38px;border-radius:11px;background:radial-gradient(circle at 32% 30%,var(--gold),#b5781b 70%);box-shadow:0 0 22px rgba(255,196,90,.45)}
+h1{font-family:'Instrument Serif',serif;font-size:26px;margin:0;font-weight:400}
+header span{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--mut)}
+.sub{color:var(--mut);font-size:13px;margin:2px 0 24px}
+.gate{max-width:380px;margin:60px auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px;backdrop-filter:blur(12px)}
+.gate h2{font-size:15px;margin:0 0 4px}.gate p{font-size:12.5px;color:var(--mut);margin:0 0 16px}
+input,textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:11px 13px;font-size:14px;outline:none;font-family:inherit}
+input:focus,textarea:focus{border-color:var(--violet)}
+button{background:var(--violet);border:none;color:#fff;border-radius:9px;padding:11px 14px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit}
+button:hover{filter:brightness(1.08)}
+.gate button{margin-top:12px;width:100%;padding:12px}
+.err{color:var(--red);font-size:12.5px;margin-top:10px;min-height:16px}
+.stats{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;min-width:120px}
+.stat b{font-size:26px;display:block;font-weight:700}.stat span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1.4px;font-family:'JetBrains Mono',monospace}
+.bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:12px;flex-wrap:wrap}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.toolbar input{max-width:240px;padding:9px 12px}
+.toolbar button{background:rgba(255,255,255,.08);border:1px solid var(--line)}
+.toolbar button.primary{background:var(--gold);color:#1a1407;border:none}
+table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+th,td{text-align:left;padding:11px 13px;font-size:13px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);font-weight:500}
+tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,.03)}
+.name{font-weight:600}.email{color:var(--mut);font-size:12px}
+.pillbar{position:relative;width:104px;height:8px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px}
+.pillbar>i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--green),var(--gold));border-radius:5px}
+.dots{display:flex;gap:4px;flex-wrap:wrap;max-width:210px}
+.dot{width:12px;height:12px;border-radius:4px;background:rgba(255,255,255,.09);border:1px solid var(--line)}
+.dot.cert{background:var(--green);border-color:var(--green)}.dot.part{background:rgba(167,139,250,.5);border-color:var(--violet)}
+.ago{color:var(--mut);font-size:12px;white-space:nowrap}
+.rowact{display:flex;gap:6px;flex-wrap:wrap}
+.rowact button{padding:6px 9px;font-size:11.5px;font-weight:500;background:rgba(255,255,255,.07);border:1px solid var(--line);color:var(--ink)}
+.rowact button.cert{background:rgba(255,212,121,.16);border-color:rgba(255,212,121,.4);color:var(--gold)}
+.rowact button.danger{color:var(--red)}
+.badge{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--amber);border:1px solid rgba(251,191,36,.4);border-radius:6px;padding:1px 6px;margin-left:6px}
+.empty{color:var(--mut);text-align:center;padding:40px;font-size:14px}
+.legend{display:flex;gap:16px;font-size:11.5px;color:var(--mut);margin:14px 2px 0;flex-wrap:wrap}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block;vertical-align:middle;margin-right:5px}
+.modal{position:fixed;inset:0;background:rgba(4,6,14,.7);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal.on{display:flex}
+.mcard{width:min(460px,94vw);background:linear-gradient(180deg,#0e1226,#0a0d1f);border:1px solid var(--line);border-radius:16px;padding:22px}
+.mcard h3{margin:0 0 4px;font-size:15px}.mcard p{color:var(--mut);font-size:12.5px;margin:0 0 14px}
+.mcard textarea{min-height:120px;resize:vertical}
+.mrow{display:flex;gap:8px;margin-top:14px}.mrow button{flex:1}.mrow button.ghost{background:rgba(255,255,255,.08);border:1px solid var(--line)}
+.note{font-size:12px;color:var(--mut);margin-top:10px}
+.link{word-break:break-all;font-size:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:8px;padding:9px;margin-top:8px}
+.warn{color:var(--amber);font-size:12px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="logo"></div><div><h1>Trainer Console</h1><span>Service Ambassador Academy · Legal Affairs Department</span></div>
+    <a class="hubBack" href="https://www.legalaffairstraining.com/" onclick="try{window.top.location.href='https://www.legalaffairstraining.com/';return false;}catch(e){}">← Training hub</a>
+  </header>
+  <div class="sub">Track progress, manage trainees and passwords, and issue certificates.</div>
+
+  <div class="gate" id="gate">
+    <h2>Administrator sign in</h2>
+    <p>Enter the admin password to manage the academy.</p>
+    <input type="password" id="pass" placeholder="Admin password" autocomplete="current-password"/>
+    <button id="go">Open console</button>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div id="board" style="display:none">
+    <div class="stats" id="stats"></div>
+    <div class="bar">
+      <div class="toolbar">
+        <input id="search" placeholder="Search name or email…"/>
+        <button class="primary" id="addBtn">＋ Add trainees</button>
+        <button id="pwBtn">Change shared password</button>
+        <button id="adminPwBtn">Change admin password</button>
+        <button id="refresh">↻ Refresh</button>
+        <button id="csv">⬇ Export CSV</button>
+      </div>
+      <div class="ago" id="meta"></div>
+    </div>
+    <div class="warn" id="emailWarn" style="display:none"></div>
+    <table>
+      <thead><tr><th>Trainee</th><th>Certified</th><th>Per-service journey</th><th>Last active</th><th>Manage</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="legend"><span><i style="background:var(--green)"></i>Certified</span><span><i style="background:rgba(167,139,250,.5)"></i>In progress</span><span><i style="background:rgba(255,255,255,.09)"></i>Not started</span></div>
+  </div>
+</div>
+
+<div class="modal" id="modal"><div class="mcard" id="mcard"></div></div>
+
+<script>
+const SERVICES=[
+  ['reg','Registration'],['firm','Firm licensing'],['fines','Violations & fines'],
+  ['probono','Pro Bono'],['clpd','Professional Development'],['rep','Representation'],
+  ['exec','Execution of judgments'],['govsup','Government Legal Support'],
+  ['complaints','Complaints against entities'],['monitor','Monitoring practice'],['directory','Advocates Directory']
+];
+let PASS='', DATA=[], META={};
+const $=id=>document.getElementById(id);
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function ago(iso){if(!iso)return 'never';const d=new Date(iso);if(isNaN(d))return '—';const s=(Date.now()-d.getTime())/1000;
+  if(s<60)return 'just now';if(s<3600)return Math.floor(s/60)+' min ago';if(s<86400)return Math.floor(s/3600)+' h ago';
+  if(s<2592000)return Math.floor(s/86400)+' d ago';return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
+
+async function api(method,body){
+  const opt={method,headers:{'x-admin-pass':PASS,'Content-Type':'application/json'}};
+  if(body){body.adminPass=PASS;opt.body=JSON.stringify(body);}
+  const r=await fetch('/api/manage',opt);
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.error||('Error '+r.status));
+  return j;
+}
+async function load(){
+  $('err').textContent='Loading…';
+  try{const j=await api('GET');DATA=j.users||[];META=j;}
+  catch(e){$('err').textContent=e.message;return;}
+  $('err').textContent='';$('gate').style.display='none';$('board').style.display='block';
+  render();
+}
+function render(){
+  const q=($('search').value||'').toLowerCase().trim();
+  const list=DATA.filter(u=>!q||(u.name||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q));
+  $('stats').innerHTML=stat(DATA.length,'Trainees')+stat(DATA.filter(u=>u.certified>0).length,'Started')+
+    stat(DATA.filter(u=>u.certified>=11).length,'Fully certified')+stat(DATA.reduce((a,u)=>a+(u.certified||0),0),'Services certified');
+  $('meta').textContent=list.length+' shown · '+new Date().toLocaleTimeString();
+  if(!list.length){$('rows').innerHTML='<tr><td colspan="5"><div class="empty">No trainees yet. Use ＋ Add trainees to enrol people, then share the training link.</div></td></tr>';return;}
+  $('rows').innerHTML=list.map(u=>{
+    const pct=Math.round((u.certified||0)/11*100);
+    const dots=SERVICES.map(([id,nm])=>{const p=(u.progress||{})[id]||{};const cls=p.quiz&&p.sim?'cert':(p.quiz||p.sim?'part':'');return '<span class="dot '+cls+'" title="'+esc(nm)+'"></span>';}).join('');
+    const done=u.certified>=11;
+    return '<tr><td><div class="name">'+esc(u.name||'—')+(u.active===false?'<span class="badge">disabled</span>':'')+(u.hasOwnPassword?'<span class="badge" style="color:var(--blue);border-color:rgba(106,166,255,.4)">own pw</span>':'')+'</div><div class="email">'+esc(u.email)+'</div></td>'+
+      '<td><span class="pillbar"><i style="width:'+pct+'%"></i></span>'+(u.certified||0)+' / 11</td>'+
+      '<td><div class="dots">'+dots+'</div></td>'+
+      '<td class="ago">'+ago(u.updated)+'</td>'+
+      '<td><div class="rowact">'+
+        (done?'<button class="cert" onclick="certify(\''+esc(u.email)+'\',\''+esc(u.name||'')+'\')">Certificate</button>':'')+
+        '<button onclick="setPw(\''+esc(u.email)+'\')">Password</button>'+
+        '<button class="danger" onclick="remove(\''+esc(u.email)+'\')">Remove</button>'+
+      '</div></td></tr>';
+  }).join('');
+}
+function stat(n,label){return '<div class="stat"><b>'+n+'</b><span>'+label+'</span></div>';}
+
+function modal(html){$('mcard').innerHTML=html;$('modal').classList.add('on');}
+function closeModal(){$('modal').classList.remove('on');}
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
+
+$('addBtn').addEventListener('click',()=>{
+  modal('<h3>Add trainees</h3><p>Paste one or more work emails (separated by commas, spaces or new lines). They’ll sign in with the shared password.</p>'+
+    '<textarea id="emails" placeholder="amal@legalaffairs.gov.ae\nyousef@legalaffairs.gov.ae"></textarea>'+
+    '<div class="err" id="merr"></div>'+
+    '<div class="mrow"><button class="ghost" onclick="closeModal()">Cancel</button><button onclick="doAdd()">Add trainees</button></div>');
+});
+async function doAdd(){
+  const emails=$('emails').value;
+  try{const j=await api('POST',{action:'addUsers',emails});closeModal();await load();}
+  catch(e){$('merr').textContent=e.message;}
+}
+$('pwBtn').addEventListener('click',()=>{
+  modal('<h3>Change shared password</h3><p>This is the password trainees use to sign in (unless they have their own). Changing it affects everyone on the shared password.</p>'+
+    '<input id="newpw" type="text" placeholder="New shared password e.g. Legal@2026"/>'+
+    '<div class="err" id="merr"></div>'+
+    '<div class="mrow"><button class="ghost" onclick="closeModal()">Cancel</button><button onclick="doSharedPw()">Update password</button></div>');
+});
+async function doSharedPw(){
+  const password=$('newpw').value;
+  try{await api('POST',{action:'setSharedPassword',password});closeModal();alert('Shared password updated.');}
+  catch(e){$('merr').textContent=e.message;}
+}
+$('adminPwBtn').addEventListener('click',()=>{
+  modal('<h3>Change admin password</h3><p>The password for this Trainer Console. You\'ll use the new one next time you sign in.</p>'+
+    '<input id="newadminpw" type="text" placeholder="New admin password"/>'+
+    '<div class="err" id="merr"></div>'+
+    '<div class="mrow"><button class="ghost" onclick="closeModal()">Cancel</button><button onclick="doAdminPw()">Update admin password</button></div>');
+});
+async function doAdminPw(){
+  const password=$('newadminpw').value;
+  try{await api('POST',{action:'setAdminPassword',password});PASS=password;closeModal();alert('Admin password updated. Use it next time you sign in.');}
+  catch(e){$('merr').textContent=e.message;}
+}
+async function setPw(email){
+  const password=prompt('Set a personal password for '+email+'\n(Leave blank and OK to clear it and use the shared password.)');
+  if(password===null)return;
+  try{await api('POST',{action:'setUserPassword',email,password});await load();alert(password?'Personal password set.':'Reset to shared password.');}
+  catch(e){alert(e.message);}
+}
+async function remove(email){
+  if(!confirm('Remove '+email+' from the training list? Their saved progress can be kept or deleted.'))return;
+  const alsoProgress=confirm('Also delete their saved progress?\nOK = delete progress · Cancel = keep progress');
+  try{await api('POST',{action:'removeUser',email,alsoProgress});await load();}
+  catch(e){alert(e.message);}
+}
+function certify(email,name){
+  const who=name||email;
+  const u=DATA.find(x=>x.email===email)||{};
+  const dateStr=fmt(u.updated)||fmt(new Date().toISOString());
+  modal('<h3>Certificate · '+esc(who)+'</h3><p>Download and send it to the trainee yourself.</p>'+
+    '<canvas id="certCanvas" width="1240" height="876" style="width:100%;border-radius:10px;border:1px solid var(--line)"></canvas>'+
+    '<div class="mrow"><button class="ghost" onclick="closeModal()">Close</button><button onclick="dlCertPNG(\''+esc(who)+'\')">⬇ Download PNG</button><button onclick="printCert()">🖨 Print / PDF</button></div>');
+  drawCert(who, dateStr);
+}
+function wrapText(ctx,text,x,y,maxW,lh){const words=text.split(' ');let line='',yy=y;
+  for(const w of words){const t=line+w+' ';if(ctx.measureText(t).width>maxW&&line){ctx.fillText(line.trim(),x,yy);line=w+' ';yy+=lh;}else line=t;}
+  ctx.fillText(line.trim(),x,yy);return yy;}
+function drawCert(name,dateStr){
+  const cv=document.getElementById('certCanvas');if(!cv)return;const ctx=cv.getContext('2d');const W=cv.width,H=cv.height;
+  const paint=()=>{
+    const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#0e1226');g.addColorStop(1,'#0a0d1f');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='rgba(255,212,121,.55)';ctx.lineWidth=4;ctx.strokeRect(26,26,W-52,H-52);
+    ctx.strokeStyle='rgba(255,212,121,.22)';ctx.lineWidth=2;ctx.strokeRect(46,46,W-92,H-92);
+    ctx.textAlign='center';
+    // seal
+    const cx=W/2,sy=140;const sg=ctx.createRadialGradient(cx-8,sy-8,4,cx,sy,40);sg.addColorStop(0,'#ffe9b0');sg.addColorStop(1,'#b5781b');
+    ctx.fillStyle=sg;ctx.beginPath();ctx.arc(cx,sy,40,0,7);ctx.fill();
+    ctx.fillStyle='#ffcf7a';ctx.font='600 19px Georgia, "Instrument Serif", serif';ctx.fillText('LAD',cx,sy+7);
+    ctx.fillStyle='#ffcf7a';ctx.font='500 17px "JetBrains Mono", monospace';ctx.fillText('GOVERNMENT OF DUBAI · LEGAL AFFAIRS DEPARTMENT',cx,sy+78);
+    ctx.fillStyle='#ffffff';ctx.font='62px "Instrument Serif", Georgia, serif';ctx.fillText('Certificate of Completion',cx,sy+170);
+    ctx.fillStyle='#8a93b0';ctx.font='500 18px "JetBrains Mono", monospace';ctx.fillText('S E R V I C E   A M B A S S A D O R   A C A D E M Y',cx,sy+208);
+    ctx.fillStyle='#ffd479';ctx.font='54px "Instrument Serif", Georgia, serif';ctx.fillText(name,cx,sy+300);
+    ctx.strokeStyle='rgba(255,212,121,.35)';ctx.lineWidth=2;const nw=Math.min(ctx.measureText(name).width+80,W-220);
+    ctx.beginPath();ctx.moveTo(cx-nw/2,sy+320);ctx.lineTo(cx+nw/2,sy+320);ctx.stroke();
+    ctx.fillStyle='#cdd6ea';ctx.font='24px Georgia, serif';
+    wrapText(ctx,'has completed voice-led training across all eleven Legal Affairs Department services — learning each service, passing every knowledge check and handling live customer simulations — and is hereby certified a Service Ambassador.',cx,sy+372,W-320,38);
+    ctx.fillStyle='#8a93b0';ctx.font='500 18px "JetBrains Mono", monospace';
+    ctx.textAlign='left';ctx.fillText('Dubai · '+dateStr,90,H-70);
+    ctx.textAlign='right';ctx.fillText('Know our services. Serve with happiness.',W-90,H-70);
+    ctx.textAlign='center';
+  };
+  if(document.fonts&&document.fonts.ready){document.fonts.ready.then(paint);setTimeout(paint,300);}else paint();
+}
+function dlCertPNG(name){const cv=document.getElementById('certCanvas');if(!cv)return;
+  cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='Certificate - '+name.replace(/[^\w .-]+/g,'_')+'.png';a.click();},'image/png');}
+function printCert(){const cv=document.getElementById('certCanvas');if(!cv)return;const url=cv.toDataURL('image/png');
+  const w=window.open('','_blank');w.document.write('<html><head><title>Certificate</title><style>@page{size:landscape}body{margin:0}img{width:100%}</style></head><body><img src="'+url+'" onload="setTimeout(function(){window.print()},200)"></body></html>');w.document.close();}
+
+function csv(){
+  const head=['Name','Email','Certified (of 11)','Last active',...SERVICES.map(s=>s[1])];
+  const lines=[head.join(',')];
+  DATA.forEach(u=>{const row=[u.name||'',u.email||'',(u.certified||0),u.updated||'',
+    ...SERVICES.map(([id])=>{const p=(u.progress||{})[id]||{};return p.quiz&&p.sim?'certified':(p.quiz||p.sim?'in progress':'');})];
+    lines.push(row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','));});
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/csv'}));
+  a.download='academy-progress-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+$('go').addEventListener('click',()=>{PASS=$('pass').value;load();});
+$('pass').addEventListener('keydown',e=>{if(e.key==='Enter'){PASS=$('pass').value;load();}});
+$('refresh').addEventListener('click',load);
+$('search').addEventListener('input',render);
+$('csv').addEventListener('click',csv);
+window.certify=certify;window.setPw=setPw;window.remove=remove;window.doAdd=doAdd;window.doSharedPw=doSharedPw;window.doAdminPw=doAdminPw;window.closeModal=closeModal;window.dlCertPNG=dlCertPNG;window.printCert=printCert;
+</script>
+</body>
+</html>

@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Service Ambassador Hub — Legal Affairs Department, Government of Dubai</title>
+<meta name="description" content="Interactive knowledge & training hub for Legal Affairs Department service staff. Government of Dubai."/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+<script>
+window.SITE_CONFIG = {
+  doceboUrl: 'https://creativewordtraining.docebosaas.com/learn',
+  articulateUrl: '',                           // the Articulate course link ("Begin training"); falls back to doceboUrl
+  courseLive: true,                            // false => "coming soon"
+  supportEmail: 'training@legal.dubai.gov.ae',
+  lexEndpoint: '/api/lex'                       // AI assistant (Azure function)
+};
+</script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;-webkit-tap-highlight-color:transparent}
+:root{
+  --green:#006B3F;--green2:#008549;--green-d:#004d2e;--green-l:#00a85e;
+  --gold:#C9913A;--gold2:#dba84e;--gold-l:#f0cc88;--gold-bg:#fdf6e8;
+  --ink:#0a0e14;--ink2:#1a2330;--navy:#1c1f2e;--navy2:#12141e;
+  --slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;--slate4:#b8c4d2;
+  --line:#e8ecf1;--line2:#d8dfe7;--amber:#92540a;
+  --paper:#f8fafb;--paper2:#f1f4f7;--white:#ffffff;--red:#c0392b;
+  --serif:'Instrument Serif',Georgia,serif;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  --mono:'JetBrains Mono','SF Mono',Menlo,monospace;
+  --arabic:'IBM Plex Sans Arabic',sans-serif;
+  --r:12px;--r-lg:18px;--r-xl:24px;
+  --sh-sm:0 1px 3px rgba(10,14,20,.06),0 2px 6px rgba(10,14,20,.04);
+  --sh:0 2px 4px rgba(10,14,20,.06),0 8px 24px rgba(10,14,20,.06);
+  --sh-md:0 4px 8px rgba(10,14,20,.08),0 16px 40px rgba(10,14,20,.08);
+  --sh-xl:0 16px 32px rgba(10,14,20,.12),0 48px 96px rgba(10,14,20,.14);
+}
+html{scroll-behavior:smooth}
+html,body{color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;min-height:100vh}
+body{background:var(--paper)}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+em{font-style:italic}
+
+/* reading progress */
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--green),var(--gold));z-index:600;transition:width .1s ease;display:none}
+body.unlocked #progress{display:block}
+
+/* reveal on scroll */
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .6s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+
+/* ════ GATE ════ */
+#gate{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--navy2);overflow:hidden}
+#gate .gate-bg{position:absolute;inset:0;background-image:url('img/dclpd-reception.jpg');background-size:cover;background-position:center 40%;animation:slowzoom 22s ease-in-out infinite alternate}
+@keyframes slowzoom{from{transform:scale(1)}to{transform:scale(1.08)}}
+#gate .gate-overlay{position:absolute;inset:0;background:linear-gradient(140deg,rgba(8,12,22,.96),rgba(8,12,22,.86) 55%,rgba(8,12,22,.7))}
+.gate-card{position:relative;z-index:1;width:100%;max-width:430px;background:#fff;border-radius:var(--r-xl);box-shadow:var(--sh-xl);overflow:hidden;animation:rise .5s cubic-bezier(.2,.7,.2,1)}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.gate-logos{background:var(--navy);padding:22px 28px;display:flex;align-items:center;gap:14px}
+.gate-logos img{height:34px;width:auto}
+.gate-logos-sep{width:1px;height:26px;background:rgba(255,255,255,.22)}
+.gate-body{padding:30px 32px 34px;text-align:center}
+.gate-eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:2.2px;text-transform:uppercase;color:var(--green);font-weight:600;margin-bottom:10px}
+.gate-title{font-family:var(--serif);font-size:30px;color:var(--ink);letter-spacing:-.015em;line-height:1.12;margin-bottom:6px}
+.gate-title em{color:var(--green)}
+.gate-ar{font-family:var(--arabic);font-size:13px;color:var(--slate3);direction:rtl;margin-bottom:18px}
+.gate-sub{font-size:13.5px;color:var(--slate2);line-height:1.6;margin-bottom:22px}
+.gate-input{display:flex;align-items:center;gap:10px;background:var(--paper);border:1.5px solid var(--line2);border-radius:11px;padding:13px 15px;transition:border-color .15s,box-shadow .15s;margin-bottom:14px}
+.gate-input:focus-within{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,107,63,.1)}
+.gate-input svg{width:17px;height:17px;stroke:var(--slate3);fill:none;stroke-width:1.8;flex-shrink:0}
+.gate-input input{border:none;outline:none;background:transparent;font-family:var(--sans);font-size:15px;color:var(--ink);flex:1}
+.gate-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--green);color:#fff;border:none;border-radius:11px;padding:14px;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;transition:background .15s,transform .1s;box-shadow:0 4px 14px rgba(0,107,63,.28)}
+.gate-btn:hover{background:var(--green-d);transform:translateY(-1px)}
+.gate-btn svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.4}
+.gate-err{font-size:12.5px;color:var(--red);font-weight:500;margin-top:12px;min-height:16px;opacity:0;transition:opacity .15s}
+.gate-err.on{opacity:1}
+.gate-foot{margin-top:20px;font-size:11px;color:var(--slate3);line-height:1.6}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+
+/* ════ SITE ════ */
+#site{display:none}
+body.unlocked #gate{display:none}
+body.unlocked #site{display:block}
+.lw{font-family:'Segoe UI',Tahoma,Arial,sans-serif}
+.lad-util{background:#f7f7f7;border-bottom:1px solid #e2e2e2}
+.lad-util-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:34px;display:flex;align-items:center;justify-content:space-between}
+.lad-util-link{font-size:12px;color:#444;text-decoration:none;font-weight:500}
+.lad-util-link:hover{color:#006b3f}
+.lad-nav{background:var(--navy);position:sticky;top:0;z-index:200;box-shadow:0 3px 14px rgba(0,0,0,.38)}
+.lad-nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:62px;display:flex;align-items:center;gap:16px}
+.lad-logos{display:flex;align-items:center;padding-right:16px;border-right:1px solid rgba(255,255,255,.13);gap:12px;flex-shrink:0;cursor:pointer}
+.finder-badge{cursor:pointer}
+.lad-logos img{height:34px;width:auto}
+.lad-logos-sep{width:1px;height:24px;background:rgba(255,255,255,.22)}
+.lad-brand{display:flex;flex-direction:column;justify-content:center;min-width:0}
+.lad-brand-en{font-family:var(--serif);font-size:16px;color:#fff;line-height:1.15}
+.lad-brand-ar{font-family:var(--arabic);font-size:10.5px;color:rgba(255,255,255,.55);direction:rtl;margin-top:1px}
+.nav-links{display:flex;align-items:center;gap:1px;margin-left:auto}
+.nav-link{color:rgba(255,255,255,.82);font-size:12.5px;font-weight:500;padding:8px 10px;border-radius:7px;cursor:pointer;text-decoration:none;transition:background .15s,color .15s}
+.nav-link:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-cta{display:inline-flex;align-items:center;gap:7px;background:var(--gold);color:#fff;border:none;font-family:var(--sans);font-size:12.5px;font-weight:600;padding:9px 15px;border-radius:8px;cursor:pointer;transition:background .15s,transform .1s;text-decoration:none;white-space:nowrap;margin-left:6px}
+.nav-cta:hover{background:var(--gold2);transform:translateY(-1px)}
+.nav-lock{font-size:11.5px;color:rgba(255,255,255,.55);cursor:pointer;padding:7px 8px;border-radius:5px}
+.nav-lock:hover{color:#fff;background:rgba(255,255,255,.08)}
+
+/* HERO */
+.hero{position:relative;overflow:hidden;background:var(--navy2)}
+.hero-bg{position:absolute;inset:0;background-image:url('img/flag-ceremony.jpg');background-size:cover;background-position:center 28%}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(115deg,rgba(8,12,22,.95),rgba(8,12,22,.8) 55%,rgba(8,12,22,.6))}
+.hero-glow{position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(201,145,58,.22),transparent 60%);top:-160px;right:-120px;filter:blur(8px);animation:float 9s ease-in-out infinite alternate}
+@keyframes float{from{transform:translateY(0)}to{transform:translateY(28px)}}
+.hero-inner{max-width:1040px;margin:0 auto;padding:62px 24px 56px;position:relative;z-index:1}
+.hero-kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--gold-l);font-weight:600;margin-bottom:18px}
+.hero-kicker::before{content:'';width:26px;height:1px;background:var(--gold)}
+.hero-title{font-family:var(--serif);font-size:clamp(38px,5.4vw,60px);color:#fff;line-height:1.05;letter-spacing:-.022em;margin-bottom:12px}
+.hero-title em{color:var(--gold-l)}
+.hero-desc{font-size:16px;color:rgba(255,255,255,.8);line-height:1.75;max-width:640px;margin-bottom:28px}
+.hero-btns{display:flex;gap:13px;flex-wrap:wrap;margin-bottom:40px}
+.btn-p{display:inline-flex;align-items:center;gap:9px;background:var(--gold);color:#fff;border:none;font-family:var(--sans);font-size:15px;font-weight:600;padding:14px 28px;border-radius:11px;cursor:pointer;transition:background .15s,transform .1s;box-shadow:0 6px 20px rgba(201,145,58,.32);text-decoration:none}
+.btn-p:hover{background:var(--gold2);transform:translateY(-2px)}
+.btn-p svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2.4}
+.btn-s{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.22);font-family:var(--sans);font-size:15px;font-weight:600;padding:14px 26px;border-radius:11px;cursor:pointer;transition:background .15s;text-decoration:none}
+.btn-s:hover{background:rgba(255,255,255,.18)}
+.btn-p2{display:inline-flex;align-items:center;gap:9px;background:#fff;color:#1d2433;border:none;font-family:var(--sans);font-size:15px;font-weight:600;padding:14px 28px;border-radius:11px;cursor:pointer;transition:transform .1s,background .15s;box-shadow:0 6px 20px rgba(0,0,0,.18);text-decoration:none}
+.btn-p2:hover{transform:translateY(-2px);background:#eef1f6}
+.btn-p2 svg{width:17px;height:17px;stroke:#1d2433;fill:none;stroke-width:2.4}
+.hero-link{display:inline-block;margin:-26px 0 40px;color:rgba(255,255,255,.82);font-size:13.5px;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.32);padding-bottom:1px;transition:color .15s}
+.hero-link:hover{color:#fff}
+.hero-stats{display:flex;gap:32px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.14);padding-top:26px}
+.hstat-n{font-family:var(--serif);font-size:40px;color:var(--gold-l);line-height:1}
+.hstat-l{font-size:12px;color:rgba(255,255,255,.6);margin-top:4px;letter-spacing:.2px}
+
+/* SECTIONS */
+.section{max-width:1100px;margin:0 auto;padding:62px 24px}
+.sec-head{max-width:720px;margin:0 auto 36px;text-align:center}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--green);font-weight:600;margin-bottom:11px}
+.eyebrow.gold{color:var(--gold)}
+.sec-title{font-family:var(--serif);font-size:clamp(28px,3.6vw,40px);color:var(--ink);letter-spacing:-.02em;line-height:1.1;margin-bottom:12px}
+.sec-title em{color:var(--green)}
+.sec-sub{font-size:15px;color:var(--slate2);line-height:1.7}
+.band{background:var(--paper2)}
+
+/* ════ FINDER ════ */
+.finder{max-width:1040px;margin:-36px auto 0;padding:0 24px;position:relative;z-index:5}
+.finder-card{background:#fff;border-radius:var(--r-xl);box-shadow:var(--sh-xl);border:1px solid var(--line);overflow:hidden}
+.finder-top{padding:24px 28px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px}
+.finder-badge{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,var(--green),var(--green2));display:grid;place-items:center;flex-shrink:0;box-shadow:0 6px 16px rgba(0,107,63,.25)}
+.finder-badge svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:1.9}
+.finder-ttl{font-family:var(--serif);font-size:23px;color:var(--ink);line-height:1.1}
+.finder-sub{font-size:13px;color:var(--slate2);margin-top:2px}
+.finder-body{padding:22px 28px 26px}
+.finder-q{font-size:13px;font-weight:600;color:var(--slate);margin-bottom:14px}
+.persona-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+.persona{display:flex;flex-direction:column;gap:11px;align-items:flex-start;text-align:left;background:var(--paper);border:1.5px solid var(--line2);border-radius:14px;padding:17px;cursor:pointer;transition:all .16s;font-family:var(--sans)}
+.persona:hover{border-color:var(--green);background:#fff;box-shadow:var(--sh);transform:translateY(-2px)}
+.persona-ico{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--green),var(--green2));display:grid;place-items:center}
+.persona-ico svg{width:21px;height:21px;stroke:#fff;fill:none;stroke-width:1.8}
+.persona-l{font-size:14px;font-weight:700;color:var(--ink);line-height:1.2}
+.persona-s{font-size:11.5px;color:var(--slate2);line-height:1.3}
+.finder-back{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--green);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:14px;padding:0}
+.finder-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2}
+.crumb{font-family:var(--mono);font-size:11px;color:var(--slate3);margin-bottom:14px}
+.crumb b{color:var(--green)}.crumb .arr{color:var(--gold);margin:0 5px}
+.crumb-link{color:var(--green);cursor:pointer;font-weight:600}.crumb-link:hover{text-decoration:underline}
+.crumb-cur{color:var(--slate2)}
+.intent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.intent{display:flex;flex-direction:column;gap:9px;align-items:flex-start;text-align:left;background:var(--paper);border:1.5px solid var(--line2);border-radius:13px;padding:14px;cursor:pointer;transition:all .16s;font-family:var(--sans)}
+.intent:hover{border-color:var(--green);background:#fff;box-shadow:var(--sh);transform:translateY(-2px)}
+.intent-ico{width:34px;height:34px;border-radius:9px;background:var(--gold-bg);display:grid;place-items:center}
+.intent-ico svg{width:17px;height:17px;stroke:var(--gold);fill:none;stroke-width:1.9}
+.intent-t{font-size:12.5px;font-weight:600;color:var(--ink);line-height:1.3}
+/* answer */
+.finder-answer{display:none;animation:rise .4s}
+.finder-answer.on{display:block}
+.ans-route{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;color:var(--slate3);margin-bottom:14px;flex-wrap:wrap}
+.ans-route b{color:var(--green)}
+.ans-route .arr{color:var(--gold)}
+.ans-card{border:1px solid var(--green-border,#b8d8c5);background:linear-gradient(180deg,#f4faf6,#fff);border-radius:var(--r-lg);padding:22px}
+.ans-en{font-family:var(--serif);font-size:22px;color:var(--ink);margin-bottom:4px}
+.ans-ar{font-family:var(--arabic);font-size:13px;color:var(--slate3);direction:rtl;margin-bottom:14px}
+.ans-say{display:flex;gap:12px;background:#fff;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:11px;padding:14px 16px;margin-bottom:14px}
+.ans-say-ico{flex-shrink:0;width:30px;height:30px;border-radius:8px;background:var(--gold-bg);display:grid;place-items:center}
+.ans-say-ico svg{width:16px;height:16px;stroke:var(--gold);fill:none;stroke-width:2}
+.ans-say-l{font-family:var(--mono);font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:3px}
+.ans-say-t{font-size:13.5px;color:var(--slate);line-height:1.55}
+.ans-desc{font-size:13px;color:var(--slate2);line-height:1.65;margin-bottom:14px}
+.ans-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.ans-card .svc-detail{border-top:1px dashed var(--green-border,#b8d8c5);margin-top:14px}
+.meta-tag{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:11.5px;color:var(--slate2);font-weight:500}
+.meta-tag b{color:var(--ink);font-weight:600}
+.meta-tag.who{background:var(--gold-bg);border-color:#edd9b5;color:var(--amber)}
+.ans-reset{margin-top:16px;display:inline-flex;align-items:center;gap:7px;background:none;border:none;color:var(--green);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer}
+.ans-reset svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2}
+.ans-link,.svc-link{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--green);text-decoration:none}
+.ans-link{margin-top:14px}.svc-link{margin-top:12px}
+.ans-link:hover,.svc-link:hover{text-decoration:underline}
+.ans-link svg,.svc-link svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* CHARTER */
+.charter-intro{max-width:820px;margin:0 auto 30px;text-align:center;font-size:16px;color:var(--slate);line-height:1.8;font-style:italic}
+.charter-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.charter-col{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-sm)}
+.charter-col-h{padding:16px 22px;font-weight:700;font-size:14.5px;color:#fff;display:flex;align-items:center;gap:9px}
+.charter-col-h svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2}
+.charter-col.commit .charter-col-h{background:var(--green)}
+.charter-col.expect .charter-col-h{background:var(--gold)}
+.charter-li{display:flex;gap:11px;padding:12px 22px;border-top:1px solid var(--line);font-size:13.5px;color:var(--slate);line-height:1.55}
+.charter-li:first-of-type{border-top:none}
+.charter-li .num{flex-shrink:0;width:20px;height:20px;border-radius:6px;background:var(--paper2);color:var(--slate2);font-family:var(--mono);font-size:10px;font-weight:700;display:grid;place-items:center;margin-top:1px}
+.charter-col.commit .charter-li .num{background:var(--gold-bg);color:var(--gold)}
+.charter-note{text-align:center;font-size:11.5px;color:var(--slate3);margin-top:18px;font-family:var(--mono)}
+
+/* BEHAVIOUR FLIP CARDS */
+.behav-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:30px}
+.flip{height:128px;perspective:1000px;cursor:pointer}
+.flip-inner{position:relative;width:100%;height:100%;transition:transform .6s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d}
+.flip.on .flip-inner,.flip:hover .flip-inner{transform:rotateY(180deg)}
+.flip-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:12px}
+.flip-front{background:#fff;border:1px solid var(--line);box-shadow:var(--sh-sm)}
+.flip-front svg{width:24px;height:24px;stroke:var(--green);fill:none;stroke-width:1.8;margin-bottom:9px}
+.flip-front .fw{font-family:var(--serif);font-size:17px;color:var(--ink)}
+.flip-back{background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;transform:rotateY(180deg);font-size:11.5px;line-height:1.45}
+.behav-hint{text-align:center;font-size:11.5px;color:var(--slate3);margin-top:14px}
+
+/* VMV / AUDIENCE */
+.vmv{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.vmv-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;box-shadow:var(--sh-sm)}
+.vmv-tag{font-family:var(--mono);font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:9px}
+.vmv-card p{font-family:var(--serif);font-size:19px;color:var(--ink);line-height:1.35}
+.values{display:flex;flex-wrap:wrap;gap:9px;justify-content:center}
+.value-chip{background:#fff;border:1px solid var(--line2);border-radius:30px;padding:8px 16px;font-size:13px;color:var(--slate);font-weight:500}
+.aud-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.aud{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;text-align:center;box-shadow:var(--sh-sm);transition:transform .2s,box-shadow .2s}
+.aud:hover{transform:translateY(-3px);box-shadow:var(--sh-md)}
+.aud-ico{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--green),var(--green2));display:grid;place-items:center;margin:0 auto 14px}
+.aud-ico svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:1.7}
+.aud-h{font-family:var(--serif);font-size:18px;color:var(--ink);margin-bottom:6px}
+.aud-p{font-size:12.5px;color:var(--slate2);line-height:1.55}
+
+/* SEARCH */
+.searchbar{max-width:560px;margin:0 auto 26px;display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line2);border-radius:12px;padding:11px 16px;box-shadow:var(--sh-sm);transition:border-color .15s,box-shadow .15s}
+.searchbar:focus-within{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,107,63,.1)}
+.searchbar svg{width:17px;height:17px;stroke:var(--slate3);fill:none;stroke-width:1.9;flex-shrink:0}
+.searchbar input{flex:1;border:none;outline:none;font-family:var(--sans);font-size:14px;color:var(--ink);background:transparent}
+.no-results{text-align:center;color:var(--slate3);font-size:13.5px;padding:20px;display:none}
+
+/* SERVICES accordion */
+.svc-list{display:flex;flex-direction:column;gap:12px}
+.svc{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-sm);overflow:hidden;transition:box-shadow .2s}
+.svc.open{box-shadow:var(--sh-md)}
+.svc-head{display:flex;align-items:center;gap:16px;padding:18px 22px;cursor:pointer}
+.svc-num{flex-shrink:0;width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;font-family:var(--serif);font-size:19px;display:grid;place-items:center}
+.svc-titles{flex:1;min-width:0}
+.svc-en{font-family:var(--serif);font-size:19px;color:var(--ink);line-height:1.2}
+.svc-ar{font-family:var(--arabic);font-size:13px;color:var(--slate3);direction:rtl;margin-top:2px}
+.svc-chev{flex-shrink:0;width:20px;height:20px;stroke:var(--slate3);fill:none;stroke-width:2.2;transition:transform .25s}
+.svc.open .svc-chev{transform:rotate(180deg)}
+.svc-body{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.svc-body-inner{padding:0 22px 20px 76px}
+.svc-desc{font-size:13.5px;color:var(--slate);line-height:1.65;margin-bottom:14px}
+.svc-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.svc-subs-label{font-family:var(--mono);font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--slate3);font-weight:600;margin-bottom:8px}
+.svc-subs{display:flex;flex-wrap:wrap;gap:7px}
+.sub-chip{background:#fff;border:1px solid var(--line2);border-radius:7px;padding:5px 11px;font-size:12px;color:var(--slate);font-weight:500}
+.svc-detail{margin-top:16px;border-top:1px dashed var(--line2);padding-top:16px}
+.svc-facts{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:6px}
+.fact{display:flex;gap:9px;align-items:flex-start;background:var(--paper2);border:1px solid var(--line);border-radius:11px;padding:10px 13px;font-size:12.5px;color:var(--slate);line-height:1.45;flex:1;min-width:200px}
+.fact svg{width:16px;height:16px;stroke:var(--gold);flex-shrink:0;margin-top:1px;fill:none;stroke-width:1.9}
+.fact b{display:block;font-family:var(--mono);font-size:8.5px;letter-spacing:1px;text-transform:uppercase;color:var(--slate3);margin-bottom:3px;font-weight:700}
+.svc-block-label{font-family:var(--mono);font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--slate3);font-weight:600;margin:16px 0 9px}
+.svc-docs{list-style:none;display:grid;gap:7px}
+.svc-docs li{display:flex;gap:9px;font-size:12.5px;color:var(--slate);line-height:1.5}
+.svc-docs li svg{width:14px;height:14px;stroke:var(--green);flex-shrink:0;margin-top:2px;fill:none;stroke-width:2.2}
+.svc-steps{list-style:none;counter-reset:st;display:grid;gap:9px;margin:0;padding:0}
+.svc-steps li{display:flex;gap:11px;font-size:12.5px;color:var(--slate);line-height:1.5;counter-increment:st;align-items:flex-start}
+.svc-steps li::before{content:counter(st);flex-shrink:0;width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;display:grid;place-items:center;margin-top:1px}
+.svc-tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:11px}
+.svc-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.svc-table th{font-family:var(--mono);font-size:8.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--slate3);text-align:left;padding:8px 12px;background:var(--paper2);border-bottom:1px solid var(--line2);font-weight:700;white-space:nowrap}
+.svc-table td{padding:9px 12px;border-bottom:1px solid var(--line);color:var(--slate);vertical-align:top;line-height:1.4}
+.svc-table tr:last-child td{border-bottom:none}
+.svc-table td.svc-fee{font-weight:600;color:var(--ink);white-space:nowrap}
+.svc-table td.svc-time{color:var(--slate2);white-space:nowrap}
+.svc-note{font-size:11.5px;color:var(--slate2);font-style:italic;line-height:1.5;margin-top:9px;padding-left:2px}
+
+/* SCENARIO CARDS */
+.scn-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.scn{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-sm);overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .2s}
+.scn.open{box-shadow:var(--sh-md)}
+.scn-top{padding:20px 22px 16px}
+.scn-vlabel{font-family:var(--mono);font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--slate3);font-weight:600;margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.scn-vlabel svg{width:14px;height:14px;stroke:var(--gold);fill:none;stroke-width:1.9}
+.scn-quote{font-family:var(--serif);font-size:19px;color:var(--ink);line-height:1.3;font-style:italic}
+.scn-btn{margin:0 22px 18px;align-self:flex-start;display:inline-flex;align-items:center;gap:7px;background:var(--paper2);border:1px solid var(--line2);color:var(--green);font-family:var(--sans);font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:9px;cursor:pointer;transition:all .15s}
+.scn-btn:hover{background:var(--green);color:#fff;border-color:var(--green)}
+.scn-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.2;transition:transform .25s}
+.scn.open .scn-btn svg{transform:rotate(180deg)}
+.scn-ans{max-height:0;overflow:hidden;transition:max-height .3s ease;background:linear-gradient(180deg,#f4faf6,#fff);border-top:1px solid var(--line)}
+.scn-ans-inner{padding:16px 22px 20px}
+.scn-ans-l{font-family:var(--mono);font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--green);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.scn-ans-l svg{width:14px;height:14px;stroke:var(--green);fill:none;stroke-width:2.2}
+.scn-ans-t{font-size:13.5px;color:var(--slate);line-height:1.65}
+.scn-ans-t b{color:var(--green);font-weight:600}
+.scn-tag{display:inline-block;margin-top:13px;background:var(--gold-bg);border:1px solid #edd9b5;color:var(--amber);font-family:var(--mono);font-size:10px;font-weight:600;padding:3px 10px;border-radius:6px}
+
+/* CHANNELS */
+.chan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.chan{display:flex;gap:13px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;box-shadow:var(--sh-sm);transition:transform .2s,box-shadow .2s}
+.chan:hover{transform:translateY(-3px);box-shadow:var(--sh-md)}
+.chan-ico{flex-shrink:0;width:42px;height:42px;border-radius:11px;background:var(--paper2);display:grid;place-items:center}
+.chan-ico svg{width:21px;height:21px;stroke:var(--green);fill:none;stroke-width:1.8}
+.chan-h{font-weight:600;font-size:14px;color:var(--ink);margin-bottom:3px}
+.chan-p{font-size:12px;color:var(--slate2);line-height:1.5}
+
+/* QUIZ */
+.quiz-wrap{max-width:680px;margin:0 auto}
+.quiz-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-xl);box-shadow:var(--sh-md);overflow:hidden}
+.quiz-top{height:6px;background:var(--paper2)}
+.quiz-prog{height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--gold));transition:width .4s ease}
+.quiz-inner{padding:30px 32px 32px}
+.quiz-step{font-family:var(--mono);font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--slate3);font-weight:600;margin-bottom:12px;display:flex;justify-content:space-between}
+.quiz-q{font-family:var(--serif);font-size:24px;color:var(--ink);line-height:1.25;margin-bottom:20px}
+.quiz-opts{display:flex;flex-direction:column;gap:10px}
+.qopt{display:flex;align-items:center;gap:12px;text-align:left;background:var(--paper);border:1.5px solid var(--line2);border-radius:12px;padding:14px 16px;cursor:pointer;font-family:var(--sans);font-size:14px;color:var(--ink);transition:all .15s}
+.qopt:hover:not(.locked){border-color:var(--green);background:#fff}
+.qopt .qletter{flex-shrink:0;width:26px;height:26px;border-radius:8px;background:#fff;border:1px solid var(--line2);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--slate2);display:grid;place-items:center}
+.qopt.correct{border-color:var(--green);background:#f0f9f4}
+.qopt.correct .qletter{background:var(--green);color:#fff;border-color:var(--green)}
+.qopt.wrong{border-color:var(--red);background:#fdeceb}
+.qopt.wrong .qletter{background:var(--red);color:#fff;border-color:var(--red)}
+.qopt.locked{cursor:default;opacity:.85}
+.qopt.locked.dim{opacity:.5}
+.quiz-fb{margin-top:16px;padding:14px 16px;border-radius:11px;font-size:13px;line-height:1.6;display:none}
+.quiz-fb.on{display:block;animation:rise .3s}
+.quiz-fb.good{background:#f0f9f4;color:var(--green-d);border:1px solid #b8d8c5}
+.quiz-fb.bad{background:#fdeceb;color:#7a241b;border:1px solid #f0aaaa}
+.quiz-next{margin-top:18px;display:none;width:100%;justify-content:center}
+.quiz-next.on{display:inline-flex}
+.btn-g{display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#fff;border:none;font-family:var(--sans);font-size:14px;font-weight:600;padding:13px 24px;border-radius:11px;cursor:pointer;transition:background .15s,transform .1s}
+.btn-g:hover{background:var(--green-d);transform:translateY(-1px)}
+.btn-g svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2.4}
+/* result */
+.quiz-result{text-align:center;display:none}
+.quiz-result.on{display:block;animation:rise .4s}
+.qr-score{font-family:var(--serif);font-size:64px;color:var(--green);line-height:1}
+.qr-score em{color:var(--gold);font-size:34px}
+.qr-msg{font-size:15px;color:var(--slate);margin:10px 0 6px;line-height:1.6}
+.qr-best{font-family:var(--mono);font-size:11px;color:var(--slate3);margin-bottom:22px}
+.qr-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn-ghost{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1.5px solid var(--line2);color:var(--slate);font-family:var(--sans);font-size:14px;font-weight:600;padding:12px 22px;border-radius:11px;cursor:pointer}
+.btn-ghost:hover{border-color:var(--green);color:var(--green)}
+
+/* FAQ */
+.faq-list{max-width:840px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.faq{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-sm);overflow:hidden}
+.faq-q{display:flex;align-items:center;gap:12px;padding:16px 20px;cursor:pointer;font-weight:600;font-size:14.5px;color:var(--ink)}
+.faq-q .qmark{flex-shrink:0;width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;font-family:var(--serif);font-size:14px;display:grid;place-items:center}
+.faq-q .fchev{margin-left:auto;width:18px;height:18px;stroke:var(--slate3);fill:none;stroke-width:2.2;transition:transform .25s;flex-shrink:0}
+.faq.open .fchev{transform:rotate(180deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.faq-a-inner{padding:0 20px 18px 54px;font-size:13.5px;color:var(--slate);line-height:1.7}
+.faq-a-inner b{color:var(--green);font-weight:600}
+
+/* LAUNCH */
+.launch{background:linear-gradient(135deg,var(--green-d),var(--green));position:relative;overflow:hidden}
+.launch-glow{position:absolute;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(201,145,58,.28),transparent 60%);bottom:-180px;left:-80px}
+.launch-inner{max-width:760px;margin:0 auto;padding:62px 24px;text-align:center;position:relative;z-index:1}
+.launch-h{font-family:var(--serif);font-size:clamp(30px,4vw,44px);color:#fff;letter-spacing:-.02em;margin-bottom:14px}
+.launch-h em{color:var(--gold-l)}
+.launch-p{font-size:16px;color:rgba(255,255,255,.85);line-height:1.65;margin-bottom:28px}
+.launch .btn-p{font-size:16px;padding:16px 34px}
+.launch-note{font-size:12.5px;color:rgba(255,255,255,.65);margin-top:16px}
+
+/* FOOTER */
+.footer{background:var(--ink);color:#fff;padding:44px 24px 26px}
+.footer-inner{max-width:1100px;margin:0 auto}
+.footer-top{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;padding-bottom:26px;border-bottom:1px solid rgba(255,255,255,.1)}
+.footer-brand-title{font-family:var(--serif);font-size:20px;line-height:1.25;margin-bottom:8px}
+.footer-brand-ar{font-family:var(--arabic);font-size:13px;color:rgba(255,255,255,.5);direction:rtl}
+.footer-contact{font-size:13px;color:rgba(255,255,255,.6);line-height:1.9;text-align:right}
+.footer-contact a{color:rgba(255,255,255,.75);text-decoration:none}
+.footer-bottom{padding-top:18px;font-size:12px;color:rgba(255,255,255,.5);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+/* TOAST + CONFETTI */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(160%);background:var(--ink2);color:#fff;padding:13px 22px;border-radius:11px;font-size:13.5px;box-shadow:var(--sh-xl);z-index:2000;transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:9px;max-width:90vw}
+.toast.on{transform:translateX(-50%) translateY(0)}
+.toast svg{width:16px;height:16px;stroke:var(--gold-l);fill:none;stroke-width:2.2;flex-shrink:0}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:1900;overflow:hidden}
+.confetti-bit{position:absolute;width:9px;height:14px;border-radius:2px;will-change:transform,opacity;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:.2}}
+
+/* ── DAILY TIP BAR ── */
+.tipbar{background:var(--gold-bg);border-bottom:1px solid #edd9b5}
+.tipbar-inner{max-width:1200px;margin:0 auto;padding:9px 24px;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--amber);line-height:1.4}
+.tipbar svg{width:15px;height:15px;stroke:var(--gold);fill:none;stroke-width:2;flex-shrink:0}
+.tipbar b{font-weight:700}
+.tipbar-x{margin-left:auto;background:none;border:none;color:var(--amber);cursor:pointer;opacity:.55;font-size:17px;line-height:1;flex-shrink:0}
+.tipbar-x:hover{opacity:1}
+
+/* ── LEX ASSISTANT ── */
+.lex-fab{position:fixed;bottom:22px;right:22px;z-index:1500;display:none;align-items:center;gap:9px;background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;border:none;border-radius:30px;padding:13px 20px;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 8px 26px rgba(0,107,63,.34);transition:transform .15s}
+body.unlocked .lex-fab{display:inline-flex}
+.lex-fab:hover{transform:translateY(-2px)}
+.lex-fab svg{width:18px;height:18px;stroke:var(--gold-l);fill:none;stroke-width:1.9}
+.lex-panel{position:fixed;bottom:22px;right:22px;z-index:1600;width:384px;max-width:calc(100vw - 28px);height:560px;max-height:calc(100vh - 40px);background:#fff;border-radius:18px;box-shadow:var(--sh-xl);display:none;flex-direction:column;overflow:hidden;animation:rise .28s}
+.lex-panel.on{display:flex}
+.lex-head{background:var(--navy);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:11px}
+.lex-orb{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--green),var(--green2));display:grid;place-items:center;flex-shrink:0}
+.lex-orb svg{width:18px;height:18px;stroke:var(--gold-l);fill:none;stroke-width:2}
+.lex-h-t{font-family:var(--serif);font-size:18px;line-height:1.05}
+.lex-h-s{font-size:11px;color:rgba(255,255,255,.6)}
+.lex-close{margin-left:auto;background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:22px;line-height:1;padding:2px 6px}
+.lex-close:hover{color:#fff}
+.lex-body{flex:1;overflow-y:auto;padding:16px;background:var(--paper);display:flex;flex-direction:column;gap:11px}
+.lex-msg{max-width:86%;padding:11px 14px;border-radius:14px;font-size:13.5px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word}
+.lex-msg.user{align-self:flex-end;background:var(--green);color:#fff;border-bottom-right-radius:4px}
+.lex-msg.bot{align-self:flex-start;background:#fff;color:var(--slate);border:1px solid var(--line);border-bottom-left-radius:4px}
+.lex-msg.bot b{color:var(--green);font-weight:600}
+.lex-typing{align-self:flex-start;display:flex;gap:4px;padding:13px 15px;background:#fff;border:1px solid var(--line);border-radius:14px}
+.lex-typing span{width:7px;height:7px;border-radius:50%;background:var(--slate3);animation:lexdot 1s infinite}
+.lex-typing span:nth-child(2){animation-delay:.15s}.lex-typing span:nth-child(3){animation-delay:.3s}
+@keyframes lexdot{0%,60%,100%{opacity:.3}30%{opacity:1;transform:translateY(-3px)}}
+.lex-suggest{display:flex;flex-wrap:wrap;gap:7px;padding:0 16px 10px;background:var(--paper)}
+.lex-chip{background:#fff;border:1px solid var(--line2);border-radius:16px;padding:6px 12px;font-size:11.5px;color:var(--slate);cursor:pointer;transition:all .15s}
+.lex-chip:hover{border-color:var(--green);color:var(--green)}
+.lex-foot{display:flex;gap:8px;padding:11px 13px;border-top:1px solid var(--line);background:#fff}
+.lex-input{flex:1;border:1.5px solid var(--line2);border-radius:11px;padding:10px 12px;font-family:var(--sans);font-size:13.5px;outline:none;resize:none;max-height:88px;line-height:1.4}
+.lex-input:focus{border-color:var(--green)}
+.lex-send{background:var(--green);border:none;color:#fff;border-radius:11px;width:44px;display:grid;place-items:center;cursor:pointer;flex-shrink:0}
+.lex-send:hover{background:var(--green-d)}.lex-send:disabled{opacity:.5;cursor:default}
+.lex-send svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2.2}
+.lex-note{font-size:9px;color:var(--slate3);text-align:center;padding:0 14px 8px;background:#fff;line-height:1.4}
+
+@media(max-width:860px){
+  .lad-brand,.lad-util,.nav-links .nav-link{display:none}
+  .nav-links{margin-left:auto}
+  /* Keep the AI Trainer link visible on mobile as a tappable chip */
+  .nav-links .nav-trainer{display:inline-flex !important;align-items:center;gap:6px;background:var(--gold);color:#fff;font-weight:700;padding:9px 13px;border-radius:8px}
+  .nav-links .nav-trainer:hover{background:var(--gold2)}
+  .charter-grid,.vmv{grid-template-columns:1fr}
+  .persona-grid{grid-template-columns:1fr 1fr}
+  .intent-grid{grid-template-columns:1fr 1fr}
+  .scn-grid{grid-template-columns:1fr}
+  .behav-grid{grid-template-columns:1fr 1fr 1fr}
+  .aud-grid{grid-template-columns:1fr 1fr}
+  .chan-grid{grid-template-columns:1fr}
+  .svc-body-inner{padding-left:22px}
+  .footer-top{flex-direction:column}.footer-contact{text-align:left}
+  .hero-stats{gap:22px}
+}
+@media(max-width:520px){.intent-grid,.behav-grid,.aud-grid{grid-template-columns:1fr 1fr}}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}.flip:hover .flip-inner{transform:none}#gate .gate-bg{animation:none}.hero-glow{animation:none}}
+/* ── Service spotlights ("Did you know?") ── */
+.spot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.spot{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 22px 20px;overflow:hidden;transition:transform .18s,box-shadow .18s,border-color .18s}
+.spot:hover{transform:translateY(-4px);box-shadow:0 14px 34px rgba(10,14,20,.09);border-color:var(--line2)}
+.spot::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(var(--green),var(--green2))}
+.spot.gold::before{background:linear-gradient(var(--gold),var(--gold2))}
+.spot-ico{width:42px;height:42px;border-radius:12px;background:var(--paper);display:grid;place-items:center;margin-bottom:15px}
+.spot-ico svg{width:21px;height:21px;stroke:var(--green);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.spot.gold .spot-ico{background:var(--gold-bg)}
+.spot.gold .spot-ico svg{stroke:var(--gold)}
+.spot-stat{font-family:var(--serif);font-size:36px;color:var(--green);line-height:1;letter-spacing:-.02em;margin-bottom:9px}
+.spot.gold .spot-stat{color:var(--amber)}
+.spot-h{font-size:15.5px;font-weight:700;color:var(--ink);margin-bottom:6px;letter-spacing:-.01em}
+.spot-t{font-size:13.5px;color:var(--slate2);line-height:1.62;margin-bottom:15px}
+.spot-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--slate3);font-weight:600}
+.spot-tag svg{width:13px;height:13px;stroke:var(--green);fill:none;stroke-width:2.2}
+.spot.gold .spot-tag svg{stroke:var(--gold)}
+@media(max-width:900px){.spot-grid{grid-template-columns:1fr}}
+/* ── Service journey strip ── */
+.journey{display:flex;flex-wrap:wrap;margin-top:4px}
+.journey-step{position:relative;flex:1 1 0;min-width:108px;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 4px}
+.journey-step::before{content:'';position:absolute;top:17px;left:-50%;width:100%;height:2px;background:var(--green);z-index:0;transform:scaleX(0);transform-origin:left;transition:transform .45s ease}
+.journey-step:first-child::before{display:none}
+.jdot{position:relative;z-index:1;width:34px;height:34px;border-radius:50%;background:#fff;border:2px solid var(--line2);color:var(--slate3);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:700;margin-bottom:10px;transition:border-color .35s ease,background .35s ease,color .35s ease,box-shadow .35s ease,transform .35s cubic-bezier(.2,.7,.2,1)}
+.jdot svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.6}
+.jlabel{font-size:11.8px;color:var(--slate2);line-height:1.45;max-width:140px}
+/* animated state — fill left to right */
+.journey.go .journey-step::before{transform:scaleX(1)}
+.journey.go .jdot{border-color:var(--green);background:var(--green);color:#fff;box-shadow:0 5px 14px rgba(0,107,63,.26);transform:scale(1.04)}
+.journey.go .journey-step:last-child .jdot{background:var(--gold);border-color:var(--gold);box-shadow:0 5px 14px rgba(201,145,58,.3)}
+/* sequential reveal (supports up to 5 steps) */
+.journey.go .journey-step:nth-child(1) .jdot{transition-delay:.05s}
+.journey.go .journey-step:nth-child(2)::before{transition-delay:.15s}
+.journey.go .journey-step:nth-child(2) .jdot{transition-delay:.35s}
+.journey.go .journey-step:nth-child(3)::before{transition-delay:.55s}
+.journey.go .journey-step:nth-child(3) .jdot{transition-delay:.75s}
+.journey.go .journey-step:nth-child(4)::before{transition-delay:.95s}
+.journey.go .journey-step:nth-child(4) .jdot{transition-delay:1.15s}
+.journey.go .journey-step:nth-child(5)::before{transition-delay:1.35s}
+.journey.go .journey-step:nth-child(5) .jdot{transition-delay:1.55s}
+@media(max-width:560px){
+  .journey{flex-direction:column;align-items:flex-start}
+  .journey-step{flex:none;width:100%;flex-direction:row;align-items:flex-start;text-align:left;gap:13px;padding:0 0 16px 0;min-width:0}
+  .journey-step::before{top:-50%;left:17px;width:2px;height:100%;transform:scaleY(0);transform-origin:top;transition:transform .45s ease}
+  .journey.go .journey-step::before{transform:scaleY(1)}
+  .jdot{margin-bottom:0}
+  .jlabel{max-width:none;padding-top:7px}
+}
+@media(prefers-reduced-motion:reduce){
+  .journey-step::before,.jdot{transition-duration:.001s!important;transition-delay:0s!important}
+}
+</style>
+</head>
+<body class="unlocked">
+
+<div id="progress"></div>
+
+<!-- ════ SITE ════ -->
+<div id="site"><div class="lw">
+
+  <div class="lad-util"><div class="lad-util-inner">
+    <a class="lad-util-link" href="https://legal.dubai.gov.ae" target="_blank" rel="noopener">Legal Affairs Department</a>
+    <a class="lad-util-link" href="https://legal.dubai.gov.ae/en/AboutDepartment/Pages/Contact-us.aspx" target="_blank" rel="noopener">800 523</a>
+  </div></div>
+
+  <nav class="lad-nav"><div class="lad-nav-inner">
+    <div class="lad-logos" onclick="goHome()" title="Back to top" role="button">
+      <img src="https://legal.dubai.gov.ae/assets/govlogo/DG_white.svg" alt="Government of Dubai" onerror="this.style.display='none'"/>
+      <div class="lad-logos-sep"></div>
+      <img src="https://legal.dubai.gov.ae/assets/govlogo/lad_logo_white.svg" alt="Legal Affairs Department" onerror="this.style.display='none'"/>
+    </div>
+    <div class="lad-brand">
+      <div class="lad-brand-en">Service Ambassador Hub</div>
+      <div class="lad-brand-ar">منصة سفير الخدمة</div>
+    </div>
+    <div class="nav-links">
+      <a class="nav-link" href="/portal" title="The unified CLPD platform — your role-based workspace" style="font-weight:700">⊞ CLPD Platform</a>
+      <a class="nav-link" href="/aviation" title="Aviation law — legislation, Q&amp;A and training">✈ Aviation Law</a>
+      <a class="nav-link nav-trainer" href="ai-trainer-live.html" style="font-weight:700" title="Live 1-2-1 AI legal training">🎓 AI Trainer</a>
+      <a class="nav-link" href="#finder">Find a service</a>
+      <a class="nav-link" href="#charter">Charter</a>
+      <a class="nav-link" href="#services">Services</a>
+      <a class="nav-link" href="#spotlights">Did you know?</a>
+      <a class="nav-link" href="#quiz">Knowledge check</a>
+      <a class="nav-link" href="#scenarios">Practice</a>
+      <a class="nav-link" href="#faq">FAQs</a>
+      <a class="nav-link" onclick="launchAdmin()" style="cursor:pointer">🛡 Admin</a>
+    </div>
+  </div></nav>
+
+  <!-- DAILY TIP -->
+  <div class="tipbar" id="tipbar" style="display:none">
+    <div class="tipbar-inner">
+      <svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12c1 1 1 2 1 3h6c0-1 0-2 1-3a7 7 0 0 0-4-12z"/></svg>
+      <span><b>Tip of the day:</b> <span id="tipText"></span></span>
+      <button class="tipbar-x" onclick="document.getElementById('tipbar').style.display='none'" title="Dismiss">&times;</button>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div><div class="hero-overlay"></div><div class="hero-glow"></div>
+    <div class="hero-inner">
+      <div class="hero-kicker">Legal Affairs Department · Government of Dubai</div>
+      <h1 class="hero-title">Know our services.<br><em>Serve with happiness.</em></h1>
+      <p class="hero-desc">Welcome to your Service Ambassador hub — an interactive guide to greeting every visitor with confidence and guiding them to the right Legal Affairs Department service. Explore, test yourself, then begin your training.</p>
+      <div class="hero-btns">
+        <a class="btn-p" onclick="launchSolarSystem()">Enter the Training Solar System <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="btn-p2" onclick="launchTraining()">Begin training <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      </div>
+      <a class="hero-link" href="#finder">or use the service finder below ↓</a>
+      <div class="hero-stats">
+        <div><div class="hstat-n" data-count="11">0</div><div class="hstat-l">Main services</div></div>
+        <div><div class="hstat-n" data-count="45">0</div><div class="hstat-l">Sub-services</div></div>
+        <div><div class="hstat-n" data-count="4">0</div><div class="hstat-l">Customer groups</div></div>
+        <div><div class="hstat-n" data-count="24" data-suffix="/7">0</div><div class="hstat-l">Digital availability</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ FINDER (flagship) ════ -->
+  <div class="finder" id="finder">
+    <div class="finder-card reveal">
+      <div class="finder-top">
+        <div class="finder-badge" onclick="finderHome()" title="Start over"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6M8 11h6"/></svg></div>
+        <div><div class="finder-ttl">Guide a visitor</div><div class="finder-sub">Two taps — who's at your desk, and what they need — to the right service, channel and what to say.</div></div>
+      </div>
+      <div class="finder-body">
+        <div id="finderStep1">
+          <div class="finder-q">Who is at your desk?</div>
+          <div class="persona-grid" id="personaGrid"></div>
+        </div>
+        <div id="finderStep2" style="display:none">
+          <button class="finder-back" onclick="finderHome()"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Different visitor</button>
+          <div class="finder-q" id="finderStep2Q"></div>
+          <div class="intent-grid" id="needGrid"></div>
+        </div>
+        <div class="finder-answer" id="finderAnswer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTER + behaviours -->
+  <section class="section" id="charter">
+    <div class="sec-head reveal">
+      <div class="eyebrow gold">Customers Happiness Charter</div>
+      <h2 class="sec-title">Customers at the <em>core</em> of everything</h2>
+    </div>
+    <p class="charter-intro reveal">"The Government of Dubai Legal Affairs Department is keen to provide distinguished Government services that satisfy its customers, exceed their expectations and make them happy. This Charter represents the Department's acknowledgement to place its customers at the core of its operations according to an integrated corporate culture in providing its services."</p>
+    <div class="charter-grid reveal">
+      <div class="charter-col commit">
+        <div class="charter-col-h"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>The Department commits to its customers</div>
+        <div id="commitList"></div>
+      </div>
+      <div class="charter-col expect">
+        <div class="charter-col-h"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>Your rights as a customer</div>
+        <div id="expectList"></div>
+      </div>
+    </div>
+    <div class="charter-note reveal">Approved by Administrative Resolution No. (9) of 2026 — Customers Happiness Charter (Second Version).</div>
+
+    <div class="sec-head reveal" style="margin-top:54px">
+      <div class="eyebrow">Service in action</div>
+      <h2 class="sec-title">Six behaviours, <em>brought to life</em></h2>
+      <p class="sec-sub">The way an ambassador makes a visitor happy. Tap each card to see what it looks like at the desk.</p>
+    </div>
+    <div class="behav-grid reveal" id="behavGrid"></div>
+    <div class="behav-hint reveal">Tap or hover a card to flip it.</div>
+  </section>
+
+  <!-- SERVICES -->
+  <section class="band"><div class="section" id="services">
+    <div class="sec-head reveal">
+      <div class="eyebrow gold">The Department's services</div>
+      <h2 class="sec-title">Eleven services to <em>know by heart</em></h2>
+      <p class="sec-sub">11 main services with 29 essential and 16 complementary sub-services. Search, or tap any service for the detail.</p>
+    </div>
+    <div class="searchbar reveal">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="svcSearch" type="text" placeholder="Search services — e.g. licence, fine, complaint, advice…" oninput="filterServices(this.value)"/>
+    </div>
+    <div class="svc-list reveal" id="svcList"></div>
+    <div class="no-results" id="svcNone">No services match that search.</div>
+  </div></section>
+
+  <!-- SPOTLIGHTS — Did you know? -->
+  <section class="section" id="spotlights">
+    <div class="sec-head reveal">
+      <div class="eyebrow gold">Did you know?</div>
+      <h2 class="sec-title">A few things <em>worth saying</em></h2>
+      <p class="sec-sub">Real facts from the Department's services — the kind that put a visitor at ease. Each one is true, and each one points to a service you already know.</p>
+    </div>
+    <div class="spot-grid reveal">
+
+      <div class="spot gold">
+        <div class="spot-ico"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></div>
+        <div class="spot-stat"><span data-count="395">0</span></div>
+        <div class="spot-h">Free legal advice — genuinely free</div>
+        <div class="spot-t">Through Voluntary Legal Services, 395 volunteer lawyers help members of the public at no cost — a visitor picks an area of law and a firm, and can talk in their preferred language.</div>
+        <div class="spot-tag"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> Pro Bono service</div>
+      </div>
+
+      <div class="spot">
+        <div class="spot-ico"><svg viewBox="0 0 24 24"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></div>
+        <div class="spot-stat"><span data-count="50" data-suffix="%">0</span></div>
+        <div class="spot-h">Half price for new advocates</div>
+        <div class="spot-t">A newly registered advocate pays 50% off the registration fee for their first three years on the Roll — a real encouragement for lawyers starting out in Dubai.</div>
+        <div class="spot-tag"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> Registration of Advocates</div>
+      </div>
+
+      <div class="spot gold">
+        <div class="spot-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <div class="spot-stat"><span data-count="24" data-suffix="/7">0</span></div>
+        <div class="spot-h">The desk that never closes</div>
+        <div class="spot-t">Most of the Department's services are fully digital and available around the clock — on the Smart App, the website, and DubaiNow. Often your best help is pointing to the right channel.</div>
+        <div class="spot-tag"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> Service channels</div>
+      </div>
+
+      <div class="spot">
+        <div class="spot-ico"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg></div>
+        <div class="spot-stat">1 day</div>
+        <div class="spot-h">Some things are same-day</div>
+        <div class="spot-t">A replacement registration card, a name or office amendment, a 'to whom it may concern' certificate — each is turned around in a single working day. Reassuring news for an anxious visitor.</div>
+        <div class="spot-tag"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> Registration &amp; certificates</div>
+      </div>
+
+      <div class="spot">
+        <div class="spot-ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M8.4 11l1.9 1.9L14 9.2"/></svg></div>
+        <div class="spot-stat">Instant</div>
+        <div class="spot-h">Check any lawyer is registered</div>
+        <div class="spot-t">The Advocates &amp; Legal Consultants Directory lets anyone confirm a lawyer or firm is licensed in Dubai — free, instantly, just by searching a name. A simple way to protect a visitor.</div>
+        <div class="spot-tag"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> Legal Directory</div>
+      </div>
+
+      <div class="spot gold">
+        <div class="spot-ico"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <div class="spot-stat">AED 0</div>
+        <div class="spot-h">Some complaints settle by conversation</div>
+        <div class="spot-t">Under Law No. 16 of 2025, a claim against a government entity is resolved by amicable settlement — no fees and no court, with a response due within set timelines. Calm, fair, and free.</div>
+        <div class="spot-tag"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> Government Complaints</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CHANNELS -->
+  <section class="section" id="channels">
+    <div class="sec-head reveal">
+      <div class="eyebrow">How people reach us</div>
+      <h2 class="sec-title">Service <em>channels</em></h2>
+      <p class="sec-sub">Most services are digital and available 24/7 — your job is often to guide a visitor to the right channel.</p>
+    </div>
+    <div class="chan-grid reveal" id="chanGrid"></div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="band"><div class="section" id="quiz">
+    <div class="sec-head reveal">
+      <div class="eyebrow gold">Knowledge check</div>
+      <h2 class="sec-title">Are you <em>desk-ready</em>?</h2>
+      <p class="sec-sub">Five questions, pulled fresh from a bank of 90+ each time you play. Answer as if a visitor were standing in front of you.</p>
+    </div>
+    <div class="quiz-wrap reveal">
+      <div class="quiz-card">
+        <div class="quiz-top"><div class="quiz-prog" id="quizProg"></div></div>
+        <div class="quiz-inner">
+          <div id="quizQuestion">
+            <div class="quiz-step"><span id="quizStep">Question 1 of 5</span><span id="quizScoreLbl">Score 0</span></div>
+            <div class="quiz-q" id="quizQ"></div>
+            <div class="quiz-opts" id="quizOpts"></div>
+            <div class="quiz-fb" id="quizFb"></div>
+            <button class="btn-g quiz-next" id="quizNext" onclick="nextQuestion()">Next <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+          </div>
+          <div class="quiz-result" id="quizResult">
+            <div class="qr-score"><span id="qrScore">0</span><em>/5</em></div>
+            <div class="qr-msg" id="qrMsg"></div>
+            <div class="qr-best" id="qrBest"></div>
+            <div class="qr-btns">
+              <button class="btn-ghost" onclick="startQuiz()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg> Try again</button>
+              <button class="btn-g" onclick="launchTraining()">Begin training <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- SCENARIOS -->
+  <section class="section" id="scenarios">
+    <div class="sec-head reveal">
+      <div class="eyebrow gold">Scenario practice</div>
+      <h2 class="sec-title">A visitor says… <em>what do you do?</em></h2>
+      <p class="sec-sub">Real moments at the desk. Read each one, decide your response, then reveal the model answer.</p>
+    </div>
+    <div class="scn-grid reveal" id="scnGrid"></div>
+  </section>
+
+  <!-- VMV -->
+  <section class="band"><div class="section">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Who we are</div>
+      <h2 class="sec-title">Vision, mission &amp; <em>values</em></h2>
+    </div>
+    <div class="vmv reveal">
+      <div class="vmv-card"><div class="vmv-tag">Vision</div><p>A leading system in government and professional legal work, enabled by data and technology.</p></div>
+      <div class="vmv-card"><div class="vmv-tag">Mission</div><p>Innovative, proactive and smart services that strengthen the legal sectors and Dubai's sustainable development.</p></div>
+    </div>
+    <div class="values reveal">
+      <span class="value-chip">Participation &amp; teamwork</span>
+      <span class="value-chip">Reliability &amp; commitment</span>
+      <span class="value-chip">Innovation &amp; proactivity</span>
+      <span class="value-chip">Effectiveness &amp; efficiency</span>
+      <span class="value-chip">Agility &amp; flexibility</span>
+      <span class="value-chip">Continuous learning</span>
+    </div>
+  </div></section>
+
+  <!-- AUDIENCE -->
+  <section class="section">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Who we serve</div>
+      <h2 class="sec-title">Know your <em>visitor</em></h2>
+      <p class="sec-sub">Every person at the desk belongs to one of four customer groups — knowing which one points you to the right service.</p>
+    </div>
+    <div class="aud-grid reveal">
+      <div class="aud"><div class="aud-ico"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg></div><div class="aud-h">Professionals</div><div class="aud-p">Advocates &amp; legal consultants practising in Dubai.</div></div>
+      <div class="aud"><div class="aud-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg></div><div class="aud-h">Individuals</div><div class="aud-p">Citizens, residents and visitors — members of the public.</div></div>
+      <div class="aud"><div class="aud-ico"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg></div><div class="aud-h">Government</div><div class="aud-p">Dubai Government entities, local and non-local.</div></div>
+      <div class="aud"><div class="aud-ico"><svg viewBox="0 0 24 24"><path d="M3 21h18M6 21V8h12v13M10 12h4M10 16h4"/></svg></div><div class="aud-h">Private organisations</div><div class="aud-p">Companies and sole establishments.</div></div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="band"><div class="section" id="faq">
+    <div class="sec-head reveal">
+      <div class="eyebrow gold">At the desk</div>
+      <h2 class="sec-title">Questions you'll be <em>asked</em></h2>
+      <p class="sec-sub">The answers a Service Ambassador should have ready.</p>
+    </div>
+    <div class="searchbar reveal">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="faqSearch" type="text" placeholder="Search the FAQs…" oninput="filterFaq(this.value)"/>
+    </div>
+    <div class="faq-list reveal" id="faqList"></div>
+    <div class="no-results" id="faqNone">No questions match that search.</div>
+  </div></section>
+
+  <!-- LAUNCH -->
+  <section class="launch"><div class="launch-glow"></div><div class="launch-inner">
+    <div class="launch-h">Ready to <em>begin training</em>?</div>
+    <p class="launch-p">You've explored the Charter, the services and the channels, and tested yourself. Now put it into practice with the interactive Service Ambassador course.</p>
+    <div style="display:flex;gap:13px;justify-content:center;flex-wrap:wrap">
+      <a class="btn-p" onclick="launchSolarSystem()">Enter the Solar System <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      <a class="btn-p2" onclick="launchTraining()">Begin training <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+    </div>
+    <div class="launch-note" id="launchNote">The Solar System is the gamified academy · Begin training opens the structured course.</div>
+  </div></section>
+
+  <footer class="footer"><div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <div class="footer-brand-title">Legal Affairs Department<br>Government of Dubai</div>
+        <div class="footer-brand-ar">دائرة الشؤون القانونية · حكومة دبي</div>
+      </div>
+      <div class="footer-contact">
+        <a href="https://legal.dubai.gov.ae" target="_blank" rel="noopener">legal.dubai.gov.ae</a><br>
+        800 523 · +971 4 353 3337<br>
+        Al Fahidi · Dubai · P.O. Box 446
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Government of Dubai — Legal Affairs Department. All rights reserved.</span>
+      <span>Service Ambassador Hub</span>
+    </div>
+  </div></footer>
+
+</div></div>
+
+<!-- ── LEX ASSISTANT ── -->
+<button class="lex-fab" id="lexFab" onclick="lexToggle(true)">
+  <svg viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4z"/><path d="M19 14l.7 1.8L21.5 17l-1.8.7L19 19.5l-.7-1.8L16.5 17l1.8-.5z"/></svg>
+  Ask Maryam
+</button>
+<div class="lex-panel" id="lexPanel">
+  <div class="lex-head">
+    <div class="lex-orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4z"/></svg></div>
+    <div><div class="lex-h-t">Maryam</div><div class="lex-h-s">Your service assistant</div></div>
+    <button class="lex-close" onclick="lexToggle(false)" title="Close">&times;</button>
+  </div>
+  <div class="lex-body" id="lexBody"></div>
+  <div class="lex-suggest" id="lexSuggest"></div>
+  <div class="lex-foot">
+    <textarea class="lex-input" id="lexInput" rows="1" placeholder="Describe the visitor's situation…" onkeydown="lexKey(event)"></textarea>
+    <button class="lex-send" id="lexSend" onclick="lexSend()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+  </div>
+  <div class="lex-note">Maryam is an AI aid for staff — verified to the Department's services. Double-check anything critical.</div>
+</div>
+
+<div id="confetti"></div>
+<div class="toast" id="toast"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span id="toastMsg"></span></div>
+
+<script>
+var CFG = window.SITE_CONFIG || {};
+var BEST_KEY='lad_sa_quizbest';
+
+/* ─────────── CONTENT (edit here) ─────────── */
+var COMMITMENTS = [
+  "Keep customer data and information confidential, per the Department's approved policies.",
+  "Provide a distinguished service marked by quality and efficiency.",
+  "Meet needs with professionalism, transparency and fairness.",
+  "Provide each service's requirements and observe its completion deadlines.",
+  "Provide accurate information and apply sound procedures.",
+  "Continuously improve and streamline procedures for a flexible, quick, smooth service.",
+  "Deal with customers with the utmost attention, appreciation and decency.",
+  "Serve through a cooperative, knowledgeable, skilled team able to answer enquiries.",
+  "Welcome feedback and suggestions to develop services and achieve their happiness.",
+  "Serve People of Determination in line with their needs."
+];
+// "Your rights as a customer" — aligned with the Dubai / UAE Government
+// charters on customer service (treated with respect, fairness, privacy,
+// accessibility, convenient channels and the right to be heard).
+var EXPECTATIONS = [
+  "To be welcomed and treated with courtesy, respect and a smile.",
+  "To be served fairly and impartially — whoever you are.",
+  "To receive clear, accurate and transparent information.",
+  "To have your time respected, with prompt and efficient service.",
+  "To have your data and privacy kept confidential.",
+  "To accessible service tailored to People of Determination.",
+  "To reach us easily through convenient, multiple channels.",
+  "To be heard — to give feedback or a complaint and have it addressed."
+];
+var BEHAVIOURS = [
+  {w:"Welcoming",  d:"Greet first, with warmth. Make eye contact and offer help before they ask.", i:'<path d="M14 9V5a3 3 0 0 0-6 0v4"/><rect x="2" y="9" width="20" height="12" rx="2"/>'},
+  {w:"Courteous",  d:"Polite, patient and respectful with every visitor, every time.", i:'<path d="M12 21s-8-4.5-8-10a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5.5-8 10-8 10z"/>'},
+  {w:"Professional",d:"Accurate information, sound procedures, and discretion with sensitive matters.", i:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>'},
+  {w:"Understanding",d:"Listen fully. Understand the real need before pointing to a service.", i:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'},
+  {w:"Positive",   d:"Turn 'please wait' into 'here's exactly how we'll help'.", i:'<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>'},
+  {w:"Innovative", d:"Guide people to smart channels — DubaiNow, the app — not just a counter.", i:'<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12c1 1 1 2 1 3h6c0-1 0-2 1-3a7 7 0 0 0-4-12z"/>'}
+];
+
+var LPS='https://lps.legal.dubai.gov.ae/';
+var SERVICES = [
+  {en:"Registration of Advocates & Legal Consultants", ar:"قيد المحامين والمستشارين القانونيين", who:"Advocates & legal consultants",
+   ch:"Legal Professions System (LPS) · Smart App",
+   url:LPS,
+   desc:"Join and maintain your place on the Roll of practising advocates and legal consultants — the gateway to practising law in Dubai. New advocate registration is AED 2,020 (incl. innovation & knowledge fees) and takes about 14 working days; new advocates receive 50% off the registration fee for their first 3 years. A 'to whom it may concern' certificate is AED 220.",
+   subs:["New Registration","Registration Renewal","Reinstatement","Amendment of Details","Replacement Card","To-Whom-It-May-Concern Certificate (AED 220)","Right of audience — Court of Cassation","Visiting Legal Consultant Permit"]},
+  {en:"Licensing of Advocacy & Legal Consultancy Firms", ar:"ترخيص مكاتب المحاماة والاستشارات القانونية", who:"Law & consultancy firms",
+   ch:"Legal Professions System (LPS) · Invest in Dubai",
+   url:LPS,
+   desc:"License and manage an advocacy or legal-consultancy firm in Dubai — including changes to partners, managers, name, address and activities, and temporary or permanent cessation.",
+   subs:["New Firm Licence","Firm Licence Renewal","Add / remove a partner","Change name, address or activity","Appoint a manager","Temporary / Permanent cessation","To-Whom-It-May-Concern Certificate"]},
+  {en:"Violations & Fines", ar:"المخالفات والغرامات", who:"Advocates & legal consultants",
+   ch:"Legal Professions System (LPS) · Smart App",
+   url:LPS,
+   desc:"Settle professional fines, arrange instalments, or grieve a decision to impose a fine.",
+   subs:["Payment of Fines","Amicable Settlement","Payment by Instalments","Grievance against a fine","Grievance against other decisions"]},
+  {en:"Voluntary Legal Services (Pro Bono)", ar:"الخدمات القانونية التطوعية", who:"Members of the public",
+   ch:"Voluntary Legal Services Smart Portal · Smart App · DubaiNow",
+   url:'https://legal.dubai.gov.ae/en/Pages/Probono.aspx',
+   desc:"A free pro bono service that connects members of the public to volunteering advocates and legal consultants. The public register on the Voluntary Legal Services Smart Portal, choose an area of law and a firm, and receive free legal advice. 395 lawyers participate across 48 areas of law.",
+   subs:["Register for free legal advice","Choose an area of law & a firm","Communicate in your preferred language"]},
+  {en:"Professional Training & Development (CLPD)", ar:"التدريب والتطوير المهني", who:"Advocates · consultants · training providers",
+   ch:"CLPD Portal",
+   url:'https://clpdportal.legal.dubai.gov.ae/',
+   desc:"The Continuing Legal Professional Development programme — register for CLPD, and for providers, become accredited and accredit training courses.",
+   subs:["Register in the CLPD Programme","Provider Accreditation","Training Course Accreditation"]},
+  {en:"Representation in Government Cases", ar:"التمثيل في الدعاوى الحكومية", who:"Dubai Government entities",
+   ch:"Central Legal Services Portal (Gov Portal)",
+   url:'',
+   desc:"The Department represents the Government and its entities before the courts and in arbitration.",
+   subs:["Representation in civil cases","Representation in criminal cases","Representation in arbitration"]},
+  {en:"Execution of Judgments & Instruments", ar:"تنفيذ الأحكام والسندات", who:"Government entities · individuals",
+   ch:"Gov Portal · Email",
+   url:'',
+   desc:"Execute judgments and executory instruments issued for or against the Government, its entities, individuals and companies. Submit the judgment together with its executory wording and any related Court of Appeal / Cassation judgments.",
+   subs:["Execution of cheques","Execution of administrative resolutions","Execution of criminal judgments","Execution of judgments against individuals"]},
+  {en:"Government Legal Support", ar:"الدعم القانوني الحكومي", who:"Dubai Government entities",
+   ch:"Central Legal Services Portal (Gov Portal)",
+   url:'https://legal.dubai.gov.ae/en/ServicesToGovernment/Pages/ContractsandAgreements.aspx',
+   desc:"End-to-end legal support for government bodies — legislation, advice, company governance, intellectual property, and contracts.",
+   subs:["Legislative Support","Legal Advice","Company incorporation & governance","IP rights support","General Legal Support","Contract drafting","Contract review","Advice on contracting"]},
+  {en:"Government & Legal Professional Complaints", ar:"الشكاوى الحكومية والمهنية", who:"Public · private organisations",
+   ch:"Website · Smart App",
+   url:'https://cms.legal.dubai.gov.ae/en/Website/Pages/ComplaintAgainstGovernmentEntity.aspx',
+   desc:"Raise a complaint or claim against a government entity (under Law No. 16 of 2025 — no fees, resolved by amicable settlement; not for criminal matters), or file a complaint against an advocate or legal consultant for the Professional Conduct process.",
+   subs:["Claim / complaint against a Government Entity","Amicable Settlement","Certificate of Compliance","Complaint against an Advocate / Consultant","Grievance against a Conduct Committee decision"]},
+  {en:"Monitoring & Inspection", ar:"الرقابة والتفتيش", who:"Public · the profession",
+   ch:"Report · field inspection",
+   url:'',
+   desc:"Safeguard the profession — report unlicensed legal practice and flag breaches of professional conduct rules.",
+   subs:["Report unlicensed practice","Monitor professional-conduct violations"]},
+  {en:"Informational Services — Legal Directory", ar:"الخدمات المعلوماتية", who:"Everyone",
+   ch:"Website · Smart App",
+   url:'https://lps.legal.dubai.gov.ae/AreasOfLaws',
+   desc:"The Advocates & Legal Consultants Directory — verify whether an advocate or legal consultant is registered, or whether a firm is licensed in Dubai. Search by full or partial name of the person or the firm.",
+   subs:["Search for a registered advocate / consultant","Search for a licensed firm","Browse by area of law"]}
+];
+
+// Per-service deep detail — fees, time, required documents and steps,
+// summarised from the official LAD Services Guide.
+var SERVICE_DETAIL = {
+  0:{rows:[
+       {n:"New advocate registration", fee:"AED 2,020", time:"14 working days"},
+       {n:"New legal-consultant registration", fee:"AED 2,020", time:"18 working days"},
+       {n:"Registration renewal", fee:"from AED 1,020", time:"Immediate"},
+       {n:"Reinstatement of registration", fee:"AED 2,020", time:"10–14 working days"},
+       {n:"Amend name / nationality, change office, or transfer roll", fee:"AED 520", time:"1 working day"},
+       {n:"Right of audience — Court of Cassation", fee:"AED 520", time:"1 working day"},
+       {n:"Replacement registration card", fee:"AED 120", time:"1 working day"},
+       {n:"'To whom it may concern' certificate", fee:"AED 220", time:"1 working day"},
+       {n:"Temporary rights of audience permit", fee:"AED 5,020", time:"5 working days"},
+       {n:"Visiting legal-consultant permit", fee:"AED 220", time:"2 working days"}],
+     note:"Fees include a 10 innovation fee + 10 knowledge fee. New advocates get 50% off the registration fee for their first 3 years.",
+     docs:["University law degree","Passport","Good-conduct (criminal status) certificate","Certificate of passing the Ministry of Justice theoretical & practical training","Employment contract attested by MOHRE","Certificate from the commercial-licensing authority that issued the applicant's passport, confirming no commercial licences in their name (not required if Dubai-issued)","Curriculum vitae (CV)"],
+     steps:["Apply on the Legal Professions System or Smart App","The Department reviews the application and documents","Pay the fees","Registration decision and registration card issued"]},
+  1:{rows:[
+       {n:"New firm licence (sole establishment, company or branch)", fee:"AED 3,020 (AED 3,000 per partner for companies)", time:"20 working days"},
+       {n:"Firm licence renewal", fee:"AED 3,000 per advocate / consultant", time:"1 working day"},
+       {n:"Amend licence — name, address, manager, activity, partner, legal form, or add a branch", fee:"AED 1,020", time:"5 working days"},
+       {n:"Temporary or permanent cessation", fee:"No fee", time:"5 working days"},
+       {n:"'To whom it may concern' certificate", fee:"AED 220", time:"1 working day"}],
+     note:"Fees include a 10 innovation fee + 10 knowledge fee. New advocates get 50% off the licence fees for their first 3 years.",
+     docs:["Detailed experience certificate from the previous employer (for advocates with under 2 years' practice)","Owners of a legal office outside Dubai: an undertaking naming a proposed UAE-national managing advocate","Signed acceptance from the proposed manager to join the Dubai office full-time","Proof the proposed manager is registered with the Department or the Ministry of Justice (or meets the Article 7 requirements)","Proof the proposed manager has at least 2 consecutive years' legal experience"],
+     steps:["Apply on the Legal Professions System / Invest in Dubai","The Department reviews the application","Pay the fees","No-objection certificate and professional licence issued"]},
+  2:{rows:[
+       {n:"Pay a fine", fee:"Fine amount", time:"Immediate"},
+       {n:"Amicable settlement of a fine", fee:"No fee", time:"5 working days"},
+       {n:"Pay a fine by instalments", fee:"No fee", time:"5 working days"},
+       {n:"Grievance against a fine (or other decision)", fee:"No fee", time:"60 working days"}],
+     docs:["A written grievance stating the reasons","Any supporting documents"],
+     steps:["Submit the payment, settlement or grievance on the Legal Professions System","The Grievances Committee reviews (for grievances)","A decision is issued and the person is notified"]},
+  3:{rows:[
+       {n:"Ask a lawyer (free legal advice)", fee:"Free", time:"Instant"}],
+     docs:["None"],
+     steps:["Register on the Voluntary Legal Services Smart Portal","Choose the area of law and preferred language","Pick an available firm and a convenient time","Receive the free legal consultation"]},
+  4:{rows:[
+       {n:"Register in a CLPD activity", fee:"AED 1,050 (1,000 + 50 VAT)", time:"1 day"},
+       {n:"Provider accreditation", fee:"No fee", time:"30 days"},
+       {n:"Training-course accreditation", fee:"No fee", time:"30 days"}],
+     docs:["Not applicable"],
+     steps:["Log in to the CLPD Portal","Buy enough units (online or via the customer reception team)","Choose the development activity","Choose the date and time","Register for the activity"]},
+  5:{rows:[
+       {n:"Representation in civil, criminal or arbitration cases", fee:"No fee", time:"Tied to the final judgment"}],
+     docs:["For a case brought by the government: a request form/letter from the entity, with documents supporting the right claimed","For a case against the government: the judicial notice with the statement of claim naming the entity"],
+     steps:["The entity submits the request via the Central Legal Services Portal or email","The Department takes up the representation","Amicable settlement, or a final judgment/order — with the executory copy for judgments in the entity's favour"]},
+  6:{rows:[
+       {n:"Execution of cheques", fee:"No fee", time:"Varies by case"},
+       {n:"Execution of administrative resolutions", fee:"No fee", time:"Varies by case"},
+       {n:"Execution of criminal judgments", fee:"No fee", time:"Varies by case"},
+       {n:"Execution of judgments against individuals", fee:"No fee", time:"60 working days"}],
+     docs:["Copy of the cheque","Bank notice (cheque-return advice and reason — no/insufficient funds, account closed or frozen)","Certified translation of the cheque and bank notice","Copy of ID (if the defendant is an individual)","Company licence and authorised-signatory ID (if the defendant is a company)","Explanatory memo of why the cheque was issued","Letter from the entity regarding any partial payment"],
+     steps:["Submit via the Gov Portal or email with the judgment and its executory wording","The Department prepares and approves the enforcement letter","The entity is notified and complies — amicable settlement, or the claim is registered with a case number"]},
+  7:{rows:[
+       {n:"Legislative support", fee:"No fee", time:"10–30 working days"},
+       {n:"Legal advice", fee:"No fee", time:"10–20 working days"},
+       {n:"Company incorporation & governance", fee:"No fee", time:"First response 5–30 working days"},
+       {n:"IP rights support", fee:"No LAD fee (Ministry of Economy fees may apply)", time:"Trademark 3–6 months"},
+       {n:"Contract drafting / review / advice", fee:"No fee", time:"First response 5–30 working days"}],
+     docs:["An official request from the government entity via the service channels","The draft legislation or contract to prepare or review (or the key provisions to include if there is no draft)","Related correspondence and relevant federal/local legislation or resolutions","Any other documents the Department requests"],
+     steps:["Submit the request via the Central Legal Services Portal or email","The Department classifies and works the request","The output is delivered — e.g. a draft law/regulation, contract, or legal observations"]},
+  8:{rows:[
+       {n:"Claim / complaint against a government entity", fee:"No fee", time:"Up to 60 working days"},
+       {n:"Complaint against an advocate / consultant", fee:"No fee", time:"Up to 60 working days"}],
+     note:"Government claims are referred to the entity within 5 working days, with a 15-day response window (Law No. 16 of 2025).",
+     docs:["A signed statement of claim with: claimant name, title, ID details, contact and domicile","The legal representative's details and power of attorney (if any)","The name of the respondent government entity","The subject, details, requests and grounds of the claim","ID of the complainant (Emirates ID or valid passport; power of attorney if via an agent; commercial licence for organisations)"],
+     steps:["File via the website, Smart App or in person","Amicable settlement is attempted (negotiation or mediation)","A settlement agreement, or a certificate of compliance with the Government Claims Law procedures, is issued"]},
+  9:{rows:[
+       {n:"Report unlicensed practice / conduct breach", fee:"No fee", time:"Reporting 24/7"}],
+     docs:["Details of the person or activity being reported","Any supporting evidence (e.g. adverts, documents)"],
+     steps:["Report the suspected unlicensed practice to the Department","The Department reviews and inspects","Action is taken where a breach is confirmed"]},
+  10:{rows:[
+       {n:"Search advocates, consultants & firms", fee:"Free", time:"Instant"}],
+     docs:["None"],
+     steps:["Open the Advocates & Legal Consultants Directory on the website","Search by the person's or firm's name (full or partial)","View the registration / licensing status"]}
+};
+
+var SCENARIOS = [
+  {q:"I just graduated in law — how do I become a lawyer here?",
+   a:"Welcome them warmly. This is <b>New Registration</b> (Registration of Advocates). They apply on the <b>Legal Professions System</b> or Smart App — <b>AED 2,020</b>, about <b>14 working days</b>, with <b>50% off the fee for their first 3 years</b>. Offer the document list: degree, passport, good-conduct certificate, Ministry of Justice training certificate, MOHRE-attested contract and CV.",
+   tag:"Registration"},
+  {q:"A lawyer treated me badly and took my money!",
+   a:"Stay calm and empathetic — reassure them you'll help. This is a <b>complaint against an advocate or legal consultant</b>: file via the website or Smart App; it goes to the <b>Professional Conduct</b> process (Professional.conduct@legal.dubai.gov.ae). Don't take sides — note the lawyer's name and the details.",
+   tag:"Complaints"},
+  {q:"I can't afford a lawyer but I really need legal advice.",
+   a:"Reassure them — the Department offers <b>free Voluntary Legal Services (Pro Bono)</b>. Help them register on the <b>Voluntary Legal Services Smart Portal</b> (also on the Smart App / DubaiNow), choose the area of law, and they'll be matched with a volunteer lawyer. <b>No fee.</b>",
+   tag:"Pro Bono"},
+  {q:"How do I know if 'XYZ Law Firm' is actually licensed?",
+   a:"Great question to encourage. Use the <b>Advocates & Legal Consultants Directory</b> on the website — search by the firm or person's name (full or partial) to confirm they're licensed. Offer to show them how.",
+   tag:"Directory"},
+  {q:"Our government department needs a contract reviewed — urgently.",
+   a:"That's <b>Government Legal Support</b> via the <b>Central Legal Services Portal (Gov Portal)</b> — contract drafting, review and advice. Typically <b>10–30 working days</b> by request type; <b>no fee</b>. Help them find the portal and the documents to attach.",
+   tag:"Gov support"},
+  {q:"I want to file a criminal case against my neighbour!",
+   a:"Empathise, then redirect correctly. The Legal Affairs Department <b>does not handle criminal reports or complaints</b> — politely direct them to <b>Dubai Police / Public Prosecution</b>. (For a non-criminal dispute with a <i>government entity</i>, the Department can help under Law No. 16 of 2025.)",
+   tag:"Redirect"},
+  {q:"(A visitor using a wheelchair approaches your desk.)",
+   a:"Lead with the Charter: serve <b>People of Determination in line with their needs</b>. Proactively offer help, make sure the channel is accessible, be patient, and guide them through the service or the smart channel yourself.",
+   tag:"Inclusive service"}
+];
+
+var PERSONAS = [
+  {label:"Professional", ar:"المهنيون", sub:"Advocate or legal consultant",
+   i:'<path d="M12 3v18M4 7h16M8 7l-3 6a3 3 0 0 0 6 0zM16 7l-3 6a3 3 0 0 0 6 0z"/>',
+   needs:[
+     {t:"Register for the first time", si:0, say:"New Registration on the Legal Professions System / Smart App — AED 2,020 and about 14 working days; new advocates get 50% off the registration fee for their first 3 years."},
+     {t:"Renew, reinstate or amend registration", si:0, say:"Renewal, reinstatement and amendment of details are all on the Legal Professions System."},
+     {t:"Replace a lost registration card", si:0, say:"Apply for a replacement registration card on the Legal Professions System."},
+     {t:"Get a 'to whom it may concern' certificate", si:0, say:"Email the Advocates & Legal Consultants Affairs Section — the certificate is AED 220 (200 + 10 innovation + 10 knowledge)."},
+     {t:"Right of audience — Court of Cassation", si:0, say:"They must be on the Roll of Practising Advocates and take the oath before the Court of Cassation; apply via the Legal Professions System."},
+     {t:"Pay or dispute a fine", si:2, say:"Pay, settle amicably, or pay by instalments on the Legal Professions System; grievances against a fine are here too."},
+     {t:"CLPD points & training", si:4, say:"Register and track Continuing Legal Professional Development on the CLPD Portal."}
+   ]},
+  {label:"Member of the public", ar:"الأفراد", sub:"Citizen, resident or visitor",
+   i:'<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/>',
+   needs:[
+     {t:"Get free legal advice", si:3, say:"Free Voluntary Legal Services (Pro Bono) — register on the Voluntary Legal Services Smart Portal to be matched with a volunteer lawyer (395 lawyers across 48 areas of law). Also on the Smart App / DubaiNow."},
+     {t:"Check a lawyer or firm is licensed", si:10, say:"Search the Advocates & Legal Consultants Directory by name or firm on the website."},
+     {t:"Complain about a lawyer or consultant", si:8, say:"File online via the website / Smart App — it goes to the Professional Conduct process (Professional.conduct@legal.dubai.gov.ae)."},
+     {t:"Complaint / claim vs a government entity", si:8, say:"Filed through the Department under Law No. 16 of 2025 — no fees, resolved by amicable settlement (negotiation or mediation). Not for criminal matters."},
+     {t:"Report unlicensed legal practice", si:9, say:"Report someone practising law without a licence to the Department for inspection."},
+     {t:"Enforce a judgment", si:6, say:"Submit the judgment together with its executory wording; the Department handles the enforcement."}
+   ]},
+  {label:"Law / consultancy firm", ar:"المؤسسات الخاصة", sub:"Advocacy or legal-consultancy firm",
+   i:'<path d="M3 21h18M6 21V8h12v13M10 12h4M10 16h4M10 8V4h4v4"/>',
+   needs:[
+     {t:"License a new firm", si:1, say:"Apply for a New Firm Licence on the Legal Professions System / Invest in Dubai."},
+     {t:"Renew or amend a firm licence", si:1, say:"Renew, change name/address/activity, add or remove a partner, or appoint a manager — all on the Legal Professions System."},
+     {t:"Temporarily or permanently close a firm", si:1, say:"Apply for temporary or permanent cessation on the Legal Professions System."},
+     {t:"Firm 'to whom it may concern' certificate", si:1, say:"Request the certificate via the Legal Professions System."},
+     {t:"Become a CLPD training provider", si:4, say:"Apply for Provider Accreditation and accredit your courses on the CLPD Portal."}
+   ]},
+  {label:"Government entity", ar:"الجهات الحكومية", sub:"Dubai Government body",
+   i:'<path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/>',
+   needs:[
+     {t:"Legal advice or legislative support", si:7, say:"Submit via the Central Legal Services Portal — legislative support and legal advice."},
+     {t:"Draft or review a contract", si:7, say:"Contract drafting, review and contracting advice via the Central Legal Services Portal."},
+     {t:"Company governance or IP support", si:7, say:"Support on incorporating and governing government companies and protecting IP rights — via the Gov Portal."},
+     {t:"Representation in a case or arbitration", si:5, say:"The Department represents the entity in civil, criminal and arbitration cases — via the Gov Portal."},
+     {t:"Enforce a judgment or instrument", si:6, say:"Cheques, administrative resolutions and criminal judgments — submit the judgment with its executory wording via the Gov Portal."},
+     {t:"Amicable settlement with another entity", si:8, say:"Request amicable settlement / a certificate of compliance via the Gov Portal."}
+   ]}
+];
+
+var CHANNELS = [
+  {h:"Smart App", p:"The Department's mobile app — most services, 24/7.", i:'<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>'},
+  {h:"Website", p:"legal.dubai.gov.ae — services, information and search.", i:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>'},
+  {h:"Central Legal Services Portal", p:"Gov Portal — for Dubai Government entities.", i:'<path d="M3 21h18M5 21V7l7-4 7 4v14"/>'},
+  {h:"Legal Professions System (LPS)", p:"Registration, licensing and fines for the profession.", i:'<path d="M12 3l9 4-9 4-9-4 9-4zM3 12l9 4 9-4M3 17l9 4 9-4"/>'},
+  {h:"CLPD Portal", p:"Continuing Legal Professional Development.", i:'<path d="M4 19V5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h8M8 11h6"/>'},
+  {h:"Email & Call Centre", p:"Email plus 800 523 / +971 4 353 3337.", i:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/>'}
+];
+
+var FAQS = [
+  {q:"What does the Legal Affairs Department do?", a:"It <b>regulates the legal profession</b> in Dubai — advocates, legal consultants and firms — and provides <b>legal services to the Government of Dubai</b>: registration & licensing, the CLPD training programme, fines, complaints, free legal advice to the public, and representation and legal support for government entities."},
+  {q:"Someone wants to become an advocate in Dubai — what do they do?", a:"They apply for <b>New Registration</b> via the <b>Legal Professions System (LPS)</b> or <b>Smart App</b>. Fee <b>AED 2,020</b>, about <b>14 working days</b>; new advocates get <b>50% off the registration fee for their first 3 years</b>."},
+  {q:"Who can register as an advocate?", a:"Generally, someone holding a <b>law degree</b> (or an equivalent qualification plus valid professional membership abroad). UAE nationals may also register if they have served as a <b>judge or public prosecutor for at least a year</b>, hold a <b>doctorate in law as a faculty member</b>, or have worked in the <b>legal field for at least two years</b>."},
+  {q:"How can a member of the public get free legal advice?", a:"Through <b>Voluntary Legal Services (Pro Bono)</b>. The public register on the <b>Voluntary Legal Services Smart Portal</b>, pick an area of law and a participating firm, and receive free advice — <b>395 lawyers across 48 areas of law</b>. Also reachable via the Smart App / DubaiNow."},
+  {q:"How is a 'to whom it may concern' certificate issued, and what does it cost?", a:"A registered advocate can request it by email to the <b>Advocates & Legal Consultants Affairs Section</b>. The fee is <b>AED 220</b> — AED 200 plus a 10 innovation fee and a 10 knowledge fee."},
+  {q:"How do I check whether a lawyer or law firm is licensed?", a:"Search the <b>Advocates & Legal Consultants Directory</b> on the website — by full or partial name of the person, or by firm name."},
+  {q:"How do I complain about a lawyer or legal consultant?", a:"File online via the <b>website</b> or <b>Smart App</b>; it goes to the <b>Professional Conduct</b> process (Professional.conduct@legal.dubai.gov.ae). Decisions can be grieved to the Professional Conduct Committee."},
+  {q:"How do I make a complaint or claim against a government entity?", a:"It's filed <b>through the Department</b> under <b>Law No. 16 of 2025</b>. There are <b>no fees</b>; it's resolved by <b>amicable settlement</b> (negotiation or mediation). The claim is referred to the entity within <b>5 working days</b>, with a <b>15-day</b> response window. The Department does <b>not</b> handle criminal matters or urgent/provisional requests."},
+  {q:"A government entity needs legal support or representation — where do they go?", a:"Through the <b>Central Legal Services Portal (Gov Portal)</b>: legal support, contract drafting & review, representation in cases and arbitration, and execution of judgments."},
+  {q:"Where do lawyers pay fines?", a:"Under <b>Violations & Fines</b> via the <b>Legal Professions System</b> / <b>Smart App</b>. <b>Amicable settlement</b> and <b>instalments</b> are available."},
+  {q:"What are the Department's service channels?", a:"<b>Smart App</b>, <b>Website</b>, <b>Central Legal Services Portal</b>, <b>Legal Professions System (LPS)</b>, <b>CLPD Portal</b>, the <b>Voluntary Legal Services Smart Portal</b>, and <b>Email</b> — plus DubaiNow and Invest in Dubai. Call centre: <b>800 523</b> / <b>+971 4 353 3337</b>."},
+  {q:"What hours are services available?", a:"Digital services are available <b>24/7</b>. The call centre and customer service centre follow published hours (Sun–Thu)."},
+  {q:"What does the Customers Happiness Charter promise?", a:"That customers are at the <b>core of operations</b>: confidentiality, distinguished and efficient service, accurate information, deadlines observed, respectful treatment, accessibility for <b>People of Determination</b>, and welcoming feedback."}
+];
+
+// QUESTION BANK — every item is grounded in the verified primary material
+// (LAD Services Guide fees/timelines/documents, channels, the Customers
+// Happiness Charter, and the Voluntary Legal Services facts). The quiz draws
+// a random 5 each time. To add a question, append {q, o:[4 options], c, e}.
+var QUIZ_POOL = [
+  // ── Which service? ──
+  {q:"A visitor wants to become a lawyer in Dubai. Which service?", o:["Registration of Advocates & Legal Consultants","Licensing of Firms","Voluntary Legal Services","Violations & Fines"], c:0, e:"New Registration — via the Legal Professions System or Smart App."},
+  {q:"A member of the public wants free legal advice. Which service?", o:["Government Legal Support","Voluntary Legal Services (Pro Bono)","Representation in Government Cases","Informational Services"], c:1, e:"Voluntary Legal Services (Pro Bono) matches the public to volunteer lawyers."},
+  {q:"Someone wants to open a law firm in Dubai. Which service?", o:["Registration of Advocates","Licensing of Advocacy & Legal Consultancy Firms","Monitoring & Inspection","CLPD"], c:1, e:"Firm licensing — via the Legal Professions System / Invest in Dubai."},
+  {q:"A visitor wants to check whether a lawyer is licensed. Which service?", o:["Informational Services — Legal Directory","Complaints","Registration","Monitoring & Inspection"], c:0, e:"The Advocates & Legal Consultants Directory verifies registration/licensing."},
+  {q:"A lawyer needs to pay a professional fine. Which service?", o:["Government Legal Support","Violations & Fines","Execution of Judgments","Complaints"], c:1, e:"Violations & Fines — on the Legal Professions System."},
+  {q:"A government entity needs a contract reviewed. Which service?", o:["Government Legal Support","Voluntary Legal Services","Registration","Violations & Fines"], c:0, e:"Government Legal Support covers contract drafting, review and advice."},
+  {q:"A visitor wants to complain about a legal consultant. Which service?", o:["Monitoring & Inspection","Government & Legal Professional Complaints","Registration","Execution"], c:1, e:"Complaints — it goes to the Professional Conduct process."},
+  {q:"A government entity needs to be represented in court. Which service?", o:["Representation in Government Cases","Government Legal Support","Execution of Judgments","Complaints"], c:0, e:"The Department represents the Government and its entities in court and arbitration."},
+  {q:"A lawyer wants to record CLPD points. Which service?", o:["Registration","Professional Training & Development (CLPD)","Monitoring & Inspection","Informational Services"], c:1, e:"Continuing Legal Professional Development — on the CLPD Portal."},
+  {q:"Someone wants to report a person practising law without a licence. Which service?", o:["Complaints","Monitoring & Inspection","Violations & Fines","Directory"], c:1, e:"Monitoring & Inspection handles unlicensed-practice reports."},
+  {q:"A government entity wants to enforce a bounced cheque. Which service?", o:["Execution of Judgments & Instruments","Representation","Violations & Fines","Government Legal Support"], c:0, e:"Execution of Judgments & Instruments — includes cheque execution."},
+  {q:"A training company wants to deliver accredited CLPD courses. Which service?", o:["Registration","Professional Training & Development (CLPD)","Licensing of Firms","Government Legal Support"], c:1, e:"CLPD — Provider Accreditation and Course Accreditation."},
+  {q:"A firm wants to add a partner to its licence. Which service?", o:["Registration","Licensing of Advocacy & Legal Consultancy Firms","Complaints","CLPD"], c:1, e:"Firm licence amendments include adding/removing a partner."},
+  {q:"A resident wants to claim against a government department. Which service?", o:["Government & Legal Professional Complaints","Representation","Execution","Monitoring & Inspection"], c:0, e:"Claims against a government entity are filed through the Department."},
+  {q:"A lawyer wants the right to appear before the Court of Cassation. Which service?", o:["Registration of Advocates & Legal Consultants","Representation","CLPD","Licensing"], c:0, e:"Right of audience before the Court of Cassation is a registration sub-service."},
+  {q:"A government entity needs help drafting a new regulation. Which service?", o:["Government Legal Support","Representation","Complaints","CLPD"], c:0, e:"Government Legal Support includes legislative support."},
+  {q:"A lawyer lost their registration card. Which service?", o:["Registration (replacement card)","Violations & Fines","Complaints","Directory"], c:0, e:"A replacement registration card is a registration sub-service."},
+  {q:"A visiting foreign lawyer needs a short-term permit. Which service?", o:["Registration (visiting legal consultant permit)","Licensing","CLPD","Monitoring"], c:0, e:"The visiting legal-consultant permit is under Registration."},
+
+  // ── Fees ──
+  {q:"How much is new advocate registration?", o:["AED 520","AED 2,020","AED 3,020","Free"], c:1, e:"AED 2,020 (2,000 + 10 innovation + 10 knowledge)."},
+  {q:"How much is a 'to whom it may concern' certificate?", o:["AED 120","AED 220","AED 520","Free"], c:1, e:"AED 220 (200 + 10 + 10)."},
+  {q:"How much is a replacement registration card?", o:["AED 120","AED 220","AED 520","AED 2,020"], c:0, e:"AED 120."},
+  {q:"How much is a new firm licence?", o:["AED 1,020","AED 2,020","AED 3,020","AED 5,020"], c:2, e:"AED 3,020 (3,000 per partner for companies)."},
+  {q:"How much is a temporary rights-of-audience permit for an advocate?", o:["AED 520","AED 1,020","AED 3,020","AED 5,020"], c:3, e:"AED 5,020."},
+  {q:"How much to amend a lawyer's name on the roll?", o:["AED 120","AED 520","AED 1,020","Free"], c:1, e:"AED 520 (1 working day)."},
+  {q:"How much is registering in a CLPD activity?", o:["Free","AED 520","AED 1,050","AED 2,020"], c:2, e:"AED 1,050 (1,000 + 50 VAT)."},
+  {q:"What does it cost to claim against a government entity?", o:["AED 220","AED 520","No fee","AED 1,020"], c:2, e:"No fee — resolved by amicable settlement (Law No. 16 of 2025)."},
+  {q:"What does free legal advice (Pro Bono) cost the public?", o:["AED 50","AED 220","Free","AED 1,050"], c:2, e:"Free — Voluntary Legal Services (Pro Bono)."},
+  {q:"How much to change a firm's address on its licence?", o:["AED 220","AED 1,020","AED 3,020","Free"], c:1, e:"Firm amendments are AED 1,020 (5 working days)."},
+  {q:"What does it cost a government entity to be represented in a case?", o:["No fee","AED 1,020","AED 5,020","2% of the claim"], c:0, e:"Representation in Government Cases carries no fee."},
+  {q:"What discount do new advocates get on the registration fee?", o:["10% for 1 year","25% for 2 years","50% for their first 3 years","None"], c:2, e:"50% off the registration fee for the first 3 years."},
+  {q:"What does it cost to search the Legal Directory?", o:["AED 50","AED 220","Free","AED 120"], c:2, e:"Directory search is free."},
+  {q:"What does CLPD provider accreditation cost?", o:["No fee","AED 1,050","AED 3,020","AED 5,000"], c:0, e:"No fee (about 30 days)."},
+  {q:"How much is a visiting legal-consultant permit?", o:["AED 120","AED 220","AED 520","AED 5,020"], c:1, e:"AED 220 (2 working days)."},
+  {q:"What is the firm licence renewal fee?", o:["AED 1,020 flat","AED 3,000 per advocate / consultant","AED 220","Free"], c:1, e:"AED 3,000 per advocate/consultant (1 working day)."},
+  {q:"What does paying a fine by instalments cost?", o:["10% surcharge","AED 220","No fee","AED 520"], c:2, e:"No fee — amicable settlement and instalments are available."},
+  {q:"The extra AED 20 added to most fees is made up of…", o:["VAT only","An innovation fee (10) + a knowledge fee (10)","A service charge","A stamp duty"], c:1, e:"AED 10 innovation + AED 10 knowledge fees."},
+  {q:"What does executing a cheque cost a government entity?", o:["No fee","AED 220","1% of the cheque","AED 1,020"], c:0, e:"Execution carries no fee."},
+
+  // ── Timelines ──
+  {q:"How long does new advocate registration take?", o:["1 working day","14 working days","30 working days","60 working days"], c:1, e:"About 14 working days."},
+  {q:"How long does a new legal-consultant registration take?", o:["1 working day","18 working days","30 working days","Immediate"], c:1, e:"About 18 working days."},
+  {q:"How long does a new firm licence take?", o:["5 working days","20 working days","30 working days","60 working days"], c:1, e:"About 20 working days."},
+  {q:"How long for a 'to whom it may concern' certificate?", o:["1 working day","5 working days","14 working days","30 working days"], c:0, e:"1 working day."},
+  {q:"How long does a grievance against a fine take?", o:["1 working day","5 working days","60 working days","Immediate"], c:2, e:"Up to 60 working days."},
+  {q:"How quickly is free legal advice (Pro Bono) available?", o:["Instant","5 working days","14 working days","30 days"], c:0, e:"The request is instant; you then pick a firm and time."},
+  {q:"How long does CLPD provider accreditation take?", o:["1 day","5 working days","30 days","60 days"], c:2, e:"About 30 days."},
+  {q:"How long does a firm licence amendment take?", o:["1 working day","5 working days","20 working days","30 working days"], c:1, e:"About 5 working days."},
+  {q:"A government claim is referred to the entity within…", o:["1 working day","5 working days","15 working days","30 working days"], c:1, e:"Within 5 working days (then a 15-day response window)."},
+  {q:"When are the Department's digital services available?", o:["Sun–Thu only","Office hours","24/7","Weekends only"], c:2, e:"Digital services are available 24/7."},
+  {q:"How long does a temporary rights-of-audience permit take?", o:["1 working day","5 working days","20 working days","60 working days"], c:1, e:"About 5 working days."},
+  {q:"How long does legislative support for a government entity take?", o:["1 day","10–30 working days","60 working days","90 days"], c:1, e:"10–30 working days depending on the request."},
+  {q:"How long does a complaint typically take to resolve?", o:["1 working day","5 working days","Up to 60 working days","6 months"], c:2, e:"Up to 60 working days."},
+  {q:"What is the response window once a government claim is referred?", o:["48 hours","15 days","30 days","60 days"], c:1, e:"A 15-day response window."},
+
+  // ── Channels ──
+  {q:"Which channel registers and licenses the profession?", o:["DubaiNow","Legal Professions System (LPS)","Dubai Police app","UAE Pass only"], c:1, e:"The Legal Professions System (LPS)."},
+  {q:"Where does a government entity submit a legal request?", o:["Smart App","Central Legal Services Portal (Gov Portal)","The Directory","DubaiNow"], c:1, e:"The Central Legal Services Portal (Gov Portal)."},
+  {q:"Where do members of the public get Pro Bono legal advice?", o:["Legal Professions System","Voluntary Legal Services Smart Portal","Gov Portal","Invest in Dubai"], c:1, e:"The Voluntary Legal Services Smart Portal (also Smart App / DubaiNow)."},
+  {q:"Where is CLPD registration done?", o:["CLPD Portal","Invest in Dubai","Gov Portal","Dubai Justice"], c:0, e:"The CLPD Portal."},
+  {q:"How does a visitor verify a licensed firm?", o:["By calling the firm","The Advocates & Legal Consultants Directory","Dubai Police","They can't"], c:1, e:"The Directory on the website / Smart App."},
+  {q:"What is the Department's main call-centre number?", o:["999","800 523","901","800 4888"], c:1, e:"800 523 (also +971 4 353 3337)."},
+  {q:"Which is NOT a Department service channel?", o:["Smart App","Website","Walk-in only, no digital option","Legal Professions System"], c:2, e:"Services are digital and available 24/7 — not walk-in only."},
+  {q:"Where would a firm apply for a new licence?", o:["Legal Professions System / Invest in Dubai","DubaiNow","Dubai Courts","UAE Pass"], c:0, e:"Legal Professions System / Invest in Dubai."},
+  {q:"Which sign-in does DubaiNow use for government services?", o:["A new password each time","UAE PASS single sign-on","Email link","No sign-in"], c:1, e:"UAE PASS single sign-on."},
+
+  // ── Documents ──
+  {q:"Which document is required to register as an advocate?", o:["A university law degree","A driving licence","A tenancy contract","A trade licence"], c:0, e:"A university law degree is required (plus passport, good-conduct cert, etc.)."},
+  {q:"A registration employment contract must be attested by…", o:["The Dubai Courts","MOHRE","The applicant's bank","Dubai Police"], c:1, e:"Attested by MOHRE."},
+  {q:"Which document proves an applicant's good conduct for registration?", o:["A bank statement","A good-conduct (criminal status) certificate","A utility bill","A reference letter"], c:1, e:"A good-conduct (criminal status) certificate."},
+  {q:"To execute a bounced cheque, what must be submitted?", o:["Only the cheque","The cheque plus the bank return notice","A police report","Nothing"], c:1, e:"Copy of the cheque and the bank return notice (with reason)."},
+  {q:"What documents does free legal advice (Pro Bono) require?", o:["None","Emirates ID + salary certificate","A court order","A trade licence"], c:0, e:"None — just register and pick a firm."},
+  {q:"A complaint against a government entity must include…", o:["A signed statement of claim and ID","A bank guarantee","A medical report","A trade licence only"], c:0, e:"A signed statement of claim plus ID of the complainant."},
+  {q:"For cheque execution, a non-Arabic cheque needs…", o:["Nothing extra","A certified translation","A notarised photocopy","A police stamp"], c:1, e:"A certified translation of the cheque and bank notice."},
+  {q:"An overseas firm owner applying for a Dubai licence must name…", o:["A local sponsor","A proposed UAE-national managing advocate","A bank","An auditor"], c:1, e:"A proposed UAE-national managing advocate, who must accept and qualify."},
+
+  // ── Who is it for? ──
+  {q:"Who can use Voluntary Legal Services (Pro Bono)?", o:["Only lawyers","Members of the public","Only government","Only companies"], c:1, e:"All members of the public."},
+  {q:"Representation in Government Cases is for…", o:["Any resident","Dubai Government entities","Law firms","Tourists"], c:1, e:"Dubai Government entities."},
+  {q:"How many customer groups does the Department serve?", o:["Two","Three","Four","Six"], c:2, e:"Four: Professionals, Individuals, Government, Private organisations."},
+  {q:"Government Legal Support is provided to…", o:["The public","Dubai Government entities","Tourists","Law students"], c:1, e:"Dubai Government entities."},
+  {q:"Who can search the Legal Directory?", o:["Only lawyers","Only government","Everyone","Only firms"], c:2, e:"Everyone."},
+  {q:"CLPD is primarily for…", o:["The general public","Advocates, legal consultants & training providers","Tourists","Government only"], c:1, e:"Advocates, consultants and training providers."},
+
+  // ── Charter, happiness & behaviours ──
+  {q:"The Customers Happiness Charter places customers…", o:["After internal process","At the core of operations","On a first-come basis only","Behind government clients"], c:1, e:"At the core of the Department's operations."},
+  {q:"Which is one of the six service behaviours?", o:["Indifferent","Welcoming","Hurried","Formal-only"], c:1, e:"Welcoming (also Courteous, Professional, Understanding, Positive, Innovative)."},
+  {q:"Which is a customer's right under the charter?", o:["To be treated with courtesy and respect","To skip required documents","To unlimited free services","To set their own fees"], c:0, e:"Courtesy, respect and fair treatment are customer rights."},
+  {q:"How must the Department treat customer data?", o:["Share it across entities","Keep it confidential and private","Publish it","Sell it"], c:1, e:"Kept confidential and private."},
+  {q:"People of Determination have the right to…", o:["Pay more for priority","Accessible service tailored to their needs","Use a separate building only","Wait longer"], c:1, e:"Accessible service tailored to their needs."},
+  {q:"What are the three pillars of the Customer Happiness Formula?", o:["Speed, price, location","Proud employees, a committed entity, positive customers","Forms, queues, counters","Apps, kiosks, call centres"], c:1, e:"Proud people, a committed entity, and positive customers."},
+  {q:"A 'Mystery Shopper' programme is used to…", o:["Sell services","Measure the quality of service","Recruit staff","Audit finances"], c:1, e:"It measures service quality from the customer's view."},
+  {q:"Across Dubai Government, 'service centres' were renamed…", o:["Help desks","Customer Happiness Centres","Front offices","Service kiosks"], c:1, e:"Customer Happiness Centres, with Happiness Employees."},
+  {q:"What's the best first action when a visitor arrives?", o:["Ask for documents","Welcome them warmly and offer help","Point to a form","Tell them to wait"], c:1, e:"Welcome first — the 'Welcoming' behaviour."},
+  {q:"A visitor's right 'to be heard' means…", o:["They can give feedback or complain and have it addressed","They can interrupt staff","They get free services","They can set policy"], c:0, e:"The right to give feedback/complaints and have them addressed."},
+
+  // ── Edge cases, redirects & general ──
+  {q:"A visitor wants to file a criminal case against a neighbour. You…", o:["Open a case at LAD","Politely redirect them to Dubai Police / Public Prosecution","Refuse and dismiss them","Tell them to email LAD"], c:1, e:"LAD does not handle criminal matters — redirect to Police / Prosecution."},
+  {q:"Claims against a government entity are governed by…", o:["Law No. 16 of 2025","The penal code","Federal labour law","No law"], c:0, e:"Law No. 16 of 2025."},
+  {q:"How many advocates take part in the Pro Bono portal?", o:["About 50","About 150","About 395","About 1,000"], c:2, e:"395 lawyers across 48 areas of law."},
+  {q:"How many main services does the Department offer?", o:["6","9","11","20"], c:2, e:"11 main services (with 45 sub-services)."},
+  {q:"Right of audience before the Court of Cassation requires…", o:["A separate company","Being on the Roll of Practising Advocates and taking the oath","A master's degree","Ten years' experience"], c:1, e:"On the Roll of Practising Advocates, then take the oath."},
+  {q:"Which does the Department NOT handle?", o:["Lawyer registration","Criminal complaints","Firm licensing","CLPD"], c:1, e:"It does not handle criminal complaints — those go to Police / Prosecution."},
+  {q:"How many sub-services sit under the 11 main services?", o:["20","45","69","100"], c:1, e:"45 (29 essential + 16 complementary)."},
+  {q:"Amicable settlement of a government claim is reached through…", o:["A public auction","Negotiation or mediation","A criminal trial","A lottery"], c:1, e:"Negotiation or mediation — no fees."},
+  {q:"A foreign cheque submitted for execution must be…", o:["Notarised abroad","Translated by a certified translator","Re-issued","Cancelled"], c:1, e:"Accompanied by a certified translation."},
+  {q:"In Pro Bono, how is the public matched to a lawyer?", o:["The visitor selects an area of law, then a firm and a time","A random assignment","The courts decide","Dubai Police assigns one"], c:0, e:"The user selects the area of law, then chooses a firm and a convenient time."}
+];
+var QUIZ = [];
+
+/* ─────────── Render ─────────── */
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+
+function renderCharter(){
+  var c=document.getElementById('commitList'), x=document.getElementById('expectList');
+  COMMITMENTS.forEach(function(t,i){ c.appendChild(el('div','charter-li','<span class="num">'+(i+1)+'</span><span>'+t+'</span>')); });
+  EXPECTATIONS.forEach(function(t,i){ x.appendChild(el('div','charter-li','<span class="num">'+(i+1)+'</span><span>'+t+'</span>')); });
+}
+function renderBehaviours(){
+  var g=document.getElementById('behavGrid');
+  BEHAVIOURS.forEach(function(b){
+    var card=el('div','flip');
+    card.innerHTML='<div class="flip-inner">'+
+      '<div class="flip-face flip-front"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">'+b.i+'</svg><div class="fw">'+b.w+'</div></div>'+
+      '<div class="flip-face flip-back">'+b.d+'</div></div>';
+    card.addEventListener('click',function(){card.classList.toggle('on');});
+    g.appendChild(card);
+  });
+}
+var curPersona=null;
+function renderPersonas(){
+  var g=document.getElementById('personaGrid');
+  PERSONAS.forEach(function(p,idx){
+    var b=el('button','persona','<div class="persona-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">'+p.i+'</svg></div><div><div class="persona-l">'+p.label+'</div><div class="persona-s">'+p.sub+'</div></div>');
+    b.addEventListener('click',function(){ pickPersona(idx); });
+    g.appendChild(b);
+  });
+}
+function pickPersona(idx){
+  curPersona=idx; var p=PERSONAS[idx];
+  document.getElementById('finderStep2Q').innerHTML='What does your <b style="color:var(--green)">'+p.label.toLowerCase()+'</b> visitor need?';
+  var g=document.getElementById('needGrid'); g.innerHTML='';
+  p.needs.forEach(function(n,ni){
+    var b=el('button','intent','<div class="intent-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 18l6-6-6-6"/></svg></div><div class="intent-t">'+n.t+'</div>');
+    b.addEventListener('click',function(){ showNeed(idx,ni); });
+    g.appendChild(b);
+  });
+  document.getElementById('finderStep1').style.display='none';
+  document.getElementById('finderStep2').style.display='';
+  document.getElementById('finderAnswer').classList.remove('on');
+}
+function showNeed(pIdx,nIdx){
+  var p=PERSONAS[pIdx], n=p.needs[nIdx], s=SERVICES[n.si];
+  var link = s.url ? '<a class="ans-link" href="'+s.url+'" target="_blank" rel="noopener">Open the official service <svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></a>' : '';
+  var box=document.getElementById('finderAnswer');
+  box.innerHTML=
+    '<div class="crumb">'+
+      '<a class="crumb-link" onclick="finderHome()">Find a service</a><span class="arr">→</span>'+
+      '<a class="crumb-link" onclick="pickPersona('+pIdx+')">'+p.label+'</a><span class="arr">→</span>'+
+      '<span class="crumb-cur">'+n.t+'</span><span class="arr">→</span>'+
+      '<b>'+s.en+'</b>'+
+    '</div>'+
+    '<div class="ans-card">'+
+      '<div class="ans-en">'+s.en+'</div><div class="ans-ar">'+s.ar+'</div>'+
+      '<div class="ans-say"><div class="ans-say-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>'+
+        '<div><div class="ans-say-l">Say this</div><div class="ans-say-t">'+n.say+'</div></div></div>'+
+      '<div class="ans-desc">'+s.desc+'</div>'+
+      '<div class="ans-meta"><span class="meta-tag who"><b>For:</b> '+s.who+'</span><span class="meta-tag"><b>Channel:</b> '+s.ch+'</span></div>'+
+      svcDetailHTML(n.si)+
+      link+
+      '<div><button class="ans-reset" onclick="pickPersona('+pIdx+')"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Another need</button></div>'+
+    '</div>';
+  document.getElementById('finderStep2').style.display='none';
+  box.classList.add('on');
+  startJourneys(box);
+}
+function finderHome(){
+  curPersona=null;
+  document.getElementById('finderAnswer').classList.remove('on');
+  document.getElementById('finderStep2').style.display='none';
+  document.getElementById('finderStep1').style.display='';
+}
+function goHome(){ window.scrollTo({top:0,behavior:'smooth'}); }
+// Trigger the step-by-step "journey" fill animation for any strips inside `root`.
+function startJourneys(root){
+  (root||document).querySelectorAll('.journey:not(.go)').forEach(function(j){
+    setTimeout(function(){ j.classList.add('go'); }, 140);
+  });
+}
+function svcDetailHTML(i){
+  var d=SERVICE_DETAIL[i]||{}; var detail='<div class="svc-detail">';
+  if(d.rows&&d.rows.length){
+    detail+='<div class="svc-block-label">Fees &amp; timelines — by sub-service</div>'+
+      '<div class="svc-tablewrap"><table class="svc-table"><thead><tr><th>Sub-service</th><th>Fee</th><th>Time</th></tr></thead><tbody>'+
+      d.rows.map(function(r){return '<tr><td>'+r.n+'</td><td class="svc-fee">'+r.fee+'</td><td class="svc-time">'+r.time+'</td></tr>';}).join('')+
+      '</tbody></table></div>'+
+      (d.note?'<div class="svc-note">'+d.note+'</div>':'');
+  }
+  if(d.docs&&d.docs.length){
+    detail+='<div class="svc-block-label">Required documents</div><ul class="svc-docs">'+
+      d.docs.map(function(x){return '<li><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span>'+x+'</span></li>';}).join('')+'</ul>';
+  }
+  if(d.steps&&d.steps.length){
+    detail+='<div class="svc-block-label">The journey</div><div class="journey">'+
+      d.steps.map(function(x,si){
+        var last=si===d.steps.length-1;
+        var dot=last?'<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>':(si+1);
+        return '<div class="journey-step"><span class="jdot">'+dot+'</span><span class="jlabel">'+x+'</span></div>';
+      }).join('')+'</div>';
+  }
+  return detail+'</div>';
+}
+function renderServices(){
+  var list=document.getElementById('svcList');
+  SERVICES.forEach(function(s,i){
+    var card=el('div','svc');
+    var d=SERVICE_DETAIL[i]||{};
+    var rowsTxt=(d.rows||[]).map(function(r){return r.n+' '+r.fee+' '+r.time;}).join(' ');
+    card.dataset.search=(s.en+' '+s.ar+' '+s.desc+' '+s.who+' '+s.subs.join(' ')+' '+s.ch+' '+rowsTxt).toLowerCase();
+    var detail=svcDetailHTML(i);
+    card.innerHTML=
+      '<div class="svc-head"><div class="svc-num">'+(i+1)+'</div>'+
+        '<div class="svc-titles"><div class="svc-en">'+s.en+'</div><div class="svc-ar">'+s.ar+'</div></div>'+
+        '<svg class="svc-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>'+
+      '<div class="svc-body"><div class="svc-body-inner">'+
+        '<div class="svc-desc">'+s.desc+'</div>'+
+        '<div class="svc-meta"><span class="meta-tag who"><b>For:</b> '+s.who+'</span><span class="meta-tag"><b>Channel:</b> '+s.ch+'</span></div>'+
+        detail+
+        (s.url?'<a class="svc-link" href="'+s.url+'" target="_blank" rel="noopener">Open the official service <svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></a>':'')+
+      '</div></div>';
+    var head=card.querySelector('.svc-head'), body=card.querySelector('.svc-body');
+    head.addEventListener('click',function(){var open=card.classList.toggle('open');body.style.maxHeight=open?body.scrollHeight+'px':0;if(open)startJourneys(card);});
+    list.appendChild(card);
+  });
+}
+function filterServices(q){
+  q=(q||'').trim().toLowerCase(); var any=false;
+  document.querySelectorAll('#svcList .svc').forEach(function(c){
+    var m=!q||c.dataset.search.indexOf(q)>-1; c.style.display=m?'':'none'; if(m)any=true;
+  });
+  document.getElementById('svcNone').style.display=any?'none':'block';
+}
+function renderChannels(){
+  var g=document.getElementById('chanGrid');
+  CHANNELS.forEach(function(c){
+    g.appendChild(el('div','chan','<div class="chan-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">'+c.i+'</svg></div><div><div class="chan-h">'+c.h+'</div><div class="chan-p">'+c.p+'</div></div>'));
+  });
+}
+function renderFaq(){
+  var l=document.getElementById('faqList');
+  FAQS.forEach(function(f){
+    var item=el('div','faq'); item.dataset.search=(f.q+' '+f.a).toLowerCase();
+    item.innerHTML='<div class="faq-q"><span class="qmark">?</span>'+f.q+'<svg class="fchev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div><div class="faq-a"><div class="faq-a-inner">'+f.a+'</div></div>';
+    var q=item.querySelector('.faq-q'), a=item.querySelector('.faq-a');
+    q.addEventListener('click',function(){var open=item.classList.toggle('open');a.style.maxHeight=open?a.scrollHeight+'px':0;});
+    l.appendChild(item);
+  });
+}
+function renderScenarios(){
+  var g=document.getElementById('scnGrid');
+  SCENARIOS.forEach(function(s){
+    var c=el('div','scn');
+    c.innerHTML=
+      '<div class="scn-top"><div class="scn-vlabel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>A visitor says</div>'+
+        '<div class="scn-quote">"'+s.q+'"</div></div>'+
+      '<button class="scn-btn">What do you do? <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button>'+
+      '<div class="scn-ans"><div class="scn-ans-inner"><div class="scn-ans-l"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Your move</div>'+
+        '<div class="scn-ans-t">'+s.a+'</div><span class="scn-tag">'+s.tag+'</span></div></div>';
+    var btn=c.querySelector('.scn-btn'), ans=c.querySelector('.scn-ans');
+    btn.addEventListener('click',function(){var open=c.classList.toggle('open');ans.style.maxHeight=open?ans.scrollHeight+'px':0;});
+    g.appendChild(c);
+  });
+}
+function filterFaq(q){
+  q=(q||'').trim().toLowerCase(); var any=false;
+  document.querySelectorAll('#faqList .faq').forEach(function(c){
+    var m=!q||c.dataset.search.indexOf(q)>-1; c.style.display=m?'':'none'; if(m)any=true;
+  });
+  document.getElementById('faqNone').style.display=any?'none':'block';
+}
+
+/* ─────────── Quiz ─────────── */
+var qi=0, qscore=0, qlocked=false;
+var QUIZ_N=5;
+function pickQuiz(){
+  var pool=QUIZ_POOL.slice();
+  for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t;}
+  return pool.slice(0, Math.min(QUIZ_N, pool.length));
+}
+function startQuiz(){ QUIZ=pickQuiz(); qi=0; qscore=0; document.getElementById('quizResult').classList.remove('on'); document.getElementById('quizQuestion').style.display=''; renderQuestion(); }
+function renderQuestion(){
+  qlocked=false;
+  var item=QUIZ[qi];
+  document.getElementById('quizStep').textContent='Question '+(qi+1)+' of '+QUIZ.length;
+  document.getElementById('quizScoreLbl').textContent='Score '+qscore;
+  document.getElementById('quizProg').style.width=((qi)/QUIZ.length*100)+'%';
+  document.getElementById('quizQ').textContent=item.q;
+  var fb=document.getElementById('quizFb'); fb.className='quiz-fb'; fb.innerHTML='';
+  document.getElementById('quizNext').classList.remove('on');
+  var opts=document.getElementById('quizOpts'); opts.innerHTML='';
+  var letters=['A','B','C','D'];
+  item.o.forEach(function(txt,idx){
+    var b=el('button','qopt','<span class="qletter">'+letters[idx]+'</span><span>'+txt+'</span>');
+    b.addEventListener('click',function(){ answer(idx,b); });
+    opts.appendChild(b);
+  });
+}
+function answer(idx,btn){
+  if(qlocked) return; qlocked=true;
+  var item=QUIZ[qi];
+  var all=document.querySelectorAll('#quizOpts .qopt');
+  all.forEach(function(b,i){ b.classList.add('locked'); if(i===item.c)b.classList.add('correct'); else if(i===idx)b.classList.add('wrong'); else b.classList.add('dim'); });
+  var fb=document.getElementById('quizFb');
+  if(idx===item.c){ qscore++; fb.className='quiz-fb good on'; fb.innerHTML='✓ Correct. '+item.e; }
+  else{ fb.className='quiz-fb bad on'; fb.innerHTML='✗ Not quite. '+item.e; }
+  document.getElementById('quizScoreLbl').textContent='Score '+qscore;
+  var nx=document.getElementById('quizNext'); nx.classList.add('on');
+  nx.querySelector('svg').nextSibling; // noop
+  nx.firstChild.textContent = (qi===QUIZ.length-1)?'See result ':'Next ';
+}
+function nextQuestion(){
+  if(qi<QUIZ.length-1){ qi++; renderQuestion(); document.getElementById('quiz').scrollIntoView({behavior:'smooth'}); }
+  else{ finishQuiz(); }
+}
+function finishQuiz(){
+  document.getElementById('quizProg').style.width='100%';
+  document.getElementById('quizQuestion').style.display='none';
+  var res=document.getElementById('quizResult'); res.classList.add('on');
+  document.getElementById('qrScore').textContent=qscore;
+  var best=0; try{ best=parseInt(localStorage.getItem(BEST_KEY)||'0',10); }catch(_){}
+  if(qscore>best){ best=qscore; try{localStorage.setItem(BEST_KEY,String(best));}catch(_){} }
+  document.getElementById('qrBest').textContent='Your best score: '+best+' / '+QUIZ.length;
+  var msg=document.getElementById('qrMsg');
+  if(qscore>=4){ msg.innerHTML='Excellent — you\'re desk-ready. Time to <b>begin your training</b>.'; confetti(); }
+  else if(qscore>=2){ msg.innerHTML='Good start. Review the services and try again before training.'; }
+  else{ msg.innerHTML='Worth another look at the services and FAQs — then try again.'; }
+  document.getElementById('quiz').scrollIntoView({behavior:'smooth'});
+}
+
+/* ─────────── Confetti ─────────── */
+function confetti(){
+  var host=document.getElementById('confetti'); var cols=['#006B3F','#C9913A','#f0cc88','#00a85e','#ffffff'];
+  for(var i=0;i<90;i++){(function(){
+    var b=document.createElement('div'); b.className='confetti-bit';
+    b.style.left=Math.random()*100+'vw'; b.style.top=(-10-Math.random()*20)+'vh';
+    b.style.background=cols[i%cols.length];
+    b.style.animationDuration=(2.6+Math.random()*1.8)+'s';
+    b.style.animationDelay=(Math.random()*.5)+'s';
+    b.style.transform='rotate('+(Math.random()*360)+'deg)';
+    host.appendChild(b); setTimeout(function(){host.removeChild(b);},5000);
+  })();}
+}
+
+/* ─────────── Reveal ─────────── */
+function reveal(){ document.body.classList.add('unlocked'); initReveal(); startQuiz(); }
+reveal();
+
+/* ─────────── Launch ─────────── */
+function applyLaunchState(){ var n=document.getElementById('launchNote');
+  if(CFG.courseLive===false && n) n.innerHTML='The course is being finalised — launching here soon.'; }
+// The Service Ambassador Academy ("Training Solar System") — now served on this
+// same site at /academy (so login + tracking run on this app's working API).
+var ACADEMY_URL='/academy/';
+// The structured (Articulate) course — configured in window.SITE_CONFIG.
+var TRAINING_URL=((CFG.articulateUrl||CFG.doceboUrl||'')+'').trim();
+function launchSolarSystem(){ window.open(ACADEMY_URL,'_blank','noopener'); }
+function launchTraining(){ if(!TRAINING_URL){ showToast('The training course link isn’t set yet.'); return; } window.open(TRAINING_URL,'_blank','noopener'); }
+function launchAdmin(){ window.open('/admin','_blank','noopener'); }
+
+/* ─────────── Toast ─────────── */
+function showToast(m){ var t=document.getElementById('toast'); document.getElementById('toastMsg').textContent=m;
+  t.classList.add('on'); clearTimeout(window._tt); window._tt=setTimeout(function(){t.classList.remove('on');},4200); }
+
+/* ─────────── Motion: reveal + counters + progress ─────────── */
+function initReveal(){
+  if(!('IntersectionObserver' in window)){ document.querySelectorAll('.reveal').forEach(function(e){e.classList.add('in');}); return; }
+  var io=new IntersectionObserver(function(es){es.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }});},{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(function(e){io.observe(e);});
+  // counters
+  var co=new IntersectionObserver(function(es){es.forEach(function(en){ if(en.isIntersecting){ countUp(en.target); co.unobserve(en.target);} });},{threshold:.5});
+  document.querySelectorAll('[data-count]').forEach(function(e){co.observe(e);});
+}
+function countUp(elm){
+  var target=parseInt(elm.getAttribute('data-count'),10), suf=elm.getAttribute('data-suffix')||'', t0=null, dur=1100;
+  function step(ts){ if(!t0)t0=ts; var p=Math.min((ts-t0)/dur,1); var val=Math.round((1-Math.pow(1-p,3))*target);
+    elm.textContent=val+suf; if(p<1)requestAnimationFrame(step); }
+  requestAnimationFrame(step);
+}
+window.addEventListener('scroll',function(){
+  var st=document.documentElement.scrollTop||document.body.scrollTop;
+  var h=(document.documentElement.scrollHeight-document.documentElement.clientHeight)||1;
+  document.getElementById('progress').style.width=(st/h*100)+'%';
+});
+
+/* ─────────── Boot ─────────── */
+/* ─────────── Daily tip ─────────── */
+var TIPS = [
+  "Greet first, with warmth — make eye contact and offer help before the visitor asks.",
+  "Free legal advice exists: the public can use Voluntary Legal Services (Pro Bono) — 395 lawyers across 48 areas of law.",
+  "New advocate registration is AED 2,020 and takes about 14 working days — new advocates get 50% off the fee for 3 years.",
+  "Criminal matters aren't handled here — politely redirect visitors to Dubai Police / Public Prosecution.",
+  "Most services are digital and available 24/7 — guide visitors to the Smart App or the right portal, not a counter.",
+  "A 'to whom it may concern' certificate is AED 220 and ready in one working day.",
+  "Verify any lawyer or firm in seconds using the Advocates & Legal Consultants Directory.",
+  "People of Determination have a right to service tailored to their needs — offer help proactively.",
+  "Claims against a government entity are free and settled amicably under Law No. 16 of 2025 — no court, no fees.",
+  "Lead with the outcome: turn 'please take a seat' into 'here's exactly how we'll sort this'.",
+  "The Department serves four groups: professionals, individuals, government entities, and private organisations.",
+  "Firm licence amendments (name, address, partner, activity) are AED 1,020 and take about 5 working days.",
+  "When in doubt, the call centre is 800 523 — and you can always ask Maryam.",
+  "Confidentiality first: handle every visitor's information with discretion."
+];
+function initTip(){
+  try{ if(sessionStorage.getItem('lad_tip_x')==='1') return; }catch(_){}
+  var day=Math.floor(Date.now()/86400000);
+  document.getElementById('tipText').textContent = TIPS[day % TIPS.length];
+  document.getElementById('tipbar').style.display='';
+}
+document.getElementById('tipbar') && document.querySelector('.tipbar-x') &&
+  document.querySelector('.tipbar-x').addEventListener('click',function(){ try{sessionStorage.setItem('lad_tip_x','1');}catch(_){} });
+
+/* ─────────── Lex assistant ─────────── */
+var lexHistory=[], lexBusy=false;
+var LEX_SUGGEST=[
+  "Someone wants to become a lawyer",
+  "A visitor needs free legal advice",
+  "How do I check a firm is licensed?",
+  "A visitor wants to complain about a lawyer"
+];
+function lexToggle(open){
+  var p=document.getElementById('lexPanel'), f=document.getElementById('lexFab');
+  p.classList.toggle('on',open); f.style.display=open?'none':'inline-flex';
+  if(open){
+    if(lexHistory.length===0) lexGreet();
+    setTimeout(function(){document.getElementById('lexInput').focus();},50);
+  }
+}
+function lexGreet(){
+  lexAdd('bot',"Hi — I'm Maryam. Tell me what a visitor needs and I'll point you to the right service, channel, and what to say.");
+  var s=document.getElementById('lexSuggest'); s.innerHTML='';
+  LEX_SUGGEST.forEach(function(t){ var c=el('button','lex-chip',t); c.addEventListener('click',function(){ document.getElementById('lexInput').value=t; lexSend(); }); s.appendChild(c); });
+}
+function lexAdd(role,text){
+  var b=document.getElementById('lexBody');
+  var m=el('div','lex-msg '+(role==='user'?'user':'bot'));
+  m.innerHTML = role==='bot' ? text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>') : text.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  b.appendChild(m); b.scrollTop=b.scrollHeight; return m;
+}
+function lexKey(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); lexSend(); } }
+function lexSend(){
+  if(lexBusy) return;
+  var inp=document.getElementById('lexInput'); var q=(inp.value||'').trim();
+  if(!q) return;
+  document.getElementById('lexSuggest').innerHTML='';
+  lexAdd('user',q); lexHistory.push({role:'user',content:q}); inp.value='';
+  lexBusy=true; document.getElementById('lexSend').disabled=true;
+  var b=document.getElementById('lexBody');
+  var typing=el('div','lex-typing','<span></span><span></span><span></span>'); b.appendChild(typing); b.scrollTop=b.scrollHeight;
+  fetch((CFG.lexEndpoint||'/api/lex'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:lexHistory})})
+    .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+    .then(function(res){
+      typing.remove();
+      if(res.ok && res.j.answer){ lexAdd('bot',res.j.answer); lexHistory.push({role:'assistant',content:res.j.answer}); }
+      else if(res.j && res.j.error==='not_configured'){ lexAdd('bot',"I'm not switched on yet — an administrator needs to finish my setup (add the API key in Azure). In the meantime, try the **Guide a visitor** finder above."); }
+      else { lexAdd('bot',(res.j && res.j.message) || "I couldn't answer just now — please try again, or use the Guide a visitor finder above."); }
+    })
+    .catch(function(){ typing.remove(); lexAdd('bot',"I'm not reachable right now — please try again in a moment, or use the Guide a visitor finder above."); })
+    .finally(function(){ lexBusy=false; document.getElementById('lexSend').disabled=false; });
+}
+
+initTip();
+renderCharter(); renderBehaviours(); renderPersonas(); renderServices(); renderChannels(); renderScenarios(); renderFaq();
+applyLaunchState(); startQuiz();
+</script>
+</body>
+</html>

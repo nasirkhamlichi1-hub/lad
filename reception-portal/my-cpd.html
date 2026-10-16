@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>My CPD — Legal Affairs Department</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{--green:#006B3F;--green2:#008549;--green-d:#004d2e;--green-bg:#eaf6ef;--green-border:#bfe0cd;--gold:#C9913A;--gold-l:#f0cc88;--sky:#0e6ba8;--sky-bg:#eaf4fb;--ink:#0a0e14;--navy:#1c1f2e;--slate:#3a4554;--slate2:#5a6878;--slate3:#8a98aa;--line:#e8ecf1;--line2:#d8dfe7;--paper:#f8fafb;--paper2:#f1f4f7;--white:#fff;--amber:#92540a;--amber-bg:#fef3e2;
+--serif:'Instrument Serif',Georgia,serif;--sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;--sh:0 2px 4px rgba(10,14,20,.06),0 8px 24px rgba(10,14,20,.06)}
+html,body{color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;background:var(--paper);min-height:100vh}
+a{color:var(--green2);text-decoration:none}.wrap{max-width:920px;margin:0 auto;padding:0 24px}.muted{color:var(--slate3)}
+.top{background:var(--navy)}.top-in{display:flex;align-items:center;gap:13px;height:62px;max-width:920px;margin:0 auto;padding:0 24px;color:#fff}
+.emblem{width:36px;height:36px;background:linear-gradient(135deg,var(--green),var(--green2));border-radius:9px;display:grid;place-items:center}.emblem svg{width:18px;height:22px}
+.brand-t{font-family:var(--serif);font-size:17px}.brand-s{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.5);letter-spacing:1.2px;text-transform:uppercase;font-weight:600}
+.spacer{flex:1}.top a,.top span{color:rgba(255,255,255,.8);font-size:12.5px;font-weight:500}
+.hero{background:linear-gradient(160deg,#0d1f17,#0a0e14 64%);color:#fff;position:relative;overflow:hidden}.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(700px 300px at 84% -10%,rgba(0,168,94,.22),transparent 70%)}
+.hero-in{position:relative;max-width:920px;margin:0 auto;padding:38px 24px 34px}
+.eyebrow{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold-l);margin-bottom:12px}
+.hero h1{font-family:var(--serif);font-size:clamp(26px,4.4vw,38px);font-weight:400}
+.cyc{display:flex;align-items:flex-end;gap:18px;margin-top:22px;flex-wrap:wrap}
+.cyc-n{font-family:var(--serif);font-size:54px;line-height:.9}.cyc-l{font-size:13px;color:rgba(255,255,255,.7);max-width:24ch;padding-bottom:6px}
+.bar{height:10px;background:rgba(255,255,255,.14);border-radius:99px;overflow:hidden;margin-top:16px;max-width:520px}.bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green2),var(--gold))}
+main{padding:30px 0 70px}.h2{font-size:15px;font-weight:700;margin-bottom:14px}
+.rec{display:flex;align-items:center;gap:14px;background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--sh);margin-bottom:12px}
+.rec-pts{width:54px;height:54px;border-radius:13px;background:var(--green-bg);color:var(--green-d);display:grid;place-items:center;font-family:var(--serif);font-size:22px;flex-shrink:0}
+.rec-t{font-size:15px;font-weight:700}.rec-s{font-size:12.5px;color:var(--slate2);margin-top:2px}
+.code{font-family:var(--mono);font-size:11px;color:var(--slate3)}
+.empty{color:var(--slate3);text-align:center;padding:50px 18px}
+.gate{max-width:400px;margin:8vh auto;padding:0 24px;text-align:center}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh);padding:22px;text-align:left}
+label{display:block;font-size:12px;font-weight:650;color:var(--slate);margin:10px 0 5px}input{width:100%;padding:10px 12px;border:1.5px solid var(--line2);border-radius:10px;font-size:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600;padding:12px 18px;border-radius:11px;border:0;cursor:pointer;background:linear-gradient(135deg,var(--green2),var(--green));color:#fff;width:100%}
+.err{color:#c0392b;font-size:13px;margin-top:8px;display:none}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <div class="emblem"><svg viewBox="0 0 20 24" fill="none"><path d="M10 1l8 4v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-4z" fill="#fff"/></svg></div>
+  <div><div class="brand-t">My CPD</div><div class="brand-s">Dubai Legal Affairs · CLPD</div></div>
+  <div class="spacer"></div><span id="who"></span><a href="/portal" style="margin-left:14px">← Platform</a>
+</div></header>
+
+<section id="gate" class="gate" style="display:none">
+  <h2 class="h2" style="font-family:var(--serif);font-size:26px;font-weight:400">Sign in to view your CPD</h2>
+  <div class="card">
+    <label>Email</label><input id="gEmail" type="email" placeholder="you@firm.ae"/>
+    <label>Password</label><input id="gPass" type="password" placeholder="Password"/>
+    <div id="gErr" class="err"></div>
+    <button class="btn" id="gBtn" style="margin-top:14px">Sign in</button>
+  </div>
+</section>
+
+<main id="app" style="display:none">
+  <header class="hero"><div class="hero-in">
+    <div class="eyebrow">Continuing Legal Professional Development</div>
+    <h1>Your CPD points</h1>
+    <div class="cyc"><div class="cyc-n" id="ptsNum">0</div><div class="cyc-l">points earned toward the 16-point CLPD cycle.</div></div>
+    <div class="bar"><i id="ptsBar" style="width:0"></i></div>
+  </div></header>
+  <div class="wrap">
+    <div class="h2" style="margin-top:30px">Accredited courses you’ve completed</div>
+    <div id="list"></div>
+  </div>
+</main>
+
+<script>
+(function(){
+  var el=function(i){return document.getElementById(i);};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function token(){try{return localStorage.getItem('tr_token')||'';}catch(e){return '';}}
+  var CYCLE=16;
+
+  function show(){ el('gate').style.display='none';el('app').style.display='';load(); }
+  function gate(){ el('app').style.display='none';el('gate').style.display='';}
+
+  function load(){
+    fetch('/api/cpd?token='+encodeURIComponent(token())).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      if(!j){gate();return;}
+      var total=j.total||0;
+      el('ptsNum').textContent=total;
+      el('ptsBar').style.width=Math.min(100,Math.round(total/CYCLE*100))+'%';
+      var recs=j.records||[];
+      el('list').innerHTML=recs.length?recs.map(function(r){
+        return '<div class="rec"><div class="rec-pts">'+esc(r.points||0)+'</div><div style="flex:1"><div class="rec-t">'+esc(r.courseTitle||'Course')+'</div><div class="rec-s">'+esc(r.provider||'')+' · '+esc((r.at||'').slice(0,10))+'  <span class="code">'+esc(r.courseCode||'')+'</span></div></div></div>';
+      }).join(''):'<div class="empty">No CPD points yet. When you complete an accredited course and the provider records your attendance, your points appear here.</div>';
+    }).catch(function(){gate();});
+  }
+
+  el('gBtn').onclick=function(){
+    var email=(el('gEmail').value||'').trim().toLowerCase(),pass=el('gPass').value||'';
+    if(!email||!pass){el('gErr').textContent='Enter your email and password.';el('gErr').style.display='block';return;}
+    el('gBtn').disabled=true;el('gErr').style.display='none';
+    fetch('/api/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:email,password:pass})})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+      .then(function(o){ el('gBtn').disabled=false;
+        if(!o.ok||!o.j.token){el('gErr').textContent=(o.j&&o.j.error)||'Could not sign in.';el('gErr').style.display='block';return;}
+        try{localStorage.setItem('tr_token',o.j.token);localStorage.setItem('tr_name',o.j.name||email);}catch(e){}
+        el('who').textContent='👤 '+(o.j.name||email);show();
+      }).catch(function(){el('gBtn').disabled=false;el('gErr').textContent='Network error.';el('gErr').style.display='block';});
+  };
+  el('gPass').addEventListener('keydown',function(e){if(e.key==='Enter')el('gBtn').click();});
+
+  (function boot(){
+    var t=token(); if(!t){gate();return;}
+    try{var n=localStorage.getItem('tr_name');if(n)el('who').textContent='👤 '+n;}catch(e){}
+    show();
+  })();
+})();
+</script>
+</body>
+</html>
