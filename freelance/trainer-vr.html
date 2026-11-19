@@ -25,6 +25,8 @@ button.ghost{background:rgba(255,255,255,.12)}
 button:disabled{opacity:.5;cursor:default}
 .hidden{display:none!important}
 #status{position:fixed;top:18px;left:0;right:0;text-align:center;font-size:14px;color:#E4E6E3;pointer-events:none}
+#debrief{position:fixed;top:56px;right:18px;width:300px;padding:16px 18px;border-radius:12px;background:rgba(22,29,56,.94);font-size:14px;line-height:1.6}
+#debrief p{margin-top:10px;color:#E4E6E3}
 #back{position:fixed;top:14px;left:18px;color:#E4E6E3;text-decoration:none;font-size:14px}
 </style>
 <script type="importmap">
@@ -39,7 +41,8 @@ button:disabled{opacity:.5;cursor:default}
 <div id="stage"></div>
 <video id="client-video" autoplay playsinline></video>
 <a id="back" href="home.html">← My training</a>
-<div id="status" role="status">Loading the room…</div>
+<div id="status" role="status">Loading…</div>
+<div id="debrief" class="hidden"></div>
 <div class="bar">
   <button id="start">Start interview</button>
   <button id="vr" class="ghost hidden">Enter VR</button>
@@ -113,14 +116,14 @@ box(0.6, 1.2, 0.08, mat(0x2C3765), 0, 0.75, -1.95);                           //
 
 // ─── The real room: a 360° photograph wrapped around the trainee ─────────
 // img/vr-library.jpg (8192x4096) is the room; headsets that cannot hold a
-// texture that large get the 4K copy. ?turn=<degrees> rotates the photograph,
-// ?seat=<metres> sets how far away the client sits, ?photo=0 shows the plain
-// built room instead.
+// texture that large get the 4K copy. Off by default: ?photo=1 turns it on,
+// ?turn=<degrees> rotates it, ?seat=<metres> sets how far away the client sits.
 const Q = new URLSearchParams(location.search);
 const TURN = Number(Q.get('turn') ?? 3);        // brings the partner's desk straight ahead
 const SEAT = Number(Q.get('seat') ?? 2.6);
 let photoRoom = false;
-if (Q.get('photo') !== '0') {
+const PHOTO = Q.get('photo') === '1';       // the library is opt-in; the default is the client alone
+if (PHOTO) {
   const big = renderer.capabilities.maxTextureSize >= 8192 && Q.get('q') !== '4k';
   new THREE.TextureLoader().load(big ? 'img/vr-library.jpg' : 'img/vr-library-4k.jpg', (tex) => {
     tex.colorSpace = THREE.SRGBColorSpace;
@@ -150,20 +153,33 @@ const clientMat = new THREE.ShaderMaterial({
     'uniform sampler2D map; uniform float live; uniform float foot; varying vec2 vUv;',
     'void main(){',
     '  vec4 c = texture2D(map, vUv);',
-    '  float a = smoothstep(0.0, 0.10, vUv.x) * smoothstep(1.0, 0.90, vUv.x) * smoothstep(1.0, 0.92, vUv.y);',
-    '  a *= mix(1.0, smoothstep(0.0, 0.22, vUv.y), foot);',
+    '  float a = smoothstep(0.0, 0.06, vUv.x) * smoothstep(1.0, 0.94, vUv.x) * smoothstep(1.0, 0.94, vUv.y);',
+    '  a *= mix(1.0, smoothstep(0.0, 0.22 * foot, vUv.y), step(0.001, foot));',
     '  gl_FragColor = vec4(c.rgb, a * live);',
     '  #include <colorspace_fragment>',
     '}',
   ].join('\n'),
 });
-const client = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 1.425), clientMat);  // 2:3 portrait
+let CLIENT_H = 1.425;                        // metres; the plane takes the stream's own shape
+const client = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 1.425), clientMat);
 client.position.set(0, 1.18, -1.72);
 scene.add(client);
+if (!PHOTO) {
+  // The default: no set at all. The client's own video, with the room he is
+  // really sitting in, hangs in the dark like a window across a table, close
+  // to life size. Nothing is pasted onto anything, so nothing looks pasted.
+  room.visible = false;
+  scene.background = new THREE.Color(0x0B0E1A);
+  CLIENT_H = 0.78;
+  client.geometry.dispose(); client.geometry = new THREE.PlaneGeometry(CLIENT_H * 1.5, CLIENT_H);
+  client.position.set(0, 1.2, -1.3);
+  clientMat.uniforms.foot.value = 0.35;      // a light feather on the lower edge too
+  camera.position.set(0, 1.2, -0.42); camera.lookAt(0, 1.2, -1.3);
+}
 function fitClient() {                       // keep the plane in the stream's own shape
   if (!video.videoWidth) return;
   const ar = video.videoWidth / video.videoHeight;
-  const h = 1.425, w = h * ar;
+  const h = CLIENT_H, w = h * ar;
   client.geometry.dispose();
   client.geometry = new THREE.PlaneGeometry(w, h);
 }
@@ -176,6 +192,9 @@ const pctx = pc.getContext('2d');
 const panelTex = new THREE.CanvasTexture(pc); panelTex.colorSpace = THREE.SRGBColorSpace;
 const panel = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.75), new THREE.MeshBasicMaterial({ map: panelTex }));
 panel.position.set(-0.98, 1.45, -1.7); panel.rotation.y = 0.5; scene.add(panel);
+if (!PHOTO) {                                 // tucked under the window, like a card on the table
+  panel.position.set(0, 0.58, -1.12); panel.rotation.set(-0.7, 0, 0); panel.scale.setScalar(0.5);
+}
 let debrief = null;                          // set when the interview has been marked
 const END_BTN = { x: 60, y: 560, w: 330, h: 64 };   // on the panel canvas; hit-tested in VR
 function drawPanel() {
@@ -197,7 +216,7 @@ function drawPanel() {
   } else {
     pctx.fillStyle = '#fff'; pctx.font = '600 58px system-ui, sans-serif'; pctx.fillText('Client interview', 60, 130);
     pctx.fillStyle = '#C9CEDD'; pctx.font = '36px system-ui, sans-serif';
-    ['Your client is across the desk.', 'Greet them, take their instructions,', 'and speak as you would in practice.']
+    ['Your client is in front of you.', 'Greet them, take their instructions,', 'and speak as you would in practice.']
       .forEach((l, i) => pctx.fillText(l, 60, 230 + i * 56));
     pctx.fillStyle = '#7FD1AE'; pctx.font = '600 38px system-ui, sans-serif'; pctx.fillText(statusText || '', 60, 480);
     if (running) {
@@ -258,12 +277,12 @@ function demoStream() {                      // a stand-in so the room can be ch
 async function start() {
   $('start').disabled = true;
   try {
-    running = true; debrief = null; turns.length = 0;
+    running = true; debrief = null; turns.length = 0; $('debrief').classList.add('hidden');
     if (DEMO) {
       video.srcObject = demoStream(); video.muted = true; await video.play();
     } else {
       setStatus('Connecting to your client…');
-      const { sessionToken } = await api('POST', '/trainer/vr/session-token', {});
+      const { sessionToken } = await api('POST', '/trainer/vr/session-token', { portrait: PHOTO });
       const sdk = await import(ANAM_SDK);
       anam = sdk.createClient(sessionToken);
       anam.addListener(sdk.AnamEvent.MESSAGE_STREAM_EVENT_RECEIVED, (evt) => {
@@ -307,8 +326,12 @@ async function mark() {
       setStatus('Writing your debrief…');
       debrief = await api('POST', '/trainer/vr/debrief', { turns: turns.map((t) => ({ role: t.role, content: t.content })) });
     }
-    statusEl.textContent = 'Your debrief is on the panel to your left.';
+    statusEl.textContent = 'Your debrief is ready.';
     drawPanel();
+    $('debrief').innerHTML = '';
+    debrief.skills.forEach((k) => { const r = document.createElement('div'); r.textContent = k.name + '  ' + k.score + '/10'; $('debrief').appendChild(r); });
+    [['Strength: ', debrief.strength], ['Work on: ', debrief.improve]].forEach(([a, b]) => { const r = document.createElement('p'); r.textContent = a + b; $('debrief').appendChild(r); });
+    $('debrief').classList.remove('hidden');
   } catch (e) { setStatus('Interview ended. The debrief could not be written.'); console.error('[vr] debrief failed', e); }
 }
 
