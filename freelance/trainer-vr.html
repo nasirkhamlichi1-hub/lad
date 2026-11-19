@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Client interview (VR) · Freelance Lawyers Training</title>
+<style>
+/* ─────────────────────────────────────────────────────────────────────
+   The VR client interview. A meeting room rendered in the browser (WebXR,
+   so it opens in the Meta Quest browser from a link), with the client
+   seated across the desk. The client's face is Anam; its voice, ears and
+   brain are the ElevenLabs agent. This page holds no keys: it asks the
+   portal's own backend for one short-lived session token.
+   ───────────────────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#161D38;color:#fff;font-family:'Inter',system-ui,sans-serif;font-size:15px;overflow:hidden}
+#stage{position:fixed;inset:0}
+#stage canvas{display:block;width:100%;height:100%}
+#client-video{position:absolute;width:2px;height:2px;opacity:0;pointer-events:none}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:18px 22px;display:flex;gap:12px;align-items:center;justify-content:center;
+  background:linear-gradient(to top,rgba(22,29,56,.92),rgba(22,29,56,0))}
+button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:13px 22px;cursor:pointer;color:#fff;background:#9D7714}
+button.ghost{background:rgba(255,255,255,.12)}
+button:disabled{opacity:.5;cursor:default}
+.hidden{display:none!important}
+#status{position:fixed;top:18px;left:0;right:0;text-align:center;font-size:14px;color:#E4E6E3;pointer-events:none}
+#back{position:fixed;top:14px;left:18px;color:#E4E6E3;text-decoration:none;font-size:14px}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+} }
+</script>
+<script src="runtime-config.js"></script>
+</head>
+<body>
+<div id="stage"></div>
+<video id="client-video" autoplay playsinline></video>
+<a id="back" href="home.html">← My training</a>
+<div id="status" role="status">Loading the room…</div>
+<div class="bar">
+  <button id="start">Start interview</button>
+  <button id="vr" class="ghost hidden">Enter VR</button>
+  <button id="end" class="ghost hidden">End interview</button>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+
+const ANAM_SDK = 'https://cdn.jsdelivr.net/npm/@anam-ai/js-sdk@4.23.1/+esm';
+const DEMO = new URLSearchParams(location.search).has('demo');
+const API = (window.LAD_API_BASE || '') + '/api/v1';
+const $ = (id) => document.getElementById(id);
+const statusEl = $('status');
+let statusText = '', running = false;
+function setStatus(t) { statusText = t; statusEl.textContent = t; drawPanel(); }
+
+function token() { try { return localStorage.getItem('lad_token') || ''; } catch (e) { return ''; } }
+if (!DEMO && !token()) location.replace('index.html');
+
+async function api(method, path, body) {
+  const r = await fetch(API + path, {
+    method, credentials: 'omit',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token() },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (r.status === 401) { location.replace('index.html'); throw new Error('Unauthenticated'); }
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(data.error || r.statusText); e.status = r.status; throw e; }
+  return data;
+}
+
+// ─── The room ────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.xr.enabled = true;
+renderer.xr.setReferenceSpaceType('local-floor');
+$('stage').appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x161D38);
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.05, 30);
+camera.position.set(0, 1.2, 0.35);          // seated eye height, used outside VR
+camera.lookAt(0, 1.12, -1.7);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a66, 1.15));
+const key = new THREE.DirectionalLight(0xfff3e0, 1.4); key.position.set(1.5, 2.6, 1); scene.add(key);
+
+const mat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, ...o });
+const room = new THREE.Group(); scene.add(room);   // the plain built room: the fallback
+function box(w, h, d, m, x, y, z) {
+  const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); room.add(b); return b;
+}
+const W = 5.2, H = 2.8, D = 6;                       // room, metres
+box(W, 0.05, D, mat(0x8C6B4A), 0, -0.025, -1);       // floor
+box(W, 0.05, D, mat(0xF7F6F2), 0, H, -1);            // ceiling
+box(W, H, 0.05, mat(0xECE9E1), 0, H / 2, -4);        // far wall
+box(W, H, 0.05, mat(0xECE9E1), 0, H / 2, 2);         // wall behind you
+box(0.05, H, D, mat(0xE4E0D6), -W / 2, H / 2, -1);   // left
+box(0.05, H, D, mat(0xE4E0D6), W / 2, H / 2, -1);    // right
+box(2.6, 2.1, 0.04, mat(0x202A50), 0, 1.25, -2.02);  // indigo panel behind the client
+box(2.7, 0.03, 0.06, mat(0x9D7714, { metalness: 0.4, roughness: 0.4 }), 0, 2.32, -2.0);
+box(1.9, 0.05, 0.9, mat(0x5B3F29, { roughness: 0.5 }), 0, 0.74, -1.05);   // desk top
+box(1.8, 0.7, 0.04, mat(0x4A3321), 0, 0.37, -1.42);                       // modesty panel
+[-0.88, 0.88].forEach((x) => box(0.06, 0.72, 0.8, mat(0x4A3321), x, 0.36, -1.05));
+box(0.3, 0.012, 0.21, mat(0xFAFAF7), -0.35, 0.772, -0.85).rotation.y = 0.2;  // papers
+box(0.02, 0.15, 0.02, mat(0x202A50), 0.5, 0.84, -0.9);                       // pen pot
+box(0.6, 1.2, 0.08, mat(0x2C3765), 0, 0.75, -1.95);                           // client's chair back
+
+// ─── The real room: a 360° photograph wrapped around the trainee ─────────
+// Drop an equirectangular image at img/vr-library.jpg (2:1, 4096x2048 or 8192x4096)
+// and it replaces the built room. ?turn=<degrees> rotates it so the spot where
+// the client should sit is straight ahead; ?seat=<metres> sets their distance.
+const Q = new URLSearchParams(location.search);
+new THREE.TextureLoader().load('img/vr-library.jpg', (tex) => {
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(20, 64, 40),
+    new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide }));
+  dome.scale.x = -1;                                   // un-mirror the photo
+  dome.position.y = 1.2;                               // centred on seated eye height
+  dome.rotation.y = THREE.MathUtils.degToRad(Number(Q.get('turn') || 0));
+  scene.add(dome);
+  room.visible = false;
+  if (Q.get('seat')) client.position.z = -Number(Q.get('seat'));
+}, undefined, () => { /* no photograph yet: keep the built room */ });
+
+// ─── The client: Anam's video on a plane, edges feathered into the panel ──
+const video = $('client-video');
+const videoTex = new THREE.VideoTexture(video);
+videoTex.colorSpace = THREE.SRGBColorSpace;
+const clientMat = new THREE.ShaderMaterial({
+  transparent: true,
+  uniforms: { map: { value: videoTex }, live: { value: 0 } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: [
+    'uniform sampler2D map; uniform float live; varying vec2 vUv;',
+    'void main(){',
+    '  vec4 c = texture2D(map, vUv);',
+    '  float a = smoothstep(0.0, 0.10, vUv.x) * smoothstep(1.0, 0.90, vUv.x) * smoothstep(1.0, 0.92, vUv.y);',
+    '  gl_FragColor = vec4(c.rgb, a * live);',
+    '  #include <colorspace_fragment>',
+    '}',
+  ].join('\n'),
+});
+const client = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 1.425), clientMat);  // 2:3 portrait
+client.position.set(0, 1.18, -1.72);
+scene.add(client);
+function fitClient() {                       // keep the plane in the stream's own shape
+  if (!video.videoWidth) return;
+  const ar = video.videoWidth / video.videoHeight;
+  const h = 1.425, w = h * ar;
+  client.geometry.dispose();
+  client.geometry = new THREE.PlaneGeometry(w, h);
+}
+video.addEventListener('loadedmetadata', fitClient);
+video.addEventListener('resize', fitClient);
+
+// ─── One quiet panel on the left wall: the brief and the state ──────────
+const pc = document.createElement('canvas'); pc.width = 1024; pc.height = 640;
+const pctx = pc.getContext('2d');
+const panelTex = new THREE.CanvasTexture(pc); panelTex.colorSpace = THREE.SRGBColorSpace;
+const panel = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.75), new THREE.MeshBasicMaterial({ map: panelTex }));
+panel.position.set(-0.98, 1.45, -1.7); panel.rotation.y = 0.5; scene.add(panel);
+let debrief = null;                          // set when the interview has been marked
+const END_BTN = { x: 60, y: 560, w: 330, h: 64 };   // on the panel canvas; hit-tested in VR
+function drawPanel() {
+  pctx.fillStyle = '#161D38'; pctx.fillRect(0, 0, 1024, 640);
+  pctx.fillStyle = '#9D7714'; pctx.fillRect(0, 0, 1024, 10);
+  pctx.textAlign = 'left';
+  if (debrief) {
+    pctx.fillStyle = '#fff'; pctx.font = '600 52px system-ui, sans-serif'; pctx.fillText('Your debrief', 60, 100);
+    debrief.skills.forEach((k, i) => {
+      const y = 170 + i * 70;
+      pctx.fillStyle = '#fff'; pctx.font = '32px system-ui, sans-serif'; pctx.fillText(k.name, 60, y);
+      pctx.fillStyle = '#2C3765'; pctx.fillRect(560, y - 24, 320, 22);
+      pctx.fillStyle = k.score >= 6 ? '#5DCAA5' : '#EF9F27'; pctx.fillRect(560, y - 24, 32 * k.score, 22);
+      pctx.fillStyle = '#fff'; pctx.fillText(k.score + '/10', 900, y);
+    });
+    pctx.font = '28px system-ui, sans-serif';
+    pctx.fillStyle = '#7FD1AE'; wrap('Strength: ' + debrief.strength, 60, 470, 900, 36);
+    pctx.fillStyle = '#FAC775'; wrap('Work on: ' + debrief.improve, 60, 560, 900, 36);
+  } else {
+    pctx.fillStyle = '#fff'; pctx.font = '600 58px system-ui, sans-serif'; pctx.fillText('Client interview', 60, 130);
+    pctx.fillStyle = '#C9CEDD'; pctx.font = '36px system-ui, sans-serif';
+    ['Your client is across the desk.', 'Greet them, take their instructions,', 'and speak as you would in practice.']
+      .forEach((l, i) => pctx.fillText(l, 60, 230 + i * 56));
+    pctx.fillStyle = '#7FD1AE'; pctx.font = '600 38px system-ui, sans-serif'; pctx.fillText(statusText || '', 60, 480);
+    if (running) {
+      pctx.fillStyle = '#9D7714'; pctx.fillRect(END_BTN.x, END_BTN.y, END_BTN.w, END_BTN.h);
+      pctx.fillStyle = '#fff'; pctx.font = '600 34px system-ui, sans-serif'; pctx.fillText('End interview', END_BTN.x + 50, END_BTN.y + 44);
+    }
+  }
+  panelTex.needsUpdate = true;
+}
+function wrap(text, x, y, maxW, lh) {
+  let line = '';
+  String(text).split(' ').forEach((w) => {
+    if (pctx.measureText(line + w).width > maxW && line) { pctx.fillText(line, x, y); y += lh; line = ''; }
+    line += w + ' ';
+  });
+  pctx.fillText(line, x, y);
+}
+
+// In the headset, point at "End interview" on the panel and pull the trigger (or pinch).
+const ray = new THREE.Raycaster(), rm = new THREE.Matrix4();
+[0, 1].forEach((i) => {
+  const c = renderer.xr.getController(i); scene.add(c);
+  c.addEventListener('select', () => {
+    if (!running) return;
+    rm.identity().extractRotation(c.matrixWorld);
+    ray.ray.origin.setFromMatrixPosition(c.matrixWorld);
+    ray.ray.direction.set(0, 0, -1).applyMatrix4(rm);
+    const hit = ray.intersectObject(panel)[0];
+    if (!hit || !hit.uv) return;
+    const px = hit.uv.x * 1024, py = (1 - hit.uv.y) * 640;
+    if (px >= END_BTN.x && px <= END_BTN.x + END_BTN.w && py >= END_BTN.y && py <= END_BTN.y + END_BTN.h) end();
+  });
+});
+
+renderer.setAnimationLoop(() => renderer.render(scene, camera));
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ─── The session ─────────────────────────────────────────────────────
+let anam = null, xrSession = null;
+const turns = [];                            // what was said, for the debrief
+
+function demoStream() {                      // a stand-in so the room can be checked without keys
+  const c = document.createElement('canvas'); c.width = 768; c.height = 1152; const x = c.getContext('2d');
+  (function tick() {
+    x.fillStyle = '#2C3765'; x.fillRect(0, 0, 768, 1152);
+    x.fillStyle = '#C9CEDD'; x.beginPath(); x.arc(384, 380, 150, 0, 7); x.fill();
+    x.fillRect(164, 580, 440, 572);
+    x.fillStyle = '#202A50'; x.font = '600 44px system-ui'; x.textAlign = 'center';
+    x.fillText('Stand-in client', 384, 820); x.fillText(new Date().toLocaleTimeString(), 384, 880);
+    if (running) requestAnimationFrame(tick);
+  })();
+  return c.captureStream(15);
+}
+
+async function start() {
+  $('start').disabled = true;
+  try {
+    running = true; debrief = null; turns.length = 0;
+    if (DEMO) {
+      video.srcObject = demoStream(); video.muted = true; await video.play();
+    } else {
+      setStatus('Connecting to your client…');
+      const { sessionToken } = await api('POST', '/trainer/vr/session-token', {});
+      const sdk = await import(ANAM_SDK);
+      anam = sdk.createClient(sessionToken);
+      anam.addListener(sdk.AnamEvent.MESSAGE_STREAM_EVENT_RECEIVED, (evt) => {
+        const t = turns.find((m) => m.id === evt.id);         // chunks arrive per message id
+        if (t) t.content += evt.content; else turns.push({ id: evt.id, role: evt.role, content: evt.content || '' });
+      });
+      anam.addListener(sdk.AnamEvent.CONNECTION_CLOSED, () => { if (running) end('The interview has ended.'); });
+      await anam.streamToVideoElement('client-video');   // also opens the microphone
+    }
+    clientMat.uniforms.live.value = 1;
+    setStatus('Your client is listening.');
+    $('start').classList.add('hidden'); $('end').classList.remove('hidden');
+  } catch (e) {
+    running = false; $('start').disabled = false;
+    setStatus(e.status === 503 ? 'The VR interview is not switched on yet.' :
+      e.name === 'NotAllowedError' ? 'Allow the microphone, then start again.' :
+      'Could not reach your client. Try again.');
+    console.error('[vr] start failed', e);
+  }
+}
+
+async function end(msg) {
+  running = false;
+  clientMat.uniforms.live.value = 0;
+  try { if (anam) await anam.stopStreaming(); } catch (e) { /* already closed */ }
+  anam = null;
+  if (video.srcObject) { video.srcObject.getTracks().forEach((t) => t.stop()); video.srcObject = null; }
+  $('end').classList.add('hidden'); $('start').classList.remove('hidden'); $('start').disabled = false;
+  setStatus(msg || 'Interview ended.');
+  await mark();
+}
+
+async function mark() {
+  try {
+    if (DEMO) {
+      debrief = { skills: [['Building rapport', 8], ['Fact finding', 6], ['Explaining fees and next steps', 4], ['Professional conduct', 9]]
+        .map(([name, score]) => ({ name, score, note: '' })),
+        strength: 'You let the client finish before you advised.', improve: 'Raise fees yourself, before the client has to ask.' };
+    } else {
+      if (!turns.some((t) => t.role === 'user' && t.content.trim())) return;
+      setStatus('Writing your debrief…');
+      debrief = await api('POST', '/trainer/vr/debrief', { turns: turns.map((t) => ({ role: t.role, content: t.content })) });
+    }
+    statusEl.textContent = 'Your debrief is on the panel to your left.';
+    drawPanel();
+  } catch (e) { setStatus('Interview ended. The debrief could not be written.'); console.error('[vr] debrief failed', e); }
+}
+
+async function toggleVR() {
+  if (xrSession) { await xrSession.end(); return; }
+  try {
+    xrSession = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor', 'hand-tracking'] });
+    xrSession.addEventListener('end', () => { xrSession = null; $('vr').textContent = 'Enter VR'; });
+    await renderer.xr.setSession(xrSession);
+    $('vr').textContent = 'Leave VR';
+  } catch (e) { setStatus('Could not start VR on this device.'); console.error('[vr] xr failed', e); }
+}
+
+$('start').addEventListener('click', start);
+$('end').addEventListener('click', () => end());
+$('vr').addEventListener('click', toggleVR);
+window.addEventListener('pagehide', () => { if (running) end(); });
+
+if (navigator.xr && navigator.xr.isSessionSupported) {
+  navigator.xr.isSessionSupported('immersive-vr').then((ok) => { if (ok) $('vr').classList.remove('hidden'); }).catch(() => {});
+}
+
+(async function boot() {
+  if (DEMO) { setStatus('Demo room. Press Start interview.'); return; }
+  try {
+    const s = await api('GET', '/trainer/vr/status');
+    setStatus(s.ready ? 'Ready. Press Start interview.' : 'The VR interview is not switched on yet.');
+    if (!s.ready) $('start').disabled = true;
+  } catch (e) { setStatus('Could not reach the training service.'); }
+})();
+</script>
+</body>
+</html>

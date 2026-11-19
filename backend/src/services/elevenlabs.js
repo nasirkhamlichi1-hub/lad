@@ -65,4 +65,36 @@ async function ttsStream(text) {
   return r.data; // a readable stream of MP3 bytes
 }
 
-module.exports = { isConfigured, ttsStream };
+// A short-lived signed URL for the conversational agent. Anam connects to the
+// agent with it server-side, so neither key ever reaches the headset.
+function agentConfigured() {
+  return !!(EL.apiKey && EL.agentId);
+}
+
+async function getAgentSignedUrl(agentId) {
+  const id = agentId || EL.agentId;
+  if (!EL.apiKey || !id) {
+    const err = new Error('ElevenLabs agent is not configured');
+    err.status = 503;
+    throw err;
+  }
+  const r = await axios.get(
+    `${EL.baseUrl}/v1/convai/conversation/get-signed-url`,
+    {
+      params: { agent_id: id },
+      headers: { 'xi-api-key': EL.apiKey },
+      timeout: 20000,
+      validateStatus: () => true,
+    }
+  );
+  const signedUrl = r.data && r.data.signed_url;
+  if (r.status >= 300 || !signedUrl) {
+    log.error('elevenlabs_signed_url_failed', { status: r.status, detail: r.data });
+    const err = new Error('ElevenLabs signed-URL request failed (' + r.status + ')');
+    err.status = 502;
+    throw err;
+  }
+  return { signedUrl, agentId: id };
+}
+
+module.exports = { isConfigured, ttsStream, agentConfigured, getAgentSignedUrl };

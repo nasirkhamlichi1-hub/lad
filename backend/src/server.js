@@ -216,6 +216,8 @@ for (const p of [
   '/api/v1/assistant/command',
   '/api/v1/trainer/turn',
   '/api/v1/trainer/tts',
+  '/api/v1/trainer/vr/session-token',
+  '/api/v1/trainer/vr/debrief',
   '/api/v1/skills/analyze',
   '/api/v1/learning/draft-lesson',
   '/api/v1/lawyers/copilot',

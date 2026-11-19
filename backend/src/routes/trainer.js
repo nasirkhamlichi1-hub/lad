@@ -29,6 +29,7 @@ const router = express.Router();
 const trainerBrain = require('../services/trainerBrain');
 const anam = require('../services/anam');
 const elevenlabs = require('../services/elevenlabs');
+const vrDebrief = require('../services/vrDebrief');
 const trainerStore = require('../services/trainerStore');
 const store = require('../services/store');
 const config = require('../config');
@@ -472,6 +473,48 @@ router.post('/anam/session-token', requireAuth, async (req, res, next) => {
     const token = await anam.createSessionToken({ name });
     res.json(token);
   } catch (e) { next(e); }
+});
+
+// ─── VR client interview (freelance/trainer-vr.html) ─────────────────
+// The headset asks whether the room can run, then for one session token. The
+// ElevenLabs agent (scenario + brain + voice) and the Anam face are joined
+// here, server-side; the headset only ever holds the short-lived Anam token.
+router.get('/vr/status', requireAuth, (_req, res) => {
+  res.json({
+    ready: anam.isConfigured() && elevenlabs.agentConfigured(),
+    face: anam.isConfigured(),
+    agent: elevenlabs.agentConfigured(),
+  });
+});
+
+router.post('/vr/session-token', requireAuth, async (req, res, next) => {
+  try {
+    if (!anam.isConfigured() || !elevenlabs.agentConfigured()) {
+      return res.status(503).json({ error: 'vr_not_configured' });
+    }
+    const signed = await elevenlabs.getAgentSignedUrl();
+    const token = await anam.createAgentSessionToken({
+      signedUrl: signed.signedUrl,
+      agentId: signed.agentId,
+      portrait: !(req.body && req.body.portrait === false),
+    });
+    res.json(token);
+  } catch (e) {
+    if (e.status === 502 || e.status === 503) return res.status(e.status).json({ error: e.message });
+    next(e);
+  }
+});
+
+// The debrief: the headset sends the transcript it heard and Claude marks it
+// against four interview skills. Nothing is stored.
+router.post('/vr/debrief', requireAuth, async (req, res, next) => {
+  try {
+    if (!vrDebrief.isConfigured()) return res.status(503).json({ error: 'debrief_not_configured' });
+    res.json(await vrDebrief.assess(req.body && req.body.turns));
+  } catch (e) {
+    if (e.status === 400 || e.status === 502) return res.status(e.status).json({ error: e.message });
+    next(e);
+  }
 });
 
 // ─── The trainer's voice (ElevenLabs TTS) ────────────────────────────
