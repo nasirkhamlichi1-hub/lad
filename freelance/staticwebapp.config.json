@@ -70,6 +70,10 @@
       "rewrite": "/trainer.html"
     },
     {
+      "route": "/trainer-vr",
+      "rewrite": "/trainer-vr.html"
+    },
+    {
       "route": "/admin",
       "rewrite": "/admin.html"
     },
@@ -93,8 +97,8 @@
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
-    "Permissions-Policy": "camera=(), microphone=(self), geolocation=(), payment=(), usb=(), interest-cohort=()",
-    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self' data: https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://*.azurewebsites.net https://*.blob.core.windows.net https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; frame-src 'self' blob: https://*.azurewebsites.net https://www.youtube-nocookie.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
+    "Permissions-Policy": "camera=(), microphone=(self), xr-spatial-tracking=(self), geolocation=(), payment=(), usb=(), interest-cohort=()",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self' data: https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://*.anam.ai wss://*.anam.ai https://*.azurewebsites.net https://*.blob.core.windows.net https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; frame-src 'self' blob: https://*.azurewebsites.net https://www.youtube-nocookie.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
   },
   "mimeTypes": {
     ".json": "application/json",

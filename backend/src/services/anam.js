@@ -65,4 +65,40 @@ async function createSessionToken({ name } = {}) {
   return { sessionToken: token, avatarId: AN.avatarId, name: personaConfig.name };
 }
 
-module.exports = { isConfigured, createSessionToken };
+// Session token for the VR client interview: the ElevenLabs agent is the
+// voice, ears and brain; Anam connects to it with the signed URL and renders
+// the face. Shape follows Anam's own example (anam-cookbook,
+// elevenlabs-server-side-agent-nextjs).
+async function createAgentSessionToken({ signedUrl, agentId, portrait } = {}) {
+  if (!isConfigured()) {
+    const err = new Error('Anam is not configured');
+    err.status = 503;
+    throw err;
+  }
+  const body = {
+    personaConfig: {
+      avatarId: AN.vrAvatarId || AN.avatarId,
+      avatarModel: AN.vrAvatarModel,
+      directorNotes: { presetStyle: 'warm', expressivity: 0.5 },
+    },
+    environment: { elevenLabsAgentSettings: { signedUrl, agentId } },
+  };
+  // A seated client reads best tall and narrow; Cara 4 serves 768x1152.
+  if (portrait) body.sessionOptions = { videoWidth: 768, videoHeight: 1152 };
+
+  const r = await axios.post(`${AN.baseUrl}/v1/auth/session-token`, body, {
+    headers: { Authorization: `Bearer ${AN.apiKey}`, 'Content-Type': 'application/json' },
+    timeout: 20000,
+    validateStatus: () => true,
+  });
+  const token = r.data && r.data.sessionToken;
+  if (r.status >= 300 || !token) {
+    log.error('anam_agent_session_token_failed', { status: r.status, detail: r.data });
+    const err = new Error('Anam session-token request failed (' + r.status + ')');
+    err.status = 502; err.detail = r.data;
+    throw err;
+  }
+  return { sessionToken: token };
+}
+
+module.exports = { isConfigured, createSessionToken, createAgentSessionToken };

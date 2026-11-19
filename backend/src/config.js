@@ -93,6 +93,9 @@ module.exports = {
     // only needs ANAM_API_KEY set; override ANAM_AVATAR_ID to pick another.
     avatarId: process.env.ANAM_AVATAR_ID || '6cc28442-cccd-42a8-b6e4-24b7210a09c5',
     voiceId:  process.env.ANAM_VOICE_ID || '',            // optional specific Anam voice
+    // The VR client interview may use a different face from the trainer.
+    vrAvatarId:    process.env.ANAM_VR_AVATAR_ID || '',
+    vrAvatarModel: process.env.ANAM_VR_AVATAR_MODEL || 'cara-4',
     name:     process.env.ANAM_AVATAR_NAME || `${brand.name} Trainer`,
   },
 
@@ -116,6 +119,10 @@ module.exports = {
     // A smaller MP3 starts playing sooner over a slow connection.
     outputFormat: process.env.ELEVENLABS_OUTPUT_FORMAT || 'mp3_22050_32',
     speed: Number(process.env.ELEVENLABS_SPEED || '1.0'),
+    // The ElevenLabs conversational agent behind the VR client interview
+    // (freelance/trainer-vr.html). The agent holds the scenario and the brain;
+    // Anam renders its face. Unset = the VR room reports itself not configured.
+    agentId: process.env.ELEVENLABS_AGENT_ID || '',
   },
 
   // MorphCast Emotion AI — optional in-browser perception ("eyes") provider.
