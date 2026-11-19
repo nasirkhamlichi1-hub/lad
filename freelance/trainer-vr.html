@@ -91,8 +91,9 @@ scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a66, 1.15));
 const key = new THREE.DirectionalLight(0xfff3e0, 1.4); key.position.set(1.5, 2.6, 1); scene.add(key);
 
 const mat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, ...o });
+const room = new THREE.Group(); scene.add(room);   // the plain built room: the fallback
 function box(w, h, d, m, x, y, z) {
-  const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); scene.add(b); return b;
+  const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); room.add(b); return b;
 }
 const W = 5.2, H = 2.8, D = 6;                       // room, metres
 box(W, 0.05, D, mat(0x8C6B4A), 0, -0.025, -1);       // floor
@@ -109,6 +110,23 @@ box(1.8, 0.7, 0.04, mat(0x4A3321), 0, 0.37, -1.42);                       // mod
 box(0.3, 0.012, 0.21, mat(0xFAFAF7), -0.35, 0.772, -0.85).rotation.y = 0.2;  // papers
 box(0.02, 0.15, 0.02, mat(0x202A50), 0.5, 0.84, -0.9);                       // pen pot
 box(0.6, 1.2, 0.08, mat(0x2C3765), 0, 0.75, -1.95);                           // client's chair back
+
+// ─── The real room: a 360° photograph wrapped around the trainee ─────────
+// Drop an equirectangular image at img/vr-library.jpg (2:1, 4096x2048 or 8192x4096)
+// and it replaces the built room. ?turn=<degrees> rotates it so the spot where
+// the client should sit is straight ahead; ?seat=<metres> sets their distance.
+const Q = new URLSearchParams(location.search);
+new THREE.TextureLoader().load('img/vr-library.jpg', (tex) => {
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(20, 64, 40),
+    new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide }));
+  dome.scale.x = -1;                                   // un-mirror the photo
+  dome.position.y = 1.2;                               // centred on seated eye height
+  dome.rotation.y = THREE.MathUtils.degToRad(Number(Q.get('turn') || 0));
+  scene.add(dome);
+  room.visible = false;
+  if (Q.get('seat')) client.position.z = -Number(Q.get('seat'));
+}, undefined, () => { /* no photograph yet: keep the built room */ });
 
 // ─── The client: Anam's video on a plane, edges feathered into the panel ──
 const video = $('client-video');
