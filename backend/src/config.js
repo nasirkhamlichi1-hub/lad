@@ -94,7 +94,9 @@ module.exports = {
     avatarId: process.env.ANAM_AVATAR_ID || '6cc28442-cccd-42a8-b6e4-24b7210a09c5',
     voiceId:  process.env.ANAM_VOICE_ID || '',            // optional specific Anam voice
     // The VR client interview may use a different face from the trainer.
-    vrAvatarId:    process.env.ANAM_VR_AVATAR_ID || '',
+    // Default: "Robert", a stock Anam avatar (a mature man in a suit jacket),
+    // who suits the client in the VR interview. ANAM_VR_AVATAR_ID overrides it.
+    vrAvatarId:    process.env.ANAM_VR_AVATAR_ID || '8bbf1f70-c286-4da9-8bd7-e99fcf9834a6',
     vrAvatarModel: process.env.ANAM_VR_AVATAR_MODEL || 'cara-4',
     name:     process.env.ANAM_AVATAR_NAME || `${brand.name} Trainer`,
   },
