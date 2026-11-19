@@ -92,7 +92,10 @@ module.exports = {
     // Defaults to "Gabriel" (a stock Anam avatar, cara-4-latest) so a deploy
     // only needs ANAM_API_KEY set; override ANAM_AVATAR_ID to pick another.
     avatarId: process.env.ANAM_AVATAR_ID || '6cc28442-cccd-42a8-b6e4-24b7210a09c5',
-    voiceId:  process.env.ANAM_VOICE_ID || '',            // optional specific Anam voice
+    // The trainer's voice inside Anam. Default: "Doga", an ElevenLabs voice in
+    // Anam's library that speaks both English and Arabic. ANAM_VOICE_ID overrides.
+    voiceId:  process.env.ANAM_VOICE_ID || 'aa7e7f30-66b6-4bdc-b5f2-0516e85dacff',
+    avatarModel: process.env.ANAM_AVATAR_MODEL || 'cara-4',
     // The VR client interview may use a different face from the trainer.
     // Default: "Robert", a stock Anam avatar (a mature man in a suit jacket),
     // who suits the client in the VR interview. ANAM_VR_AVATAR_ID overrides it.
