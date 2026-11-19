@@ -32,12 +32,17 @@ async function createSessionToken({ name } = {}) {
 
   // Persona config: a custom persona whose speech we drive ourselves (Claude is
   // the brain). avatarId selects the photoreal face; Anam provides the voice.
+  // Anam no longer accepts a face with no voice and no brain setting on its own
+  // transport: the config must name a voice, and CUSTOMER_CLIENT_V1 tells Anam
+  // the words come from us (Claude's lines, sent with the SDK's talk()).
   const personaConfig = {
     name: name || AN.name,
     avatarId: AN.avatarId,
-    // brain/LLM is supplied by us via the SDK's talk() calls, so no llmId here.
+    avatarModel: AN.avatarModel,
+    voiceId: AN.voiceId,
+    llmId: 'CUSTOMER_CLIENT_V1',
+    skipGreeting: true,
   };
-  if (AN.voiceId) personaConfig.voiceId = AN.voiceId; // optional specific Anam voice
 
   const r = await axios.post(
     `${AN.baseUrl}/v1/auth/session-token`,

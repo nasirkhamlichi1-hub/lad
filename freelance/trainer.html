@@ -105,6 +105,7 @@ a{color:inherit;text-decoration:none}
 
 /* ── Teacher card ── */
 .teacher{background:var(--indigo);border-radius:24px;box-shadow:var(--sh);color:#fff;padding:38px 30px 28px;text-align:center;position:sticky;top:96px}
+.face{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:16px;background:#161D38;margin:0 auto 14px}
 .orb-wrap{width:150px;height:150px;margin:0 auto;display:grid;place-items:center;position:relative}
 .orb{width:118px;height:118px;border-radius:50%;transition:all .4s;position:relative;z-index:2}
 .orb.listening{background:radial-gradient(circle at 32% 28%,#E9D9A6,#9D7714 55%,#70550F);box-shadow:0 10px 44px rgba(157,119,20,.45)}
@@ -186,6 +187,7 @@ a{color:inherit;text-decoration:none}
         </div>
       </div></div>
       <div class="teacher">
+        <video id="face" class="face hidden" autoplay playsinline></video>
         <div class="orb-wrap" id="orbWrap"><span class="ring"></span><span class="ring"></span><div class="orb idle" id="orb"></div></div>
         <h3>Your trainer</h3>
         <div class="tstate idle" id="tstate">Connecting</div>
@@ -264,7 +266,7 @@ a{color:inherit;text-decoration:none}
     var brainOn=!!(S.status&&S.status.engines&&S.status.engines.brain);
     var p=el('enginePill');
     var voiceOn=!!(S.status&&S.status.engines&&S.status.engines.voice);
-    if(brainOn&&!DEMO){p.className='pill pill-live';p.textContent='● Live'+(voiceOn?' · ElevenLabs voice':'');}
+    if(brainOn&&!DEMO){p.className='pill pill-live';p.textContent='● Live'+((S.status.engines&&S.status.engines.anam)?' · Live trainer':(voiceOn?' · ElevenLabs voice':''));}
     else{p.className='pill pill-demo';p.textContent='Preview mode';}
     var match=WANT_LESSON&&S.lessons.filter(function(L){return String(L.id)===WANT_LESSON;})[0];
     if(match){S.selected=match;start();return;}
@@ -329,7 +331,8 @@ a{color:inherit;text-decoration:none}
     }
     S.coverage=null;
     paintCoverage({done:held.length,total:objs.length,covered:held});
-    nextTurn();
+    // Give the face a few seconds to arrive; never hold the lesson for it.
+    Promise.race([initFace(),new Promise(function(r){setTimeout(r,7000);})]).then(function(){ nextTurn(); });
   }
 
   // On the Arabic site, the Arabic key elements the author wrote (kept with
@@ -470,8 +473,45 @@ a{color:inherit;text-decoration:none}
   // the orb goes green while the trainer talks.
   // S.speaking resolves when the current utterance has finished, so a follow-on
   // line can be queued behind it instead of cutting it off mid-word.
+  // ─── The trainer's face (Anam) ───────────────────────────────────────
+  // When the server has an Anam key, the trainer is a person, not an orb:
+  // a live face that speaks Claude's lines. The mic stays with this page
+  // (Anam is told not to listen), so answering works exactly as before. If
+  // the face cannot start, or its session ends, the orb and voice carry on.
+  var ANAM_SDK='https://cdn.jsdelivr.net/npm/@anam-ai/js-sdk@4.23.1/+esm';
+  function faceOff(){ S.face=null; el('face').classList.add('hidden'); el('orbWrap').classList.remove('hidden'); }
+  function initFace(){
+    if(DEMO||S.face||S.faceTried||!(S.status&&S.status.engines&&S.status.engines.anam)) return Promise.resolve(!!S.face);
+    S.faceTried=true;
+    return fetch((window.LAD_API_BASE||'')+'/api/v1/trainer/anam/session-token',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+api.getToken()},body:'{}'
+    }).then(function(r){ if(!r.ok) throw new Error('face '+r.status); return r.json(); })
+      .then(function(t){ return import(ANAM_SDK).then(function(sdk){
+        var c=sdk.createClient(t.sessionToken,{disableInputAudio:true});
+        c.addListener(sdk.AnamEvent.CONNECTION_CLOSED,function(){
+          // Sessions are capped by the Anam plan. When one ends mid-lesson,
+          // bring the face back once; meanwhile the voice carries on.
+          faceOff(); if(!S.ended){ S.faceTried=false; setTimeout(function(){ if(!S.ended) initFace(); },1500); }
+        });
+        return c.streamToVideoElement('face').then(function(){
+          S.face=c; el('face').classList.remove('hidden'); el('orbWrap').classList.add('hidden'); return true;
+        });
+      }); })
+      .catch(function(e){ console.warn('[trainer] face unavailable',e); faceOff(); return false; });
+  }
+  function speakFace(text,done){
+    var id=stopSpeaking(), face=S.face;
+    setState('speaking','Speaking');
+    var ms=Math.min(60000,700+String(text).length*68);   // Anam gives no end-of-speech signal for talk()
+    face.talk(text).catch(function(){ if(id===S.speechId){ faceOff(); speakEleven(text,done); done=null; } });
+    S.faceTimer=setTimeout(function(){ if(id===S.speechId&&done) done(); },ms);
+  }
   function speak(text,done){
     var voiceOn=!DEMO&&S.status&&S.status.engines&&S.status.engines.voice;
+    if(S.face){
+      var pf=new Promise(function(resolve){ speakFace(text,function(){ try{ done&&done(); } finally { resolve(); } }); });
+      S.speaking=pf; return pf;
+    }
     var p=new Promise(function(resolve){
       var fin=function(){ try{ done&&done(); } finally { resolve(); } };
       if(voiceOn){ speakEleven(text,fin); } else { speakBrowser(text,fin); }
@@ -494,6 +534,8 @@ a{color:inherit;text-decoration:none}
   // started, and two trainers talked over each other.
   function stopSpeaking(){
     S.speechId=(S.speechId||0)+1;
+    if(S.faceTimer){ clearTimeout(S.faceTimer); S.faceTimer=null; }
+    if(S.face){ try{S.face.interruptPersona();}catch(e){} }
     if(S.audio){ try{S.audio.pause();}catch(e){} S.audio=null; }
     if(window.speechSynthesis){ try{window.speechSynthesis.cancel();}catch(e){} }
     return S.speechId;
@@ -577,7 +619,7 @@ a{color:inherit;text-decoration:none}
   el('replyInput').addEventListener('keydown',function(e){if(e.key==='Enter')submitReply(el('replyInput').value);});
 
   // ─── Pause / Finish ──────────────────────────────────────────────────
-  function teardown(){S.ended=true;stopListening();stopSpeaking();}
+  function teardown(){S.ended=true;stopListening();stopSpeaking();var f=S.face;S.face=null;if(f){try{f.stopStreaming();}catch(e){}}}
   function leave(){ if(RETURN_URL){location.href=RETURN_URL;} else {location.href='trainer.html';} }
   el('pauseBtn').onclick=function(){teardown();var sec=Math.round((Date.now()-S.startedAt)/1000);
     if(DEMO){toast('Paused (demo).');setTimeout(leave,1000);return;}
