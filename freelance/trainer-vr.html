@@ -54,7 +54,7 @@ const DEMO = new URLSearchParams(location.search).has('demo');
 const API = (window.LAD_API_BASE || '') + '/api/v1';
 const $ = (id) => document.getElementById(id);
 const statusEl = $('status');
-let statusText = '';
+let statusText = '', running = false;
 function setStatus(t) { statusText = t; statusEl.textContent = t; drawPanel(); }
 
 function token() { try { return localStorage.getItem('lad_token') || ''; } catch (e) { return ''; } }
@@ -164,17 +164,62 @@ const pc = document.createElement('canvas'); pc.width = 1024; pc.height = 640;
 const pctx = pc.getContext('2d');
 const panelTex = new THREE.CanvasTexture(pc); panelTex.colorSpace = THREE.SRGBColorSpace;
 const panel = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.75), new THREE.MeshBasicMaterial({ map: panelTex }));
-panel.position.set(-1.25, 1.5, -1.85); panel.rotation.y = 0.45; scene.add(panel);
+panel.position.set(-0.98, 1.45, -1.7); panel.rotation.y = 0.5; scene.add(panel);
+let debrief = null;                          // set when the interview has been marked
+const END_BTN = { x: 60, y: 560, w: 330, h: 64 };   // on the panel canvas; hit-tested in VR
 function drawPanel() {
   pctx.fillStyle = '#161D38'; pctx.fillRect(0, 0, 1024, 640);
   pctx.fillStyle = '#9D7714'; pctx.fillRect(0, 0, 1024, 10);
-  pctx.fillStyle = '#fff'; pctx.font = '600 58px system-ui, sans-serif'; pctx.fillText('Client interview', 60, 130);
-  pctx.fillStyle = '#C9CEDD'; pctx.font = '36px system-ui, sans-serif';
-  ['Your client is across the desk.', 'Greet them, take their instructions,', 'and speak as you would in practice.']
-    .forEach((l, i) => pctx.fillText(l, 60, 230 + i * 56));
-  pctx.fillStyle = '#7FD1AE'; pctx.font = '600 38px system-ui, sans-serif'; pctx.fillText(statusText || '', 60, 540);
+  pctx.textAlign = 'left';
+  if (debrief) {
+    pctx.fillStyle = '#fff'; pctx.font = '600 52px system-ui, sans-serif'; pctx.fillText('Your debrief', 60, 100);
+    debrief.skills.forEach((k, i) => {
+      const y = 170 + i * 70;
+      pctx.fillStyle = '#fff'; pctx.font = '32px system-ui, sans-serif'; pctx.fillText(k.name, 60, y);
+      pctx.fillStyle = '#2C3765'; pctx.fillRect(560, y - 24, 320, 22);
+      pctx.fillStyle = k.score >= 6 ? '#5DCAA5' : '#EF9F27'; pctx.fillRect(560, y - 24, 32 * k.score, 22);
+      pctx.fillStyle = '#fff'; pctx.fillText(k.score + '/10', 900, y);
+    });
+    pctx.font = '28px system-ui, sans-serif';
+    pctx.fillStyle = '#7FD1AE'; wrap('Strength: ' + debrief.strength, 60, 470, 900, 36);
+    pctx.fillStyle = '#FAC775'; wrap('Work on: ' + debrief.improve, 60, 560, 900, 36);
+  } else {
+    pctx.fillStyle = '#fff'; pctx.font = '600 58px system-ui, sans-serif'; pctx.fillText('Client interview', 60, 130);
+    pctx.fillStyle = '#C9CEDD'; pctx.font = '36px system-ui, sans-serif';
+    ['Your client is across the desk.', 'Greet them, take their instructions,', 'and speak as you would in practice.']
+      .forEach((l, i) => pctx.fillText(l, 60, 230 + i * 56));
+    pctx.fillStyle = '#7FD1AE'; pctx.font = '600 38px system-ui, sans-serif'; pctx.fillText(statusText || '', 60, 480);
+    if (running) {
+      pctx.fillStyle = '#9D7714'; pctx.fillRect(END_BTN.x, END_BTN.y, END_BTN.w, END_BTN.h);
+      pctx.fillStyle = '#fff'; pctx.font = '600 34px system-ui, sans-serif'; pctx.fillText('End interview', END_BTN.x + 50, END_BTN.y + 44);
+    }
+  }
   panelTex.needsUpdate = true;
 }
+function wrap(text, x, y, maxW, lh) {
+  let line = '';
+  String(text).split(' ').forEach((w) => {
+    if (pctx.measureText(line + w).width > maxW && line) { pctx.fillText(line, x, y); y += lh; line = ''; }
+    line += w + ' ';
+  });
+  pctx.fillText(line, x, y);
+}
+
+// In the headset, point at "End interview" on the panel and pull the trigger (or pinch).
+const ray = new THREE.Raycaster(), rm = new THREE.Matrix4();
+[0, 1].forEach((i) => {
+  const c = renderer.xr.getController(i); scene.add(c);
+  c.addEventListener('select', () => {
+    if (!running) return;
+    rm.identity().extractRotation(c.matrixWorld);
+    ray.ray.origin.setFromMatrixPosition(c.matrixWorld);
+    ray.ray.direction.set(0, 0, -1).applyMatrix4(rm);
+    const hit = ray.intersectObject(panel)[0];
+    if (!hit || !hit.uv) return;
+    const px = hit.uv.x * 1024, py = (1 - hit.uv.y) * 640;
+    if (px >= END_BTN.x && px <= END_BTN.x + END_BTN.w && py >= END_BTN.y && py <= END_BTN.y + END_BTN.h) end();
+  });
+});
 
 renderer.setAnimationLoop(() => renderer.render(scene, camera));
 window.addEventListener('resize', () => {
@@ -183,7 +228,8 @@ window.addEventListener('resize', () => {
 });
 
 // ─── The session ─────────────────────────────────────────────────────
-let anam = null, running = false, xrSession = null;
+let anam = null, xrSession = null;
+const turns = [];                            // what was said, for the debrief
 
 function demoStream() {                      // a stand-in so the room can be checked without keys
   const c = document.createElement('canvas'); c.width = 768; c.height = 1152; const x = c.getContext('2d');
@@ -201,7 +247,7 @@ function demoStream() {                      // a stand-in so the room can be ch
 async function start() {
   $('start').disabled = true;
   try {
-    running = true;
+    running = true; debrief = null; turns.length = 0;
     if (DEMO) {
       video.srcObject = demoStream(); video.muted = true; await video.play();
     } else {
@@ -209,6 +255,10 @@ async function start() {
       const { sessionToken } = await api('POST', '/trainer/vr/session-token', {});
       const sdk = await import(ANAM_SDK);
       anam = sdk.createClient(sessionToken);
+      anam.addListener(sdk.AnamEvent.MESSAGE_STREAM_EVENT_RECEIVED, (evt) => {
+        const t = turns.find((m) => m.id === evt.id);         // chunks arrive per message id
+        if (t) t.content += evt.content; else turns.push({ id: evt.id, role: evt.role, content: evt.content || '' });
+      });
       anam.addListener(sdk.AnamEvent.CONNECTION_CLOSED, () => { if (running) end('The interview has ended.'); });
       await anam.streamToVideoElement('client-video');   // also opens the microphone
     }
@@ -232,6 +282,23 @@ async function end(msg) {
   if (video.srcObject) { video.srcObject.getTracks().forEach((t) => t.stop()); video.srcObject = null; }
   $('end').classList.add('hidden'); $('start').classList.remove('hidden'); $('start').disabled = false;
   setStatus(msg || 'Interview ended.');
+  await mark();
+}
+
+async function mark() {
+  try {
+    if (DEMO) {
+      debrief = { skills: [['Building rapport', 8], ['Fact finding', 6], ['Explaining fees and next steps', 4], ['Professional conduct', 9]]
+        .map(([name, score]) => ({ name, score, note: '' })),
+        strength: 'You let the client finish before you advised.', improve: 'Raise fees yourself, before the client has to ask.' };
+    } else {
+      if (!turns.some((t) => t.role === 'user' && t.content.trim())) return;
+      setStatus('Writing your debrief…');
+      debrief = await api('POST', '/trainer/vr/debrief', { turns: turns.map((t) => ({ role: t.role, content: t.content })) });
+    }
+    statusEl.textContent = 'Your debrief is on the panel to your left.';
+    drawPanel();
+  } catch (e) { setStatus('Interview ended. The debrief could not be written.'); console.error('[vr] debrief failed', e); }
 }
 
 async function toggleVR() {
