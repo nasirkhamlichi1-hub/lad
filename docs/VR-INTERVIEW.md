@@ -6,7 +6,7 @@ desk from a client, talks to them, and gets a marked debrief at the end.
 
 | Part | What does it |
 |---|---|
-| The room | `freelance/trainer-vr.html` — WebXR (three.js). The room is a 360° photograph of a law library, `frontend/img/vr-library.jpg` (8K) with `vr-library-4k.jpg` for headsets that cannot hold the larger texture; a plain built room is the fallback. |
+| The room | `freelance/trainer-vr.html` — WebXR (three.js). By default there is no set: the client's own video hangs in the dark like a life-size window. `?photo=1` turns on a 360° photograph of a law library, `frontend/img/vr-library.jpg` (8K) with `vr-library-4k.jpg` for headsets that cannot hold the larger texture; a plain built room is the fallback. |
 | The client's face | Anam (`ANAM_API_KEY`, `ANAM_VR_AVATAR_ID` or `ANAM_AVATAR_ID`) |
 | The client's voice, ears and brain | An ElevenLabs conversational agent (`ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`), with Claude chosen as the agent's model |
 | The debrief | Claude, through the backend's existing Anthropic settings |
