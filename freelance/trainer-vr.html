@@ -69,7 +69,11 @@ async function api(method, path, body) {
     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token() },
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (r.status === 401) { location.replace('index.html'); throw new Error('Unauthenticated'); }
+  if (r.status === 401) {                     // say so before leaving, so the reason is never a mystery
+    statusEl.textContent = 'Your sign-in has expired. Taking you to sign in…';
+    setTimeout(() => location.replace('index.html'), 2500);
+    const e = new Error('Your sign-in has expired. Sign in, then open this page again.'); e.status = 401; throw e;
+  }
   const data = await r.json().catch(() => ({}));
   if (!r.ok) { const e = new Error(data.error || r.statusText); e.status = r.status; throw e; }
   return data;
@@ -297,9 +301,10 @@ async function start() {
     $('start').classList.add('hidden'); $('end').classList.remove('hidden');
   } catch (e) {
     running = false; $('start').disabled = false;
-    setStatus(e.status === 503 ? 'The VR interview is not switched on yet.' :
+    setStatus(e.status === 401 ? e.message :
+      e.status === 503 ? 'The VR interview is not switched on yet.' :
       e.name === 'NotAllowedError' ? 'Allow the microphone, then start again.' :
-      'Could not reach your client. Try again.');
+      'Could not start: ' + (e.status ? e.status + ' ' : '') + String(e.message || e.name || 'unknown error').slice(0, 140));
     console.error('[vr] start failed', e);
   }
 }
@@ -360,7 +365,7 @@ if (navigator.xr && navigator.xr.isSessionSupported) {
     const s = await api('GET', '/trainer/vr/status');
     setStatus(s.ready ? 'Ready. Press Start interview.' : 'The VR interview is not switched on yet.');
     if (!s.ready) $('start').disabled = true;
-  } catch (e) { setStatus('Could not reach the training service.'); }
+  } catch (e) { setStatus(e.status === 401 ? e.message : 'Could not reach the training service' + (e.status ? ' (' + e.status + ')' : '') + ': ' + String(e.message || '').slice(0, 120)); }
 })();
 </script>
 </body>
